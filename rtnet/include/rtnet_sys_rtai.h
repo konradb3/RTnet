@@ -287,6 +287,13 @@ static inline int rtos_irq_free(unsigned int irq)
 
 #define rtos_irq_enable(irq)        rt_enable_irq(irq)
 #define rtos_irq_disable(irq)       rt_disable_irq(irq)
+#if defined(CONFIG_ARCH_I386)
+    #define rtos_irq_end(irq)       rt_enable_irq(irq)
+#elif defined(CONFIG_ARCH_PPC)
+    #define rtos_irq_end(irq)       rt_unmask_irq(irq)
+#else
+    #error Unsupported architecture.
+#endif
 
 
 
