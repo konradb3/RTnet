@@ -50,11 +50,12 @@ typedef size_t          socklen_t;
 
 
 /* Sub-classes: RTDM_CLASS_NETWORK */
-#define RTDM_SUBCLASS_RTNET 0
+#define RTDM_SUBCLASS_RTNET     0
 
 
 /* Sub-classes: RTDM_CLASS_RTMAC */
-#define RTDM_SUBCLASS_TDMA  0
+#define RTDM_SUBCLASS_TDMA      0
+#define RTDM_SUBCLASS_UNMANAGED 1
 
 
 /* LXRT function IDs */
