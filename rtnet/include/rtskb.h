@@ -111,20 +111,21 @@ shared between the stack, the driver, and the capturing service. In contrast to
 many other network stacks, RTnet does not create a new rtskb head and
 re-references the payload. Instead, additional fields at the end of the rtskb
 structure are use for sharing a rtskb with a capturing service. If the sharing
-bit (RTSKB_CAP_SHARED) in cap_flags is set, the rtskb will not be return to the
-owning pool upon the first call of kfree_rtskb. This call will only reset the
-bit so that the second call can then return the rtskb as normal. cap_start and
-cap_len can be used to mirror the dimension of the full packet. This is
-required because the data and len fields will be modified while walking through
-the stack. cap_next allows to add a rtskb to a separate queue which is
-independent of any queue described in 2.
+bit (RTSKB_CAP_SHARED) in cap_flags is set, the rtskb will not be returned to
+the owning pool upon the call of kfree_rtskb. Instead this bit will be reset,
+and a compensation rtskb stored in cap_comp_skb will be returned to the owning
+pool. cap_start and cap_len can be used to mirror the dimension of the full
+packet. This is required because the data and len fields will be modified while
+walking through the stack. cap_next allows to add a rtskb to a separate queue
+which is independent of any queue described in 2.
 
 Certain setup tasks for capturing packets can not become part of a capturing
 module, they have to be embedded into the stack. For this purpose, several
 inline functions are provided. rtcap_mark_incoming() is used to save the packet
 dimension right before it is modifed by the stack. rtcap_report_incoming()
-calls the capturing handler if present in order to let it process the received
-rtskb (e.g. acquire it, mark it as shared, and enqueue it).
+calls the capturing handler, if present, in order to let it process the
+received rtskb (e.g. allocate compensation rtskb, mark original rtskb as
+shared, and enqueue it).
 
 Outgoing rtskb have to be captured by adding a hook function to the chain of
 hard_start_xmit functions of a device. To measure the delay caused by RTmac
