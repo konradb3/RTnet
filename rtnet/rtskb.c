@@ -64,11 +64,10 @@ unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset,
                                       u8 *to, int len, unsigned int csum)
 {
     int copy;
-    int start = skb->len - skb->data_len;
     int pos = 0;
 
     /* Copy header. */
-    if ((copy = start-offset) > 0) {
+    if ((copy = skb->len-offset) > 0) {
         if (copy > len)
             copy = len;
         csum = csum_partial_copy_nocheck(skb->data+offset, to, copy, csum);
@@ -92,13 +91,13 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
     unsigned int csum;
     unsigned int csstart;
 
-    if (skb->ip_summed == CHECKSUM_HW)
+    if (skb->ip_summed == CHECKSUM_HW) {
         csstart = skb->h.raw - skb->data;
-    else
-        csstart = skb->len - skb->data_len;
 
-    if (csstart > skb->len - skb->data_len)
-        BUG();
+        if (csstart > skb->len)
+            BUG();
+    } else
+        csstart = skb->len;
 
     memcpy(to, skb->data, csstart);
 
@@ -187,7 +186,6 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     /* Set up other states */
     skb->chain_end = skb;
     skb->len = 0;
-    skb->data_len = 0;
     skb->pkt_type = PACKET_HOST;
 
 #ifdef CONFIG_RTNET_RTCAP
@@ -361,7 +359,6 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
         skb->pool = pool;
         skb->buf_start = ((char *)skb) + ALIGN_RTSKB_STRUCT_LEN;
         skb->buf_end = skb->buf_start + SKB_DATA_ALIGN(RTSKB_SIZE) - 1;
-        skb->buf_len = SKB_DATA_ALIGN(RTSKB_SIZE);
 
         rtskb_queue_tail(pool, skb);
 

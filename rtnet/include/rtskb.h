@@ -194,8 +194,6 @@ struct rtskb {
     struct rt_rtable    *dst;
 
     unsigned int        len;
-    unsigned int        data_len;
-    unsigned int        buf_len;
 
     unsigned char       *buf_start;
     unsigned char       *buf_end;
@@ -530,14 +528,9 @@ static inline void rtskb_queue_purge(struct rtskb_queue *queue)
         kfree_rtskb(skb);
 }
 
-static inline int rtskb_is_nonlinear(const struct rtskb *skb)
-{
-    return skb->data_len;
-}
-
 static inline int rtskb_headlen(const struct rtskb *skb)
 {
-    return skb->len - skb->data_len;
+    return skb->len;
 }
 
 static inline void rtskb_reserve(struct rtskb *skb, unsigned int len)
@@ -546,13 +539,10 @@ static inline void rtskb_reserve(struct rtskb *skb, unsigned int len)
     skb->tail+=len;
 }
 
-#define RTSKB_LINEAR_ASSERT(rtskb) \
-    RTNET_ASSERT(!rtskb_is_nonlinear(rtskb), BUG();)
-
 static inline unsigned char *__rtskb_put(struct rtskb *skb, unsigned int len)
 {
     unsigned char *tmp=skb->tail;
-    RTSKB_LINEAR_ASSERT(skb);
+
     skb->tail+=len;
     skb->len+=len;
     return tmp;
@@ -561,7 +551,7 @@ static inline unsigned char *__rtskb_put(struct rtskb *skb, unsigned int len)
 static inline unsigned char *rtskb_put(struct rtskb *skb, unsigned int len)
 {
     unsigned char *tmp=skb->tail;
-    RTSKB_LINEAR_ASSERT(skb);
+
     skb->tail+=len;
     skb->len+=len;
 
@@ -592,7 +582,7 @@ static inline unsigned char *rtskb_push(struct rtskb *skb, unsigned int len)
 static inline char *__rtskb_pull(struct rtskb *skb, unsigned int len)
 {
     skb->len-=len;
-    if (skb->len < skb->data_len)
+    if (skb->len < 0)
         BUG();
     return skb->data+=len;
 }

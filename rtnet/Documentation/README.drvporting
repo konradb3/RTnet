@@ -189,5 +189,8 @@ waiting on hardware events.
 40. replace spin_lock_init(&<priv>->lock) with rtos_spin_lock_init(&<priv>->lock)
 
 
+41. rtskb structure does not contain a data_len field => set any occurrence to zero
+
+
 XX. check the critical paths in xmit function and interrupt handler for delays
     or hardware wait loops, disable or avoid them

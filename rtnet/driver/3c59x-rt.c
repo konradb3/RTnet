@@ -2348,8 +2348,8 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		int i;
 
 		vp->tx_ring[entry].frag[0].addr = cpu_to_le32(pci_map_single(vp->pdev,
-										skb->data, skb->len-skb->data_len, PCI_DMA_TODEVICE));
-		vp->tx_ring[entry].frag[0].length = cpu_to_le32(skb->len-skb->data_len);
+										skb->data, skb->len, PCI_DMA_TODEVICE));
+		vp->tx_ring[entry].frag[0].length = cpu_to_le32(skb->len);
 
 		for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
 			skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
