@@ -160,29 +160,18 @@ static int rt_icmp_glue_bits(const void *p, char *to, unsigned int offset, unsig
  */
 static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 {
-    struct ipcm_cookie  ipc;
-    struct rt_rtable    *rt = NULL;
+    struct rt_rtable    *rt;
     u32                 saddr;
     u32                 daddr;
     int                 err;
 
-    saddr = skb->nh.iph->daddr;
-
-    rt = (struct rt_rtable*)skb->dst;
-
-    RTNET_ASSERT(rt != NULL,
-                 rtos_print("RTnet: rt_icmp_reply() error in route table\n");
-                 return;);
+    saddr = skb->rtdev->local_addr;
+    daddr = skb->nh.iph->saddr;
 
     icmp_param->data.icmph.checksum = 0;
     icmp_param->csum = 0;
 
-
-    daddr = ipc.addr = rt->rt_dst;
-    ipc.opt = &icmp_param->replyopts;
-
     err = rt_ip_route_output(&rt, daddr, saddr);
-
     if (err)
         return;
 
