@@ -11,6 +11,7 @@ exec_prefix="@exec_prefix@"
 RTNET_MOD="@RTNET_MODULE_DIR@"
 RTIFCONFIG="@sbindir@/rtifconfig"
 RTCFG="@sbindir@/rtcfg"
+TDMACFG="@sbindir@/tdmacfg"
 
 # Module suffix: ".o" for 2.4 kernels, ".ko" for later versions
 MODULE_EXT="@RTNET_MODULE_EXT@"
@@ -36,10 +37,10 @@ RTCAP="no"
 # Common RTcfg stage 2 config data (master mode only)
 STAGE_2_SRC=""
 
-# Stage 2 config data destination file (client mode only)
+# Stage 2 config data destination file (slave mode only)
 STAGE_2_DST=""
 
-# Command to be executed after stage 2 phase (client mode only)
+# Command to be executed after stage 2 phase (slave mode only)
 STAGE_2_CMDS=""
 
 
@@ -62,3 +63,6 @@ TDMA_OFFSET="200"
 #   To use this mode, uncomment the following line and disable the
 #   three master parameters above.
 #TDMA_CONFIG="@sysconfdir@/tdma.conf"
+
+# Path of tdmacfg on the slave system
+SLAVE_TDMACFG="@sbindir@/tdmacfg"

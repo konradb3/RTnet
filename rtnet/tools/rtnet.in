@@ -49,10 +49,10 @@ init_rtnet() {
 submit_cfg() {
     case "$STATION_TYPE" in
         master)
+            $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
+
             $TDMACFG rteth0 master $TDMA_CYCLE
             $TDMA_SLOTS
-
-            $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
             ;;
         slave)
             if [ ! "$STATION_IP" = "" ]; then
@@ -61,11 +61,14 @@ submit_cfg() {
                 else
                     RTCFG_CLIENT="$STATION_IP"
                 fi
-            elif
+            else
                 RTCFG_CLIENT="$STATION_MAC"
             fi
 
-            echo "$TDMA_SLOTS" | $RTCFG rteth0 add $RTCFG_CLIENT -stage1 -
+            ADD_STAGE1_CMDS="ifconfig vnic0 up $STATION_IP"
+
+            echo "$TDMA_SLOTS$ADD_STAGE1_CMDS" | \
+                $RTCFG rteth0 add $RTCFG_CLIENT -stage1 -
             ;;
     esac
 
@@ -84,21 +87,21 @@ start_master() {
         STAGE_2_OPT="-stage2 $STAGE_2_SRC"
     fi
 
-    if [ ! "$TDMA_CLIENTS" = "" ]; then
+    if [ ! "$TDMA_SLAVES" = "" ]; then
         # Simple setup:
         #   Sync / Master Slot / + TDMA_OFFSET us / Slave 1 /
         #   + TDMA_OFFSET us / Slave 2 / + TDMA_OFFSET us / ... / Slave n
 
+        $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
+
         $TDMACFG rteth0 master $TDMA_CYCLE
         $TDMACFG rteth0 slot 0 0
 
-        $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
-
         OFFSET=$TDMA_OFFSET
-        for CLIENT in $TDMA_CLIENTS; do
+        for SLAVE in $TDMA_SLAVES; do
             echo "$SLAVE_TDMACFG rteth0 slot 0 $OFFSET;" \
                 "ifconfig vnic0 up \$IPADDR \$NETMASK_OPT" | \
-                $RTCFG rteth0 add $CLIENT -stage1 - $STAGE_2_OPT
+                $RTCFG rteth0 add $SLAVE -stage1 - $STAGE_2_OPT
             let OFFSET=$OFFSET+$TDMA_OFFSET
         done
     else
@@ -121,6 +124,11 @@ start_master() {
         # mac AA:BB:CC:DD:EE:FF
         # slot ...
         #
+
+        if [ ! -r $TDMA_CONFIG ]; then
+            echo "Could not read $TDMA_CONFIG"
+            exit 1
+        fi
 
         while read ARG1 ARG2 ARG3 ARG4 ARG5; do
             case "$ARG1" in
@@ -234,7 +242,7 @@ case "$1" in
     master)
         shift
         init_rtnet
-        TDMA_CLIENTS=$*
+        TDMA_SLAVES=$*
         start_master
         ;;
 
