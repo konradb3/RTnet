@@ -25,6 +25,7 @@
 #ifdef __KERNEL__
 
 #include <linux/init.h>
+#include <linux/list.h>
 #include <linux/socket.h>
 
 #include <rtdev.h>
@@ -61,8 +62,7 @@ struct rtsocket {
     int                 fd;         /* file descriptor
                                      * bit 0-7: index in rt_sockets
                                      * bit 8-30: instance id */
-    struct rtsocket     *prev;      /* previous socket in list */
-    struct rtsocket     *next;      /* next socket in list */
+    struct list_head    list_entry;
     atomic_t            refcount;
 
     unsigned short      family;

@@ -57,8 +57,8 @@ int rt_socket_release(struct rtsocket *sock);
  */
 static inline struct rtsocket *rt_socket_alloc(void)
 {
-    unsigned long   flags;
-    struct rtsocket *sock;
+    unsigned long    flags;
+    struct rtsocket  *sock;
 
 
     rtos_spin_lock_irqsave(&socket_base_lock, flags);
@@ -69,7 +69,7 @@ static inline struct rtsocket *rt_socket_alloc(void)
         rtos_print("RTnet: no more rt-sockets\n");
         return NULL;
     }
-    free_rtsockets = free_rtsockets->next;
+    free_rtsockets = (struct rtsocket *)free_rtsockets->list_entry.next;
 
     atomic_set(&sock->refcount, 1);
 
@@ -77,7 +77,6 @@ static inline struct rtsocket *rt_socket_alloc(void)
 
     sock->priority = SOCK_DEF_PRIO;
     sock->state    = TCP_CLOSE;
-    sock->next     = NULL;
     sock->wakeup   = NULL;
 
     rtskb_queue_init(&sock->incoming);
@@ -142,7 +141,7 @@ int rt_socket_release(struct rtsocket *sock)
         return -EAGAIN;
     }
 
-    sock->next = free_rtsockets;
+    sock->list_entry.next = (struct list_head *)free_rtsockets;
     free_rtsockets = sock;
 
     /* invalidate file descriptor id */
@@ -667,22 +666,19 @@ void __init rtsockets_init(void)
 
 
     /* initialise the first socket */
-    rt_sockets[0].prev  = NULL;
-    rt_sockets[0].next  = &rt_sockets[1];
-    rt_sockets[0].state = TCP_CLOSE;
-    rt_sockets[0].fd    = 0;
+    rt_sockets[0].list_entry.next = (struct list_head *)&rt_sockets[1];
+    rt_sockets[0].state           = TCP_CLOSE;
+    rt_sockets[0].fd              = 0;
 
     /* initialise the last socket */
-    rt_sockets[RT_SOCKETS-1].prev  = &rt_sockets[RT_SOCKETS-2];
-    rt_sockets[RT_SOCKETS-1].next  = NULL;
-    rt_sockets[RT_SOCKETS-1].state = TCP_CLOSE;
-    rt_sockets[RT_SOCKETS-1].fd    = RT_SOCKETS-1;
+    rt_sockets[RT_SOCKETS-1].list_entry.next = NULL;
+    rt_sockets[RT_SOCKETS-1].state           = TCP_CLOSE;
+    rt_sockets[RT_SOCKETS-1].fd              = RT_SOCKETS-1;
 
     for (i = 1; i < RT_SOCKETS-1; i++) {
-        rt_sockets[i].next  = &rt_sockets[i+1];
-        rt_sockets[i].prev  = &rt_sockets[i-1];
-        rt_sockets[i].state = TCP_CLOSE;
-        rt_sockets[i].fd    = i;
+        rt_sockets[i].list_entry.next = (struct list_head *)&rt_sockets[i+1];
+        rt_sockets[i].state           = TCP_CLOSE;
+        rt_sockets[i].fd              = i;
     }
     free_rtsockets=&rt_sockets[0];
 }
