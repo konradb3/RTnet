@@ -24,6 +24,7 @@
 
 #include <rtnet.h>
 #include <rtskb.h>
+#include <rtnet_chrdev.h>
 #include <rtnet_socket.h>
 #include <rtdev_mgr.h>
 #include <stack_mgr.h>
@@ -74,6 +75,7 @@ EXPORT_SYMBOL(rt_ssocket_getsockname);
 EXPORT_SYMBOL(rt_ssocket_callback);
 #endif
 
+
 /****************************************************************************
  * stack_mgr.c                                                              *
  ****************************************************************************/
@@ -87,6 +89,7 @@ EXPORT_SYMBOL(rtnetif_tx);
 EXPORT_SYMBOL(rt_stack_connect);
 EXPORT_SYMBOL(rt_stack_disconnect);
 
+
 /****************************************************************************
  * rtdev_mgr.c                                                              *
  ****************************************************************************/
@@ -95,6 +98,7 @@ EXPORT_SYMBOL(rtnetif_err_tx);
 
 EXPORT_SYMBOL(rt_rtdev_connect);
 EXPORT_SYMBOL(rt_rtdev_disconnect);
+
 
 /****************************************************************************
  * rtdev.c                                                                  *
@@ -113,6 +117,13 @@ EXPORT_SYMBOL(rtdev_get_by_hwaddr);
 
 EXPORT_SYMBOL(rtdev_xmit);
 EXPORT_SYMBOL(rtdev_xmit_proxy);
+
+
+/****************************************************************************
+ * rtnet_chrdev.c                                                             *
+ ****************************************************************************/
+EXPORT_SYMBOL(rtnet_register_ioctls);
+EXPORT_SYMBOL(rtnet_unregister_ioctls);
 
 
 /****************************************************************************
