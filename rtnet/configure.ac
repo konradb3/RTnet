@@ -87,13 +87,12 @@ dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
 # define helper function
 #
-AC_DEFUN(AC_CHECK_LIBRARY, [dnl
-			   ac_save_LIBS="$LIBS"
-			   LIBS="$$3 $ac_save_LIBS"
-			   AC_CHECK_LIB($1,$2)
-			   $3=`echo "$LIBS" | sed "s% $ac_save_LIBS$%%"`
-			   LIBS="$ac_save_LIBS"
-			   ])
+AC_DEFUN([AC_CHECK_LIBRARY],
+    [ac_save_LIBS="$LIBS"
+    LIBS="$$3 $ac_save_LIBS"
+    AC_CHECK_LIB($1,$2)
+    $3=`echo "$LIBS" | sed "s% $ac_save_LIBS$%%"`
+    LIBS="$ac_save_LIBS"])
 
 
 # Checks for libraries.
@@ -837,5 +836,4 @@ if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
 	AC_MSG_NOTICE([include/rtnet_config.h is unchanged])
 else
 	mv include/rtnet_config.h.new include/rtnet_config.h
-
 fi
