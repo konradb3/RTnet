@@ -114,7 +114,7 @@ The whole configuration are done on the master station.
 Sample RTmac/TDMA session
 ---------------------------
 Assumption:
-3 stations, eth0 is realtime network device
+3 stations, rteth0 is realtime network device
 10.0.0.1 is master, cycle time = 10ms
 10.0.0.2 is client #1, offset = 1ms
 10.0.0.3 is client #2, offset = 2ms
@@ -122,28 +122,28 @@ Assumption:
 0. Setup RTnet as usual. (Don't forget to do ARP)
 
 1. Load module rtmac
-	# modprobe rtmac dev=eth0
+	# modprobe rtmac dev=rteth0
 
 2. On the master station:
 
    2.1 Change to Master state
-	# rtifconfig eth0 mac master 10000
+	# rtifconfig rteth0 mac master 10000
 
    2.2 Register all client stations
-	# rtifconfig eth0 mac add 10.0.0.2
-	# rtifconfig eth0 mac add 10.0.0.3
+	# rtifconfig rteth0 mac add 10.0.0.2
+	# rtifconfig rteth0 mac add 10.0.0.3
 	
    2.3 Start the master
-	# rtifconfig eth0 mac up
+	# rtifconfig rteth0 mac up
 
    2.4 Set sender offset
-	# rtifconfig eth0 mac offset 10.0.0.2 1000
-	# rtifconfig eth1 mac offset 10.0.0.3 2000
+	# rtifconfig rteth0 mac offset 10.0.0.2 1000
+	# rtifconfig rteth0 mac offset 10.0.0.3 2000
 
 3. The realtime network is ready.
 
 4. To shutdown RTmac
-	# rtifconfig eth0 mac down
+	# rtifconfig rteth0 mac down
 
 
 

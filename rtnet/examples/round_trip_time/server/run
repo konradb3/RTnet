@@ -5,6 +5,4 @@ insmod rtai_fifos
 insmod rtnet
 insmod rtnet8139too
 
-../../../tools/rtifconfig eth1 up 192.168.0.1 255.0.0.0
-
-
+../../../tools/rtifconfig rteth0 up 192.168.0.1 255.0.0.0

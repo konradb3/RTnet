@@ -1,4 +1,4 @@
-../../../tools/rtifconfig eth1 down
+../../../tools/rtifconfig rteth0 down
 rmmod rtnet8139too
 rmmod rtnet
 
