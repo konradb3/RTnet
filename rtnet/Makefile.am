@@ -7,7 +7,7 @@ EXTRA_LIBRARIES = libnetlxrt.a
 librtnet_a_SOURCES = iovec.c \
 		rtdev.c \
 		rtdev_mgr.c \
-		rtnet_dev.c \
+		rtnet_chrdev.c \
 		rtnet_module.c \
 		rtnet_syms.c \
 		rtskb.c \
