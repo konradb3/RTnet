@@ -25,15 +25,19 @@ How to install it?
 4. cd rtnet
 5. Run ./configure --with-rtai=<PATH-TO-RTAI> <options>
    Valid options are a combination of the following values:
+       --enable-allpci          compiles all PCI NIC drivers
        --enable-8139            compiles the RealTek driver
        --enable-eepro100        compiles the EtherExpress driver
-       --enable-loopback        compiles the loopback driver
        --enable-pcnet32         compiles the PCnet32 driver
        --enable-tulip           compiles the DEC driver
        --enable-via-rhine       compiles the VIA Rhine driver
+       --enable-natsemi         compiles the NatSemi driver
        --enable-fcc-enet        compiles the MPC8260 FCC driver
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
+       --enable-proxy           compiles the IP protocol proxy driver (legacy)
+       --disable-loopback       does not compile the loopback driver
+       --disable-checks         does not compile internal bug checks
 6. make
 7. Copy the desired modules (rtnet.o, rtmac.o, tdma.o, drivers, examples, etc.)
    to your target system
@@ -95,12 +99,14 @@ Jan Kiszka <jan.kiszka-at-web.de>       - project management, core programming
 Wittawat Yamwong <wittawat-at-web.de>   - testing, documents
 Hans-Peter Bock <hpbock-at-web.de>      - testing, bug fixing
 Mathias Koehrer                         - 3c59x-rt, rtnetproxy, testing,
-<mathias_koehrer-at-yahoo.de>      	  bug fixing, ip fragmentation
+<mathias_koehrer-at-yahoo.de>             bug fixing, ip fragmentation
 Vinay Sridhara                          - ICMP support
 <vinaysridhara-at-yahoo.com>
 Erwin Rol <erwin-at-muffin.org>         - Ethereal plugin, rtnetproxy
 Wolfgang Grandegger                     - MPC drivers
 <wg-at-denx.de>
+Erik Buit                               - NatSemi driver
+<e.buit-at-student.utwente.nl>
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
