@@ -26,53 +26,44 @@
 
 
 /***
- *	rt_iovec_len
+ *  rt_memcpy_tokerneliovec
  */
-int rt_iovec_len(const struct iovec *iov, int iovlen)
+void rt_memcpy_tokerneliovec(struct iovec *iov, unsigned char *kdata, int len)
 {
-	int i,len=0;
-	for (i=0; i<iovlen; i++) 
-		len+=iov[i].iov_len;
-	return len;
+    while (len > 0)
+    {
+        if (iov->iov_len)
+        {
+            int copy = min_t(unsigned int, iov->iov_len, len);
+
+            memcpy(iov->iov_base, kdata, copy);
+            kdata+=copy;
+            len-=copy;
+            iov->iov_len-=copy;
+            iov->iov_base+=copy;
+        }
+        iov++;
+    }
 }
 
 
 /***
- *	rt_memcpy_tokerneliovec:	
+ *  rt_memcpy_fromkerneliovec
  */
-void rt_memcpy_tokerneliovec (struct iovec *iov, unsigned char *kdata, int len)
+void rt_memcpy_fromkerneliovec(unsigned char *kdata, struct iovec *iov,int len)
 {
-	while(len>0)
-	{
-		if(iov->iov_len)
-		{
-			int copy = min_t(unsigned int, iov->iov_len, len);
-			memcpy(iov->iov_base, kdata, copy);
-			kdata+=copy;
-			len-=copy;
-			iov->iov_len-=copy;
-			iov->iov_base+=copy;
-		}
-		iov++;
-	}
-}
+    while (len > 0)
+    {
+        if (iov->iov_len)
+        {
+            int copy=min_t(unsigned int, len, iov->iov_len);
 
-
-/***
- *	rt_memcpy_fromkerneliovec
- */
-int rt_memcpy_fromkerneliovec(unsigned char *kdata, struct iovec *iov,int len)
-{
-	while(len>0){
-		if(iov->iov_len){
-			int copy=min_t(unsigned int, len, iov->iov_len);
-			memcpy(kdata, iov->iov_base, copy);
-			len-=copy;
-			kdata+=copy;
-			iov->iov_base+=copy;
-			iov->iov_len-=copy;
-		}
-		iov++;
-	}
-	return 0;
+            memcpy(kdata, iov->iov_base, copy);
+            len-=copy;
+            kdata+=copy;
+            iov->iov_base+=copy;
+            iov->iov_len-=copy;
+        }
+        iov++;
+    }
 }

@@ -26,9 +26,23 @@
 #include <linux/uio.h>
 
 
-extern int rt_iovec_len(const struct iovec *iov,int iovlen);
+/***
+ *  rt_iovec_len
+ */
+static inline size_t rt_iovec_len(const struct iovec *iov, int iovlen)
+{
+    int i;
+    size_t len = 0;
+
+    for (i = 0; i < iovlen; i++)
+        len += iov[i].iov_len;
+
+    return len;
+}
+
+
 extern void rt_memcpy_tokerneliovec(struct iovec *iov, unsigned char *kdata, int len);
-extern int  rt_memcpy_fromkerneliovec(unsigned char *kdata,struct iovec *iov,int len);
+extern void rt_memcpy_fromkerneliovec(unsigned char *kdata, struct iovec *iov, int len);
 
 
 #endif  /* __KERNEL__ */
