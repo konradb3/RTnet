@@ -379,6 +379,7 @@ static int create_instance(struct rtdm_device *device,
 
         if (context->device) {
             rt_spin_unlock_irqrestore(flags, &rt_dev_lock);
+            *context_ptr = NULL;
             return -EBUSY;
         }
         context->device = device;
