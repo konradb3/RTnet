@@ -54,6 +54,14 @@ int main(int argc, char *argv[])
     /* Lock allocated memory into RAM. */
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
+    /* Create new socket. */
+    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+
+        printf("Error opening socket: %d\n", sockfd);
+        exit(1);
+    }
+
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4800, 1, 0, 0);
     if (NULL == lxrtnettsk) {
@@ -63,9 +71,6 @@ int main(int argc, char *argv[])
 
     /* Switch over to hard realtime mode. */
     rt_make_hard_real_time();
-
-    /* Create new socket. */
-    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
 
     ifc.ifc_len = sizeof(ifr);
     ifc.ifc_req = ifr;
@@ -93,6 +98,8 @@ int main(int argc, char *argv[])
             exit(1);
         }
         flags[devices] = flags_ifr.ifr_flags;
+
+        ifc.ifc_len -= sizeof(struct ifreq);
         devices++;
     }
 
@@ -106,7 +113,7 @@ int main(int argc, char *argv[])
     rt_task_delete(lxrtnettsk);
 
     for (i = 0; i < devices; i++)
-        printf("Device %s: IP %d.%d.%d.%d, flags %0x08X\n", ifr[i].ifr_name,
+        printf("Device %s: IP %d.%d.%d.%d, flags 0x%08X\n", ifr[i].ifr_name,
                ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr & 0xFF,
                ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr >> 8 & 0xFF,
                ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr >> 16 & 0xFF,
