@@ -150,6 +150,7 @@ void echo_rcv(struct rtdm_dev_context *context, void *arg)
 
 int init_module(void)
 {
+    int                     ret = 0;
     rtos_time_t             cycle;
     unsigned int            local_ip;
     unsigned int            server_ip = rt_inet_aton(server_ip_s);
@@ -180,14 +181,21 @@ int init_module(void)
     rtos_fifo_create(&print_fifo, PRINT_FIFO, 8000);
 
     /* create rt-socket */
-    sock = socket_rt(AF_INET,SOCK_DGRAM,0);
+    if ((sock = socket_rt(AF_INET,SOCK_DGRAM,0)) < 0) {
+        printk("socket not created\n");
+        return -ENOMEM;
+    }
 
     /* bind the rt-socket to local_addr */
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(RCV_PORT);
     local_addr.sin_addr.s_addr = local_ip;
-    bind_rt(sock, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_in));
+    if ( (ret = bind_rt(sock, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_in))) < 0) {
+        printk("can't bind rtsocket\n");
+        close_rt(sock);
+        return ret;
+    }
 
     /* set server-addr */
     memset(&server_addr, 0, sizeof(struct sockaddr_in));

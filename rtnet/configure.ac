@@ -358,7 +358,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     3.2*)
 	CONFIG_RTNET_RTAI_VERSION=32
 	;;
-    0.6.6-fusion | 0.6.7-fusion | 0.6.8-fusion | 0.6.9-fusion)
+    0.6.6-fusion | 0.6.7-fusion | 0.6.8-fusion | 0.6.9-fusion | 0.6.99-fusion)
 	CONFIG_RTNET_RTAI_VERSION=06
 	;;
     *)
