@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	
         if (argc==3) {
 		server_addr.sin_family=AF_INET;
-		inet_aton(argv[1], &local_addr.sin_addr);
+		inet_aton(argv[1], &server_addr.sin_addr);
 		server_addr.sin_port=htons(atoi(argv[2]));
 		local_addr.sin_family=AF_INET;
         } else {
