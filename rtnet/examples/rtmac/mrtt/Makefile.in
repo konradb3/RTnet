@@ -191,6 +191,8 @@ librt_client_a_CFLAGS = \
 
 PROGS = $(am__append_1)
 
+CLEANFILES = $(PROGS)
+
 showtime_LDADD = $(NCURSES_LIBS)
 subdir = examples/rtmac/mrtt
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -440,6 +442,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-rm -f Makefile $(CONFIG_CLEAN_FILES)

@@ -13,6 +13,8 @@ if CONFIG_NCURSES
 PROGS += showtime
 endif
 
+CLEANFILES = $(PROGS)
+
 rt_client.o: librt_client.a
 	$(LD) --whole-archive $< -r -o $@
 
