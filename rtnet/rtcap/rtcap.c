@@ -329,7 +329,13 @@ void cleanup_tap_devices(void)
         if ((tap_device[i].present & TAP_DEV) != 0) {
             if ((tap_device[i].present & XMIT_HOOK) != 0) {
                 rtdev = (struct rtnet_device *)tap_device[i].tap_dev.priv;
+
+                down(&rtdev->nrt_sem);
                 rtdev->hard_start_xmit = tap_device[i].orig_xmit;
+                __MOD_DEC_USE_COUNT(rtdev->owner);
+                up(&rtdev->nrt_sem);
+
+                rtdev_dereference(rtdev);
             }
 
             if ((tap_device[i].present & RTMAC_TAP_DEV) != 0)
@@ -371,9 +377,21 @@ int __init rtcap_init(void)
 
         rtdev = rtdev_get_by_index(i);
         if (rtdev != NULL) {
+            down(&rtdev->nrt_sem);
+
+            if (test_bit(PRIV_FLAG_UP, &rtdev->priv_flags)) {
+                up(&rtdev->nrt_sem);
+                printk("RTcap: %s busy, skipping device!\n", rtdev->name);
+                rtdev_dereference(rtdev);
+                continue;
+            }
+
             if (rtdev->mac_priv != NULL) {
+                up(&rtdev->nrt_sem);
+
                 printk("RTcap: RTmac discipline already active on device %s. "
                        "Load RTcap before RTmac!\n", rtdev->name);
+
                 rtdev_dereference(rtdev);
                 continue;
             }
@@ -390,7 +408,9 @@ int __init rtcap_init(void)
 
             ret = register_netdev(dev);
             if (ret < 0) {
+                up(&rtdev->nrt_sem);
                 rtdev_dereference(rtdev);
+
                 printk("RTcap: unable to register %s!\n", dev->name);
                 goto error2;
             }
@@ -409,7 +429,9 @@ int __init rtcap_init(void)
 
                 ret = register_netdev(dev);
                 if (ret < 0) {
+                    up(&rtdev->nrt_sem);
                     rtdev_dereference(rtdev);
+
                     printk("RTcap: unable to register %s!\n", dev->name);
                     goto error2;
                 }
@@ -420,8 +442,9 @@ int __init rtcap_init(void)
                 rtdev->hard_start_xmit = rtcap_loopback_xmit_hook;
 
             tap_device[i].present |= XMIT_HOOK;
+            __MOD_INC_USE_COUNT(rtdev->owner);
 
-            rtdev_dereference(rtdev);
+            up(&rtdev->nrt_sem);
 
             devices++;
         }
