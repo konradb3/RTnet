@@ -26,7 +26,8 @@
 
 #include <rtnet_port.h>
 
-/*#define DEBUG_LOOPBACK_DRIVER*/
+/*#define DEBUG_LOOPBACK*/
+/*#define DEBUG_LOOPBACK_DATA*/
 
 MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
 MODULE_DESCRIPTION("RTnet loopback driver");
@@ -72,13 +73,13 @@ static int rt_loopback_close (struct rtnet_device *rtdev)
  */
 static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
-    /* make sure that critical field are re-intialised */
+    /* make sure that critical fields are re-intialised */
     skb->chain_end = skb;
 
     /* parse the Ethernet header as usual */
     skb->protocol = rt_eth_type_trans(skb, rtdev);
 
-#ifdef DEBUG_LOOPBACK_DRIVER
+#ifdef DEBUG_LOOPBACK
     {
         int i, cuantos;
         rtos_print("\n\nPACKET:");
@@ -104,11 +105,13 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
         rtos_print("\nIP ORIGE: "); for(i=0;i<4;i++){ rtos_print("0x%02X ", skb->buf_start[i+28]); }
         rtos_print("\nIP DESTI: "); for(i=0;i<4;i++){ rtos_print("0x%02X ", skb->buf_start[i+32]); }
 
+#ifdef DEBUG_LOOPBACK_DATA
         cuantos = (int)(*(unsigned short *)(skb->buf_start+18)) - 20;
         rtos_print("\n\nDATA (%d):", cuantos);
         rtos_print("\n:"); for(i=0;i<cuantos;i++){ rtos_print("0x%02X ", skb->buf_start[i+36]); }
+#endif /* DEBUG_LOOPBACK_DATA */
     }
-#endif
+#endif /* DEBUG_LOOPBACK */
 
     rtnetif_rx(skb);
     rt_mark_stack_mgr(rtdev);
@@ -137,8 +140,8 @@ static int __init loopback_init(void)
 
     rtdev->open = &rt_loopback_open;
     rtdev->stop = &rt_loopback_close;
-    rtdev->hard_header = rt_eth_header;
     rtdev->hard_start_xmit = &rt_loopback_xmit;
+    rtdev->flags |= IFF_LOOPBACK;
 
     if ((err = rt_register_rtnetdev(rtdev)) != 0)
     {
