@@ -155,9 +155,14 @@ void do_up(int argc, char *argv[])
     if ((argc > 3) && (inet_aton(argv[3], &addr))) {
         i = 4;
         cmd.args.up.ip_addr = addr.s_addr;
+        if (addr.s_addr == 0xFFFFFFFF) {
+            fprintf(stderr, "Invalid IP address!\n");
+            exit(1);
+        }
     } else {
         i = 3;
-        cmd.args.up.ip_addr = 0;
+        /* don't change ip settings */
+        cmd.args.up.ip_addr = 0xFFFFFFFF;
     }
 
     /* set default netmask */
