@@ -30,7 +30,7 @@
 #include <rtmac/tdma/tdma.h>
 
 
-#define TDMA_FRM_VERSION    0x0200
+#define TDMA_FRM_VERSION    0x0201
 
 #define TDMA_FRM_SYNC       0x0000
 #define TDMA_FRM_REQ_CAL    0x0010

@@ -240,7 +240,7 @@ in the related document. The hexadecimal RTmac type identifier is 0x0001. All
 frame fields are encoded in network byte order (big endian). Version
 identifiers of TDMA frames shall only be changed if the format becomes
 incompatible to the previous revision. Currently, all frames carry the
-hexadecimal value 0x0200.
+hexadecimal value 0x0201.
 
 
 
@@ -248,7 +248,7 @@ Synchronisation Frame
 ---------------------
 
  +------------------+------------------+----------------------+ - -
- | Version: 0x0200  | Frame ID: 0x0000 |     Cycle Number     |
+ | Version: 0x0201  | Frame ID: 0x0000 |     Cycle Number     |
  |    (2 bytes)     |    (2 bytes)     |      (4 bytes)       |
  +------------------+------------------+----------------------+ - -
   - - +-----------------------------+-----------------------------+
@@ -283,7 +283,7 @@ Calibration Frames
 
 Request Calibration Frame:
  +------------------+------------------+-----------------------------+ - -
- | Version: 0x0200  | Frame ID: 0x0010 |   Transmission Time Stamp   |
+ | Version: 0x0201  | Frame ID: 0x0010 |   Transmission Time Stamp   |
  |    (2 bytes)     |    (2 bytes)     |          (8 bytes)          |
  +------------------+------------------+-----------------------------+ - -
   - - +----------------------+-----------------------------+
@@ -293,7 +293,7 @@ Request Calibration Frame:
 
 Reply Calibration Frame:
  +------------------+------------------+-----------------------------+ - -
- | Version: 0x0200  | Frame ID: 0x0011 |  Request Transmission Time  |
+ | Version: 0x0201  | Frame ID: 0x0011 |  Request Transmission Time  |
  |    (2 bytes)     |    (2 bytes)     |          (8 bytes)          |
  +------------------+------------------+-----------------------------+ - -
   - - +-----------------------------+-----------------------------+
