@@ -53,7 +53,8 @@ void help(void)
     fprintf(stderr, "usage (server):\n"
         "\trtcfg <dev> server [-p period] [-b burstrate] [-h <heartbeat>]\n"
         "\t      [-t <threshold>] [-r]\n"
-        "\trtcfg <dev> add <address> [-stage1 <stage1_file>]\n"
+        "\trtcfg <dev> add <address> [-hw <hw_address>] "
+            "[-stage1 <stage1_file>]\n"
         "\t      [-stage2 <stage2_file>] [-t <timeout>]\n"
         "\trtcfg <dev> del <address>\n"
         "\trtcfg <dev> wait [-t <timeout>]\n"
@@ -158,7 +159,7 @@ void cmd_add(int argc, char *argv[])
 
     for (i = 4; i < argc; i++) {
         if (strcmp(argv[i], "-hw") == 0) {
-            if (ether_aton_r(argv[3], &mac_addr) == NULL)
+            if ((++i >= argc) || (ether_aton_r(argv[i], &mac_addr) == NULL))
                 help();
             ioctl_code = RTCFG_IOC_ADD_IP_MAC;
             memcpy(cmd.args.add.mac_addr, mac_addr.ether_addr_octet,
