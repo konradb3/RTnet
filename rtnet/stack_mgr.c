@@ -20,7 +20,7 @@
 #include <rtai_sched.h>
 #include <rtai_fifos.h>
 
-#include <rtnet.h>
+#include <rtdev.h>
 #include <rtnet_internal.h>
 
 

@@ -23,6 +23,7 @@
 #include <rtai.h>
 #include <rtai_sched.h>
 
+#include <rtdev.h>
 #include <rtnet.h>
 #include <rtnet_internal.h>
 

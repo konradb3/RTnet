@@ -21,7 +21,7 @@
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
 
-#include <rtnet.h>
+#include <rtdev.h>
 #include <rtnet_internal.h>
 
 

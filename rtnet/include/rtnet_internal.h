@@ -24,7 +24,8 @@
 
 #ifdef __KERNEL__
 
-#include <rtdev.h>
+#include <rtai.h>
+#include <rtai_sched.h>
 
 
 /* #ifdef CONFIG_RTNET_CHECKED */
@@ -44,6 +45,8 @@
 #define RTNET_RTDEV_PRIORITY    5
 #define DROPPING_RTSKB          20
 
+
+struct rtnet_device;
 
 struct rtnet_msg {
     int                 msg_type;
