@@ -161,7 +161,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
             break;
 
         case RTNET_RTIOC_CALLBACK:
-            if (test_bit(RTDM_USER_MODE_CALL, context->context_flags))
+            if (test_bit(RTDM_USER_MODE_CALL, &context->context_flags))
                 return -EACCES;
 
             rtos_spin_lock_irqsave(&sock->param_lock, flags);
