@@ -199,10 +199,10 @@ int __init rtnet_init(void)
     printk("RTnet: initialising real-time networking\n");
 
     if ((err = init_crc32()) != 0)
-        goto err_out1;
+        goto err_out0;
 
     if ((err = rtskb_pools_init()) != 0)
-        goto err_out2;
+        goto err_out1;
 
 #ifdef CONFIG_PROC_FS
     if ((err = rtnet_proc_register()) != 0)
@@ -255,6 +255,7 @@ err_out2:
 err_out1:
     cleanup_crc32();
 
+err_out0:
     return err;
 }
 
