@@ -1103,7 +1103,7 @@ static void tdma_master_change_offset(struct rtmac_tdma *tdma, u32 ip_addr, unsi
 		if (rt_entry->arp->ip_addr == ip_addr) {
 			skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_CHANGE_OFFSET, data);
 			
-			offset_msg->offset = offset;
+			offset_msg->offset = htonl(offset);
 
 			rtdev_xmit(skb);
 			break;
@@ -1270,10 +1270,13 @@ static void tdma_client_rcvd_station_list(struct rtmac_tdma *tdma, struct rtskb 
 
 static void tdma_client_rcvd_change_offset(struct rtmac_tdma *tdma, struct rtskb *skb)
 {
+	int offset;
 	struct tdma_offset_msg *change_offset = (struct tdma_offset_msg *)skb->data;
 
-	TDMA_DEBUG(2, "RTmac: tdma: recieved change offset %d\n", change_offset->offset);
-	tdma->offset = nano2count(change_offset->offset * 1000);
+	offset = ntohl(change_offset->offset);
+
+	TDMA_DEBUG(2, "RTmac: tdma: recieved change offset %d\n", offset);
+	tdma->offset = nano2count(offset * 1000);
 
 	return;
 }

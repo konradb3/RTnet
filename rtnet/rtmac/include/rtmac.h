@@ -44,10 +44,7 @@ struct rtmac_device {
 struct rtmac_hdr {
 	u16				type;
 	u8				ver;
-	u8				flags;
-
-	u16				len;
-	u16				res;		// reserved for future use :)
+	u8				res;		// reserved for future use :)
 } __attribute__ ((packed));
 
 
