@@ -58,11 +58,13 @@ How to test it?
    into the kernel!)
 2. Load required RTAI modules (24.1.x: rtai, rtai_sched; 3.x: rtai_hal,
    rtai_ksched/rtai_lxrt, rtai_sem)
-3. Copy tools/rtnet.conf to the target's /etc directories and adapt at least
+3. Load the driver layer module rtai_rtdm.o (currently, this comes with RTnet,
+   see <PREFIX>/modules directory)
+4. Copy tools/rtnet.conf to the target's /etc directories and adapt at least
    the following parameters: RTNET_PATH, RT_DRIVER, IPADDR, TDMA_MODE,
    TDMA_CLIENTS.
-4. Run <RTNET_PATH>/sbin/rtnet start
-5. Run rtping <remote-host> or load an application module
+5. Run <RTNET_PATH>/sbin/rtnet start
+6. Run rtping <remote-host> or load an application module
    (like examples/round_trip_time/run)
 
 
