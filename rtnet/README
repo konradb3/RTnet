@@ -11,8 +11,8 @@ What are the requirements?
 - Linux kernel 2.4.x
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
   RTAI 3.x: tested on 3.0, LXRT when using user space API
-- x86 platform for LXRT extensions, kernel API should also work on other
-  platforms (tested on PowerPC)
+- x86 (required for LXRT interface) or PowerPC platform. Other platforms are
+  untested yet.
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
   AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x network adapter, MPC8260
   FCC, or MPC8xx SCC/FEC on-chip controllers
@@ -24,9 +24,9 @@ How to install it?
 3. tar xvjf <PATH-TO-RTNET-ARCHIVE>/rtnet-X.X.X.tar.bz2
 4. cd rtnet
 5. Run ./configure --with-rtai=<PATH-TO-RTAI> <options> [--prefix=<PREFIX>]
-   <PATH-TO-RTAI> is either the source directory of a 24.1.x version or the
-   installation directory of a 3.x version. Valid options are a combination of
-   the following values:
+   <PATH-TO-RTAI> is either the configured and compiled source directory of a
+   24.1.x version or the installation directory of a 3.x version. Valid options
+   are a combination of the following values:
        --enable-allpci          compiles all PCI NIC drivers
        --enable-8139            compiles the RealTek driver
        --enable-eepro100        compiles the EtherExpress driver
@@ -68,11 +68,12 @@ There is also a simple script for loading and unloading RTnet and RTmac. See
 
 How to use RTmac? (a very very short guide!)
 -----------------
-I assume that rtnet module has been loaded and configured(rtifconfig).
+Assumed that the RTnet module and the driver(s) have been loaded and
+configured:
 1. Load RTmac with the TDMA discipline:
     # insmod rtmac
     # insmod tdma
-   Assumed that your realtime device is rteth0.
+Assumed that your realtime device is rteth0.
 2. On client stations:
     # rtifconfig rteth0 mac client
 3. On the server station:
@@ -84,7 +85,7 @@ I assume that rtnet module has been loaded and configured(rtifconfig).
     # rtifconfig rteth0 mac offset <ip_client1> <offset/us>
     # rtifconfig rteth0 mac offset <ip_client2> <offset/us>
     # ...
-4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
+4. Now you can run examples in <RTNET-SRC>/rtmac/examples
 5. You can furthermore use the associated VNIC (here "vnic0") now.
 
 See Documentation/README.rtmac for more information.
