@@ -110,12 +110,10 @@ struct rtdm_operations {
 
 #ifdef CONFIG_RTNET_RTDM_SELECT
     /* event-oriented device operations */
+    unsigned int (*poll_rt)   (struct rtdm_dev_context *context); /* , poll_table *wait) */
     ssize_t     (*pollwait_rt)(struct rtdm_dev_context *context,
 			       wait_queue_primitive_t *sem);
     ssize_t     (*pollfree_rt)(struct rtdm_dev_context *context);
-    /*poll(pollfd *ufds,
-      unsigned int nfds,
-      int timeout);*/
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 };
 

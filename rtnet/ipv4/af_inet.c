@@ -217,7 +217,8 @@ static struct rtdm_device ipv4_device = {
         recvmsg_rt:     rt_udp_recvmsg,
         sendmsg_rt:     rt_udp_sendmsg,
 #ifdef CONFIG_RTNET_RTDM_SELECT
-        /* there should be only a function poll() */
+	poll_rt:        rt_udp_poll,
+        /* there should be only the function poll() */
         pollwait_rt:    rt_udp_pollwait,
         pollfree_rt:    rt_udp_pollfree,
 #endif /* CONFIG_RTNET_RTDM_SELECT */
