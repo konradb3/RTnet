@@ -226,10 +226,12 @@ noinst_HEADERS = \
 	rtnet_socket.h \
 	rtnet_sys.h \
 	rtnet_sys_rtai.h \
+	rtnet_sys_fusion.h \
 	rtskb.h \
 	stack_mgr.h \
 	\
 	nomac_chrdev.h \
+	tdma_chrdev.h \
 	tdma-v1_chrdev.h \
 	\
 	rtcfg_chrdev.h \
@@ -268,6 +270,11 @@ noinst_HEADERS = \
 	rtmac/rtmac_proc.h \
 	rtmac/rtmac_proto.h \
 	rtmac/rtmac_vnic.h \
+	rtmac/tdma/tdma.h \
+	rtmac/tdma/tdma_dev.h \
+	rtmac/tdma/tdma_ioctl.h \
+	rtmac/tdma/tdma_proto.h \
+	rtmac/tdma/tdma_worker.h \
 	rtmac/tdma-v1/tdma.h \
 	rtmac/tdma-v1/tdma_cleanup.h \
 	rtmac/tdma-v1/tdma_dev.h \
@@ -397,7 +404,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/packet $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma-v1
+	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/packet $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma $(distdir)/rtmac/tdma-v1
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
