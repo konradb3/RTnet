@@ -243,7 +243,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             new_conn->ifindex      = ifindex;
             new_conn->state        = RTCFG_CONN_SEARCHING;
             new_conn->addr_type    = RTCFG_ADDR_IP;
-            new_conn->addr.ip_addr = user_event->args.ip_addr;
+            new_conn->addr.ip_addr = user_event->args.add_ip.ip_addr;
             new_conn->cfg_offs     = 0;
 
             /* MAC address yet unknown -> set to broadcast address */
@@ -253,7 +253,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 
             list_for_each(entry, &rtcfg_dev->conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
-                if (conn->addr.ip_addr == user_event->args.ip_addr) {
+                if (conn->addr.ip_addr == user_event->args.add_ip.ip_addr) {
                     rt_sem_signal(&rtcfg_dev->dev_sem);
                     return -EEXIST;
                 }

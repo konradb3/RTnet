@@ -37,13 +37,16 @@
 static char *ips[8]    = {"", "", "", "", "", "", "", ""};
 static char *dev       = "rteth0";
 static int start_timer = 1;
+static int timeout     = 120000;
 
 MODULE_PARM(ips, "1-8s");
 MODULE_PARM(dev, "s");
 MODULE_PARM(start_timer, "i");
+MODULE_PARM(timeout, "i");
 MODULE_PARM_DESC(ips, "list of client IPs, if empty, run RTcfg as client");
 MODULE_PARM_DESC(dev, "network device to use");
 MODULE_PARM_DESC(start_timer, "set to zero if scheduler already runs");
+MODULE_PARM_DESC(timeout, "timeout for waiting on other stations");
 
 MODULE_LICENSE("GPL");
 
@@ -110,18 +113,18 @@ int rtcfg_init(void)
         }
 
     if (client) {
-        ret = rtcfg_cmd_client(ifindex);
+        ret = rtcfg_cmd_client(ifindex, timeout);
         if (ret < 0) {
             printk("rtcfg_cmd_client(): %d\n", ret);
             return 0;
         }
-        ret = rtcfg_cmd_announce(ifindex);
+        ret = rtcfg_cmd_announce(ifindex, timeout);
         if (ret < 0) {
             printk("rtcfg_cmd_announce(): %d\n", ret);
             return 0;
         }
     } else {
-        rtcfg_cmd_wait(ifindex);
+        rtcfg_cmd_wait(ifindex, timeout);
         if (ret < 0) {
             printk("rtcfg_cmd_wait(): %d\n", ret);
             return 0;

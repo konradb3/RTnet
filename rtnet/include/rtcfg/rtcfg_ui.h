@@ -36,6 +36,7 @@
 struct rtcfg_user_event {
     struct list_head     list_entry;
     volatile int         processed;
+    unsigned int         timeout;
     int                  result;
     atomic_t             ref_count;
     wait_queue_head_t    event_wq;
@@ -43,25 +44,27 @@ struct rtcfg_user_event {
     int                  ifindex;
     void*                buffer;
     union {
-        u32              ip_addr;
+        struct {
+            u32          ip_addr;
+        } add_ip;
         struct {
             unsigned int period;
             unsigned int heartbeat;
             unsigned int threshold;
         } server;
         struct {
-            u32          max_clients;
+            unsigned int max_clients;
         } client;
     } args;
 };
 
 
 int rtcfg_cmd_server(int ifindex);
-int rtcfg_cmd_add_ip(int ifindex, unsigned long ip_addr);
-int rtcfg_cmd_wait(int ifindex);
+int rtcfg_cmd_add_ip(int ifindex, u32 ip_addr);
+int rtcfg_cmd_wait(int ifindex, unsigned int timeout);
 
-int rtcfg_cmd_client(int ifindex);
-int rtcfg_cmd_announce(int ifindex);
+int rtcfg_cmd_client(int ifindex, unsigned int timeout);
+int rtcfg_cmd_announce(int ifindex, unsigned int timeout);
 
 void rtcfg_complete_event(struct rtcfg_user_event *event, int result);
 void rtcfg_complete_event_nrt(struct rtcfg_user_event *event, int result);

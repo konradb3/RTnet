@@ -44,6 +44,41 @@ LIST_HEAD(pending_event_list);
 LIST_HEAD(processed_event_list);
 
 
+#define __wait_event_interruptible_timeout(wq, condition, timeout, ret)     \
+do {                                                                        \
+    signed long __timeout;                                                  \
+    wait_queue_t __wait;                                                    \
+    init_waitqueue_entry(&__wait, current);                                 \
+                                                                            \
+    __timeout = timeout;                                                    \
+    add_wait_queue(&wq, &__wait);                                           \
+    for (;;) {                                                              \
+        set_current_state(TASK_INTERRUPTIBLE);                              \
+        if (condition)                                                      \
+            break;                                                          \
+        if (!signal_pending(current)) {                                     \
+            if ((__timeout = schedule_timeout(__timeout)) == 0) {           \
+                ret = -ETIME;                                               \
+                break;                                                      \
+            }                                                               \
+            continue;                                                       \
+        }                                                                   \
+        ret = -ERESTARTSYS;                                                 \
+        break;                                                              \
+    }                                                                       \
+    current->state = TASK_RUNNING;                                          \
+    remove_wait_queue(&wq, &__wait);                                        \
+} while (0)
+
+#define wait_event_interruptible_timeout(wq, condition, timeout)            \
+({                                                                          \
+    int __ret = 0;                                                          \
+    if (!(condition))                                                       \
+        __wait_event_interruptible_timeout(wq, condition, timeout, __ret);  \
+    __ret;                                                                  \
+})
+
+
 
 static int rtcfg_queue_user_event(struct rtcfg_user_event *event)
 {
@@ -62,7 +97,11 @@ static int rtcfg_queue_user_event(struct rtcfg_user_event *event)
 
     rt_sem_signal(&event_sem);
 
-    ret = wait_event_interruptible(event->event_wq, event->processed);
+    if (event->timeout > 0)
+        ret = wait_event_interruptible_timeout(event->event_wq,
+            event->processed, (event->timeout * HZ) / 1000);
+    else
+        ret = wait_event_interruptible(event->event_wq, event->processed);
     if (ret == 0)
         ret = event->result;
 
@@ -174,6 +213,7 @@ int rtcfg_cmd_server(int ifindex)
         return -ENOMEM;
 
     cmd_server->event_id = RTCFG_CMD_SERVER;
+    cmd_server->timeout  = 0;
     cmd_server->ifindex  = ifindex;
     cmd_server->buffer   = NULL;
 
@@ -184,7 +224,7 @@ int rtcfg_cmd_server(int ifindex)
 
 
 
-int rtcfg_cmd_add_ip(int ifindex, unsigned long ip_addr)
+int rtcfg_cmd_add_ip(int ifindex, u32 ip_addr)
 {
     struct rtcfg_user_event *cmd_add_ip;
 
@@ -193,9 +233,9 @@ int rtcfg_cmd_add_ip(int ifindex, unsigned long ip_addr)
     if (cmd_add_ip == NULL)
         return -ENOMEM;
 
-    cmd_add_ip->event_id     = RTCFG_CMD_ADD_IP;
-    cmd_add_ip->ifindex      = ifindex;
-    cmd_add_ip->args.ip_addr = ip_addr;
+    cmd_add_ip->event_id = RTCFG_CMD_ADD_IP;
+    cmd_add_ip->timeout  = 0;
+    cmd_add_ip->ifindex  = ifindex;
 
     cmd_add_ip->buffer = kmalloc(sizeof(struct rtcfg_connection), GFP_KERNEL);
     if (cmd_add_ip->buffer == NULL) {
@@ -203,12 +243,14 @@ int rtcfg_cmd_add_ip(int ifindex, unsigned long ip_addr)
         return -ENOMEM;
     }
 
+    cmd_add_ip->args.add_ip.ip_addr = ip_addr;
+
     return rtcfg_queue_user_event(cmd_add_ip);
 }
 
 
 
-int rtcfg_cmd_wait(int ifindex)
+int rtcfg_cmd_wait(int ifindex, unsigned int timeout)
 {
     struct rtcfg_user_event *cmd_wait;
 
@@ -218,6 +260,7 @@ int rtcfg_cmd_wait(int ifindex)
         return -ENOMEM;
 
     cmd_wait->event_id = RTCFG_CMD_WAIT;
+    cmd_wait->timeout  = timeout;
     cmd_wait->ifindex  = ifindex;
     cmd_wait->buffer   = NULL;
 
@@ -226,7 +269,7 @@ int rtcfg_cmd_wait(int ifindex)
 
 
 
-int rtcfg_cmd_client(int ifindex)
+int rtcfg_cmd_client(int ifindex, unsigned int timeout)
 {
     struct rtcfg_user_event *cmd_client;
 
@@ -236,6 +279,7 @@ int rtcfg_cmd_client(int ifindex)
         return -ENOMEM;
 
     cmd_client->event_id = RTCFG_CMD_CLIENT;
+    cmd_client->timeout  = timeout;
     cmd_client->ifindex  = ifindex;
 
     cmd_client->buffer = kmalloc(RTCFG_MAX_ADDRSIZE * 32, GFP_KERNEL);
@@ -251,7 +295,7 @@ int rtcfg_cmd_client(int ifindex)
 
 
 
-int rtcfg_cmd_announce(int ifindex)
+int rtcfg_cmd_announce(int ifindex, unsigned int timeout)
 {
     struct rtcfg_user_event *cmd_announce;
 
@@ -261,6 +305,7 @@ int rtcfg_cmd_announce(int ifindex)
         return -ENOMEM;
 
     cmd_announce->event_id = RTCFG_CMD_ANNOUNCE;
+    cmd_announce->timeout  = timeout;
     cmd_announce->ifindex  = ifindex;
     cmd_announce->buffer   = NULL;
 
