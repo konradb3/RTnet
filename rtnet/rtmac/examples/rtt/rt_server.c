@@ -40,6 +40,8 @@
 #include <rtnet.h>
 #include <rtnet_socket.h>
 
+//#define USE_CALLBACKS
+
 #define MIN_LENGTH_IPv4 7
 #define MAX_LENGTH_IPv4 15
 static char *local_ip_s  = "127.0.0.1";
@@ -70,6 +72,7 @@ char tx_msg[BUFSIZE];
 
 
 
+#ifdef USE_CALLBACKS
 
 void *process(void * arg)
 {
@@ -106,6 +109,38 @@ int echo_rcv(int s,void *arg)
 
 	return 0;
 }
+
+#else
+
+void process(void * arg)
+{
+	struct msghdr		msg;
+	struct iovec		iov;
+	struct sockaddr_in	addr;
+	int			ret;
+
+	while(1) {
+		memset(&msg, 0, sizeof(msg));
+		iov.iov_base=&buffer;
+		iov.iov_len=BUFSIZE;
+		msg.msg_name=&addr;
+		msg.msg_namelen=sizeof(addr);
+		msg.msg_iov=&iov;
+		msg.msg_iovlen=1;
+		msg.msg_control=NULL;
+		msg.msg_controllen=0;
+
+		ret=rt_socket_recvmsg(sock, &msg, 0);
+		if ( (ret <= 0) || (msg.msg_namelen != sizeof(struct sockaddr_in)) )
+			return;
+
+		memcpy(&tx_msg, &buffer, 8);
+
+	     	rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr, sizeof (struct sockaddr_in));
+	}
+}
+
+#endif
 
 
 
@@ -156,11 +191,13 @@ int init_module(void)
 		rt_printk("dest addr: %x:%x\n", socket->daddr, socket->dport);
 	}
 
+#ifdef USE_CALLBACKS
 	/* set up receiving */
 	rt_socket_callback(sock, echo_rcv, NULL);
 
 	/* initialize semaphore */
 	rt_sem_init(&tx_sem, 0);
+#endif
 
 	/* create print-fifo */
 	rtf_create (PRINT, 3000);
@@ -180,27 +217,9 @@ void cleanup_module(void)
 
 	rt_task_delete(&rt_task);
 	rtf_destroy(PRINT);
+#ifdef USE_CALLBACKS
 	rt_sem_delete(&tx_sem);
+#endif
 
   	rt_socket_close(sock);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

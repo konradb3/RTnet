@@ -160,6 +160,7 @@ int echo_rcv(int s,void *arg)
 
 int init_module(void)
 {
+	unsigned int nonblock = 1;
 	int ret;
 
 	unsigned long local_ip  = rt_inet_aton(local_ip_s);
@@ -182,6 +183,10 @@ int init_module(void)
 
 	/* create rt-socket */
 	sock=rt_socket(AF_INET,SOCK_DGRAM,0);
+
+	/* switch to non-blocking */
+	ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
+	rt_printk("rt_setsockopt() = %d\n", ret);
 	
 	/* bind the rt-socket to local_addr */	
 	memset(&local_addr, 0, sizeof(struct sockaddr_in));
