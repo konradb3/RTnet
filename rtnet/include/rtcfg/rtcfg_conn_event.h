@@ -54,6 +54,8 @@ struct rtcfg_connection {
     u32                     cfg_offs;
     unsigned int            flags;
     unsigned int            burstrate;
+    rtos_time_t             last_frame;
+    rtos_time_t             cfg_timeout;
 #ifdef CONFIG_PROC_FS
     struct proc_dir_entry   *proc_entry;
 #endif

@@ -749,6 +749,10 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
     new_conn->burstrate    = rtcfg_dev->burstrate;
 
+    rtos_nanosecs_to_time(
+        (nanosecs_t)cmd_event->args.add.timeout * (nanosecs_t)1000000,
+        &new_conn->cfg_timeout);
+
     memcpy(new_conn->mac_addr, cmd_event->args.add.mac_addr, MAX_ADDR_LEN);
 
     /* get stage 2 file */

@@ -52,6 +52,7 @@ typedef enum {
     RTCFG_CMD_DOWN,
 
     /* internal usage only */
+    RTCFG_TIMER,
     RTCFG_FRM_STAGE_1_CFG,
     RTCFG_FRM_ANNOUNCE_NEW,
     RTCFG_FRM_ANNOUNCE_REPLY,

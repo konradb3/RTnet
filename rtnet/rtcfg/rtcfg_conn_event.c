@@ -104,6 +104,8 @@ static int rtcfg_conn_state_searching(struct rtcfg_connection *conn,
 
     switch (event_id) {
         case RTCFG_FRM_ANNOUNCE_NEW:
+            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+
             announce_new = (struct rtcfg_frm_announce *)rtskb->data;
 
             conn->flags = announce_new->flags;
@@ -150,10 +152,14 @@ static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
     struct rtskb             *rtskb = (struct rtskb *)event_data;
     struct rtcfg_frm_ack_cfg *ack_cfg;
     int                      packets;
+    rtos_time_t              now;
+    rtos_time_t              deadline;
 
 
     switch (event_id) {
         case RTCFG_FRM_ACK_CFG:
+            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+
             ack_cfg = (struct rtcfg_frm_ack_cfg *)rtskb->data;
             conn->cfg_offs = ntohl(ack_cfg->ack_len);
 
@@ -180,6 +186,21 @@ static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
 
             break;
 
+        case RTCFG_TIMER:
+            if (RTOS_TIME_IS_ZERO(&conn->cfg_timeout))
+                break;
+
+            rtos_get_time(&now);
+            rtos_time_sum(&deadline, &conn->last_frame, &conn->cfg_timeout);
+
+            if (RTOS_TIME_IS_BEFORE(&now, &deadline)) {
+                rtcfg_next_conn_state(conn, RTCFG_CONN_SEARCHING);
+                conn->cfg_offs = 0;
+                conn->flags    = 0;
+            }
+
+            break;
+
         default:
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for conn %p in %s()\n",
                         rtcfg_event[event_id], conn, __FUNCTION__);
@@ -193,13 +214,18 @@ static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
 static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
                                     RTCFG_EVENT event_id, void* event_data)
 {
+    struct rtskb        *rtskb = (struct rtskb *)event_data;
     struct rtcfg_device *rtcfg_dev = &device[conn->ifindex];
     struct rt_proc_call *call;
     struct rtcfg_cmd    *cmd_event;
+    rtos_time_t         now;
+    rtos_time_t         deadline;
 
 
     switch (event_id) {
         case RTCFG_FRM_READY:
+            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+
             rtcfg_next_conn_state(conn, RTCFG_CONN_READY);
 
             conn->flags |= RTCFG_FLAG_READY;
@@ -217,6 +243,21 @@ static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
                         (cmd_event->event_id == RTCFG_CMD_READY) ?
                             0 : -EINVAL);
                 }
+
+            break;
+
+        case RTCFG_TIMER:
+            if (RTOS_TIME_IS_ZERO(&conn->cfg_timeout))
+                break;
+
+            rtos_get_time(&now);
+            rtos_time_sum(&deadline, &conn->last_frame, &conn->cfg_timeout);
+
+            if (RTOS_TIME_IS_BEFORE(&now, &deadline)) {
+                rtcfg_next_conn_state(conn, RTCFG_CONN_SEARCHING);
+                conn->cfg_offs = 0;
+                conn->flags    = 0;
+            }
 
             break;
 

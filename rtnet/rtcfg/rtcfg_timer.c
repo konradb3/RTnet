@@ -37,26 +37,45 @@ void rtcfg_timer(int ifindex)
     struct rtcfg_device     *rtcfg_dev = &device[ifindex];
     struct list_head        *entry;
     struct rtcfg_connection *conn;
+    int                     last_stage_1 = -1;
+    int                     burst_credit;
+    int                     index;
     int                     ret;
 
 
     while (1) {
         rtos_res_lock(&rtcfg_dev->dev_lock);
 
-        if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING)
-            /* TODO: send only limited burst of stage 1 frames */
+        if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
+            index = 0;
+            burst_credit = rtcfg_dev->burstrate;
+
             list_for_each(entry, &rtcfg_dev->conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
 
                 if (conn->state == RTCFG_CONN_SEARCHING) {
-                    if ((ret = rtcfg_send_stage_1(conn)) < 0) {
-                        RTCFG_DEBUG(2, "RTcfg: error %d while sending stage 1 "
-                                    "frame\n", ret);
+                    if ((burst_credit > 0) && (index > last_stage_1)) {
+                        if ((ret = rtcfg_send_stage_1(conn)) < 0) {
+                            RTCFG_DEBUG(2, "RTcfg: error %d while sending "
+                                        "stage 1 frame\n", ret);
+                        }
+                        burst_credit--;
+                        last_stage_1 = index;
                     }
-                }
+                } else {
+                    /* skip connection which do not send stage 1 frames */
+                    if (last_stage_1 == (index-1))
+                        last_stage_1 = index;
 
-                /* TODO: check heartbeat */
+                    rtcfg_do_conn_event(conn, RTCFG_TIMER, NULL);
+                }
+                index++;
             }
+
+            /* handle pointer overrun of the last stage 1 transmission */
+            if (last_stage_1 == (index-1))
+                last_stage_1 = -1;
+        }
         /* TODO:
         else if (rtcfg_dev->state == RTCFG_MAIN_CLIENT_2)
             rtcfg_send_heartbeat(ifindex);*/
