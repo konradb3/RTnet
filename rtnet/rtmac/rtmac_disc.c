@@ -38,6 +38,7 @@ struct rtpacket_type rtmac_packet_type;
  * -EINVAL	called with rtdev=NULL or not complete discipline
  * -ENODEV	discipline unknown
  * -EBUSY	other discipline active
+ * -ENOMEM	could not allocate memory
  *
  */
 int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc)
@@ -80,7 +81,7 @@ int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc)
 
 	// move our tx funktion between driver an layer 3
 	rtmac->packet_tx = rtdev->hard_start_xmit;
-	rtdev->hard_start_xmit = disc->packet_tx;
+	rtdev->hard_start_xmit = disc->rt_packet_tx; // fixme!
 
 	// install rx_rtmac fkt and *_ops
 	rtmac->disc_ops = disc->disc_ops;

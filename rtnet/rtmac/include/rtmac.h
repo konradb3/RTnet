@@ -122,7 +122,8 @@ struct rtmac_disc_ops {
 
 struct rtmac_disc_type {
 	int (*packet_rx)		(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt);
-	int (*packet_tx)		(struct rtskb *skb, struct rtnet_device *rtdev);
+	int (*rt_packet_tx)		(struct rtskb *skb, struct rtnet_device *rtdev);
+	int (*proxy_packet_tx)		(struct rtskb *skb, struct rtnet_device *rtdev);
 	struct rtmac_disc_ops		*disc_ops;
 	struct rtmac_ioctl_ops		*ioctl_ops;
 };

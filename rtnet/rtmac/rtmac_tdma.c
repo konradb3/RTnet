@@ -201,7 +201,8 @@ int tdma_start(struct rtnet_device *rtdev)
 
 	static struct rtmac_disc_type disc_type = {
 		packet_rx:		&tdma_packet_rx,
-		packet_tx:		&tdma_packet_tx,
+		rt_packet_tx:		&tdma_packet_tx,
+		proxy_packet_tx:	&tdma_packet_tx,
 		disc_ops:		&tdma_disc_ops,
 		ioctl_ops:		&tdma_ioctl_ops,
 	};

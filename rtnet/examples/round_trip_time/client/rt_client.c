@@ -150,7 +150,7 @@ int init_module(void)
 	if (interval > 1000) interval = 1000;
 
 	if (packetsize < 1) packetsize = 1;
-	if (packetsize > 1400) packetsize = 1400;
+	if (packetsize > 5400) packetsize = 1400;
 
 	printk ("***** start of rt_client ***** %s %s *****\n", __DATE__, __TIME__);
 	printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
