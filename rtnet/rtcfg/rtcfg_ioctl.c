@@ -99,7 +99,7 @@ void copy_stage_1_data(struct rt_proc_call *call, void *priv_data)
 
     cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
-    if (cmd->args.client.buffer_size < result)
+    if (cmd->args.client.buffer_size < (size_t)result)
         rtpc_set_result(call, -ENOSPC);
     else if (copy_to_user(cmd->args.client.buffer,
                           cmd->args.client.rtskb->data, result) != 0)
@@ -140,7 +140,7 @@ void copy_stage_2_data(struct rt_proc_call *call, void *priv_data)
 
     cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
-    if (cmd->args.announce.buffer_size < result)
+    if (cmd->args.announce.buffer_size < (size_t)result)
         rtpc_set_result(call, -ENOSPC);
     else {
         rtskb = cmd->args.announce.rtskb;
@@ -297,7 +297,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
                 set_fs(oldfs);
                 fput(filp);
 
-                if (ret != file->size) {
+                if (ret != (int)file->size) {
                     kfree(conn_buf);
                     vfree(file->buffer);
                     kfree(file);

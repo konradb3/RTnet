@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    while (ifc.ifc_len >= sizeof(struct ifreq)) {
+    while (ifc.ifc_len >= (int)sizeof(struct ifreq)) {
         memcpy(flags_ifr.ifr_name, ifc.ifc_req[devices].ifr_name, IFNAMSIZ);
         ret = rt_socket_ioctl(sockfd, SIOCGIFFLAGS, &flags_ifr);
         if (ret < 0) {
