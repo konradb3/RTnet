@@ -74,7 +74,7 @@ struct tdma_frm_rpl_cal {
 
 
 void tdma_xmit_sync_frame(struct tdma_priv *tdma);
-int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u16 reply_cycle,
+int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u32 reply_cycle,
                                 u64 reply_slot_offset);
 
 int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev);

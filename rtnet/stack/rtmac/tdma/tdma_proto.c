@@ -57,7 +57,7 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     sync->head.version = __constant_htons(TDMA_FRM_VERSION);
     sync->head.id      = __constant_htons(TDMA_FRM_SYNC);
 
-    sync->cycle_no         = htons(tdma->current_cycle);
+    sync->cycle_no         = htonl(tdma->current_cycle);
     sync->xmit_stamp       = rtos_time_to_nanosecs(&tdma->clock_offset);
     sync->sched_xmit_stamp =
         cpu_to_be64(rtos_time_to_nanosecs(&tdma->current_cycle_start));
@@ -75,7 +75,7 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
 
 
 
-int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u16 reply_cycle,
+int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u32 reply_cycle,
                                 u64 reply_slot_offset)
 {
     struct rtnet_device     *rtdev = tdma->rtdev;
@@ -106,7 +106,7 @@ int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u16 reply_cycle,
     req_cal->head.id      = __constant_htons(TDMA_FRM_REQ_CAL);
 
     req_cal->xmit_stamp        = 0;
-    req_cal->reply_cycle       = htons(reply_cycle);
+    req_cal->reply_cycle       = htonl(reply_cycle);
     req_cal->reply_slot_offset = cpu_to_be64(reply_slot_offset);
 
     rtskb->xmit_stamp = &req_cal->xmit_stamp;
@@ -226,7 +226,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             rtos_time_diff(&cycle_start, &cycle_start, &clock_offset);
 
             rtos_spin_lock_irqsave(&tdma->lock, flags);
-            tdma->current_cycle = ntohs(SYNC_FRM(head)->cycle_no);
+            tdma->current_cycle = ntohl(SYNC_FRM(head)->cycle_no);
             tdma->current_cycle_start = cycle_start;
             tdma->clock_offset        = clock_offset;
             rtos_spin_unlock_irqrestore(&tdma->lock,flags);
@@ -293,7 +293,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
 
             rpl_cal_job->head.id        = XMIT_RPL_CAL;
             rpl_cal_job->head.ref_count = 0;
-            rpl_cal_job->reply_cycle = ntohs(REQ_CAL_FRM(head)->reply_cycle);
+            rpl_cal_job->reply_cycle = ntohl(REQ_CAL_FRM(head)->reply_cycle);
             rpl_cal_job->reply_rtskb = reply_rtskb;
             rtos_nanosecs_to_time(
                 be64_to_cpu(REQ_CAL_FRM(head)->reply_slot_offset),
