@@ -147,4 +147,14 @@ static inline void RTNET_MOD_DEC_USE_COUNT_EX(struct module *module)
 #define RTNET_SET_MODULE_OWNER(some_struct) \
     do { (some_struct)->rt_owner = THIS_MODULE; } while (0)
 
+
+#ifndef list_for_each_entry
+#define list_for_each_entry(pos, head, member)                      \
+    for (pos = list_entry((head)->next, typeof(*pos), member),      \
+                          prefetch(pos->member.next);               \
+         &pos->member != (head);                                    \
+         pos = list_entry(pos->member.next, typeof(*pos), member),  \
+                          prefetch(pos->member.next))
+#endif
+
 #endif /* __RTNET_INTERNAL_H_ */
