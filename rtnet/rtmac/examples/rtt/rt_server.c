@@ -44,16 +44,17 @@
 
 static char *local_ip_s  = "";
 static char *client_ip_s = "127.0.0.1";
-static int reply_size = sizeof(RTIME);
+static unsigned int reply_size = sizeof(RTIME);
 
 MODULE_PARM(local_ip_s, "s");
 MODULE_PARM(client_ip_s, "s");
 MODULE_PARM(reply_size, "i");
 MODULE_PARM_DESC(local_ip_s, "local ip-addr");
 MODULE_PARM_DESC(client_ip_s, "client ip-addr");
-MODULE_PARM_DESC(reply_size, "size of the reply message (8-65535)");
+MODULE_PARM_DESC(reply_size, "size of the reply message (8-65507)");
 
-#define PRINT_FIFO  0
+MODULE_LICENSE("GPL");
+
 RT_TASK rt_task;
 
 #ifdef USE_CALLBACKS
@@ -154,6 +155,7 @@ int init_module(void)
 #ifdef USE_CALLBACKS
     unsigned int nonblock = 1;
 #endif
+    unsigned int add_rtskbs = 30;
     int ret;
     struct rtsocket *socket;
 
@@ -187,6 +189,7 @@ int init_module(void)
     local_addr.sin_port = htons(RCV_PORT);
     local_addr.sin_addr.s_addr = local_ip;
     if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
+        rt_socket_close(sock);
         rt_printk("can't bind rtsocket\n");
         return ret;
     }
@@ -198,6 +201,7 @@ int init_module(void)
     client_addr.sin_port = htons(SRV_PORT);
     client_addr.sin_addr.s_addr = client_ip;
     if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
+        rt_socket_close(sock);
         rt_printk("can't connect rtsocket\n");
         return ret;
     }
@@ -211,7 +215,7 @@ int init_module(void)
 #ifdef USE_CALLBACKS
     /* switch to non-blocking */
     ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
-    rt_printk("rt_setsockopt() = %d\n", ret);
+    rt_printk("rt_setsockopt(RT_SO_NONBLOCK) = %d\n", ret);
 
     /* set up receiving */
     rt_socket_callback(sock, echo_rcv, NULL);
@@ -220,8 +224,13 @@ int init_module(void)
     rt_sem_init(&tx_sem, 0);
 #endif
 
-    /* create print-fifo */
-    rtf_create(PRINT_FIFO, 3000);
+    /* extend the socket pool */
+    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_EXTPOOL, &add_rtskbs, sizeof(add_rtskbs));
+    if (ret != (int)add_rtskbs) {
+        rt_socket_close(sock);
+        rt_printk("rt_setsockopt(RT_SO_EXTPOOL) = %d\n", ret);
+        return -1;
+    }
 
     ret = rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
     ret = rt_task_resume(&rt_task);
@@ -235,7 +244,6 @@ int init_module(void)
 void cleanup_module(void)
 {
     rt_task_delete(&rt_task);
-    rtf_destroy(PRINT_FIFO);
 #ifdef USE_CALLBACKS
     rt_sem_delete(&tx_sem);
 #endif

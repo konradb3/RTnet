@@ -57,6 +57,8 @@ MODULE_PARM_DESC (local_ip_s, "rt_echo_client: lokal ip-address");
 MODULE_PARM_DESC (broadcast_ip_s, "rt_echo_client: broadcast ip-address");
 MODULE_PARM_DESC (cycle, "cycletime in us");
 
+MODULE_LICENSE("GPL");
+
 RT_TASK rt_task;
 
 #define RCV_PORT    35999
@@ -137,6 +139,7 @@ int echo_rcv(int s,void *arg)
 int init_module(void)
 {
     unsigned int nonblock = 1;
+    unsigned int add_rtskbs = 30;
     int ret;
 
     unsigned long local_ip;
@@ -155,18 +158,34 @@ int init_module(void)
     rt_printk ("broadcast ip address %s=%8x\n", broadcast_ip_s, (unsigned int) broadcast_ip);
 
     /* create rt-socket */
-    sock=rt_socket(AF_INET,SOCK_DGRAM,0);
+    rt_printk("create rtsocket\n");
+    if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
+        rt_printk("socket not created\n");
+        return -ENOMEM;
+    }
 
     /* switch to non-blocking */
     ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
-    rt_printk("rt_setsockopt() = %d\n", ret);
+    rt_printk("rt_setsockopt(RT_SO_NONBLOCK) = %d\n", ret);
+
+    /* extend the socket pool */
+    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_EXTPOOL, &add_rtskbs, sizeof(add_rtskbs));
+    if (ret != (int)add_rtskbs) {
+        rt_socket_close(sock);
+        rt_printk("rt_setsockopt(RT_SO_EXTPOOL) = %d\n", ret);
+        return -1;
+    }
 
     /* bind the rt-socket to local_addr */
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(RCV_PORT);
     local_addr.sin_addr.s_addr = local_ip;
-    ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in));
+    if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
+        rt_socket_close(sock);
+        rt_printk("can't bind rtsocket\n");
+        return ret;
+    }
 
     /* set server-addr */
     memset(&broadcast_addr, 0, sizeof(struct sockaddr_in));
