@@ -107,7 +107,6 @@ int packetsize = 58;
 void* process(void * arg)
 {
     fd_set readfds;
-    FD_ZERO(&readfds);
     struct msghdr		msg;
     struct iovec		iov;
     struct sockaddr_in		addr;
@@ -121,17 +120,19 @@ void* process(void * arg)
     msg.msg_iovlen=1;
     msg.msg_control=NULL;
     msg.msg_controllen=0;
-    
-    /*
-      FD_SET((sock1 & (MAX_FILDES - 1)), &readfds);
-      FD_SET((sock2 & (MAX_FILDES - 1)), &readfds);
-    */
-    FD_SET(sock1, &readfds);
-    FD_SET(sock2, &readfds);
 
     rt_printk(" --> selecting task started\n");
     while (0==exit_select) {
 	int ret;
+
+	FD_ZERO(&readfds);
+	/*
+	  FD_SET((sock1 & (MAX_FILDES - 1)), &readfds);
+	  FD_SET((sock2 & (MAX_FILDES - 1)), &readfds);
+	*/
+	FD_SET(sock1, &readfds);
+	FD_SET(sock2, &readfds);
+
 	ret = select_rt(0, sock1 > sock2 ? sock1 : sock2,
 			&readfds, 0, 0);
 	
