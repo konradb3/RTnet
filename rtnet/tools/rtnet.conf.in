@@ -44,14 +44,21 @@ STAGE_2_CMDS=""
 
 
 
-# TDMA mode of the station ("master" or "client")
+# TDMA mode of the station ("master" or "slave")
 TDMA_MODE="master"
 
-# List of TDMA clients (master mode only)
-TDMA_CLIENTS="10.0.0.2 10.0.0.3 10.0.0.4"
+# Master parameters
 
-# Cycle time in microsecond (master mode only)
+# Simple setup: List of TDMA slaves
+TDMA_SLAVES="10.0.0.2 10.0.0.3 10.0.0.4"
+
+# Simple setup: Cycle time in microsecond
 TDMA_CYCLE="5000"
 
-# Offset in microsecond between TDMA slots (master mode only)
+# Simple setup: Offset in microsecond between TDMA slots
 TDMA_OFFSET="200"
+
+# Advanced setup: Config file containing all TDMA station parameters
+#   To use this mode, uncomment the following line and disable the
+#   three master parameters above.
+#TDMA_CONFIG="@sysconfdir@/tdma.conf"

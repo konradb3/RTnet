@@ -1213,6 +1213,7 @@ AC_CONFIG_FILES([ \
     tools/GNUmakefile \
     tools/rtnet \
     tools/rtnet.conf \
+    tools/rtnet-tdma-v1 \
     ])
 
 AC_OUTPUT

@@ -16,7 +16,7 @@ AM_CPPFLAGS = \
 
 all-local: rtifconfig rtroute rtping $(OPTPROGS)
 
-install-exec-local: rtnet
+install-exec-local: rtnet rtnet-tdma-v1
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
 	$(INSTALL_SCRIPT) $< $(DESTDIR)$(sbindir)
 

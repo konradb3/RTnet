@@ -9,8 +9,8 @@ Usage:
     $0 [-cf <config-file>] {start|stop}
         Start or stop station according to configuration file
 
-    $0 [-cf <config-file>] master <client_ip1> [<client_ip2> ...]
-        Start station as master for given list of clients
+    $0 [-cf <config-file>] master <slave_ip1> [<slave_ip2> ...]
+        Start station as master for given list of slaves
 
     $0 [-cf <config-file>] capture
         Start only passive realtime capturing
@@ -29,8 +29,6 @@ init_rtnet() {
         insmod $RTNET_MOD/rtcap$MODULE_EXT >/dev/null || exit 1
     fi
 
-    $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
-
     if [ $RT_LOOPBACK = "yes" ]; then
         $RTIFCONFIG rtlo up 127.0.0.1
     fi
@@ -45,7 +43,37 @@ init_rtnet() {
 
     insmod $RTNET_MOD/rtcfg$MODULE_EXT >/dev/null
     insmod $RTNET_MOD/rtmac$MODULE_EXT >/dev/null
-    insmod $RTNET_MOD/tdma-v1$MODULE_EXT start_timer=0 >/dev/null
+    insmod $RTNET_MOD/tdma$MODULE_EXT >/dev/null
+}
+
+submit_cfg() {
+    case "$STATION_TYPE" in
+        master)
+            $TDMACFG rteth0 master $TDMA_CYCLE
+            $TDMA_SLOTS
+
+            $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
+            ;;
+        slave)
+            if [ ! "$STATION_IP" = "" ]; then
+                if [ ! "$STATION_MAC" = "" ]; then
+                    RTCFG_CLIENT="$STATION_IP -hw $STATION_MAC"
+                else
+                    RTCFG_CLIENT="$STATION_IP"
+                fi
+            elif
+                RTCFG_CLIENT="$STATION_MAC"
+            fi
+
+            echo "$TDMA_SLOTS" | $RTCFG rteth0 add $RTCFG_CLIENT -stage1 -
+            ;;
+    esac
+
+    STATION_TYPE=
+    STATION_IP=
+    STATION_MAC=
+    TDMA_SLOTS=
+    TDMA_CYCLE=
 }
 
 start_master() {
@@ -55,33 +83,88 @@ start_master() {
     if [ ! "$STAGE_2_SRC" = "" ]; then
         STAGE_2_OPT="-stage2 $STAGE_2_SRC"
     fi
-    for CLIENT in $TDMA_CLIENTS; do
-        $RTCFG rteth0 add $CLIENT $STAGE_2_OPT
-    done
 
-    echo -n "Waiting for all clients..."
-    $RTCFG rteth0 wait
+    if [ ! "$TDMA_CLIENTS" = "" ]; then
+        # Simple setup:
+        #   Sync / Master Slot / + TDMA_OFFSET us / Slave 1 /
+        #   + TDMA_OFFSET us / Slave 2 / + TDMA_OFFSET us / ... / Slave n
 
-    echo
-    echo -n "Starting TDMA master..."
-    $RTIFCONFIG rteth0 mac master $TDMA_CYCLE
-    sleep 1
+        $TDMACFG rteth0 master $TDMA_CYCLE
+        $TDMACFG rteth0 slot 0 0
 
-    OFFSET=$TDMA_OFFSET
-    DELAY=0
-    for CLIENT in $TDMA_CLIENTS; do
-        $RTIFCONFIG rteth0 mac add $CLIENT $OFFSET
-        let OFFSET=$OFFSET+$TDMA_OFFSET
-        let DELAY=$DELAY+5
-        sleep 3
-    done
+        $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
-    $RTIFCONFIG rteth0 mac up
-    sleep $DELAY
+        OFFSET=$TDMA_OFFSET
+        for CLIENT in $TDMA_CLIENTS; do
+            echo "$SLAVE_TDMACFG rteth0 slot 0 $OFFSET;" \
+                "ifconfig vnic0 up \$IPADDR \$NETMASK_OPT" | \
+                $RTCFG rteth0 add $CLIENT -stage1 - $STAGE_2_OPT
+            let OFFSET=$OFFSET+$TDMA_OFFSET
+        done
+    else
+        # Get setup from TDMA_CONFIG file:
+        #
+        # master:
+        # cycle <cycle_in_us>
+        #
+        # slave:
+        # ip 1.2.3.4
+        # mac AA:BB:CC:DD:EE:FF
+        # slot <id> <offset_in_us> [<phasing>/<period> [<size>]]
+        # slot ...
+        #
+        # slave:
+        # ip 1.2.3.4
+        # slot ...
+        #
+        # slave:
+        # mac AA:BB:CC:DD:EE:FF
+        # slot ...
+        #
+
+        while read ARG1 ARG2 ARG3 ARG4 ARG5; do
+            case "$ARG1" in
+                "master:")
+                    submit_cfg
+                    STATION_TYPE=master
+                    ;;
+                "cycle")
+                    TDMA_CYCLE="$ARG2"
+                    ;;
+                "slave:")
+                    submit_cfg
+                    STATION_TYPE=slave
+                    ;;
+                "ip")
+                    STATION_IP="$ARG2"
+                    ;;
+                "mac")
+                    STATION_MAC="$ARG2"
+                    ;;
+                "slot")
+                    if [ "$STATION_TYPE" = "slave" ]; then
+                        TDMA_SLOTS="$TDMA_SLOTS$SLAVE_TDMACFG rteth0 slot $ARG2 $ARG3"
+                    else
+                        TDMA_SLOTS="$TDMA_SLOTS $TDMACFG rteth0 slot $ARG2 $ARG3"
+                    fi
+                    if [ ! "$ARG4" = "" ]; then
+                        TDMA_SLOTS="$TDMA_SLOTS -p $ARG4"
+                    fi
+                    if [ ! "$ARG5" = "" ]; then
+                        TDMA_SLOTS="$TDMA_SLOTS -s $ARG5"
+                    fi
+                    TDMA_SLOTS="$TDMA_SLOTS;"
+                    ;;
+            esac
+        done < $TDMA_CONFIG
+        submit_cfg
+    fi
+
     ifconfig vnic0 up $IPADDR $NETMASK_OPT
 
-    echo
+    echo -n "Waiting for all slaves..."
     $RTCFG rteth0 ready
+    echo
 }
 
 
@@ -113,11 +196,14 @@ case "$1" in
         if [ $TDMA_MODE = "master" ]; then
             start_master
         else
-            echo -n "Stage 1: searching for master..."
-            $RTCFG rteth0 client
+            $TDMACFG rteth0 slave
 
-            echo
-            echo -n "Stage 2: waiting for other clients..."
+            $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
+
+            echo -n "Stage 1: searching for master..."
+            sh -c `echo; $RTCFG rteth0 client -c`
+
+            echo -n "Stage 2: waiting for other slaves..."
             if [ ! "$STAGE_2_DST" = "" ]; then
                 $RTCFG rteth0 announce -f $STAGE_2_DST
                 echo
@@ -126,9 +212,6 @@ case "$1" in
                 $RTCFG rteth0 announce
                 echo
             fi
-
-            $RTIFCONFIG rteth0 mac client
-            ifconfig vnic0 up $IPADDR $NETMASK_OPT
 
             echo -n "Stage 3: waiting for common setup completion..."
             $RTCFG rteth0 ready
@@ -142,14 +225,10 @@ case "$1" in
         ifconfig rteth0-mac down 2>/dev/null
         ifconfig rtlo down 2>/dev/null
 
-        $RTIFCONFIG rteth0 mac down
-
-        rmmod tdma-v1 rtmac rtcfg 2>/dev/null
-
         $RTIFCONFIG rteth0 down
         $RTIFCONFIG rtlo down 2>/dev/null
 
-        rmmod rtcap rt_loopback $RT_DRIVER rtnet 2>/dev/null
+        rmmod tdma rtmac rtcfg rtcap rt_loopback $RT_DRIVER rtnet 2>/dev/null
         ;;
 
     master)
@@ -163,7 +242,7 @@ case "$1" in
         insmod $RTNET_MOD/rtnet$MODULE_EXT >/dev/null || exit 1
         insmod $RTNET_MOD/$RT_DRIVER$MODULE_EXT $RT_DRIVER_OPTIONS >/dev/null || exit 1
         insmod $RTNET_MOD/rtcap$MODULE_EXT start_timer=1 >/dev/null || exit 1
-        $RTIFCONFIG rteth0 up $IPADDR promisc
+        $RTIFCONFIG rteth0 up promisc
         ifconfig rteth0 up
         ifconfig rteth0-mac up
         ;;
