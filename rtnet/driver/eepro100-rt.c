@@ -126,9 +126,6 @@ static int debug = -1;			/* The debug level */
 
 // *** RTnet ***
 #include <linux/if_vlan.h>
-#include <crc32.h>
-#include <rtnet.h>
-#include <rtnet_internal.h>
 #include <rtnet_port.h>
 
 static int cards = INT_MAX;

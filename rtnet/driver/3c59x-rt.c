@@ -272,9 +272,6 @@ static int vortex_debug = 1;
 #include <asm/uaccess.h>
 
 // *** RTnet ***
-#include <crc32.h>
-#include <rtnet.h>
-#include <rtnet_internal.h>
 #include <rtnet_port.h>
 //#include "../comdbg.h"
 
