@@ -19,6 +19,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/module.h>
 #include <linux/socket.h>
 #include <linux/in.h>
 #include <linux/udp.h>
@@ -40,46 +41,29 @@
  *  udp_sockets
  *  the registered sockets from any server
  */
-static struct rtsocket *udp_sockets = NULL;
-static unsigned short  good_port    = 1024;
-
-static rtos_res_lock_t udp_socket_base_lock;
+LIST_HEAD(udp_sockets);
+static rtos_res_lock_t  udp_socket_base_lock;
 
 /***
- *  rt_udp_port_inuse
+ *  Automatic port number assignment
+ *  The automatic assignment of port numbers to unbound sockets is realised as
+ *  a simple addition of two values:
+ *   - the socket ID (lower 8 bits of file descriptor) which is set during
+ *     initialisation and left unchanged afterwards
+ *   - the start value auto_port_start which is a module parameter
+ *  auto_port_mask, also a module parameter, is used to define the range of
+ *  port numbers which are used for automatic assignment. Any number within
+ *  this range be rejected when passed to rt_bind(). This restriction allows a
+ *  lock-free implementation of the port assignment.
  */
-static inline int rt_udp_port_inuse(u16 num)
-{
-    struct rtsocket *sk;
+static unsigned int     auto_port_start = 1024;
+static unsigned int     auto_port_mask  = ~(RT_SOCKETS-1);
 
-    rtos_res_lock(&udp_socket_base_lock);
-
-    for (sk = udp_sockets; sk != NULL; sk = sk->next) {
-        if (sk->prot.inet.sport == num)
-            break;
-    }
-
-    rtos_res_unlock(&udp_socket_base_lock);
-
-    return (sk != NULL) ? 1 : 0;
-}
-
-
-
-/***
- *  rt_udp_good_port
- */
-unsigned short rt_udp_good_port(void)
-{
-    unsigned short good;
-
-    do {
-        good=good_port++;
-    } while (rt_udp_port_inuse(good));
-
-    return good;
-}
-
+MODULE_PARM(auto_port_start, "i");
+MODULE_PARM(auto_port_mask, "i");
+MODULE_PARM_DESC(auto_port_start, "Start of automatically assigned port range");
+MODULE_PARM_DESC(auto_port_mask,
+                 "Mask that defines port range for automatic assignment");
 
 
 /***
@@ -87,17 +71,20 @@ unsigned short rt_udp_good_port(void)
  */
 struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
 {
-    struct rtsocket *sk;
+    struct list_head *entry;
+    struct rtsocket  *sk = NULL;
 
     rtos_res_lock(&udp_socket_base_lock);
 
-    for (sk = udp_sockets; sk != NULL; sk = sk->next)
+    list_for_each(entry, &udp_sockets) {
+        sk = list_entry(entry, struct rtsocket, list_entry);
         if ((sk->prot.inet.sport == dport) &&
             ((sk->prot.inet.saddr == INADDR_ANY) ||
              (sk->prot.inet.saddr == daddr))) {
             rt_socket_reference(sk);
             break;
         }
+    }
 
     rtos_res_unlock(&udp_socket_base_lock);
 
@@ -115,7 +102,8 @@ int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, socklen_t addrlen)
 {
     struct sockaddr_in *usin = (struct sockaddr_in *)addr;
 
-    if ( (s->state!=TCP_CLOSE) || (addrlen<(int)sizeof(struct sockaddr_in)) )
+    if ((s->state!=TCP_CLOSE) || (addrlen<(int)sizeof(struct sockaddr_in)) ||
+        ((usin->sin_port & auto_port_mask) == auto_port_start))
         return -EINVAL;
 
     /* set the source-addr */
@@ -123,7 +111,7 @@ int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, socklen_t addrlen)
 
     /* set source port, if not set by user */
     if((s->prot.inet.sport = usin->sin_port) == 0)
-        s->prot.inet.sport = htons(rt_udp_good_port());
+        s->prot.inet.sport = htons(auto_port_start + (s->fd & (RT_SOCKETS-1)));
 
     return 0;
 }
@@ -404,29 +392,14 @@ out:
  */
 int rt_udp_close(struct rtsocket *s)
 {
-    struct rtsocket *prev=s->prev;
-    struct rtsocket *next=s->next;
     struct rtskb *del;
 
 
     s->state=TCP_CLOSE;
 
     rtos_res_lock(&udp_socket_base_lock);
-
-    prev=s->prev;
-    next=s->next;
-    if (prev != NULL)
-        prev->next = next;
-    if (next != NULL)
-        next->prev = prev;
-
-    if (s == udp_sockets)
-        udp_sockets = next;
-
+    list_del(&s->list_entry);
     rtos_res_unlock(&udp_socket_base_lock);
-
-    s->next = NULL;
-    s->prev = NULL;
 
     /* cleanup already collected fragments */
     rt_ip_frag_invalidate_socket(s);
@@ -537,17 +510,11 @@ int rt_udp_socket(struct rtsocket *s)
     s->protocol        = IPPROTO_UDP;
     s->ops             = &rt_udp_socket_ops;
     s->prot.inet.saddr = INADDR_ANY;
+    s->prot.inet.sport = htons(auto_port_start + (s->fd & (RT_SOCKETS-1)));
 
     /* add to udp-socket-list */
     rtos_res_lock(&udp_socket_base_lock);
-
-    s->next = udp_sockets;
-    s->prev = NULL;
-
-    if (udp_sockets != NULL)
-        udp_sockets->prev = s;
-    udp_sockets = s;
-
+    list_add_tail(&s->list_entry, &udp_sockets);
     rtos_res_unlock(&udp_socket_base_lock);
 
     return s->fd;
@@ -573,6 +540,9 @@ static struct rtinet_protocol udp_protocol = {
  */
 void __init rt_udp_init(void)
 {
+    auto_port_start &= (auto_port_mask & 0xFFFF);
+    auto_port_mask  |= 0xFFFF0000;
+
     rtos_res_lock_init(&udp_socket_base_lock);
     rt_inet_add_protocol(&udp_protocol);
 }
