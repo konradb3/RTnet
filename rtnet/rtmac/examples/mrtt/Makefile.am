@@ -6,8 +6,8 @@ noinst_PROGRAMS = showtime
 librt_client_a_SOURCES = rt_client.c
 
 librt_client_a_CFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 rt_client.o: librt_client.a
 	rm -rf .extract && mkdir .extract

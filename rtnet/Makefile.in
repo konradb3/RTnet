@@ -166,8 +166,8 @@ libnetproxy_a_SOURCES = rtnetproxy.c
 libnetlxrt_a_SOURCES = rtnet_lxrt.c
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4

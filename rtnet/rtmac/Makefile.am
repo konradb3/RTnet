@@ -25,8 +25,8 @@ rtmac.o: librtmac.a
 	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 all-local: rtmac.o
 

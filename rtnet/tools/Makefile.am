@@ -1,7 +1,7 @@
 sbin_PROGRAMS = rtifconfig
 
 AM_CPPFLAGS = \
-	@KERNEL_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@KERNEL_CFLAGS@
 
 all-local: rtifconfig

@@ -5,7 +5,7 @@ librt_event_a_SOURCES = rt_event.c
 librt_show_events_a_SOURCES = rt_show_events.c
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 all-local: rt_event.o rt_show_events.o

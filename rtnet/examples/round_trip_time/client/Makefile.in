@@ -146,8 +146,8 @@ noinst_PROGRAMS = showtime
 librt_client_a_SOURCES = rt_client.c
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 subdir = examples/round_trip_time/client
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

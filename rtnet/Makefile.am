@@ -27,8 +27,8 @@ rtnet.o: librtnet.a $(RTNET_BUILTIN_OBJS)
 	$(LD) -r -o $@ .extract/*.o $(RTNET_BUILTIN_OBJS)
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 all-local: rtnet.o rtnetproxy.o rtnet_lxrt.o
 

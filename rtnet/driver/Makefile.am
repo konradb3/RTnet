@@ -53,8 +53,8 @@ OBJS += mpc8xx_fec-rt.o
 endif
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/lib
+	-I$(top_srcdir)/lib \
+	@RTAI_KMOD_CFLAGS@
 
 all-local: $(OBJS)

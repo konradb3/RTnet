@@ -143,8 +143,8 @@ target_alias = @target_alias@
 sbin_PROGRAMS = rtifconfig
 
 AM_CPPFLAGS = \
-	@KERNEL_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@KERNEL_CFLAGS@
 
 subdir = tools
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

@@ -157,8 +157,8 @@ libipv4_a_SOURCES = \
 
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	@RTAI_KMOD_CFLAGS@
 
 subdir = ipv4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

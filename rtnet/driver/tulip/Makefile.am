@@ -13,9 +13,9 @@ libtulip_rt_a_SOURCES = \
 	pnic2.c
 
 AM_CPPFLAGS = \
-	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/lib
+	-I$(top_srcdir)/lib \
+	@RTAI_KMOD_CFLAGS@
 
 tulip-rt.o: libtulip-rt.a
 	rm -rf .extract && mkdir .extract
