@@ -40,7 +40,6 @@ static struct rtskb_queue rtcfg_pool;
 static rtos_task_t        rx_task;
 static rtos_event_sem_t   rx_event;
 static struct rtskb_queue rx_queue;
-static u8                 eth_broadcast[] = { 255, 255, 255, 255, 255, 255 };
 
 
 
@@ -234,7 +233,7 @@ int rtcfg_send_stage_2(struct rtcfg_connection *conn, int send_data)
     stage_2_frm->head.version     = 0;
     stage_2_frm->flags            = rtcfg_dev->flags;
     stage_2_frm->stations         = htonl(rtcfg_dev->other_stations);
-    stage_2_frm->heartbeat_period = htons(0);
+    stage_2_frm->heartbeat_period = htons(rtcfg_dev->spec.srv.heartbeat);
     stage_2_frm->cfg_len          = htonl(total_size);
 
     if (send_data)
@@ -277,9 +276,9 @@ int rtcfg_send_stage_2_frag(struct rtcfg_connection *conn)
     stage_2_frm = (struct rtcfg_frm_stage_2_cfg_frag *)
         rtskb_put(rtskb, sizeof(struct rtcfg_frm_stage_2_cfg_frag));
 
-    stage_2_frm->head.id          = RTCFG_ID_STAGE_2_CFG_FRAG;
-    stage_2_frm->head.version     = 0;
-    stage_2_frm->frag_offs        = htonl(conn->cfg_offs);
+    stage_2_frm->head.id      = RTCFG_ID_STAGE_2_CFG_FRAG;
+    stage_2_frm->head.version = 0;
+    stage_2_frm->frag_offs    = htonl(conn->cfg_offs);
 
     memcpy(rtskb_put(rtskb, frag_size),
            conn->stage2_file->buffer + conn->cfg_offs, frag_size);
@@ -304,7 +303,7 @@ int rtcfg_send_announce_new(int ifindex)
         return -ENODEV;
 
     rtskb_size = rtdev->hard_header_len + sizeof(struct rtcfg_frm_announce) +
-        (((rtcfg_dev->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
+        (((rtcfg_dev->spec.clt.addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
         RTCFG_ADDRSIZE_IP : 0);
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
@@ -320,7 +319,7 @@ int rtcfg_send_announce_new(int ifindex)
 
     announce_new->head.id      = RTCFG_ID_ANNOUNCE_NEW;
     announce_new->head.version = 0;
-    announce_new->addr_type    = rtcfg_dev->addr_type;
+    announce_new->addr_type    = rtcfg_dev->spec.clt.addr_type;
 
     if (announce_new->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
@@ -354,7 +353,8 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
 
     rtskb_size = rtdev->hard_header_len +
         sizeof(struct rtcfg_frm_announce) +
-        ((rtcfg_dev->addr_type == RTCFG_ADDR_IP) ? RTCFG_ADDRSIZE_IP : 0);
+        ((rtcfg_dev->spec.clt.addr_type == RTCFG_ADDR_IP) ?
+        RTCFG_ADDRSIZE_IP : 0);
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -369,7 +369,7 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
 
     announce_rpl->head.id      = RTCFG_ID_ANNOUNCE_REPLY;
     announce_rpl->head.version = 0;
-    announce_rpl->addr_type    = rtcfg_dev->addr_type;
+    announce_rpl->addr_type    = rtcfg_dev->spec.clt.addr_type;
 
     if (announce_rpl->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
@@ -415,26 +415,27 @@ int rtcfg_send_ack(int ifindex)
 
     ack_frm->head.id      = RTCFG_ID_ACK_CFG;
     ack_frm->head.version = 0;
-    ack_frm->ack_len      = htonl(device[ifindex].cfg_offs);
+    ack_frm->ack_len      = htonl(device[ifindex].spec.clt.cfg_offs);
 
-    return rtcfg_send_frame(rtskb, rtdev, device[ifindex].srv_mac_addr);
+    return rtcfg_send_frame(rtskb, rtdev,
+                            device[ifindex].spec.clt.srv_mac_addr);
 }
 
 
 
-int rtcfg_send_ready(int ifindex)
+int rtcfg_send_simple_frame(int ifindex, int frame_id, u8 *dest_addr)
 {
-    struct rtnet_device    *rtdev;
-    struct rtskb           *rtskb;
-    unsigned int           rtskb_size;
-    struct rtcfg_frm_ready *ready_frm;
+    struct rtnet_device     *rtdev;
+    struct rtskb            *rtskb;
+    unsigned int            rtskb_size;
+    struct rtcfg_frm_simple *simple_frm;
 
 
     rtdev = rtdev_get_by_index(ifindex);
     if (rtdev == NULL)
         return -ENODEV;
 
-    rtskb_size = rtdev->hard_header_len + sizeof(struct rtcfg_frm_ready);
+    rtskb_size = rtdev->hard_header_len + sizeof(struct rtcfg_frm_simple);
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -444,13 +445,63 @@ int rtcfg_send_ready(int ifindex)
 
     rtskb_reserve(rtskb, rtdev->hard_header_len);
 
-    ready_frm = (struct rtcfg_frm_ready *)
-        rtskb_put(rtskb, sizeof(struct rtcfg_frm_ready));
+    simple_frm = (struct rtcfg_frm_simple *)
+        rtskb_put(rtskb, sizeof(struct rtcfg_frm_simple));
 
-    ready_frm->head.id      = RTCFG_ID_READY;
-    ready_frm->head.version = 0;
+    simple_frm->head.id      = frame_id;
+    simple_frm->head.version = 0;
 
-    return rtcfg_send_frame(rtskb, rtdev, eth_broadcast);
+    return rtcfg_send_frame(rtskb, rtdev,
+                            (dest_addr) ? dest_addr : rtdev->broadcast);
+}
+
+
+
+int rtcfg_send_dead_station(struct rtcfg_connection *conn)
+{
+    struct rtnet_device           *rtdev;
+    struct rtskb                  *rtskb;
+    unsigned int                  rtskb_size;
+    struct rtcfg_frm_dead_station *dead_station_frm;
+
+
+    rtdev = rtdev_get_by_index(conn->ifindex);
+    if (rtdev == NULL)
+        return -ENODEV;
+
+    rtskb_size = rtdev->hard_header_len +
+        sizeof(struct rtcfg_frm_dead_station) +
+        (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
+        RTCFG_ADDRSIZE_IP : 0);
+
+    rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
+    if (rtskb == NULL) {
+        rtdev_dereference(rtdev);
+        return -ENOBUFS;
+    }
+
+    rtskb_reserve(rtskb, rtdev->hard_header_len);
+
+    dead_station_frm = (struct rtcfg_frm_dead_station *)
+        rtskb_put(rtskb, sizeof(struct rtcfg_frm_dead_station));
+
+    dead_station_frm->head.id      = RTCFG_ID_DEAD_STATION;
+    dead_station_frm->head.version = 0;
+    dead_station_frm->addr_type    = conn->addr_type & RTCFG_ADDR_MASK;
+
+    if (dead_station_frm->addr_type == RTCFG_ADDR_IP) {
+        rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
+
+        *(u32*)dead_station_frm->logical_addr = conn->addr.ip_addr;
+
+        dead_station_frm = (struct rtcfg_frm_dead_station *)
+            (((u8 *)dead_station_frm) + RTCFG_ADDRSIZE_IP);
+    }
+
+    /* Ethernet-specific! */
+    memcpy(dead_station_frm->physical_addr, conn->mac_addr, ETH_ALEN);
+
+    return rtcfg_send_frame(rtskb, rtdev, rtdev->broadcast);
 }
 
 

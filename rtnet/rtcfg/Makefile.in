@@ -187,6 +187,7 @@ noinst_LIBRARIES = librtcfg.a
 librtcfg_a_SOURCES = \
 	rtcfg_module.c \
 	rtcfg_event.c \
+	rtcfg_client_event.c \
 	rtcfg_conn_event.c \
 	rtcfg_ioctl.c \
 	rtcfg_frame.c \
@@ -210,15 +211,16 @@ LIBRARIES = $(noinst_LIBRARIES)
 librtcfg_a_AR = $(AR) cru
 librtcfg_a_LIBADD =
 am_librtcfg_a_OBJECTS = rtcfg_module.$(OBJEXT) rtcfg_event.$(OBJEXT) \
-	rtcfg_conn_event.$(OBJEXT) rtcfg_ioctl.$(OBJEXT) \
-	rtcfg_frame.$(OBJEXT) rtcfg_timer.$(OBJEXT) \
-	rtcfg_file.$(OBJEXT) rtcfg_proc.$(OBJEXT)
+	rtcfg_client_event.$(OBJEXT) rtcfg_conn_event.$(OBJEXT) \
+	rtcfg_ioctl.$(OBJEXT) rtcfg_frame.$(OBJEXT) \
+	rtcfg_timer.$(OBJEXT) rtcfg_file.$(OBJEXT) rtcfg_proc.$(OBJEXT)
 librtcfg_a_OBJECTS = $(am_librtcfg_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg_conn_event.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg_client_event.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rtcfg_conn_event.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_event.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_file.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_frame.Po \
@@ -260,6 +262,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_client_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_conn_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_file.Po@am__quote@

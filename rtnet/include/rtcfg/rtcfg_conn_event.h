@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,8 @@ typedef enum {
     RTCFG_CONN_SEARCHING,
     RTCFG_CONN_STAGE_1,
     RTCFG_CONN_STAGE_2,
-    RTCFG_CONN_READY
+    RTCFG_CONN_READY,
+    RTCFG_CONN_DEAD
 } RTCFG_CONN_STATE;
 
 struct rtcfg_connection {

@@ -5,6 +5,7 @@ noinst_LIBRARIES = librtcfg.a
 librtcfg_a_SOURCES = \
 	rtcfg_module.c \
 	rtcfg_event.c \
+	rtcfg_client_event.c \
 	rtcfg_conn_event.c \
 	rtcfg_ioctl.c \
 	rtcfg_frame.c \

@@ -42,6 +42,7 @@
 #define RTCFG_ID_ACK_CFG            5
 #define RTCFG_ID_READY              6
 #define RTCFG_ID_HEARTBEAT          7
+#define RTCFG_ID_DEAD_STATION       8
 
 #define RTCFG_ADDRSIZE_MAC          0
 #define RTCFG_ADDRSIZE_IP           4
@@ -101,12 +102,15 @@ struct rtcfg_frm_ack_cfg {
     u32                   ack_len;
 } __attribute__((packed));
 
-struct rtcfg_frm_ready {
+struct rtcfg_frm_simple {
     struct rtcfg_frm_head head;
 } __attribute__((packed));
 
-struct rtcfg_frm_heartbeat {
+struct rtcfg_frm_dead_station {
     struct rtcfg_frm_head head;
+    u8                    addr_type;
+    u8                    logical_addr[0];
+    u8                    physical_addr[32];
 } __attribute__((packed));
 
 
@@ -116,7 +120,15 @@ int rtcfg_send_stage_2_frag(struct rtcfg_connection *conn);
 int rtcfg_send_announce_new(int ifindex);
 int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr);
 int rtcfg_send_ack(int ifindex);
-int rtcfg_send_ready(int ifindex);
+int rtcfg_send_dead_station(struct rtcfg_connection *conn);
+
+int rtcfg_send_simple_frame(int ifindex, int frame_id, u8 *dest_addr);
+
+#define rtcfg_send_ready(ifindex)                                   \
+    rtcfg_send_simple_frame(ifindex, RTCFG_ID_READY, NULL)
+#define rtcfg_send_heartbeat(ifindex)                               \
+    rtcfg_send_simple_frame(ifindex, RTCFG_ID_HEARTBEAT,            \
+                            device[ifindex].spec.clt.srv_mac_addr)
 
 int __init rtcfg_init_frames(void);
 void rtcfg_cleanup_frames(void);

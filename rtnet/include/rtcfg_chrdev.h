@@ -31,14 +31,13 @@
 #define ERTCFG_START            0x0F00
 #define ESTAGE1SIZE             ERTCFG_START
 
-#define FLAG_STAGE_2_DATA       1
-#define FLAG_READY              2
+#define FLAG_STAGE_2_DATA       0x0001
+#define FLAG_READY              0x0002
+#define FLAG_ASSIGN_ADDR_BY_MAC 0x0100
 
 #define RTCFG_ADDR_MAC          0x00
 #define RTCFG_ADDR_IP           0x01
 #define RTCFG_ADDR_MASK         0xFF
-
-#define ASSIGN_ADDR_BY_MAC      0x0100
 
 
 typedef enum {
@@ -60,7 +59,8 @@ typedef enum {
     RTCFG_FRM_STAGE_2_CFG_FRAG,
     RTCFG_FRM_ACK_CFG,
     RTCFG_FRM_READY,
-    RTCFG_FRM_HEARTBEAT
+    RTCFG_FRM_HEARTBEAT,
+    RTCFG_FRM_DEAD_STATION
 } RTCFG_EVENT;
 
 struct rtskb;

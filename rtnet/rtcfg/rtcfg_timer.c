@@ -50,10 +50,11 @@ void rtcfg_timer(int ifindex)
             index = 0;
             burst_credit = rtcfg_dev->burstrate;
 
-            list_for_each(entry, &rtcfg_dev->conn_list) {
+            list_for_each(entry, &rtcfg_dev->spec.srv.conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
 
-                if (conn->state == RTCFG_CONN_SEARCHING) {
+                if ((conn->state == RTCFG_CONN_SEARCHING) ||
+                    (conn->state == RTCFG_CONN_DEAD)){
                     if ((burst_credit > 0) && (index > last_stage_1)) {
                         if ((ret = rtcfg_send_stage_1(conn)) < 0) {
                             RTCFG_DEBUG(2, "RTcfg: error %d while sending "
@@ -63,7 +64,7 @@ void rtcfg_timer(int ifindex)
                         last_stage_1 = index;
                     }
                 } else {
-                    /* skip connection which do not send stage 1 frames */
+                    /* skip connection in history */
                     if (last_stage_1 == (index-1))
                         last_stage_1 = index;
 
@@ -75,10 +76,8 @@ void rtcfg_timer(int ifindex)
             /* handle pointer overrun of the last stage 1 transmission */
             if (last_stage_1 == (index-1))
                 last_stage_1 = -1;
-        }
-        /* TODO:
-        else if (rtcfg_dev->state == RTCFG_MAIN_CLIENT_2)
-            rtcfg_send_heartbeat(ifindex);*/
+        } else if (rtcfg_dev->state == RTCFG_MAIN_CLIENT_READY)
+            rtcfg_send_heartbeat(ifindex);
 
         rtos_res_unlock(&rtcfg_dev->dev_lock);
 

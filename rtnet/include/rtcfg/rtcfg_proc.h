@@ -34,8 +34,8 @@
 extern struct semaphore nrt_proc_lock;
 
 
-void rtcfg_update_proc_entries(int ifindex);
-void rtcfg_remove_proc_entries(int ifindex);
+void rtcfg_update_conn_proc_entries(int ifindex);
+void rtcfg_remove_conn_proc_entries(int ifindex);
 
 int rtcfg_init_proc(void);
 void rtcfg_cleanup_proc(void);
@@ -44,12 +44,12 @@ void rtcfg_cleanup_proc(void);
 static inline void rtcfg_lockwr_proc(int ifindex)
 {
     down(&nrt_proc_lock);
-    rtcfg_remove_proc_entries(ifindex);
+    rtcfg_remove_conn_proc_entries(ifindex);
 }
 
 static inline void rtcfg_unlockwr_proc(int ifindex)
 {
-    rtcfg_update_proc_entries(ifindex);
+    rtcfg_update_conn_proc_entries(ifindex);
     up(&nrt_proc_lock);
 }
 
