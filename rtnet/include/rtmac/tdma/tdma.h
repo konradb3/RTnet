@@ -182,6 +182,7 @@ struct tdma_rt_entry {
     nanosecs_t                  tx;
     unsigned int                rtt;
     volatile TDMA_RT_STATE      state;
+    unsigned int                offset;
 };
 
 struct tdma_rt_add_entry {
@@ -189,6 +190,7 @@ struct tdma_rt_add_entry {
     u32                         ip_addr;
     unsigned char               station;
     unsigned long               timeout;
+    unsigned int                offset;
 };
 
 struct tdma_info {
@@ -301,23 +303,6 @@ out:
 static inline struct rtskb *tdma_make_msg(struct rtnet_device *rtdev, void *daddr, TDMA_EVENT event, void **data)
 {
     return tdma_make_msg_len(rtdev, daddr, event, 60-14, data); /* note: dev->hard_header_len == 14 */
-}
-
-
-
-static inline int tdma_xmit(struct rtskb *skb)
-{
-    struct rtnet_device *rtdev = skb->rtdev;
-    int ret;
-
-
-    RTNET_ASSERT(rtdev->mac_priv->hard_start_xmit != NULL, kfree_rtskb(skb);
-                 return -1;);
-    ret = rtdev->mac_priv->hard_start_xmit(skb, rtdev);
-    if (ret != 0)
-        kfree_rtskb(skb);
-
-    return ret;
 }
 
 
