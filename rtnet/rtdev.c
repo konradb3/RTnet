@@ -311,8 +311,10 @@ int rtdev_xmit(struct rtskb *skb)
 
 		if (rtdev->hard_start_xmit) {
 			ret=rtdev->hard_start_xmit(skb, rtdev);
-			if (ret) 
+			if (ret) {
 				rt_printk("xmit returned %d not 0\n",ret);
+				if (skb) kfree_rtskb(skb); /* not really nice workaround to avoid memory leaks */
+			}
 		}
 
 		rt_sem_signal(&rtdev->txsem);
