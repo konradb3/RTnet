@@ -1,4 +1,5 @@
-                             RTnet Version 0.6.0
+                             RTnet Version 0.6.1
+                             ===================
 
 What is it?
 -----------
@@ -25,8 +26,8 @@ How to install it?
 4. cd rtnet
 5. Run ./configure --with-rtai=<PATH-TO-RTAI> <options> [--prefix=<PREFIX>]
    <PATH-TO-RTAI> is either the configured and compiled source directory of a
-   24.1.x version or the installation directory of a 3.x version. Valid options
-   are a combination of the following values:
+   24.1.x version or the installation directory of a 3.x version. Some of the
+   available options are:
        --enable-allpci          compiles all PCI NIC drivers
        --enable-8139            compiles the RealTek driver
        --enable-eepro100        compiles the EtherExpress driver
@@ -38,10 +39,12 @@ How to install it?
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
        --enable-proxy           compiles the IP protocol proxy driver (legacy)
-       --disable-loopback       does not compile the loopback driver
+       --enable-rtcap           enables capturing support (see README.rtcap)
        --disable-checks         does not compile internal bug checks
    <PREFIX> is the installation path prefix (see below). Default <PREFIX> is
-   /usr/local/rtnet.
+   /usr/local/rtnet. Further parameters are shown by ./configure --help. RTnet
+   can also be build out-of-tree, just run configure from a newly created
+   directory.
 6. make
 7. make install
    This will create the directories <PREFIX>/sbin with all configuration tools,
@@ -55,42 +58,13 @@ How to test it?
 1. Shutdown the network device which shall become part of the RT-network and
    remove its driver module (this also means that it must not be compiled
    into the kernel!)
-2. Load required RTAI modules
-3. Load RTnet and NIC RT-driver module
-4. Setup RT-ethernet device and solicit required MAC adresses (rtifconfig)
-5. Load application module
-
-For more details see run-scripts in <RTNET-SRC>/examples/round_trip_time
-
-There is also a simple script for loading and unloading RTnet and RTmac. See
-<RTNET-SRC>/tools/rtnet. To use it copy rtnet.conf from that directory to
-/etc/rtnet.conf and modify it for your system.
-
-How to use RTmac? (a very very short guide!)
------------------
-Assumed that the RTnet module and the driver(s) have been loaded and
-configured:
-1. Load RTmac with the TDMA discipline:
-    # insmod rtmac
-    # insmod tdma
-Assumed that your realtime device is rteth0.
-2. On client stations:
-    # rtifconfig rteth0 mac client
-3. On the master station:
-    # rtifconfig rteth0 mac master <cycle-time/us> [<mtu-size/byte>]
-    # rtifconfig rteth0 mac add <ip_client1>
-    # rtifconfig rteth0 mac add <ip_client2>
-    # ...
-    # rtifconfig rteth0 mac up
-    # rtifconfig rteth0 mac offset <ip_client1> <offset/us>
-    # rtifconfig rteth0 mac offset <ip_client2> <offset/us>
-    # ...
-4. Now you can run examples in <RTNET-SRC>/rtmac/examples
-5. You can furthermore use the associated VNIC (here "vnic0") now.
-
-See Documentation/README.rtmac for more information.
-
-NOTE FOR TDMA: ONLY one-shot timer mode is supported by the current version.
+2. Load required RTAI modules (24.1.x: rtai, rtai_sched; 3.x: rtai_hal,
+   rtai_ksched/rtai_lxrt, rtai_sem)
+3. Copy tools/rtnet.conf to the target's /etc directories and adapt at least
+   the following paramters: RTNET_PATH, RT_DRIVER, IPADDR, TDMA_MODE,
+   TDMA_CLIENTS.
+4. Run <RTNET_PATH>/sbin/rtnet start
+5. Load application module (e.g. by using examples/round_trip_time/run)
 
 
 RTnet is free software, and you are welcome to redistribute it under
@@ -98,8 +72,8 @@ the terms of the GNU General Public License. This program comes with
 ABSOLUTELY NO WARRANTY. See "COPYING" for details.
 
 Contributors:
-Ulrich Marx
-<marx-at-fet.uni-hannover.de>           - core programming
+Ulrich Marx                             - core programming
+<marx-at-fet.uni-hannover.de>
 Nathan Gustavson                        - testing and bug fixing
 Marc Kleine-Budde                       - RTmac, testing, bug fixing, autotools
 <kleine-budde-at-gmx.de>
