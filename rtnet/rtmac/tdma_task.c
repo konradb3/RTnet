@@ -239,7 +239,7 @@ void tdma_task_master(int rtdev_id)
 		time_stamp = rt_get_time_ns();
 		*(RTIME *)data = cpu_to_be64(time_stamp);
 
-		rtmac->packet_tx(skb, skb->rtdev);
+		rtdev_xmit(skb);
 
 		/* Calculate delta_t for the master by assuming the current
 		 * to be the virtual receiption time. Then inform all listings 
@@ -257,7 +257,7 @@ void tdma_task_master(int rtdev_id)
 			skb = rtskb_dequeue(&tdma->tx_queue);
 			rt_sem_signal(&tdma->free);
 
-			rtmac->packet_tx(skb, skb->rtdev);
+			rtdev_xmit(skb);
 		}
 
 	}
@@ -288,7 +288,7 @@ void tdma_task_client(int rtdev_id)
 			skb = rtskb_dequeue(&tdma->tx_queue);
 			rt_sem_signal(&tdma->free);
 			
-			rtmac->packet_tx(skb, skb->rtdev);
+			rtdev_xmit(skb);
 		}
 	}
 

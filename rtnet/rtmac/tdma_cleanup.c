@@ -69,7 +69,7 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
 	while (tdma->tx_queue.qlen >= 1) {
 		skb = rtskb_dequeue(&tdma->tx_queue);
 
-		skb->rtdev->rtmac->packet_tx(skb, skb->rtdev);
+		rtdev_xmit(skb);
 
 		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() tx_queue length=%d\n", tdma->tx_queue.qlen);
 	}
@@ -187,7 +187,7 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
 	while (tdma->tx_queue.qlen >= 1) {
 		skb = rtskb_dequeue(&tdma->tx_queue);
 
-		skb->rtdev->rtmac->packet_tx(skb, skb->rtdev);
+		rtdev_xmit(skb);
 
 		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() tx_queue length=%d\n", tdma->tx_queue.qlen);
 	}

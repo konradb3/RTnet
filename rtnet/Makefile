@@ -16,7 +16,7 @@ rtnet-objs   	:= $(MI_OBJS) $(MIX_OBJS) $(join $(SUB_DIRS),$(SUB_DIRS:%=/%.o))
 ifdef TOPDIR
 include $(TOPDIR)/Rules.make
 else
-all:
+all:		clean	# absolutely weird, but unfortunately necessary because of broken dependencies, so if you are bothered by it please do not just delete this but fix the dependencies; patches are always welcome =:)
 		make -C .. modules SUBDIRS=rtnet
 clean:
 		make -C .. subclean SUBDIRS=rtnet

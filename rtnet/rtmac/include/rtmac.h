@@ -32,8 +32,6 @@ typedef enum {
 
 
 struct rtmac_device {
-	int (*packet_tx)		(struct rtskb *skb, struct rtnet_device *rtdev);
-
 	struct rtnet_device		*rtdev;
 	void				*priv;
 

@@ -1105,7 +1105,7 @@ static void tdma_master_change_offset(struct rtmac_tdma *tdma, u32 ip_addr, unsi
 			
 			offset_msg->offset = offset;
 
-			rtdev->rtmac->packet_tx(skb, rtdev);
+			rtdev_xmit(skb);
 			break;
 		}
 	}
@@ -1236,7 +1236,7 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
 	 * ...and send it
 	 * FIXME: note: transmit, even if mac is active...
 	 */
-	rtdev->rtmac->packet_tx(new_skb, rtdev);
+	rtdev_xmit(new_skb);
 
 	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() sending test packet back to master %u.%u.%u.%u\n", NIPQUAD(tdma->master->ip_addr));
 }
@@ -1388,7 +1388,7 @@ static void tdma_send_station_list(struct rtmac_tdma *tdma, void *hw_addr, void 
 	/*
 	 * send packet
 	 */
-	rtmac->packet_tx(skb, rtdev);
+	rtdev_xmit(skb);
 	
 	return;
 }
