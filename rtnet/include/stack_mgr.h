@@ -23,7 +23,7 @@
 #ifdef __KERNEL__
 
 #include <rtnet_internal.h>
-#include <rtskb.h>
+#include <rtdev.h>
 
 
 /***
@@ -53,7 +53,11 @@ extern void rt_stack_mgr_delete (struct rtnet_mgr *mgr);
 
 extern void rtnetif_rx(struct rtskb *skb);
 extern void rtnetif_tx(struct rtnet_device *rtdev);
-extern void rt_mark_stack_mgr(struct rtnet_device *rtdev);
+
+static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
+{
+    rtos_event_signal(rtdev->stack_event);
+}
 
 
 #endif /* __KERNEL__ */
