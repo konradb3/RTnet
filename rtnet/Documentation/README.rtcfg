@@ -14,48 +14,12 @@ the clients. The clients wait for the invitation, then exchange the configuratio
 with the server, and wait for all other clients to start up.
 
 
-Module Parameters
------------------
+Usage
+-----
 
-    dev=<device>            - name of the device to use (default: rteth0)
-    ips=<ip1>[,<ip2>,...]   - list of client IPs (max. 8), if empty, run as
-                              RTcfg client
-    start_timer=0|1         - set to zero if scheduler already runs
-                              (default: 1 = start scheduling timer)
-    timeout=<ms>            - timeout in ms for waiting on other stations
-                              (default: 120000 ms)
+RTcfg is now configured using the rtcfg tool. Please refer to RTcfg.spec for
+its usage and an example. File exchange is not yet implemented, some parameters
+may not be functional. Sorry, this all is work-in-progress. Stay tuned!
 
 
-Example
--------
-
-Server:
-    insmod rtnet
-    insmod eepro100-rt
-    rtifconfig rteth0 up 192.168.0.1 255.255.255.0
-
-    insmod rtcfg ips=192.168.0.2,192.168.0.3
-    rmmod rtcfg
-
-    insmod rtmac
-    rtifconfig rteth0 mac ...
-
-Client:
-    insmod rtnet
-    insmod eepro100-rt
-    rtifconfig rteth0 up 192.168.0.2 255.255.255.0
-
-    insmod rtcfg
-    rmmod rtcfg
-
-    insmod rtmac
-    rtifconfig rteth0 mac ...
-
-
-NOTE: This description only applies to the preliminary version released with
-      RTnet 0.5.6. As soon as the user mode tool "rtcfg" has been completed and
-      the configuration file distribution has been included, the start-up
-      procedure described above will change.
-
-
-December 2003, Jan Kiszka <jan.kiszka-at-web.de>
+January 2004, Jan Kiszka <jan.kiszka-at-web.de>
