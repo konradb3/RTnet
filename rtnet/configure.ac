@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(RTnet,0.5.6,jan.kiszka@web.de)
+AC_INIT([RTnet],[0.5.6],[jan.kiszka@web.de])
 AC_CONFIG_HEADER(config/config.h)
 AC_CONFIG_AUX_DIR(config/autoconf)
 AC_CONFIG_SRCDIR([rtskb.c])
@@ -456,4 +456,4 @@ rtmac/examples/rtt/Makefile \
 rtcfg/Makefile \
 ])
 
-AC_OUTPUT()
+AC_OUTPUT
