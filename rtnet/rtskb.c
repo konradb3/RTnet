@@ -165,7 +165,8 @@ static inline int new_rtskb(struct rtskb_head *pool)
         rt_printk("RTnet: rtskb allocation failed.\n");
         return -ENOMEM;
     }
-    memset(skb, 0, ALIGN_RTSKB_LEN + len);
+    /* fill the header with zero */
+    memset(skb, 0, ALIGN_RTSKB_LEN);
 
     skb->pool = pool;
     skb->buf_start = ((char *)skb) + ALIGN_RTSKB_LEN;
@@ -236,7 +237,6 @@ void kfree_rtskb(struct rtskb *skb)
     ASSERT(skb != NULL, return;);
     ASSERT(skb->pool != NULL, return;);
 
-    memset(skb->buf_start, 0, skb->buf_len);
     rtskb_queue_tail(skb->pool, skb);
 }
 
