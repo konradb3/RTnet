@@ -30,6 +30,7 @@
 
 #include <rtcfg_chrdev.h>
 #include <rtdev.h>
+#include <rtnet_internal.h>
 #include <rtnet_rtpc.h>
 
 
@@ -51,32 +52,35 @@ struct rtcfg_station {
 };
 
 struct rtcfg_device {
-    RTCFG_MAIN_STATE     state;
-    u32                  other_stations;
-    u32                  stations_found;
-    u32                  stations_ready;
-    rtos_res_lock_t      dev_lock;
-    struct list_head     event_calls;
-    rtos_spinlock_t      event_calls_lock;
-    rtos_task_t          timer_task;
-    unsigned int         flags;
+    RTCFG_MAIN_STATE        state;
+    u32                     other_stations;
+    u32                     stations_found;
+    u32                     stations_ready;
+    rtos_res_lock_t         dev_lock;
+    struct list_head        event_calls;
+    rtos_spinlock_t         event_calls_lock;
+    rtos_task_t             timer_task;
+    unsigned int            flags;
+#ifdef CONFIG_PROC_FS
+    struct proc_dir_entry   *proc_entry;
+#endif
 
     /* client related */
-    unsigned int         addr_type;
-    u8                   srv_mac_addr[ETH_ALEN]; /* Ethernet-specific! */
-    u8                   *stage2_buffer;
-    u32                  cfg_len;
-    u32                  cfg_offs;
-    unsigned int         packet_counter;
-    u32                  chain_len;
-    struct rtskb         *stage2_chain;
-    u32                  max_stations;
-    struct rtcfg_station *station_addr_list;
+    unsigned int            addr_type;
+    u8                      srv_mac_addr[ETH_ALEN]; /* Ethernet-specific! */
+    u8                      *stage2_buffer;
+    u32                     cfg_len;
+    u32                     cfg_offs;
+    unsigned int            packet_counter;
+    u32                     chain_len;
+    struct rtskb            *stage2_chain;
+    u32                     max_stations;
+    struct rtcfg_station    *station_addr_list;
 
     /* server related */
-    u32                  clients_configured;
-    struct list_head     conn_list;
-    unsigned int         burstrate;
+    u32                     clients_configured;
+    struct list_head        conn_list;
+    unsigned int            burstrate;
 };
 
 

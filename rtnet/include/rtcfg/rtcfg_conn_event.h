@@ -29,6 +29,7 @@
 
 #include <rtcfg_chrdev.h>
 #include <rtcfg/rtcfg_file.h>
+#include <rtnet_internal.h>
 
 
 typedef enum {
@@ -39,20 +40,23 @@ typedef enum {
 } RTCFG_CONN_STATE;
 
 struct rtcfg_connection {
-    struct list_head  entry;
-    int               ifindex;
-    RTCFG_CONN_STATE  state;
-    u8                mac_addr[MAX_ADDR_LEN];
-    unsigned int      addr_type;
+    struct list_head        entry;
+    int                     ifindex;
+    RTCFG_CONN_STATE        state;
+    u8                      mac_addr[MAX_ADDR_LEN];
+    unsigned int            addr_type;
     union {
-        u32           ip_addr;
+        u32                 ip_addr;
     } addr;
-    void              *stage1_data;
-    size_t            stage1_size;
-    struct rtcfg_file *stage2_file;
-    u32               cfg_offs;
-    unsigned int      flags;
-    unsigned int      burstrate;
+    void                    *stage1_data;
+    size_t                  stage1_size;
+    struct rtcfg_file       *stage2_file;
+    u32                     cfg_offs;
+    unsigned int            flags;
+    unsigned int            burstrate;
+#ifdef CONFIG_PROC_FS
+    struct proc_dir_entry   *proc_entry;
+#endif
 };
 
 

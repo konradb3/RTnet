@@ -31,23 +31,32 @@
 
 #ifdef CONFIG_PROC_FS
 
-extern struct semaphore nrt_proc_sem;
+extern struct semaphore nrt_proc_lock;
 
 
-#define rtcfg_lock_proc()   down_interruptible(&nrt_proc_sem)
-#define rtcfg_unlock_proc() up(&nrt_proc_sem)
-
-
-void rtcfg_update_proc(void);
+void rtcfg_update_proc_entries(int ifindex);
+void rtcfg_remove_proc_entries(int ifindex);
 
 int rtcfg_init_proc(void);
 void rtcfg_cleanup_proc(void);
 
+
+static inline void rtcfg_lockwr_proc(int ifindex)
+{
+    down(&nrt_proc_lock);
+    rtcfg_remove_proc_entries(ifindex);
+}
+
+static inline void rtcfg_unlockwr_proc(int ifindex)
+{
+    rtcfg_update_proc_entries(ifindex);
+    up(&nrt_proc_lock);
+}
+
 #else
 
-#define rtcfg_lock_proc()
-#define rtcfg_unlock_proc()
-#define rtcfg_update_proc()
+#define rtcfg_lock_proc(x)
+#define rtcfg_unlock_proc(x)
 
 #endif /* CONFIG_PROC_FS */
 

@@ -24,29 +24,270 @@
 
 #include <asm/semaphore.h>
 
+#include <rtdev.h>
 #include <rtnet_internal.h>
+#include <rtcfg/rtcfg_conn_event.h>
+#include <rtcfg/rtcfg_event.h>
+#include <rtcfg/rtcfg_frame.h>
 
 
 #ifdef CONFIG_PROC_FS
-struct semaphore        nrt_proc_sem;
-struct proc_dir_entry   *rtcfg_proc_root;
+DECLARE_MUTEX(nrt_proc_lock);
+static struct proc_dir_entry    *rtcfg_proc_root;
 
 
 
-void rtcfg_update_proc(void)
+int rtcfg_proc_read_dev_state(char *buf, char **start, off_t offset, int count,
+                              int *eof, void *data)
 {
+    struct rtcfg_device *rtcfg_dev = data;
+    char *state_name[] = { "OFF", "SERVER_RUNNING", "CLIENT_0", "CLIENT_1",
+                           "CLIENT_ANNOUNCED", "CLIENT_ALL_KNOWN",
+                           "CLIENT_ALL_FRAMES", "CLIENT_2", "CLIENT_READY" };
+    RTNET_PROC_PRINT_VARS;
+
+
+    RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
+                     "flags:\t\t\t%02X\n"
+                     "other stations:\t\t%d\n"
+                     "stations found:\t\t%d\n"
+                     "stations ready:\t\t%d\n",
+                     rtcfg_dev->state, state_name[rtcfg_dev->state],
+                     rtcfg_dev->flags, rtcfg_dev->other_stations,
+                     rtcfg_dev->stations_found, rtcfg_dev->stations_ready);
+
+    if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
+        RTNET_PROC_PRINT("configured clients:\t%d\n"
+                         "burstrate:\t\t%d\n",
+                         rtcfg_dev->clients_configured,
+                         rtcfg_dev->burstrate);
+    } else if (rtcfg_dev->state != RTCFG_MAIN_OFF) {
+        RTNET_PROC_PRINT("address type:\t\t%d\n"
+                         "server address:\t\t%02X:%02X:%02X:%02X:%02X:%02X\n"
+                         "stage 2 config:\t\t%d/%d\n",
+                         rtcfg_dev->addr_type,
+                         rtcfg_dev->srv_mac_addr[0],
+                         rtcfg_dev->srv_mac_addr[1],
+                         rtcfg_dev->srv_mac_addr[2],
+                         rtcfg_dev->srv_mac_addr[3],
+                         rtcfg_dev->srv_mac_addr[4],
+                         rtcfg_dev->srv_mac_addr[5],
+                         rtcfg_dev->cfg_offs, rtcfg_dev->cfg_len);
+    }
+
+    RTNET_PROC_PRINT_DONE;
 }
+
+
+
+int rtcfg_proc_read_stations(char *buf, char **start, off_t offset, int count,
+                             int *eof, void *data)
+{
+    struct rtcfg_device     *rtcfg_dev = data;
+    struct list_head        *entry;
+    struct rtcfg_connection *conn;
+    int                     i;
+    RTNET_PROC_PRINT_VARS;
+
+
+    if (down_interruptible(&nrt_proc_lock))
+        return -ERESTARTSYS;
+
+    if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
+        list_for_each(entry, &rtcfg_dev->conn_list) {
+            conn = list_entry(entry, struct rtcfg_connection, entry);
+
+            if (conn->state != RTCFG_CONN_SEARCHING)
+                RTNET_PROC_PRINT("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
+                                 conn->mac_addr[0], conn->mac_addr[1],
+                                 conn->mac_addr[2], conn->mac_addr[3],
+                                 conn->mac_addr[4], conn->mac_addr[5],
+                                 conn->flags);
+        }
+    } else if (rtcfg_dev->station_addr_list) {
+        for (i = 0; i < rtcfg_dev->stations_found; i++)
+            RTNET_PROC_PRINT("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
+                             rtcfg_dev->station_addr_list[i].mac_addr[0],
+                             rtcfg_dev->station_addr_list[i].mac_addr[1],
+                             rtcfg_dev->station_addr_list[i].mac_addr[2],
+                             rtcfg_dev->station_addr_list[i].mac_addr[3],
+                             rtcfg_dev->station_addr_list[i].mac_addr[4],
+                             rtcfg_dev->station_addr_list[i].mac_addr[5],
+                             rtcfg_dev->station_addr_list[i].flags);
+    }
+
+    up(&nrt_proc_lock);
+    RTNET_PROC_PRINT_DONE;
+}
+
+
+
+int rtcfg_proc_read_conn_state(char *buf, char **start, off_t offset,
+                               int count, int *eof, void *data)
+{
+    struct rtcfg_connection *conn = data;
+    char *state_name[] = { "SEARCHING", "STAGE_1", "STAGE_2", "READY" };
+    RTNET_PROC_PRINT_VARS;
+
+
+    RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
+                     "flags:\t\t\t%02X\n"
+                     "stage 1 size:\t\t%d\n"
+                     "stage 2 filename:\t%s\n"
+                     "stage 2 size:\t\t%d\n"
+                     "stage 2 offset:\t\t%d\n"
+                     "burstrate:\t\t%d\n"
+                     "mac address:\t\t%02X:%02X:%02X:%02X:%02X:%02X\n",
+                     conn->state, state_name[conn->state], conn->flags,
+                     conn->stage1_size,
+                     (conn->stage2_file)? conn->stage2_file->name: "-",
+                     (conn->stage2_file)? conn->stage2_file->size: 0,
+                     conn->cfg_offs, conn->burstrate,
+                     conn->mac_addr[0], conn->mac_addr[1], conn->mac_addr[2],
+                     conn->mac_addr[3], conn->mac_addr[4], conn->mac_addr[5]);
+
+    if (conn->addr_type == RTCFG_ADDR_IP)
+        RTNET_PROC_PRINT("ip:\t\t\t%u.%u.%u.%u\n",
+                         NIPQUAD(conn->addr.ip_addr));
+
+    RTNET_PROC_PRINT_DONE;
+}
+
+
+
+void rtcfg_update_proc_entries(int ifindex)
+{
+    struct list_head        *entry;
+    struct rtcfg_connection *conn;
+    char                    name_buf[64];
+
+
+    list_for_each(entry, &device[ifindex].conn_list) {
+        conn = list_entry(entry, struct rtcfg_connection, entry);
+
+        switch (conn->addr_type) {
+            case RTCFG_ADDR_IP:
+                snprintf(name_buf, 64, "CLIENT_%u.%u.%u.%u",
+                         NIPQUAD(conn->addr.ip_addr));
+                break;
+
+            default: /* RTCFG_ADDR_MAC */
+                snprintf(name_buf, 64,
+                         "CLIENT_%02X%02X%02X%02X%02X%02X",
+                         conn->mac_addr[0], conn->mac_addr[1],
+                         conn->mac_addr[2], conn->mac_addr[3],
+                         conn->mac_addr[4], conn->mac_addr[5]);
+                break;
+        }
+        conn->proc_entry = create_proc_entry(name_buf,
+            S_IFREG | S_IRUGO | S_IWUSR, device[ifindex].proc_entry);
+        if (!conn->proc_entry)
+            continue;
+
+        conn->proc_entry->read_proc = rtcfg_proc_read_conn_state;
+        conn->proc_entry->data      = conn;
+    }
+}
+
+
+
+void rtcfg_remove_proc_entries(int ifindex)
+{
+    struct list_head        *entry;
+    struct rtcfg_connection *conn;
+
+
+    list_for_each(entry, &device[ifindex].conn_list) {
+        conn = list_entry(entry, struct rtcfg_connection, entry);
+
+        remove_proc_entry(conn->proc_entry->name,
+                          device[ifindex].proc_entry);
+    }
+}
+
+
+
+void rtcfg_new_rtdev(struct rtnet_device *rtdev)
+{
+    struct rtcfg_device *dev = &device[rtdev->ifindex];
+    struct proc_dir_entry   *proc_entry;
+
+
+    down(&nrt_proc_lock);
+
+    dev->proc_entry = create_proc_entry(rtdev->name, S_IFDIR, rtcfg_proc_root);
+    if (!dev->proc_entry)
+        goto exit;
+
+    proc_entry = create_proc_entry("state", S_IFREG | S_IRUGO | S_IWUSR,
+                                   dev->proc_entry);
+    if (!proc_entry)
+        goto exit;
+    proc_entry->read_proc = rtcfg_proc_read_dev_state;
+    proc_entry->data      = dev;
+
+    proc_entry = create_proc_entry("station_list", S_IFREG | S_IRUGO | S_IWUSR,
+                                   dev->proc_entry);
+    if (!proc_entry)
+        goto exit;
+    proc_entry->read_proc = rtcfg_proc_read_stations;
+    proc_entry->data      = dev;
+
+  exit:
+    up(&nrt_proc_lock);
+}
+
+
+
+void rtcfg_remove_rtdev(struct rtnet_device *rtdev)
+{
+    struct rtcfg_device *dev = &device[rtdev->ifindex];
+
+
+    // To-Do: issue down command
+
+    down(&nrt_proc_lock);
+
+    if (dev->proc_entry) {
+        rtcfg_remove_proc_entries(rtdev->ifindex);
+
+        remove_proc_entry("station_list", dev->proc_entry);
+        remove_proc_entry("state", dev->proc_entry);
+        remove_proc_entry(dev->proc_entry->name, rtcfg_proc_root);
+        dev->proc_entry = NULL;
+    }
+
+    up(&nrt_proc_lock);
+}
+
+
+
+static struct rtdev_register_hook register_hook = {
+    register_device:    rtcfg_new_rtdev,
+    unregister_device:  rtcfg_remove_rtdev
+};
 
 
 
 int rtcfg_init_proc(void)
 {
-    sema_init(&nrt_proc_sem, 1);
+    struct rtnet_device *rtdev;
+    int                 i;
+
 
     rtcfg_proc_root = create_proc_entry("rtcfg", S_IFDIR, rtnet_proc_root);
     if (!rtcfg_proc_root)
         goto err1;
 
+    for (i = 0; i < MAX_RT_DEVICES; i++) {
+        rtdev = rtdev_get_by_index(i);
+        if (rtdev) {
+            rtcfg_new_rtdev(rtdev);
+            rtdev_dereference(rtdev);
+        }
+    }
+
+    rtdev_add_register_hook(&register_hook);
     return 0;
 
   err1:
@@ -58,6 +299,19 @@ int rtcfg_init_proc(void)
 
 void rtcfg_cleanup_proc(void)
 {
+    struct rtnet_device *rtdev;
+    int                 i;
+
+
+    rtdev_del_register_hook(&register_hook);
+
+    for (i = 0; i < MAX_RT_DEVICES; i++) {
+        rtdev = rtdev_get_by_index(i);
+        if (rtdev) {
+            rtcfg_remove_rtdev(rtdev);
+            rtdev_dereference(rtdev);
+        }
+    }
 
     remove_proc_entry("rtcfg", rtnet_proc_root);
 }
