@@ -100,29 +100,30 @@ static int rtnet_read_proc_rtskb(char *buf, char **start, off_t offset, int coun
 static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
                                    int count, int *eof, void *data)
 {
+    const char verstr[] =
+        "RTnet " RTNET_VERSION " - built on " __DATE__ " " __TIME__ "\n"
+        "RTcap:      "
+#ifdef CONFIG_RTNET_RTCAP
+            "yes\n"
+#else
+            "no\n"
+#endif
+        "rtnetproxy: "
+#ifdef CONFIG_RTNET_PROXY
+            "yes\n"
+#else
+            "no\n"
+#endif
+        "bug checks: "
+#ifdef CONFIG_RTNET_CHECKED
+            "yes\n";
+#else
+            "no\n";
+#endif
     RTNET_PROC_PRINT_VARS;
 
-    RTNET_PROC_PRINT("RTnet " RTNET_VERSION " - built on " __DATE__ " "
-                     __TIME__"\n"
-                     "RTcap:      "
-#ifdef CONFIG_RTNET_RTCAP
-                        "yes\n"
-#else
-                        "no\n"
-#endif
-                     "rtnetproxy: "
-#ifdef CONFIG_RTNET_PROXY
-                        "yes\n"
-#else
-                        "no\n"
-#endif
-                     "bug checks: "
-#ifdef CONFIG_RTNET_CHECKED
-                        "yes\n"
-#else
-                        "no\n"
-#endif
-                        );
+
+    RTNET_PROC_PRINT(verstr);
 
     RTNET_PROC_PRINT_DONE;
 }

@@ -66,7 +66,7 @@ struct rtmac_disc {
 
     struct rtnet_ioctls ioctls;
 
-    struct rtmac_proc_entry proc_entries[];
+    struct rtmac_proc_entry proc_entries[0];
 };
 
 

@@ -102,11 +102,10 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
                      net_hash_key_shift, mask);
 #endif /* CONFIG_RTNET_NETWORK_ROUTING */
 
-    RTNET_PROC_PRINT("IP Router:\t\t\t"
 #ifdef CONFIG_RTNET_ROUTER
-                         "yes\n");
+    RTNET_PROC_PRINT("IP Router:\t\t\tyes\n");
 #else
-                         "no\n");
+    RTNET_PROC_PRINT("IP Router:\t\t\tno\n");
 #endif
 
     RTNET_PROC_PRINT_DONE;
