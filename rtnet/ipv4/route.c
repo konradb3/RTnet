@@ -1,4 +1,4 @@
-/* route.c - routing tables 
+/* route.c - routing tables
  *
  * Copyright (C) 1999    Lineo, Inc
  *               1999,2002 David A. Schleef <ds@schleef.org>
@@ -20,67 +20,27 @@
  */
 
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET     An implementation of the TCP/IP protocol suite for the LINUX
+ *          operating system.  INET is implemented using the  BSD Socket
+ *          interface as the means of communication with the user level.
  *
- *		ROUTE - implementation of the IP router.
+ *          ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.8 2003/05/27 09:50:41 kiszka Exp $
+ * Version: $Id: route.c,v 1.9 2003/09/05 10:45:59 kiszka Exp $
  *
- * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
- *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
- *		Alan Cox, <gw4pts@gw4pts.ampr.org>
- *		Linus Torvalds, <Linus.Torvalds@helsinki.fi>
- *		Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ * Authors: Ross Biro, <bir7@leland.Stanford.Edu>
+ *          Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
+ *          Alan Cox, <gw4pts@gw4pts.ampr.org>
+ *          Linus Torvalds, <Linus.Torvalds@helsinki.fi>
+ *          Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  * Fixes:
- *		Alan Cox	:	Verify area fixes.
- *		Alan Cox	:	cli() protects routing changes
- *		Rui Oliveira	:	ICMP routing table updates
- *		(rco@di.uminho.pt)	Routing table insertion and update
- *		Linus Torvalds	:	Rewrote bits to be sensible
- *		Alan Cox	:	Added BSD route gw semantics
- *		Alan Cox	:	Super /proc >4K 
- *		Alan Cox	:	MTU in route table
- *		Alan Cox	: 	MSS actually. Also added the window
- *					clamper.
- *		Sam Lantinga	:	Fixed route matching in rt_del()
- *		Alan Cox	:	Routing cache support.
- *		Alan Cox	:	Removed compatibility cruft.
- *		Alan Cox	:	RTF_REJECT support.
- *		Alan Cox	:	TCP irtt support.
- *		Jonathan Naylor	:	Added Metric support.
- *	Miquel van Smoorenburg	:	BSD API fixes.
- *	Miquel van Smoorenburg	:	Metrics.
- *		Alan Cox	:	Use __u32 properly
- *		Alan Cox	:	Aligned routing errors more closely with BSD
- *					our system is still very different.
- *		Alan Cox	:	Faster /proc handling
- *	Alexey Kuznetsov	:	Massive rework to support tree based routing,
- *					routing caches and better behaviour.
- *		
- *		Olaf Erb	:	irtt wasn't being copied right.
- *		Bjorn Ekwall	:	Kerneld route support.
- *		Alan Cox	:	Multicast fixed (I hope)
- * 		Pavel Krauz	:	Limited broadcast fixed
- *		Mike McLagan	:	Routing by source
- *	Alexey Kuznetsov	:	End of old history. Splitted to fib.c and
- *					route.c and rewritten from scratch.
- *		Andi Kleen	:	Load-limit warning messages.
- *	Vitaly E. Lavrov	:	Transparent proxy revived after year coma.
- *	Vitaly E. Lavrov	:	Race condition in ip_route_input_slow.
- *	Tobias Ringstrom	:	Uninitialized res.type in ip_route_output_slow.
- *	Vladimir V. Ivanov	:	IP rule info (flowid) is really useful.
- *		Marc Boucher	:	routing by fwmark
+ *      Billa           :   added rt_ip_route_del_specific
  *
- * RTnet-Fixes:
- *		Billa		:	added rt_ip_route_del_specific
- *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
+ *          This program is free software; you can redistribute it and/or
+ *          modify it under the terms of the GNU General Public License
+ *          as published by the Free Software Foundation; either version
+ *          2 of the License, or (at your option) any later version.
  */
 
 #include <rtai.h>
@@ -92,6 +52,7 @@
 #include <rtai_proc_fs.h>
 #endif /* CONFIG_PROC_FS */
 
+#include <linux/in.h>
 #include <ipv4/arp.h>
 #include <ipv4/route.h>
 
@@ -107,228 +68,238 @@ struct rt_rtable *rt_rtables_generic;
 
 
 /***
- *	proc filesystem section "/proc/rtai/route"
- */ 
+ *  proc filesystem section "/proc/rtai/route"
+ */
 #ifdef CONFIG_PROC_FS
-static int rt_route_read_proc(char *page, char **start, off_t off, int count, int *eof, void *data) 
+static int rt_route_read_proc(char *page, char **start, off_t off, int count,
+                              int *eof, void *data)
 {
-	PROC_PRINT_VARS;
-	struct rt_rtable *rt_entry;
-	
-	PROC_PRINT("specific routing table\n")
-	PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\t\t\tdev\n");
-	for (rt_entry=rt_rtables; rt_entry!=NULL; rt_entry=rt_entry->next) {
-		union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
-		unsigned char *hw_dst;
-		char dev_name[IFNAMSIZ+1];
-		strncpy(dev_name, rt_entry->rt_dev->name, IFNAMSIZ);
-		dev_name[IFNAMSIZ] = '\0';
-		
-		src.l=rt_entry->rt_src;
-		dst.l=rt_entry->rt_dst;
-		dst_mask.l=rt_entry->rt_dst_mask;
-		hw_dst = rt_entry->rt_dst_mac_addr;
-		
-		PROC_PRINT("%d.%d.%d.%d\t%d.%d.%d.%d\t%d.%d.%d.%d\t%02x:%02x:%02x:%02x:%02x:%02x\t%s\n", 
-		           src.c[0], src.c[1], src.c[2], src.c[3], 
-		           dst.c[0], dst.c[1], dst.c[2], dst.c[3], 
-		           dst_mask.c[0], dst_mask.c[1], dst_mask.c[2], dst_mask.c[3], 
-		           hw_dst[0], hw_dst[1], hw_dst[2], hw_dst[3], hw_dst[4], hw_dst[5], 
-		           dev_name);
-	}	
+    PROC_PRINT_VARS;
+    struct rt_rtable *rt_entry;
 
-	PROC_PRINT("\ngeneric routing table\n")
-	PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\n");
-	for (rt_entry=rt_rtables_generic; rt_entry!=NULL; rt_entry=rt_entry->next) {
-		union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
-		unsigned char *hw_dst;
-		
-		src.l=rt_entry->rt_src;
-		dst.l=rt_entry->rt_dst;
-		dst_mask.l=rt_entry->rt_dst_mask;
-		hw_dst = rt_entry->rt_dst_mac_addr;
-		
-		PROC_PRINT("%d.%d.%d.%d\t%d.%d.%d.%d\t%d.%d.%d.%d\t%02x:%02x:%02x:%02x:%02x:%02x\n", 
-		           src.c[0], src.c[1], src.c[2], src.c[3], 
-		           dst.c[0], dst.c[1], dst.c[2], dst.c[3], 
-		           dst_mask.c[0], dst_mask.c[1], dst_mask.c[2], dst_mask.c[3], 
-			   hw_dst[0], hw_dst[1], hw_dst[2], hw_dst[3], hw_dst[4], hw_dst[5]);
-	}	
-	PROC_PRINT_DONE;
+    PROC_PRINT("specific routing table\n")
+    PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\t\t\tdev\n");
+    for (rt_entry=rt_rtables; rt_entry!=NULL; rt_entry=rt_entry->next) {
+        union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
+        unsigned char *hw_dst;
+        char dev_name[IFNAMSIZ+1];
+        strncpy(dev_name, rt_entry->rt_dev->name, IFNAMSIZ);
+        dev_name[IFNAMSIZ] = '\0';
+
+        src.l=rt_entry->rt_src;
+        dst.l=rt_entry->rt_dst;
+        dst_mask.l=rt_entry->rt_dst_mask;
+        hw_dst = rt_entry->rt_dst_mac_addr;
+
+        PROC_PRINT("%d.%d.%d.%d\t%d.%d.%d.%d\t%d.%d.%d.%d\t"
+                   "%02x:%02x:%02x:%02x:%02x:%02x\t%s\n",
+                   src.c[0], src.c[1], src.c[2], src.c[3],
+                   dst.c[0], dst.c[1], dst.c[2], dst.c[3],
+                   dst_mask.c[0], dst_mask.c[1], dst_mask.c[2], dst_mask.c[3],
+                   hw_dst[0], hw_dst[1], hw_dst[2], hw_dst[3], hw_dst[4],
+                   hw_dst[5],
+                   dev_name);
+    }
+
+    PROC_PRINT("\ngeneric routing table\n")
+    PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\n");
+    for (rt_entry=rt_rtables_generic; rt_entry!=NULL; rt_entry=rt_entry->next) {
+        union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
+        unsigned char *hw_dst;
+
+        src.l=rt_entry->rt_src;
+        dst.l=rt_entry->rt_dst;
+        dst_mask.l=rt_entry->rt_dst_mask;
+        hw_dst = rt_entry->rt_dst_mac_addr;
+
+        PROC_PRINT("%d.%d.%d.%d\t%d.%d.%d.%d\t%d.%d.%d.%d\t"
+                   "%02x:%02x:%02x:%02x:%02x:%02x\n",
+                   src.c[0], src.c[1], src.c[2], src.c[3],
+                   dst.c[0], dst.c[1], dst.c[2], dst.c[3],
+                   dst_mask.c[0], dst_mask.c[1], dst_mask.c[2], dst_mask.c[3],
+                   hw_dst[0], hw_dst[1], hw_dst[2], hw_dst[3], hw_dst[4],
+                   hw_dst[5]);
+    }
+    PROC_PRINT_DONE;
 }
+
+
 
 static int rt_route_proc_register(void)
 {
-	static struct proc_dir_entry *proc_rt_arp;
-  
-	proc_rt_arp = create_proc_entry("route", S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
-	if (!proc_rt_arp) {
-		rt_printk("Unable to initialize: /proc/rtai/route\n");
-		return -1;
-	}
-	proc_rt_arp->read_proc = rt_route_read_proc;
+    static struct proc_dir_entry *proc_rt_arp;
 
-	return 0;
-}       
+    proc_rt_arp = create_proc_entry("route", S_IFREG | S_IRUGO | S_IWUSR,
+                                    rtai_proc_root);
+    if (!proc_rt_arp) {
+        rt_printk("Unable to initialize: /proc/rtai/route\n");
+        return -1;
+    }
+    proc_rt_arp->read_proc = rt_route_read_proc;
 
-static void rt_route_proc_unregister(void) 
-{
-	remove_proc_entry ("route", rtai_proc_root);
+    return 0;
 }
-#endif	/* CONFIG_PROC_FS */
+
+static void rt_route_proc_unregister(void)
+{
+    remove_proc_entry ("route", rtai_proc_root);
+}
+#endif  /* CONFIG_PROC_FS */
 
 
 
 
 /***
- *	rt_alloc 
+ *  rt_alloc
  *
  */
 static struct rt_rtable *rt_alloc(void)
 {
-	struct rt_rtable *rt;
+    struct rt_rtable *rt;
 
-	rt=rt_rtable_free_list;
-	if ( rt ) {
-		rt_rtable_free_list=rt->next;
-		rt->use_count=1;
-		rt->next=NULL;
-		rt->prev=NULL;
-	} else {
-		rt_printk("RTnet: no more routes\n");
-	}
+    rt=rt_rtable_free_list;
+    if ( rt ) {
+        rt_rtable_free_list=rt->next;
+        rt->use_count=1;
+        rt->next=NULL;
+        rt->prev=NULL;
+    } else {
+        rt_printk("RTnet: no more routes\n");
+    }
 
-	return rt;
+    return rt;
 }
 
 
 
 
 /***
- *	rt_ip_route_add: add a new route 
+ *  rt_ip_route_add: add a new route
  *
- *	@rtdev		the outgoing rtnet_device 
- *	@addr		IPv4-Address
- *	@mask		Subnet-Mask
+ *  @rtdev      the outgoing rtnet_device
+ *  @addr       IPv4-Address
+ *  @mask       Subnet-Mask
  *
  */
-struct rt_rtable *rt_ip_route_add(struct rtnet_device *rtdev, u32 addr, u32 mask)
+struct rt_rtable *rt_ip_route_add(struct rtnet_device *rtdev,
+                                  u32 addr, u32 mask)
 {
-	struct rt_rtable *rt;
+    struct rt_rtable *rt;
 
-	rt=rt_alloc();
-	if (!rt)
-		return NULL;
+    rt=rt_alloc();
+    if (!rt)
+        return NULL;
 
-	rt->rt_dst=addr;
-	rt->rt_dst_mask=mask;
-	rt->rt_src=rtdev->local_addr;
-	rt->rt_dev=rtdev;
+    rt->rt_dst=addr;
+    rt->rt_dst_mask=mask;
+    rt->rt_src=rtdev->local_addr;
+    rt->rt_dev=rtdev;
 
-	if( rt_rtables_generic != NULL)	
-		rt_rtables_generic->prev = rt;
-	rt->next=rt_rtables_generic;
-	rt_rtables_generic=rt;
+    if( rt_rtables_generic != NULL)
+        rt_rtables_generic->prev = rt;
+    rt->next=rt_rtables_generic;
+    rt_rtables_generic=rt;
 
-	return rt;
+    return rt;
 }
 
 
 
 
 /***
- *	ip_route_add_specific
+ *  ip_route_add_specific
  */
-struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev, u32 addr, unsigned char *hw_addr)
+struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev,
+                                           u32 addr, unsigned char *hw_addr)
 {
-	struct rt_rtable *rt;
+    struct rt_rtable *rt;
 
-	rt = rt_alloc();
-	if (!rt)
-		return NULL;
+    rt = rt_alloc();
+    if (!rt)
+        return NULL;
 
-	rt->rt_dst=addr;
-	rt->rt_dst_mask=0xffffffff;	/* it's specific, safer */
-	rt->rt_src=rtdev->local_addr;
-	rt->rt_dev=rtdev;
-	rt->rt_ifindex=rtdev->ifindex;
-	
-	memcpy(rt->rt_dst_mac_addr, hw_addr, RT_ARP_ADDR_LEN);
+    rt->rt_dst=addr;
+    rt->rt_dst_mask=0xffffffff; /* it's specific, safer */
+    rt->rt_src=rtdev->local_addr;
+    rt->rt_dev=rtdev;
+    rt->rt_ifindex=rtdev->ifindex;
 
-	if( rt_rtables != NULL)
-		rt_rtables->prev = rt;
+    memcpy(rt->rt_dst_mac_addr, hw_addr, RT_ARP_ADDR_LEN);
 
-	rt->next=rt_rtables;
-	rt_rtables=rt;
+    if( rt_rtables != NULL)
+        rt_rtables->prev = rt;
 
-	return rt;
+    rt->next=rt_rtables;
+    rt_rtables=rt;
+
+    return rt;
 }
 
 
 
 /***
- *	rt_ip_route_del: delete route
+ *  rt_ip_route_del: delete route
  *
  */
 void rt_ip_route_del(struct rtnet_device *rtdev)
 {
-	struct rt_rtable *rt = rt_rtables_generic;
-	struct rt_rtable *next;
+    struct rt_rtable *rt = rt_rtables_generic;
+    struct rt_rtable *next;
 
-	// remove entries from the generic routing table
-	while(rt != NULL) {
-		next = rt->next;
+    /* remove entries from the generic routing table */
+    while(rt != NULL) {
+        next = rt->next;
 
-		if( rt->rt_dev == rtdev && rt->rt_src == rtdev->local_addr ) {
-			struct rt_rtable *prev = rt->prev;
-			
-			if( prev != NULL )
-				prev->next = next;
-			if( next != NULL )
-				next->prev = prev;
+        if( rt->rt_dev == rtdev && rt->rt_src == rtdev->local_addr ) {
+            struct rt_rtable *prev = rt->prev;
 
-			memset(rt, 0, sizeof(struct rt_rtable));
+            if( prev != NULL )
+                prev->next = next;
+            if( next != NULL )
+                next->prev = prev;
 
-			// add rt_rtable to free list
-			rt->prev = NULL;
-			rt->next = rt_rtable_free_list;
-			rt_rtable_free_list = rt;
+            memset(rt, 0, sizeof(struct rt_rtable));
 
-			// if we deleted the first elemet, set head to next
-			if(rt == rt_rtables_generic)
-				rt_rtables_generic = next;
-		}
+            /* add rt_rtable to free list */
+            rt->prev = NULL;
+            rt->next = rt_rtable_free_list;
+            rt_rtable_free_list = rt;
 
-		rt = next;
-	}
+            /* if we deleted the first elemet, set head to next */
+            if(rt == rt_rtables_generic)
+                rt_rtables_generic = next;
+        }
 
-	//now the same for the specific one
-	rt = rt_rtables;
-	while(rt != NULL) {
-		next = rt->next;
+        rt = next;
+    }
 
-		if( rt->rt_dev == rtdev && rt->rt_src == rtdev->local_addr ) {
-			struct rt_rtable *prev = rt->prev;
-			
-			if( prev != NULL )
-				prev->next = next;
-			if( next != NULL )
-				next->prev = prev;
+    /* now the same for the specific one */
+    rt = rt_rtables;
+    while(rt != NULL) {
+        next = rt->next;
 
-			memset(rt, 0, sizeof(struct rt_rtable));
+        if( rt->rt_dev == rtdev && rt->rt_src == rtdev->local_addr ) {
+            struct rt_rtable *prev = rt->prev;
 
-			// add rt_rtable to free list
-			rt->prev = NULL;
-			rt->next = rt_rtable_free_list;
-			rt_rtable_free_list = rt;
+            if( prev != NULL )
+                prev->next = next;
+            if( next != NULL )
+                next->prev = prev;
 
-			// if we deleted the first elemet, set head to next
-			if(rt == rt_rtables)
-				rt_rtables = next;
-		}
+            memset(rt, 0, sizeof(struct rt_rtable));
 
-		rt = next;
-	}
+            /* add rt_rtable to free list */
+            rt->prev = NULL;
+            rt->next = rt_rtable_free_list;
+            rt_rtable_free_list = rt;
+
+            /* if we deleted the first elemet, set head to next */
+            if(rt == rt_rtables)
+                rt_rtables = next;
+        }
+
+        rt = next;
+    }
 
 
 }
@@ -336,240 +307,238 @@ void rt_ip_route_del(struct rtnet_device *rtdev)
 
 
 /***
- *	rt_ip_route_del_specific: delete an specific route
+ *  rt_ip_route_del_specific: delete an specific route
  *
  */
 void rt_ip_route_del_specific(struct rtnet_device *rtdev, u32 addr)
 {
-	struct rt_rtable *rt = rt_rtables_generic;
-	struct rt_rtable *next;
+    struct rt_rtable *rt = rt_rtables_generic;
+    struct rt_rtable *next;
 
-	// remove entries from the specific routing table
-	rt = rt_rtables;
-	while(rt != NULL) {
-		next = rt->next;
+    /* remove entries from the specific routing table */
+    rt = rt_rtables;
+    while(rt != NULL) {
+        next = rt->next;
 
-		if( rt->rt_dev == rtdev && rt->rt_dst == addr ) {
-			struct rt_rtable *prev = rt->prev;
+        if( rt->rt_dev == rtdev && rt->rt_dst == addr ) {
+            struct rt_rtable *prev = rt->prev;
 
-			if( prev != NULL )
-				prev->next = next;
-			if( next != NULL )
-				next->prev = prev;
+            if( prev != NULL )
+                prev->next = next;
+            if( next != NULL )
+                next->prev = prev;
 
-			memset(rt, 0, sizeof(struct rt_rtable));
+            memset(rt, 0, sizeof(struct rt_rtable));
 
-			// add rt_rtable to free list
-			rt->prev = NULL;
-			rt->next = rt_rtable_free_list;
-			rt_rtable_free_list = rt;
+            /* add rt_rtable to free list */
+            rt->prev = NULL;
+            rt->next = rt_rtable_free_list;
+            rt_rtable_free_list = rt;
 
-			// if we deleted the first elemet, set head to next
-			if(rt == rt_rtables)
-				rt_rtables = next;
-		}
-		rt = next;
-	}
+            /* if we deleted the first elemet, set head to next */
+            if(rt == rt_rtables)
+                rt_rtables = next;
+        }
+        rt = next;
+    }
 }
 
 
 
 /***
- *	rt_ip_route_find: find a route to destination
+ *  rt_ip_route_find: find a route to destination
  *
- *	@daddr		destination-address
+ *  @daddr      destination-address
  */
 struct rt_rtable *rt_ip_route_find(u32 daddr)
 {
-	struct rt_rtable *rt,*new_rt;
+    struct rt_rtable *rt,*new_rt;
 
-	for (rt=rt_rtables; rt; rt=rt->next) {
-		if ( rt->rt_dst==daddr )
-			return rt;
-	}
+    for (rt=rt_rtables; rt; rt=rt->next) {
+        if ( rt->rt_dst==daddr )
+            return rt;
+    }
 
-	for(rt=rt_rtables_generic;rt;rt=rt->next){
-		if(rt->rt_dst==(daddr&rt->rt_dst_mask))
-			goto found;
-	}
-	return NULL;
+    for(rt=rt_rtables_generic;rt;rt=rt->next){
+        if(rt->rt_dst==(daddr&rt->rt_dst_mask))
+            goto found;
+    }
+    return NULL;
 
 found:
-	new_rt=rt_alloc();
-	new_rt->rt_dev=rt->rt_dev;
-	new_rt->rt_src=rt->rt_src;
-	new_rt->rt_dst=daddr;
-	new_rt->rt_dst_mask=0xffffffff;
+    new_rt=rt_alloc();
+    new_rt->rt_dev=rt->rt_dev;
+    new_rt->rt_src=rt->rt_src;
+    new_rt->rt_dst=daddr;
+    new_rt->rt_dst_mask=0xffffffff;
 
-	memset(new_rt->rt_dst_mac_addr, 0, 6);
-	return rt;
+    memset(new_rt->rt_dst_mac_addr, 0, 6);
+    return rt;
 }
 
 
 
 /***
- *	rt_ip_route_input:	for every incoming packet
+ *  rt_ip_route_input:  for every incoming packet
  */
-int rt_ip_route_input(struct rtskb *skb, u32 daddr, u32 saddr, struct rtnet_device *rtdev)
+int rt_ip_route_input(struct rtskb *skb, u32 daddr, u32 saddr,
+                      struct rtnet_device *rtdev)
 {
-	struct rt_rtable *rt;
+    struct rt_rtable *rt;
 
-	for (rt=rt_rtables;rt!=NULL;rt=rt->next) {
-		if ( (rt->rt_dst==saddr) && 
-	             (rt->rt_src==daddr) &&
-		     (rt->rt_dev==rtdev) ){
-			skb->dst=rt;
-			return 0;
-		}
-	}
-
-        for (rt=rt_rtables_generic; rt!=NULL; rt=rt->next){
-                __u32 mask = rt->rt_dst_mask;
-                /* Check the saddr range and also if daddr fits directly or 
-                 * if it is a IP broadcast: */
-                if ( (rt->rt_dst==(saddr & mask)) &&
-                     (rt->rt_dev==rtdev)  &&
-                     ( (rt->rt_src == daddr) || 
-                       (((rt->rt_src & mask) == (daddr & mask) ) &&
-                            ((daddr | mask) == 0xffffffff ))
-                     )
-                   ) {
-                
-                        skb->dst=rt;
-                        goto route;
-                }
+    for (rt=rt_rtables;rt!=NULL;rt=rt->next) {
+        if ( (rt->rt_dst==saddr) && (rt->rt_src==daddr) &&
+             (rt->rt_dev==rtdev) ){
+            skb->dst=rt;
+            return 0;
         }
-	skb->dst = NULL;
+    }
 
-	return -EHOSTUNREACH;
+    for (rt=rt_rtables_generic; rt!=NULL; rt=rt->next){
+        __u32 mask = rt->rt_dst_mask;
+        /* Check the saddr range and also if daddr fits directly or
+         * if it is a IP broadcast: */
+        if ( (rt->rt_dst==(saddr & mask)) &&
+             (rt->rt_dev==rtdev) ) {
+            /* Add new host-to-host routes */
+            if (rt->rt_src == daddr) {
+                skb->dst=rt;
+                goto route;
+            }
+            /* Do not add routes for incoming broadcasts! */
+            if ( ( (rt->rt_src & mask) == (daddr & mask) ) &&
+                 ( (daddr | mask) == 0xffffffff ) ) {
+                skb->dst=rt;
+                return 0;
+            }
+        }
+    }
+    skb->dst = NULL;
+
+    return -EHOSTUNREACH;
 
 route:
-	rt=rt_alloc();
-	if (!rt)
-		return 0;
+    rt=rt_alloc();
+    if (!rt)
+        return 0;
 
-	rt->rt_dst=saddr;
-	rt->rt_dst_mask=0xffffffff;	/* it's specific, safer */
-	rt->rt_src=daddr;
-	rt->rt_dev=rtdev;
-	rt->rt_ifindex=rtdev->ifindex;
-	
-	memcpy(rt->rt_dst_mac_addr,skb->mac.ethernet->h_source,RT_ARP_ADDR_LEN);
+    rt->rt_dst=saddr;
+    rt->rt_dst_mask=0xffffffff; /* it's specific, safer */
+    rt->rt_src=daddr;
+    rt->rt_dev=rtdev;
+    rt->rt_ifindex=rtdev->ifindex;
 
-	if( rt_rtables != NULL)
-		rt_rtables->prev = rt;
+    memcpy(rt->rt_dst_mac_addr,skb->mac.ethernet->h_source,RT_ARP_ADDR_LEN);
 
-	rt->next=rt_rtables;
-	rt_rtables=rt;
+    if( rt_rtables != NULL)
+        rt_rtables->prev = rt;
 
-	skb->dst=rt;
+    rt->next=rt_rtables;
+    rt_rtables=rt;
 
-	return 0;
+    skb->dst=rt;
+
+    return 0;
 }
 
 
 
 /***
- *	rt_ip_dev_find
+ *  rt_ip_dev_find
  *
  */
-#if 0 // commented so there is no compiler warning 'defined but not used'
+#if 0
 static struct rtnet_device *rt_ip_dev_find(u32 saddr)
 {
-	if (!saddr)
-		return rtnet_devices;
-	else {
-		struct rtnet_device *rtdev;
-		unsigned long flags;
-	
-		flags = rt_spin_lock_irqsave(&rtnet_devices_lock);
-		for (rtdev=rtnet_devices; rtdev!=NULL; rtdev=rtdev->next) {
-		    if (saddr==rtdev->local_addr) {
-			    rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
-				return rtdev;
-		    }
-		}
-		rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
-		rt_printk("RTnet: rt_ip_dev_find() returning NULL\n");
-		return NULL;
-	}
+    if (!saddr)
+        return rtnet_devices;
+    else {
+        struct rtnet_device *rtdev;
+        unsigned long flags;
+
+        flags = rt_spin_lock_irqsave(&rtnet_devices_lock);
+        for (rtdev=rtnet_devices; rtdev!=NULL; rtdev=rtdev->next) {
+            if (saddr==rtdev->local_addr) {
+                rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
+                return rtdev;
+            }
+        }
+        rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
+        rt_printk("RTnet: rt_ip_dev_find() returning NULL\n");
+        return NULL;
+    }
 }
-#endif // 0
+#endif
+
 
 
 /***
- *	rt_ip_route_output:	for every outgoing packet
+ *  rt_ip_route_output: for every outgoing packet
  */
 int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
 {
-	struct rt_rtable *rt;
+    struct rt_rtable *rt;
 
-	for (rt=rt_rtables; rt; rt=rt->next) {
-		if ( (rt->rt_dst==daddr) && 
-		     (rt->rt_src==saddr) ) {
-			*rp=rt;
-			return 0; 
-		}
-	}
-	
-	/* we will find the right dev, but we haven't got the destination MAC....
-	for (rt=rt_rtables_generic; rt; rt=rt->next) {
-		if ( (rt->rt_dst==(daddr & rt->rt_dst_mask)) && 
-		     (rt->rt_src==saddr) ) {
-			*rp=rt;
-			return 0; 
-		}
-	}
-	*/
+    for (rt=rt_rtables; rt; rt=rt->next) {
+        if ( (rt->rt_dst==daddr) &&
+             ( (saddr == INADDR_ANY) || (rt->rt_src==saddr) ) ) {
+            *rp=rt;
+            return 0;
+        }
+    }
 
-	rt_printk("RTnet: Host %u.%u.%u.%u unreachable (from %u.%u.%u.%u)\n", NIPQUAD(daddr), NIPQUAD(saddr));
+    /* we will find the right dev, but we haven't got the destination MAC....
+    for (rt=rt_rtables_generic; rt; rt=rt->next) {
+        if ( (rt->rt_dst==(daddr & rt->rt_dst_mask)) &&
+            (rt->rt_src==saddr) ) {
+            *rp=rt;
+            return 0;
+        }
+    }
+    */
 
-	return -EHOSTUNREACH;
+    rt_printk("RTnet: Host %u.%u.%u.%u unreachable (from %u.%u.%u.%u)\n",
+              NIPQUAD(daddr), NIPQUAD(saddr));
+
+    return -EHOSTUNREACH;
 }
 
 
 
 /***
- *	rt_ip_routing_init: initialize 
+ *  rt_ip_routing_init: initialize
  *
  */
 void rt_ip_routing_init(void)
 {
-	int i;
+    int i;
 
-	(rt_rtable_cache)->prev=NULL;
-	(rt_rtable_cache)->next=rt_rtable_cache+1;
-	(rt_rtable_cache+RT_ROUT_TABLE_LEN-1)->prev=(rt_rtable_cache+RT_ROUT_TABLE_LEN-2);
-	(rt_rtable_cache+RT_ROUT_TABLE_LEN-1)->next=NULL;
-	for(i=1; i<RT_ROUT_TABLE_LEN-1; i++){
-		(rt_rtable_cache+i)->prev=rt_rtable_cache+i-1;
-		(rt_rtable_cache+i)->next=rt_rtable_cache+i+1;
-	}
+    (rt_rtable_cache)->prev=NULL;
+    (rt_rtable_cache)->next=rt_rtable_cache+1;
+    (rt_rtable_cache+RT_ROUT_TABLE_LEN-1)->prev=
+        (rt_rtable_cache+RT_ROUT_TABLE_LEN-2);
+    (rt_rtable_cache+RT_ROUT_TABLE_LEN-1)->next=NULL;
+    for(i=1; i<RT_ROUT_TABLE_LEN-1; i++){
+        (rt_rtable_cache+i)->prev=rt_rtable_cache+i-1;
+        (rt_rtable_cache+i)->next=rt_rtable_cache+i+1;
+    }
 
-	rt_rtable_free_list=rt_rtable_cache;
-	rt_rtables=rt_rtables_generic=NULL;
+    rt_rtable_free_list=rt_rtable_cache;
+    rt_rtables=rt_rtables_generic=NULL;
 #ifdef CONFIG_PROC_FS
-	rt_route_proc_register();
+    rt_route_proc_register();
 #endif
 }
 
 
 
 /***
- *	rt_ip_routing_realease
+ *  rt_ip_routing_realease
  *
  */
 void rt_ip_routing_release(void)
 {
 #ifdef CONFIG_PROC_FS
-	rt_route_proc_unregister();
+    rt_route_proc_unregister();
 #endif
 }
-
-
-
-
-
-
-
-
