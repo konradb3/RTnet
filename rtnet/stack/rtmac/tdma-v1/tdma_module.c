@@ -148,6 +148,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
      * FIXME: all these thingies _should_ be clean...test them
      */
     tdma_cleanup_master_rt_check(tdma);
+    rtos_task_delete(&tdma->tx_task);
 
     /*
      * delete timers

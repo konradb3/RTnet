@@ -73,10 +73,10 @@ int tdma_task_change_con(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), un
     rtos_time_t cycle_time;
     int ret = 0;
 
-    if (tdma->flags.task_active) {
-        TDMA_DEBUG(0, "RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
+//    if (tdma->flags.task_active) {
+//        TDMA_DEBUG(0, "RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
         rtos_task_delete(&tdma->tx_task);
-    }
+//    }
 
     if (cycle_ns != 0) {
         rtos_nanosecs_to_time(cycle_ns, &cycle_time);
