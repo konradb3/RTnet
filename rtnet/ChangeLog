@@ -1,4 +1,10 @@
+- fixed routing bug in IP input path
+- fixed bug in timeout handling of recvmsg functions
+- fixed application unload problems when running RTcap
+- fixed init bug in rtnetproxy
+- avoid stack manager for loopback packets
 - fixed compilation problem with RTAI-24 and ADEOS
+- fixed some smaller issues in the build system
 
 0.6.1
 - improved RTcfg
