@@ -31,6 +31,14 @@ void tdma_task_shutdown(struct rtmac_tdma *tdma)
 {
 	if (tdma->flags.task_active == 1) {
 		tdma->flags.shutdown_task = 1;
+		
+		/* In case the application has stopped the timer, it's
+		 * likely that the tx_task will be waiting forever in
+		 * rt_task_wait_period().  So we wakeup the task here for
+		 * sure.
+		 * -WY-
+		 */
+		rt_task_wakeup_sleeping(&tdma->tx_task);
 
 		/*
 		 * unblock all tasks by deleting semas
@@ -251,7 +259,10 @@ void tdma_task_client(int rtdev_id)
 	struct rtskb *skb;
        
 	while(tdma->flags.shutdown_task == 0) {
-		rt_sem_wait(&tdma->client_tx);
+		if (rt_sem_wait(&tdma->client_tx) == 0xFFFF) {
+			TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() rt_sem_wait(client_tx) failed\n");
+			break;
+		}
 
 		rt_sleep_until(tdma->wakeup);
 
