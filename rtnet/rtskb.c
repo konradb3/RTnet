@@ -176,6 +176,7 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
         return NULL;
 #ifdef CONFIG_RTNET_CHECKED
     pool->pool_balance--;
+    skb->chain_len = 1;
 #endif
 
     /* Load the data pointers. */
@@ -206,6 +207,8 @@ void kfree_rtskb(struct rtskb *skb)
 #ifdef CONFIG_RTNET_RTCAP
     unsigned long flags;
     struct rtskb  *comp_skb;
+    struct rtskb  *next_skb;
+    struct rtskb  *chain_end;
 #endif
 
 
@@ -213,31 +216,48 @@ void kfree_rtskb(struct rtskb *skb)
     RTNET_ASSERT(skb->pool != NULL, return;);
 
 #ifdef CONFIG_RTNET_RTCAP
-    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    next_skb  = skb;
+    chain_end = skb->chain_end;
 
-    if (skb->cap_flags & RTSKB_CAP_SHARED) {
-        skb->cap_flags &= ~RTSKB_CAP_SHARED;
+    do {
+        skb      = next_skb;
+        next_skb = skb->next;
 
-        comp_skb  = skb->cap_comp_skb;
-        skb->pool = xchg(&comp_skb->pool, skb->pool);
+        rtos_spin_lock_irqsave(&rtcap_lock, flags);
 
-        rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+        if (skb->cap_flags & RTSKB_CAP_SHARED) {
+            skb->cap_flags &= ~RTSKB_CAP_SHARED;
 
-        rtskb_queue_tail(comp_skb->pool, comp_skb);
+            comp_skb  = skb->cap_comp_skb;
+            skb->pool = xchg(&comp_skb->pool, skb->pool);
+
+            rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+
+            rtskb_queue_tail(comp_skb->pool, comp_skb);
 #ifdef CONFIG_RTNET_CHECKED
-        comp_skb->pool->pool_balance++;
+            comp_skb->pool->pool_balance++;
 #endif
+        }
+        else {
+            rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
 
-        return;
-    }
+            skb->chain_end = skb;
+            rtskb_queue_tail(skb->pool, skb);
+#ifdef CONFIG_RTNET_CHECKED
+            skb->pool->pool_balance++;
+#endif
+        }
 
-    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
-#endif /* CONFIG_RTNET_RTCAP */
+    } while (chain_end != skb);
+
+#else  /* CONFIG_RTNET_RTCAP */
 
     rtskb_queue_tail(skb->pool, skb);
 #ifdef CONFIG_RTNET_CHECKED
-    skb->pool->pool_balance++;
+    skb->pool->pool_balance += skb->chain_len;
 #endif
+
+#endif /* CONFIG_RTNET_RTCAP */
 }
 
 
@@ -358,7 +378,9 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
         skb->chain_end = skb;
         skb->pool = pool;
         skb->buf_start = ((char *)skb) + ALIGN_RTSKB_STRUCT_LEN;
+#ifdef CONFIG_RTNET_CHECKED
         skb->buf_end = skb->buf_start + SKB_DATA_ALIGN(RTSKB_SIZE) - 1;
+#endif
 
         rtskb_queue_tail(pool, skb);
 
@@ -460,6 +482,7 @@ int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
     comp_rtskb->pool = rtskb->pool;
     rtskb_queue_tail(comp_rtskb->pool, comp_rtskb);
 #ifdef CONFIG_RTNET_CHECKED
+    comp_rtskb->chain_len = 1;
     comp_rtskb->pool->pool_balance++;
 #endif
     rtskb->pool = comp_pool;
