@@ -1,7 +1,7 @@
                      RTnet Configuration Service (RTcfg)
                      ===================================
 
-                                Revision: 1.3
+                                Revision: 1.4
 
 
 RTcfg is a configuration service for setting up an RTnet network and
@@ -245,19 +245,17 @@ server should send as far as the client supports it (see also "announce").
 sets the number of missing heartbeats after which a client shall be considered
 dead (default: 2).
 
-rtcfg <dev> add [ip|hw] <address> [-stage1 <stage1_file>]
-      [-stage2 <stage2_file>]
+rtcfg <dev> add <address> [-stage1 <stage1_file>] [-stage2 <stage2_file>]
 
 Adds a client to the server's list of potential participants of the network
 connected to the specified device <dev>. <address> can be either an IP address
-(ip, A.B.C.D) or a physical address (hw, AA:BB:CC:DD:EE:FF). If no address
-type is given, ip is assumed. Optionally, files can specified which will be
-passed during the different configuration stages.
+(A.B.C.D) or a physical address (AA:BB:CC:DD:EE:FF). Optionally, files can
+specified which will be passed during the different configuration stages.
 
-rtcfg <dev> del [ip|hw] <address>
+rtcfg <dev> del <address>
 
 Removes a client from the list of network participants. See above for details
-about the parameter format.
+about the address format.
 
 rtcfg <dev> wait [-t <timeout>]
 
@@ -271,13 +269,15 @@ time. The default timeout is infinite.
 Client Commands
 ---------------
 
-rtcfg <dev> client [-t <timeout>] [-f <stage1_file>]
+rtcfg <dev> client [-t <timeout>] [-c|-f <stage1_file>] [-m maxclients]
 
 Waits until the first configuration stage is completed for the device <dev>.
 If <timeout> (in milliseconds) is given, rtifconfig will return an error code
 when the configuration cannot be completed within the specified time. The
 default timeout is infinite. The incoming configuration data is either send to
-the standard output or to <stage1_file> if specified.
+the standard output if -c is given or to <stage1_file> if specified. By default
+clients can synchronise with up to 32 other clients (not including the server).
+This limit can be modified using the <maxclients> parameter.
 
 rtcfg <dev> announce [-t <timeout>] [-c|-f <stage2_file>] [-b burstrate]
 
@@ -308,13 +308,11 @@ rtnetserver.sh:
 echo "Starting RTnet (RTmac master/RTcfg server)..."
 # basic setup
 rtifconfig rteth0 up $MYIP 255.255.255.0
-# ***how it may look like in the future...***
-#rtifconfig rteth0 mac tdma2
 
 # RTmac-specific stuff, depends on the discipline
 # ***how it may look like in the future...***
-#rtmacconfig_tdma2 rteth0 master 2000
-#rtmacconfig_tdma2 rteth0 slot 0 -s 1500
+#rtmacconfig_tdma rteth0 master 2000
+#rtmacconfig_tdma rteth0 slot 0 -s 1500
 
 # setup the RTcfg server
 rtcfg rteth0 server
@@ -342,7 +340,7 @@ client2-1.sh:
 
 # RTmac-specific stuff, depends on the discipline
 # ***how it may look like in the future...***
-#rtmacconfig_tdma2 rteth0 slot 200 -s 1000
+#rtmacconfig_tdma rteth0 slot 200 -s 1000
 EOF
 
 
@@ -356,7 +354,7 @@ client3-1.sh:
 
 # RTmac-specific stuff, depends on the discipline
 # ***how it may look like in the future...***
-#rtmacconfig_tdma2 rteth0 slot 300 -s 1500
+#rtmacconfig_tdma rteth0 slot 300 -s 1500
 EOF
 
 
@@ -371,8 +369,6 @@ rtnetclient.sh:
 echo "Starting RTnet (client)..."
 # basic setup
 rtifconfig rteth0 up $MY_IP 255.255.255.0
-# ***how it may look like in the future...***
-#rtifconfig rteth0 mac tdma2
 
 # wait for the first configuration stage
 rtcfg rteth0 client -f /tmp/my_stage1_config
@@ -395,4 +391,4 @@ echo "RTnet is running now."
 EOF
 
 
-November 2003, Jan Kiszka <jan.kiszka-at-web.de>
+January 2004, Jan Kiszka <jan.kiszka-at-web.de>
