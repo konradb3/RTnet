@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     printf("RTnet, simpleserver for NEWLXRT\n");
 
     /* Check arguments and set addresses. */
-    if (argc==3) {
+    if (argc == 2) {
         local_addr.sin_family      = AF_INET;
         local_addr.sin_addr.s_addr = INADDR_ANY;
         local_addr.sin_port        = htons(atoi(argv[2]));
