@@ -155,9 +155,6 @@ EXPORT_SYMBOL(rt_arp_table_add);
 EXPORT_SYMBOL(rtskb_copy_and_csum_bits);
 EXPORT_SYMBOL(rtskb_copy_and_csum_dev);
 
-EXPORT_SYMBOL(rtskb_over_panic);
-EXPORT_SYMBOL(rtskb_under_panic);
-
 EXPORT_SYMBOL(alloc_rtskb);
 EXPORT_SYMBOL(kfree_rtskb);
 
@@ -166,6 +163,11 @@ EXPORT_SYMBOL(rtskb_pool_release);
 EXPORT_SYMBOL(global_pool);
 
 EXPORT_SYMBOL(rtskb_acquire);
+
+#ifdef CONFIG_RTNET_CHECKED
+EXPORT_SYMBOL(rtskb_over_panic);
+EXPORT_SYMBOL(rtskb_under_panic);
+#endif
 
 #ifdef CONFIG_RTNET_RTCAP
 EXPORT_SYMBOL(rtcap_lock);
