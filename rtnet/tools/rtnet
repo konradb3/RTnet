@@ -1,29 +1,70 @@
 #! /bin/bash
-RTAI=/home/local/rtai-24.1.10
+#
+# A simple script for loading/unloading RTnet and RTmac
+#
 
-IP=2
-SUBNET=192.168.0
-NETMASK=255.255.255.0
-DEV=eth1
-ARP_START=1
-ARP_END=3
+RTNETCFG=/etc/rtnet.conf
+
+# The following values are set in the configuration file.
+#IP=1
+#DEV=eth1
+#ARP_START=1
+#ARP_END=3
+#RT_DRIVER=8139too-rt
+#SUBNET=192.168.0
+#NETMASK=255.255.255.0
+
+usage_rtnet() {
+	cat << EOF
+Usage:
+	$0 {start|up}
+	$0 mac
+	$0 {stop|down}
+EOF
+}
+
+usage_rtmac() {
+	cat << EOF
+Usage:
+	On client side:
+	$0 mac client
+	(...run your application...)
+	$0 mac down
+
+	On master side:
+	$0 mac master <cycle/us> [mtu/bytes]
+	$0 mac add <ip> [<ip> ...]
+	$0 mac up
+	$0 mac offset <ip> <offset/us>
+	(...run your applications...)
+	$0 mac down
+EOF
+}
+
+
+if [ -r $RTNETCFG ]; then
+	. $RTNETCFG
+else
+	echo "Could not read $RTNETCFG"
+	exit 1
+fi
+
 ADD_MODULES="rtai_fifos"
-RT_DRIVER=8139too-rt
 
 case "$1" in
-    start)
+    start|up)
 	modprobe $RT_DRIVER
 	for MODULE in $ADD_MODULES; do
 	    modprobe $MODULE
 	done
 
-	$RTAI/rtnet/tools/rtifconfig $DEV up $SUBNET.$IP $NETMASK
-	
-	echo start all other stacks to perform ARP
+	rtifconfig $DEV up $SUBNET.$IP $NETMASK
+
+        echo Start all other stacks to perform ARP. Press RETURN to continue!
 	read
 
 	for ARP_IP in $(seq $ARP_START $ARP_END); do
-	    $RTAI/rtnet/tools/rtifconfig $DEV route solicit $SUBNET.$ARP_IP
+	    rtifconfig $DEV route solicit $SUBNET.$ARP_IP
 	done
 
 	echo "*** ARP table"
@@ -31,17 +72,60 @@ case "$1" in
 	echo
 	echo "*** routing table"
 	cat /proc/rtai/route
-	;;
-    stop)
-	$RTAI/rtnet/tools/rtifconfig $DEV down
 
+	;;
+
+    stop|down)
+	rtifconfig $DEV down
 	modprobe -r $RT_DRIVER
+
 	for MODULE in $ADD_MODULES; do
 	    modprobe -r $MODULE
 	done
 	;;
+
+    mac)
+	case "$2" in
+	    master)
+		modprobe rtmac dev=$DEV
+		rtifconfig $DEV mac master $3 $4
+		;;
+
+	    client)
+		modprobe rtmac dev=$DEV
+		rtifconfig $DEV mac client
+		;;
+
+	    add)
+		shift 2
+		for i in $* ; do
+			echo Add $i
+			rtifconfig $DEV mac add $i
+		done
+		;;
+
+	    up)
+		rtifconfig $DEV mac up
+		;;
+
+	    down)
+		rtifconfig $DEV mac down
+		rmmod rtmac
+		;;
+
+	    offset)
+		rtifconfig $DEV mac offset $3 $4
+		;;
+
+	    *)
+		usage_rtmac
+		exit 1
+		;;
+	esac
+	;;
+
     *)
-	echo "Usage $0 {start|stop}"
+	usage_rtnet
 	exit 1
 esac
 

@@ -37,7 +37,11 @@ How to test it?
 4. Setup RT-ethernet device and solicit required MAC adresses(rtifconfig)
 5. Load application module
 
-For more details see run-scripts in <RTAI-DIR>/rtnet/examples/round_trip_time
+For more details see run-scripts in <RTAI-DIR>/rtnet/examples/round_trip_time 
+
+There is also a simple script for loading and unloading RTnet and RTmac. See
+<RTAI-DIR>/rtnet/tools/rtnet. To use it copy rtnet.conf from that directory
+to /etc/rtnet.conf and modify it for your system.
 
 How to use RTmac? (a very very short guide!)
 -----------------
