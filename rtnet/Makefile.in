@@ -666,7 +666,7 @@ uninstall-info: uninstall-info-recursive
 
 
 rtnet.o: librtnet.a $(RTNET_BUILTIN_OBJS)
-	$(LD) --whole-archive $< -r -o $@
+	$(LD) --whole-archive $^ -r -o $@
 
 all-local: rtnet.o rtnetproxy.o rtnet_lxrt.o
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -22,7 +22,7 @@ libnetproxy_a_SOURCES = rtnetproxy.c
 libnetlxrt_a_SOURCES = rtnet_lxrt.c
 
 rtnet.o: librtnet.a $(RTNET_BUILTIN_OBJS)
-	$(LD) --whole-archive $< -r -o $@
+	$(LD) --whole-archive $^ -r -o $@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
