@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4800, 1, 0, 0);
     if (NULL == lxrtnettsk) {
+        rt_socket_close(sockfd);
         printf("CANNOT INIT MASTER TASK\n");
         exit(1);
     }
