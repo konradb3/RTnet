@@ -1080,7 +1080,7 @@ static int rtcfg_add_to_station_list(struct rtcfg_device *rtcfg_dev,
 {
    if (rtcfg_dev->stations_found == rtcfg_dev->max_stations) {
         RTCFG_DEBUG(1, "RTcfg: insufficient memory for storing new station "
-                    "address\n", __FUNCTION__);
+                    "address\n");
         return -ENOMEM;
     }
 
