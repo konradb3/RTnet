@@ -238,11 +238,11 @@ dnl		import settings from RTAI
 dnl ======================================================================
 
 RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
-RTAI_CFLAGS=-I$RTAI_DIR/include
+LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
 KERNEL_CFLAGS=-I$RTAI_LINUX_DIR/include
 
 AC_SUBST(RTAI_KMOD_CFLAGS)
-AC_SUBST(RTAI_CFLAGS)
+AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
 AC_SUBST(CROSS_COMPILE)
 
