@@ -2,7 +2,7 @@
         rtdm.c  - core driver layer module (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.0
+        Version:    0.5.1
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 
@@ -26,6 +26,7 @@
 #include <linux/spinlock.h>
 #include <asm/atomic.h>
 #include <asm/bitops.h>
+#include <asm/semaphore.h>
 #include <asm/uaccess.h>
 
 #ifdef CONFIG_PROC_FS
@@ -88,10 +89,10 @@ MODULE_LICENSE("GPL and additional rights");
 
 
 struct rtdm_fildes {
-    struct rtdm_fildes      *next;
-    struct rtdm_dev_context *context;
-    long                    instance_id;
-    long                    __padding;
+    struct rtdm_fildes                  *next;
+    volatile struct rtdm_dev_context    *context;
+    long                                instance_id;
+    long                                __padding;
 };
 
 /* global variables */
@@ -111,7 +112,7 @@ MODULE_PARM_DESC(protocol_hash_table_size,
 static struct list_head     *rtdm_named_devices;    /* hash table */
 static struct list_head     *rtdm_protocol_devices; /* hash table */
 static spinlock_t           rt_dev_lock  = SPIN_LOCK_UNLOCKED;
-static rwlock_t             nrt_dev_lock = RW_LOCK_UNLOCKED;
+static struct semaphore     nrt_sem;
 
 static struct rtdm_fildes   *fildes_table;  /* allocated on init */
 static struct rtdm_fildes   *free_fildes;   /* chain of free descriptors */
@@ -284,24 +285,18 @@ static struct rtdm_dev_context *get_context(int fd)
 
     flags = rt_spin_lock_irqsave(&rt_fildes_lock);
 
-    context = fildes->context;
-    if (((fd >> FILDES_INDEX_BITS) != fildes->instance_id) || !context) {
+    context = (struct rtdm_dev_context *)fildes->context;
+    if (((fd >> FILDES_INDEX_BITS) != fildes->instance_id) || !context ||
+        test_bit(RTDM_CLOSING, &context->context_flags)) {
         rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
         return NULL;
     }
 
-    atomic_inc(&context->close_lock_count);
+    RTDM_LOCK_CONTEXT(context);
 
     rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
     return context;
-}
-
-
-
-static inline void release_context(struct rtdm_dev_context *context)
-{
-    atomic_dec(&context->close_lock_count);
 }
 
 
@@ -388,11 +383,8 @@ static void cleanup_instance(struct rtdm_device *device,
 
     if (context) {
         if (device->reserved.exclusive_context) {
-            /* can be optimised on architectures which can atomically write
-               pointers to memory */
-            flags = rt_spin_lock_irqsave(&rt_dev_lock);
+            /* note: assumes that writing this pointer to memory is atomic */
             context->device = NULL;
-            rt_spin_unlock_irqrestore(flags, &rt_dev_lock);
         } else {
             if (nrt_mem)
                 kfree(context);
@@ -413,7 +405,6 @@ int rtdm_open(int call_flags, const char *path, int oflag)
     struct rtdm_dev_context *context;
     int                     ret;
     int                     nrt_mode = in_nrt_context();
-    unsigned long           flags;
 
 
     device = get_named_device(path);
@@ -435,11 +426,8 @@ int rtdm_open(int call_flags, const char *path, int oflag)
     if (ret < 0)
         goto err;
 
-    /* can be optimised on architectures which can atomically write pointers
-       to memory */
-    flags = rt_spin_lock_irqsave(&rt_fildes_lock);
+    /* note: assumes that writing this pointer to memory is atomic */
     fildes->context = context;
-    rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
     return context->fd;
 
@@ -458,7 +446,6 @@ int rtdm_socket(int call_flags, int protocol_family, int socket_type,
     struct rtdm_dev_context *context;
     int                     ret;
     int                     nrt_mode = in_nrt_context();
-    unsigned long           flags;
 
 
     device = get_protocol_device(protocol_family, socket_type);
@@ -481,11 +468,8 @@ int rtdm_socket(int call_flags, int protocol_family, int socket_type,
     if (ret < 0)
         goto err;
 
-    /* can be optimised on architectures which can atomically write pointers
-       to memory */
-    flags = rt_spin_lock_irqsave(&rt_fildes_lock);
+    /* note: assumes that writing this pointer to memory is atomic */
     fildes->context = context;
-    rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
     return context->fd;
 
@@ -514,14 +498,14 @@ int rtdm_close(int call_flags, int fd)
 
     flags = rt_spin_lock_irqsave(&rt_fildes_lock);
 
-    context = fildes->context;
+    context = (struct rtdm_dev_context *)fildes->context;
     if (((fd >> FILDES_INDEX_BITS) != fildes->instance_id) || !context) {
         rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
         return -EBADF;
     }
 
     set_bit(RTDM_CLOSING, &context->context_flags);
-    atomic_inc(&context->close_lock_count);
+    RTDM_LOCK_CONTEXT(context);
 
     rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
@@ -552,13 +536,13 @@ int rtdm_close(int call_flags, int fd)
 
     rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
-    cleanup_instance(context->device, context, fildes,
+    cleanup_instance((struct rtdm_device *)context->device, context, fildes,
                      test_bit(RTDM_CREATED_IN_NRT, &context->context_flags));
 
     return ret;
 
   err:
-    release_context(context);
+    RTDM_UNLOCK_CONTEXT(context);
     return ret;
 }
 
@@ -586,7 +570,7 @@ int rtdm_close(int call_flags, int fd)
 
 
 #define MAJOR_FUNCTION_WRAPPER_BOTTOM()                                     \
-    release_context(context);                                               \
+    RTDM_UNLOCK_CONTEXT(context);                                           \
     return ret
 
 
@@ -604,10 +588,6 @@ int rtdm_ioctl(int call_flags, int fd, int request, void* arg)
                 if (context_args->struct_version != RTDM_CONTEXT_STRUCT_VER)
                     return -EINVAL;
                 context_args->context = context;
-                return 0;
-
-            case RTIOC_RELEASECONTEXT:
-                release_context(context);
                 ret = 0;
                 break;
         }
@@ -766,7 +746,8 @@ static int proc_read_named_devs(char* page, char** start, off_t off, int count,
 
     PROC_PRINT("Hash\tName\t\t\t\t/proc\n");
 
-    write_lock_bh(&nrt_dev_lock);
+    if (down_interruptible(&nrt_sem))
+        return -ERESTARTSYS;
 
     for (i = 0; i < name_hash_table_size; i++)
         list_for_each(entry, &rtdm_named_devices[i]) {
@@ -776,7 +757,7 @@ static int proc_read_named_devs(char* page, char** start, off_t off, int count,
                        device->proc_name);
         }
 
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
 
     PROC_PRINT_DONE;
 }
@@ -795,7 +776,8 @@ static int proc_read_proto_devs(char* page, char** start, off_t off, int count,
 
     PROC_PRINT("Hash\tProtocolFamily:SocketType\t/proc\n");
 
-    write_lock_bh(&nrt_dev_lock);
+    if (down_interruptible(&nrt_sem))
+        return -ERESTARTSYS;
 
     for (i = 0; i < protocol_hash_table_size; i++)
         list_for_each(entry, &rtdm_protocol_devices[i]) {
@@ -806,7 +788,7 @@ static int proc_read_proto_devs(char* page, char** start, off_t off, int count,
             PROC_PRINT("%02X\t%-31s\t%s\n", i, buf, device->proc_name);
         }
 
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
 
     PROC_PRINT_DONE;
 }
@@ -826,7 +808,8 @@ static int proc_read_open_fildes(char* page, char** start, off_t off,
 
     PROC_PRINT("Index\tInstance  fd\t\tLocked\tDevice\n");
 
-    write_lock_bh(&nrt_dev_lock);
+    if (down_interruptible(&nrt_sem))
+        return -ERESTARTSYS;
 
     for (i = 0; i < fildes_count; i++) {
         flags = rt_spin_lock_irqsave(&rt_fildes_lock);
@@ -839,7 +822,7 @@ static int proc_read_open_fildes(char* page, char** start, off_t off,
         }
 
         close_lock_count = atomic_read(&fildes.context->close_lock_count);
-        device           = fildes.context->device;
+        device           = (struct rtdm_device *)fildes.context->device;
 
         rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
@@ -850,7 +833,7 @@ static int proc_read_open_fildes(char* page, char** start, off_t off,
                    device->device_name : device->proc_name);
     }
 
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
 
     PROC_PRINT_DONE;
 }
@@ -863,12 +846,13 @@ static int proc_read_fildes(char* page, char** start, off_t off,
     PROC_PRINT_VARS;
 
 
-    write_lock_bh(&nrt_dev_lock);
+    if (down_interruptible(&nrt_sem))
+        return -ERESTARTSYS;
 
     PROC_PRINT("total:\t%d\nopen:\t%d\nfree:\t%d\n", fildes_count, open_fildes,
                fildes_count - open_fildes);
 
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
 
     PROC_PRINT_DONE;
 }
@@ -882,7 +866,8 @@ static int proc_read_dev_info(char* page, char** start, off_t off,
     PROC_PRINT_VARS;
 
 
-    write_lock_bh(&nrt_dev_lock);
+    if (down_interruptible(&nrt_sem))
+        return -ERESTARTSYS;
 
     PROC_PRINT("driver:\t\t%s\nperipheral:\t%s\nprovider:\t%s\n",
                device->driver_name, device->peripheral_name,
@@ -897,7 +882,7 @@ static int proc_read_dev_info(char* page, char** start, off_t off,
                "PROTOCOL_DEVICE  " : "");
     PROC_PRINT("lock count:\t%d\n", atomic_read(&device->reserved.refcount));
 
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
 
     PROC_PRINT_DONE;
 }
@@ -1001,7 +986,7 @@ int rtdm_dev_register(struct rtdm_device* device)
         device->reserved.exclusive_context->device = NULL; /* mark as unused */
     }
 
-    write_lock_bh(&nrt_dev_lock);
+    down(&nrt_sem);
 
     if ((device->device_flags & RTDM_DEVICE_TYPE) == RTDM_NAMED_DEVICE) {
         hash_key = get_name_hash(device->device_name);
@@ -1024,7 +1009,7 @@ int rtdm_dev_register(struct rtdm_device* device)
         list_add_tail(&device->reserved.entry, &rtdm_named_devices[hash_key]);
         rt_spin_unlock_irqrestore(flags, &rt_dev_lock);
 
-        write_unlock_bh(&nrt_dev_lock);
+        up(&nrt_sem);
 
         DEBUG_PK("RTDM: registered named device %s\n", device->device_name);
     } else {
@@ -1051,7 +1036,7 @@ int rtdm_dev_register(struct rtdm_device* device)
                       &rtdm_protocol_devices[hash_key]);
         rt_spin_unlock_irqrestore(flags, &rt_dev_lock);
 
-        write_unlock_bh(&nrt_dev_lock);
+        up(&nrt_sem);
 
         DEBUG_PK("RTDM: registered protocol device %d:%d\n",
                  device->protocol_family, device->socket_type);
@@ -1059,7 +1044,7 @@ int rtdm_dev_register(struct rtdm_device* device)
     return 0;
 
   err:
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
     if (device->reserved.exclusive_context)
         kfree(device->reserved.exclusive_context);
     return ret;
@@ -1085,7 +1070,7 @@ int rtdm_dev_unregister(struct rtdm_device* device)
     if (!reg_dev)
         return -ENODEV;
 
-    write_lock_bh(&nrt_dev_lock);
+    down(&nrt_sem);
 
 #ifdef CONFIG_PROC_FS
     remove_proc_entry("information", device->proc_entry);
@@ -1096,7 +1081,7 @@ int rtdm_dev_unregister(struct rtdm_device* device)
 
     if (atomic_read(&reg_dev->reserved.refcount) > 1) {
         rt_spin_unlock_irqrestore(flags, &rt_dev_lock);
-        write_unlock_bh(&nrt_dev_lock);
+        up(&nrt_sem);
 
         rtdm_dereference_device(reg_dev);
         return -EAGAIN;
@@ -1105,7 +1090,7 @@ int rtdm_dev_unregister(struct rtdm_device* device)
     list_del(&reg_dev->reserved.entry);
 
     rt_spin_unlock_irqrestore(flags, &rt_dev_lock);
-    write_unlock_bh(&nrt_dev_lock);
+    up(&nrt_sem);
 
     return 0;
 }
@@ -1126,12 +1111,14 @@ int init_module(void)
 #endif
 
 
-    printk("RTDM Version 0.5.0\n");
+    printk("RTDM Version 0.5.1\n");
 
     if (fildes_count > MAX_FILDES) {
         printk("RTDM: fildes_count exceeds %d\n", MAX_FILDES);
         return -EINVAL;
     }
+
+    sema_init(&nrt_sem, 1);
 
     name_hash_key_mask  = name_hash_table_size - 1;
     proto_hash_key_mask = protocol_hash_table_size - 1;
