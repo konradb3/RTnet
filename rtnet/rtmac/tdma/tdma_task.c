@@ -152,19 +152,19 @@ void tdma_task_config(int rtdev_id)
             goto out;
 
         TDMA_DEBUG(4, "RTmac: tdma: %s() sending %d test packets to %u.%u.%u.%u\n",
-            __FUNCTION__,max, NIPQUAD(rt_entry->arp->ip_addr));
+            __FUNCTION__,max, NIPQUAD(rt_entry->arp.ip));
 
         for (i = 0; i < max; i++) {
             if (!(rt_entry->state == RT_RCVD_CONF || rt_entry->state == RT_RCVD_TEST))
                 goto out;
 
             TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet #%d to %u.%u.%u.%u\n",
-                __FUNCTION__,i, NIPQUAD(rt_entry->arp->ip_addr));
+                __FUNCTION__,i, NIPQUAD(rt_entry->arp.ip));
 
             /*
              * alloc skb, and put counter and time into it....
              */
-            skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_TEST, data);
+            skb = tdma_make_msg(rtdev, rt_entry->arp.dev_addr, REQUEST_TEST, data);
             rt_entry->counter = test_msg->counter = i;
             rt_entry->state = RT_SENT_TEST;
             rtos_get_time(&time_stamp);
@@ -193,7 +193,7 @@ void tdma_task_config(int rtdev_id)
 
 out:
     TDMA_DEBUG(0, "RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
-        __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+        __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp.ip));
     tdma_cleanup_master_rt(tdma);
     tdma_next_state(tdma, TDMA_DOWN);
 

@@ -116,8 +116,6 @@ static inline int tdma_ioctl_up(struct rtnet_device *rtdev)
 static inline int tdma_ioctl_down(struct rtnet_device *rtdev)
 {
     struct rtmac_tdma   *tdma;
-    struct tdma_info    info;
-    int                 ret;
 
 
     if (rtdev->mac_priv == NULL)
@@ -126,14 +124,6 @@ static inline int tdma_ioctl_down(struct rtnet_device *rtdev)
     tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
     if (tdma->magic != TDMA_MAGIC)
         return -ENOTTY;
-
-    memset(&info, 0, sizeof(struct tdma_info));
-
-    info.rtdev = rtdev;
-
-    ret = tdma_do_event(tdma, REQUEST_DOWN, &info);
-    if (ret < 0)
-        return ret;
 
     return rtmac_disc_detach(rtdev);
 }

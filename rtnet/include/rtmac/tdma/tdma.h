@@ -27,8 +27,8 @@
 #include <linux/types.h>
 
 #include <rtdev.h>
-#include <rtskb.h>
 #include <rtnet_internal.h>
+#include <ipv4/route.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
 
@@ -167,7 +167,7 @@ struct rtmac_tdma {
     rtos_time_t                 wakeup;
     rtos_time_t                 offset;
     unsigned char               station;
-    struct rt_arp_table_struct  *master;
+    unsigned char               master_hw_addr[MAX_ADDR_LEN];
     struct timer_list           client_sent_ack_timer;
     rtos_spinlock_t             delta_t_lock;
     nanosecs_t                  delta_t; /* offset to master clock */
@@ -176,7 +176,7 @@ struct rtmac_tdma {
 struct tdma_rt_entry {
     struct list_head            list;
     struct list_head            list_rate;
-    struct rt_arp_table_struct  *arp;
+    struct dest_route           arp;
     unsigned char               station;
     unsigned int                counter;
     nanosecs_t                  tx;

@@ -637,7 +637,7 @@ static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int
      * check if the users wants to add his devs ip address
      * master is also a client...
      */
-    if (ip_addr == rtdev->local_addr) {
+    if (ip_addr == rtdev->local_ip) {
         TDMA_DEBUG(1, "RTmac: rtnet: you don't need to add your local IP address to realtime list\n");
         return 0;
     }
@@ -659,7 +659,7 @@ static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int
         /*
          * already in list, then exit
          */
-        if (rt_entry->arp->ip_addr == ip_addr) {
+        if (rt_entry->arp.ip == ip_addr) {
             TDMA_DEBUG(1, "RTmac: tdma: IP %u.%u.%u.%u already in realtime list.\n", NIPQUAD(ip_addr));
             return -1;
         }
@@ -675,18 +675,20 @@ static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int
 
 static int tdma_client_add_rt_rate(struct rtmac_tdma *tdma, u32 ip_addr, unsigned char station)
 {
-    struct rt_arp_table_struct *arp_entry;
-    struct tdma_rt_entry *rt_entry;
+    struct dest_route       arp_entry;
+    struct tdma_rt_entry    *rt_entry;
+    int                     err;
+
 
     /*
      * lookup IP in ARP table...
      */
-    arp_entry = rt_arp_table_lookup(ip_addr);
+    err = rt_arp_table_lookup(&arp_entry, ip_addr);
 
     /*
      * ...if IP is found add to realtime list
      */
-    if (arp_entry) {
+    if (err == 0) {
         TDMA_DEBUG(4, "RTmac: tdma: %s() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n",__FUNCTION__, NIPQUAD(ip_addr));
         rt_entry = rtos_malloc(sizeof(struct tdma_rt_entry));
         if (!rt_entry) {
@@ -697,7 +699,7 @@ static int tdma_client_add_rt_rate(struct rtmac_tdma *tdma, u32 ip_addr, unsigne
         INIT_LIST_HEAD(&rt_entry->list);
         INIT_LIST_HEAD(&rt_entry->list_rate);
 
-        rt_entry->arp = arp_entry;
+        memcpy(&rt_entry->arp, &arp_entry, sizeof(struct dest_route));
         rt_entry->station = station;
         list_add_tail(&rt_entry->list_rate, &tdma->rt_list_rate);
 
@@ -711,28 +713,30 @@ static int tdma_client_add_rt_rate(struct rtmac_tdma *tdma, u32 ip_addr, unsigne
 
 static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int offset)
 {
-    struct rtnet_device *rtdev = tdma->rtdev;
-    struct tdma_rt_add_entry *rt_add_entry;
-    struct tdma_rt_entry *rt_entry;
-    struct rt_arp_table_struct *arp_entry;
+    struct rtnet_device         *rtdev = tdma->rtdev;
+    struct tdma_rt_add_entry    *rt_add_entry;
+    struct tdma_rt_entry        *rt_entry;
+    struct dest_route           arp_entry;
+    int                         err;
+
 
     /*
      * lookup IP in ARP table...
      */
-    arp_entry = rt_arp_table_lookup(ip_addr);
+    err = rt_arp_table_lookup(&arp_entry, ip_addr);
 
 
     /*
      * ...if IP is found add to realtime list
      */
-    if (arp_entry) {
+    if (err == 0) {
         TDMA_DEBUG(4, "RTmac: tdma: %s() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n",__FUNCTION__, NIPQUAD(ip_addr));
         rt_entry = rtos_malloc(sizeof(struct tdma_rt_entry));
         memset(rt_entry, 0, sizeof(struct tdma_rt_entry));
         INIT_LIST_HEAD(&rt_entry->list);
         INIT_LIST_HEAD(&rt_entry->list_rate);
 
-        rt_entry->arp = arp_entry;
+        memcpy(&rt_entry->arp, &arp_entry, sizeof(struct dest_route));
         rt_entry->offset = offset;
         list_add_tail(&rt_entry->list, &tdma->rt_list);
 
@@ -785,7 +789,7 @@ void tdma_remove_rt(struct rtmac_tdma *tdma, u32 ip_addr)
     list_for_each_safe(lh, next, &tdma->rt_list) {
         rt_entry = list_entry(lh, struct tdma_rt_entry, list);
 
-        if (rt_entry->arp->ip_addr == ip_addr) {
+        if (rt_entry->arp.ip == ip_addr) {
             list_del(&rt_entry->list);
             rt_free(rt_entry);
         }
@@ -795,10 +799,12 @@ void tdma_remove_rt(struct rtmac_tdma *tdma, u32 ip_addr)
 
 static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
 {
-    struct tdma_rt_add_entry *rt_add_entry;
-    struct tdma_rt_entry *rt_entry;
-    struct rt_arp_table_struct *arp_entry;
-    struct list_head *lh, *next;
+    struct tdma_rt_add_entry    *rt_add_entry;
+    struct tdma_rt_entry        *rt_entry;
+    struct dest_route           arp_entry;
+    struct list_head            *lh, *next;
+    int                         err;
+
 
     /*
      * iterate through to-add-list
@@ -809,9 +815,9 @@ static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
         /*
          * lookup IP in arp table
          */
-        arp_entry = rt_arp_table_lookup(rt_add_entry->ip_addr);
+        err = rt_arp_table_lookup(&arp_entry, rt_add_entry->ip_addr);
 
-        if (arp_entry) {
+        if (err == 0) {
             /*
              * remove to-add-entry from list
              */
@@ -829,7 +835,7 @@ static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
             memset(rt_entry, 0, sizeof(struct tdma_rt_entry));
             INIT_LIST_HEAD(&rt_entry->list);
 
-            rt_entry->arp = arp_entry;
+            memcpy(&rt_entry->arp, &arp_entry, sizeof(struct dest_route));
             rt_entry->offset = rt_add_entry->offset;
 
             list_add_tail(&rt_entry->list, &tdma->rt_list);
@@ -852,11 +858,11 @@ static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
 
 static int tdma_master_request_up(struct rtmac_tdma *tdma)
 {
-    struct tdma_rt_entry *rt_entry;
-    struct rt_arp_table_struct *arp_entry;
-    struct list_head *lh;
-    unsigned char station = 1;
-    int ret = 0;
+    struct tdma_rt_entry    *rt_entry;
+    struct list_head        *lh;
+    unsigned char           station = 1;
+    int                     ret = 0;
+
 
     /*
      * if there is no entry in rt list, exit
@@ -873,15 +879,14 @@ static int tdma_master_request_up(struct rtmac_tdma *tdma)
      */
     list_for_each(lh, &tdma->rt_list) {
         rt_entry = list_entry(lh, struct tdma_rt_entry, list);
-        arp_entry = rt_entry->arp;
 
         /*FIXME: ASSERT(rt_entry->state == RT_DOWN);*/
         rt_entry->state = RT_SENT_CONF;
         rt_entry->station = station;
 
-        TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf request to client %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(arp_entry->ip_addr));
+        TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf request to client %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(rt_entry->arp.ip));
 
-        tdma_send_conf(tdma, arp_entry->hw_addr, station);
+        tdma_send_conf(tdma, rt_entry->arp.dev_addr, station);
 
         station++;
     }
@@ -918,9 +923,9 @@ static void tdma_expired_sent_conf(struct rtmac_tdma *tdma)
              * if station has sent ACK....
              */
             TDMA_DEBUG(4, "RTmac: tdma: %s() station: %d, IP: %u.%u.%u.%u successful acknowledged\n",
-                __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+                __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp.ip));
 
-            skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, ACK_ACK_CONF, data);
+            skb = tdma_make_msg(rtdev, rt_entry->arp.dev_addr, ACK_ACK_CONF, data);
             conf_ack_ack->station = rt_entry->station;
 
             rtmac_xmit(skb);
@@ -928,7 +933,7 @@ static void tdma_expired_sent_conf(struct rtmac_tdma *tdma)
             /*
              * if station has _not_ sent ACK, delete it from list
              */
-            TDMA_DEBUG(1, "RTmac: tdma: client with IP %u.%u.%u.%u did _not_ send acknowledge\n", NIPQUAD(rt_entry->arp->ip_addr));
+            TDMA_DEBUG(1, "RTmac: tdma: client with IP %u.%u.%u.%u did _not_ send acknowledge\n", NIPQUAD(rt_entry->arp.ip));
 
             list_del(&rt_entry->list);
             rtos_free(rt_entry);
@@ -970,7 +975,7 @@ static void tdma_master_rcvd_test_ack(struct rtmac_tdma *tdma, struct rtskb *skb
          * the received ACK is only valid if the counter and the
          * transmitting time match
          */
-        if (memcmp(rt_entry->arp->hw_addr, skb->mac.ethernet->h_source, RT_ARP_ADDR_LEN) == 0 &&
+        if (memcmp(rt_entry->arp.dev_addr, skb->mac.ethernet->h_source, 6) == 0 &&
             rt_entry->state == RT_SENT_TEST &&
             rt_entry->counter == test_ack->counter &&
             rt_entry->tx == test_ack->tx) {
@@ -986,7 +991,7 @@ static void tdma_master_rcvd_test_ack(struct rtmac_tdma *tdma, struct rtskb *skb
             rt_entry->rtt = MAX(rt_entry->rtt, rtt);
 
             TDMA_DEBUG(6, "RTMAC: tdma: %s() received test ack from %u.%u.%u.%u rtt %u ns\n",
-                __FUNCTION__,NIPQUAD(rt_entry->arp->ip_addr), rtt);
+                __FUNCTION__,NIPQUAD(rt_entry->arp.ip), rtt);
             return;
         }
     }
@@ -1018,7 +1023,7 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
          */
         if (rt_entry->state == RT_RCVD_TEST && rt_entry->counter >= max-1) {
             TDMA_DEBUG(1, "RTmac: tdma: station %d, IP %u.%u.%u.%u, max rtt %d us\n",
-                rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr), (rt_entry->rtt+500)/1000);
+                rt_entry->station, NIPQUAD(rt_entry->arp.ip), (rt_entry->rtt+500)/1000);
 
             /*
              * station completed test, so set state
@@ -1052,7 +1057,7 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
 
         } else {    /* (rt_entry->state == RT_RCVD_TEST && rt_entry->counter == max) */
             TDMA_DEBUG(0, "RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
-                __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+                __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp.ip));
             tdma_cleanup_master_rt(tdma);
             tdma_next_state(tdma, TDMA_DOWN);
         }
@@ -1063,9 +1068,9 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
     list_for_each(lh, &tdma->rt_list) {
         rt_entry = list_entry(lh, struct tdma_rt_entry, list);
 
-        tdma_send_station_list(tdma, rt_entry->arp->hw_addr, station_list);
+        tdma_send_station_list(tdma, rt_entry->arp.dev_addr, station_list);
 
-        skb = tdma_make_msg(tdma->rtdev, rt_entry->arp->hw_addr, REQUEST_CHANGE_OFFSET, data);
+        skb = tdma_make_msg(tdma->rtdev, rt_entry->arp.dev_addr, REQUEST_CHANGE_OFFSET, data);
 
         offset_msg->offset = htonl(rt_entry->offset);
 
@@ -1089,8 +1094,8 @@ static void tdma_master_change_offset(struct rtmac_tdma *tdma, u32 ip_addr, unsi
     list_for_each(lh, &tdma->rt_list) {
         rt_entry = list_entry(lh, struct tdma_rt_entry, list);
 
-        if (rt_entry->arp->ip_addr == ip_addr) {
-            skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_CHANGE_OFFSET, data);
+        if (rt_entry->arp.ip == ip_addr) {
+            skb = tdma_make_msg(rtdev, rt_entry->arp.dev_addr, REQUEST_CHANGE_OFFSET, data);
 
             offset_msg->offset = htonl(offset);
 
@@ -1104,11 +1109,10 @@ static void tdma_master_change_offset(struct rtmac_tdma *tdma, u32 ip_addr, unsi
 
 static void tdma_client_rcvd_conf(struct rtmac_tdma *tdma, struct rtskb *skb)
 {
-    struct rtskb *new_skb;
-    struct tdma_conf_msg *conf_req = (struct tdma_conf_msg *)skb->data;
-    struct tdma_conf_msg *conf_ack;
-    struct rt_arp_table_struct *arp_entry;
-    void *data = &conf_ack;
+    struct rtskb            *new_skb;
+    struct tdma_conf_msg    *conf_req = (struct tdma_conf_msg *)skb->data;
+    struct tdma_conf_msg    *conf_ack;
+    void                    *data = &conf_ack;
 
     /*
      * copy configuration from incoming packet to local config
@@ -1120,25 +1124,15 @@ static void tdma_client_rcvd_conf(struct rtmac_tdma *tdma, struct rtskb *skb)
     TDMA_DEBUG(5, "RTmac: tmda: %s() received conf request station %d, cycle %d, mtu %d\n",
         __FUNCTION__,tdma->station, tdma->cycle, tdma->mtu);
 
-    /*
-     * make rarp lookup with masters mac address and save it
-     * if master not found, do not acknowledge and change to down state...
-     */
-    arp_entry = rt_rarp_table_lookup(skb->mac.ethernet->h_source);
-    if (!arp_entry) {
-        TDMA_DEBUG(0, "RTmac: tdma: master not found in ARP table, not good ;( ... goint into DOWN state\n");
-        tdma_cleanup_client_rt(tdma);
-        tdma_next_state(tdma, TDMA_DOWN);
-        return;
-    }
-    tdma->master = arp_entry;
+    /* save master's hardware address */
+    memcpy(tdma->master_hw_addr, skb->mac.ethernet->h_source, MAX_ADDR_LEN);
 
 
     /*
      * acknowledge conf request
      */
-    TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf acknowledge to master %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(arp_entry->ip_addr));
-    new_skb = tdma_make_msg(skb->rtdev, tdma->master->hw_addr, ACK_CONF, data);
+    TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf acknowledge to master\n",__FUNCTION__);
+    new_skb = tdma_make_msg(skb->rtdev, tdma->master_hw_addr, ACK_CONF, data);
     memcpy(conf_ack, conf_req, sizeof(struct tdma_conf_msg));
 
     /*FIXME: crc32*/
@@ -1169,11 +1163,11 @@ static void tdma_master_rcvd_ack_conf(struct rtmac_tdma *tdma, struct rtskb *skb
          * accept the ACK and set state
          */
         if (conf_ack->station == rt_entry->station &&
-            memcmp(rt_entry->arp->hw_addr, skb->mac.ethernet->h_source, RT_ARP_ADDR_LEN) == 0 &&
+            memcmp(rt_entry->arp.dev_addr, skb->mac.ethernet->h_source, 6) == 0 &&
             rt_entry->state == RT_SENT_CONF) {
 
             TDMA_DEBUG(4, "RTmac: tdma: %s() received config acknowledge from IP %u.%u.%u.%u\n",
-                __FUNCTION__,NIPQUAD(rt_entry->arp->ip_addr));
+                __FUNCTION__,NIPQUAD(rt_entry->arp.ip));
             rt_entry->state = RT_RCVD_CONF;
             return;
         }
@@ -1183,17 +1177,7 @@ static void tdma_master_rcvd_ack_conf(struct rtmac_tdma *tdma, struct rtskb *skb
     /*
      * print a nice error message...
      */
-    {
-        struct rt_arp_table_struct *arp_entry;
-
-        arp_entry = rt_rarp_table_lookup(skb->mac.ethernet->h_source);
-        if (arp_entry)
-            TDMA_DEBUG(0, "RTmac: tdma *** WARNING *** %s() received client ack from unknown client IP %u.%u.%u.%u\n",
-                __FUNCTION__,NIPQUAD(rt_entry->arp->ip_addr));
-        else
-            TDMA_DEBUG(0, "RTmac: tdma *** WARNING *** %s() received client ack from unknown client\n",__FUNCTION__);
-
-    }
+    TDMA_DEBUG(0, "RTmac: tdma *** WARNING *** %s() received client ack from unknown client\n", __FUNCTION__);
 }
 
 
@@ -1209,7 +1193,7 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
     /*
      * Check if we receives packer from real master....
      */
-    if (memcmp(skb->mac.ethernet->h_source, tdma->master->hw_addr, RT_ARP_ADDR_LEN) != 0) {
+    if (memcmp(skb->mac.ethernet->h_source, tdma->master_hw_addr, 6) != 0) {
         TDMA_DEBUG(0, "RTmac: tdma: %s() received test packet from wrong master\n",__FUNCTION__);
         return;
     }
@@ -1219,7 +1203,7 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
     /*
      * copy data from received to transmitting buffer....
      */
-    new_skb = tdma_make_msg(rtdev, tdma->master->hw_addr, ACK_TEST, data);
+    new_skb = tdma_make_msg(rtdev, tdma->master_hw_addr, ACK_TEST, data);
     memcpy(test_ack, test_msg, sizeof(struct tdma_test_msg));
 
     /*
@@ -1228,7 +1212,7 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
      */
     rtmac_xmit(new_skb);
 
-    TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet back to master %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(tdma->master->ip_addr));
+    TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet back to master\n",__FUNCTION__);
 }
 
 
@@ -1348,9 +1332,9 @@ static void tdma_make_station_list(struct rtmac_tdma *tdma, void *data)
          * print sorted list for debugging purpose
          */
         TDMA_DEBUG(4, "RTmac: tdma: %s() sorted: station %d, IP %u.%u.%u.%u, rtt %d us\n",
-            __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr), rt_entry->rtt);
+            __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp.ip), rt_entry->rtt);
 
-        station_list_ptr->ip_addr = rt_entry->arp->ip_addr;
+        station_list_ptr->ip_addr = rt_entry->arp.ip;
         station_list_ptr->station = rt_entry->station;
 
         station_list_ptr++;

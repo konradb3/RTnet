@@ -1,22 +1,25 @@
-/* tdma_module.c
+/***
  *
- * rtmac - real-time networking media access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
- *               2003 Jan Kiszka <Jan.Kiszka@web.de>
+ *  rtmac/tdma/tdma_module.c
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  rtmac - real-time networking media access control subsystem
+ *  Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <linux/module.h>
@@ -26,6 +29,7 @@
 #include <rtnet_sys.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/tdma/tdma_cleanup.h>
+#include <rtmac/tdma/tdma_event.h>
 #include <rtmac/tdma/tdma_ioctl.h>
 #include <rtmac/tdma/tdma_rx.h>
 
@@ -42,6 +46,21 @@ __u32 tdma_debug = TDMA_DEFAULT_DEBUG_LEVEL;
 
 MODULE_PARM(tdma_debug, "i");
 MODULE_PARM_DESC(tdma_debug, "tdma debug level");
+
+
+#ifdef CONFIG_PROC_FS
+int tdma_proc_read(char *buf, char **start, off_t offset, int count,
+                   int *eof, void *data)
+{
+    RTNET_PROC_PRINT_VARS;
+
+
+    RTNET_PROC_PRINT("todo\n");
+
+    RTNET_PROC_PRINT_DONE;
+}
+#endif /* CONFIG_PROC_FS */
+
 
 
 int tdma_attach(struct rtnet_device *rtdev, void *priv)
@@ -102,8 +121,17 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
 
 int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
-    struct rtmac_tdma *tdma = (struct rtmac_tdma *)priv;
+    struct rtmac_tdma   *tdma = (struct rtmac_tdma *)priv;
+    struct tdma_info    info;
+    int                 ret;
 
+
+    memset(&info, 0, sizeof(struct tdma_info));
+    info.rtdev = rtdev;
+
+    ret = tdma_do_event(tdma, REQUEST_DOWN, &info);
+    if (ret < 0)
+        return ret;
 
     /*
      * delete rt specific stuff
@@ -186,7 +214,13 @@ struct rtmac_disc tdma_disc = {
         service_name:   "RTmac/TDMA",
         ioctl_type:     RTNET_IOC_TYPE_RTMAC_TDMA,
         handler:        tdma_ioctl
+    },
+
+#ifdef CONFIG_PROC_FS
+    proc_entries:   {
+        { name: "tdma", handler: tdma_proc_read }
     }
+#endif /* CONFIG_PROC_FS */
 };
 
 
