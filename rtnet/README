@@ -57,7 +57,7 @@ How to test it?
    into the kernel!)
 2. Load required RTAI modules
 3. Load RTnet and NIC RT-driver module
-4. Setup RT-ethernet device and solicit required MAC adresses(rtifconfig)
+4. Setup RT-ethernet device and solicit required MAC adresses (rtifconfig)
 5. Load application module
 
 For more details see run-scripts in <RTNET-SRC>/examples/round_trip_time
@@ -76,7 +76,7 @@ configured:
 Assumed that your realtime device is rteth0.
 2. On client stations:
     # rtifconfig rteth0 mac client
-3. On the server station:
+3. On the master station:
     # rtifconfig rteth0 mac master <cycle-time/us> [<mtu-size/byte>]
     # rtifconfig rteth0 mac add <ip_client1>
     # rtifconfig rteth0 mac add <ip_client2>
