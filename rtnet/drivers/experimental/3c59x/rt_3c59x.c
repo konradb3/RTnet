@@ -1887,7 +1887,7 @@ vortex_open(struct rtnet_device *rtdev)
 	int i;
 	int retval;
 
-	MOD_INC_USE_COUNT;
+	RTNET_MOD_INC_USE_COUNT;
 
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
@@ -1947,7 +1947,7 @@ out_free_irq:
 	rt_stack_disconnect(rtdev);
 	// *** RTnet ***
 out:
-	MOD_DEC_USE_COUNT;
+	RTNET_MOD_DEC_USE_COUNT;
 	if (vortex_debug > 1)
 		printk(KERN_ERR "%s: vortex_open() fails: returning %d\n", rtdev->name, retval);
 	return retval;
@@ -2965,7 +2965,7 @@ vortex_close(struct rtnet_device *rtdev)
 		}
 	}
 
-	MOD_DEC_USE_COUNT;
+	RTNET_MOD_DEC_USE_COUNT;
 
 	return 0;
 }

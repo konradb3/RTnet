@@ -20,14 +20,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <sched.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <linux/if.h>
-#include <sys/ioctl.h>
 
 #include <rtnet.h>
 

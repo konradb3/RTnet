@@ -198,12 +198,12 @@ static int tdma_state_down(struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdm
          */
         tdma_timer_start_master_wait(tdma, TDMA_MASTER_WAIT_TIMEOUT);
 
-        MOD_INC_USE_COUNT;
+        RTNET_MOD_INC_USE_COUNT;
         tdma_next_state(tdma, TDMA_MASTER_WAIT);
         break;
 
     case REQUEST_CLIENT:
-        MOD_INC_USE_COUNT;
+        RTNET_MOD_INC_USE_COUNT;
         tdma_next_state(tdma, TDMA_CLIENT_DOWN);
         break;
 
@@ -436,7 +436,7 @@ static int tdma_state_other_master(struct rtmac_tdma *tdma, TDMA_EVENT event, st
         return -1;
 
     case REQUEST_CLIENT:
-        MOD_INC_USE_COUNT;
+        RTNET_MOD_INC_USE_COUNT;
         tdma_next_state(tdma, TDMA_CLIENT_DOWN);
         break;
 

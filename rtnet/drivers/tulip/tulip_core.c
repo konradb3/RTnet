@@ -500,13 +500,13 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 {
 	int retval;
 
-	MOD_INC_USE_COUNT;
+	RTNET_MOD_INC_USE_COUNT;
 
 	if ((retval = /*RTnet*/
 	     rtos_irq_request(rtdev->irq, tulip_interrupt, rtdev))) {
 		printk("%s: Unable to install ISR for IRQ %d\n",
 			  rtdev->name,rtdev->irq);
-		MOD_DEC_USE_COUNT;
+		RTNET_MOD_DEC_USE_COUNT;
 		return retval;
 	}
 
@@ -884,7 +884,7 @@ static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 
 	rt_stack_disconnect(rtdev);
 
-	MOD_DEC_USE_COUNT;
+	RTNET_MOD_DEC_USE_COUNT;
 
 	return 0;
 }

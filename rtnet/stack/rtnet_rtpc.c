@@ -44,6 +44,7 @@ LIST_HEAD(pending_calls);
 LIST_HEAD(processed_calls);
 
 
+#ifndef __wait_event_interruptible_timeout
 #define __wait_event_interruptible_timeout(wq, condition, timeout, ret)     \
 do {                                                                        \
     signed long __timeout;                                                  \
@@ -69,7 +70,9 @@ do {                                                                        \
     current->state = TASK_RUNNING;                                          \
     remove_wait_queue(&wq, &__wait);                                        \
 } while (0)
+#endif
 
+#ifndef wait_event_interruptible_timeout
 #define wait_event_interruptible_timeout(wq, condition, timeout)            \
 ({                                                                          \
     int __ret = 0;                                                          \
@@ -77,6 +80,7 @@ do {                                                                        \
         __wait_event_interruptible_timeout(wq, condition, timeout, __ret);  \
     __ret;                                                                  \
 })
+#endif
 
 
 

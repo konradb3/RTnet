@@ -22,8 +22,6 @@
 #ifndef __RTNET_INTERNAL_H_
 #define __RTNET_INTERNAL_H_
 
-#ifdef __KERNEL__
-
 #include <rtnet_sys.h>
 
 #ifdef HAVE_RTAI_SEM_H
@@ -112,7 +110,40 @@ extern struct proc_dir_entry *rtnet_proc_root;
 
 #endif /* CONFIG_PROC_FS */
 
-#endif /* __KERNEL__ */
 
+/* manage module reference counter */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+
+static inline void RTNET_MOD_INC_USE_COUNT_EX(struct module *module)
+{
+#if defined(CONFIG_MODULE_UNLOAD) && defined(MODULE)
+    local_inc(&module->ref[get_cpu()].count);
+    put_cpu();
+#else
+    (void)try_module_get(module);
+#endif
+}
+
+static inline void RTNET_MOD_DEC_USE_COUNT_EX(struct module *module)
+{
+    module_put(module);
+}
+
+#else
+
+static inline void RTNET_MOD_INC_USE_COUNT_EX(struct module *module)
+{
+    __MOD_INC_USE_COUNT(module);
+}
+
+static inline void RTNET_MOD_DEC_USE_COUNT_EX(struct module *module)
+{
+    __MOD_DEC_USE_COUNT(module);
+}
+
+#endif
+
+#define RTNET_MOD_INC_USE_COUNT RTNET_MOD_INC_USE_COUNT_EX(THIS_MODULE)
+#define RTNET_MOD_DEC_USE_COUNT RTNET_MOD_DEC_USE_COUNT_EX(THIS_MODULE)
 
 #endif /* __RTNET_INTERNAL_H_ */

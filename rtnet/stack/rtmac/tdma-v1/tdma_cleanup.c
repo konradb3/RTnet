@@ -118,7 +118,7 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
     /*
      * not it should be save to remove module
      */
-    MOD_DEC_USE_COUNT;
+    RTNET_MOD_DEC_USE_COUNT;
 
     return;
 }
@@ -197,7 +197,7 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
     /*
      * not it should be save to remove module
      */
-    MOD_DEC_USE_COUNT;
+    RTNET_MOD_DEC_USE_COUNT;
 
     return;
 }

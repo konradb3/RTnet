@@ -76,7 +76,7 @@ int nomac_attach(struct rtnet_device *rtdev, void *priv)
     if (ret < 0)
         return ret;
 
-    MOD_INC_USE_COUNT;
+    RTNET_MOD_INC_USE_COUNT;
 
 #ifdef CONFIG_PROC_FS
     down(&nomac_nrt_lock);
@@ -100,7 +100,7 @@ int nomac_detach(struct rtnet_device *rtdev, void *priv)
         return ret;
 
     /* ... */
-    MOD_DEC_USE_COUNT;
+    RTNET_MOD_DEC_USE_COUNT;
 
 #ifdef CONFIG_PROC_FS
     down(&nomac_nrt_lock);

@@ -1142,7 +1142,7 @@ static int netdev_open(struct rtnet_device *dev)
 	long ioaddr = dev->base_addr;
 	int i;
 
-	MOD_INC_USE_COUNT;
+	RTNET_MOD_INC_USE_COUNT;
 
 	/* Reset the chip, just in case. */
 	natsemi_reset(dev);
@@ -1153,7 +1153,7 @@ static int netdev_open(struct rtnet_device *dev)
 /*** RTnet ***/
 /*	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);*/
 	if (i) {
-		MOD_DEC_USE_COUNT;
+		RTNET_MOD_DEC_USE_COUNT;
 		return i;
 	}
 
@@ -1163,7 +1163,7 @@ static int netdev_open(struct rtnet_device *dev)
 	i = alloc_ring(dev);
 	if (i < 0) {
 		rtos_irq_free(dev->irq);
-		MOD_DEC_USE_COUNT;
+		RTNET_MOD_DEC_USE_COUNT;
 		return i;
 	}
 	init_ring(dev);
@@ -2719,7 +2719,7 @@ static int netdev_close(struct rtnet_device *dev)
 		}
 	}
 
-	MOD_DEC_USE_COUNT;
+	RTNET_MOD_DEC_USE_COUNT;
 
 	return 0;
 }

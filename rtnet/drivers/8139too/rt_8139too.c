@@ -1185,7 +1185,7 @@ static int rtl8139_open (struct rtnet_device *rtdev)
 
         rtos_irq_enable(rtdev->irq);
 
-        MOD_INC_USE_COUNT;
+        RTNET_MOD_INC_USE_COUNT;
 
         return 0;
 }
@@ -1766,7 +1766,7 @@ static int rtl8139_close (struct rtnet_device *rtdev)
         if (rtl_chip_info[tp->chipset].flags & HasHltClk)
                 RTL_W8 (HltClk, 'H');        /* 'R' would leave the clock running. */
 
-        MOD_DEC_USE_COUNT;
+        RTNET_MOD_DEC_USE_COUNT;
 
         return 0;
 }

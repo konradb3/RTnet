@@ -92,7 +92,7 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     rtdev->mac_priv = priv;
     rtdev->mac_detach = rtmac_disc_detach;
 
-    __MOD_INC_USE_COUNT(rtdev->owner);
+    RTNET_MOD_INC_USE_COUNT_EX(rtdev->owner);
     rtdev_reference(rtdev);
 
     /* create the VNIC */
@@ -152,7 +152,7 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
     rtdev->mac_priv   = NULL;
     rtdev->mac_detach = NULL;
 
-    __MOD_DEC_USE_COUNT(rtdev->owner);
+    RTNET_MOD_DEC_USE_COUNT_EX(rtdev->owner);
     rtdev_dereference(rtdev);
 
     kfree(priv);

@@ -20,14 +20,21 @@
 #ifndef __RTDM_H
 #define __RTDM_H
 
-#include <linux/ioctl.h>
-#include <linux/socket.h>
-
 
 #ifdef __KERNEL__
+
+#include <linux/ioctl.h>
+#include <linux/socket.h>
+#include <linux/fcntl.h>
+
 typedef size_t          socklen_t;
+
 #else  /* !__KERNEL__ */
+
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+
 #endif /* __KERNEL__ */
 
 

@@ -483,10 +483,13 @@ pcnet32_probe_vlbus(void)
 
     /* search for PCnet32 VLB cards at known addresses */
     for (port = pcnet32_portlist; (ioaddr = *port); port++) {
-	if (!check_region(ioaddr, PCNET32_TOTAL_SIZE)) {
+	if (!request_region(ioaddr, PCNET32_TOTAL_SIZE, "pcnet32_probe_vlbus")) {
 	    /* check if there is really a pcnet chip on that ioaddr */
-	    if ((inb(ioaddr + 14) == 0x57) && (inb(ioaddr + 15) == 0x57))
+	    if ((inb(ioaddr + 14) == 0x57) && (inb(ioaddr + 15) == 0x57)) {
 		pcnet32_probe1(ioaddr, 0, 0, NULL);
+	    } else {
+		release_region(ioaddr, PCNET32_TOTAL_SIZE);
+	    }
 	}
     }
 }
@@ -978,7 +981,7 @@ pcnet32_open(struct rtnet_device *dev) /*** RTnet ***/
 	       lp->a.read_csr(ioaddr, 0));
 
 
-    MOD_INC_USE_COUNT;
+    RTNET_MOD_INC_USE_COUNT;
 
     return 0;	/* Always succeed */
 }
@@ -1522,7 +1525,7 @@ pcnet32_close(struct rtnet_device *dev) /*** RTnet ***/
         lp->tx_dma_addr[i] = 0;
     }
 
-    MOD_DEC_USE_COUNT;
+    RTNET_MOD_DEC_USE_COUNT;
 
     return 0;
 }

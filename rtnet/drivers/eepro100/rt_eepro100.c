@@ -992,7 +992,7 @@ speedo_open(struct rtnet_device *rtdev)
 	if (speedo_debug > 1)
 		printk(KERN_DEBUG "%s: speedo_open() irq %d.\n", rtdev->name, rtdev->irq);
 
-	MOD_INC_USE_COUNT;
+	RTNET_MOD_INC_USE_COUNT;
 
 	pci_set_power_state(sp->pdev, 0);
 
@@ -1009,7 +1009,7 @@ speedo_open(struct rtnet_device *rtdev)
 
 	retval = rtos_irq_request(rtdev->irq, speedo_interrupt, rtdev);
 	if (retval) {
-		MOD_DEC_USE_COUNT;
+		RTNET_MOD_DEC_USE_COUNT;
 		return retval;
 	}
 	// *** RTnet ***
@@ -2042,7 +2042,7 @@ speedo_close(struct rtnet_device *rtdev)
 
 	pci_set_power_state(sp->pdev, 2);
 
-	MOD_DEC_USE_COUNT;
+	RTNET_MOD_DEC_USE_COUNT;
 
 	return 0;
 }

@@ -38,7 +38,7 @@ static struct rtnet_device* rt_loopback_dev;
  */
 static int rt_loopback_open (struct rtnet_device *rtdev)
 {
-    MOD_INC_USE_COUNT;
+    RTNET_MOD_INC_USE_COUNT;
 
     rt_stack_connect(rtdev, &STACK_manager);
     rtnetif_start_queue(rtdev);
@@ -56,7 +56,7 @@ static int rt_loopback_close (struct rtnet_device *rtdev)
     rtnetif_stop_queue(rtdev);
     rt_stack_disconnect(rtdev);
 
-    MOD_DEC_USE_COUNT;
+    RTNET_MOD_DEC_USE_COUNT;
 
     return 0;
 }
