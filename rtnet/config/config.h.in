@@ -1,16 +1,13 @@
-/* include/rtnet_config.h.in.  Generated from configure.ac by autoheader.  */
+/* config/config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Be build for rtai 24.1.x */
+#undef CONFIG_RTAI_24
+
+/* Be build for rtai 3.0.x */
+#undef CONFIG_RTAI_30
 
 /* Use Adeos-based HAL */
 #undef CONFIG_RTAI_ADEOS
-
-/* Build system alias */
-#undef CONFIG_RTAI_BUILD_STRING
-
-/* Compiler */
-#undef CONFIG_RTAI_COMPILER
-
-/* Host system alias */
-#undef CONFIG_RTAI_HOST_STRING
 
 /* Kconfig */
 #undef CONFIG_RTAI_LINUX24
@@ -18,8 +15,17 @@
 /* Use legacy RTHAL */
 #undef CONFIG_RTAI_RTHAL
 
+/* Build system alias */
+#undef CONFIG_RTNET_BUILD_STRING
+
 /* Bug checks */
 #undef CONFIG_RTNET_CHECKED
+
+/* Compiler */
+#undef CONFIG_RTNET_COMPILER
+
+/* Host system alias */
+#undef CONFIG_RTNET_HOST_STRING
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
@@ -50,6 +56,18 @@
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <rtai_declare.h> header file. */
+#undef HAVE_RTAI_DECLARE_H
+
+/* Define to 1 if you have the <rtai_lxrt_user.h> header file. */
+#undef HAVE_RTAI_LXRT_USER_H
+
+/* Define to 1 if you have the <rtai_malloc.h> header file. */
+#undef HAVE_RTAI_MALLOC_H
+
+/* Define to 1 if you have the <rtai_sem.h> header file. */
+#undef HAVE_RTAI_SEM_H
 
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
