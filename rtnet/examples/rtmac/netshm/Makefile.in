@@ -224,7 +224,7 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 DIST_SOURCES = $(libnetshm_a_SOURCES) $(libnetshm_kerndemo_a_SOURCES)
-DIST_COMMON = Makefile.am Makefile.in
+DIST_COMMON = README Makefile.am Makefile.in
 SOURCES = $(libnetshm_a_SOURCES) $(libnetshm_kerndemo_a_SOURCES)
 
 all: all-am
