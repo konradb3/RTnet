@@ -24,6 +24,7 @@
 
 #include <asm/uaccess.h>
 #include <linux/file.h>
+#include <linux/vmalloc.h>
 
 #include <rtcfg.h>
 #include <rtnet_rtpc.h>
