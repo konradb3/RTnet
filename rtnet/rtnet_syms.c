@@ -56,26 +56,6 @@ EXPORT_SYMBOL(rt_socket_setsockopt);
 EXPORT_SYMBOL(rt_socket_ioctl);
 EXPORT_SYMBOL(rt_socket_callback);
 
-/* DISCONTINUED! WILL BE REMOVED SOON */
-#if 0
-EXPORT_SYMBOL(rt_ssocket);
-EXPORT_SYMBOL(rt_ssocket_bind);
-EXPORT_SYMBOL(rt_ssocket_listen);
-EXPORT_SYMBOL(rt_ssocket_connect);
-EXPORT_SYMBOL(rt_ssocket_accept);
-EXPORT_SYMBOL(rt_ssocket_close);
-EXPORT_SYMBOL(rt_ssocket_writev);
-EXPORT_SYMBOL(rt_ssocket_send);
-EXPORT_SYMBOL(rt_ssocket_sendto);
-EXPORT_SYMBOL(rt_ssocket_sendmsg);
-EXPORT_SYMBOL(rt_ssocket_readv);
-EXPORT_SYMBOL(rt_ssocket_recv);
-EXPORT_SYMBOL(rt_ssocket_recvfrom);
-EXPORT_SYMBOL(rt_ssocket_recvmsg);
-EXPORT_SYMBOL(rt_ssocket_getsockname);
-EXPORT_SYMBOL(rt_ssocket_callback);
-#endif
-
 
 /****************************************************************************
  * stack_mgr.c                                                              *

@@ -43,20 +43,6 @@
 typedef size_t socklen_t;
 
 
-#if 0
-/***
- *  rtsocket - NO LONGER NEEDED WITHOUT THE STATIC INTERFACE!
- */
-
-struct rtsocket;
-typedef struct rtsocket SOCKET;
-
-
-
-/* the external interface */
-extern struct rtsocket *rt_socket_lookup(int s);
-#endif
-
 /* file descriptor interface */
 extern int rt_socket            (int family, int type, int protocol);
 extern int rt_socket_bind       (int s, struct sockaddr *my_addr, socklen_t addrlen);
@@ -91,28 +77,6 @@ extern int rt_socket_ioctl      (int s, int request, void *arg);
 #define rt_recvmsg              rt_socket_recvmsg
 #define rt_setsockopt           rt_socket_setsockopt
 #define rt_ioctl                rt_socket_ioctl
-
-#if 0
-/* static interface - DISCONTINUED! WILL BE REMOVED SOON */
-extern int rt_ssocket(SOCKET* socket, int family, int type, int protocol);
-extern int rt_ssocket_bind(SOCKET *socket, struct sockaddr *my_addr, socklen_t addrlen);
-extern int rt_ssocket_listen(SOCKET *socket, int backlog);
-extern int rt_ssocket_connect(SOCKET *socket, const struct sockaddr *serv_addr, socklen_t addrlen);
-extern int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, socklen_t *addrlen);
-extern int rt_ssocket_close(SOCKET *socket);
-extern int rt_ssocket_writev(SOCKET *socket, const struct iovec *vector, int count);
-extern int rt_ssocket_send(SOCKET *socket, const void *msg, size_t len, int flags);
-extern int rt_ssocket_sendto(SOCKET *socket, const void *msg, size_t len, int flags,
-                             const struct sockaddr *to, socklen_t tolen);
-extern int rt_ssocket_sendmsg(SOCKET *socket, const struct msghdr *msg, int flags);
-extern int rt_ssocket_readv(SOCKET *socket, const struct iovec *vector, int count);
-extern int rt_ssocket_recv(SOCKET *socket, void *buf, size_t len, int flags);
-extern int rt_ssocket_recvfrom(SOCKET *socket, void *buf, size_t len, int flags,
-                               struct sockaddr *from, socklen_t *fromlen);
-extern int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, int flags);
-extern int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, socklen_t addr_len);
-extern int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg);
-#endif
 
 /* utils */
 extern unsigned long rt_inet_aton(const char *ip);

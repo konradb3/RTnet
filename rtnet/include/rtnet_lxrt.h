@@ -43,26 +43,6 @@
 #define RT_SOCKET_SETSOCKOPT    17
 #define RT_SOCKET_IOCTL         18
 
-/* discontinued */
-/*#define RT_SSOCKET              40
-#define RT_SSOCKET_CLOSE        41
-#define RT_SSOCKET_BIND         42
-#define RT_SSOCKET_CONNECT      43
-#define RT_SSOCKET_ACCEPT       44
-#define RT_SSOCKET_LISTEN       45
-#define RT_SSOCKET_SEND         46
-#define RT_SSOCKET_RECV         47
-#define RT_SSOCKET_SENDTO       48
-#define RT_SSOCKET_RECVFROM     49
-#define RT_SSOCKET_SENDMSG      50
-#define RT_SSOCKET_RECVMSG      51
-#define RT_SSOCKET_WRITE        52
-#define RT_SSOCKET_READ         53
-#define RT_SSOCKET_WRITEV       54
-#define RT_SSOCKET_READV        55
-#define RT_SSOCKET_GETSOCKNAME  56
-#define RT_SSOCKET_SETSOCKOPT   57*/
-
 #ifndef __KERNEL__
 
 #include <rtnet_config.h>
