@@ -1,6 +1,16 @@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 
-SUBDIRS = driver ethernet examples ipv4 lib packet rtcfg rtmac tools include
+OPTDIRS =
+
+if CONFIG_RTNET_RTCAP
+OPTDIRS += rtcap
+endif
+
+if CONFIG_RTNET_RTCFG
+OPTDIRS += rtcfg
+endif
+
+SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools include $(OPTDIRS)
 
 noinst_LIBRARIES = librtnet.a
 
