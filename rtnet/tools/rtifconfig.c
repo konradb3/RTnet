@@ -24,11 +24,12 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <fcntl.h>
 #include <sys/socket.h>
+#include <net/ethernet.h>
 #include <netinet/in.h>
 
 #include <rtnet_chrdev.h>
@@ -44,7 +45,7 @@ void help(void)
 {
     fprintf(stderr, "Usage:\n"
         "\trtifconfig [<dev>]\n"
-        "\trtifconfig <dev> up <addr> [netmask <mask>]\n"
+        "\trtifconfig <dev> up <addr> [netmask <mask>] [[-]promisc]\n"
         "\trtifconfig <dev> down\n"
         "\trtifconfig <dev> route\n"
         "\trtifconfig <dev> route solicit <addr>\n"
@@ -53,7 +54,7 @@ void help(void)
         "\trtifconfig <dev> mac master <cycle-time/us> [<mtu-size/byte>]\n"
         "\trtifconfig <dev> mac up\n"
         "\trtifconfig <dev> mac down\n"
-        "\trtifconfig <dev> mac add <addr>\n"
+        "\trtifconfig <dev> mac add <addr> <offset/us>\n"
         "\trtifconfig <dev> mac remove <addr>\n"
         "\trtifconfig <dev> mac cycle <time/us>\n"
         "\trtifconfig <dev> mac mtu <size/byte>\n"
@@ -73,8 +74,8 @@ void do_display(void)
     char *name = "/proc/rtai/route";
 
     if ((fp = fopen(name, "r")) == NULL) {
-        fprintf(stderr, "rtifconfig: cannot open file %s:%s.\n", name, strerror(errno));
-        help ();
+        fprintf(stderr, "rtifconfig: cannot open %s: %s.\n", name, strerror(errno));
+        exit(1);
     }
 
     /* Read the lines in the file. */
@@ -93,7 +94,8 @@ void do_display(void)
 
 void do_up(int argc, char *argv[])
 {
-    int r;
+    int            r;
+    int            i;
     struct in_addr addr;
 
     if (argc < 4)
@@ -101,22 +103,37 @@ void do_up(int argc, char *argv[])
 
     inet_aton(argv[3], &addr);
     cfg.ip_addr = addr.s_addr;
-    if (argc > 4) {
-        if ((argc != 6) || (strcmp(argv[4], "netmask") != 0))
-            help();
 
-        inet_aton(argv[5], &addr);
-        cfg.ip_mask = addr.s_addr;
-    } else {
-        if (strcmp(argv[1], "rtlo") == 0)           /* loopback device? */
-            /* RTnet's routing system still needs this work around      */
-            cfg.ip_mask = 0xFFFFFFFF;
-        else if (ntohl(cfg.ip_addr) <= 0x7FFFFFFF)  /* 127.255.255.255  */
-            cfg.ip_mask = 0x000000FF;               /* 255.0.0.0        */
-        else if (ntohl(cfg.ip_addr) <= 0xBFFFFFFF)  /* 191.255.255.255  */
-            cfg.ip_mask = 0x0000FFFF;               /* 255.255.0.0      */
-        else
-            cfg.ip_mask = 0x00FFFFFF;               /* 255.255.255.0    */
+    /* set default netmask */
+    if (strcmp(argv[1], "rtlo") == 0)           /* loopback device? */
+        /* RTnet's routing system still needs this work around      */
+        cfg.ip_mask = 0xFFFFFFFF;
+    else if (ntohl(cfg.ip_addr) <= 0x7FFFFFFF)  /* 127.255.255.255  */
+        cfg.ip_mask = 0x000000FF;               /* 255.0.0.0        */
+    else if (ntohl(cfg.ip_addr) <= 0xBFFFFFFF)  /* 191.255.255.255  */
+        cfg.ip_mask = 0x0000FFFF;               /* 255.255.0.0      */
+    else
+        cfg.ip_mask = 0x00FFFFFF;               /* 255.255.255.0    */
+
+    /* default: don't change flags */
+    cfg.set_dev_flags   = 0;
+    cfg.clear_dev_flags = 0;
+
+    /* parse optional parameters */
+    for (i = 4; i < argc; i++) {
+        if (strcmp(argv[i], "netmask") == 0) {
+            if (++i >= argc)
+                help();
+            inet_aton(argv[i], &addr);
+            cfg.ip_mask = addr.s_addr;
+        } else if (strcmp(argv[i], "promisc") == 0) {
+            cfg.set_dev_flags   |= IFF_PROMISC;
+            cfg.clear_dev_flags &= ~IFF_PROMISC;
+        } else if (strcmp(argv[i], "-promisc") == 0) {
+            cfg.set_dev_flags   &= ~IFF_PROMISC;
+            cfg.clear_dev_flags |= IFF_PROMISC;
+        } else
+            help();
     }
 
     cfg.ip_netaddr   = cfg.ip_addr&cfg.ip_mask;
@@ -284,14 +301,17 @@ void do_mac_down(int argc, char *argv[])
 
 void do_mac_add(int argc, char *argv[])
 {
-    int r;
+    int r, offset;
     struct in_addr addr;
 
-    if (argc < 5)
+    if (argc < 6)
         help();
 
     inet_aton(argv[4], &addr);
     tdma_cfg.ip_addr = addr.s_addr;
+
+    offset = atoi(argv[5]);
+    tdma_cfg.offset = offset;
 
     r = ioctl(f, TDMA_IOC_ADD, &tdma_cfg);
     if (r < 0) {
