@@ -20916,7 +20916,7 @@ LXRT_CFLAGS="-D__IN_RTNET__ $LXRT_CFLAGS"
 
 
 
-                                                                                                                                                                                                                                                                    ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile examples/rtmac/Makefile examples/rtmac/event/Makefile examples/rtmac/mrtt/Makefile examples/rtmac/rtt/Makefile examples/rtmac/netshm/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/tdma/Makefile rtcfg/Makefile include/Makefile rtcap/Makefile rtai_rtdm/Makefile"
+                                                                                                                                                                                                                                                                              ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/select/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile examples/rtmac/Makefile examples/rtmac/event/Makefile examples/rtmac/mrtt/Makefile examples/rtmac/rtt/Makefile examples/rtmac/netshm/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/tdma/Makefile rtcfg/Makefile include/Makefile rtcap/Makefile rtai_rtdm/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -21630,6 +21630,7 @@ do
   "examples/round_trip_time/client/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/round_trip_time/client/Makefile" ;;
   "examples/round_trip_time/server/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/round_trip_time/server/Makefile" ;;
   "examples/rtnet_lxrt/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtnet_lxrt/Makefile" ;;
+  "examples/select/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/select/Makefile" ;;
   "examples/frag_ip/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/frag_ip/Makefile" ;;
   "examples/raw_packets/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/raw_packets/Makefile" ;;
   "examples/rtmac/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtmac/Makefile" ;;

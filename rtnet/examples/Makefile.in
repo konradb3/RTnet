@@ -37,6 +37,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
 @CONFIG_NEWLXRT_TRUE@am__append_1 = rtnet_lxrt
+@CONFIG_RTNET_RTDM_SELECT_TRUE@am__append_2 = select
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
@@ -181,7 +182,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTDIRS = $(am__append_1)
+OPTDIRS = $(am__append_1) $(am__append_2)
 
 SUBDIRS = round_trip_time frag_ip raw_packets rtmac $(OPTDIRS)
 subdir = examples
@@ -197,7 +198,8 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	installdirs-recursive install-recursive uninstall-recursive \
 	check-recursive installcheck-recursive
 DIST_COMMON = Makefile.am Makefile.in
-DIST_SUBDIRS = round_trip_time frag_ip raw_packets rtmac rtnet_lxrt
+DIST_SUBDIRS = round_trip_time frag_ip raw_packets rtmac rtnet_lxrt \
+	select
 all: all-recursive
 
 .SUFFIXES:
