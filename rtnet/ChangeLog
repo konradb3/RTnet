@@ -9,12 +9,13 @@
   * improved locking scheme
   * layer version tag
 - kernel 2.6 support
-- experimental RTAI/fusion 0.6.6 support
+- RTAI/fusion support (0.6.6 or better)
 - source tree reorganisation
 - added NoMAC module as skeleton for new disciplines
 - revised and extended rtnet start script
 - worst-case statistics for rtping
 - read stage 1 data for "rtcfg add" from stdin
+- fixed cleanup bug in RTmac's VNIC handling
 - bug fixes in RTcfg, /proc output, legacy tdma-v1, and some other parts
 
 0.7.1

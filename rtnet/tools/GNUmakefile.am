@@ -27,6 +27,8 @@ install-exec-local: rtnet $(OPTSCRIPTS)
  		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
 	done
 
-install-data-local: rtnet.conf
+install-data-local: rtnet.conf tdma.conf
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
-	$(INSTALL_DATA) $< $(DESTDIR)$(sysconfdir)
+	for FILE in $^; do					\
+		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\
+	done
