@@ -27,6 +27,7 @@
 #include <ipv4/protocol.h>
 #include <ipv4/route.h>
 
+#ifdef CONFIG_RTNET_PROXY
 static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
 
 
@@ -41,6 +42,7 @@ int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
     ip_fallback_handler = callback;
     return 0;
 }
+#endif /* CONFIG_RTNET_PROXY */
 
 
 
@@ -93,6 +95,7 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
         /* Deliver the packet to the next layer */
         ret = ipprot->rcv_handler(skb);
     } else {
+#ifdef CONFIG_RTNET_PROXY
         /* If a fallback handler for IP protocol has been installed,
          * call it! */
         if (ip_fallback_handler) {
@@ -100,11 +103,12 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
             if (ret) {
                 rtos_print("RTnet: fallback handler failed\n");
             }
-        } else {
-            rtos_print("RTnet: no protocol found\n");
-            kfree_rtskb(skb);
-            ret = 0;
+            return ret;
         }
+#endif /* CONFIG_RTNET_PROXY */
+        rtos_print("RTnet: no protocol found\n");
+        kfree_rtskb(skb);
+        ret = 0;
     }
 
     return ret;
