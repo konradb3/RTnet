@@ -52,7 +52,7 @@ submit_cfg() {
             $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
             $TDMACFG rteth0 master $TDMA_CYCLE
-            sh -c "$TDMA_SLOTS"
+            /bin/sh -c "$TDMA_SLOTS"
             ;;
         slave)
             if [ ! "$STATION_IP" = "" ]; then
@@ -210,7 +210,7 @@ case "$1" in
             $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
             echo -n "Stage 1: searching for master..."
-            sh -c "`$RTCFG rteth0 client -c`"
+            /bin/sh -c "IPADDR=$IPADDR; NETMASK_OPT=$NETMASK_OPT; `$RTCFG rteth0 client -c`"
             echo
 
             echo -n "Stage 2: waiting for other slaves..."
