@@ -1,4 +1,4 @@
-                             RTnet Version 0.6.1
+                             RTnet Version 0.6.2
                              ===================
 
 What is it?
@@ -11,12 +11,13 @@ What are the requirements?
 --------------------------
 - Linux kernel 2.4.x
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
-  RTAI 3.x: tested on 3.0, LXRT when using user space API
+  RTAI 3.x: tested on 3.0[r1|r2], LXRT when using user space API
 - x86 (required for LXRT interface) or PowerPC platform. Other platforms are
   untested yet.
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
   AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x network adapter, MPC8260
-  FCC, or MPC8xx SCC/FEC on-chip controllers
+  FCC, or MPC8xx SCC/FEC on-chip controllers, SMSC LAN91C111 embedded
+  controller
 
 How to install it?
 ------------------
@@ -38,6 +39,7 @@ How to install it?
        --enable-fcc-enet        compiles the MPC8260 FCC driver
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
+       --enable-smc91111        compiles the SMSC LAN91C111 driver
        --enable-proxy           compiles the IP protocol proxy driver (legacy)
        --enable-rtcap           enables capturing support (see README.rtcap)
        --disable-checks         does not compile internal bug checks
