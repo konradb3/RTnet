@@ -194,7 +194,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             rtos_spin_lock_irqsave(&rtdev->rtdev_lock, flags);
 
             if (test_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags)) {
-                rtos_spin_unlock_irqrestore(&rtdev->dev_lock, flags);
+                rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
 
                 up(&rtdev->nrt_sem);
                 return -EBUSY;

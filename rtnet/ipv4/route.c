@@ -339,7 +339,7 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
 
     if ((!test_bit(PRIV_FLAG_UP, &rtdev->priv_flags) ||
         test_and_set_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags))) {
-        rtos_spin_unlock_irqrestore(&rtdev->dev_lock, flags);
+        rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
         return -EBUSY;
     }
 
