@@ -40,24 +40,27 @@
  *  udp_sockets
  *  the registered sockets from any server
  */
-static struct rtsocket  *udp_sockets         = NULL;
-static unsigned short   good_port            = 1024;
-static rtos_spinlock_t  udp_socket_base_lock = RTOS_SPIN_LOCK_UNLOCKED;
+static struct rtsocket *udp_sockets = NULL;
+static unsigned short  good_port    = 1024;
+
+static rtos_res_lock_t udp_socket_base_lock;
 
 /***
  *  rt_udp_port_inuse
  */
 static inline int rt_udp_port_inuse(u16 num)
 {
-    unsigned long flags;
     struct rtsocket *sk;
 
-    rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
+    rtos_res_lock(&udp_socket_base_lock);
+
     for (sk = udp_sockets; sk != NULL; sk = sk->next) {
         if (sk->prot.inet.sport == num)
             break;
     }
-    rtos_spin_unlock_irqrestore(&udp_socket_base_lock, flags);
+
+    rtos_res_unlock(&udp_socket_base_lock);
+
     return (sk != NULL) ? 1 : 0;
 }
 
@@ -82,20 +85,22 @@ unsigned short rt_udp_good_port(void)
 /***
  *  rt_udp_v4_lookup
  */
-struct rtsocket *rt_udp_v4_lookup(u16 sport, u16 dport)
+struct rtsocket *rt_udp_v4_lookup(u16 sport, u32 daddr, u16 dport)
 {
-    unsigned long flags;
     struct rtsocket *sk;
 
-    rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
+    rtos_res_lock(&udp_socket_base_lock);
 
     for (sk = udp_sockets; sk != NULL; sk = sk->next)
-        if (sk->prot.inet.sport == dport) {
+        if ((sk->prot.inet.sport == dport) &&
+            ((sk->prot.inet.daddr == INADDR_ANY) ||
+             (sk->prot.inet.daddr == daddr))) {
             rt_socket_reference(sk);
             break;
         }
 
-    rtos_spin_unlock_irqrestore(&udp_socket_base_lock, flags);
+    rtos_res_unlock(&udp_socket_base_lock);
+
     return sk;
 }
 
@@ -399,7 +404,6 @@ out:
  */
 int rt_udp_close(struct rtsocket *s)
 {
-    unsigned long flags;
     struct rtsocket *prev=s->prev;
     struct rtsocket *next=s->next;
     struct rtskb *del;
@@ -407,7 +411,7 @@ int rt_udp_close(struct rtsocket *s)
 
     s->state=TCP_CLOSE;
 
-    rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
+    rtos_res_lock(&udp_socket_base_lock);
 
     prev=s->prev;
     next=s->next;
@@ -419,7 +423,7 @@ int rt_udp_close(struct rtsocket *s)
     if (s == udp_sockets)
         udp_sockets = next;
 
-    rtos_spin_unlock_irqrestore(&udp_socket_base_lock, flags);
+    rtos_res_unlock(&udp_socket_base_lock);
 
     s->next = NULL;
     s->prev = NULL;
@@ -474,7 +478,7 @@ struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
         skb->csum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
 
     /* find the destination socket */
-    skb->sk = rt_udp_v4_lookup(uh->source, uh->dest);
+    skb->sk = rt_udp_v4_lookup(uh->source, daddr, uh->dest);
 
     return skb->sk;
 }
@@ -529,15 +533,13 @@ static struct rtsocket_ops rt_udp_socket_ops = {
  */
 int rt_udp_socket(struct rtsocket *s)
 {
-    unsigned long flags;
-
     s->family          = PF_INET;
     s->protocol        = IPPROTO_UDP;
     s->ops             = &rt_udp_socket_ops;
     s->prot.inet.saddr = INADDR_ANY;
 
     /* add to udp-socket-list */
-    rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
+    rtos_res_lock(&udp_socket_base_lock);
 
     s->next = udp_sockets;
     s->prev = NULL;
@@ -546,7 +548,7 @@ int rt_udp_socket(struct rtsocket *s)
         udp_sockets->prev = s;
     udp_sockets = s;
 
-    rtos_spin_unlock_irqrestore(&udp_socket_base_lock, flags);
+    rtos_res_unlock(&udp_socket_base_lock);
 
     return s->fd;
 }
@@ -571,6 +573,7 @@ static struct rtinet_protocol udp_protocol = {
  */
 void __init rt_udp_init(void)
 {
+    rtos_res_lock_init(&udp_socket_base_lock);
     rt_inet_add_protocol(&udp_protocol);
 }
 
@@ -582,4 +585,5 @@ void __init rt_udp_init(void)
 void rt_udp_release(void)
 {
     rt_inet_del_protocol(&udp_protocol);
+    rtos_res_lock_delete(&udp_socket_base_lock);
 }
