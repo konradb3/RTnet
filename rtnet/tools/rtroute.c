@@ -76,6 +76,10 @@ void print_routes(void)
     close(f);
 
     if ((proc = open(net_route, O_RDONLY)) < 0) {
+        if (errno == ENOENT) {
+            /* Network routing is not available */
+            exit(0);
+        }
         perror(net_route);
         exit(1);
     }
