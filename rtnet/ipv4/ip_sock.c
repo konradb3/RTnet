@@ -1,6 +1,6 @@
 /* ip_sock.c
  *
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ * Copyright (C) 2002 Hans-Peter Bock <Hans-Peter.Bock@epost.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+// $Log: ip_sock.c,v $
+// Revision 1.2  2003/02/05 08:40:08  hpbock
+// This file has been created by me (Hans-Peter Bock) - but I copied the Header from another file, so Ulrich Marx's name was still in it.
+//
+
 #include <rtnet.h>
 
 int rt_ip_setsockopt (int fd, int optname, char *optval, int optlen) {
