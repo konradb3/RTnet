@@ -45,23 +45,20 @@ LIST_HEAD(processed_calls);
 
 
 #ifndef __wait_event_interruptible_timeout
-#define __wait_event_interruptible_timeout(wq, condition, timeout, ret)     \
+#define __wait_event_interruptible_timeout(wq, condition, ret)              \
 do {                                                                        \
-    signed long __timeout;                                                  \
     wait_queue_t __wait;                                                    \
     init_waitqueue_entry(&__wait, current);                                 \
                                                                             \
-    __timeout = timeout;                                                    \
     add_wait_queue(&wq, &__wait);                                           \
     for (;;) {                                                              \
         set_current_state(TASK_INTERRUPTIBLE);                              \
         if (condition)                                                      \
             break;                                                          \
         if (!signal_pending(current)) {                                     \
-            if ((__timeout = schedule_timeout(__timeout)) == 0) {           \
-                ret = -ETIME;                                               \
+            ret = schedule_timeout(ret);                                    \
+            if (!ret)                                                       \
                 break;                                                      \
-            }                                                               \
             continue;                                                       \
         }                                                                   \
         ret = -ERESTARTSYS;                                                 \
@@ -75,9 +72,9 @@ do {                                                                        \
 #ifndef wait_event_interruptible_timeout
 #define wait_event_interruptible_timeout(wq, condition, timeout)            \
 ({                                                                          \
-    int __ret = 0;                                                          \
+    long __ret = timeout;                                                   \
     if (!(condition))                                                       \
-        __wait_event_interruptible_timeout(wq, condition, timeout, __ret);  \
+        __wait_event_interruptible_timeout(wq, condition, __ret);           \
     __ret;                                                                  \
 })
 #endif
@@ -113,13 +110,15 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
 
     rtos_event_sem_signal(&dispatch_event);
 
-    if (timeout > 0)
+    if (timeout > 0) {
         ret = wait_event_interruptible_timeout(call->call_wq,
             call->processed, (timeout * HZ) / 1000);
-    else
+        if (ret == 0)
+            ret = -ETIME;
+    } else
         ret = wait_event_interruptible(call->call_wq, call->processed);
 
-    if (ret == 0) {
+    if (ret >= 0) {
         if (copy_back_handler != NULL)
             copy_back_handler(call, priv_data);
         ret = call->result;
