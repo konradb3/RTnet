@@ -24,6 +24,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <net/ip.h>
 
 #include <rtnet_internal.h>
 #include <ipv4/af_inet.h>
@@ -717,7 +718,6 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr)
 {
     struct rtnet_device *rtdev = rtskb->rtdev;
-    struct iphdr        *iph;
     struct dest_route   dest;
 
 
@@ -730,11 +730,9 @@ int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr)
         goto error;
     }
 
-    iph = rtskb->nh.iph;
-
     if (rt_ip_route_output(&dest, daddr) < 0) {
         /*ERRMSG*/rtos_print("RTnet: unable to forward packet from %u.%u.%u.%u\n",
-                             NIPQUAD(daddr));
+                             NIPQUAD(rtskb->nh.iph->saddr));
         goto error;
     }
 
