@@ -18,7 +18,6 @@
  */
 #include <rtai.h>
 #include <rtai_sched.h>
-#include <rtai_fifos.h>
 
 #include <rtdev.h>
 #include <rtnet_internal.h>
