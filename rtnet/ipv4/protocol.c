@@ -19,6 +19,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/socket.h>
+#include <linux/in.h>
+
 #include <rtnet_socket.h>
 #include <ipv4/protocol.h>
 
