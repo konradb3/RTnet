@@ -1312,7 +1312,7 @@ static void speedo_purge_tx(struct net_device *dev)
 	}
 	sp->mc_setup_tail = NULL;
 	sp->tx_full = 0;
-	netif_wake_queue(dev);
+	netif_start_queue(dev);
 }
 #endif
 
@@ -1684,7 +1684,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 				&& (int)(sp->cur_tx - sp->dirty_tx) < TX_QUEUE_UNFULL) {
 				/* The ring is no longer full. */
 				sp->tx_full = 0;
-				netif_wake_queue(dev); /* Attention: under a spinlock.  --SAW */
+				netif_start_queue(dev); /* Attention: under a spinlock.  --SAW */
 			}
 			rt_spin_unlock(&sp->lock);
 		}

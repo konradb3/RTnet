@@ -1400,7 +1400,7 @@ static void rtl8139_tx_interrupt (struct net_device *dev,
 		tp->dirty_tx = dirty_tx;
 		mb();
 		if (netif_queue_stopped (dev))
-			netif_wake_queue (dev);
+			netif_start_queue (dev);
 	}
 }
 
