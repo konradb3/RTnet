@@ -35,10 +35,10 @@ MODULE_PARM_DESC(rtskb_cache_size, "Number of cached rtskbs for creating pools i
 
 
 /* Linux slab pool for rtskbs */
-kmem_cache_t *rtskb_slab_pool;
+static kmem_cache_t *rtskb_slab_pool;
 
 /* preallocated rtskbs for real-time pool creation */
-struct rtskb_queue rtskb_cache;
+static struct rtskb_queue rtskb_cache;
 
 /* pool of rtskbs for global use */
 struct rtskb_queue global_pool;
@@ -48,6 +48,12 @@ static unsigned int rtskb_pools=0;
 static unsigned int rtskb_pools_max=0;
 static unsigned int rtskb_amount=0;
 static unsigned int rtskb_amount_max=0;
+
+#ifdef CONFIG_RTNET_RTCAP
+/* RTcap interface */
+rtos_spinlock_t rtcap_lock;
+void (*rtcap_handler)(struct rtskb *skb) = NULL;
+#endif
 
 
 
@@ -109,6 +115,7 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
 
 
 
+#ifdef CONFIG_RTNET_CHECKED
 /**
  *  skb_over_panic - private function
  *  @skb: buffer
@@ -149,6 +156,7 @@ void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
     rtos_print("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here,
                skb->len, sz, name);
 }
+#endif /* CONFIG_RTNET_CHECKED */
 
 
 
@@ -167,6 +175,9 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     skb = rtskb_dequeue(pool);
     if (!skb)
         return NULL;
+#ifdef CONFIG_RTNET_CHECKED
+    pool->pool_balance--;
+#endif
 
     /* Load the data pointers. */
     skb->data = skb->buf_start;
@@ -177,6 +188,11 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     skb->chain_end = skb;
     skb->len = 0;
     skb->data_len = 0;
+    skb->pkt_type = PACKET_HOST;
+
+#ifdef CONFIG_RTNET_RTCAP
+    skb->cap_flags = 0;
+#endif
 
     return skb;
 }
@@ -189,10 +205,31 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
  */
 void kfree_rtskb(struct rtskb *skb)
 {
+#ifdef CONFIG_RTNET_RTCAP
+    unsigned long flags;
+#endif
+
+
     RTNET_ASSERT(skb != NULL, return;);
     RTNET_ASSERT(skb->pool != NULL, return;);
 
+#ifdef CONFIG_RTNET_RTCAP
+    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+
+    if (skb->cap_flags & RTSKB_CAP_SHARED) {
+        skb->cap_flags &= ~RTSKB_CAP_SHARED;
+
+        rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+        return;
+    }
+
+    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+#endif /* CONFIG_RTNET_RTCAP */
+
     rtskb_queue_tail(skb->pool, skb);
+#ifdef CONFIG_RTNET_CHECKED
+    skb->pool->pool_balance++;
+#endif
 }
 
 
@@ -209,6 +246,9 @@ unsigned int rtskb_pool_init(struct rtskb_queue *pool,
     unsigned int i;
 
     rtskb_queue_init(pool);
+#ifdef CONFIG_RTNET_CHECKED
+    pool->pool_balance = 0;
+#endif
 
     i = rtskb_pool_extend(pool, initial_size);
 
@@ -233,6 +273,9 @@ unsigned int rtskb_pool_init_rt(struct rtskb_queue *pool,
     unsigned int i;
 
     rtskb_queue_init(pool);
+#ifdef CONFIG_RTNET_CHECKED
+    pool->pool_balance = 0;
+#endif
 
     i = rtskb_pool_extend_rt(pool, initial_size);
 
@@ -253,6 +296,8 @@ void rtskb_pool_release(struct rtskb_queue *pool)
 {
     struct rtskb *skb;
 
+    RTNET_ASSERT(pool->pool_balance == 0, rtos_print("pool: %p\n", pool););
+
     while ((skb = rtskb_dequeue(pool)) != NULL) {
         kmem_cache_free(rtskb_slab_pool, skb);
         rtskb_amount--;
@@ -270,6 +315,8 @@ void rtskb_pool_release(struct rtskb_queue *pool)
 void rtskb_pool_release_rt(struct rtskb_queue *pool)
 {
     struct rtskb *skb;
+
+    RTNET_ASSERT(pool->pool_balance == 0, rtos_print("pool: %p\n", pool););
 
     while ((skb = rtskb_dequeue(pool)) != NULL) {
         skb->chain_end = skb;
@@ -398,10 +445,16 @@ int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
 
     if (!comp_rtskb)
         return -ENOMEM;
+#ifdef CONFIG_RTNET_CHECKED
+    comp_pool->pool_balance--;
+#endif
 
     comp_rtskb->chain_end = comp_rtskb;
     comp_rtskb->pool = rtskb->pool;
     rtskb_queue_tail(comp_rtskb->pool, comp_rtskb);
+#ifdef CONFIG_RTNET_CHECKED
+    comp_rtskb->pool->pool_balance++;
+#endif
     rtskb->pool = comp_pool;
 
     return 0;
@@ -430,6 +483,10 @@ int rtskb_pools_init(void)
     /* create the global rtskb pool */
     if (rtskb_pool_init(&global_pool, global_rtskbs) < global_rtskbs)
         goto err_out2;
+
+#ifdef CONFIG_RTNET_RTCAP
+    rtos_spin_lock_init(&rtcap_lock);
+#endif
 
     return 0;
 
