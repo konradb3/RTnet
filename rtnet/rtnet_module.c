@@ -36,6 +36,8 @@
 #include <rtnet.h>
 #include <rtnet_internal.h>
 
+MODULE_LICENSE("GPL");
+
 struct rtnet_mgr STACK_manager;
 struct rtnet_mgr RTDEV_manager;
 
