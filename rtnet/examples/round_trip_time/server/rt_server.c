@@ -136,42 +136,42 @@ int init_module(void)
 	unsigned long client_ip = rt_inet_aton(client_ip_s);
 
 
-	rt_printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
-	rt_printk ("client ip address %s=%08x\n", client_ip_s, client_ip);
+	printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
+	printk ("client ip address %s=%08x\n", client_ip_s, client_ip);
 
 	/* create rt-socket */
-	rt_printk("create rtsocket\n");	
+	printk("create rtsocket\n");	
 	if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
-		rt_printk("socket not created\n");
+		printk("socket not created\n");
 		return -ENOMEM;
 	}
 	
 	/* bind the rt-socket to local_addr */	
-	rt_printk("bind rtsocket to local address:port\n");
+	printk("bind rtsocket to local address:port\n");
 	memset(&local_addr, 0, sizeof(struct sockaddr_in));
 	local_addr.sin_family = AF_INET;
 	local_addr.sin_port = htons(RCV_PORT);
 	local_addr.sin_addr.s_addr = local_ip;
 	if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
-		rt_printk("can't bind rtsocket\n");
+		printk("can't bind rtsocket\n");
 		return ret;
 	}
 	
 	/* set client-addr */
-	rt_printk("connect rtsocket to client address:port\n");
+	printk("connect rtsocket to client address:port\n");
 	memset(&client_addr, 0, sizeof(struct sockaddr_in));
 	client_addr.sin_family = AF_INET;
 	client_addr.sin_port = htons(SRV_PORT);
 	client_addr.sin_addr.s_addr = client_ip;
 	if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
-		rt_printk("can't connect rtsocket\n");
+		printk("can't connect rtsocket\n");
 		return ret;
 	}
 
 	/* get socket-structure for printing */
 	if ( (socket=rt_socket_lookup(sock)) ) {
-		rt_printk("src  addr: %08x:%04x\n", socket->saddr, socket->sport);
-		rt_printk("dest addr: %08x:%04x\n", socket->daddr, socket->dport);
+		printk("src  addr: %08x:%04x\n", socket->saddr, socket->sport);
+		printk("dest addr: %08x:%04x\n", socket->daddr, socket->dport);
 	}
 
 	/* set up receiving */

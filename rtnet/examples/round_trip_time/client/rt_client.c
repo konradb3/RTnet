@@ -152,11 +152,11 @@ int init_module(void)
 	if (packetsize < 1) packetsize = 1;
 	if (packetsize > 1400) packetsize = 1400;
 
-	rt_printk ("***** start of rt_client ***** %s %s *****\n", __DATE__, __TIME__);
-	rt_printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
-	rt_printk ("server ip address %s=%08x\n", server_ip_s, server_ip);
-	rt_printk ("interval = %d\n", interval);
-	rt_printk ("packetsize = %d\n", packetsize);
+	printk ("***** start of rt_client ***** %s %s *****\n", __DATE__, __TIME__);
+	printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
+	printk ("server ip address %s=%08x\n", server_ip_s, server_ip);
+	printk ("interval = %d\n", interval);
+	printk ("packetsize = %d\n", packetsize);
 
 	rtf_create(PRINT, 8000);
 
@@ -202,5 +202,5 @@ void cleanup_module(void)
 	/* destroy the fifo   */
 	rtf_destroy(PRINT);
 
-	rt_printk ("packets sent:\t\t%10d\npackets received:\t%10d\npacketloss:\t\t%10d\%\n", sent, rcvd, 100-((100*rcvd)/sent));
+	printk ("packets sent:\t\t%10d\npackets received:\t%10d\npacketloss:\t\t%10d\%\n", sent, rcvd, 100-((100*rcvd)/sent));
 }
