@@ -266,11 +266,11 @@ if test x$arch_select = x; then
    exit 1
 fi
 
-if test x${CONFIG_MODULES} = x ; then
+if test x${CONFIG_MODULES} = x; then
   AC_MSG_ERROR([*** Please set CONFIG_MODULES for $RTAI_LINUX_DIR and rebuild your kernel])
 fi
 
-if test x${CONFIG_MODVERSIONS} = xy ; then
+if test x${CONFIG_MODVERSIONS} = xy; then
   AC_MSG_ERROR([*** Please unset CONFIG_MODVERSIONS for $RTAI_LINUX_DIR and rebuild your kernel])
 fi
 
@@ -449,6 +449,9 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     AC_MSG_CHECKING([for Linux source tree])
     RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
     RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+
+#source (load) the kernel configuration
+    . ${RTAI_LINUX_DIR}/.config
 
     AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
 fi
@@ -787,7 +790,7 @@ AC_SUBST(RTNET_MODULE_DIR)
 dnl ======================================================================
 dnl		check for NEWLXRT
 dnl ======================================================================
-AC_MSG_CHECKING([for RTAI NEWLXRT enabled])
+AC_MSG_CHECKING([for RTAI 24.1.x NEWLXRT resp. RTAI 3.x LXRT enabled])
 case "${CONFIG_RTNET_RTAI_VERSION}" in
     24)
 	case "$CONFIG_RTAI_NEWLXRT" in
@@ -808,6 +811,22 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	;;
 esac
 AC_MSG_RESULT([${CONFIG_NEWLXRT}])
+
+AC_MSG_CHECKING([for CONFIG_REGPARM activated in Linux Kernel])
+if test "${CONFIG_NEWLXRT}" = "yes" -a "${CONFIG_REGPARM}" = "y"; then
+    AC_MSG_WARN([
+
+*** LXRT interface for RTnet disabled ***
+Please unset CONFIG_NEWLXRT for
+${RTAI_LINUX_DIR}
+and rebuild your kernel in order to build LXRT interface for RTNET
+
+])
+    CONFIG_NEWLXRT=no
+else
+    AC_MSG_RESULT([${CONFIG_REGPARM:-no}])
+fi
+
 AM_CONDITIONAL(CONFIG_NEWLXRT,[test "$CONFIG_NEWLXRT" = "yes"])
 if test "$CONFIG_NEWLXRT" = "yes"; then
    AC_DEFINE(CONFIG_NEWLXRT, 1, [RTAI LXRT])

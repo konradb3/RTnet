@@ -20664,13 +20664,13 @@ if test x$arch_select = x; then
    exit 1
 fi
 
-if test x${CONFIG_MODULES} = x ; then
+if test x${CONFIG_MODULES} = x; then
   { { echo "$as_me:$LINENO: error: *** Please set CONFIG_MODULES for $RTAI_LINUX_DIR and rebuild your kernel" >&5
 echo "$as_me: error: *** Please set CONFIG_MODULES for $RTAI_LINUX_DIR and rebuild your kernel" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-if test x${CONFIG_MODVERSIONS} = xy ; then
+if test x${CONFIG_MODVERSIONS} = xy; then
   { { echo "$as_me:$LINENO: error: *** Please unset CONFIG_MODVERSIONS for $RTAI_LINUX_DIR and rebuild your kernel" >&5
 echo "$as_me: error: *** Please unset CONFIG_MODVERSIONS for $RTAI_LINUX_DIR and rebuild your kernel" >&2;}
    { (exit 1); exit 1; }; }
@@ -20895,6 +20895,9 @@ echo "$as_me: error: *** internal error" >&2;}
 echo $ECHO_N "checking for Linux source tree... $ECHO_C" >&6
     RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
     RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+
+#source (load) the kernel configuration
+    . ${RTAI_LINUX_DIR}/.config
 
     echo "$as_me:$LINENO: result: $RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&5
 echo "${ECHO_T}$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&6
@@ -21528,8 +21531,8 @@ echo "${ECHO_T}$RTNET_MODULE_DIR" >&6
 
 
 
-echo "$as_me:$LINENO: checking for RTAI NEWLXRT enabled" >&5
-echo $ECHO_N "checking for RTAI NEWLXRT enabled... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for RTAI 24.1.x NEWLXRT resp. RTAI 3.x LXRT enabled" >&5
+echo $ECHO_N "checking for RTAI 24.1.x NEWLXRT resp. RTAI 3.x LXRT enabled... $ECHO_C" >&6
 case "${CONFIG_RTNET_RTAI_VERSION}" in
     24)
 	case "$CONFIG_RTAI_NEWLXRT" in
@@ -21553,6 +21556,32 @@ echo "$as_me: error: *** internal error" >&2;}
 esac
 echo "$as_me:$LINENO: result: ${CONFIG_NEWLXRT}" >&5
 echo "${ECHO_T}${CONFIG_NEWLXRT}" >&6
+
+echo "$as_me:$LINENO: checking for CONFIG_REGPARM activated in Linux Kernel" >&5
+echo $ECHO_N "checking for CONFIG_REGPARM activated in Linux Kernel... $ECHO_C" >&6
+if test "${CONFIG_NEWLXRT}" = "yes" -a "${CONFIG_REGPARM}" = "y"; then
+    { echo "$as_me:$LINENO: WARNING:
+
+*** LXRT interface for RTnet disabled ***
+Please unset CONFIG_NEWLXRT for
+${RTAI_LINUX_DIR}
+and rebuild your kernel in order to build LXRT interface for RTNET
+
+" >&5
+echo "$as_me: WARNING:
+
+*** LXRT interface for RTnet disabled ***
+Please unset CONFIG_NEWLXRT for
+${RTAI_LINUX_DIR}
+and rebuild your kernel in order to build LXRT interface for RTNET
+
+" >&2;}
+    CONFIG_NEWLXRT=no
+else
+    echo "$as_me:$LINENO: result: ${CONFIG_REGPARM:-no}" >&5
+echo "${ECHO_T}${CONFIG_REGPARM:-no}" >&6
+fi
+
 
 
 if test "$CONFIG_NEWLXRT" = "yes"; then
