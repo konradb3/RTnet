@@ -140,7 +140,7 @@ int init_module(void)
            "    dest_ip = %s\n", io, irq, my_ip, dest_ip);
 
 
-    tdma = tdma_get_by_name(rteth_dev);
+    tdma = tdma_get_by_device(rteth_dev);
     if (!tdma)
     {
         printk("ERROR: RTmac/TDMA not loaded!\n");
