@@ -690,8 +690,26 @@ extern unsigned int rtskb_pool_init(struct rtskb_queue *pool,
                                     unsigned int initial_size);
 extern unsigned int rtskb_pool_init_rt(struct rtskb_queue *pool,
                                        unsigned int initial_size);
-extern void rtskb_pool_release(struct rtskb_queue *pool);
-extern void rtskb_pool_release_rt(struct rtskb_queue *pool);
+extern void __rtskb_pool_release(struct rtskb_queue *pool);
+extern void __rtskb_pool_release_rt(struct rtskb_queue *pool);
+
+#ifdef CONFIG_RTNET_CHECKED
+#define rtskb_pool_release(pool)                            \
+    do {                                                    \
+        RTNET_ASSERT((pool)->pool_balance == 0,             \
+                     rtos_print("pool: %p\n", (pool)););    \
+        __rtskb_pool_release((pool));                       \
+    } while (0)
+#define rtskb_pool_release_rt(pool)                         \
+    do {                                                    \
+        RTNET_ASSERT((pool)->pool_balance == 0,             \
+                     rtos_print("pool: %p\n", (pool)););    \
+        __rtskb_pool_release_rt((pool));                    \
+    } while (0)
+#else
+#define rtskb_pool_release      __rtskb_pool_release
+#define rtskb_pool_release_rt   __rtskb_pool_release_rt
+#endif
 
 extern unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
                                       unsigned int add_rtskbs);

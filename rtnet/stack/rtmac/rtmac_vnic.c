@@ -40,22 +40,22 @@ static struct rtskb_queue   rx_queue;
 
 
 
-int rtmac_vnic_rx(struct rtskb *skb, u16 type)
+int rtmac_vnic_rx(struct rtskb *rtskb, u16 type)
 {
-    struct rtmac_priv *mac_priv = skb->rtdev->mac_priv;
+    struct rtmac_priv *mac_priv = rtskb->rtdev->mac_priv;
     struct rtskb_queue *pool = &mac_priv->vnic_skb_pool;
 
 
-    if (rtskb_acquire(skb, pool) != 0) {
+    if (rtskb_acquire(rtskb, pool) != 0) {
         mac_priv->vnic_stats.rx_dropped++;
-        kfree_rtskb(skb);
+        kfree_rtskb(rtskb);
         return -1;
     }
 
-    skb->protocol = type;
+    rtskb->protocol = type;
 
-    rtdev_reference(skb->rtdev);
-    rtskb_queue_tail(&rx_queue, skb);
+    rtdev_reference(rtskb->rtdev);
+    rtskb_queue_tail(&rx_queue, rtskb);
     rtos_pend_nrt_signal(&vnic_signal);
 
     return 0;
@@ -226,7 +226,7 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
     struct net_device   *vnic = &mac_priv->vnic;
 
 
-    mac_priv->vnic_used = 0;
+    mac_priv->vnic_registered = 0;
     memset(&mac_priv->vnic_stats, 0, sizeof(mac_priv->vnic_stats));
 
     /* create the rtskb pool */
@@ -244,7 +244,7 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
 
     res = register_netdev(vnic);
     if (res == 0)
-        mac_priv->vnic_used = 1;
+        mac_priv->vnic_registered = 1;
     else
         rtskb_pool_release(&mac_priv->vnic_skb_pool);
 
@@ -253,15 +253,14 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
 
 
 
-void rtmac_vnic_remove(struct rtnet_device *rtdev)
+void rtmac_vnic_unregister(struct rtnet_device *rtdev)
 {
     struct rtmac_priv   *mac_priv = rtdev->mac_priv;
 
 
-    if (mac_priv->vnic_used) {
-        mac_priv->vnic_used = 0;
+    if (mac_priv->vnic_registered) {
         unregister_netdev(&mac_priv->vnic);
-        rtskb_pool_release(&mac_priv->vnic_skb_pool);
+        mac_priv->vnic_registered = 0;
     }
 }
 

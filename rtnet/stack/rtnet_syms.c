@@ -174,7 +174,7 @@ EXPORT_SYMBOL(alloc_rtskb);
 EXPORT_SYMBOL(kfree_rtskb);
 
 EXPORT_SYMBOL(rtskb_pool_init);
-EXPORT_SYMBOL(rtskb_pool_release);
+EXPORT_SYMBOL(__rtskb_pool_release);
 EXPORT_SYMBOL(global_pool);
 
 EXPORT_SYMBOL(rtskb_acquire);

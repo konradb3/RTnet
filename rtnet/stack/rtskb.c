@@ -318,14 +318,13 @@ unsigned int rtskb_pool_init_rt(struct rtskb_queue *pool,
 
 
 /***
- *  rtskb_pool_release
+ *  __rtskb_pool_release
  *  @pool: pool to release
  */
-void rtskb_pool_release(struct rtskb_queue *pool)
+void __rtskb_pool_release(struct rtskb_queue *pool)
 {
     struct rtskb *skb;
 
-    RTNET_ASSERT(pool->pool_balance == 0, rtos_print("pool: %p\n", pool););
 
     while ((skb = rtskb_dequeue(pool)) != NULL) {
         kmem_cache_free(rtskb_slab_pool, skb);
@@ -338,14 +337,13 @@ void rtskb_pool_release(struct rtskb_queue *pool)
 
 
 /***
- *  rtskb_pool_release_rt
+ *  __rtskb_pool_release_rt
  *  @pool: pool to release
  */
-void rtskb_pool_release_rt(struct rtskb_queue *pool)
+void __rtskb_pool_release_rt(struct rtskb_queue *pool)
 {
     struct rtskb *skb;
 
-    RTNET_ASSERT(pool->pool_balance == 0, rtos_print("pool: %p\n", pool););
 
     while ((skb = rtskb_dequeue(pool)) != NULL) {
         skb->chain_end = skb;

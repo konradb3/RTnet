@@ -136,13 +136,14 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
     priv = rtdev->mac_priv;
     RTNET_ASSERT(priv != NULL, return -EINVAL;);
 
-    /* remove the VNIC */
-    rtmac_vnic_remove(rtdev);
+    rtmac_vnic_unregister(rtdev);
 
     /* call release function of discipline */
     ret = disc->detach(rtdev, priv->disc_priv);
     if (ret < 0)
         return ret;
+
+    rtmac_vnic_cleanup(rtdev);
 
     /* restore start_xmit */
     rtdev->start_xmit = priv->orig_start_xmit;

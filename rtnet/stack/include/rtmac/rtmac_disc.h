@@ -37,7 +37,7 @@ struct rtmac_priv {
     struct net_device       vnic;
     struct net_device_stats vnic_stats;
     struct rtskb_queue      vnic_skb_pool;
-    int                     vnic_used;
+    int                     vnic_registered;
 
     u8                      disc_priv[0] __attribute__ ((aligned(16)));
 };

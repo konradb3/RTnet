@@ -54,10 +54,9 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
         goto error;
     }
 
-    if (hdr->flags & RTMAC_FLAG_TUNNEL) {
-        if (skb->rtdev->mac_priv->vnic_used)
-            return rtmac_vnic_rx(skb, hdr->type);
-    } else if (disc->disc_type == hdr->type)
+    if (hdr->flags & RTMAC_FLAG_TUNNEL)
+        return rtmac_vnic_rx(skb, hdr->type);
+    else if (disc->disc_type == hdr->type)
         return disc->packet_rx(skb);
 
   error:
