@@ -1,6 +1,6 @@
 This list was created when porting the pcnet32 driver to RTnet. It is
 absolutely unsorted. Some points may not apply to every driver, some may have
-to be added for other. It is recommended to take a look at pcnet32-rt.c if a
+to be added for others. It is recommended to take a look at pcnet32-rt.c if a
 step remains unclear.
 
 IMPORTANT: Check if the critical paths of the driver (xmit function, interrupt

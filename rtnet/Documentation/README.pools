@@ -10,7 +10,7 @@ them to the NIC driver.
 Unlike buffers in a normal network stack, rtskbs have to be allocatable in a
 strictly deterministic way. For this reason, rtskbs are kept preallocated in
 multiple pools, one for each producer or consumer of packets. When a filled
-buffer is passed from a producer to a consumer, the consumer as to return an
+buffer is passed from a producer to a consumer, the consumer has to return an
 empty rtskb back. Thus it can be avoided that a failing component can exhaust
 global resources like the buffers and lock the whole RTnet system.
 
@@ -49,8 +49,8 @@ Resizable:      module parameter "global_rtskbs" (base value)
 Runtime Resize: by adding or removing NIC drivers
 Initialization: non real-time
 
-The global pool is used by the ARP protocol (transmission only) the loopback
-device (cloning the packets), and by the real-time protocol part of RTmac.
+The global pool is used by the ARP protocol (transmission only) and by the
+real-time protocol part of RTmac.
 
 
 3. ICMP Pool
