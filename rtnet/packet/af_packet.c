@@ -124,7 +124,7 @@ int rt_packet_recvmsg(struct rtsocket *sock, struct msghdr *msg, size_t len,
                 if (ret == SEM_TIMOUT)
                     return -ETIMEDOUT;
             } else
-                rt_sem_wait(&sock->wakeup_sem);
+                ret = rt_sem_wait(&sock->wakeup_sem);
 
             if (ret == 0xFFFF /* SEM_ERR */)
                 return -ENOTSOCK;
