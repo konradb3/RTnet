@@ -255,7 +255,9 @@ static int tulip_open(/*RTnet*/struct rtnet_device *rtdev);
 static int tulip_close(/*RTnet*/struct rtnet_device *rtdev);
 static void tulip_up(/*RTnet*/struct rtnet_device *rtdev);
 static void tulip_down(/*RTnet*/struct rtnet_device *rtdev);
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static struct net_device_stats *tulip_get_stats(struct net_device *dev);
+#endif // 0
 //static int private_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 //static void set_rx_mode(struct net_device *dev);
 
@@ -882,6 +884,7 @@ static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 	return 0;
 }
 
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static struct net_device_stats *tulip_get_stats(struct net_device *dev)
 {
 	struct tulip_private *tp = (struct tulip_private *)dev->priv;
@@ -899,7 +902,7 @@ static struct net_device_stats *tulip_get_stats(struct net_device *dev)
 
 	return &tp->stats;
 }
-
+#endif // 0
 
 #if 0
 static int netdev_ethtool_ioctl(/*RTnet*/struct rtnet_device *rtdev, void *useraddr)

@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.2 2003/03/12 16:30:44 yamwong Exp $
+ * Version:	$Id: route.c,v 1.3 2003/05/09 12:27:33 hpbock Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -434,6 +434,7 @@ route:
  *	rt_ip_dev_find
  *
  */
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static struct rtnet_device *rt_ip_dev_find(u32 saddr)
 {
 	if (!saddr)
@@ -449,7 +450,7 @@ static struct rtnet_device *rt_ip_dev_find(u32 saddr)
 		return NULL;
 	}
 }
-
+#endif // 0
 
 
 /***

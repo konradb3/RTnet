@@ -195,7 +195,7 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 	if(!sk)
 	{
 		/* WHAT ???? */
-		rt_printk("RTnet : socket is NULL %x\n", icmp_sockets);
+		rt_printk("RTnet : socket is NULL %p\n", icmp_sockets);
 		goto error;
 	}
 
@@ -385,7 +385,7 @@ int rt_icmp_rcv(struct rtskb *skb)
 
 	if(!rtskb_pull(skb, sizeof(struct icmphdr)))
 	{
-		rt_printk("RTnet : pull failed %x\n", (skb->sk));
+		rt_printk("RTnet : pull failed %p\n", (skb->sk));
 		goto error;
 	}
 

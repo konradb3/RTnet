@@ -502,9 +502,10 @@ MODULE_PARM_DESC (full_duplex, "8139too: Force full duplex for board(s) (1)");
 
 
 static int read_eeprom (void *ioaddr, int location, int addr_len);
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static int mdio_read (struct net_device *dev, int phy_id, int location);
 static void mdio_write (struct net_device *dev, int phy_id, int location, int val);
-
+#endif // 0
 
 static int rtl8139_open (struct rtnet_device *rtdev);
 static int rtl8139_close (struct rtnet_device *rtdev);
@@ -1031,6 +1032,7 @@ static int __devinit read_eeprom (void *ioaddr, int location, int addr_len)
 #define mdio_delay(mdio_addr)	readb(mdio_addr)
 
 
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static char mii_2_8139_map[8] = {
 	BasicModeCtrl,
 	BasicModeStatus,
@@ -1041,7 +1043,7 @@ static char mii_2_8139_map[8] = {
 	NWayExpansion,
 	0
 };
-
+#endif // 0
 
 #ifdef CONFIG_8139TOO_8129
 /* Syncronize the MII management interface by shifting 32 one bits out. */
@@ -1059,7 +1061,7 @@ static void mdio_sync (void *mdio_addr)
 #endif
 
 
-
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static int mdio_read (struct net_device *dev, int phy_id, int location)
 {
 	struct rtl8139_private *tp = dev->priv;
@@ -1143,7 +1145,7 @@ static void mdio_write (struct net_device *dev, int phy_id, int location,
 	}
 #endif
 }
-
+#endif // 0
 
 static int rtl8139_open (struct rtnet_device *rtdev)
 {

@@ -45,7 +45,7 @@ void tdma_timer_start(struct timer_list *ptimer, int timeout, void *data, TIMER_
 	ptimer->function = (void (*)(unsigned long)) callback;
 	ptimer->expires = jiffies + timeout;
 
-	TDMA_DEBUG(6, "RTmac: tdma: timer set, now=%d, timeout=%d\n", jiffies, ptimer->expires);
+	TDMA_DEBUG(6, "RTmac: tdma: timer set, now=%d, timeout=%d\n", (int) jiffies, (int) ptimer->expires);
 
 	add_timer(ptimer);
 }

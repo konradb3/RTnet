@@ -325,7 +325,7 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 	s->prev=NULL;
 		
 	/* free packets in incoming queue */
-	while (del=rtskb_dequeue(&s->incoming)) {
+	while (0 != (del=rtskb_dequeue(&s->incoming))) {
 		kfree_rtskb(del);
 	}
 		

@@ -19,10 +19,11 @@
 #include <linux/pci.h>
 #include <linux/delay.h>
 
-
+#if 0 // commented so there is no compiler warning 'defined but not used'
 static u16 t21142_csr13[] = { 0x0001, 0x0009, 0x0009, 0x0000, 0x0001, };
-u16 t21142_csr14[] =	    { 0xFFFF, 0x0705, 0x0705, 0x0000, 0x7F3D, };
 static u16 t21142_csr15[] = { 0x0008, 0x0006, 0x000E, 0x0008, 0x0008, };
+#endif // 0
+u16 t21142_csr14[] =	    { 0xFFFF, 0x0705, 0x0705, 0x0000, 0x7F3D, };
 
 
 /* Handle the 21143 uniquely: do autoselect with NWay, not the EEPROM list

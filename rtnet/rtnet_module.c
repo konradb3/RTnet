@@ -86,7 +86,7 @@ int rtnet_init(void)
 {
         int err = 0;
 
-	printk("\n*** RTnet - %s, %s ***\n\n", __DATE__, __TIME__);
+	printk("\n*** RTnet - built on %s, %s ***\n\n", __DATE__, __TIME__);
         printk("RTnet: init real-time networking\n");
         init_crc32();
 

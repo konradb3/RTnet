@@ -117,8 +117,8 @@ int init_module(void)
 	unsigned long client_ip = rt_inet_aton(client_ip_s);
 
 
-	rt_printk ("local  ip address %s=%8x\n", local_ip_s, local_ip);
-	rt_printk ("client ip address %s=%8x\n", client_ip_s, client_ip);
+	rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+	rt_printk ("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
 
 	/* create rt-socket */
 	rt_printk("create rtsocket\n");	

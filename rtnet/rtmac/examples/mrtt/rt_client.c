@@ -145,8 +145,8 @@ int init_module(void)
 	rtf_create(PRINT, 40000);
 	rt_sem_init(&tx_sem, 0);
 
-	rt_printk ("local     ip address %s=%8x\n", local_ip_s, local_ip);
-	rt_printk ("broadcast ip address %s=%8x\n", broadcast_ip_s, broadcast_ip);
+	rt_printk ("local     ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+	rt_printk ("broadcast ip address %s=%8x\n", broadcast_ip_s, (unsigned int) broadcast_ip);
 
 	/* create rt-socket */
 	sock=rt_socket(AF_INET,SOCK_DGRAM,0);
