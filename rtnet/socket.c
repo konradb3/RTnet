@@ -348,8 +348,7 @@ int rt_socket_send(int s, const void *msg, size_t len, int flags)
  */
 int rt_socket_recv(int s, void *buf, size_t len, int flags)
 {
-    int fromlen=0; /* fix for null pointer dereference-NZG */
-    return rt_socket_recvfrom(s, buf, len, flags, NULL, &fromlen);
+    return rt_socket_recvfrom(s, buf, len, flags, NULL, NULL);
 }
 
 
@@ -408,18 +407,19 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
     if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    iov.iov_base=buf;
-    iov.iov_len=len;
-    msg_hdr.msg_name=from;
-    msg_hdr.msg_namelen=*fromlen;
-    msg_hdr.msg_iov=&iov;
-    msg_hdr.msg_iovlen=1;
+    iov.iov_base = buf;
+    iov.iov_len  = len;
+
+    msg_hdr.msg_name    = from;
+    msg_hdr.msg_namelen = (from != NULL) ? *fromlen : 0;
+    msg_hdr.msg_iov     = &iov;
+    msg_hdr.msg_iovlen  = 1;
 
     error = sock->ops->recvmsg(sock, &msg_hdr, len, flags);
 
     rt_socket_dereference(sock);
 
-    if ((error >= 0) && (*fromlen != 0))
+    if ((error >= 0) && (from != NULL))
         *fromlen = msg_hdr.msg_namelen;
 
     return error;
