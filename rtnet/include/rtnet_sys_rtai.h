@@ -315,6 +315,19 @@ static inline int rtos_irq_free(unsigned int irq)
 #endif
 
 
+static inline void rtos_irq_release_lock(void)
+{
+    rt_sched_lock();
+    hard_sti();
+}
+
+static inline void rtos_irq_reacquire_lock(void)
+{
+    hard_cli();
+    rt_sched_unlock();
+}
+
+
 
 /* proc filesystem */
 /* TODO: make it RTOS independent (it's part of Linux!) */
