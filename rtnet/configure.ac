@@ -358,7 +358,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     3.2*)
 	CONFIG_RTNET_RTAI_VERSION=32
 	;;
-    0.7-fusion)
+    0.7*-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-07
 	;;
     *)
@@ -448,7 +448,19 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 # get linux kernel tree and version
     AC_MSG_CHECKING([for Linux source tree])
     RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-    RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+    case "$CONFIG_RTNET_RTAI_3_VERSION" in
+        3.0 | 3.0r1 | 3.0r2)
+
+            eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
+            ;;
+        *)
+            RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+            ;;
+    esac
 
 #source (load) the kernel configuration
     . ${RTAI_LINUX_DIR}/.config
