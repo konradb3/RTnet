@@ -140,7 +140,7 @@ static inline int tdma_ioctl_down(struct rtnet_device *rtdev)
 
 
 
-static inline int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
+static inline int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr, unsigned int offset)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -157,6 +157,7 @@ static inline int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
 
     info.rtdev = rtdev;
     info.ip_addr = ip_addr;
+    info.offset = offset;
 
     return tdma_do_event(tdma, REQUEST_ADD_RT, &info);
 }
@@ -291,7 +292,7 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long a
             break;
 
         case TDMA_IOC_ADD:
-            ret = tdma_ioctl_add(rtdev, cfg.ip_addr);
+            ret = tdma_ioctl_add(rtdev, cfg.ip_addr, cfg.offset);
             break;
 
         case TDMA_IOC_REMOVE:
