@@ -82,16 +82,16 @@ int main(int argc, char *argv[])
 	rt_socket_connect(sockfd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr_in));
 
 
-	printf("starte\n");
+	printf("start\n");
 	time_tx.l=rt_get_time_ns();
 
-	printf("send paket\n");
+	printf("send packet\n");
 	rt_socket_send(sockfd, &time_tx.l, sizeof(unsigned long long), 0);
 
 	while (!end) {
 		if ( (end=rt_socket_recv(sockfd, msg, sizeof(unsigned long long), 0)) > 0 )  {
 			memcpy (&time_rx.l, msg, sizeof(unsigned long long));
-			printf ("Round-Trip-Zeit %d ns \n", (int)(time_rx.l-time_tx.l));
+			printf ("round trip time %d ns \n", (int)(time_rx.l-time_tx.l));
 			memset (&msg, 0, 1000);
 		}
        	}
