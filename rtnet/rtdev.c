@@ -108,7 +108,7 @@ struct rtnet_device *rtdev_get_by_index(int ifindex)
     unsigned long flags;
 
 
-    if ((ifindex <= 0) && (ifindex >= MAX_RT_DEVICES))
+    if ((ifindex <= 0) || (ifindex > MAX_RT_DEVICES))
         return NULL;
 
     flags = rt_spin_lock_irqsave(&rtnet_devices_rt_lock);
