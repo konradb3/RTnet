@@ -188,7 +188,6 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
             p_coll->buf_size += skb->len;
 
             if (!more_frags) {
-                first_skb->nh.iph->tot_len = htons(p_coll->buf_size + sizeof(struct iphdr));
                 p_coll->in_use = 0;
 
                 rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
