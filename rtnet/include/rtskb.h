@@ -2,7 +2,7 @@
  *
  * RTnet - real-time networking subsystem
  * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>,
- *               2003 Jan Kiszka <jan.kiszka@web.de>
+ *               2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -103,7 +103,43 @@ rtskbs, it is not possible to allocate a chain from a pool (alloc_rtskb()); a
 newly allocated rtskb is always reset to a "single rtskb chain". Furthermore,
 the acquisition of complete chains is NOT supported (rtskb_acquire()).
 
+
+6. Capturing Support (Optional)
+
+When incoming or outgoing packets are captured, the assigned rtskb needs to be
+shared between the stack, the driver, and the capturing service. In contrast to
+many other network layers, RTnet does not create a new rtskb head and
+re-references the payload. Instead, additional fields at the end of the rtskb
+structure are use for sharing a rtskb with a capturing service. If the sharing
+bit (RTSKB_CAP_SHARED) in cap_flags is set, the rtskb will not be return to the
+owning pool upon the first call of kfree_rtskb. This call will only reset the
+bit so that the second call can then return the rtskb as normal. cap_start and
+cap_len can be used to mirror the dimension of the full packet. This is
+required because the data and len fields will be modified while walking through
+the stack. cap_next allows to add a rtskb to a separate queue which is
+independent of any queue described in 2.
+
+Certain setup tasks for capturing packets can not become part of a capturing
+module, they have to be embedded into the stack. For this purpose, several
+inline functions are provided. rtcap_mark_incoming() is used to save the packet
+dimension right before it is modifed by the stack. rtcap_report_incoming()
+calls the capturing handler if present in order to let it process the received
+rtskb (e.g. acquire it, mark it as shared, and enqueue it).
+
+Outgoing rtskb have to be captured by adding a hook function to the chain of
+hard_start_xmit functions of a device. To measure the delay caused by RTmac
+between the request and the actual transmission, a time stamp can be taken using
+rtcap_mark_rtmac_enqueue(). This function is typically called by RTmac
+disciplines when they add a rtskb to their internal transmission queue. In such
+a case, the RTSKB_CAP_RTMAC_STAMP bit is set in cap_flags to indicate that the
+cap_rtmac_stamp field now contains valid data.
+
  ***/
+
+
+#define RTSKB_CAP_SHARED        1   /* rtskb shared between stack and RTcap */
+#define RTSKB_CAP_RTMAC_STAMP   2   /* cap_rtmac_stamp is valid             */
+
 
 struct rtskb_queue;
 struct rtsocket;
@@ -166,13 +202,24 @@ struct rtskb {
     unsigned char       *data;
     unsigned char       *tail;
     unsigned char       *end;
-    rtos_time_t         rx; /* arrival time */
+    rtos_time_t         time_stamp; /* arrival or transmission (RTcap) time */
+
+#ifdef CONFIG_RTNET_RTCAP
+    int                 cap_flags;  /* see RTSKB_CAP_xxx                    */
+    struct rtskb        *cap_next;  /* used for capture queue               */
+    unsigned char       *cap_start; /* start offset for capturing           */
+    unsigned int        cap_len;    /* capture length of this rtskb         */
+    rtos_time_t         cap_rtmac_stamp; /* RTmac enqueuing time            */
+#endif
 };
 
 struct rtskb_queue {
     struct rtskb        *first;
     struct rtskb        *last;
     rtos_spinlock_t     lock;
+#ifdef CONFIG_RTNET_CHECKED
+    int                 pool_balance;
+#endif
 };
 
 #define QUEUE_MAX_PRIO          0
@@ -201,8 +248,10 @@ extern unsigned int rtskb_pools_max;    /* maximum number of rtskb pools      */
 extern unsigned int rtskb_amount;       /* current number of allocated rtskbs */
 extern unsigned int rtskb_amount_max;   /* maximum number of allocated rtskbs */
 
+#ifdef CONFIG_RTNET_CHECKED
 extern void rtskb_over_panic(struct rtskb *skb, int len, void *here);
 extern void rtskb_under_panic(struct rtskb *skb, int len, void *here);
+#endif
 
 extern struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool);
 #define dev_alloc_rtskb(len, pool)  alloc_rtskb(len, pool)
@@ -496,7 +545,7 @@ static inline void rtskb_reserve(struct rtskb *skb, unsigned int len)
 }
 
 #define RTSKB_LINEAR_ASSERT(rtskb) \
-    do { if (rtskb_is_nonlinear(rtskb)) BUG(); }  while (0)
+    RTNET_ASSERT(!rtskb_is_nonlinear(rtskb), BUG();)
 
 static inline unsigned char *__rtskb_put(struct rtskb *skb, unsigned int len)
 {
@@ -513,9 +562,10 @@ static inline unsigned char *rtskb_put(struct rtskb *skb, unsigned int len)
     RTSKB_LINEAR_ASSERT(skb);
     skb->tail+=len;
     skb->len+=len;
-    if(skb->tail>skb->buf_end) {
-        rtskb_over_panic(skb, len, current_text_addr());
-    }
+
+    RTNET_ASSERT(skb->tail <= skb->buf_end,
+        rtskb_over_panic(skb, len, current_text_addr()););
+
     return tmp;
 }
 
@@ -530,9 +580,10 @@ static inline unsigned char *rtskb_push(struct rtskb *skb, unsigned int len)
 {
     skb->data-=len;
     skb->len+=len;
-    if (skb->data<skb->buf_start) {
-        rtskb_under_panic(skb, len, current_text_addr());
-    }
+
+    RTNET_ASSERT(skb->data >= skb->buf_start,
+        rtskb_under_panic(skb, len, current_text_addr()););
+
     return skb->data;
 }
 
@@ -596,6 +647,45 @@ extern unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb,
                                              int offset, u8 *to, int len,
                                              unsigned int csum);
 extern void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to);
+
+
+#ifdef CONFIG_RTNET_RTCAP
+
+extern rtos_spinlock_t rtcap_lock;
+extern void (*rtcap_handler)(struct rtskb *skb);
+
+static inline void rtcap_mark_incoming(struct rtskb *skb)
+{
+    skb->cap_start = skb->data;
+    skb->cap_len   = skb->len;
+}
+
+static inline void rtcap_report_incoming(struct rtskb *skb)
+{
+    unsigned long flags;
+
+
+    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    if (rtcap_handler != NULL)
+        rtcap_handler(skb);
+
+    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+}
+
+static inline void rtcap_mark_rtmac_enqueue(struct rtskb *skb)
+{
+    /* rtskb start and length are probably not valid yet */
+    skb->cap_flags |= RTSKB_CAP_RTMAC_STAMP;
+    rtos_get_time(&skb->cap_rtmac_stamp);
+}
+
+#else /* ifndef CONFIG_RTNET_RTCAP */
+
+#define rtcap_mark_incoming(skb)
+#define rtcap_report_incoming(skb)
+#define rtcap_mark_rtmac_enqueue(skb)
+
+#endif /* CONFIG_RTNET_RTCAP */
 
 
 #endif /* __KERNEL__ */
