@@ -4,6 +4,7 @@
   * server restart after failures
   * IP assignment to clients based on HW addresses
   * verbose /proc interface
+- clean up loopback route when non-loopback interface goes down or changes ip
 
 0.7.0
 - ported user API to RTDM (real-time driver model)
