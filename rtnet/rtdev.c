@@ -241,7 +241,6 @@ void rtdev_alloc_name(struct rtnet_device *rtdev, const char *mask)
 /***
  *	rtdev_alloc
  *	@int sizeof_priv:
- *	@int sem_init
  *
  *	allocate memory for a new rt-network-adapter
  */

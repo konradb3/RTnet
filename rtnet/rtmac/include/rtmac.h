@@ -23,8 +23,8 @@
 
 #ifdef __KERNEL__
 
-
-#define ETH_RTMAC	0x9001
+#define RTMAC_VERSION	0x1
+#define ETH_RTMAC	0x9021
 
 typedef enum {
 	TDMA = 1,
@@ -39,17 +39,17 @@ struct rtmac_device {
 
 	struct rtmac_ioctl_ops		*ioctl_ops;
 	struct rtmac_disc_ops		*disc_ops;
+	struct rtmac_disc_type		*disc_type;
 };
 
 
 struct rtmac_hdr {
-	u8				src;
-	u8				dst;
-	u16				len;
-
-	u8				disc;
+	u16				type;
 	u8				ver;
-	u16				padding;
+	u8				flags;
+
+	u16				len;
+	u16				res;		// reserved for future use :)
 } __attribute__ ((packed));
 
 

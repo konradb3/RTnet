@@ -79,9 +79,8 @@ int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc)
 	rtdev->rtmac = rtmac;
 	rtmac->rtdev = rtdev;
 
-	// move our tx funktion between driver an layer 3
-	rtmac->packet_tx = rtdev->hard_start_xmit;
-	rtdev->hard_start_xmit = disc->rt_packet_tx; // fixme!
+	/* insert pointer to tx functions in disc_type */
+	rtmac->disc_type = disc;
 
 	// install rx_rtmac fkt and *_ops
 	rtmac->disc_ops = disc->disc_ops;
@@ -137,7 +136,7 @@ int rtmac_disc_release(struct rtnet_device *rtdev)
 	ret = rtdev->rtmac->disc_ops->release(rtdev);
 	
 	// restore drivers packet_tx routine
-	rtdev->hard_start_xmit = rtdev->rtmac->packet_tx;
+	rtdev->rtmac->disc_type = NULL;
 	
 	// free memory, and remove pointer from rtdev
 	kfree(rtdev->rtmac);

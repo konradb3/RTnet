@@ -53,6 +53,7 @@
 
 #include <rtnet.h>
 #include <rtnet_internal.h>
+#include <rtmac.h>
 
 /* **************************************************************************
  *  SKB ringbuffers for exchanging data between rtnet and kernel:
@@ -199,7 +200,14 @@ static inline void send_data_out(struct sk_buff *skb)
 
         /* Call the actual transmit function (this function is semaphore 
          * protected): */
-        rtdev_xmit(rtskb);
+	if ((rtskb->rtdev->rtmac) && /* This code lines are crappy! */
+	    (rtskb->rtdev->rtmac->disc_type) &&
+	    (rtskb->rtdev->rtmac->disc_type->proxy_packet_tx)) {
+	    rtskb->rtdev->rtmac->disc_type->proxy_packet_tx(rtskb, rtskb->rtdev);
+	} else {
+	    rtdev_xmit(rtskb);
+	}
+
         /* The rtskb is freed somewhere deep in the driver... 
          * No need to do it here. */
     }

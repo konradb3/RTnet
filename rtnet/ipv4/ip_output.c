@@ -18,6 +18,10 @@
  */
  
 // $Log: ip_output.c,v $
+// Revision 1.6  2003/05/17 16:28:11  hpbock
+// rtnet and rtnetproxy now use rtmac function hooks to send packets
+// rtmac does not modify hard_start_xmit any more
+//
 // Revision 1.5  2003/05/16 19:31:52  hpbock
 // big fat merge with pre-0-3-0
 // compiles and hopefully also runs =8)
@@ -40,6 +44,7 @@
 
 #include <rtnet.h>
 #include <rtnet_internal.h>
+#include <../rtmac/include/rtmac.h>
 
 static u16 rt_ip_id_count = 0;
 
@@ -112,7 +117,14 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 		goto error;
 	}
 
-	err = rtdev_xmit(skb);
+	if ((skb->rtdev->rtmac) && /* This code lines are crappy! */
+	    (skb->rtdev->rtmac->disc_type) &&
+	    (skb->rtdev->rtmac->disc_type->rt_packet_tx)) {
+	    err = skb->rtdev->rtmac->disc_type->rt_packet_tx(skb, skb->rtdev);
+	} else {
+	    err = rtdev_xmit(skb);
+	}
+
 	if (err) {
 		return -EAGAIN;
 	} else {

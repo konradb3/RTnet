@@ -64,6 +64,7 @@
 #define TDMA_PRIO_TX_TASK		0
 
 #define TDMA_VERSION			0x01
+#define ETH_TDMA			0x9031
 
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
@@ -312,8 +313,8 @@ static inline struct rtskb *tdma_make_msg_len(struct rtnet_device *rtdev, void *
 	/*
 	 * assign data to pointers
 	 */
-	rtmac_ptr->disc = TDMA;
-	rtmac_ptr->ver = TDMA_VERSION;
+	rtmac_ptr->type = __constant_htons(ETH_TDMA);
+	rtmac_ptr->ver = RTMAC_VERSION;
 	tdma_ptr->msg = __constant_htonl(event);
 
 	return skb;
