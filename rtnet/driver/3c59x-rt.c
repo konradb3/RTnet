@@ -1068,7 +1068,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 		printk (KERN_ERR PFX "unable to allocate etherdev, aborting\n");
 		goto out;
 	}
-	//rtdev_alloc_name(rtdev, "eth%d"); //Done by register_rtdev()
+	rtdev_alloc_name(rtdev, "eth%d");
 	memset(rtdev->priv, 0, sizeof(*vp));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
