@@ -1,55 +1,55 @@
-/*
-    tools/rtifconfig.c
-    ifconfig replacement for RTnet
-
-    rtnet - real-time networking subsystem
-    Copyright (C) 1999,2000 Zentropic Computing, LLC
-                  2004 Jan Kiszka <jan.kiszka@web.de>
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-*/
+/***
+ *
+ *  tools/rtifconfig.c
+ *  ifconfig replacement for RTnet
+ *
+ *  rtnet - real-time networking subsystem
+ *  Copyright (C) 1999,2000 Zentropic Computing, LLC
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <net/ethernet.h>
+#include <net/if_arp.h>
 #include <netinet/in.h>
 
 #include <rtnet_chrdev.h>
 #include <tdma.h>
 
 
-int f;
-struct rtnet_core_cfg   cfg;
+#define PRINT_FLAG_ALL          1
+#define PRINT_FLAG_INACTIVE     2
+
+
+int                     f;
+struct rtnet_core_cmd   cmd;
 struct tdma_config      tdma_cfg;
 
 
 void help(void)
 {
     fprintf(stderr, "Usage:\n"
-        "\trtifconfig [<dev>]\n"
-        "\trtifconfig <dev> up <addr> [netmask <mask>] [[-]promisc]\n"
+        "\trtifconfig [-a] [<dev>]\n"
+        "\trtifconfig <dev> up [<addr> [netmask <mask>]] [[-]promisc]\n"
         "\trtifconfig <dev> down\n"
-        "\trtifconfig <dev> route\n"
-        "\trtifconfig <dev> route solicit <addr>\n"
-        "\trtifconfig <dev> route delete <addr>\n"
         "\trtifconfig <dev> mac client\n"
         "\trtifconfig <dev> mac master <cycle-time/us> [<mtu-size/byte>]\n"
         "\trtifconfig <dev> mac up\n"
@@ -65,28 +65,81 @@ void help(void)
 
 
 
-void do_display(void)
+void print_dev(void)
 {
-    char buff[1024];
-    int linenr;
-    FILE *fp;
+    struct in_addr  ip_addr;
+    struct in_addr  broadcast_ip;
+    unsigned int    flags;
 
-    char *name = "/proc/rtai/route";
 
-    if ((fp = fopen(name, "r")) == NULL) {
-        fprintf(stderr, "rtifconfig: cannot open %s: %s.\n", name, strerror(errno));
-        exit(1);
+    cmd.head.if_name[9] = 0;
+
+    printf("%-9s Medium: ", cmd.head.if_name);
+
+    if ((cmd.args.info.flags & IFF_LOOPBACK) != 0)
+        printf("Local Loopback\n");
+    else if (cmd.args.info.type == ARPHRD_ETHER)
+        printf("Ethernet  Hardware address: "
+               "%02X:%02X:%02X:%02X:%02X:%02X\n",
+               cmd.args.info.dev_addr[0], cmd.args.info.dev_addr[1],
+               cmd.args.info.dev_addr[2], cmd.args.info.dev_addr[3],
+               cmd.args.info.dev_addr[4], cmd.args.info.dev_addr[5]);
+    else
+        printf("unknown (%X)", cmd.args.info.type);
+
+    if (cmd.args.info.ip_addr != 0) {
+        ip_addr.s_addr      = cmd.args.info.ip_addr;
+        broadcast_ip.s_addr = cmd.args.info.broadcast_ip;
+        printf("          IP address: %s  ", inet_ntoa(ip_addr));
+        if (cmd.args.info.flags & IFF_BROADCAST)
+            printf("Broadcast address: %s", inet_ntoa(broadcast_ip));
     }
 
-    /* Read the lines in the file. */
-    linenr = 0;
-    while (fgets(buff, sizeof(buff), fp)) {
-        ++linenr;
-        if ((buff[0] == '#') || (buff[0] == '\0'))
-            continue;
-        fprintf(stdout, buff);
+    flags = cmd.args.info.flags &
+        (IFF_UP | IFF_BROADCAST | IFF_LOOPBACK | IFF_RUNNING | IFF_PROMISC);
+    printf("\n          %s%s%s%s%s%s MTU: %d\n\n",
+           ((flags & IFF_UP) != 0) ? "UP " : "",
+           ((flags & IFF_BROADCAST) != 0) ? "BROADCAST " : "",
+           ((flags & IFF_LOOPBACK) != 0) ? "LOOPBACK " : "",
+           ((flags & IFF_RUNNING) != 0) ? "RUNNING " : "",
+           ((flags & IFF_PROMISC) != 0) ? "PROMISC " : "",
+           (flags == 0) ? "[NO FLAGS] " : "", cmd.args.info.mtu);
+}
+
+
+
+void do_display(int print_flags)
+{
+    int i;
+    int ret;
+
+
+    if ((print_flags & PRINT_FLAG_ALL) != 0)
+        for (i = 1; i <= MAX_RT_DEVICES; i++) {
+            cmd.args.info.ifindex = i;
+
+            ret = ioctl(f, IOC_RT_IFINFO, &cmd);
+            if (ret == 0) {
+                if (((print_flags & PRINT_FLAG_INACTIVE) != 0) ||
+                    ((cmd.args.info.flags & IFF_RUNNING) != 0))
+                    print_dev();
+            } else if (errno != ENODEV) {
+                perror("ioctl");
+                exit(1);
+            }
+        }
+    else {
+        cmd.args.info.ifindex = 0;
+
+        ret = ioctl(f, IOC_RT_IFINFO, &cmd);
+        if (ret < 0) {
+            perror("ioctl");
+            exit(1);
+        }
+
+        print_dev();
     }
-    fclose(fp);
+
     exit(0);
 }
 
@@ -94,53 +147,52 @@ void do_display(void)
 
 void do_up(int argc, char *argv[])
 {
-    int            r;
-    int            i;
-    struct in_addr addr;
+    int             ret;
+    int             i;
+    struct in_addr  addr;
+    __u32           ip_mask;
 
-    if (argc < 4)
-        help();
-
-    inet_aton(argv[3], &addr);
-    cfg.ip_addr = addr.s_addr;
+    if ((argc > 3) && (inet_aton(argv[3], &addr))) {
+        i = 4;
+        cmd.args.up.ip_addr = addr.s_addr;
+    } else {
+        i = 3;
+        cmd.args.up.ip_addr = 0;
+    }
 
     /* set default netmask */
-    if (strcmp(argv[1], "rtlo") == 0)           /* loopback device? */
-        /* RTnet's routing system still needs this work around      */
-        cfg.ip_mask = 0xFFFFFFFF;
-    else if (ntohl(cfg.ip_addr) <= 0x7FFFFFFF)  /* 127.255.255.255  */
-        cfg.ip_mask = 0x000000FF;               /* 255.0.0.0        */
-    else if (ntohl(cfg.ip_addr) <= 0xBFFFFFFF)  /* 191.255.255.255  */
-        cfg.ip_mask = 0x0000FFFF;               /* 255.255.0.0      */
+    if (ntohl(cmd.args.up.ip_addr) <= 0x7FFFFFFF)       /* 127.255.255.255  */
+        ip_mask = 0x000000FF;                           /* 255.0.0.0        */
+    else if (ntohl(cmd.args.up.ip_addr) <= 0xBFFFFFFF)  /* 191.255.255.255  */
+        ip_mask = 0x0000FFFF;                           /* 255.255.0.0      */
     else
-        cfg.ip_mask = 0x00FFFFFF;               /* 255.255.255.0    */
+        ip_mask = 0x00FFFFFF;                           /* 255.255.255.0    */
 
     /* default: don't change flags */
-    cfg.set_dev_flags   = 0;
-    cfg.clear_dev_flags = 0;
+    cmd.args.up.set_dev_flags   = 0;
+    cmd.args.up.clear_dev_flags = 0;
 
     /* parse optional parameters */
-    for (i = 4; i < argc; i++) {
+    for ( ; i < argc; i++) {
         if (strcmp(argv[i], "netmask") == 0) {
-            if (++i >= argc)
+            if ((++i >= argc) || (cmd.args.up.ip_addr == 0) ||
+                (!inet_aton(argv[i], &addr)))
                 help();
-            inet_aton(argv[i], &addr);
-            cfg.ip_mask = addr.s_addr;
+            ip_mask = addr.s_addr;
         } else if (strcmp(argv[i], "promisc") == 0) {
-            cfg.set_dev_flags   |= IFF_PROMISC;
-            cfg.clear_dev_flags &= ~IFF_PROMISC;
+            cmd.args.up.set_dev_flags   |= IFF_PROMISC;
+            cmd.args.up.clear_dev_flags &= ~IFF_PROMISC;
         } else if (strcmp(argv[i], "-promisc") == 0) {
-            cfg.set_dev_flags   &= ~IFF_PROMISC;
-            cfg.clear_dev_flags |= IFF_PROMISC;
+            cmd.args.up.set_dev_flags   &= ~IFF_PROMISC;
+            cmd.args.up.clear_dev_flags |= IFF_PROMISC;
         } else
             help();
     }
 
-    cfg.ip_netaddr   = cfg.ip_addr&cfg.ip_mask;
-    cfg.ip_broadcast = cfg.ip_addr|(~cfg.ip_mask);
+    cmd.args.up.broadcast_ip = cmd.args.up.ip_addr | (~ip_mask);
 
-    r = ioctl(f, IOC_RT_IFUP, &cfg);
-    if (r < 0) {
+    ret = ioctl(f, IOC_RT_IFUP, &cmd);
+    if (ret < 0) {
         perror("ioctl");
         exit(1);
     }
@@ -153,72 +205,15 @@ void do_down(int argc,char *argv[])
 {
     int r;
 
-    r = ioctl(f, IOC_RT_IFDOWN, &cfg);
-    if (r < 0) {
-        perror("ioctl");
-        exit(1);
-    }
-    exit(0);
-}
-
-
-
-void do_route_solicit(int argc, char *argv[])
-{
-    int r;
-    struct in_addr addr;
-
-    if (argc < 5)
+    if (argc > 3)
         help();
 
-    inet_aton(argv[4], &addr);
-    cfg.ip_addr = addr.s_addr;
-
-    r = ioctl(f, IOC_RT_ROUTE_SOLICIT, &cfg);
+    r = ioctl(f, IOC_RT_IFDOWN, &cmd);
     if (r < 0) {
         perror("ioctl");
         exit(1);
     }
     exit(0);
-}
-
-
-
-/***
- * do_route_delete:     delete route
- */
-void do_route_delete(int argc, char *argv[])
-{
-    int r;
-    struct in_addr addr;
-
-    if (argc < 5)
-        help();
-
-    inet_aton(argv[4], &addr);
-    cfg.ip_addr = addr.s_addr;
-
-    r = ioctl(f, IOC_RT_ROUTE_DELETE, &cfg);
-    if (r < 0) {
-        perror("ioctl");
-        exit(1);
-    }
-    exit(0);
-}
-
-
-
-void do_route(int argc, char *argv[])
-{
-    if (argc < 4)
-        do_display();
-
-    if (strcmp(argv[3], "solicit") == 0)
-        do_route_solicit(argc, argv);
-    if (strcmp(argv[3], "delete") == 0)
-        do_route_delete(argc, argv);
-
-    help();
 }
 
 
@@ -442,15 +437,6 @@ void do_mac(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1)
-        do_display();
-
-    if (strcmp(argv[1], "--help") == 0)
-        help();
-
-    if (argc < 3)
-        do_display();
-
     f = open("/dev/rtnet", O_RDWR);
 
     if (f < 0) {
@@ -458,15 +444,28 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    memset(&cfg, 0, sizeof(cfg));
-    strncpy(cfg.head.if_name, argv[1], IFNAMSIZ);
+    if (argc == 1)
+        do_display(PRINT_FLAG_ALL);
+
+    if (strcmp(argv[1], "--help") == 0)
+        help();
+
+    if (strcmp(argv[1], "-a") == 0) {
+        if (argc == 3) {
+            strncpy(cmd.head.if_name, argv[2], IFNAMSIZ);
+            do_display(PRINT_FLAG_INACTIVE);
+        } else
+            do_display(PRINT_FLAG_INACTIVE | PRINT_FLAG_ALL);
+    } else
+        strncpy(cmd.head.if_name, argv[1], IFNAMSIZ);
+
+    if (argc < 3)
+        do_display(0);
 
     if (strcmp(argv[2], "up") == 0)
         do_up(argc,argv);
     if (strcmp(argv[2], "down") == 0)
         do_down(argc,argv);
-    if (strcmp(argv[2], "route") == 0)
-        do_route(argc,argv);
     if (strcmp(argv[2], "mac") == 0)
         do_mac(argc,argv);
 
