@@ -108,7 +108,7 @@ the acquisition of complete chains is NOT supported (rtskb_acquire()).
 
 When incoming or outgoing packets are captured, the assigned rtskb needs to be
 shared between the stack, the driver, and the capturing service. In contrast to
-many other network layers, RTnet does not create a new rtskb head and
+many other network stacks, RTnet does not create a new rtskb head and
 re-references the payload. Instead, additional fields at the end of the rtskb
 structure are use for sharing a rtskb with a capturing service. If the sharing
 bit (RTSKB_CAP_SHARED) in cap_flags is set, the rtskb will not be return to the
@@ -206,6 +206,7 @@ struct rtskb {
 
 #ifdef CONFIG_RTNET_RTCAP
     int                 cap_flags;  /* see RTSKB_CAP_xxx                    */
+    struct rtskb        *cap_comp_skb; /* compensation rtskb                */
     struct rtskb        *cap_next;  /* used for capture queue               */
     unsigned char       *cap_start; /* start offset for capturing           */
     unsigned int        cap_len;    /* capture length of this rtskb         */

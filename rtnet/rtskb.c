@@ -207,6 +207,7 @@ void kfree_rtskb(struct rtskb *skb)
 {
 #ifdef CONFIG_RTNET_RTCAP
     unsigned long flags;
+    struct rtskb  *comp_skb;
 #endif
 
 
@@ -219,7 +220,16 @@ void kfree_rtskb(struct rtskb *skb)
     if (skb->cap_flags & RTSKB_CAP_SHARED) {
         skb->cap_flags &= ~RTSKB_CAP_SHARED;
 
+        comp_skb  = skb->cap_comp_skb;
+        skb->pool = xchg(&comp_skb->pool, skb->pool);
+
         rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+
+        rtskb_queue_tail(comp_skb->pool, comp_skb);
+#ifdef CONFIG_RTNET_CHECKED
+        comp_skb->pool->pool_balance++;
+#endif
+
         return;
     }
 
