@@ -5013,7 +5013,7 @@ fi
 
 
 
-                                                                                                                                                                                                        ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/rtt/Makefile examples/frag_ip/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/examples/Makefile rtmac/examples/event/Makefile rtmac/examples/mrtt/Makefile rtmac/examples/rtt/Makefile"
+                                                                                                                                                                                                                            ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/rtt/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/examples/Makefile rtmac/examples/event/Makefile rtmac/examples/mrtt/Makefile rtmac/examples/rtt/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5648,10 +5648,12 @@ do
   "examples/rtskb_alloc/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtskb_alloc/Makefile" ;;
   "examples/rtt/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtt/Makefile" ;;
   "examples/frag_ip/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/frag_ip/Makefile" ;;
+  "examples/raw_packets/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/raw_packets/Makefile" ;;
   "driver/Makefile" ) CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
   "driver/tulip/Makefile" ) CONFIG_FILES="$CONFIG_FILES driver/tulip/Makefile" ;;
   "ethernet/Makefile" ) CONFIG_FILES="$CONFIG_FILES ethernet/Makefile" ;;
   "ipv4/Makefile" ) CONFIG_FILES="$CONFIG_FILES ipv4/Makefile" ;;
+  "packet/Makefile" ) CONFIG_FILES="$CONFIG_FILES packet/Makefile" ;;
   "lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
   "tools/Makefile" ) CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
   "rtmac/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtmac/Makefile" ;;

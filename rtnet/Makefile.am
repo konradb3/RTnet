@@ -1,4 +1,4 @@
-SUBDIRS = driver ethernet examples ipv4 lib rtmac tools
+SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools
 
 noinst_LIBRARIES = librtnet.a libnetproxy.a libnetlxrt.a
 
@@ -6,7 +6,6 @@ librtnet_a_SOURCES = iovec.c \
 		rtdev.c \
 		rtdev_mgr.c \
 		rtnet_dev.c \
-		rtnet_init.c \
 		rtnet_module.c \
 		rtnet_syms.c \
 		rtskb.c \
@@ -15,7 +14,8 @@ librtnet_a_SOURCES = iovec.c \
 
 RTNET_BUILTIN_OBJS = ethernet/eth.o \
 		ipv4/ipv4.o \
-		lib/crc32.o
+		lib/crc32.o \
+		packet/packet.o
 
 libnetproxy_a_SOURCES = rtnetproxy.c
 

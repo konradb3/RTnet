@@ -144,7 +144,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = driver ethernet examples ipv4 lib rtmac tools
+SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools
 
 noinst_LIBRARIES = librtnet.a libnetproxy.a libnetlxrt.a
 
@@ -152,7 +152,6 @@ librtnet_a_SOURCES = iovec.c \
 		rtdev.c \
 		rtdev_mgr.c \
 		rtnet_dev.c \
-		rtnet_init.c \
 		rtnet_module.c \
 		rtnet_syms.c \
 		rtskb.c \
@@ -162,7 +161,8 @@ librtnet_a_SOURCES = iovec.c \
 
 RTNET_BUILTIN_OBJS = ethernet/eth.o \
 		ipv4/ipv4.o \
-		lib/crc32.o
+		lib/crc32.o \
+		packet/packet.o
 
 
 libnetproxy_a_SOURCES = rtnetproxy.c
@@ -191,9 +191,9 @@ libnetproxy_a_OBJECTS = $(am_libnetproxy_a_OBJECTS)
 librtnet_a_AR = $(AR) cru
 librtnet_a_LIBADD =
 am_librtnet_a_OBJECTS = iovec.$(OBJEXT) rtdev.$(OBJEXT) \
-	rtdev_mgr.$(OBJEXT) rtnet_dev.$(OBJEXT) rtnet_init.$(OBJEXT) \
-	rtnet_module.$(OBJEXT) rtnet_syms.$(OBJEXT) rtskb.$(OBJEXT) \
-	socket.$(OBJEXT) stack_mgr.$(OBJEXT)
+	rtdev_mgr.$(OBJEXT) rtnet_dev.$(OBJEXT) rtnet_module.$(OBJEXT) \
+	rtnet_syms.$(OBJEXT) rtskb.$(OBJEXT) socket.$(OBJEXT) \
+	stack_mgr.$(OBJEXT)
 librtnet_a_OBJECTS = $(am_librtnet_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
@@ -201,7 +201,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/iovec.Po ./$(DEPDIR)/rtdev.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtdev_mgr.Po ./$(DEPDIR)/rtnet_dev.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rtnet_init.Po ./$(DEPDIR)/rtnet_lxrt.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rtnet_lxrt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_module.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_syms.Po ./$(DEPDIR)/rtnetproxy.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtskb.Po ./$(DEPDIR)/socket.Po \
@@ -290,7 +290,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtdev.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtdev_mgr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_dev.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_init.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_lxrt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_module.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_syms.Po@am__quote@

@@ -373,10 +373,12 @@ examples/rtnet_lxrt/Makefile \
 examples/rtskb_alloc/Makefile \
 examples/rtt/Makefile \
 examples/frag_ip/Makefile \
+examples/raw_packets/Makefile \
 driver/Makefile \
 driver/tulip/Makefile \
 ethernet/Makefile \
 ipv4/Makefile \
+packet/Makefile \
 lib/Makefile \
 tools/Makefile \
 rtmac/Makefile
