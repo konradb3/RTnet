@@ -165,6 +165,7 @@ void rtcap_kfree_rtskb(struct rtskb *rtskb)
 
     rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
 
+    rtskb->chain_end = rtskb;
     rtskb_queue_tail(rtskb->pool, rtskb);
 #ifdef CONFIG_RTNET_CHECKED
     rtskb->pool->pool_balance++;
