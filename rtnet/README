@@ -9,7 +9,7 @@ modules and LXRT processes, see header files for details.
 What are the requirements?
 --------------------------
 - Linux kernel 2.4.x
-- RTAI 24.1.9 or better
+- RTAI 24.1.9 or better, NEWLXRT when using user space API
 - x86 platform (at least for LXRT extensions, kernel API _should_ work on
   other platforms, too)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
