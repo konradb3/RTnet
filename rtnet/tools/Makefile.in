@@ -177,7 +177,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTPROGS = $(am__append_1)
 
-sbin_PROGRAMS = rtifconfig $(OPTPROGS)
+sbin_PROGRAMS = rtifconfig rtroute $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -189,8 +189,9 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 @CONFIG_RTNET_RTCFG_TRUE@sbin_PROGRAMS = rtifconfig$(EXEEXT) \
-@CONFIG_RTNET_RTCFG_TRUE@	rtcfg$(EXEEXT)
-@CONFIG_RTNET_RTCFG_FALSE@sbin_PROGRAMS = rtifconfig$(EXEEXT)
+@CONFIG_RTNET_RTCFG_TRUE@	rtroute$(EXEEXT) rtcfg$(EXEEXT)
+@CONFIG_RTNET_RTCFG_FALSE@sbin_PROGRAMS = rtifconfig$(EXEEXT) \
+@CONFIG_RTNET_RTCFG_FALSE@	rtroute$(EXEEXT)
 PROGRAMS = $(sbin_PROGRAMS)
 
 rtcfg_SOURCES = rtcfg.c
@@ -203,11 +204,17 @@ rtifconfig_OBJECTS = rtifconfig.$(OBJEXT)
 rtifconfig_LDADD = $(LDADD)
 rtifconfig_DEPENDENCIES =
 rtifconfig_LDFLAGS =
+rtroute_SOURCES = rtroute.c
+rtroute_OBJECTS = rtroute.$(OBJEXT)
+rtroute_LDADD = $(LDADD)
+rtroute_DEPENDENCIES =
+rtroute_LDFLAGS =
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg.Po ./$(DEPDIR)/rtifconfig.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg.Po ./$(DEPDIR)/rtifconfig.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rtroute.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -215,9 +222,9 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES = rtcfg.c rtifconfig.c
+DIST_SOURCES = rtcfg.c rtifconfig.c rtroute.c
 DIST_COMMON = Makefile.am Makefile.in
-SOURCES = rtcfg.c rtifconfig.c
+SOURCES = rtcfg.c rtifconfig.c rtroute.c
 
 all: all-am
 
@@ -263,6 +270,9 @@ rtcfg$(EXEEXT): $(rtcfg_OBJECTS) $(rtcfg_DEPENDENCIES)
 rtifconfig$(EXEEXT): $(rtifconfig_OBJECTS) $(rtifconfig_DEPENDENCIES) 
 	@rm -f rtifconfig$(EXEEXT)
 	$(LINK) $(rtifconfig_LDFLAGS) $(rtifconfig_OBJECTS) $(rtifconfig_LDADD) $(LIBS)
+rtroute$(EXEEXT): $(rtroute_OBJECTS) $(rtroute_DEPENDENCIES) 
+	@rm -f rtroute$(EXEEXT)
+	$(LINK) $(rtroute_LDFLAGS) $(rtroute_OBJECTS) $(rtroute_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -272,6 +282,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtifconfig.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtroute.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -494,7 +505,7 @@ uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 	uninstall-sbinPROGRAMS
 
 
-all-local: rtifconfig $(OPTPROGS)
+all-local: rtifconfig rtroute $(OPTPROGS)
 
 install-exec-local:
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
