@@ -55,20 +55,25 @@ static int rtnet_mgr_read_proc (char *page, char **start,
                 off_t off, int count, int *eof, void *data)
 {
     PROC_PRINT_VARS;
+    int i;
     struct rtnet_device *rtdev;
     unsigned int rtskb_len;
 
     PROC_PRINT("\nRTnet\n\n");
     PROC_PRINT("Devices:\n");
-    for (rtdev = rtnet_devices; rtdev; rtdev = rtdev->next) {
-        PROC_PRINT("  %s: %s rxq=%d\n",
-            rtdev->name,
-            (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
-            rtdev->rxqueue_len);
+    for (i = 1; i <= MAX_RT_DEVICES; i++) {
+        rtdev = rtdev_get_by_index(i);
+        if (rtdev != NULL) {
+            PROC_PRINT("  %s: %s rxq=%d\n",
+                rtdev->name,
+                (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
+                rtdev->rxqueue_len);
+            rtdev_dereference(rtdev);
+        }
     }
 
     rtskb_len = ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(RTSKB_SIZE);
-    PROC_PRINT("rtskb pools current/max:       %d / %d\n"
+    PROC_PRINT("\nrtskb pools current/max:       %d / %d\n"
                "rtskbs current/max:            %d / %d\n"
                "rtskb memory need current/max: %d / %d\n\n",
                rtskb_pools, rtskb_pools_max,
@@ -116,39 +121,34 @@ int rtnet_init(void)
     if ((err = rtskb_pools_init()) != 0)
         goto err_out2;
 
+    /* initialize the Stack-Manager */
+    if ((err=rt_stack_mgr_init(&STACK_manager)) != 0)
+        goto err_out2;
+
+    /* initialize the RTDEV-Manager */
+    if ((err=rt_rtdev_mgr_init(&RTDEV_manager)) != 0)
+        goto err_out3;
+
     rtsockets_init();
-    rtnet_dev_init();
     rt_inet_proto_init();
     rtnet_chrdev_init();
 
 #ifdef CONFIG_PROC_FS
     if ((err = rtnet_proc_register()) != 0)
-        goto err_out3;
-#endif
-
-    /* initialize the Stack-Manager */
-    if ((err=rt_stack_mgr_init(&STACK_manager)) != 0)
         goto err_out4;
-
-    /* initialize the RTDEV-Manager */
-    if ((err=rt_rtdev_mgr_init(&RTDEV_manager)) != 0)
-        goto err_out5;
+#endif
 
     return 0;
 
-err_out5:
-    rt_stack_mgr_delete(&STACK_manager);
-
 err_out4:
-#ifdef CONFIG_PROC_FS
-    rtnet_proc_unregister();
-#endif
-
-err_out3:
     rtnet_chrdev_release();
     rt_inet_proto_release();
-    rtnet_dev_release();
     rtsockets_release();
+
+    rt_rtdev_mgr_delete(&RTDEV_manager);
+
+err_out3:
+    rt_stack_mgr_delete(&STACK_manager);
 
 err_out2:
     rtskb_pools_release();
@@ -167,16 +167,15 @@ err_out1:
  */
 void rtnet_release(void)
 {
-
-    rt_stack_mgr_delete(&STACK_manager);
-    rt_rtdev_mgr_delete(&RTDEV_manager);
-
 #ifdef CONFIG_PROC_FS
     rtnet_proc_unregister();
 #endif
     rtnet_chrdev_release();
+
+    rt_stack_mgr_delete(&STACK_manager);
+    rt_rtdev_mgr_delete(&RTDEV_manager);
+
     rt_inet_proto_release();
-    rtnet_dev_release();
     rtsockets_release();
     rtskb_pools_release();
 

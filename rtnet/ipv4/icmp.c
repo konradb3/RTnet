@@ -261,7 +261,7 @@ int rt_icmp_socket(struct rtsocket *sock)
     unsigned long flags;
 
     sock->family    = AF_INET;
-    sock->typ       = SOCK_DGRAM;
+    sock->type      = SOCK_DGRAM;
     sock->protocol  = IPPROTO_ICMP;
     sock->ops       = &rt_icmp_socket_ops;
 
@@ -331,11 +331,13 @@ static struct rt_icmp_control rt_icmp_pointers[NR_ICMP_TYPES+1] =
 
 
 /***
- *  rt_icmp_get_pool
+ *  rt_icmp_dest_pool
  */
-struct rtskb_queue *rt_icmp_get_pool(struct rtskb *skb)
+struct rtsocket *rt_icmp_dest_socket(struct rtskb *skb)
 {
-    return &reply_socket.skb_pool;
+    /* Note that the socket's refcount is not used by this protocol.
+     * The socket returned here is static and not part of the global pool. */
+    return &reply_socket;
 }
 
 
@@ -399,7 +401,7 @@ void rt_icmp_rcv_err(struct rtskb *skb)
  */
 static struct rtinet_protocol icmp_protocol = {
     protocol:       IPPROTO_ICMP,
-    get_pool:       &rt_icmp_get_pool,
+    dest_socket:    &rt_icmp_dest_socket,
     rcv_handler:    &rt_icmp_rcv,
     err_handler:    &rt_icmp_rcv_err,
     init_socket:    &rt_icmp_socket
@@ -415,7 +417,7 @@ void rt_icmp_init(void)
     unsigned int skbs;
 
     reply_socket.protocol = IPPROTO_ICMP;
-    reply_socket.tos      = 0;
+    reply_socket.prot.inet.tos = 0;
     reply_socket.priority = RT_ICMP_REPLY_PRIO;
 
     /* create the rtskb pool */

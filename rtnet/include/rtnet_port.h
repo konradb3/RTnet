@@ -29,7 +29,6 @@
 
 #include <rtdev.h>
 #include <rtdev_mgr.h>
-#include <rtnet_init.h>
 #include <stack_mgr.h>
 #include <ethernet/eth.h>
 

@@ -37,6 +37,7 @@
 #include <rtnet_iovec.h>
 #include <rtnet_socket.h>
 #include <ipv4/protocol.h>
+#include <packet/af_packet.h>
 
 
 static unsigned int socket_rtskbs = DEFAULT_SOCKET_RTSKBS;
@@ -47,21 +48,21 @@ static SOCKET       rt_sockets[RT_SOCKETS];
 static SOCKET       *free_rtsockets;
 static spinlock_t   socket_base_lock;
 
-static unsigned int rtsocket_fd = 1;
-#define new_rtsocket_fd() (rtsocket_fd++)
-
 
 /************************************************************************
  *  internal socket functions                                           *
  ************************************************************************/
 
+int rt_socket_release(SOCKET *sock);
+
 /***
  *  rt_socket_alloc
  */
-SOCKET *rt_socket_alloc(void)
+static inline SOCKET *rt_socket_alloc(void)
 {
     unsigned long   flags;
     SOCKET          *sock;
+
 
     flags = rt_spin_lock_irqsave(&socket_base_lock);
 
@@ -72,10 +73,16 @@ SOCKET *rt_socket_alloc(void)
     }
     free_rtsockets = free_rtsockets->next;
 
+    atomic_set(&sock->refcount, 1);
+
     rt_spin_unlock_irqrestore(flags, &socket_base_lock);
 
-    sock->state=TCP_CLOSE;
-    sock->next=NULL;
+    sock->priority = SOCK_DEF_PRIO;
+    sock->state    = TCP_CLOSE;
+    sock->next     = NULL;
+    sock->wakeup   = NULL;
+
+    rtskb_queue_init(&sock->incoming);
 
     rt_sem_init(&sock->wakeup_sem, 0);
 
@@ -104,26 +111,40 @@ int rt_socket_release(SOCKET *sock)
     unsigned long flags;
     unsigned int rtskbs = sock->pool_size;
 
+
     rt_sem_delete(&sock->wakeup_sem);
 
-    if (sock->rt_pool) {
-        rtskbs = rtskb_pool_shrink_rt(&sock->skb_pool, rtskbs);
-        if ((sock->pool_size -= rtskbs) > 0)
-            return -EAGAIN;
-        rtskb_pool_release_rt(&sock->skb_pool);
-    } else {
-        rtskbs = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
-        if ((sock->pool_size -= rtskbs) > 0)
-            return -EAGAIN;
-        rtskb_pool_release(&sock->skb_pool);
+    if (sock->pool_size > 0)
+    {
+        if (sock->rt_pool) {
+            rtskbs = rtskb_pool_shrink_rt(&sock->skb_pool, rtskbs);
+            if ((sock->pool_size -= rtskbs) > 0) {
+                rt_socket_dereference(sock);
+                return -EAGAIN;
+            }
+            rtskb_pool_release_rt(&sock->skb_pool);
+        } else {
+            rtskbs = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
+            if ((sock->pool_size -= rtskbs) > 0) {
+                rt_socket_dereference(sock);
+                return -EAGAIN;
+            }
+            rtskb_pool_release(&sock->skb_pool);
+        }
     }
-
-    memset(sock, 0, sizeof(SOCKET));
 
     flags = rt_spin_lock_irqsave(&socket_base_lock);
 
+    if (!atomic_dec_and_test(&sock->refcount)) {
+        rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+        return -EAGAIN;
+    }
+
     sock->next = free_rtsockets;
     free_rtsockets = sock;
+
+    /* invalidate file descriptor id */
+    sock->fd = (sock->fd + 0x100) & 0x7FFFFFFF;
 
     rt_spin_unlock_irqrestore(flags, &socket_base_lock);
 
@@ -136,20 +157,30 @@ int rt_socket_release(SOCKET *sock)
  *  rt_scoket_lookup
  *  @fd - file descriptor
  */
-SOCKET *rt_socket_lookup (int fd)
+SOCKET *rt_socket_lookup(int fd)
 {
-    int i;
-    for (i=0; i<RT_SOCKETS; i++) {
-        if (rt_sockets[i].fd==fd)
-            return &rt_sockets[i];
+    SOCKET *sock = NULL;
+    unsigned long flags;
+    unsigned int index;
+
+
+    if ((index = fd & 0xFF) < RT_SOCKETS) {
+        flags = rt_spin_lock_irqsave(&socket_base_lock);
+
+        if (rt_sockets[index].fd == fd) {
+            sock = &rt_sockets[index];
+            atomic_inc(&sock->refcount);
+        }
+
+        rt_spin_unlock_irqrestore(flags, &socket_base_lock);
     }
-    return NULL;
+    return sock;
 }
 
 
 
 /************************************************************************
- *  file discribtor socket interface                                    *
+ *  file discriptor socket interface                                    *
  ************************************************************************/
 
 /***
@@ -162,53 +193,36 @@ SOCKET *rt_socket_lookup (int fd)
 int rt_socket(int family, int type, int protocol)
 {
     SOCKET *sock = NULL;
-    unsigned char hash;
+    int ret;
 
-    /* protol family (PF_INET) and adress family (AF_INET) only */
-    if ( (family!=AF_INET) )
-        return -EAFNOSUPPORT;
-
-    /* only datagram-sockets */
-    if ( type!=SOCK_DGRAM )
-        return -EAFNOSUPPORT;
 
     /* allocate a new socket */
-    if ( !(sock=rt_socket_alloc()) ) {
+    if ((sock = rt_socket_alloc()) == NULL) {
         rt_printk("RTnet: no more rt-sockets\n");
         return -ENOMEM;
     }
 
-    /* create new file descriptor */
-    sock->fd=new_rtsocket_fd();
+    sock->type = type;
 
-    /* default priority */
-    sock->priority = SOCK_DEF_PRIO;
+    switch (family) {
+        /* protocol family PF_INET */
+        case PF_INET:
+            ret = rt_inet_socket(sock, protocol);
+            break;
 
-    /* default UDP-Protocol */
-    if (!protocol)
-        hash = rt_inet_hashkey(IPPROTO_UDP);
-    else
-        hash = rt_inet_hashkey(protocol);
+        case PF_PACKET:
+            ret = rt_packet_socket(sock, protocol);
+            break;
 
-    /* create the socket (call the socket creator) */
-    if  (rt_inet_protocols[hash]) {
-        int s;
-        s = rt_inet_protocols[hash]->init_socket(sock);
-
-        /* This is the right place to check if sock->ops is not NULL. */
-        if (NULL == sock->ops) {
-            rt_printk("%s:%s: sock-ops is NULL!\n", __FUNCTION__, __LINE__);
-            /* Do something reasonable...
-             * (insert code here)
-             */
-        }
-        /* This is the right place to check if sock->ops->... are not NULL. */
-        return s;
-    } else {
-        rt_printk("RTnet: protocol with id %d not found\n", protocol);
-        rt_socket_release(sock);
-        return -ENOPROTOOPT;
+        default:
+            ret = -EAFNOSUPPORT;
     }
+
+    if (ret < 0)
+        rt_socket_release(sock);
+    else
+        rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -219,12 +233,17 @@ int rt_socket(int family, int type, int protocol)
  */
 int rt_socket_bind(int s, struct sockaddr *my_addr, socklen_t addrlen)
 {
-    SOCKET *sock = rt_socket_lookup(s);
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->bind)) /* There should be no socket without ops! */
+    SOCKET *sock;
+    int ret;
+
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
-    return ( sock->ops->bind(sock, my_addr, addrlen) );
+
+    ret = sock->ops->bind(sock, my_addr, addrlen);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -234,12 +253,17 @@ int rt_socket_bind(int s, struct sockaddr *my_addr, socklen_t addrlen)
  */
 int rt_socket_listen(int s, int backlog)
 {
-    SOCKET *sock = rt_socket_lookup(s);
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->listen)) /* There should be no socket without ops! */
+    SOCKET *sock;
+    int ret;
+
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
-    return ( sock->ops->listen(sock, backlog) );
+
+    ret = sock->ops->listen(sock, backlog);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -249,12 +273,17 @@ int rt_socket_listen(int s, int backlog)
  */
 int rt_socket_connect(int s, const struct sockaddr *serv_addr, socklen_t addrlen)
 {
-    SOCKET *sock = rt_socket_lookup(s);
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->connect)) /* There should be no socket without ops! */
+    SOCKET *sock;
+    int ret;
+
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
-    return ( sock->ops->connect(sock, serv_addr, addrlen) );
+
+    ret = sock->ops->connect(sock, serv_addr, addrlen);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -264,12 +293,17 @@ int rt_socket_connect(int s, const struct sockaddr *serv_addr, socklen_t addrlen
  */
 int rt_socket_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
-    SOCKET *sock = rt_socket_lookup(s);
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->accept)) /* There should be no socket without ops! */
+    SOCKET *sock;
+    int ret;
+
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
-    return ( sock->ops->accept(sock, addr, addrlen) );
+
+    ret = sock->ops->accept(sock, addr, addrlen);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -279,14 +313,18 @@ int rt_socket_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
  */
 int rt_socket_close(int s)
 {
-    SOCKET *sock = rt_socket_lookup(s);
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->close)) /* There should be no socket without ops! */
+    SOCKET *sock;
+    int ret;
+
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    sock->ops->close(sock,0);
-    return rt_socket_release(sock);
+    if ((ret = sock->ops->close(sock)) < 0) {
+        rt_socket_dereference(sock);
+        return ret;
+    } else
+        return rt_socket_release(sock);
 }
 
 
@@ -318,17 +356,13 @@ int rt_socket_recv(int s, void *buf, size_t len, int flags)
 int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
                      const struct sockaddr *to, socklen_t tolen)
 {
-    SOCKET *sock=rt_socket_lookup(s);
     struct msghdr msg_hdr;
     struct iovec iov;
+    SOCKET *sock;
+    int ret;
 
-    if ( !sock ) {
-        rt_printk("RTnet: socket %d not found\n", s);
-        return -ENOTSOCK;
-    }
 
-    if ((NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->sendmsg)) /* There should be no socket without ops! */
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
     iov.iov_base=(void *)msg;
@@ -339,7 +373,10 @@ int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
     msg_hdr.msg_iov=&iov;
     msg_hdr.msg_iovlen=1;
 
-    return sock->ops->sendmsg(sock, &msg_hdr, len, flags);
+    ret = sock->ops->sendmsg(sock, &msg_hdr, len, flags);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -358,14 +395,13 @@ int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
  */
 int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr *from, socklen_t *fromlen)
 {
-    SOCKET *sock=rt_socket_lookup(s);
     struct msghdr msg_hdr;
     struct iovec iov;
     int error=0;
+    SOCKET *sock;
 
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->recvmsg)) /* There should be no socket without ops! */
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
     iov.iov_base=buf;
@@ -376,6 +412,8 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
     msg_hdr.msg_iovlen=1;
 
     error = sock->ops->recvmsg(sock, &msg_hdr, len, flags);
+
+    rt_socket_dereference(sock);
 
     if ((error >= 0) && (*fromlen != 0))
         *fromlen = msg_hdr.msg_namelen;
@@ -390,16 +428,19 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
  */
 int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
 {
-    SOCKET *sock=rt_socket_lookup(s);
     size_t total_len;
+    SOCKET *sock;
+    int ret;
 
-    if (sock == NULL)
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    ASSERT((sock->ops != NULL) && (sock->ops->sendmsg), return -ENOTSOCK;);
-
     total_len = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
-    return sock->ops->sendmsg(sock, msg, total_len, flags);
+    ret = sock->ops->sendmsg(sock, msg, total_len, flags);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -409,16 +450,19 @@ int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
  */
 int rt_socket_recvmsg(int s, struct msghdr *msg, int flags)
 {
-    SOCKET *sock=rt_socket_lookup(s);
     size_t total_len;
+    SOCKET *sock;
+    int ret;
 
-    if (sock == NULL)
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    ASSERT((sock->ops != NULL) && (sock->ops->recvmsg), return -ENOTSOCK;);
-
     total_len = rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
-    return sock->ops->recvmsg(sock, msg, total_len, flags);
+    ret = sock->ops->recvmsg(sock, msg, total_len, flags);
+
+    rt_socket_dereference(sock);
+    return ret;
 }
 
 
@@ -426,20 +470,24 @@ int rt_socket_recvmsg(int s, struct msghdr *msg, int flags)
 /***
  *  rt_sock_getsockname
  */
+#if 0
+IMPLEMENTATION IS ONLY FOR IP!
 int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen)
 {
-    SOCKET *sock=rt_socket_lookup(s);
     struct sockaddr_in *usin = (struct sockaddr_in *)addr;
+    SOCKET *sock;
 
-    if (sock == NULL)
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    usin->sin_family=sock->family;
-    usin->sin_addr.s_addr=sock->saddr;
-    usin->sin_port=sock->sport;
+    usin->sin_family      = sock->family;
+    usin->sin_addr.s_addr = sock->inet.saddr;
+    usin->sin_port        = sock->inet.sport;
 
     return sizeof(struct sockaddr_in);
 }
+#endif
 
 
 
@@ -448,14 +496,16 @@ int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen)
  */
 int rt_socket_callback(int s, int (*func)(int,void *), void *arg)
 {
-    SOCKET *sock=rt_socket_lookup(s);
+    SOCKET *sock;
 
-    if (sock == NULL)
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    sock->private=arg;
-    sock->wakeup=func;
+    sock->wakeup_arg = arg;
+    sock->wakeup     = func;
 
+    rt_socket_dereference(sock);
     return 0;
 }
 
@@ -467,15 +517,18 @@ int rt_socket_callback(int s, int (*func)(int,void *), void *arg)
 int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
                          socklen_t optlen)
 {
-    SOCKET *sock=rt_socket_lookup(s);
     int ret = 0;
+    SOCKET *sock;
 
-    if (sock == NULL)
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
     if (level == SOL_SOCKET) {
-        if (optlen < sizeof(unsigned int))
+        if (optlen < sizeof(unsigned int)) {
+            rt_socket_dereference(sock);
             return -EINVAL;
+        }
 
         switch (optname) {
             case RT_SO_EXTPOOL:
@@ -523,13 +576,15 @@ int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
     } else
         ret = sock->ops->setsockopt(sock, level, optname, optval, optlen);
 
+    rt_socket_dereference(sock);
     return ret;
 }
 
 
 
+#if 0
 /************************************************************************
- *  static socket interface                                             *
+ *  static socket interface - DISCONTINUED! WILL BE REMOVED SOON        *
  ************************************************************************/
 
 /***
@@ -542,6 +597,7 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
     else {
         unsigned char hash;
 
+
         /* protol family (PF_INET) and adress family (AF_INET) only */
         if (family!=AF_INET)
             return -EAFNOSUPPORT;
@@ -549,9 +605,6 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
         /* only datagram-sockets */
         if (type!=SOCK_DGRAM)
             return -EAFNOSUPPORT;
-
-        /* create new file descriptor */
-        socket->fd=new_rtsocket_fd();
 
         /* default priority */
         socket->priority = SOCK_DEF_PRIO;
@@ -849,6 +902,7 @@ int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg)
         return 0;
     }
 }
+#endif
 
 
 
@@ -863,25 +917,26 @@ void rtsockets_init(void)
 {
     int i;
 
+
     spin_lock_init(&socket_base_lock);
 
     /* initialise the first socket */
-    rt_sockets[0].prev=NULL;
-    rt_sockets[0].next=&rt_sockets[1];
-    rt_sockets[0].state=TCP_CLOSE;
-    rtskb_queue_init(&rt_sockets[0].incoming);
+    rt_sockets[0].prev  = NULL;
+    rt_sockets[0].next  = &rt_sockets[1];
+    rt_sockets[0].state = TCP_CLOSE;
+    rt_sockets[0].fd    = 0;
 
     /* initialise the last socket */
-    rt_sockets[RT_SOCKETS-1].prev=&rt_sockets[RT_SOCKETS-2];
-    rt_sockets[RT_SOCKETS-1].next=NULL;
-    rt_sockets[RT_SOCKETS-1].state=TCP_CLOSE;
-    rtskb_queue_init(&rt_sockets[RT_SOCKETS-1].incoming);
+    rt_sockets[RT_SOCKETS-1].prev  = &rt_sockets[RT_SOCKETS-2];
+    rt_sockets[RT_SOCKETS-1].next  = NULL;
+    rt_sockets[RT_SOCKETS-1].state = TCP_CLOSE;
+    rt_sockets[RT_SOCKETS-1].fd    = RT_SOCKETS-1;
 
-    for (i=1; i<RT_SOCKETS-1; i++) {
-        rt_sockets[i].next=&rt_sockets[i+1];
-        rt_sockets[i].prev=&rt_sockets[i-1];
-        rt_sockets[i].state=TCP_CLOSE;
-        rtskb_queue_init(&rt_sockets[i].incoming);
+    for (i = 1; i < RT_SOCKETS-1; i++) {
+        rt_sockets[i].next  = &rt_sockets[i+1];
+        rt_sockets[i].prev  = &rt_sockets[i-1];
+        rt_sockets[i].state = TCP_CLOSE;
+        rt_sockets[i].fd    = i;
     }
     free_rtsockets=&rt_sockets[0];
 }

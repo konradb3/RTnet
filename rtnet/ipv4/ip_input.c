@@ -21,6 +21,8 @@
 #include <net/ip.h>
 
 #include <rtskb.h>
+#include <rtnet_socket.h>
+#include <stack_mgr.h>
 #include <ipv4/ip_fragment.h>
 #include <ipv4/protocol.h>
 #include <ipv4/route.h>
@@ -50,7 +52,7 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
     struct iphdr *iph       = skb->nh.iph;
     unsigned short protocol = iph->protocol;
     struct rtinet_protocol *ipprot;
-    struct rtskb_queue *cmppool;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -70,15 +72,25 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
             if (!skb)
                 return 0;
         } else {
+            /* Get the destination socket */
+            if ((sock = ipprot->dest_socket(skb)) == NULL) {
+                kfree_rtskb(skb);
+                return 0;
+            }
+
             /* Acquire the rtskb at the expense of the protocol pool */
-            cmppool = ipprot->get_pool(skb);
-            if ((cmppool == NULL) || (rtskb_acquire(skb, cmppool) != 0)) {
+            ret = rtskb_acquire(skb, &sock->skb_pool);
+
+            /* Socket is now implicitely locked by the rtskb */
+            rt_socket_dereference(sock);
+
+            if (ret != 0) {
                 kfree_rtskb(skb);
                 return 0;
             }
         }
 
-        /* deliver the packet to the next layer*/
+        /* Deliver the packet to the next layer */
         ret = ipprot->rcv_handler(skb);
     } else {
         /* If a fallback handler for IP protocol has been installed,

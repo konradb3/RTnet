@@ -23,7 +23,28 @@
 #ifdef __KERNEL__
 
 #include <rtnet_internal.h>
+#include <rtskb.h>
 
+
+/***
+ * network layer protocol (layer 3)
+ */
+
+#define MAX_RT_PROTOCOLS        64
+
+struct rtpacket_type {
+    char           *name;
+    unsigned short type;
+    short          refcount;
+
+    int            (*handler)(struct rtskb *, struct rtpacket_type *);
+    int            (*err_handler)(struct rtskb *, struct rtnet_device *,
+                                  struct rtpacket_type *);
+};
+
+
+extern int rtdev_add_pack(struct rtpacket_type *pt);
+extern int rtdev_remove_pack(struct rtpacket_type *pt);
 
 extern void rt_stack_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr);
 extern void rt_stack_disconnect (struct rtnet_device *rtdev);

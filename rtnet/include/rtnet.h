@@ -89,7 +89,8 @@ extern int rt_socket_setsockopt (int s, int level, int optname,
 #define rt_recvmsg              rt_socket_recvmsg
 #define rt_setsockopt           rt_socket_setsockopt
 
-/* static interface (does anyone actually use it???) */
+#if 0
+/* static interface - DISCONTINUED! WILL BE REMOVED SOON */
 extern int rt_ssocket(SOCKET* socket, int family, int type, int protocol);
 extern int rt_ssocket_bind(SOCKET *socket, struct sockaddr *my_addr, socklen_t addrlen);
 extern int rt_ssocket_listen(SOCKET *socket, int backlog);
@@ -108,9 +109,12 @@ extern int rt_ssocket_recvfrom(SOCKET *socket, void *buf, size_t len, int flags,
 extern int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, int flags);
 extern int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, socklen_t addr_len);
 extern int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg);
+#endif
 
 /* utils */
 extern unsigned long rt_inet_aton(const char *ip);
+extern int rt_eth_aton(char *addr_buf, const char *mac);
+extern int rt_get_if_list(void /* buffer, size */);
 
 
 #endif  /* __KERNEL__ */

@@ -25,7 +25,6 @@
 #include <rtnet.h>
 #include <rtskb.h>
 #include <rtnet_socket.h>
-#include <rtnet_init.h>
 #include <rtdev_mgr.h>
 #include <stack_mgr.h>
 #include <ethernet/eth.h>
@@ -34,14 +33,10 @@
 #include <ipv4/route.h>
 #include <ipv4/protocol.h>
 
-EXPORT_SYMBOL(rt_inet_aton);
-
 
 /****************************************************************************
  * socket.c                                                                 *
  ****************************************************************************/
-EXPORT_SYMBOL(rt_socket_lookup);
-EXPORT_SYMBOL(rt_socket_callback);
 EXPORT_SYMBOL(rt_socket);
 EXPORT_SYMBOL(rt_socket_accept);
 EXPORT_SYMBOL(rt_socket_bind);
@@ -54,9 +49,12 @@ EXPORT_SYMBOL(rt_socket_sendto);
 EXPORT_SYMBOL(rt_socket_recvfrom);
 EXPORT_SYMBOL(rt_socket_sendmsg);
 EXPORT_SYMBOL(rt_socket_recvmsg);
-EXPORT_SYMBOL(rt_socket_getsockname);
+/*EXPORT_SYMBOL(rt_socket_getsockname);*/
 EXPORT_SYMBOL(rt_socket_setsockopt);
+EXPORT_SYMBOL(rt_socket_callback);
 
+/* DISCONTINUED! WILL BE REMOVED SOON */
+#if 0
 EXPORT_SYMBOL(rt_ssocket);
 EXPORT_SYMBOL(rt_ssocket_bind);
 EXPORT_SYMBOL(rt_ssocket_listen);
@@ -73,13 +71,18 @@ EXPORT_SYMBOL(rt_ssocket_recvfrom);
 EXPORT_SYMBOL(rt_ssocket_recvmsg);
 EXPORT_SYMBOL(rt_ssocket_getsockname);
 EXPORT_SYMBOL(rt_ssocket_callback);
+#endif
 
 /****************************************************************************
  * stack_mgr.c                                                              *
  ****************************************************************************/
+EXPORT_SYMBOL(rtdev_add_pack);
+EXPORT_SYMBOL(rtdev_remove_pack);
+
 EXPORT_SYMBOL(rtnetif_rx);
 EXPORT_SYMBOL(rt_mark_stack_mgr);
 EXPORT_SYMBOL(rtnetif_tx);
+
 EXPORT_SYMBOL(rt_stack_connect);
 EXPORT_SYMBOL(rt_stack_disconnect);
 
@@ -88,30 +91,32 @@ EXPORT_SYMBOL(rt_stack_disconnect);
  ****************************************************************************/
 EXPORT_SYMBOL(rtnetif_err_rx);
 EXPORT_SYMBOL(rtnetif_err_tx);
+
 EXPORT_SYMBOL(rt_rtdev_connect);
 EXPORT_SYMBOL(rt_rtdev_disconnect);
 
 /****************************************************************************
  * rtdev.c                                                                  *
  ****************************************************************************/
-EXPORT_SYMBOL(rtdev_alloc_name);
-EXPORT_SYMBOL(rtdev_alloc);
+EXPORT_SYMBOL(rt_alloc_etherdev);
 EXPORT_SYMBOL(rtdev_free);
+
+EXPORT_SYMBOL(rtdev_alloc_name);
+
+EXPORT_SYMBOL(rt_register_rtnetdev);
+EXPORT_SYMBOL(rt_unregister_rtnetdev);
+
 EXPORT_SYMBOL(rtdev_get_by_name);
 EXPORT_SYMBOL(rtdev_get_by_index);
-EXPORT_SYMBOL(rtdev_get_by_dev);
 EXPORT_SYMBOL(rtdev_get_by_hwaddr);
-EXPORT_SYMBOL(rtdev_add_pack);
-EXPORT_SYMBOL(rtdev_remove_pack);
+
 EXPORT_SYMBOL(rtdev_xmit);
 EXPORT_SYMBOL(rtdev_xmit_proxy);
 
+
 /****************************************************************************
- * rtnet_init.c                                                             *
+ * rtnet_module.c                                                             *
  ****************************************************************************/
-EXPORT_SYMBOL(rt_alloc_etherdev);
-EXPORT_SYMBOL(rt_register_rtnetdev);
-EXPORT_SYMBOL(rt_unregister_rtnetdev);
 EXPORT_SYMBOL(STACK_manager);
 EXPORT_SYMBOL(RTDEV_manager);
 
@@ -129,12 +134,16 @@ EXPORT_SYMBOL(rt_eth_type_trans);
 EXPORT_SYMBOL(rt_ip_route_output);
 EXPORT_SYMBOL(rt_ip_register_fallback);
 
+EXPORT_SYMBOL(rt_inet_aton);
+
+
 /****************************************************************************
  * ipv4/arp.c                                                               *
  ****************************************************************************/
 EXPORT_SYMBOL(rt_arp_table_lookup);
 EXPORT_SYMBOL(rt_rarp_table_lookup);
 EXPORT_SYMBOL(rt_arp_solicit);
+
 
 /****************************************************************************
  * rtskb.c                                                                  *
@@ -153,3 +162,9 @@ EXPORT_SYMBOL(rtskb_pool_release);
 EXPORT_SYMBOL(global_pool);
 
 EXPORT_SYMBOL(rtskb_acquire);
+
+
+/****************************************************************************
+ * packet                                                                   *
+ ****************************************************************************/
+EXPORT_SYMBOL(rt_eth_aton);

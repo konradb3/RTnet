@@ -18,6 +18,14 @@
  */
 
 // $Log: ip_sock.c,v $
+// Revision 1.7  2003/10/28 13:27:43  kiszka
+// * index-based rtdev management
+// * added packet sockets
+// * introduced reference counters on sockets, layer 3 protocols, and devices
+// * disabled static socket API
+// * code cleanup
+// * several minor fixes (which I've already forgotten)
+//
 // Revision 1.6  2003/10/06 09:12:04  kiszka
 // * added MSG_PEEK support for UDP sockets
 // * revised some function declarations to conform the BSD API
@@ -54,7 +62,7 @@ int rt_ip_setsockopt(struct rtsocket *s, int level, int optname,
 
     switch (optname) {
         case IP_TOS:
-            s->tos = *(unsigned int *)optval;
+            s->prot.inet.tos = *(unsigned int *)optval;
             break;
         default:
             err = -ENOPROTOOPT;

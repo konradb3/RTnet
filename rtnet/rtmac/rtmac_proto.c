@@ -22,6 +22,7 @@
 
 #include <rtai.h>
 
+#include <stack_mgr.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
 #include <rtmac/rtmac_vnic.h>
@@ -62,8 +63,7 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 static struct rtpacket_type rtmac_packet_type = {
     name:       "RTmac",
     type:       __constant_htons(ETH_RTMAC),
-    handler:    rtmac_proto_rx,
-    private:    (void *)1
+    handler:    rtmac_proto_rx
 };
 
 

@@ -39,107 +39,107 @@
  */
 static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
-	struct rtnet_config cfg;
-	struct rtnet_device *rtdev;
-	int ret;
+    struct rtnet_config cfg;
+    struct rtnet_device *rtdev;
+    int ret;
 
-	if (!suser())return -EPERM;
+    if (!suser())
+        return -EPERM;
 
-	ret = copy_from_user(&cfg, (void *)arg, sizeof(cfg));
-	if (ret) return -EFAULT;
+    ret = copy_from_user(&cfg, (void *)arg, sizeof(cfg));
+    if (ret != 0)
+        return -EFAULT;
 
-	rtdev = rtdev_get_by_name(cfg.if_name);
-	if ( !rtdev ) {
-		rt_printk("RTnet: invalid interface %s\n", cfg.if_name);
-		return -ENODEV;
-	}
-	switch(cmd){
-	case IOC_RT_IFUP:
-		ret = rtdev_open(rtdev);				// = 0, if dev already up
-		if( ret == 0 ) {
-			rt_ip_route_del(rtdev); /* cleanup routing table */
+    rtdev = rtdev_get_by_name(cfg.if_name);
+    if ( !rtdev ) {
+        rt_printk("RTnet: invalid interface %s\n", cfg.if_name);
+        return -ENODEV;
+    }
 
-			rtdev->local_addr = cfg.ip_addr;
-			rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
-			rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
-			rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
-		}
-		return ret;
+    switch(cmd){
+        case IOC_RT_IFUP:
+            ret = rtdev_open(rtdev);    /* also = 0 if dev already up */
+            if( ret == 0 ) {
+                rt_ip_route_del(rtdev); /* cleanup routing table */
 
-	case IOC_RT_IFDOWN:
-		/*
-		 * if rtmac is active on dev, don't shut it down....
-		 *
-		 * FIXME: if mac exists shut mac down, then device...
-		 */
-		if( rtdev->mac_disc ) {
-			rt_printk("rtnet: rtmac is active on dev %s, cannot shut down\n", rtdev->name);
-			return -ENOTTY;
-		}
-		rt_ip_route_del(rtdev);
-		rt_arp_table_del(rtdev->local_addr);
-		rtdev_close(rtdev);
-		return 0;
+                rtdev->local_addr = cfg.ip_addr;
+                rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
+                rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
+                rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
+            }
+            break;
 
-	case IOC_RT_ROUTE_SOLICIT:
-		rt_arp_solicit(rtdev,cfg.ip_addr);
-		return 0;
+        case IOC_RT_IFDOWN:
+            /*
+             * if rtmac is active on dev, don't shut it down....
+             *
+             * FIXME: if mac exists shut mac down, then device...
+             */
+            if( rtdev->mac_disc ) {
+                rt_printk("rtnet: rtmac is active on dev %s, cannot shut down\n", rtdev->name);
+                ret = -ENOTTY;
+                break;
+            }
+            rt_ip_route_del(rtdev);
+            rt_arp_table_del(rtdev->local_addr);
+            rtdev_close(rtdev);
+            ret = 0;
+            break;
 
-	case IOC_RT_ROUTE_DELETE:
-		// Billa: delete an ARP & ROUTE element in the lists
-		rt_arp_table_del(cfg.ip_addr);
-		rt_ip_route_del_specific(rtdev,cfg.ip_addr);
-		return 0;
+        case IOC_RT_ROUTE_SOLICIT:
+            rt_arp_solicit(rtdev,cfg.ip_addr);
+            ret = 0;
+            break;
 
-	default:
-		return -ENOTTY;
-	}
+        case IOC_RT_ROUTE_DELETE:
+            // Billa: delete an ARP & ROUTE element in the lists
+            rt_arp_table_del(cfg.ip_addr);
+            rt_ip_route_del_specific(rtdev,cfg.ip_addr);
+            ret = 0;
+            break;
+
+        default:
+            ret = -ENOTTY;
+    }
+
+    rtdev_dereference(rtdev);
+    return ret;
 }
 
 
 
 static struct file_operations rtnet_fops = {
-	ioctl:	rtnet_ioctl,
+    ioctl:  rtnet_ioctl,
 };
 
 
 
 static struct miscdevice rtnet_chr_misc_dev = {
-	minor:		RTNET_MINOR,
-	name:		"rtnet",
-	fops:		&rtnet_fops,
+    minor:  RTNET_MINOR,
+    name:   "rtnet",
+    fops:   &rtnet_fops,
 };
 
 
 
 /**
- * rtnet_chrdev_init - 
+ * rtnet_chrdev_init -
  *
  */
 void rtnet_chrdev_init(void)
 {
-	if ( misc_register(&rtnet_chr_misc_dev) < 0 ) {
-		rt_printk("RTnet: unable to register rtnet char misc device\n");
-	}
+    if ( misc_register(&rtnet_chr_misc_dev) < 0 ) {
+        rt_printk("RTnet: unable to register rtnet char misc device\n");
+    }
 }
 
 
 
 /**
- * rtnet_chrdev_release - 
+ * rtnet_chrdev_release -
  *
  */
 void rtnet_chrdev_release(void)
 {
-	misc_deregister(&rtnet_chr_misc_dev);
+    misc_deregister(&rtnet_chr_misc_dev);
 }
-
-
-
-
-
-
-
-
-
-

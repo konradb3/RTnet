@@ -18,6 +18,14 @@
  */
 
 // $Log: ip_output.c,v $
+// Revision 1.15  2003/10/28 13:27:43  kiszka
+// * index-based rtdev management
+// * added packet sockets
+// * introduced reference counters on sockets, layer 3 protocols, and devices
+// * disabled static socket API
+// * code cleanup
+// * several minor fixes (which I've already forgotten)
+//
 // Revision 1.14  2003/10/20 17:11:06  kiszka
 // * revised IP fragmentation (now chain-based)
 // * rtskbs are (again) allocated using a slab cache (but multiple pools remain)
@@ -71,6 +79,7 @@
 #include <net/checksum.h>
 
 #include <rtnet_socket.h>
+#include <stack_mgr.h>
 #include <ipv4/ip_fragment.h>
 #include <ipv4/ip_input.h>
 #include <ipv4/route.h>
@@ -154,7 +163,7 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
 
         iph->version  = 4;
         iph->ihl      = 5;    /* 20 byte header - no options */
-        iph->tos      = sk->tos;
+        iph->tos      = sk->prot.inet.tos;
         iph->tot_len  = htons(fraglen);
         iph->id       = htons(msg_rt_ip_id);
         iph->frag_off = htons(frag_off);
@@ -253,7 +262,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 
     iph->version  = 4;
     iph->ihl      = 5;
-    iph->tos      = sk->tos;
+    iph->tos      = sk->prot.inet.tos;
     iph->tot_len  = htons(length);
     iph->id       = htons(msg_rt_ip_id);
     iph->frag_off = df;
@@ -293,8 +302,7 @@ static struct rtpacket_type ip_packet_type =
 {
     name:       "IPv4",
     type:       __constant_htons(ETH_P_IP),
-    handler:    &rt_ip_rcv,
-    private:    (void*)1,
+    handler:    &rt_ip_rcv
 };
 
 

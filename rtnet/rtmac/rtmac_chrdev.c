@@ -31,62 +31,65 @@
 
 static int rtmac_chrdev_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)
 {
-	struct rtmac_config cfg;
-	struct rtnet_device *rtdev;
+    struct rtmac_config cfg;
+    struct rtnet_device *rtdev;
 
-	if( !suser() )
-		return -EPERM;
+    if( !suser() )
+        return -EPERM;
 
-	if( copy_from_user(&cfg, (void*)arg, sizeof(struct rtmac_config)) )
-		return -EFAULT;
+    if( copy_from_user(&cfg, (void*)arg, sizeof(struct rtmac_config)) )
+        return -EFAULT;
 
-	rtdev = rtdev_get_by_name(cfg.if_name);
+    rtdev = rtdev_get_by_name(cfg.if_name);
 
-	if( !rtdev ) {
-		rt_printk("RTmac: invalid interface %s\n", cfg.if_name);
-		return -ENODEV;
-	}
+    if( !rtdev ) {
+        rt_printk("RTmac: invalid interface %s\n", cfg.if_name);
+        return -ENODEV;
+    }
 
-	if( !rtdev->mac_disc || !rtdev->mac_disc->ioctl_ops ) {
-		return -ENOTTY;
-	}
+    if( !rtdev->mac_disc || !rtdev->mac_disc->ioctl_ops ) {
+        rtdev_dereference(rtdev);
+        return -ENOTTY;
+    }
 
-	switch( cmd ) {
-	case RTMAC_IOC_CLIENT:
-		return rtmac_ioctl_client(rtdev);
-		break;
-	case RTMAC_IOC_MASTER:
-		return rtmac_ioctl_master(rtdev, cfg.cycle, cfg.mtu);
-		break;
-	case RTMAC_IOC_UP:
-		return rtmac_ioctl_up(rtdev);
-		break;
-	case RTMAC_IOC_DOWN:
-		return rtmac_ioctl_down(rtdev);
-		break;
-	case RTMAC_IOC_ADD:
-		return rtmac_ioctl_add(rtdev, cfg.ip_addr);
-		break;
-	case RTMAC_IOC_REMOVE:
-		return rtmac_ioctl_remove(rtdev, cfg.ip_addr);
-		break;
-	case RTMAC_IOC_ADD_NRT:
-		return rtmac_ioctl_add_nrt(rtdev, cfg.ip_addr);
-		break;
-	case RTMAC_IOC_REMOVE_NRT:
-		return rtmac_ioctl_remove_nrt(rtdev, cfg.ip_addr);
-		break;
-	case RTMAC_IOC_CYCLE:
-		return rtmac_ioctl_cycle(rtdev, cfg.cycle);
-		break;
-	case RTMAC_IOC_MTU:
-		return rtmac_ioctl_mtu(rtdev, cfg.mtu);
-		break;
-	case RTMAC_IOC_OFFSET:
-		return rtmac_ioctl_offset(rtdev, cfg.ip_addr, cfg.offset);
-	default:
-		return -ENOTTY;
-	}
+    rtdev_dereference(rtdev); /* RTmac is active, device is locked anyway */
+
+    switch( cmd ) {
+    case RTMAC_IOC_CLIENT:
+        return rtmac_ioctl_client(rtdev);
+        break;
+    case RTMAC_IOC_MASTER:
+        return rtmac_ioctl_master(rtdev, cfg.cycle, cfg.mtu);
+        break;
+    case RTMAC_IOC_UP:
+        return rtmac_ioctl_up(rtdev);
+        break;
+    case RTMAC_IOC_DOWN:
+        return rtmac_ioctl_down(rtdev);
+        break;
+    case RTMAC_IOC_ADD:
+        return rtmac_ioctl_add(rtdev, cfg.ip_addr);
+        break;
+    case RTMAC_IOC_REMOVE:
+        return rtmac_ioctl_remove(rtdev, cfg.ip_addr);
+        break;
+    case RTMAC_IOC_ADD_NRT:
+        return rtmac_ioctl_add_nrt(rtdev, cfg.ip_addr);
+        break;
+    case RTMAC_IOC_REMOVE_NRT:
+        return rtmac_ioctl_remove_nrt(rtdev, cfg.ip_addr);
+        break;
+    case RTMAC_IOC_CYCLE:
+        return rtmac_ioctl_cycle(rtdev, cfg.cycle);
+        break;
+    case RTMAC_IOC_MTU:
+        return rtmac_ioctl_mtu(rtdev, cfg.mtu);
+        break;
+    case RTMAC_IOC_OFFSET:
+        return rtmac_ioctl_offset(rtdev, cfg.ip_addr, cfg.offset);
+    default:
+        return -ENOTTY;
+    }
 }
 
 
@@ -178,7 +181,7 @@ int rtmac_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
 {
     if( !(rtdev->mac_disc->ioctl_ops->add) )
         return -ENOTTY;
-	
+
     return rtdev->mac_disc->ioctl_ops->add(rtdev, ip_addr);
 }
 

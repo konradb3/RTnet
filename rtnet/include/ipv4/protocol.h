@@ -34,7 +34,7 @@ struct rtinet_protocol {
     char                *name;
     unsigned short      protocol;
 
-    struct rtskb_queue  *(*get_pool)(struct rtskb *);
+    struct rtsocket     *(*dest_socket)(struct rtskb *);
     int                 (*rcv_handler)(struct rtskb *);
     void                (*err_handler)(struct rtskb *);
     int                 (*init_socket)(struct rtsocket *sock);
@@ -47,6 +47,7 @@ extern struct rtinet_protocol *rt_inet_protocols[];
 extern void rt_inet_add_protocol(struct rtinet_protocol *prot);
 extern void rt_inet_del_protocol(struct rtinet_protocol *prot);
 extern struct rtinet_protocol *rt_inet_get_protocol(int protocol);
+extern int rt_inet_socket(SOCKET *sock, int protocol);
 
 
 #endif  /* __RTNET_PROTOCOL_H_ */

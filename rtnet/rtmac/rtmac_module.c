@@ -38,6 +38,7 @@ MODULE_PARM_DESC(dev, "RTmac: device to be rtnet started on");
 
 int rtmac_init(void)
 {
+    struct rtnet_device *rtdev;
     int ret = 0;
 
     rt_printk("RTmac: init realtime media access control\n");
@@ -72,7 +73,9 @@ int rtmac_init(void)
 
         tdma = rtmac_get_disc_by_name("TDMA1");
 
-        ret = rtmac_disc_attach(rtdev_get_by_name(dev), tdma);
+        rtdev = rtdev_get_by_name(dev);
+        ret = rtmac_disc_attach(rtdev, tdma);
+        rtdev_dereference(rtdev);
         if (ret)
         {
             tdma_release();
@@ -100,10 +103,15 @@ error1:
 
 void rtmac_release(void)
 {
+    struct rtnet_device *rtdev;
+
+
     rt_printk("RTmac: end realtime media access control\n");
 
-    rtmac_disc_detach(rtdev_get_by_name(dev));  /* legacy */
-    tdma_release();                             /* legacy */
+    rtdev = rtdev_get_by_name(dev); /* legacy */
+    rtmac_disc_detach(rtdev);       /* legacy */
+    rtdev_dereference(rtdev);       /* legacy */
+    tdma_release();                 /* legacy */
 
     rtmac_proto_release();
 #ifdef CONFIG_PROC_FS

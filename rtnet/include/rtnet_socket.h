@@ -31,10 +31,11 @@
 
 #include <rtdev.h>
 #include <rtnet.h>
+#include <stack_mgr.h>
 
 
-#define RT_SOCKETS          64
-
+#define RT_SOCKETS          64  /* only increase with care (lockup delays!),
+                                 * must not be greater then 255 */
 #define RT_SOCK_NONBLOCK    0x0001
 
 
@@ -50,19 +51,21 @@ struct rtsocket_ops {
                          size_t total_len, int flags);
     int  (*sendmsg)     (struct rtsocket *s, const struct msghdr *msg,
                          size_t total_len, int flags);
-    void (*close)       (struct rtsocket *s, long timeout);
+    int  (*close)       (struct rtsocket *s);
     int  (*setsockopt)  (struct rtsocket *s, int level, int optname,
                          const void *optval, socklen_t optlen);
 };
 
 struct rtsocket {
-    struct rtsocket     *prev;
+    int                 fd;         /* file descriptor
+                                     * bit 0-7: index in rt_sockets
+                                     * bit 8-30: instance id */
+    struct rtsocket     *prev;      /* previous socket in list */
     struct rtsocket     *next;      /* next socket in list */
-
-    int                 fd;         /* file descriptor */
+    atomic_t            refcount;
 
     unsigned short      family;
-    unsigned short      typ;
+    unsigned short      type;
     unsigned short      protocol;
 
     unsigned char       state;
@@ -75,29 +78,37 @@ struct rtsocket {
 
     struct rtskb_queue  incoming;
 
+    unsigned int        priority;
     unsigned int        flags;      /* see RT_SOCK_xxx defines  */
     RTIME               timeout;    /* receive timeout, 0 for infinite */
 
-    u32                 saddr;      /* source ip-addr */
-    u16                 sport;      /* source port */
-
-    u32                 daddr;      /* destination ip-addr */
-    u16                 dport;      /* destination port */
-
-    int                 (*wakeup)(int s,void *arg); /* socket wakeup-func */
+    int                 (*wakeup)(int s,void *arg); /* callback function */
+    void                *wakeup_arg; /* argument of callback function */
     SEM                 wakeup_sem; /* for blocking calls */
 
-    void                *private;
+    union {
+        /* IP specific */
+        struct {
+            u32         saddr;      /* source ip-addr */
+            u16         sport;      /* source port */
+            u32         daddr;      /* destination ip-addr */
+            u16         dport;      /* destination port */
+            u8          tos;
+        } inet;
 
-    unsigned int        priority;
-    u8                  tos;
+        /* packet socket specific */
+        struct {
+            struct rtpacket_type packet_type;
+            int                  ifindex;
+        } packet;
+    } prot;
 };
+
+#define rt_socket_reference(sock)   atomic_inc(&(sock)->refcount)
+#define rt_socket_dereference(sock) atomic_dec(&(sock)->refcount)
 
 extern void rtsockets_init(void);
 extern void rtsockets_release(void);
-
-extern SOCKET *rt_socket_alloc(void);
-extern int rt_socket_release(SOCKET *sock);
 
 
 #endif  /* __KERNEL__ */

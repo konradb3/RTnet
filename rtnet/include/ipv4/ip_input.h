@@ -23,10 +23,9 @@
 
 #include <rtskb.h>
 #include <rtdev.h>
+#include <stack_mgr.h>
 
 
-extern int rt_ip_local_deliver_finish(struct rtskb *skb);
-extern int rt_ip_local_deliver(struct rtskb *skb);
 extern int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt);
 extern int rt_ip_register_fallback( int (*callback)(struct rtskb *skb));
 

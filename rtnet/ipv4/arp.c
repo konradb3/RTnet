@@ -31,6 +31,7 @@
 #endif /* CONFIG_PROC_FS */
 
 #include <rtdev.h>
+#include <stack_mgr.h>
 #include <ipv4/arp.h>
 #include <ipv4/route.h>
 #include <rtmac/rtmac_disc.h>
@@ -396,8 +397,7 @@ int rt_arp_solicit(struct rtnet_device *rtdev,u32 target)
 static struct rtpacket_type arp_packet_type = {
     name:       "ARPv4",
     type:       __constant_htons(ETH_P_ARP),
-    handler:    &rt_arp_rcv,
-    private:    (void*) 1, /* understand shared skbs */
+    handler:    &rt_arp_rcv
 };
 
 

@@ -25,6 +25,7 @@
 
 #include <rtdev.h>
 #include <rtnet_internal.h>
+#include <rtnet_socket.h>
 
 #include <linux/ip.h>
 #include <linux/in.h>
@@ -49,7 +50,7 @@ struct ip_collector
     __u8  protocol;
 
     struct rtskb_queue frags;
-    struct rtskb_queue *comp_pool;
+    struct rtsocket *sock;
     unsigned int buf_size;
     unsigned int last_accessed;
 };
@@ -59,7 +60,7 @@ static struct ip_collector collector[COLLECTOR_COUNT];
 static unsigned int counter = 0;
 
 
-static void alloc_collector(struct rtskb *skb, struct rtskb_queue *comp_pool)
+static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
 {
     int i;
     unsigned int flags;
@@ -102,7 +103,7 @@ static void alloc_collector(struct rtskb *skb, struct rtskb_queue *comp_pool)
             p_coll->daddr         = iph->daddr;
             p_coll->id            = iph->id;
             p_coll->protocol      = iph->protocol;
-            p_coll->comp_pool     = comp_pool;
+            p_coll->sock          = sock;
 
             rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
 
@@ -145,7 +146,7 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
             first_skb = p_coll->frags.first;
 
             /* Acquire the rtskb at the expense of the protocol pool */
-            if (rtskb_acquire(skb, p_coll->comp_pool) != 0) {
+            if (rtskb_acquire(skb, &p_coll->sock->skb_pool) != 0) {
                 /* We have to drop this fragment => clean up the whole chain */
                 p_coll->in_use = 0;
 
@@ -207,9 +208,9 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
 
 
 /*
- * Cleans up all collectors referring to the specified rtskb pool
+ * Cleans up all collectors referring to the specified socket
  */
-void rt_ip_frag_invalidate_pool(struct rtskb_queue *pool)
+void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
 {
     int i;
     unsigned int flags;
@@ -220,7 +221,7 @@ void rt_ip_frag_invalidate_pool(struct rtskb_queue *pool)
         p_coll = &collector[i];
         flags = rt_spin_lock_irqsave(&p_coll->frags.lock);
 
-        if ((p_coll->in_use) && (p_coll->comp_pool == pool))
+        if ((p_coll->in_use) && (p_coll->sock == sock))
         {
             p_coll->in_use = 0;
             kfree_rtskb(p_coll->frags.first);
@@ -267,8 +268,10 @@ struct rtskb *rt_ip_defrag(struct rtskb *skb, struct rtinet_protocol *ipprot)
 {
     unsigned int more_frags;
     unsigned int offset;
-    struct rtskb_queue *comp_pool;
+    struct rtsocket *sock;
     struct iphdr *iph = skb->nh.iph;
+    int ret;
+
 
     counter++;
 
@@ -281,14 +284,25 @@ struct rtskb *rt_ip_defrag(struct rtskb *skb, struct rtinet_protocol *ipprot)
     /* First fragment? */
     if (offset == 0)
     {
+        /* Get the destination socket */
+        if ((sock = ipprot->dest_socket(skb)) == NULL) {
+            /* Drop the rtskb */
+            kfree_rtskb(skb);
+            return NULL;
+        }
+
         /* Acquire the rtskb at the expense of the protocol pool */
-        comp_pool = ipprot->get_pool(skb);
-        if ((comp_pool == NULL) || (rtskb_acquire(skb, comp_pool) != 0)) {
+        ret = rtskb_acquire(skb, &sock->skb_pool);
+
+        /* socket is now implicitely locked by the rtskb */
+        rt_socket_dereference(sock);
+
+        if (ret != 0) {
             /* Drop the rtskb */
             kfree_rtskb(skb);
         } else {
             /* Allocates a new collector */
-            alloc_collector(skb, comp_pool);
+            alloc_collector(skb, sock);
         }
         return NULL;
     }

@@ -51,7 +51,7 @@ static struct rt_fun_entry rt_lxrtnet_fun[] = {
     [RT_SOCKET_READ]        = {UR1(2,3),            rt_socket_recv       },
     [RT_SOCKET_WRITEV]      = {UW1(2,3),            rt_socket_sendmsg    },
     [RT_SOCKET_READV]       = {UR1(2,3),            rt_socket_recvmsg    },
-    [RT_SOCKET_GETSOCKNAME] = {UW1(2,3),            rt_socket_getsockname},
+/*    [RT_SOCKET_GETSOCKNAME] = {UW1(2,3),            rt_socket_getsockname},*/
     [RT_SOCKET_SETSOCKOPT]  = {UR1(4,5),            rt_socket_setsockopt }
 };
 

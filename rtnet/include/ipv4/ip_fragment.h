@@ -28,7 +28,7 @@
 extern struct rtskb *rt_ip_defrag(struct rtskb *skb,
                                   struct rtinet_protocol *ipprot);
 
-extern void rt_ip_frag_invalidate_pool(struct rtskb_queue *pool);
+extern void rt_ip_frag_invalidate_socket(struct rtsocket *sock);
 
 extern int rt_ip_fragment_init(void);
 extern void rt_ip_fragment_cleanup(void);

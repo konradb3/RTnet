@@ -53,8 +53,8 @@ static inline int rt_udp_port_inuse(u16 num)
     struct rtsocket *sk;
 
     flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
-    for (sk=udp_sockets; sk!=NULL; sk=sk->next) {
-        if ( sk->sport==num )
+    for (sk = udp_sockets; sk != NULL; sk = sk->next) {
+        if (sk->prot.inet.sport == num)
             break;
     }
     rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
@@ -88,10 +88,13 @@ struct rtsocket *rt_udp_v4_lookup(u32 saddr, u16 sport, u32 daddr, u16 dport)
     struct rtsocket *sk;
 
     flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
-    for (sk=udp_sockets; sk!=NULL; sk=sk->next) {
-        if (sk->sport==dport)
+    
+    for (sk = udp_sockets; sk != NULL; sk = sk->next)
+        if (sk->prot.inet.sport == dport) {
+            rt_socket_reference(sk);
             break;
-    }
+        }
+
     rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
     return sk;
 }
@@ -111,11 +114,11 @@ int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, socklen_t addrlen)
         return -EINVAL;
 
     /* set the source-addr */
-    s->saddr=usin->sin_addr.s_addr;
+    s->prot.inet.saddr = usin->sin_addr.s_addr;
 
     /* set source port, if not set by user */
-    if( !(s->sport=usin->sin_port) )
-        s->sport=htons(rt_udp_good_port());
+    if((s->prot.inet.sport = usin->sin_port) == 0)
+        s->prot.inet.sport = htons(rt_udp_good_port());
 
     return 0;
 }
@@ -132,16 +135,17 @@ int rt_udp_connect(struct rtsocket *s, const struct sockaddr *serv_addr, socklen
     if ( (s->state!=TCP_CLOSE) || (addrlen < (int)sizeof(struct sockaddr_in)) )
         return -EINVAL;
     if ( (usin->sin_family) && (usin->sin_family!=AF_INET) ) {
-        s->saddr=INADDR_ANY;
-        s->daddr=INADDR_ANY;
-        s->state=TCP_CLOSE;
+        s->prot.inet.saddr = INADDR_ANY;
+        s->prot.inet.daddr = INADDR_ANY;
+        s->state           = TCP_CLOSE;
         return -EAFNOSUPPORT;
     }
-    s->state=TCP_ESTABLISHED;
-    s->daddr=usin->sin_addr.s_addr;
-    s->dport=usin->sin_port;
+    s->state           = TCP_ESTABLISHED;
+    s->prot.inet.daddr = usin->sin_addr.s_addr;
+    s->prot.inet.dport = usin->sin_port;
 
-    rt_printk("connect socket to %x:%d\n", ntohl(s->daddr), ntohs(s->dport));
+    rt_printk("connect socket to %x:%d\n", ntohl(s->prot.inet.daddr),
+              ntohs(s->prot.inet.dport));
 
     return 0;
 }
@@ -150,8 +154,6 @@ int rt_udp_connect(struct rtsocket *s, const struct sockaddr *serv_addr, socklen
 
 /***
  *  rt_udp_listen
- *  @s
- *  @backlog
  */
 int rt_udp_listen(struct rtsocket *s, int backlog)
 {
@@ -183,16 +185,21 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, size_t len, int flags
     struct udphdr *uh;
     size_t data_len;
     struct sockaddr_in *sin;
+    int ret;
 
 
     /* block on receive semaphore */
     if (((s->flags & RT_SOCK_NONBLOCK) == 0) && ((flags & MSG_DONTWAIT) == 0))
         while ((skb = rtskb_dequeue_chain(&s->incoming)) == NULL) {
             if (s->timeout > 0) {
-                if (rt_sem_wait_timed(&s->wakeup_sem, nano2count(s->timeout)) == SEM_TIMOUT)
+                ret = rt_sem_wait_timed(&s->wakeup_sem, nano2count(s->timeout));
+                if (ret == SEM_TIMOUT)
                     return -ETIMEDOUT;
             } else
-                rt_sem_wait(&s->wakeup_sem);
+                ret = rt_sem_wait(&s->wakeup_sem);
+
+            if (ret == 0xFFFF /* SEM_ERR */)
+                return -ENOTSOCK;
         }
     else {
         skb = rtskb_dequeue_chain(&s->incoming);
@@ -332,7 +339,7 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
     if (flags & MSG_OOB)   /* Mirror BSD error message compatibility */
         return -EOPNOTSUPP;
 
-    if (flags & ~(MSG_DONTROUTE|MSG_DONTWAIT|MSG_NOSIGNAL) )
+    if (flags & ~(MSG_DONTROUTE|MSG_DONTWAIT) )
         return -EINVAL;
 
     if ((msg->msg_name) && (msg->msg_namelen==sizeof(struct sockaddr_in))) {
@@ -347,8 +354,8 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
         if (s->state != TCP_ESTABLISHED)
             return -ENOTCONN;
 
-        daddr = s->daddr;
-        dport = s->dport;
+        daddr = s->prot.inet.daddr;
+        dport = s->prot.inet.dport;
     }
 
 #ifdef DEBUG
@@ -357,14 +364,14 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
     if ((daddr==0) || (dport==0))
         return -EINVAL;
 
-    err=rt_ip_route_output(&rt, daddr, s->saddr);
+    err = rt_ip_route_output(&rt, daddr, s->prot.inet.saddr);
     if (err)
         goto out;
 
     /* we found a route, remember the routing dest-addr could be the netmask */
     ufh.saddr     = rt->rt_src;
     ufh.daddr     = daddr;
-    ufh.uh.source = s->sport;
+    ufh.uh.source = s->prot.inet.sport;
     ufh.uh.dest   = dport;
     ufh.uh.len    = htons(ulen);
     ufh.uh.check  = 0;
@@ -386,12 +393,13 @@ out:
 /***
  *  rt_udp_close
  */
-void rt_udp_close(struct rtsocket *s,long timeout)
+int rt_udp_close(struct rtsocket *s)
 {
     unsigned long flags;
     struct rtsocket *prev=s->prev;
     struct rtsocket *next=s->next;
     struct rtskb *del;
+
 
     s->state=TCP_CLOSE;
 
@@ -399,26 +407,27 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 
     prev=s->prev;
     next=s->next;
-    if (prev)
-        prev->next=next;
-    if (next)
-        next->prev=prev;
+    if (prev != NULL)
+        prev->next = next;
+    if (next != NULL)
+        next->prev = prev;
 
-    if (s==udp_sockets) {
-        udp_sockets=udp_sockets->next;
-    }
+    if (s == udp_sockets)
+        udp_sockets = next;
 
     rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
 
-    s->next=NULL;
-    s->prev=NULL;
-
-    /* free packets in incoming queue */
-    while ((del=rtskb_dequeue(&s->incoming)) != NULL)
-        kfree_rtskb(del);
+    s->next = NULL;
+    s->prev = NULL;
 
     /* cleanup already collected fragments */
-    rt_ip_frag_invalidate_pool(&s->skb_pool);
+    rt_ip_frag_invalidate_socket(s);
+
+    /* free packets in incoming queue */
+    while ((del = rtskb_dequeue(&s->incoming)) != NULL)
+        kfree_rtskb(del);
+
+    return 0;
 }
 
 
@@ -436,7 +445,7 @@ static inline unsigned short rt_udp_check(struct udphdr *uh, int len,
 
 
 
-struct rtskb_queue *rt_udp_get_pool(struct rtskb *skb)
+struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
 {
     struct udphdr *uh;
     unsigned short ulen;
@@ -470,7 +479,7 @@ struct rtskb_queue *rt_udp_get_pool(struct rtskb *skb)
 
     skb->sk = rtsk;
 
-    return &rtsk->skb_pool;
+    return rtsk;
 }
 
 
@@ -486,7 +495,7 @@ int rt_udp_rcv (struct rtskb *skb)
     rtskb_queue_tail(&rtsk->incoming, skb);
     rt_sem_signal(&rtsk->wakeup_sem);
     if ( rtsk->wakeup != NULL )
-        rtsk->wakeup(rtsk->fd, rtsk->private);
+        rtsk->wakeup(rtsk->fd, rtsk->wakeup_arg);
 
     return 0;
 }
@@ -524,18 +533,21 @@ int rt_udp_socket(struct rtsocket *s)
 {
     unsigned long flags;
 
-    s->family   = AF_INET;
-    s->typ      = SOCK_DGRAM;
-    s->protocol = IPPROTO_UDP;
-    s->ops      = &rt_udp_socket_ops;
-    s->saddr    = INADDR_ANY;
+    s->family          = PF_INET;
+    s->protocol        = IPPROTO_UDP;
+    s->ops             = &rt_udp_socket_ops;
+    s->prot.inet.saddr = INADDR_ANY;
 
     /* add to udp-socket-list */
     flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
+
     s->next = udp_sockets;
+    s->prev = NULL;
+
     if (udp_sockets != NULL)
         udp_sockets->prev = s;
     udp_sockets = s;
+
     rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
 
     return s->fd;
@@ -548,7 +560,7 @@ int rt_udp_socket(struct rtsocket *s)
  */
 static struct rtinet_protocol udp_protocol = {
     protocol:       IPPROTO_UDP,
-    get_pool:       &rt_udp_get_pool,
+    dest_socket:    &rt_udp_dest_socket,
     rcv_handler:    &rt_udp_rcv,
     err_handler:    &rt_udp_rcv_err,
     init_socket:    &rt_udp_socket

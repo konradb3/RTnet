@@ -19,46 +19,91 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <rtnet_socket.h>
 #include <ipv4/protocol.h>
 
 
 struct rtinet_protocol *rt_inet_protocols[MAX_RT_INET_PROTOCOLS];
 
 /***
- *	rt_inet_add_protocol
+ * rt_inet_add_protocol
  */
 void rt_inet_add_protocol(struct rtinet_protocol *prot)
 {
-	if ( prot!=NULL ) {
-		unsigned char hash = rt_inet_hashkey(prot->protocol);
-		if ( rt_inet_protocols[hash]==NULL ) 
-			rt_inet_protocols[hash] = prot;
-	}
+    if ( prot!=NULL ) {
+        unsigned char hash = rt_inet_hashkey(prot->protocol);
+        if ( rt_inet_protocols[hash]==NULL )
+            rt_inet_protocols[hash] = prot;
+    }
 }
 
 
 /***
- *	rt_inet_del_protocol
+ * rt_inet_del_protocol
  */
 void rt_inet_del_protocol(struct rtinet_protocol *prot)
 {
-	if ( prot!=NULL ) {
-		unsigned char hash = rt_inet_hashkey(prot->protocol);
-		if ( prot==rt_inet_protocols[hash] )
-			rt_inet_protocols[hash] = NULL;
-	}
+    if ( prot!=NULL ) {
+        unsigned char hash = rt_inet_hashkey(prot->protocol);
+        if ( prot==rt_inet_protocols[hash] )
+            rt_inet_protocols[hash] = NULL;
+    }
 
 }
 
 
 
 /***
- *	rt_inet_get_protocol - get protocol-structure
- *	@protocol: protocol id (maybe IPPROTO_UDP)
+ * rt_inet_get_protocol - get protocol-structure
+ * @protocol: protocol id (maybe IPPROTO_UDP)
  */
 struct rtinet_protocol *rt_inet_get_protocol(int protocol)
 {
-	return  ( rt_inet_protocols[rt_inet_hashkey(protocol)] );
+    return  ( rt_inet_protocols[rt_inet_hashkey(protocol)] );
+}
+
+
+
+/***
+ * rt_inet_socket - initialize an Internet socket
+ * @sock: socket structure
+ * @protocol: protocol id
+ */
+int rt_inet_socket(SOCKET *sock, int protocol)
+{
+    struct rtinet_protocol *prot;
+
+
+    /* only datagram-sockets */
+    if (sock->type != SOCK_DGRAM)
+        return -EAFNOSUPPORT;
+
+    /* default is UDP */
+    if (protocol == 0)
+        protocol = IPPROTO_UDP;
+
+    prot = rt_inet_protocols[rt_inet_hashkey(protocol)];
+
+    /* create the socket (call the socket creator) */
+    if ((prot != NULL) && (prot->protocol == protocol)) {
+        int ret = prot->init_socket(sock);
+
+        ASSERT(sock->ops             != NULL, return -EPROTO;);
+        ASSERT(sock->ops->bind       != NULL, return -EPROTO;);
+        ASSERT(sock->ops->connect    != NULL, return -EPROTO;);
+        ASSERT(sock->ops->listen     != NULL, return -EPROTO;);
+        ASSERT(sock->ops->accept     != NULL, return -EPROTO;);
+        ASSERT(sock->ops->recvmsg    != NULL, return -EPROTO;);
+        ASSERT(sock->ops->sendmsg    != NULL, return -EPROTO;);
+        ASSERT(sock->ops->close      != NULL, return -EPROTO;);
+        ASSERT(sock->ops->setsockopt != NULL, return -EPROTO;);
+
+        return ret;
+    } else {
+        rt_printk("RTnet: protocol with id %d not found\n", protocol);
+
+        return -ENOPROTOOPT;
+    }
 }
 
 
@@ -68,20 +113,20 @@ struct rtinet_protocol *rt_inet_get_protocol(int protocol)
  */
 unsigned long rt_inet_aton(const char *ip)
 {
-	int p, n, c;
-	union { unsigned long l; char c[4]; } u;
-	p = n = 0;
-	while ((c = *ip++)) {
-		if (c != '.') {
-			n = n*10 + c-'0';
-		} else {
-			if (n > 0xFF) {
-				return 0;
-			}
-			u.c[p++] = n;
-			n = 0;
-		}
-	}
-	u.c[3] = n;
-	return u.l;
+    int p, n, c;
+    union { unsigned long l; char c[4]; } u;
+    p = n = 0;
+    while ((c = *ip++)) {
+        if (c != '.') {
+            n = n*10 + c-'0';
+        } else {
+            if (n > 0xFF) {
+                return 0;
+            }
+            u.c[p++] = n;
+            n = 0;
+        }
+    }
+    u.c[3] = n;
+    return u.l;
 }

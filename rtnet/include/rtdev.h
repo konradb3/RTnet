@@ -24,12 +24,15 @@
 
 #ifdef __KERNEL__
 
+#include <asm/atomic.h>
 #include <linux/netdevice.h>
 
 #include <rtai_sched.h>
 
 #include <rtskb.h>
 
+
+#define MAX_RT_DEVICES      8
 
 /***
  *  rtnet_device
@@ -56,9 +59,7 @@ struct rtnet_device {
 
     unsigned long       state;
     int                 ifindex;
-
-    struct rtnet_device *next;
-    struct net_device   *ldev;      /* used by rtnetproxy and rtmac_vnic*/
+    atomic_t            refcount;
 
     struct module       *owner;
 
@@ -109,45 +110,24 @@ struct rtnet_device {
 };
 
 
-/***
- * network-layer-protocol (Layer-3-Protokoll)
- */
-#define MAX_RT_PROTOCOLS        16
-struct rtpacket_type {
-    char            *name;
-    unsigned short  type;
-
-    int             (*handler)(struct rtskb *, struct rtpacket_type *);
-    int             (*err_handler)(struct rtskb *, struct rtnet_device *,
-                                   struct rtpacket_type *);
-
-    void            *private;
-};
-
-
-extern struct rtnet_device *rtnet_devices;
+extern struct rtnet_device *rtnet_devices[];
 extern rwlock_t rtnet_devices_lock;
 
-extern struct rtpacket_type *rt_packets[];
-
-extern void rtdev_add_pack(struct rtpacket_type *pt);
-extern void rtdev_remove_pack(struct rtpacket_type *pt);
-
-extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
-extern int rtdev_new_index(void);
-extern struct rtnet_device *rtdev_alloc(int sizeof_priv);
+extern struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
 extern void rtdev_free(struct rtnet_device *rtdev);
 
+extern int rt_register_rtnetdev(struct rtnet_device *rtdev);
+extern int rt_unregister_rtnetdev(struct rtnet_device *rtdev);
+
+extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
+
 extern struct rtnet_device *rtdev_get_by_name(const char *if_name);
-extern struct rtnet_device *rtdev_get_by_dev(struct net_device *dev);
 extern struct rtnet_device *rtdev_get_by_index(int ifindex);
 extern struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
+#define rtdev_dereference(rtdev)    atomic_dec(&(rtdev)->refcount)
 
 extern int rtdev_xmit(struct rtskb *skb);
 extern int rtdev_xmit_proxy(struct rtskb *skb);
-
-extern int rtnet_dev_init(void);
-extern int rtnet_dev_release(void);
 
 extern int rtdev_open(struct rtnet_device *rtdev);
 extern int rtdev_close(struct rtnet_device *rtdev);

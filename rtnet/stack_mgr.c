@@ -22,9 +22,91 @@
 
 #include <rtdev.h>
 #include <rtnet_internal.h>
+#include <stack_mgr.h>
 
 
 static struct rtskb_queue rxqueue;
+static struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
+static spinlock_t rt_packets_lock;
+
+
+
+/***
+ *  rtdev_add_pack:         add protocol (Layer 3)
+ *  @pt:                    the new protocol
+ */
+int rtdev_add_pack(struct rtpacket_type *pt)
+{
+    int hash;
+    unsigned long flags;
+
+
+    if (pt->type == htons(ETH_P_ALL))
+        return -EINVAL;
+
+    hash=ntohs(pt->type) & (MAX_RT_PROTOCOLS-1);
+
+    flags = rt_spin_lock_irqsave(&rt_packets_lock);
+
+    if (rt_packets[hash] == NULL) {
+        rt_packets[hash] = pt;
+
+        pt->refcount = 0;
+
+        rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+
+        return 0;
+    }
+    else {
+        rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+
+        rt_printk("RTnet: protocol place %d is already in use\n", hash);
+        return -EADDRNOTAVAIL;
+    }
+}
+
+
+
+/***
+ *  rtdev_remove_pack:  remove protocol (Layer 3)
+ *  @pt:                protocol
+ */
+int rtdev_remove_pack(struct rtpacket_type *pt)
+{
+    int hash;
+    unsigned long flags;
+    int ret = 0;
+
+
+    ASSERT(pt != NULL, return -EINVAL;);
+
+    if (pt->type == htons(ETH_P_ALL))
+        return -EINVAL;
+
+    hash=ntohs(pt->type) & (MAX_RT_PROTOCOLS-1);
+
+    flags = rt_spin_lock_irqsave(&rt_packets_lock);
+
+    if ((rt_packets[hash] != NULL) &&
+        (rt_packets[hash]->type == pt->type)) {
+        rt_packets[hash] = NULL;
+
+        if (pt->refcount > 0)
+            ret = -EAGAIN;
+
+        rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+
+        return ret;
+    }
+    else {
+        rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+
+        rt_printk("RTnet: protocol %s not found\n",
+                (pt->name) ? (pt->name) : "<noname>");
+
+        return -ENOENT;
+    }
+}
 
 
 
@@ -110,13 +192,26 @@ static void do_stacktask(int mgr_id)
             skb->rtdev->rxqueue_len--;
             rt_spin_unlock_irqrestore(flags, &rxqueue.lock);
 
+            skb->nh.raw = skb->data;
+
             hash = ntohs(skb->protocol) & (MAX_RT_PROTOCOLS-1);
+
+            flags = rt_spin_lock_irqsave(&rt_packets_lock);
+
             pt = rt_packets[hash];
 
-            skb->nh.raw = skb->data;
-            if ((pt != NULL) && (pt->type == skb->protocol))
+            if ((pt != NULL) && (pt->type == skb->protocol)) {
+                pt->refcount++;
+                rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+
                 pt->handler(skb, pt);
-            else {
+
+                flags = rt_spin_lock_irqsave(&rt_packets_lock);
+                pt->refcount--;
+                rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+            } else {
+                rt_spin_unlock_irqrestore(flags, &rt_packets_lock);
+
                 rt_printk("RTnet: unknown layer-3 protocol\n");
                 kfree_rtskb(skb);
             }
@@ -170,7 +265,11 @@ int rt_stack_mgr_stop (struct rtnet_mgr *mgr)
 int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 {
     int ret;
+    int i;
 
+
+    spin_lock_init(&rt_packets_lock);
+    for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
 
     rtskb_queue_init(&rxqueue);
 
