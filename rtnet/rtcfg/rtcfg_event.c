@@ -111,7 +111,8 @@ static int (*state[])(int ifindex, RTCFG_EVENT event_id, void* event_data) =
 };
 
 
-static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event);
+static int rtcfg_server_add(struct rtcfg_cmd *cmd_event,
+                            unsigned int addr_type);
 static int rtcfg_server_recv_announce(int ifindex, struct rtskb *rtskb);
 static int rtcfg_server_recv_ack(int ifindex, struct rtskb *rtskb);
 static int rtcfg_server_recv_ready(int ifindex, struct rtskb *rtskb);
@@ -252,6 +253,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
     struct rtcfg_cmd    *cmd_event;
     struct rtcfg_device *rtcfg_dev;
     struct rtskb        *rtskb;
+    struct rtnet_device *rtdev;
 
 
     switch (event_id) {
@@ -259,7 +261,27 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             call      = (struct rt_proc_call *)event_data;
             cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
-            return rtcfg_server_add_ip(cmd_event);
+            /* MAC address yet unknown -> use broadcast address */
+            rtdev = rtdev_get_by_index(cmd_event->ifindex);
+            if (rtdev == NULL)
+                return -ENODEV;
+            memcpy(cmd_event->args.add.mac_addr, rtdev->broadcast,
+                   MAX_ADDR_LEN);
+            rtdev_dereference(rtdev);
+
+            return rtcfg_server_add(cmd_event, RTCFG_ADDR_IP);
+
+        case RTCFG_CMD_ADD_IP_MAC:
+            call      = (struct rt_proc_call *)event_data;
+            cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+            return rtcfg_server_add(cmd_event, RTCFG_ADDR_IP);
+
+        case RTCFG_CMD_ADD_MAC:
+            call      = (struct rt_proc_call *)event_data;
+            cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+            return rtcfg_server_add(cmd_event, RTCFG_ADDR_MAC);
 
         case RTCFG_CMD_WAIT:
             call = (struct rt_proc_call *)event_data;
@@ -709,13 +731,13 @@ static int rtcfg_main_state_client_ready(int ifindex, RTCFG_EVENT event_id,
 
 /*** Server Command Event Handlers ***/
 
-static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
+static int rtcfg_server_add(struct rtcfg_cmd *cmd_event,
+                            unsigned int addr_type)
 {
     struct rtcfg_connection *conn;
     struct rtcfg_connection *new_conn;
     struct list_head        *entry;
     struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
-    struct rtnet_device     *rtdev;
 
 
     new_conn = cmd_event->args.add.conn_buf;
@@ -723,18 +745,13 @@ static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
 
     new_conn->ifindex      = cmd_event->ifindex;
     new_conn->state        = RTCFG_CONN_SEARCHING;
-    new_conn->addr_type    = RTCFG_ADDR_IP;
+    new_conn->addr_type    = addr_type;
     new_conn->addr.ip_addr = cmd_event->args.add.ip_addr;
     new_conn->stage1_data  = cmd_event->args.add.stage1_data;
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
     new_conn->burstrate    = rtcfg_dev->burstrate;
 
-    /* MAC address yet unknown -> use broadcast address */
-    rtdev = rtdev_get_by_index(new_conn->ifindex);
-    if (rtdev == NULL)
-        return -ENODEV;
-    new_conn->mac_addr = rtdev->broadcast;
-    rtdev_dereference(rtdev);
+    memcpy(new_conn->mac_addr, cmd_event->args.add.mac_addr, MAX_ADDR_LEN);
 
     /* get stage 2 file */
     if (cmd_event->args.add.stage2_file != NULL) {
@@ -756,7 +773,11 @@ static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
     list_for_each(entry, &rtcfg_dev->conn_list) {
         conn = list_entry(entry, struct rtcfg_connection, entry);
 
-        if (conn->addr.ip_addr == cmd_event->args.add.ip_addr) {
+        if (((addr_type == RTCFG_ADDR_IP) &&
+             (conn->addr.ip_addr == cmd_event->args.add.ip_addr)) ||
+            ((addr_type == RTCFG_ADDR_MAC) &&
+             (memcmp(conn->mac_addr, cmd_event->args.add.mac_addr,
+                     MAX_ADDR_LEN) == 0))) {
             rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             if (rtcfg_release_file(new_conn->stage2_file) == 0) {
@@ -817,9 +838,8 @@ static int rtcfg_server_recv_announce(int ifindex, struct rtskb *rtskb)
                     (*(u32 *)announce_new->addr ==
                         conn->addr.ip_addr)) {
                     /* save MAC address - Ethernet-specific! */
-                    memcpy(conn->mac_addr_buf,
-                        rtskb->mac.ethernet->h_source, ETH_ALEN);
-                    conn->mac_addr = conn->mac_addr_buf;
+                    memcpy(conn->mac_addr, rtskb->mac.ethernet->h_source,
+                           ETH_ALEN);
 
                     rtdev = rtskb->rtdev;
 
@@ -838,8 +858,8 @@ static int rtcfg_server_recv_announce(int ifindex, struct rtskb *rtskb)
 
             case RTCFG_ADDR_MAC:
                 /* Ethernet-specific! */
-                if (memcmp(conn->mac_addr,
-                        rtskb->mac.ethernet->h_source, ETH_ALEN) == 0) {
+                if (memcmp(conn->mac_addr, rtskb->mac.ethernet->h_source,
+                           ETH_ALEN) == 0) {
                     rtcfg_do_conn_event(conn, RTCFG_FRM_ANNOUNCE_NEW, rtskb);
 
                     goto out;
@@ -975,8 +995,8 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
     struct rt_proc_call          *call;
     struct rtcfg_cmd             *cmd_event;
     struct rtcfg_device          *rtcfg_dev = &device[ifindex];
-    struct rtnet_device          *rtdev;
-    u32                          daddr, saddr;
+    struct rtnet_device          *rtdev, *tmp;
+    u32                          daddr, saddr, mask, bcast;
     u8                           addr_type;
     int                          ret;
 
@@ -1014,16 +1034,43 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
 
             __rtskb_pull(rtskb, 2*RTCFG_ADDRSIZE_IP);
 
-            /* directed to us? */
-            if (daddr != rtdev->local_ip) {
-                kfree_rtskb(rtskb);
-                break;
+            /* Broadcast: IP is used to address client */
+            if (rtskb->pkt_type == PACKET_BROADCAST) {
+                /* directed to us? */
+                if (daddr != rtdev->local_ip) {
+                    kfree_rtskb(rtskb);
+                    break;
+                }
+            /* Unicast: IP address is assigned by the server */
+            } else {
+                /* default netmask */
+                if (ntohl(daddr) <= 0x7FFFFFFF)         /* 127.255.255.255  */
+                    mask = 0x000000FF;                  /* 255.0.0.0        */
+                else if (ntohl(daddr) <= 0xBFFFFFFF)    /* 191.255.255.255  */
+                    mask = 0x0000FFFF;                  /* 255.255.0.0      */
+                else
+                    mask = 0x00FFFFFF;                  /* 255.255.255.0    */
+                bcast = daddr | (~mask);
+
+                rt_ip_route_del_all(rtdev); /* cleanup routing table */
+
+                rtdev->local_ip     = daddr;
+                rtdev->broadcast_ip = bcast;
+
+                if ((tmp = rtdev_get_loopback()) != NULL) {
+                    rt_ip_route_add_host(rtdev->local_ip,
+                                         tmp->dev_addr, tmp);
+                    rtdev_dereference(tmp);
+                }
+
+                if (rtdev->flags & IFF_BROADCAST)
+                    rt_ip_route_add_host(daddr, rtdev->broadcast, rtdev);
             }
 
             /* update routing table */
             rt_ip_route_add_host(saddr, rtskb->mac.ethernet->h_source, rtdev);
 
-            /* fall trough */
+            /* fall through */
         case RTCFG_ADDR_MAC:
             rtos_res_lock(&rtcfg_dev->dev_lock);
 

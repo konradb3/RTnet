@@ -157,7 +157,13 @@ void cmd_add(int argc, char *argv[])
     cmd.args.add.timeout         = 0;   /* infinite */
 
     for (i = 4; i < argc; i++) {
-        if (strcmp(argv[i], "-stage1") == 0) {
+        if (strcmp(argv[i], "-hw") == 0) {
+            if (ether_aton_r(argv[3], &mac_addr) == NULL)
+                help();
+            ioctl_code = RTCFG_IOC_ADD_IP_MAC;
+            memcpy(cmd.args.add.mac_addr, mac_addr.ether_addr_octet,
+                   sizeof(mac_addr.ether_addr_octet));
+        } else if (strcmp(argv[i], "-stage1") == 0) {
             if (++i >= argc)
                 help();
             stage1_filename = argv[i];

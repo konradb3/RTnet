@@ -46,6 +46,7 @@ typedef enum {
     RTCFG_CMD_ANNOUNCE,
     RTCFG_CMD_READY,
     RTCFG_CMD_DOWN,
+    RTCFG_CMD_ADD_IP_MAC,
 
     /* internal usage only */
     RTCFG_FRM_STAGE_1_CFG,
@@ -155,5 +156,7 @@ struct rtcfg_cmd {
                                      struct rtcfg_cmd)
 #define RTCFG_IOC_DOWN          _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DOWN,    \
                                      struct rtcfg_cmd)
+#define RTCFG_IOC_ADD_IP_MAC    _IOW(RTNET_IOC_TYPE_RTCFG, \
+                                     RTCFG_CMD_ADD_IP_MAC, struct rtcfg_cmd)
 
 #endif /* __RTCFG_H_ */
