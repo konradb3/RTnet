@@ -104,7 +104,8 @@ struct rtnet_core_cmd {
 #define RTNET_IOC_TYPE_CORE             0
 #define RTNET_IOC_TYPE_RTCFG            1
 #define RTNET_IOC_TYPE_IPV4             2
-#define RTNET_IOC_TYPE_RTMAC_TDMA       100
+#define RTNET_IOC_TYPE_RTMAC_NOMAC      100
+#define RTNET_IOC_TYPE_RTMAC_TDMA       110
 
 #define IOC_RT_IFUP                     _IOW(RTNET_IOC_TYPE_CORE, 0,    \
                                              struct rtnet_core_cmd)

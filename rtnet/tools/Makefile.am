@@ -4,6 +4,10 @@ if CONFIG_RTNET_RTCFG
 OPTPROGS += rtcfg
 endif
 
+if CONFIG_RTNET_NOMAC
+OPTPROGS += nomaccfg
+endif
+
 sbin_PROGRAMS = rtifconfig rtroute rtping $(OPTPROGS)
 
 AM_CPPFLAGS = \

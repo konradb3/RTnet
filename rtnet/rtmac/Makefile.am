@@ -1,6 +1,12 @@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 
-SUBDIRS = tdma
+OPTDIRS =
+
+if CONFIG_RTNET_NOMAC
+OPTDIRS += nomac
+endif
+
+SUBDIRS = tdma $(OPTDIRS)
 
 noinst_LIBRARIES = librtmac.a
 

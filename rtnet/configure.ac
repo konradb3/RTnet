@@ -799,27 +799,42 @@ fi
 
 
 dnl ======================================================================
-dnl		RTDM select
+dnl		NoMAC discipline for RTmac
 dnl ======================================================================
 
-AC_MSG_CHECKING([whether to include RTDM select])
+AC_MSG_CHECKING([whether to build NoMAC])
+AC_ARG_ENABLE(nomac,
+	AC_HELP_STRING([--enable-nomac], [build NoMAC discipline for RTmac]),
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_NOMAC=yes ;;
+	*) unset CONFIG_RTNET_NOMAC ;;
+	esac])
+AC_MSG_RESULT([${CONFIG_RTNET_NOMAC:-no}])
+AM_CONDITIONAL(CONFIG_RTNET_NOMAC,[test "$CONFIG_RTNET_NOMAC" = "yes"])
+
+
+dnl ======================================================================
+dnl		RTDM select (should become a compilation parameter someday)
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to enable RTDM select])
 AC_ARG_ENABLE(rtdm-select,
-	AC_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental) @<:@default: disabled@:>@]),
+	AC_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental)]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_RTDM_SELECT=yes ;;
 	*) CONFIG_RTNET_RTDM_SELECT=no ;;
 	esac],
 	CONFIG_RTNET_RTDM_SELECT=no)
-if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
-    AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT}])
-else
-    if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
-	AC_MSG_ERROR([*** Enclosed RTDM (--enable-enclosed-rtdm) must be activated for RTDM select])
-    fi
-fi
+AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT}])
+
+dnl When RTDM select has matured, the example compilation should no longer
+dnl depend on the internal select support by RTnet. Instead, running the
+dnl example shall give an error.
+
 AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "yes"])
+
 if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
-	AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM with select support])
+	AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM select support])
 fi
 
 
@@ -942,6 +957,7 @@ lib/Makefile \
 tools/Makefile \
 rtmac/Makefile \
 rtmac/tdma/Makefile \
+rtmac/nomac/Makefile \
 rtcfg/Makefile \
 include/Makefile \
 rtcap/Makefile \
