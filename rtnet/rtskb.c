@@ -161,10 +161,21 @@ static inline int new_rtskb(struct rtskb_head *pool)
 
     ASSERT(pool != NULL, return -EINVAL;);
 
+#ifndef CONFIG_RTNET_RTSKB_USE_KMALLOC
+    /* default case, preserves possibility to create new sockets in real-time
+     * note: CONFIG_RTAI_MM_VMALLOC must not be set!
+     */
     if ( !(skb = rt_malloc(ALIGN_RTSKB_LEN + len)) ) {
         rt_printk("RTnet: rtskb allocation failed.\n");
         return -ENOMEM;
     }
+#else
+    if ( !(skb = kmalloc(ALIGN_RTSKB_LEN + len, GFP_KERNEL)) ) {
+        rt_printk("RTnet: rtskb allocation failed.\n");
+        return -ENOMEM;
+    }
+#endif
+
     /* fill the header with zero */
     memset(skb, 0, ALIGN_RTSKB_LEN);
 
