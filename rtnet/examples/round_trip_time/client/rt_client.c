@@ -180,7 +180,7 @@ int init_module(void)
 	rt_socket_callback(sock, echo_rcv, NULL);
 	
         tick_period = start_rt_timer(nano2count(TICK_PERIOD));
-        ret=rt_task_init(&rt_task,(void *)process,0,4096,0,0,NULL);
+        ret=rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
         ret=rt_task_make_periodic_relative_ns( &rt_task, 1000000, (RTIME) interval * 1000000);
 	return 0;
 }

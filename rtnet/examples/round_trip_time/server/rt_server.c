@@ -183,7 +183,7 @@ int init_module(void)
 	/* create print-fifo */
 	rtf_create (PRINT, 3000);
 
-	ret=rt_task_init(&rt_task,(void *)process,0,4096,0,0,NULL);
+	ret=rt_task_init(&rt_task,(void *)process,0,4096,9,0,NULL);
 	rt_task_resume (&rt_task);
 
 	return ret;
