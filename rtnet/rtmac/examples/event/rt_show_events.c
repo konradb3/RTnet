@@ -38,8 +38,12 @@
 #define REPORT_PORT     40001
 
 
-static char* my_ip = "";
+static char* my_ip   = "";
+static char* dest_ip = "10.255.255.255";
 MODULE_PARM(my_ip, "s");
+MODULE_PARM(dest_ip, "s");
+
+MODULE_LICENSE("GPL");
 
 static int                sock;
 static RT_TASK            task;
@@ -71,14 +75,14 @@ void recv_handler(int arg)
     } event;
     unsigned long      time_hi;
     unsigned long      time_lo;
-    char*              addr_bytes = (char*)&addr.sin_addr.s_addr;
+    /*char*              addr_bytes = (char*)&addr.sin_addr.s_addr;*/
     unsigned long      jitter;
 
 
     memset(&addr, 0, sizeof(struct sockaddr_in));
     addr.sin_family      = AF_INET;
     addr.sin_port        = htons(SYNC_PORT);
-    addr.sin_addr.s_addr = htonl(0x0AFFFFFF);
+    addr.sin_addr.s_addr = rt_inet_aton(dest_ip);
     rt_socket_sendto(sock, NULL, 0, 0, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
 
     while (1)
@@ -98,9 +102,9 @@ void recv_handler(int arg)
         if (rt_socket_recvmsg(sock, &msg, 0) > 0)
         {
             time_hi = ulldiv(event.time_stamp, 1000000, &time_lo);
-            //rt_printk("%d.%d.%d.%d reports event no. #%lu at %lu.%06lu ms global time\n",
-            //          addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3],
-            //          event.count, time_hi, time_lo);
+            /*rt_printk("%d.%d.%d.%d reports event no. #%lu at %lu.%06lu ms global time\n",
+                      addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3],
+                      event.count, time_hi, time_lo);*/
 
             if (event.count == cur_index)
             {
@@ -132,15 +136,11 @@ int init_module(void)
 {
     sock = rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    if (my_ip[0] == '\0')
-    {
-        printk("ERROR: my_ip must be specified!\n");
-        return 1;
-    }
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family      = AF_INET;
     local_addr.sin_port        = htons(REPORT_PORT);
-    local_addr.sin_addr.s_addr = rt_inet_aton(my_ip);
+    local_addr.sin_addr.s_addr =
+        (strlen(my_ip) != 0) ? rt_inet_aton(my_ip) : INADDR_ANY;
 
     if (rt_socket_bind(sock, (struct sockaddr*)&local_addr, sizeof(struct sockaddr_in)) < 0)
     {
@@ -162,10 +162,13 @@ int init_module(void)
 
 void cleanup_module(void)
 {
+    while (rt_socket_close(sock) == -EAGAIN) {
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
+
     rt_task_delete(&task);
     rt_sem_delete(&rx_sem);
-
-    rt_socket_close(sock);
 
     printk("worst-case synchronization jitter was: %lu us\n", max_jitter/1000);
 }
