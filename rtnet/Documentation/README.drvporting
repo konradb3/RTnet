@@ -11,10 +11,7 @@ waiting on hardware events.
 1. Add to beginning of file:
 
     /*** RTnet ***/
-    #include <rtnet_internal.h>
     #include <rtnet_port.h>
-
-    #define DEFAULT_RX_POOL_SIZE    16
 
     static int cards = INT_MAX;
     MODULE_PARM(cards, "i");
