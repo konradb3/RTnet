@@ -1,23 +1,24 @@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 
-SUBDIRS = examples
+SUBDIRS = examples tdma
 
 noinst_LIBRARIES = librtmac.a
 
 librtmac_a_SOURCES = \
-	rtmac_chrdev.c \
 	rtmac_disc.c \
 	rtmac_module.c \
 	rtmac_proc.c \
 	rtmac_proto.c \
-	rtmac_tdma.c \
-	rtmac_vnic.c \
-	tdma_cleanup.c \
-	tdma_event.c \
-	tdma_ioctl.c \
-	tdma_rx.c \
-	tdma_task.c \
-	tdma_timer.c
+	rtmac_syms.c \
+	rtmac_vnic.c
+#	rtmac_tdma.c \
+#	rtmac_chrdev.c \
+#	tdma_cleanup.c \
+#	tdma_event.c \
+#	tdma_ioctl.c \
+#	tdma_rx.c \
+#	tdma_task.c \
+#	tdma_timer.c
 
 rtmac.o: librtmac.a
 	$(LD) --whole-archive $< -r -o $@

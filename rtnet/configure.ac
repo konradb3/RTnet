@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.57)
 AC_INIT([RTnet],[0.5.6],[jan.kiszka@web.de])
-AC_CONFIG_HEADER(config/config.h)
+AC_CONFIG_HEADER(include/rtnet_config.h)
 AC_CONFIG_AUX_DIR(config/autoconf)
 AC_CONFIG_SRCDIR([rtskb.c])
 AC_PREFIX_DEFAULT(/usr/local/rtnet)
@@ -149,7 +149,7 @@ AC_MSG_RESULT($RTAI_LINUX_DIR)
 
 
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-dnl ++++++++++++ copied from rtai-unstabel +++ start +++++++++++++++++++++
+dnl ++++++++++++ copied from rtai-unstable +++ start +++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 if test \! -r ${RTAI_LINUX_DIR}/Makefile; then
@@ -249,8 +249,9 @@ if test x${CONFIG_RTAI_RTHAL} = xy -a x${CONFIG_RTHAL} = x; then
    AC_MSG_ERROR(*** Please activate the RTAI support in $RTAI_LINUX_DIR and rebuild your kernel)
 fi
 
+
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-dnl ++++++++++++ copied from rtai-unstabel +++ end +++++++++++++++++++++++
+dnl ++++++++++++ copied from rtai-unstable +++ end +++++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 dnl ======================================================================
@@ -280,6 +281,7 @@ fi
 AC_MSG_RESULT([$RTNET_MODULE_DIR])
 AC_SUBST(RTNET_MODULE_DIR)
 
+
 dnl ======================================================================
 dnl		check for NEWLXRT
 dnl ======================================================================
@@ -299,6 +301,7 @@ esac
 AC_MSG_RESULT(${CONFIG_NEWLXRT:-no})
 AM_CONDITIONAL(CONFIG_NEWLXRT,[test "$CONFIG_NEWLXRT" = "yes"])
 
+
 dnl ======================================================================
 dnl		import settings from RTAI
 dnl ======================================================================
@@ -311,6 +314,7 @@ AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
 AC_SUBST(LD)
+
 
 dnl ======================================================================
 dnl		network interface card driver
@@ -437,6 +441,24 @@ AC_MSG_RESULT(${CONFIG_RTNET_FEC_ENET:-no})
 AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 
+dnl ======================================================================
+dnl		compilation parameters
+dnl ======================================================================
+
+AC_MSG_CHECKING(whether to enable internal bug checks)
+unset CONFIG_RTNET_CHECKED
+AC_ARG_ENABLE(checks,
+	[  --enable-checks        enable internal bug checks (default: enabled)],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_CHECKED=yes ;;
+	*) unset CONFIG_RTNET_CHECKED ;;
+	esac],
+	CONFIG_RTNET_CHECKED=yes)
+AC_MSG_RESULT(${CONFIG_RTNET_CHECKED:-no})
+if test "$CONFIG_RTNET_CHECKED" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_CHECKED,1,[Bug checks])
+fi
+
 
 AC_CONFIG_FILES([ \
 Makefile \
@@ -457,6 +479,7 @@ packet/Makefile \
 lib/Makefile \
 tools/Makefile \
 rtmac/Makefile \
+rtmac/tdma/Makefile \
 rtmac/examples/Makefile \
 rtmac/examples/event/Makefile \
 rtmac/examples/mrtt/Makefile \
