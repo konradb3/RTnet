@@ -136,7 +136,7 @@ waiting on hardware events.
         return -ENODEV;
 
 
-27. call rtos_get_time within receive interrupt and set rx field of skb accordingly
+27. call rtos_get_time within receive interrupt and set time_stamp field of skb accordingly
 
 
 28. add the following line to the open function (as soon as the IRQ is allowed to occur):
