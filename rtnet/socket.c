@@ -171,7 +171,7 @@ struct rtsocket *rt_socket_lookup(int fd)
 
         if (rt_sockets[index].fd == fd) {
             sock = &rt_sockets[index];
-            atomic_inc(&sock->refcount);
+            rt_socket_reference(sock);
         }
 
         rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
