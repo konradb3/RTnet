@@ -125,7 +125,10 @@ extern struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
 #define rtdev_dereference(rtdev)    atomic_dec(&(rtdev)->refcount)
 
 extern int rtdev_xmit(struct rtskb *skb);
+
+#ifdef CONFIG_RTNET_PROXY
 extern int rtdev_xmit_proxy(struct rtskb *skb);
+#endif
 
 extern int rtdev_open(struct rtnet_device *rtdev);
 extern int rtdev_close(struct rtnet_device *rtdev);
