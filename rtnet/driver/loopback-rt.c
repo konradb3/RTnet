@@ -28,13 +28,12 @@
 #include <rtnet_internal.h>
 #include <rtnet_port.h>
 
-#define DEBUG_LOOPBACK_DRIVER
+//#define DEBUG_LOOPBACK_DRIVER
 
 MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
 MODULE_DESCRIPTION("RTnet loopback driver");
 MODULE_LICENSE("GPL");
 
-static int rt_loopback_in_use;
 static struct rtnet_device* rt_loopback_dev;
 
 /***
@@ -43,13 +42,10 @@ static struct rtnet_device* rt_loopback_dev;
  */
 static int rt_loopback_open (struct rtnet_device *rtdev) 
 {
-	if( !rt_loopback_in_use )
-	{
-		rt_loopback_in_use = 1;
-		rt_stack_connect(rtdev, &STACK_manager);
-		rtnetif_start_queue(rtdev);
-		return 1;
-	}
+	MOD_INC_USE_COUNT;
+
+	rt_stack_connect(rtdev, &STACK_manager);
+	rtnetif_start_queue(rtdev);
 
 	return 0;
 }
@@ -61,9 +57,10 @@ static int rt_loopback_open (struct rtnet_device *rtdev)
  */
 static int rt_loopback_close (struct rtnet_device *rtdev) 
 {
-	rt_loopback_in_use = 0;
 	rtnetif_stop_queue(rtdev);
 	rt_stack_disconnect(rtdev);
+
+	MOD_DEC_USE_COUNT;
 	
 	return 0;
 }
@@ -168,8 +165,6 @@ static int __init loopback_init(void)
 	rtdev->stop = &rt_loopback_close;
 	rtdev->hard_header = rt_eth_header;
 	rtdev->hard_start_xmit = &rt_loopback_xmit;
-
-	rt_loopback_in_use = 0;
 
 	if ( (err = rt_register_rtnetdev(rtdev)) )
         {
