@@ -1,3 +1,7 @@
+0.7.0
+- ported user API to RTDM (real-time driver model)
+- revised TDMA API based on RTDM
+- lock protection of variable socket parameters
 - revised routing system
   * hash-table-based lookups
   * removed redundant ARP table
@@ -10,6 +14,8 @@
 - reordered and extended /proc interface
 - improved non-real-time locking (devices and various lists)
 - fixed UDP port demultiplexing bug
+- fixed return value of non-blocking receive on empty queue
+- fixed queue clean-up bug in packet sockets
 
 0.6.2
 - removed runtime garbage collection of fragmented IP packets
