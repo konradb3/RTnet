@@ -75,11 +75,11 @@ static inline int tdma_ioctl_master(struct rtnet_device *rtdev, unsigned int cyc
 
     if ((cycle < 100) || (cycle > 4*1000*1000)) {
         printk("RTmac: tdma: cycle must be between 100 us and 4 s\n");
-        return -1;
+        return -EINVAL;
     }
     if ((mtu < ETH_ZLEN - ETH_HLEN ) || (mtu > ETH_DATA_LEN)) {		// (mtu< 46 )||(mtu> 1500 )
         printk("RTmac: tdma: mtu %d is out of bounds, must be between 46 and 1500 octets\n", mtu);
-        return -1;
+        return -EINVAL;
     }
 
     info.rtdev = rtdev;
@@ -264,6 +264,8 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long a
     if (ret != 0)
         return -EFAULT;
 
+    down(&rtdev->nrt_sem);
+
     switch (request) {
         case TDMA_IOC_CLIENT:
             ret = tdma_ioctl_client(rtdev);
@@ -304,6 +306,8 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long a
         default:
             ret = -ENOTTY;
     }
+
+    up(&rtdev->nrt_sem);
 
     return ret;
 }
