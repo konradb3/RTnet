@@ -34,6 +34,10 @@ int rt_ip_setsockopt(struct rtsocket *s, int level, int optname,
 {
     int err = 0;
 
+
+    if (level != SOL_IP)
+        return -ENOPROTOOPT;
+
     if (optlen < sizeof(unsigned int))
         return -EINVAL;
 
@@ -56,6 +60,7 @@ int rt_ip_getsockopt(struct rtsocket *s, int level, int optname,
                      void *optval, socklen_t *optlen)
 {
     int err = 0;
+
 
     if (*optlen < sizeof(unsigned int))
         return -EINVAL;
