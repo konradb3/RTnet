@@ -42,7 +42,8 @@ struct rtcfg_connection {
     struct list_head  entry;
     int               ifindex;
     RTCFG_CONN_STATE  state;
-    u8                mac_addr[MAX_ADDR_LEN];
+    u8                *mac_addr;
+    u8                mac_addr_buf[MAX_ADDR_LEN];
     unsigned int      addr_type;
     union {
         u32           ip_addr;

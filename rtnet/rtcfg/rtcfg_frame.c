@@ -127,7 +127,7 @@ int rtcfg_send_frame(struct rtskb *rtskb, struct rtnet_device *rtdev,
     rtdev_dereference(rtdev);
     return ret;
 
-err:
+  err:
     kfree_rtskb(rtskb);
     rtdev_dereference(rtdev);
     return ret;
@@ -174,7 +174,7 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
         stage_1_frm = (struct rtcfg_frm_stage_1_cfg *)
             (((u8 *)stage_1_frm) + RTCFG_ADDRSIZE_IP);
 
-        *(u32*)stage_1_frm->server_addr = rtdev->local_addr;
+        *(u32*)stage_1_frm->server_addr = rtdev->local_ip;
 
         stage_1_frm = (struct rtcfg_frm_stage_1_cfg *)
             (((u8 *)stage_1_frm) + RTCFG_ADDRSIZE_IP);
@@ -323,7 +323,7 @@ int rtcfg_send_announce_new(int ifindex)
     if (announce_new->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
-        *(u32*)announce_new->addr = rtdev->local_addr;
+        *(u32*)announce_new->addr = rtdev->local_ip;
 
         announce_new = (struct rtcfg_frm_announce *)
             (((u8 *)announce_new) + RTCFG_ADDRSIZE_IP);
@@ -332,7 +332,7 @@ int rtcfg_send_announce_new(int ifindex)
     announce_new->flags     = rtcfg_dev->flags;
     announce_new->burstrate = rtcfg_dev->burstrate;
 
-    return rtcfg_send_frame(rtskb, rtdev, eth_broadcast);
+    return rtcfg_send_frame(rtskb, rtdev, rtdev->broadcast);
 }
 
 
@@ -372,7 +372,7 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
     if (announce_rpl->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
-        *(u32*)announce_rpl->addr = rtdev->local_addr;
+        *(u32*)announce_rpl->addr = rtdev->local_ip;
 
         announce_rpl = (struct rtcfg_frm_announce *)
             (((u8 *)announce_rpl) + RTCFG_ADDRSIZE_IP);
@@ -485,10 +485,10 @@ int __init rtcfg_init_frames(void)
 
     return 0;
 
-error2:
+  error2:
     rtos_task_delete(&rx_task);
 
-error1:
+  error1:
     rtos_event_sem_delete(&rx_event);
     rtskb_pool_release(&rtcfg_pool);
 

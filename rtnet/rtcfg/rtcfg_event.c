@@ -28,7 +28,6 @@
 #include <linux/vmalloc.h>
 
 #include <rtdev.h>
-#include <ipv4/arp.h>
 #include <ipv4/route.h>
 #include <rtcfg/rtcfg.h>
 #include <rtcfg/rtcfg_conn_event.h>
@@ -716,7 +715,7 @@ static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
     struct rtcfg_connection *new_conn;
     struct list_head        *entry;
     struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
-    int                     result = 0;;
+    struct rtnet_device     *rtdev;
 
 
     new_conn = cmd_event->args.add.conn_buf;
@@ -730,6 +729,14 @@ static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
     new_conn->burstrate    = rtcfg_dev->burstrate;
 
+    /* MAC address yet unknown -> use broadcast address */
+    rtdev = rtdev_get_by_index(new_conn->ifindex);
+    if (rtdev == NULL)
+        return -ENODEV;
+    new_conn->mac_addr = rtdev->broadcast;
+    rtdev_dereference(rtdev);
+
+    /* get stage 2 file */
     if (cmd_event->args.add.stage2_file != NULL) {
         if (cmd_event->args.add.stage2_file->buffer != NULL) {
             new_conn->stage2_file = cmd_event->args.add.stage2_file;
@@ -743,9 +750,6 @@ static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
                 return 1;
         }
     }
-
-    /* MAC address yet unknown -> set to broadcast address */
-    memset(new_conn->mac_addr, 0xFF, sizeof(new_conn->mac_addr));
 
     rtos_res_lock(&rtcfg_dev->dev_lock);
 
@@ -779,7 +783,7 @@ static int rtcfg_server_add_ip(struct rtcfg_cmd *cmd_event)
     cmd_event->args.add.conn_buf    = NULL;
     cmd_event->args.add.stage1_data = NULL;
 
-    return result;
+    return 0;
 }
 
 
@@ -813,17 +817,15 @@ static int rtcfg_server_recv_announce(int ifindex, struct rtskb *rtskb)
                     (*(u32 *)announce_new->addr ==
                         conn->addr.ip_addr)) {
                     /* save MAC address - Ethernet-specific! */
-                    memcpy(conn->mac_addr,
+                    memcpy(conn->mac_addr_buf,
                         rtskb->mac.ethernet->h_source, ETH_ALEN);
+                    conn->mac_addr = conn->mac_addr_buf;
 
                     rtdev = rtskb->rtdev;
 
-                    /* update ARP and routing tables */
-                    if (rt_ip_route_add_if_new(rtdev,
-                            conn->addr.ip_addr, rtdev->local_addr,
-                            conn->mac_addr) == 0)
-                        rt_arp_table_add(conn->addr.ip_addr,
-                            conn->mac_addr);
+                    /* update routing table */
+                    rt_ip_route_add_host(conn->addr.ip_addr, conn->mac_addr,
+                                         rtdev);
 
                     /* remove IP address */
                     __rtskb_pull(rtskb, RTCFG_ADDRSIZE_IP);
@@ -1013,15 +1015,13 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
             __rtskb_pull(rtskb, 2*RTCFG_ADDRSIZE_IP);
 
             /* directed to us? */
-            if (daddr != rtdev->local_addr) {
+            if (daddr != rtdev->local_ip) {
                 kfree_rtskb(rtskb);
                 break;
             }
 
-            /* update ARP and routing tables */
-            if (rt_ip_route_add_if_new(rtdev, saddr, daddr,
-                                       rtskb->mac.ethernet->h_source) == 0)
-                rt_arp_table_add(saddr, rtskb->mac.ethernet->h_source);
+            /* update routing table */
+            rt_ip_route_add_host(saddr, rtskb->mac.ethernet->h_source, rtdev);
 
             /* fall trough */
         case RTCFG_ADDR_MAC:
@@ -1136,10 +1136,8 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
 
             saddr = *(u32 *)announce_frm->addr;
 
-            /* update ARP and routing tables */
-            if (rt_ip_route_add_if_new(rtdev, saddr, rtdev->local_addr,
-                                       rtskb->mac.ethernet->h_source) == 0)
-                rt_arp_table_add(saddr, rtskb->mac.ethernet->h_source);
+            /* update routing table */
+            rt_ip_route_add_host(saddr, rtskb->mac.ethernet->h_source, rtdev);
 
             announce_frm = (struct rtcfg_frm_announce *)
                 (((u8 *)announce_frm) + RTCFG_ADDRSIZE_IP);
