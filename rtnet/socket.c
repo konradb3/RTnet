@@ -295,13 +295,13 @@ int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct so
 	msg.msg_controllen=0;
 	msg.msg_flags=flags;
 
-	rt_printk("rufe protokoll\n");
+	// rt_printk("rufe protokoll\n");
 	error = sock->ops->recvmsg(sock, &msg, len);
 
 	if ( (error>=0) && (*fromlen!=0) )
 		*fromlen=msg.msg_namelen;
 
-	rt_printk("return %d\n", error);
+	// rt_printk("return %d\n", error);
 	return error;
 }
 

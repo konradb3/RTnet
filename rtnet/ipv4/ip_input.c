@@ -19,6 +19,7 @@
 #include <net/checksum.h>
 #include <rtnet.h>
 
+static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
 
 int rt_ip_local_deliver_finish(struct rtskb *skb)
 {
@@ -36,12 +37,39 @@ int rt_ip_local_deliver_finish(struct rtskb *skb)
 	if ( ipprot )
 		ret = ipprot->handler(skb);
 	else {
-	    rt_printk("RTnet: no protocol found\n");
-	    kfree_rtskb(skb);
+        /* If a fallback handler for IP protocol has been installed,
+         * call it! */
+        if (ip_fallback_handler)
+        {
+            ret = ip_fallback_handler(skb);
+            if (ret)
+            {
+                rt_printk("RTnet: fallback handler failed\n");
+            }
+        }
+        else
+        {
+	        rt_printk("RTnet: no protocol found\n");
+	        kfree_rtskb(skb);
+        }
 	}
 
 	return ret;
 }
+
+/* This function can be used to register a fallback handler for incoming
+ * ip frames. Typically this is done to move over to the standard linux
+ * ip protocol (e.g. for handling TCP).
+ * By calling this function with the argument set to zero, the function is
+ * unregistered. 
+ * Note: Only one function can be registered! */
+int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
+{
+    ip_fallback_handler = callback;
+    return 0;
+}
+
+
 
 
 /***

@@ -80,6 +80,8 @@ EXPORT_SYMBOL(rtdev_get_by_dev);
 EXPORT_SYMBOL(rtdev_get_by_hwaddr);
 EXPORT_SYMBOL(rtdev_add_pack);
 EXPORT_SYMBOL(rtdev_remove_pack);
+EXPORT_SYMBOL(rtdev_xmit);
+EXPORT_SYMBOL(rtdev_xmit_if);
 
 EXPORT_SYMBOL(rt_stack_connect);
 EXPORT_SYMBOL(rt_stack_disconnect);
@@ -102,6 +104,13 @@ EXPORT_SYMBOL(RTDEV_manager);
  ****************************************************************************************/
 EXPORT_SYMBOL(rt_eth_header);
 EXPORT_SYMBOL(rt_eth_type_trans);
+
+
+/****************************************************************************************
+ * ipv4         									*
+ ****************************************************************************************/
+EXPORT_SYMBOL(rt_ip_route_output);
+EXPORT_SYMBOL(rt_ip_register_fallback);
 
 /****************************************************************************************
  * ipv4/arp.c										*
@@ -127,5 +136,3 @@ EXPORT_SYMBOL(rtskb_under_panic);
 EXPORT_SYMBOL(alloc_rtskb);
 EXPORT_SYMBOL(kfree_rtskb);
 
-EXPORT_SYMBOL(rtdev_xmit);
-EXPORT_SYMBOL(rtdev_xmit_if);

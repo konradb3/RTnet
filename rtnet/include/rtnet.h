@@ -549,7 +549,7 @@ extern struct rtskb *rt_ip_defrag(struct rtskb *skb);
 extern int rt_ip_local_deliver_finish(struct rtskb *skb);
 extern int rt_ip_local_deliver(struct rtskb *skb);
 extern int rt_ip_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt);
-
+extern int rt_ip_register_fallback( int (*callback)(struct rtskb *skb));
 
 /****************************************************************************************
  * ipv4/ip_output.c									*
