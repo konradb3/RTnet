@@ -90,9 +90,9 @@ struct rtsocket {
     union {
         /* IP specific */
         struct {
-            u32         saddr;      /* source ip-addr */
-            u16         sport;      /* source port */
+            u32         saddr;      /* source ip-addr (bind) */
             u32         daddr;      /* destination ip-addr */
+            u16         sport;      /* source port */
             u16         dport;      /* destination port */
             u8          tos;
         } inet;
