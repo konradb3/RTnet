@@ -26,15 +26,15 @@
 #include <rtnet.h>
 #include <rtnet_internal.h>
 
-static int DEFAULT_RTSKB_POOL = DEFAULT_RTSKB_POOL_DEF;
-static int DEFAULT_INC_RTSKB = DEFAULT_INC_RTSKB_DEF;
-static int DEFAULT_DEC_RTSKB = DEFAULT_DEC_RTSKB_DEF;
-MODULE_PARM(DEFAULT_RTSKB_POOL, "i");
-MODULE_PARM(DEFAULT_INC_RTSKB, "i");
-MODULE_PARM(DEFAULT_DEC_RTSKB, "i");
-MODULE_PARM_DESC(DEFAULT_RTSKB_POOL, "number of Realtime Socket Buffers in pool");
-MODULE_PARM_DESC(DEFAULT_INC_RTSKB, "low water mark");
-MODULE_PARM_DESC(DEFAULT_DEC_RTSKB, "high water mark");
+static int rtskb_pool_default = DEFAULT_RTSKB_POOL_DEF;
+static int rtskb_pool_min = DEFAULT_MIN_RTSKB_DEF;
+static int rtskb_pool_max = DEFAULT_MAX_RTSKB_DEF;
+MODULE_PARM(rtskb_pool_default, "i");
+MODULE_PARM(rtskb_pool_min, "i");
+MODULE_PARM(rtskb_pool_max, "i");
+MODULE_PARM_DESC(rtskb_pool_default, "number of Realtime Socket Buffers in pool");
+MODULE_PARM_DESC(rtskb_pool_min, "low water mark");
+MODULE_PARM_DESC(rtskb_pool_max, "high water mark");
 
 /**
  * struct rtskb_pool
@@ -43,6 +43,8 @@ int inc_pool_srq;
 int dec_pool_srq;
 struct rtskb_head rtskb_pool;
 
+static int rtskb_amount=0;
+static int rtskb_amount_max=0;
 
 #define RTSKB_CACHE	       	"rtskb"
 kmem_cache_t			*rtskb_cache;
@@ -185,13 +187,13 @@ struct rtskb *new_rtskb(void)
 	unsigned int len = SKB_DATA_ALIGN(ETH_FRAME_LEN);
 
 	if ( !(skb = kmem_cache_alloc(rtskb_cache, GFP_ATOMIC)) ) {
-		rt_printk("RTnet: allocate rtskb failed.\n");
+		printk("RTnet: allocate rtskb failed.\n");
 		return NULL;
 	}
 	memset(skb, 0, sizeof(struct rtskb));
 
 	if ( !(skb->buf_start = kmem_cache_alloc(rtskb_data_cache, GFP_ATOMIC)) ) {
-		rt_printk("RTnet: allocate rtskb->buf_ptr failed.\n");
+		printk("RTnet: allocate rtskb->buf_ptr failed.\n");
 		kmem_cache_free(rtskb_cache, skb);
 		return NULL;
 	}
@@ -200,6 +202,10 @@ struct rtskb *new_rtskb(void)
 	skb->buf_len = len;
 	skb->buf_end = skb->buf_start+len-1;
 
+	rtskb_amount++;
+	if (rtskb_amount_max < rtskb_amount) {
+		rtskb_amount_max  = rtskb_amount;
+	}
 	return skb;
 }
 
@@ -215,6 +221,7 @@ void dispose_rtskb(struct rtskb *skb)
 		if (skb->buf_start)
 			kmem_cache_free(rtskb_data_cache, skb->buf_start);
 		kmem_cache_free(rtskb_cache, skb);
+		rtskb_amount--;
 	}
 }
 
@@ -232,6 +239,7 @@ struct rtskb *alloc_rtskb(unsigned int size)
 		skb = rtskb_dequeue(&rtskb_pool);
         else {
 	  //	        skb = new_rtskb(); /* might return NULL and not be safe in this context */
+		rt_pend_linux_srq(inc_pool_srq);
 		return NULL;
 	}
 
@@ -247,7 +255,7 @@ struct rtskb *alloc_rtskb(unsigned int size)
 
 	skb->users = 1; 
 		
-	if ( rtskb_pool.qlen<DEFAULT_INC_RTSKB )
+	if ( rtskb_pool.qlen<rtskb_pool_min )
 		rt_pend_linux_srq(inc_pool_srq);
 
 	return (skb);
@@ -267,7 +275,7 @@ void kfree_rtskb(struct rtskb *skb)
 		
 		rtskb_queue_tail(&rtskb_pool, skb);
 		
-		if ( rtskb_pool.qlen>DEFAULT_DEC_RTSKB )
+		if ( rtskb_pool.qlen>rtskb_pool_max )
 			rt_pend_linux_srq(dec_pool_srq);
 	}
 }
@@ -454,7 +462,7 @@ int rtskb_queue_empty(struct rtskb_head *list)
 void inc_pool_handler(void) 
 {
 	struct rtskb* skb;
-	while ( rtskb_pool.qlen<DEFAULT_INC_RTSKB ) {
+	while ( rtskb_pool.qlen<rtskb_pool_default ) {
 		skb = new_rtskb(); /* might return NULL */
 		if (skb) {
 			rtskb_queue_tail(&rtskb_pool, skb);
@@ -472,7 +480,7 @@ void inc_pool_handler(void)
  */ 
 void dec_pool_handler(void) 
 {
-	while ( rtskb_pool.qlen>DEFAULT_DEC_RTSKB )
+	while ( rtskb_pool.qlen>rtskb_pool_default )
 		dispose_rtskb(rtskb_dequeue(&rtskb_pool));
 }
 
@@ -501,7 +509,7 @@ int rtskb_pool_init(void)
 		return -ENOMEM;
 	}
 
-	for (i=0; i<DEFAULT_RTSKB_POOL; i++) {
+	for (i=0; i<rtskb_pool_default; i++) {
 		skb = new_rtskb(); /* might return NULL */
 		if (skb) {
 			__rtskb_queue_tail(&rtskb_pool, skb);

@@ -294,14 +294,19 @@ extern MBX     alarm_mbx;
 
 /****
  * The number of free rtskb's in pool is handled by two srq's. inc_pool_srq means 
- * creating one rtskb and dec_pool_srq is the opposite of it.
+ * creating rtskbs and dec_pool_srq is the opposite of it.
  */
 //these are the new default values for the module parameter
-#define DEFAULT_RTSKB_POOL_DEF	20	/* default rtskb's in pool			*/
-#define DEFAULT_INC_RTSKB_DEF	4	/* make new rtskb by DEFAULT_INC_RTSKB in Pool	*/
-#define DEFAULT_DEC_RTSKB_DEF	20	/* delete rtskb by DEFAULT_INC_RTSKB in Pool	*/
+#define DEFAULT_RTSKB_POOL_DEF	24	/* default number of rtskb's in pool				*/
+#define DEFAULT_MIN_RTSKB_DEF	16	/* create new rtskb if less then DEFAULT_MIN_RTSKB in Pool	*/
+#define DEFAULT_MAX_RTSKB_DEF	32	/* delete rtskb if more then DEFAULT_MAX_RTSKB in Pool		*/
 
+extern int rtskb_pool_pool;		/* needed for /proc/... in rtnet_module.c	*/
+extern int rtskb_pool_min;		
+extern int rtskb_pool_max;		
 
+extern int rtskb_amount;			/* current number of allocated rtskbs */
+extern int rtskb_amount_max;			/* maximum number of allocated rtskbs */
 
 extern void rtskb_over_panic(struct rtskb *skb, int len, void *here);
 extern void rtskb_under_panic(struct rtskb *skb, int len, void *here);
