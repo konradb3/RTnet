@@ -71,6 +71,10 @@ int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc)
 
 	// alloc memory
 	rtmac = kmalloc(sizeof(struct rtmac_device), GFP_KERNEL);
+	if (NULL == rtmac) {
+		rt_printk("RTmac: kmalloc returned NULL for rtmac!\n");
+		return -ENOMEM;
+	}
 	rtdev->rtmac = rtmac;
 	rtmac->rtdev = rtdev;
 
