@@ -1,6 +1,6 @@
 /***
  *
- *  include/tdma_chrdev.h
+ *  include/tdma-v1_chrdev.h
  *
  *  rtmac - real-time networking media access control subsystem
  *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,

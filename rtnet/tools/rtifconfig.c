@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 
 #include <rtnet_chrdev.h>
-#include <tdma_chrdev.h>
+#include <tdma-v1_chrdev.h>
 
 
 #define PRINT_FLAG_ALL          1
