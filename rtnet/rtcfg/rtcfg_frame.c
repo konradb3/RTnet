@@ -500,6 +500,8 @@ int rtcfg_send_dead_station(struct rtcfg_connection *conn)
 
     /* Ethernet-specific! */
     memcpy(dead_station_frm->physical_addr, conn->mac_addr, ETH_ALEN);
+    memset(&dead_station_frm->physical_addr[ETH_ALEN], 0,
+        sizeof(dead_station_frm->physical_addr) - ETH_ALEN);
 
     return rtcfg_send_frame(rtskb, rtdev, rtdev->broadcast);
 }
