@@ -11,12 +11,6 @@ libfrag_ip_a_CFLAGS = \
 
 
 frag_ip.o: libfrag_ip.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
-
+	$(LD) --whole-archive $< -r -o $@
 
 all-local: frag_ip.o
-
-clean-local:
-	rm -rf .extract

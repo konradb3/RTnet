@@ -40,6 +40,7 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
+AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -83,6 +84,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 KERNEL_CFLAGS = @KERNEL_CFLAGS@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -262,8 +264,6 @@ $(srcdir)/./config/config.h.in: @MAINTAINER_MODE_TRUE@ $(top_srcdir)/configure.a
 
 distclean-hdr:
 	-rm -f config/config.h config/stamp-h1
-
-AR = ar
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
@@ -599,7 +599,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-local clean-noinstLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -646,7 +646,7 @@ uninstall-am: uninstall-info-am
 uninstall-info: uninstall-info-recursive
 
 .PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am all-local check \
-	check-am clean clean-generic clean-local clean-noinstLIBRARIES \
+	check-am clean clean-generic clean-noinstLIBRARIES \
 	clean-recursive ctags ctags-recursive dist dist-all dist-gzip \
 	distcheck distclean distclean-compile distclean-depend \
 	distclean-generic distclean-hdr distclean-recursive \
@@ -666,14 +666,9 @@ uninstall-info: uninstall-info-recursive
 
 
 rtnet.o: librtnet.a $(RTNET_BUILTIN_OBJS)
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(AR) x ../$<
-	$(LD) -r -o $@ .extract/*.o $(RTNET_BUILTIN_OBJS)
+	$(LD) --whole-archive $< -r -o $@
 
 all-local: rtnet.o rtnetproxy.o rtnet_lxrt.o
-
-clean-local:
-	rm -rf .extract
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

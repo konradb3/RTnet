@@ -10,13 +10,8 @@ librt_client_a_CFLAGS = \
 	@RTAI_KMOD_CFLAGS@
 
 rt_client.o: librt_client.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
+	$(LD) --whole-archive $< -r -o $@
 
 showtime_LDADD = $(NCURSES_LIBS)
 
 all-local: rt_client.o showtime
-
-clean-local:
-	rm -rf .extract

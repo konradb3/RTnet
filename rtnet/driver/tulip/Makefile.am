@@ -18,11 +18,6 @@ AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@
 
 tulip-rt.o: libtulip-rt.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
+	$(LD) --whole-archive $< -r -o $@
 
 all-local: tulip-rt.o
-
-clean-local:
-	rm -rf .extract

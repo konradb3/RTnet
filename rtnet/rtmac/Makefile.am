@@ -20,15 +20,10 @@ librtmac_a_SOURCES = \
 	tdma_timer.c
 
 rtmac.o: librtmac.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
+	$(LD) --whole-archive $< -r -o $@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 all-local: rtmac.o
-
-clean-local:
-	rm -rf .extract

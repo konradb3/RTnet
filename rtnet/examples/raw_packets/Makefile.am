@@ -11,12 +11,6 @@ libraw_packets_a_CFLAGS = \
 
 
 raw_packets.o: libraw_packets.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
-
+	$(LD) --whole-archive $< -r -o $@
 
 all-local: raw_packets.o
-
-clean-local:
-	rm -rf .extract

@@ -23,24 +23,15 @@ librt_server_a_CFLAGS = \
 
 
 rt_client.o: librt_client.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
+	$(LD) --whole-archive $< -r -o $@
 
 rt_client_parport.o: librt_client_parport.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
+	$(LD) --whole-archive $< -r -o $@
 
 rt_server.o: librt_server.a
-	rm -rf .extract && mkdir .extract
-	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
-	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
+	$(LD) --whole-archive $< -r -o $@
 
 
 showtime_LDADD = $(NCURSES_LIBS)
 
 all-local: rt_client.o rt_client_parport.o rt_server.o showtime
-
-clean-local:
-	rm -rf .extract
