@@ -196,7 +196,7 @@ case "$linux_VERSION.$linux_PATCHLEVEL" in
   2.4)
     AC_DEFINE(CONFIG_RTAI_LINUX24,1,[Kconfig])
     ;;
-  *) 
+  *)
     AC_MSG_ERROR(*** Unsupported kernel version $linux_VERSION.$linux_PATCHLEVEL)
 esac
 
@@ -249,6 +249,36 @@ AC_SUBST(CROSS_COMPILE)
 
 
 dnl ======================================================================
+dnl		global RTnet settings
+dnl ======================================================================
+
+if test \! -r ${RTAI_DIR}/.config; then
+	AC_MSG_ERROR(*** $RTAI_DIR is not configured)
+fi
+
+AC_MSG_CHECKING([$RTAI_DIR/.config])
+. $RTAI_DIR/.config
+AC_MSG_RESULT([done])
+
+AC_MSG_CHECKING(whether to use kmalloc for rtskb pools)
+AC_ARG_ENABLE(rtskb-kmalloc,
+	[  --enable-rtskb-kmalloc use kmalloc instead of rt_malloc for creating/extending rtskb pools],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_RTSKB_USE_KMALLOC=yes;;
+	*) unset CONFIG_RTNET_RTSKB_USE_KMALLOC ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_RTSKB_USE_KMALLOC:-no})
+AM_CONDITIONAL(CONFIG_RTNET_RTSKB_USE_KMALLOC,[test "$CONFIG_RTNET_RTSKB_USE_KMALLOC" = "yes"])
+
+if test "$CONFIG_RTNET_RTSKB_USE_KMALLOC" = "yes"; then
+	CFLAGS="${CFLAGS} -DCONFIG_RTNET_RTSKB_USE_KMALLOC"
+elif test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
+	AC_MSG_ERROR(*** RTAI memory manager uses vmalloc. Disable this feature or configure RTnet with --enable-rtskb-kmalloc)
+fi
+
+
+
+dnl ======================================================================
 dnl		network interface card driver
 dnl ======================================================================
 
@@ -283,6 +313,17 @@ AC_ARG_ENABLE(eepro100,
 	esac])
 AC_MSG_RESULT(${CONFIG_RTNET_EEPRO100:-no})
 AM_CONDITIONAL(CONFIG_RTNET_EEPRO100,[test "$CONFIG_RTNET_EEPRO100" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build AMD PCnet32 driver)
+AC_ARG_ENABLE(pcnet32,
+	[  --enable-pcnet32       build AMD PCnet32 driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_PCNET32=yes;;
+	*) unset CONFIG_RTNET_PCNET32 ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_PCNET32:-no})
+AM_CONDITIONAL(CONFIG_RTNET_PCNET32,[test "$CONFIG_RTNET_PCNET32" = "yes"])
 
 
 AC_MSG_CHECKING(whether to build loopback driver)
