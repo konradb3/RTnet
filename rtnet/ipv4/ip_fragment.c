@@ -39,8 +39,6 @@
  */
 #define COLLECTOR_COUNT 10
 
-#define GARBAGE_COLLECT_LIMIT 50
-
 struct ip_collector
 {
     int   in_use;
@@ -52,52 +50,35 @@ struct ip_collector
     struct rtskb_queue frags;
     struct rtsocket *sock;
     unsigned int buf_size;
-    unsigned int last_accessed;
 };
 
 static struct ip_collector collector[COLLECTOR_COUNT];
 
-static unsigned int counter = 0;
-
 
 static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
 {
-    int i;
-    unsigned int flags;
+    int                 i;
+    unsigned int        flags;
     struct ip_collector *p_coll;
-    struct iphdr *iph = skb->nh.iph;
+    struct iphdr        *iph = skb->nh.iph;
 
-    /* Find free collector */
-    for (i = 0; i < COLLECTOR_COUNT; i++)
-    {
+
+    /*
+     * Find a free collector
+     *
+     * Note: We once used to clean up probably outdated chains, but the
+     * algorithm was not stable enough and could cause incorrect drops even
+     * under medium load. If we run in overload, we will loose data anyhow.
+     * What we should do in the future is to account collectors per socket or
+     * socket owner and set quotations.
+     * Garbage collection is now performed only on socket close.
+     */
+    for (i = 0; i < COLLECTOR_COUNT; i++) {
         p_coll = &collector[i];
         rtos_spin_lock_irqsave(&p_coll->frags.lock, flags);
 
-        /*
-         * This is a very simple version of a garbage collector.
-         * Whenver the last access to any of the collectors is a while ago,
-         * the collector will be freed...
-         * Under normal conditions, it should never be necessary to collect
-         * the garbage.
-         * */
-        if (p_coll->in_use &&
-            (counter - p_coll->last_accessed > GARBAGE_COLLECT_LIMIT))
-        {
-            kfree_rtskb(p_coll->frags.first);
-            p_coll->in_use = 0;
-
-#ifdef FRAG_DBG
-            rtos_print("RTnet: IP fragmentation garbage collection "
-                       "(saddr:%x, daddr:%x)\n",
-                       p_coll->saddr, p_coll->daddr);
-#endif
-        }
-
-        /* Collector (now) free? */
-        if (!p_coll->in_use)
-        {
+        if (!p_coll->in_use) {
             p_coll->in_use        = 1;
-            p_coll->last_accessed = counter;
             p_coll->buf_size      = skb->len;
             p_coll->frags.first   = skb;
             p_coll->frags.last    = skb;
@@ -186,8 +167,6 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
                 break; /* leave the for loop */
             }
 
-            p_coll->last_accessed = counter;
-
             p_coll->buf_size += skb->len;
 
             if (!more_frags) {
@@ -216,7 +195,8 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
 
 
 /*
- * Cleans up all collectors referring to the specified socket
+ * Cleans up all collectors referring to the specified socket.
+ * This is now the only kind of garbage collection we do.
  */
 void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
 {
@@ -281,8 +261,6 @@ struct rtskb *rt_ip_defrag(struct rtskb *skb, struct rtinet_protocol *ipprot)
     int ret;
 
 
-    counter++;
-
     /* Parse the IP header */
     offset = ntohs(iph->frag_off);
     more_frags = offset & IP_MF;
@@ -299,10 +277,10 @@ struct rtskb *rt_ip_defrag(struct rtskb *skb, struct rtinet_protocol *ipprot)
             return NULL;
         }
 
-        /* Acquire the rtskb at the expense of the protocol pool */
+        /* Acquire the rtskb at the expense of the socket's pool */
         ret = rtskb_acquire(skb, &sock->skb_pool);
 
-        /* socket is now implicitely locked by the rtskb */
+        /* socket is now implicitely locked by the missing rtskb */
         rt_socket_dereference(sock);
 
         if (ret != 0) {
