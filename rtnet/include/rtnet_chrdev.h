@@ -66,10 +66,10 @@ struct rtnet_ioctl_head {
 struct rtnet_core_cfg {
     struct rtnet_ioctl_head head;
 
-    u32 ip_addr;
-    u32 ip_mask;
-    u32 ip_netaddr;
-    u32 ip_broadcast;
+    __u32 ip_addr;
+    __u32 ip_mask;
+    __u32 ip_netaddr;
+    __u32 ip_broadcast;
 };
 
 

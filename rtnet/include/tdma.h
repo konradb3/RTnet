@@ -73,7 +73,7 @@ static inline RTIME tdma_get_delta_t(struct rtmac_tdma *tdma)
 struct tdma_config {
     struct rtnet_ioctl_head head;
 
-    u32             ip_addr;
+    __u32           ip_addr;
     unsigned int    cycle;
     unsigned int    mtu;
     unsigned int    offset;
