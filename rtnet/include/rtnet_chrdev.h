@@ -75,21 +75,21 @@ struct rtnet_core_cfg {
 
 #define RTNET_IOC_TYPE_CORE             0
 #define RTNET_IOC_TYPE_RTCFG            1
-#define RTNET_IOC_TYPE_RTMAC_TDMA1      100
+#define RTNET_IOC_TYPE_RTMAC_TDMA       100
 
-#define IOC_RT_IFUP                     _IOW(RTNET_IOC_TYPE_CORE, 100, \
+#define IOC_RT_IFUP                     _IOW(RTNET_IOC_TYPE_CORE, 0, \
                                              sizeof(struct rtnet_core_cfg))
-#define IOC_RT_IFDOWN                   _IOW(RTNET_IOC_TYPE_CORE, 101, \
+#define IOC_RT_IFDOWN                   _IOW(RTNET_IOC_TYPE_CORE, 1, \
                                              sizeof(struct rtnet_core_cfg))
-/*#define IOC_RT_IF                       _IOWR(RTNET_IOC_TYPE_CORE, 102, \
+/*#define IOC_RT_IF                       _IOWR(RTNET_IOC_TYPE_CORE, 2, \
                                               sizeof(struct rtnet_core_cfg))*/
-/*#define IOC_RT_ROUTE_ADD                _IOW(RTNET_IOC_TYPE_CORE, 103, \
+/*#define IOC_RT_ROUTE_ADD                _IOW(RTNET_IOC_TYPE_CORE, 3, \
                                              sizeof(struct rtnet_core_cfg))*/
-#define IOC_RT_ROUTE_SOLICIT            _IOW(RTNET_IOC_TYPE_CORE, 104, \
+#define IOC_RT_ROUTE_SOLICIT            _IOW(RTNET_IOC_TYPE_CORE, 4, \
                                              sizeof(struct rtnet_core_cfg))
-#define IOC_RT_ROUTE_DELETE             _IOW(RTNET_IOC_TYPE_CORE, 105, \
+#define IOC_RT_ROUTE_DELETE             _IOW(RTNET_IOC_TYPE_CORE, 5, \
                                              sizeof(struct rtnet_core_cfg))
-/*#define IOC_RT_ROUTE_GET                _IOR(RTNET_IOC_TYPE_CORE, 106, \
+/*#define IOC_RT_ROUTE_GET                _IOR(RTNET_IOC_TYPE_CORE, 6, \
                                              sizeof(struct rtnet_core_cfg))*/
 
 #endif  /* __RTNET_CHRDEV_H_ */
