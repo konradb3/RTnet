@@ -60,9 +60,11 @@ MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 #define PFX DRV_NAME ": "
 
 /* enable PIO instead of MMIO, if CONFIG_8139TOO_PIO is selected */
+/* *** RTnet ***
 #ifdef CONFIG_8139TOO_PIO
 #define USE_IO_OPS 1
 #endif
+ *** RTnet *** */
 
 /* A few user-configurable values. */
 /* media options */
