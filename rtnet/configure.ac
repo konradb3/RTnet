@@ -1093,7 +1093,6 @@ if test x$CONFIG_KBUILD = xy; then
 	\
 	drivers/8139too \
 	drivers/eepro100 \
-	drivers/experimental \
 	drivers/loopback \
 	drivers/mpc8260_fcc_enet \
 	drivers/mpc8xx_enet \
