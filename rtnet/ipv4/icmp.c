@@ -49,13 +49,6 @@ struct rt_icmp_control
  */
 static struct rtsocket reply_socket;
 
-/**
- *  icmp_sockets
- *  the registered sockets from any server
- */
-static struct rtsocket  *icmp_sockets;
-static rtos_spinlock_t  icmp_socket_base_lock = RTOS_SPIN_LOCK_UNLOCKED;
-
 static struct rtsocket_ops rt_icmp_socket_ops = {
     bind:       NULL,
     connect:    NULL,
@@ -238,20 +231,10 @@ static void rt_icmp_address_reply(struct rtskb *skb)
  */
 int rt_icmp_socket(struct rtsocket *sock)
 {
-    unsigned long flags;
-
     sock->family    = AF_INET;
     sock->type      = SOCK_DGRAM;
     sock->protocol  = IPPROTO_ICMP;
     sock->ops       = &rt_icmp_socket_ops;
-
-    /* add to icmp-socket-list */
-    rtos_spin_lock_irqsave(&icmp_socket_base_lock, flags);
-    sock->next = icmp_sockets;
-    if (icmp_sockets != NULL)
-        icmp_sockets->prev = sock;
-    icmp_sockets = sock;
-    rtos_spin_unlock_irqrestore(&icmp_socket_base_lock, flags);
 
     return sock->fd;
 }
@@ -404,7 +387,6 @@ void __init rt_icmp_init(void)
     if (skbs < ICMP_REPLY_POOL_SIZE)
         printk("RTnet: allocated only %d icmp rtskbs\n", skbs);
 
-    icmp_sockets=NULL;
     rt_inet_add_protocol(&icmp_protocol);
 }
 
@@ -416,6 +398,5 @@ void __init rt_icmp_init(void)
 void rt_icmp_release(void)
 {
     rt_inet_del_protocol(&icmp_protocol);
-    icmp_sockets=NULL;
     rtskb_pool_release(&reply_socket.skb_pool);
 }
