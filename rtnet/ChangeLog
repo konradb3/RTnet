@@ -1,3 +1,16 @@
+- revised routing system
+  * hash-table-based lookups
+  * removed redundant ARP table
+  * added network routing and forwarding support
+  * loopback routes non-loopback device IPs
+  * lock protection
+- added rtroute
+- revised rtifconfig
+- added rtping core support and user tool
+- reordered and extended /proc interface
+- improved non-real-time locking (devices and various lists)
+- fixed UDP port demultiplexing bug
+
 0.6.2
 - removed runtime garbage collection of fragmented IP packets
 - added "cards" parameter to tulip-rt
