@@ -43,13 +43,16 @@ spinlock_t  udp_socket_base_lock;
  */
 static inline int rt_udp_port_inuse(u16 num)
 {
+	unsigned long flags;
 	struct rtsocket *sk;
 
+	flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
 	for (sk=udp_sockets; sk!=NULL; sk=sk->next) {
 		if ( sk->sport==num )
-			return 1;
+			break;
 	}
-	return 0;
+	rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
+	return (sk != NULL) ? 1 : 0;
 }
 
 
@@ -75,14 +78,16 @@ unsigned short rt_udp_good_port(void)
  */
 struct rtsocket *rt_udp_v4_lookup(u32 saddr, u16 sport, u32 daddr, u16 dport)
 {
+	unsigned long flags;
 	struct rtsocket *sk;
 
+	flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
 	for (sk=udp_sockets; sk!=NULL; sk=sk->next) {
 		if (sk->sport==dport)
-			return sk;
+			break;
 	}
-
-	return (NULL);
+	rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
+	return sk;
 }
 
 
@@ -304,40 +309,30 @@ out:
 void rt_udp_close(struct rtsocket *s,long timeout)
 {
 	unsigned long flags;
-	struct rtsocket *d;
+	struct rtsocket *d = s;
+	struct rtsocket *prev=d->prev;
+	struct rtsocket *next=d->next;
+	struct rtskb *del;
 
 	s->state=TCP_CLOSE;
 
-	for (d=udp_sockets; d!=NULL; d=d->next) {
-		if ( (d==s) || (s->sport==d->sport) ) { /* Why are ports checked here? */
-			struct rtsocket *prev=d->prev;
-			struct rtsocket *next=d->next;
-			struct rtskb *del;
+	flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
 
-//			rt_sem_wait(&udp_socket_sem);
-//			write_lock(&udp_socket_base_lock);
-			flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
-			if (prev) prev->next=next;
-			if (next) next->prev=prev;
-
-			s->next=NULL;
-			s->prev=NULL;
-
-			/* free packets in incoming queue */
-			while (del=rtskb_dequeue(&s->incoming)) {
-				kfree_rtskb(del);
-			}
-
-			if (s==udp_sockets) {
-				udp_sockets=udp_sockets->next;
-			}
-			rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
-//			rt_sem_signal(&udp_socket_sem);
-//			write_unlock(&udp_socket_base_lock);
-
-			return;
-		}
+	if (prev) prev->next=next;
+	if (next) next->prev=prev;
+		
+	s->next=NULL;
+	s->prev=NULL;
+		
+	/* free packets in incoming queue */
+	while (del=rtskb_dequeue(&s->incoming)) {
+		kfree_rtskb(del);
 	}
+		
+	if (s==udp_sockets) {
+		udp_sockets=udp_sockets->next;
+	}
+	rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
 }
 
 
