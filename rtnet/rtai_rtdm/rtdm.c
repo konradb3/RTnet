@@ -45,7 +45,7 @@
 #include <rtdm_driver.h>
 
 
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL and additional rights");
 
 #ifdef CONFIG_RTAI_24
 # define RT_SCHED_LINUX_PRIORITY    RT_LINUX_PRIORITY
