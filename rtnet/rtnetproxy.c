@@ -354,8 +354,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     skb->pkt_type = PACKET_HOST;  /* Extremely important! Why?!? */
 
     rt = count2nano( rtskb->rx );
-    skb->stamp.tv_sec = rt / 1000000000;
-    skb->stamp.tv_usec = ( rt % 1000000000 ) / 1000;
+    count2timeval(rt, &skb->stamp);
      
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;

@@ -4,7 +4,10 @@ ALL_SUB_DIRS	:= $(subdirs)
 MOD_SUB_DIRS	:= $(subdirs)
 SUB_DIRS	:= ipv4 ethernet lib
 
-M_OBJS 		:= rtnet.o rtnet_lxrt.o rtnetproxy.o
+M_OBJS 		:= rtnet.o rtnetproxy.o
+ifdef CONFIG_RTAI_LXRT
+M_OBJS 		+= rtnet_lxrt.o
+endif
 MI_OBJS      	:= stack_mgr.o rtdev_mgr.o rtnet_module.o rtskb.o rtnet_dev.o socket.o rtdev.o iovec.o rtnet_init.o 
 MIX_OBJS 	:= rtnet_syms.o
 
