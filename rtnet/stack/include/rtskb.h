@@ -246,6 +246,7 @@ struct rtskb_prio_queue {
 
 #define RTSKB_PRIO_MASK         0x0000FFFF  /* bits  0..15: xmit prio    */
 #define RTSKB_CHANNEL_MASK      0xFFFF0000  /* bits 16..31: xmit channel */
+#define RTSKB_CHANNEL_SHIFT     16
 
 #define RTSKB_DEF_RT_CHANNEL    0           /* default rt xmit channel     */
 #define RTSKB_DEF_NRT_CHANNEL   1           /* default non-rt xmit channel */

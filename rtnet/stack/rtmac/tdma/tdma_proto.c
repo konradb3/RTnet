@@ -138,7 +138,8 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
     rtos_spin_lock_irqsave(&tdma->lock, flags);
 
-    slot = tdma->slot_table[rtskb->priority & RTSKB_CHANNEL_MASK];
+    slot = tdma->slot_table[(rtskb->priority & RTSKB_CHANNEL_MASK) >>
+                            RTSKB_CHANNEL_SHIFT];
     if (!slot) {
         rtos_spin_unlock_irqrestore(&tdma->lock, flags);
         return -EAGAIN;
