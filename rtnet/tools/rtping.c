@@ -77,7 +77,7 @@ void print_statistics()
 {
     printf("\n--- %s rtping statistics ---\n"
            "%d packets transmitted, %d received, %d%% packet loss\n",
-           inet_ntoa(addr.s_addr), sent, received,
+           inet_ntoa(addr), sent, received,
            100 - ((received * 100) / sent));
     exit(0);
 }
@@ -93,7 +93,8 @@ void terminate(int signal)
 
 void ping(int signal)
 {
-    int ret;
+    int             ret;
+    struct in_addr  from;
 
 
     cmd.args.ping.ip_addr = addr.s_addr;
@@ -108,8 +109,9 @@ void ping(int signal)
     }
 
     received++;
+    from.s_addr = cmd.args.ping.ip_addr;
     printf("%d bytes from %s: icmp_seq=%d time=%.1f us\n",
-           ret, inet_ntoa(cmd.args.ping.ip_addr), cmd.args.ping.sequence,
+           ret, inet_ntoa(from), cmd.args.ping.sequence,
            (float)cmd.args.ping.rtt / (float)1000);
 
   done:
@@ -159,7 +161,7 @@ int main(int argc, char *argv[])
         help();
 
     printf("Real-time PING %s %d(%d) bytes of data.\n",
-           inet_ntoa(addr.s_addr), cmd.args.ping.msg_size,
+           inet_ntoa(addr), cmd.args.ping.msg_size,
            cmd.args.ping.msg_size + 28);
 
     signal(SIGINT, terminate);
