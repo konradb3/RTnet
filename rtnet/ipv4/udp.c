@@ -172,7 +172,9 @@ int rt_udp_bind(struct rtsocket *sock, const struct sockaddr *addr,
         ((usin->sin_port & auto_port_mask) == auto_port_start))
         return -EINVAL;
 
-    index = sock->prot.inet.reg_index;
+    if ((index = sock->prot.inet.reg_index) < 0)
+        /* socket is being closed */
+        return -EBADF;
 
     rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
 
@@ -206,16 +208,21 @@ int rt_udp_connect(struct rtsocket *sock, const struct sockaddr *serv_addr,
 {
     struct sockaddr_in  *usin = (struct sockaddr_in *) serv_addr;
     unsigned long       flags;
+    int                 index;
 
 
     if (usin->sin_family == AF_UNSPEC) {
+        if ((index = sock->prot.inet.reg_index) < 0)
+            /* socket is being closed */
+            return -EBADF;
+
         rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
 
         sock->prot.inet.saddr = INADDR_ANY;
         /* Note: The following line differs from standard stacks, and we also
                  don't remove the socket from the port list. Might get fixed in
                  the future... */
-        sock->prot.inet.sport = sock->prot.inet.reg_index + auto_port_start;
+        sock->prot.inet.sport = index + auto_port_start;
         sock->prot.inet.daddr = INADDR_ANY;
         sock->prot.inet.dport = 0;
         sock->prot.inet.state = TCP_CLOSE;
@@ -343,10 +350,6 @@ int rt_udp_ioctl(struct rtdm_dev_context *context, int call_flags, int request,
     if (_IOC_TYPE(request) == RTIOC_TYPE_NETWORK)
         return rt_socket_common_ioctl(context, call_flags, request, arg);
 
-    /* no further operations on closing socket (reg_index becomes invalid!) */
-    if (test_bit(RTDM_CLOSING, &context->context_flags))
-        return -EBADF;
-
     switch (request) {
         case RTIOC_BIND:
             return rt_udp_bind(sock, setaddr->addr, setaddr->addrlen);
@@ -402,7 +405,7 @@ ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context, int call_flags,
     else {
         skb = rtskb_dequeue_chain(&sock->incoming);
         if (skb == NULL)
-            return 0;
+            return -EAGAIN;
     }
 
     uh = skb->h.uh;
