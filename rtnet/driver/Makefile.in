@@ -243,7 +243,7 @@ AM_CPPFLAGS = \
 subdir = driver
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/include/rtnet_config.h
+CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 lib3c59x_rt_a_AR = $(AR) cru
 lib3c59x_rt_a_LIBADD =
@@ -312,7 +312,7 @@ am__libvia_rhine_rt_a_SOURCES_DIST = via-rhine-rt.c
 @CONFIG_RTNET_VIA_RHINE_TRUE@	via-rhine-rt.$(OBJEXT)
 libvia_rhine_rt_a_OBJECTS = $(am_libvia_rhine_rt_a_OBJECTS)
 
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/include
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/3c59x-rt.Po \

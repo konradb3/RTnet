@@ -197,7 +197,7 @@ libnetshm_kerndemo_a_CFLAGS = \
 subdir = examples/rtmac/netshm
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/include/rtnet_config.h
+CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
@@ -211,7 +211,7 @@ am_libnetshm_kerndemo_a_OBJECTS = \
 	libnetshm_kerndemo_a-netshm_kerndemo.$(OBJEXT)
 libnetshm_kerndemo_a_OBJECTS = $(am_libnetshm_kerndemo_a_OBJECTS)
 
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/include
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libnetshm_a-netshm.Po \
