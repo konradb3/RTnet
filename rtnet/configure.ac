@@ -536,9 +536,7 @@ AC_ARG_ENABLE(3c59x,
 	y | yes ) CONFIG_RTNET_3C59X=yes ;;
 	*) unset CONFIG_RTNET_3C59X ;;
 	esac])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-	CONFIG_RTNET_3C59X=yes
-fi
+# 3Com should be enabled manually, not by allpci
 AC_MSG_RESULT(${CONFIG_RTNET_3C59X:-no})
 AM_CONDITIONAL(CONFIG_RTNET_3C59X,[test "$CONFIG_RTNET_3C59X" = "yes"])
 
@@ -662,15 +660,13 @@ AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 AC_MSG_CHECKING(whether to build loopback driver)
 AC_ARG_ENABLE(loopback,
-	[  --enable-loopback      build loopback driver],
+	[  --enable-loopback      build loopback driver (default: enabled)],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_LOOPBACK=yes ;;
+	n | no ) CONFIG_RTNET_LOOPBACK=no ;;
 	*) unset CONFIG_RTNET_LOOPBACK ;;
-	esac])
-if test "$CONFIG_RTNET_ALLX86" = "yes"; then
-	CONFIG_RTNET_LOOPBACK=yes
-fi
-AC_MSG_RESULT(${CONFIG_RTNET_LOOPBACK:-no})
+	esac],
+	CONFIG_RTNET_LOOPBACK=yes)
+AC_MSG_RESULT(${CONFIG_RTNET_LOOPBACK:-yes})
 AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
 
 
@@ -744,10 +740,10 @@ dnl ======================================================================
 
 AC_MSG_NOTICE(creating include/rtnet_config.h)
 sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/config.h > include/rtnet_config.h.new
+    config/config.h >include/rtnet_config.h.new
 if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
 	rm include/rtnet_config.h.new
-	AC_MSG_NOTICE(config/rtnet_config.h is unchanged)
+	AC_MSG_NOTICE(include/rtnet_config.h is unchanged)
 else
 	mv include/rtnet_config.h.new include/rtnet_config.h
-fi 
+fi
