@@ -35,12 +35,17 @@ static inline struct rtmac_tdma *tdma_get_by_device(const char *devname)
 {
     struct rtnet_device *rtdev = rtdev_get_by_name(devname);
 
-    if (rtdev && rtdev->mac_disc &&
-        (rtdev->mac_disc->disc_type == __constant_htons(ETH_TDMA)) &&
-        (rtdev->mac_priv))
-        return (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
-    else
-        return NULL;
+    if (rtdev) {
+        /* This line is not a solution, it's a workaround. We need a revision of
+         * this API in the future. */
+        rtdev_dereference(rtdev);
+
+        if (rtdev->mac_disc &&
+            (rtdev->mac_disc->disc_type == __constant_htons(ETH_TDMA)) &&
+            (rtdev->mac_priv))
+            return (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    }
+    return NULL;
 }
 
 static inline int tdma_wait_sof(struct rtmac_tdma *tdma)
