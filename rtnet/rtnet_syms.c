@@ -46,6 +46,7 @@ EXPORT_SYMBOL(rt_socket_recvfrom);
 EXPORT_SYMBOL(rt_socket_sendmsg);
 EXPORT_SYMBOL(rt_socket_recvmsg);
 EXPORT_SYMBOL(rt_socket_getsockname);
+EXPORT_SYMBOL(rt_ip_setsockopt);
 
 EXPORT_SYMBOL(rt_ssocket);
 EXPORT_SYMBOL(rt_ssocket_bind);

@@ -64,7 +64,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 	
 	iph->version=4;
 	iph->ihl=5;
-	iph->tos=0; //sk->ip_tos;
+	iph->tos=sk->tos;
 	iph->tot_len = htons(length);
 	iph->id=htons(rt_ip_id_count++);
 	iph->frag_off = df;

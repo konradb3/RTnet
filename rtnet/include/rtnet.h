@@ -24,6 +24,7 @@
 #ifdef __KERNEL__
 #include <rtai.h>
 #include <rtai_sched.h>
+#include <linux/in.h>
 #endif /* __KERNEL__ */
 
 /* some configurables */
@@ -158,6 +159,8 @@ struct rtsocket {
 	int			(*wakeup)(int s,void *arg);	/* socket wakeup-func	*/
 
 	void 			*private;
+
+	u8			tos;
 };
 typedef struct rtsocket SOCKET;
 
@@ -559,6 +562,12 @@ extern int rt_ip_build_xmit(struct rtsocket *sk,
 			    const void *frag, unsigned length, struct rt_rtable *rt, int flags);
 extern void rt_ip_init(void);
 extern void rt_ip_release(void);
+
+
+/****************************************************************************************
+ * ipv4/ip_sock.c									*
+ ****************************************************************************************/
+extern int rt_ip_setsockopt (int fd, int optname, char *optval, int optlen);
 
 
 /****************************************************************************************
