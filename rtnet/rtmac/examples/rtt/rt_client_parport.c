@@ -183,9 +183,9 @@ int init_module(void)
 
     /* create rt-socket */
     rt_printk("create rtsocket\n");
-    if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
+    if ((sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         rt_printk("socket not created\n");
-        return -ENOMEM;
+        return sock;
     }
 
     /* switch to non-blocking */
@@ -242,13 +242,14 @@ void cleanup_module(void)
 
     outb(0, PAR_CONTROL);
 
-    rt_printk("rt_task_delete() = %d\n",rt_task_delete(&rt_task));
-
+    /* Important: First close the socket! */
     while (rt_socket_close(sock) == -EAGAIN) {
-        printk("rt_server: Not all buffers freed yet - waiting...\n");
+        printk("rt_server: Socket busy - waiting...\n");
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
+
+    rt_printk("rt_task_delete() = %d\n",rt_task_delete(&rt_task));
 
     rt_sem_delete(&tx_sem);
 
