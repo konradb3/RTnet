@@ -253,9 +253,12 @@ libkernel_tulip_a_SOURCES = \
 	timer.c \
 	21142.c \
 	pnic.c \
-	pnic2.c
+	pnic2.c \
+	tulip.h
 
 OBJS = rt_tulip$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -634,6 +637,7 @@ clean-generic:
 
 distclean-generic:
 	-rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

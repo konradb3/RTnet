@@ -36,8 +36,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
 subdir = stack/include
-DIST_COMMON = $(nobase_include_HEADERS) $(srcdir)/GNUmakefile.am \
-	$(srcdir)/GNUmakefile.in
+DIST_COMMON = $(nobase_include_HEADERS) $(noinst_HEADERS) \
+	$(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/configure.ac
@@ -50,7 +50,7 @@ SOURCES =
 DIST_SOURCES =
 am__installdirs = "$(DESTDIR)$(includedir)"
 nobase_includeHEADERS_INSTALL = $(install_sh_DATA)
-HEADERS = $(nobase_include_HEADERS)
+HEADERS = $(nobase_include_HEADERS) $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -212,6 +212,74 @@ nobase_include_HEADERS = \
 		rtnet.h \
 		rtmac.h
 
+noinst_HEADERS = \
+	comdbg.h \
+	rtdev.h \
+	rtdev_mgr.h \
+	rtnet_chrdev.h \
+	rtnet_crc32.h \
+	rtnet_internal.h \
+	rtnet_iovec.h \
+	rtnet_port.h \
+	rtnet_rtpc.h \
+	rtnet_socket.h \
+	rtnet_sys.h \
+	rtnet_sys_rtai.h \
+	rtskb.h \
+	stack_mgr.h \
+	\
+	nomac_chrdev.h \
+	tdma-v1_chrdev.h \
+	\
+	rtcfg_chrdev.h \
+	\
+	ethernet/eth.h \
+	\
+	ipv4/af_inet.h \
+	ipv4/arp.h \
+	ipv4/icmp.h \
+	ipv4/ip_fragment.h \
+	ipv4/ip_input.h \
+	ipv4/ip_output.h \
+	ipv4/ip_sock.h \
+	ipv4/protocol.h \
+	ipv4/route.h \
+	ipv4/udp.h \
+	ipv4_chrdev.h \
+	\
+	lib/crc32.h \
+	\
+	packet/af_packet.h \
+	\
+	rtcfg/rtcfg.h \
+	rtcfg/rtcfg_client_event.h \
+	rtcfg/rtcfg_conn_event.h \
+	rtcfg/rtcfg_event.h \
+	rtcfg/rtcfg_file.h \
+	rtcfg/rtcfg_frame.h \
+	rtcfg/rtcfg_ioctl.h \
+	rtcfg/rtcfg_proc.h \
+	rtcfg/rtcfg_timer.h \
+	\
+	rtmac/nomac/nomac.h \
+	rtmac/nomac/nomac_dev.h \
+	rtmac/nomac/nomac_ioctl.h \
+	rtmac/nomac/nomac_proto.h \
+	rtmac/rtmac_disc.h \
+	rtmac/rtmac_proc.h \
+	rtmac/rtmac_proto.h \
+	rtmac/rtmac_vnic.h \
+	rtmac/tdma-v1/tdma.h \
+	rtmac/tdma-v1/tdma_cleanup.h \
+	rtmac/tdma-v1/tdma_dev.h \
+	rtmac/tdma-v1/tdma_event.h \
+	rtmac/tdma-v1/tdma_ioctl.h \
+	rtmac/tdma-v1/tdma_module.h \
+	rtmac/tdma-v1/tdma_rx.h \
+	rtmac/tdma-v1/tdma_task.h \
+	rtmac/tdma-v1/tdma_timer.h
+
+EXTRA_DIST = INCLUDE.policy
 DISTCLEANFILES = rtnet_config.h rtdm.h rtdm_driver.h
 all: all-am
 
@@ -330,6 +398,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
+	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/lib $(distdir)/packet $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma-v1
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

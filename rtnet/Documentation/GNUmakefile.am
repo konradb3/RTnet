@@ -1,0 +1,13 @@
+EXTRA_DIST =\
+	README.drvporting \
+	README.ipfragmentation \
+	README.pools \
+	README.routing \
+	README.rtcap \
+	README.rtcfg \
+	README.rtmac \
+	README.rtnetproxy \
+	RTcfg.spec \
+	RTmac.spec \
+	RTnet.oxy \
+	TDMA.spec

@@ -4,4 +4,6 @@ if CONFIG_RTNET_ENCLOSED_RTAI_RTDM
 OPTDIRS += rtai_rtdm
 endif
 
-SUBDIRS = stack drivers $(OPTDIRS) addons tools
+SUBDIRS = stack drivers $(OPTDIRS) addons tools Documentation
+
+EXTRA_DIST = autogen.sh

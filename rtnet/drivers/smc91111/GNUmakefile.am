@@ -9,7 +9,8 @@ libkernel_smc91111_a_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_smc91111_a_SOURCES = \
-	rt_smc91111.c
+	rt_smc91111.c \
+	rt_smc91111.h
 
 OBJS = rt_smc91111$(modext)
 
@@ -28,5 +29,9 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_smc91111_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
 
 .PHONY: FORCE

@@ -31,4 +31,8 @@ all-local: $(OBJS) showtime
 clean-local: $(libkernel_client_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
 
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
+
 .PHONY: FORCE

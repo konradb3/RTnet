@@ -31,7 +31,7 @@
 #include <rtai.h>
 #include <rtai_sched.h>
 
-#include <netshm.h>
+#include <../netshm.h>
 
 
 static char     *shm_name      = "myNETSHM";

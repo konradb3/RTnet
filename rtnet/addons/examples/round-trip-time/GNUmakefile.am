@@ -1,1 +1,3 @@
 SUBDIRS	= client linux-client server
+
+EXTRA_DIST = run

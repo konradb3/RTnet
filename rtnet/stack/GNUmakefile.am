@@ -9,7 +9,7 @@ if CONFIG_RTNET_RTCFG
 OPTDIRS += rtcfg
 endif
 
-SUBDIRS = rtmac $(OPTDIRS)
+SUBDIRS = rtmac include $(OPTDIRS)
 
 libkernel_rtnet_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
@@ -62,5 +62,9 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtnet_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
 
 .PHONY: FORCE

@@ -1131,6 +1131,8 @@ dnl ======================================================================
 AC_CONFIG_FILES([ \
     GNUmakefile \
     \
+    Documentation/GNUmakefile \
+    \
     addons/GNUmakefile \
     addons/examples/GNUmakefile \
     addons/examples/frag-ip/GNUmakefile \

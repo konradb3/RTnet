@@ -64,7 +64,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = stack drivers rtai_rtdm addons tools
+DIST_SUBDIRS = stack drivers rtai_rtdm addons tools Documentation
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -231,7 +231,8 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTDIRS = $(am__append_1)
-SUBDIRS = stack drivers $(OPTDIRS) addons tools
+SUBDIRS = stack drivers $(OPTDIRS) addons tools Documentation
+EXTRA_DIST = autogen.sh
 all: all-recursive
 
 .SUFFIXES:

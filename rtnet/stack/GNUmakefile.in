@@ -118,7 +118,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = rtmac rtcfg
+DIST_SUBDIRS = rtmac include rtcfg
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -278,7 +278,7 @@ moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_rtnet.a
 OPTDIRS = $(am__append_1)
-SUBDIRS = rtmac $(OPTDIRS)
+SUBDIRS = rtmac include $(OPTDIRS)
 libkernel_rtnet_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
@@ -314,6 +314,8 @@ libkernel_rtnet_a_SOURCES = \
 	packet/af_packet.c
 
 OBJS = rtnet$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-recursive
 
 .SUFFIXES:
@@ -1153,6 +1155,7 @@ clean-generic:
 
 distclean-generic:
 	-rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

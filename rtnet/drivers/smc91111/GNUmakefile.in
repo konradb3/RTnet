@@ -233,9 +233,12 @@ libkernel_smc91111_a_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_smc91111_a_SOURCES = \
-	rt_smc91111.c
+	rt_smc91111.c \
+	rt_smc91111.h
 
 OBJS = rt_smc91111$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -439,6 +442,7 @@ clean-generic:
 
 distclean-generic:
 	-rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

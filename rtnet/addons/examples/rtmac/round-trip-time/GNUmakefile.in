@@ -210,12 +210,8 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = \
-	client \
-	multi-client \
-	parport-client \
-	server
-
+SUBDIRS = client multi-client parport-client server
+EXTRA_DIST = run
 all: all-recursive
 
 .SUFFIXES:

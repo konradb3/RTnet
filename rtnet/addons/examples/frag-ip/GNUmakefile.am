@@ -29,4 +29,8 @@ all-local: $(OBJS)
 clean-local: $(libkernel_frag_ip_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
 
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
+
 .PHONY: FORCE

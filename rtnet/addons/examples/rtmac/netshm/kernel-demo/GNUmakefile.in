@@ -13,7 +13,7 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-SOURCES = $(libkernel_netshm_kerndemo_a_SOURCES)
+SOURCES = $(libkernel_kernel_demo_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -47,16 +47,16 @@ mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 ARFLAGS = cru
-libkernel_netshm_kerndemo_a_AR = $(AR) $(ARFLAGS)
-libkernel_netshm_kerndemo_a_LIBADD =
-am_libkernel_netshm_kerndemo_a_OBJECTS =  \
-	libkernel_netshm_kerndemo_a-netshm-kerndemo.$(OBJEXT)
-libkernel_netshm_kerndemo_a_OBJECTS =  \
-	$(am_libkernel_netshm_kerndemo_a_OBJECTS)
+libkernel_kernel_demo_a_AR = $(AR) $(ARFLAGS)
+libkernel_kernel_demo_a_LIBADD =
+am_libkernel_kernel_demo_a_OBJECTS =  \
+	libkernel_kernel_demo_a-kernel-demo.$(OBJEXT)
+libkernel_kernel_demo_a_OBJECTS =  \
+	$(am_libkernel_kernel_demo_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -65,8 +65,8 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libkernel_netshm_kerndemo_a_SOURCES)
-DIST_SOURCES = $(libkernel_netshm_kerndemo_a_SOURCES)
+SOURCES = $(libkernel_kernel_demo_a_SOURCES)
+DIST_SOURCES = $(libkernel_kernel_demo_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -226,16 +226,18 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
-EXTRA_LIBRARIES = libkernel_netshm-kerndemo.a
-libkernel_netshm_kerndemo_a_CPPFLAGS = \
+EXTRA_LIBRARIES = libkernel_kernel-demo.a
+libkernel_kernel_demo_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
 	@RTAI_KMOD_CFLAGS@
 
-libkernel_netshm_kerndemo_a_SOURCES = \
-	netshm-kerndemo.c
+libkernel_kernel_demo_a_SOURCES = \
+	kernel-demo.c
 
-OBJS = netshm-kerndemot$(modext)
+OBJS = kernel-demo$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -269,10 +271,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-libkernel_netshm-kerndemo.a: $(libkernel_netshm_kerndemo_a_OBJECTS) $(libkernel_netshm_kerndemo_a_DEPENDENCIES) 
-	-rm -f libkernel_netshm-kerndemo.a
-	$(libkernel_netshm_kerndemo_a_AR) libkernel_netshm-kerndemo.a $(libkernel_netshm_kerndemo_a_OBJECTS) $(libkernel_netshm_kerndemo_a_LIBADD)
-	$(RANLIB) libkernel_netshm-kerndemo.a
+libkernel_kernel-demo.a: $(libkernel_kernel_demo_a_OBJECTS) $(libkernel_kernel_demo_a_DEPENDENCIES) 
+	-rm -f libkernel_kernel-demo.a
+	$(libkernel_kernel_demo_a_AR) libkernel_kernel-demo.a $(libkernel_kernel_demo_a_OBJECTS) $(libkernel_kernel_demo_a_LIBADD)
+	$(RANLIB) libkernel_kernel-demo.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -280,7 +282,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -306,29 +308,29 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libkernel_netshm_kerndemo_a-netshm-kerndemo.o: netshm-kerndemo.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_netshm_kerndemo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_netshm_kerndemo_a-netshm-kerndemo.o -MD -MP -MF "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo" -c -o libkernel_netshm_kerndemo_a-netshm-kerndemo.o `test -f 'netshm-kerndemo.c' || echo '$(srcdir)/'`netshm-kerndemo.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo" "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Po"; else rm -f "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netshm-kerndemo.c' object='libkernel_netshm_kerndemo_a-netshm-kerndemo.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Po' tmpdepfile='$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.TPo' @AMDEPBACKSLASH@
+libkernel_kernel_demo_a-kernel-demo.o: kernel-demo.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_kernel_demo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_kernel_demo_a-kernel-demo.o -MD -MP -MF "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo" -c -o libkernel_kernel_demo_a-kernel-demo.o `test -f 'kernel-demo.c' || echo '$(srcdir)/'`kernel-demo.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo" "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Po"; else rm -f "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='kernel-demo.c' object='libkernel_kernel_demo_a-kernel-demo.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Po' tmpdepfile='$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_netshm_kerndemo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_netshm_kerndemo_a-netshm-kerndemo.o `test -f 'netshm-kerndemo.c' || echo '$(srcdir)/'`netshm-kerndemo.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_kernel_demo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_kernel_demo_a-kernel-demo.o `test -f 'kernel-demo.c' || echo '$(srcdir)/'`kernel-demo.c
 
-libkernel_netshm_kerndemo_a-netshm-kerndemo.obj: netshm-kerndemo.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_netshm_kerndemo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_netshm_kerndemo_a-netshm-kerndemo.obj -MD -MP -MF "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo" -c -o libkernel_netshm_kerndemo_a-netshm-kerndemo.obj `if test -f 'netshm-kerndemo.c'; then $(CYGPATH_W) 'netshm-kerndemo.c'; else $(CYGPATH_W) '$(srcdir)/netshm-kerndemo.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo" "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Po"; else rm -f "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netshm-kerndemo.c' object='libkernel_netshm_kerndemo_a-netshm-kerndemo.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Po' tmpdepfile='$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.TPo' @AMDEPBACKSLASH@
+libkernel_kernel_demo_a-kernel-demo.obj: kernel-demo.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_kernel_demo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_kernel_demo_a-kernel-demo.obj -MD -MP -MF "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo" -c -o libkernel_kernel_demo_a-kernel-demo.obj `if test -f 'kernel-demo.c'; then $(CYGPATH_W) 'kernel-demo.c'; else $(CYGPATH_W) '$(srcdir)/kernel-demo.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo" "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Po"; else rm -f "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='kernel-demo.c' object='libkernel_kernel_demo_a-kernel-demo.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Po' tmpdepfile='$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_netshm_kerndemo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_netshm_kerndemo_a-netshm-kerndemo.obj `if test -f 'netshm-kerndemo.c'; then $(CYGPATH_W) 'netshm-kerndemo.c'; else $(CYGPATH_W) '$(srcdir)/netshm-kerndemo.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_kernel_demo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_kernel_demo_a-kernel-demo.obj `if test -f 'kernel-demo.c'; then $(CYGPATH_W) 'kernel-demo.c'; else $(CYGPATH_W) '$(srcdir)/kernel-demo.c'; fi`
 
-libkernel_netshm_kerndemo_a-netshm-kerndemo.lo: netshm-kerndemo.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_netshm_kerndemo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_netshm_kerndemo_a-netshm-kerndemo.lo -MD -MP -MF "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo" -c -o libkernel_netshm_kerndemo_a-netshm-kerndemo.lo `test -f 'netshm-kerndemo.c' || echo '$(srcdir)/'`netshm-kerndemo.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo" "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Plo"; else rm -f "$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netshm-kerndemo.c' object='libkernel_netshm_kerndemo_a-netshm-kerndemo.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.Plo' tmpdepfile='$(DEPDIR)/libkernel_netshm_kerndemo_a-netshm-kerndemo.TPlo' @AMDEPBACKSLASH@
+libkernel_kernel_demo_a-kernel-demo.lo: kernel-demo.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_kernel_demo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_kernel_demo_a-kernel-demo.lo -MD -MP -MF "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo" -c -o libkernel_kernel_demo_a-kernel-demo.lo `test -f 'kernel-demo.c' || echo '$(srcdir)/'`kernel-demo.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo" "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Plo"; else rm -f "$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='kernel-demo.c' object='libkernel_kernel_demo_a-kernel-demo.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.Plo' tmpdepfile='$(DEPDIR)/libkernel_kernel_demo_a-kernel-demo.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_netshm_kerndemo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_netshm_kerndemo_a-netshm-kerndemo.lo `test -f 'netshm-kerndemo.c' || echo '$(srcdir)/'`netshm-kerndemo.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_kernel_demo_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_kernel_demo_a-kernel-demo.lo `test -f 'kernel-demo.c' || echo '$(srcdir)/'`kernel-demo.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -439,6 +441,7 @@ clean-generic:
 
 distclean-generic:
 	-rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -506,11 +509,11 @@ uninstall-am: uninstall-info-am
 	uninstall-info-am
 
 
-netshm-kerndemo.o: libkernel_netshm-kerndemo.a
+kernek-demo.o: libkernel_kernel-demo.a
 	$(LD) --whole-archive $< -r -o $@
 
-netshm-kerndemo.ko: @RTNET_KBUILD_ENV@
-netshm-kerndemo.ko: $(libkernel_netshm_kerndemo_a_SOURCES) FORCE
+kernel-demo.ko: @RTNET_KBUILD_ENV@
+kernel-demo.ko: $(libkernel_kernel_demo_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -519,7 +522,7 @@ all-local: $(OBJS)
 #	$(mkinstalldirs) $(moduledir)
 #	$(INSTALL_DATA) $^ $(moduledir)
 
-clean-local: $(libkernel_netshm_kerndemo_a_SOURCES)
+clean-local: $(libkernel_kernel_demo_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
 
 .PHONY: FORCE

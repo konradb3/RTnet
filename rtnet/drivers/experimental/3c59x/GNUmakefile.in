@@ -234,6 +234,8 @@ libkernel_3c59x_a_SOURCES = \
 	rt_3c59x.c
 
 OBJS = rt_3c59x$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -437,6 +439,7 @@ clean-generic:
 
 distclean-generic:
 	-rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

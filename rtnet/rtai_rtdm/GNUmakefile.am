@@ -31,4 +31,8 @@ install-exec-local: $(OBJS)
 clean-local: $(libkernel_rtai_rtdm_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
 
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
+
 .PHONY: FORCE

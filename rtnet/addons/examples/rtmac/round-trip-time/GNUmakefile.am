@@ -1,5 +1,3 @@
-SUBDIRS = \
-	client \
-	multi-client \
-	parport-client \
-	server
+SUBDIRS = client multi-client parport-client server
+
+EXTRA_DIST = run

@@ -16,7 +16,8 @@ libkernel_tulip_a_SOURCES = \
 	timer.c \
 	21142.c \
 	pnic.c \
-	pnic2.c
+	pnic2.c \
+	tulip.h
 
 OBJS = rt_tulip$(modext)
 
@@ -35,5 +36,9 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_tulip_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+EXTRA_DIST = Makefile.kbuild
+
+DISTCLEANFILES = Makefile
 
 .PHONY: FORCE

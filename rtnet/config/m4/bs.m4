@@ -72,7 +72,7 @@ AS_IF([_AC_EVAL_STDERR($bs_kcompile > /dev/null)],
       [$2],
       [_AC_MSG_LOG_CONFTEST
 m4_ifvaln([$3],[$3])dnl])dnl
-rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile m4_ifval([$1], [conftest.$ac_ext])[]dnl
+rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile m4_ifval([$1], [conftest.$ac_ext]); rmdir .tmp_versions[]dnl
 ])# BS_KCOMPILE_IFELSE
 
 #AS_IF([_AC_EVAL_STDERR($bs_kcompile > /dev/null) &&
