@@ -38,7 +38,6 @@
 #include <rtai_fifos.h>
 
 #include <rtnet.h>
-#include <rtnet_socket.h>
 
 #define MIN_LENGTH_IPv4 7
 #define MAX_LENGTH_IPv4 15
@@ -112,7 +111,6 @@ int echo_rcv(int s,void *arg)
 int init_module(void)
 {
 	int ret;
-	struct rtsocket *socket;
 
 	unsigned long local_ip  = rt_inet_aton(local_ip_s);
 	unsigned long client_ip = rt_inet_aton(client_ip_s);
@@ -122,13 +120,13 @@ int init_module(void)
 	rt_printk ("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
 
 	/* create rt-socket */
-	rt_printk("create rtsocket\n");	
+	rt_printk("create rtsocket\n");
 	if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
 		rt_printk("socket not created\n");
 		return -ENOMEM;
 	}
-	
-	/* bind the rt-socket to local_addr */	
+
+	/* bind the rt-socket to local_addr */
 	rt_printk("bind rtsocket to local address:port\n");
 	memset(&local_addr, 0, sizeof(struct sockaddr_in));
 	local_addr.sin_family = AF_INET;
@@ -138,7 +136,7 @@ int init_module(void)
 		rt_printk("can't bind rtsocket\n");
 		return ret;
 	}
-	
+
 	/* set client-addr */
 	rt_printk("connect rtsocket to client address:port\n");
 	memset(&client_addr, 0, sizeof(struct sockaddr_in));
@@ -148,12 +146,6 @@ int init_module(void)
 	if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
 		rt_printk("can't connect rtsocket\n");
 		return ret;
-	}
-
-	/* get socket-structure for printing */
-	if ( (socket=rt_socket_lookup(sock)) ) {
-		rt_printk("src  addr: %x:%x\n", socket->saddr, socket->sport);
-		rt_printk("dest addr: %x:%x\n", socket->daddr, socket->dport);
 	}
 
 	/* set up receiving */
