@@ -161,6 +161,7 @@ struct rtmac_tdma {
     unsigned char               station;
     struct rt_arp_table_struct  *master;
     struct timer_list           client_sent_ack_timer;
+    spinlock_t                  delta_t_lock;
     RTIME                       delta_t; /* offset to master clock in ns. */
 };
 

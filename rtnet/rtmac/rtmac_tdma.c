@@ -46,6 +46,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     rt_printk("RTmac: tdma1: init time devision multiple access (tdma) for realtime stations\n");
 
     memset(tdma, 0, sizeof(struct rtmac_tdma));
+    spin_lock_init(&tdma->delta_t_lock);
 
     tdma->rtdev = rtdev;
 

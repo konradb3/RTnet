@@ -214,6 +214,7 @@ void tdma_task_master(int rtdev_id)
     struct rtskb *skb;
     void *data;
     RTIME time_stamp;
+    unsigned long flags;
 
     while (tdma->flags.shutdown_task == 0) {
         /*
@@ -241,7 +242,11 @@ void tdma_task_master(int rtdev_id)
          * tasks that the SOF has been sent.
          * -JK-
          */
-        tdma->delta_t = time_stamp-rt_get_time_ns();
+        time_stamp -= rt_get_time_ns();
+        flags = rt_spin_lock_irqsave(&tdma->delta_t_lock);
+        tdma->delta_t = time_stamp;
+        rt_spin_unlock_irqrestore(&tdma->delta_t_lock, flags);
+
         rt_sem_broadcast(&tdma->client_tx);
 
         /*
