@@ -574,7 +574,7 @@ static int speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force);
 static int speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp);
 static void speedo_tx_buffer_gc(struct rtnet_device *rtdev);
-static void speedo_interrupt(int irq, unsigned long rtdev_id);
+static void speedo_interrupt(unsigned int irq, void *rtdev_id);
 static int speedo_close(struct rtnet_device *rtdev);
 //static struct net_device_stats *speedo_get_stats(struct rtnet_device *rtdev);
 //static int speedo_ioctl(struct rtnet_device *rtdev, struct ifreq *rq, int cmd);
@@ -1006,7 +1006,7 @@ speedo_open(struct rtnet_device *rtdev)
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	retval = rtos_irq_request(rtdev->irq, speedo_interrupt, (unsigned long)rtdev);
+	retval = rtos_irq_request(rtdev->irq, speedo_interrupt, rtdev);
 	if (retval) {
 		MOD_DEC_USE_COUNT;
 		return retval;
@@ -1078,8 +1078,7 @@ speedo_open(struct rtnet_device *rtdev)
 // *** RTnet ***
 	/* Enable the device IRQ here, so that no race situation between the setup
 	 * code and the IRQ handler can occure. */
-	rt_startup_irq(rtdev->irq);
-	rt_enable_irq(rtdev->irq);
+	rtos_irq_enable(rtdev->irq);
 // *** RTnet ***
 
 	return 0;
@@ -1590,7 +1589,7 @@ static void speedo_tx_buffer_gc(struct rtnet_device *rtdev)
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static void speedo_interrupt(int irq, unsigned long rtdev_id)
+static void speedo_interrupt(unsigned int irq, void *rtdev_id)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
@@ -1741,7 +1740,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	clear_bit(0, (void*)&sp->in_interrupt);
-	rt_enable_irq(irq);
+	rtos_irq_enable(irq);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 	return;
@@ -1981,7 +1980,6 @@ speedo_close(struct rtnet_device *rtdev)
 	outl(PortPartialReset, ioaddr + SCBPort);
 
 	// *** RTnet ***
-	rtos_irq_shutdown(rtdev->irq);
 	if ( (i=rtos_irq_free(rtdev->irq))<0 )
 		return i;
 
