@@ -38,7 +38,7 @@
 typedef unsigned int u32;
 
 #include <rtnet_chrdev.h>
-#include <rtmac/rtmac_chrdev.h>
+#include <tdma.h>
 
 void help(void);
 void do_display(void);
@@ -55,8 +55,6 @@ void do_mac_up(int argc, char *argv[]);
 void do_mac_down(int argc, char *argv[]);
 void do_mac_add(int argc, char *argv[]);
 void do_mac_remove(int argc, char *argv[]);
-void do_mac_add_nrt(int argc, char *argv[]);
-void do_mac_remove_nrt(int argc, char *argv[]);
 void do_mac_cycle(int argc, char *argv[]);
 void do_mac_mtu(int argc, char *argv[]);
 void do_mac_client(int argc, char *argv[]);
@@ -64,9 +62,8 @@ void do_mac_offset(int argc, char *argv[]);
 
 
 int f;
-int rtmac_f;
 struct rtnet_core_cfg   cfg;
-struct rtmac_config     rtmac_cfg;
+struct tdma_config      tdma_cfg;
 
 int main(int argc,char *argv[])
 {
@@ -109,8 +106,6 @@ void help(void)
     fprintf(stderr,"\trtifconfig <dev> mac down\n");
     fprintf(stderr,"\trtifconfig <dev> mac add <addr>\n");
     fprintf(stderr,"\trtifconfig <dev> mac remove <addr>\n");
-    fprintf(stderr,"\trtifconfig <dev> mac add_nrt <addr>\n");
-    fprintf(stderr,"\trtifconfig <dev> mac remove_nrt <addr>\n");
     fprintf(stderr,"\trtifconfig <dev> mac cycle <time/us>\n");
     fprintf(stderr,"\trtifconfig <dev> mac mtu <size/byte>\n");
     fprintf(stderr,"\trtifconfig <dev> mac offset <addr> <offset/us>\n");
@@ -234,14 +229,8 @@ void do_route_delete(int argc,char *argv[])
 
 void do_mac(int argc, char *argv[])
 {
-    rtmac_f = open("/dev/rtmac", O_RDWR);
-    if(f < 0) {
-        perror("/dev/rtmac");
-        exit(1);
-    }
-
-    memset(&rtmac_cfg, 0, sizeof(rtmac_cfg));
-    strncpy(rtmac_cfg.if_name, argv[1], 15);
+    memset(&tdma_cfg, 0, sizeof(tdma_cfg));
+    strncpy(tdma_cfg.head.if_name, argv[1], 15);
 
     if(argc < 4)
         do_mac_display();
@@ -258,10 +247,6 @@ void do_mac(int argc, char *argv[])
         do_mac_add(argc, argv);
     if(!strcmp(argv[3], "remove"))
         do_mac_remove(argc, argv);
-    if(!strcmp(argv[3], "add_nrt"))
-        do_mac_add_nrt(argc, argv);
-    if(!strcmp(argv[3], "remove_nrt"))
-        do_mac_remove_nrt(argc, argv);
     if(!strcmp(argv[3], "cycle"))
         do_mac_cycle(argc, argv);
     if(!strcmp(argv[3], "mtu"))
@@ -283,7 +268,7 @@ void do_mac_client(int argc, char *argv[])
 {
     int r;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_CLIENT, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_CLIENT, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -302,10 +287,10 @@ void do_mac_master(int argc, char *argv[])
     if( argc >= 6)
         mtu = atoi(argv[5]);
 
-    rtmac_cfg.cycle = cycle;
-    rtmac_cfg.mtu = mtu;
+    tdma_cfg.cycle = cycle;
+    tdma_cfg.mtu = mtu;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_MASTER, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_MASTER, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -319,7 +304,7 @@ void do_mac_up(int argc, char *argv[])
 {
     int r;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_UP, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_UP, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -331,7 +316,7 @@ void do_mac_down(int argc, char *argv[])
 {
     int r;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_DOWN, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_DOWN, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -348,9 +333,9 @@ void do_mac_add(int argc, char *argv[])
         help();
 
     inet_aton(argv[4], &addr);
-    rtmac_cfg.ip_addr = addr.s_addr;
+    tdma_cfg.ip_addr = addr.s_addr;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_ADD, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_ADD, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -368,47 +353,9 @@ void do_mac_remove(int argc, char *argv[])
         help();
 
     inet_aton(argv[4], &addr);
-    rtmac_cfg.ip_addr = addr.s_addr;
+    tdma_cfg.ip_addr = addr.s_addr;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_REMOVE, &rtmac_cfg);
-    if(r < 0) {
-        perror("ioctl");
-        exit(1);
-    }
-    exit(0);
-}
-
-void do_mac_add_nrt(int argc, char *argv[])
-{
-    int r;
-    struct in_addr addr;
-
-    if(argc < 5)
-        help();
-
-    inet_aton(argv[4], &addr);
-    rtmac_cfg.ip_addr = addr.s_addr;
-
-    r = ioctl(rtmac_f, RTMAC_IOC_ADD_NRT, &rtmac_cfg);
-    if(r < 0) {
-        perror("ioctl");
-        exit(1);
-    }
-    exit(0);
-}
-
-void do_mac_remove_nrt(int argc, char *argv[])
-{
-    int r;
-    struct in_addr addr;
-
-    if(argc < 5)
-        help();
-
-    inet_aton(argv[4], &addr);
-    rtmac_cfg.ip_addr = addr.s_addr;
-
-    r = ioctl(rtmac_f, RTMAC_IOC_REMOVE_NRT, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_REMOVE, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -424,9 +371,9 @@ void do_mac_cycle(int argc, char *argv[])
         help();
 
     cycle = atoi(argv[4]);
-    rtmac_cfg.cycle = cycle;
+    tdma_cfg.cycle = cycle;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_CYCLE, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_CYCLE, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -442,9 +389,9 @@ void do_mac_mtu(int argc, char *argv[])
         help();
 
     mtu = atoi(argv[4]);
-    rtmac_cfg.mtu = mtu;
+    tdma_cfg.mtu = mtu;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_MTU, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_MTU, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
@@ -463,10 +410,10 @@ void do_mac_offset(int argc, char *argv[])
     inet_aton(argv[4], &addr);
     offset = atoi(argv[5]);
 
-    rtmac_cfg.ip_addr = addr.s_addr;
-    rtmac_cfg.offset = offset;
+    tdma_cfg.ip_addr = addr.s_addr;
+    tdma_cfg.offset = offset;
 
-    r = ioctl(rtmac_f, RTMAC_IOC_OFFSET, &rtmac_cfg);
+    r = ioctl(f, TDMA_IOC_OFFSET, &tdma_cfg);
     if(r < 0) {
         perror("ioctl");
         exit(1);
