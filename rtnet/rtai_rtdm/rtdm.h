@@ -2,7 +2,7 @@
         rtdm.h - user API header (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.0
+        Version:    0.5.1
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 
@@ -105,7 +105,6 @@ struct rtdm_setsockaddr_args {
 
 #define RTIOC_GETCONTEXT            _IOWR(RTIOC_TYPE_COMMON, 0x00, \
                                           struct rtdm_getcontext_args)
-#define RTIOC_RELEASECONTEXT        _IO(RTIOC_TYPE_COMMON, 0x01)
 
 #define RTIOC_PURGE                 _IOW(RTIOC_TYPE_COMMON, 0x10, int)
 
