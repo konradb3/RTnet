@@ -233,8 +233,10 @@ int rt_packet_sendmsg(struct rtsocket *sock, const struct msghdr *msg,
             ret = len;
         else
             ret = -EAGAIN;
-    } else
+    } else {
         ret = -ENETDOWN;
+        goto err;
+    }
 
 out:
     rtdev_dereference(rtdev);
