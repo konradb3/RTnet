@@ -56,15 +56,11 @@ SOCKET *rt_socket_alloc(void)
 		return ( NULL );
 	else {
 
-//		rt_sem_wait(&socket_sem);
-//		write_lock(&socket_base_lock);
 		flags = rt_spin_lock_irqsave(&socket_base_lock);
 		free_rtsockets=free_rtsockets->next;
 		if (free_rtsockets!=NULL)
 			free_rtsockets->prev=NULL;
 		rt_spin_unlock_irqrestore(flags, &socket_base_lock);
-//		write_unlock(&socket_base_lock);
-//		rt_sem_signal(&socket_sem);
 
 		sock->state=TCP_CLOSE;
 		sock->next=NULL;
@@ -82,16 +78,12 @@ void rt_socket_release (SOCKET *sock)
 
 	memset (sock, 0, sizeof(SOCKET));
 
-//	rt_sem_wait(&socket_sem);
-//	write_lock(&socket_base_lock);
 	flags = rt_spin_lock_irqsave(&socket_base_lock);
 	sock->next=free_rtsockets;
 	if (free_rtsockets->next)
 		free_rtsockets->next->prev=sock;
 	free_rtsockets=sock;
 	rt_spin_unlock_irqrestore(flags, &socket_base_lock);
-//	write_unlock(&socket_base_lock);
-//	rt_sem_signal(&socket_sem);
 }
 
 
@@ -150,9 +142,20 @@ int rt_socket(int family, int type, int protocol)
 		hash = rt_inet_hashkey(protocol);
 
 	/* create the socket (call the socket creator) */
-	if  (rt_inet_protocols[hash]) 
-		return (rt_inet_protocols[hash]->socket(sock));
-	else {
+	if  (rt_inet_protocols[hash]) {
+		int fd;
+		fd = rt_inet_protocols[hash]->socket(sock);
+
+		/* This is the right place to check if sock->ops is not NULL. */
+		if (NULL == sock->ops) {
+			rt_printk("%s:%s: sock-ops is NULL!\n", __FUNCTION__, __LINE__);
+			/* Do something reasonable...
+			 * (insert code here)
+			 */
+		}
+		/* This is the right place to check if sock->ops->... are not NULL. */
+		return fd;
+	} else {
 		rt_printk("RTnet: protocol with id %d not found\n", protocol);
 		rt_socket_release(sock);
 		return -ENOPROTOOPT;
@@ -166,7 +169,9 @@ int rt_socket(int family, int type, int protocol)
 int rt_socket_bind(int fd, struct sockaddr *my_addr, int addr_len)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock || !sock->ops || !sock->ops->bind)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->bind)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( sock->ops->bind(sock, my_addr, addr_len) );
 }
@@ -177,7 +182,9 @@ int rt_socket_bind(int fd, struct sockaddr *my_addr, int addr_len)
 int rt_socket_listen(int fd, int backlog)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock || !sock->ops || !sock->ops->listen)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->listen)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( sock->ops->listen(sock, backlog) );
 }
@@ -188,7 +195,9 @@ int rt_socket_listen(int fd, int backlog)
 int rt_socket_connect(int fd, struct sockaddr *serv_addr, int addr_len)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock || !sock->ops || !sock->ops->connect)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->connect)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( sock->ops->connect(sock, serv_addr, addr_len) );
 }
@@ -199,7 +208,9 @@ int rt_socket_connect(int fd, struct sockaddr *serv_addr, int addr_len)
 int rt_socket_accept(int fd, struct sockaddr *client_addr, int *addr_len)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock || !sock->ops || !sock->ops->accept)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->accept)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( sock->ops->accept(sock, client_addr, addr_len) );
 }
@@ -210,7 +221,9 @@ int rt_socket_accept(int fd, struct sockaddr *client_addr, int *addr_len)
 int rt_socket_close(int fd)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock || !sock->ops || !sock->ops->close)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->close)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 
 	sock->ops->close(sock,0);
@@ -249,6 +262,10 @@ int rt_socket_sendto(int fd, void *buf, int len, unsigned int flags, struct sock
 		return -ENOTSOCK;
 	}
 
+	if ((NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->sendmsg)) /* There should be no socket without ops! */
+		return -ENOTSOCK;
+		
 	iov.iov_base=(void *)buf;
 	iov.iov_len=len;
 	
@@ -282,7 +299,9 @@ int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct so
 	struct iovec iov;
 	int error=0;
 
-	if ( !sock || !sock->ops || !sock->ops->recvmsg)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->recvmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 
 	iov.iov_base=buf;
@@ -312,7 +331,9 @@ int rt_socket_sendmsg(int fd, struct msghdr *msg, unsigned int flags)
 {
 	SOCKET *sock=rt_socket_lookup(fd);
 	int len;
-	if(!sock)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->sendmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
 	return sock->ops->sendmsg(sock,msg,len);
@@ -326,7 +347,9 @@ int rt_socket_recvmsg(int fd, struct msghdr *msg, unsigned int flags)
 	SOCKET *sock=rt_socket_lookup(fd);
 	int len;
 	
-	if (!sock || !sock->ops || !sock->ops->recvmsg)
+	if ((NULL == sock) ||
+	    (NULL == sock->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == sock->ops->recvmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 
 	len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
@@ -408,7 +431,9 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
  */
 int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, int addr_len)
 {
-	if ( !socket || !socket->ops || !socket->ops->bind)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->bind)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( socket->ops->bind(socket, addr, addr_len) );
 }
@@ -418,7 +443,9 @@ int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, int addr_len)
  */
 int rt_ssocket_listen(SOCKET *socket, int backlog)
 {
-	if ( !socket || !socket->ops || !socket->ops->listen)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->listen)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( socket->ops->listen(socket, backlog) );
 }
@@ -428,7 +455,9 @@ int rt_ssocket_listen(SOCKET *socket, int backlog)
  */
 int rt_ssocket_connect(SOCKET *socket, struct sockaddr *addr, int addr_len)
 {
-	if ( !socket || !socket->ops || !socket->ops->connect)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->connect)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( socket->ops->connect(socket, addr, addr_len) );
 }
@@ -438,7 +467,9 @@ int rt_ssocket_connect(SOCKET *socket, struct sockaddr *addr, int addr_len)
  */
 int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addr_len)
 {
-	if ( !socket || !socket->ops || !socket->ops->accept)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->accept)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	return ( socket->ops->accept(socket, addr, addr_len) );
 }
@@ -448,7 +479,9 @@ int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addr_len)
  */
 int rt_ssocket_close(SOCKET *socket)
 {
-	if ( !socket || !socket->ops || !socket->ops->close)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->close)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 
 	socket->ops->close(socket, 0);
@@ -460,7 +493,9 @@ int rt_ssocket_close(SOCKET *socket)
  */
 int rt_ssocket_writev(SOCKET *socket, struct iovec *iov, size_t count)
 {
-	if ( !socket || !socket->ops || !socket->ops->sendmsg)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->sendmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -490,7 +525,9 @@ int rt_ssocket_send(SOCKET *socket, void *buf, int len, unsigned int flags)
  */
 int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, struct sockaddr *to, int tolen)
 {
-	if ( !socket || !socket->ops || !socket->ops->sendmsg)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->sendmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -516,7 +553,9 @@ int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, st
  */
 int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
 {
-	if ( !socket || !socket->ops || !socket->ops->sendmsg)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->sendmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	else {
 		int len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
@@ -529,7 +568,9 @@ int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
  */
 int rt_ssocket_readv(SOCKET *socket, struct iovec *iov, size_t count)
 {
-	if ( !socket || !socket->ops || !socket->ops->recvmsg)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->recvmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -557,7 +598,9 @@ int rt_ssocket_recv(SOCKET *socket, void *buf, int len, unsigned int flags)
  */
 int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, struct sockaddr *from, int fromlen)
 {
-	if ( !socket || !socket->ops || !socket->ops->bind)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->bind)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -585,7 +628,9 @@ int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, 
  */
 int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
 {
-	if ( !socket || !socket->ops || !socket->ops->recvmsg)
+	if ((NULL == socket) ||
+	    (NULL == socket->ops) || /* This check shall be obsolete in the future! */
+	    (NULL == socket->ops->recvmsg)) /* There should be no socket without ops! */
 		return -ENOTSOCK;
 	else {
 		int len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
@@ -636,7 +681,6 @@ void rtsockets_init(void)
 {
 	int i;
 
-//	rt_typed_sem_init(&socket_sem, 0, BIN_SEM);
 	spin_lock_init(&socket_base_lock);
 
 	/* initialise the first socket */ 	
@@ -666,6 +710,4 @@ void rtsockets_init(void)
 void rtsockets_release(void)
 {
 	free_rtsockets=NULL;
-
-//	rt_sem_delete(&socket_sem);
 }
