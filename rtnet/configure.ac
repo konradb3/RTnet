@@ -4,7 +4,7 @@
 AC_PREREQ(2.57)
 
 AC_INIT([RTnet],[0.7.0],[rtnet-users@lists.sourceforge.net])
-AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
+AC_CONFIG_HEADERS([include/rtnet_config.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_SRCDIR([rtskb.c])
@@ -42,18 +42,9 @@ dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 dnl ++++++++++++ copied from rtai 3.0 +++ start ++++++++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-arch_supports_lxrt=
-arch_supports_leds=
-arch_supports_sim=
-arch_supports_rtailab=
-
 case "$host" in
     i*86*-*)
 	RTNET_TARGET_ARCH=i386
-	arch_supports_lxrt=y
-	arch_supports_leds=y
-	arch_supports_sim=y
-	arch_supports_rtailab=y
 	wanted_kernel_arch=CONFIG_X86
         ;;
 #    arm-*)
@@ -803,6 +794,7 @@ AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTA
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
 #	RTAI_KMOD_CFLAGS="$RTAI_KMOD_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
 #	LXRT_CFLAGS="$LXRT_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
+	if test \! -d include; then mkdir include; fi
 	if test \! -f include/rtdm.h; then ln -s ../$srcdir/rtai_rtdm/rtdm.h include/rtdm.h; fi
 	if test \! -f include/rtdm_driver.h; then ln -s ../$srcdir/rtai_rtdm/rtdm_driver.h include/rtdm_driver.h; fi
 else
@@ -868,6 +860,38 @@ if test "$CONFIG_RTNET_CHECKED" = "yes"; then
 fi
 
 
+dnl ======================================================================
+dnl		hac^H^H^Hfix problem with multible defined symbols problem
+dnl		shamelessly stolen from RTAI-3.1 tnx to Philippe
+dnl ======================================================================
+
+dnl CAUTION: We need to have the CONFIG_RTNET_XX symbols always defined when
+dnl the configuration header is read, but we want the Autoconf-produced
+dnl symbols to be defined only when compiling RTNET. This way, we won't
+dnl pollute the namespace with the latter when our configuration header is
+dnl indirectly included by a client application. To achieve this, we ask
+dnl autoheader to produce the following header structure:
+dnl #define CONFIG_XX
+dnl #define CONFIG_XX ...
+dnl #ifdef __IN_RTNET__
+dnl <Autoconf-defined symbols>
+dnl #endif /* __IN_RTNET__ */
+dnl This is quite a hack since we have to rely on the fact that
+dnl all Autoconf-generated symbols are lexicographically sorted
+dnl after CONFIG_RTNET_XX ones, but, well...
+
+dnl Use a key which will cause the verbatim string to be put after
+dnl all CONFIG_RTNET_XX symbols, but still before any Autoconf-generated
+dnl symbol, hence CONFIG_RTNET___.
+AH_VERBATIM(CONFIG_RTNET___,[#ifdef __IN_RTNET__])
+
+dnl Now we can close the conditional section, right after all
+dnl Autoconf-generated symbols have been listed.
+AH_BOTTOM([#endif /* __IN_RTNET__ */])
+
+
+RTAI_KMOD_CFLAGS="-D__IN_RTNET__ $RTAI_KMOD_CFLAGS"
+LXRT_CFLAGS="-D__IN_RTNET__ $LXRT_CFLAGS"
 AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
@@ -903,18 +927,3 @@ rtai_rtdm/Makefile \
 ])
 
 AC_OUTPUT
-
-
-dnl ======================================================================
-dnl		generate include/rtnet_config.h
-dnl ======================================================================
-
-AC_MSG_NOTICE([creating include/rtnet_config.h])
-sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/rtnet_config_pre.h >include/rtnet_config.h.new
-if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
-	rm include/rtnet_config.h.new
-	AC_MSG_NOTICE([include/rtnet_config.h is unchanged])
-else
-	mv include/rtnet_config.h.new include/rtnet_config.h
-fi

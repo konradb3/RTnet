@@ -22,7 +22,7 @@ SUBDIRS = driver ethernet ipv4 lib packet rtmac tools include $(OPTDIRS)
 
 noinst_LIBRARIES = librtnet.a
 
-EXTRA_LIBRARIES = librtnet_lxrt.a libnetproxy.a
+EXTRA_LIBRARIES = libnetproxy.a
 
 librtnet_a_SOURCES = \
 	iovec.c \
@@ -42,12 +42,7 @@ RTNET_BUILTIN_OBJS = \
 	lib/crc32.o \
 	packet/packet.o
 
-OBJS =
-
-#if CONFIG_NEWLXRT
-#librtnet_lxrt_a_SOURCES = rtnet_lxrt.c
-#OBJS += rtnet_lxrt.o
-#endif
+OBJS = rtnet.o
 
 if CONFIG_RTNET_PROXY
 libnetproxy_a_SOURCES = rtnetproxy.c
@@ -62,8 +57,8 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
-all-local: rtnet.o $(OBJS)
+all-local: $(OBJS)
 
-install-exec-local: rtnet.o $(OBJS)
+install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	$(INSTALL_DATA) $^ $(moduledir)
