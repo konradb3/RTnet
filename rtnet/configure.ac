@@ -421,6 +421,24 @@ esac
 
 
 dnl ======================================================================
+dnl		decide to build for 2.4 or 2.6 kernel
+dnl ======================================================================
+
+   RTNET_MODULE_EXT=.o
+   RTNET_KBUILD_ENV=
+   RTNET_KBUILD_CMD=
+   RTNET_KBUILD_CLEAN=
+
+AC_MSG_CHECKING([for kernel module extension])
+AC_MSG_RESULT([$RTNET_MODULE_EXT])
+
+AC_SUBST(RTNET_MODULE_EXT)
+AC_SUBST(RTNET_KBUILD_ENV)
+AC_SUBST(RTNET_KBUILD_CMD)
+AC_SUBST(RTNET_KBUILD_CLEAN)
+
+
+dnl ======================================================================
 dnl		import settings from RTAI
 dnl ======================================================================
 
@@ -934,34 +952,46 @@ AC_SUBST(KERNEL_CFLAGS)
 
 
 AC_CONFIG_FILES([ \
-Makefile \
-examples/Makefile \
-examples/round_trip_time/Makefile \
-examples/round_trip_time/client/Makefile \
-examples/round_trip_time/server/Makefile \
-examples/rtnet_lxrt/Makefile \
-examples/select/Makefile \
-examples/frag_ip/Makefile \
-examples/raw_packets/Makefile \
-examples/rtmac/Makefile \
-examples/rtmac/event/Makefile \
-examples/rtmac/mrtt/Makefile \
-examples/rtmac/rtt/Makefile \
-examples/rtmac/netshm/Makefile \
-driver/Makefile \
-driver/tulip/Makefile \
-ethernet/Makefile \
-ipv4/Makefile \
-packet/Makefile \
-lib/Makefile \
-tools/Makefile \
-rtmac/Makefile \
-rtmac/tdma/Makefile \
-rtmac/nomac/Makefile \
-rtcfg/Makefile \
-include/Makefile \
-rtcap/Makefile \
-rtai_rtdm/Makefile \
+GNUmakefile \
+examples/GNUmakefile \
+examples/round_trip_time/GNUmakefile \
+examples/round_trip_time/client/GNUmakefile \
+examples/round_trip_time/server/GNUmakefile \
+examples/rtnet_lxrt/GNUmakefile \
+examples/select/GNUmakefile \
+examples/frag_ip/GNUmakefile \
+examples/raw_packets/GNUmakefile \
+examples/rtmac/GNUmakefile \
+examples/rtmac/event/GNUmakefile \
+examples/rtmac/mrtt/GNUmakefile \
+examples/rtmac/rtt/GNUmakefile \
+examples/rtmac/netshm/GNUmakefile \
+drivers/GNUmakefile \
+drivers/tulip/GNUmakefile \
+drivers/8139too/GNUmakefile \
+drivers/eepro100/GNUmakefile \
+drivers/loopback/GNUmakefile \
+drivers/mpc8260_fcc_enet/GNUmakefile \
+drivers/mpc8xx_enet/GNUmakefile \
+drivers/mpc8xx_fec/GNUmakefile \
+drivers/natsemi/GNUmakefile \
+drivers/pcnet32/GNUmakefile \
+drivers/smc91111/GNUmakefile \
+drivers/via-rhine/GNUmakefile \
+drivers/experimental/GNUmakefile \
+drivers/experimental/3c59x/GNUmakefile \
+ethernet/GNUmakefile \
+ipv4/GNUmakefile \
+packet/GNUmakefile \
+lib/GNUmakefile \
+tools/GNUmakefile \
+rtmac/GNUmakefile \
+rtmac/tdma/GNUmakefile \
+rtmac/nomac/GNUmakefile \
+rtcfg/GNUmakefile \
+include/GNUmakefile \
+rtcap/GNUmakefile \
+rtai_rtdm/GNUmakefile \
 ])
 
 AC_OUTPUT

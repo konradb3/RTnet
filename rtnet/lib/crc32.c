@@ -22,7 +22,7 @@
 #include <linux/init.h>
 #include <asm/atomic.h>
 
-#include <crc32.h>
+#include <lib/crc32.h>
 
 
 #if __GNUC__ >= 3	/* 2.x has "attribute", but only 3.0 has "pure */

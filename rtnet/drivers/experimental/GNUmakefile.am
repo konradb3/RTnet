@@ -1,0 +1,7 @@
+OPTDIRS =
+
+if  CONFIG_RTNET_3C59X
+OPTDIRS += 3c59x
+endif
+
+SUBDIRS = $(OPTDIRS)

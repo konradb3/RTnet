@@ -31,8 +31,8 @@ for DIR in autom4te.cache; do
 	echo -n .
 done
 
-find . -type f -name 'Makefile.in' -print0 | xargs -r0  rm -f --
-find . -type f -name 'Makefile' -print0 | xargs -r0 rm -f --
+find . -type f -name 'GNUmakefile.in' -print0 | xargs -r0  rm -f --
+find . -type f -name 'GNUmakefile' -print0 | xargs -r0 rm -f --
 
 echo ' done'
 
