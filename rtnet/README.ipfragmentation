@@ -34,6 +34,12 @@ Fragmented IP packets are generated AND received at the expense of the socket
 rtskb pool. Adjust the pool size appropriately to provide sufficient rtskbs
 (see also examples/frap_ip).
 
+To identify the destination socket and to simplify the defragmentation, all IP
+fragments must arrive in a strictly ascending order. Unordered packets are
+dropped, if they can be assigned to an existing collector, the already
+collected fragments are also cleaned up. However, for typically isolated
+real-time networks, this requirement can be easily fulfilled.
+
 
 Known Issues:
 -------------
