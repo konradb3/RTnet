@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 noinst_LIBRARIES = libtulip-rt.a
 
 libtulip_rt_a_SOURCES = \

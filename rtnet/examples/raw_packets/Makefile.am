@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 noinst_LIBRARIES = libraw_packets.a
 
 libraw_packets_a_SOURCES = raw_packets.c

@@ -1,46 +1,72 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-#AC_PREREQ(2.57)
-AC_INIT(RTnet)
-AM_INIT_AUTOMAKE(rtnet, 0.5.1, jan.kiszka@web.de)
-
-AC_PREFIX_DEFAULT(/usr/local/rtnet)
-
-AM_MAINTAINER_MODE
-#AC_CANONICAL_BUILD
+AC_PREREQ(2.57)
+AC_INIT(RTnet,0.5.1,jan.kiszka@web.de)
+AC_CONFIG_HEADER(config/config.h)
+AC_CONFIG_AUX_DIR(config/autoconf)
+AC_CONFIG_SRCDIR([rtskb.c])
+AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
+AC_PROG_INSTALL
 
 CFLAGS=${CFLAGS:--s}
-AR=${AR:-ar}
+
+# Checks for programs.
+AC_ARG_WITH(CC,
+    [  --with-cc=compiler      use specific C compiler],
+    [
+        case "$withval" in
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-cc.])
+          ;;
+        esac
+        CC="$withval"
+    ])
+AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(CONFIG_RTAI_BUILD_STRING,"$build",[Build system alias])
 RTAI_BUILD_STRING="$build"
 AC_DEFINE_UNQUOTED(CONFIG_RTAI_HOST_STRING,"$host",[Host system alias])
 RTAI_HOST_STRING="$host"
 
+
+AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2])
+AM_MAINTAINER_MODE
+AC_PROG_LIBTOOL
+AM_PROG_AS
+
+dnl Find arch-specific requirements and supports. Features which
+dnl are not supported by all archs must be listed here, so that a
+dnl an Autoconf flag can later be defined/undefined in rtai_config.h.
+
+arch_supports_lxrt=
+arch_supports_leds=
+
 case "$host" in
  i*86*-*)
-	RTAI_TARGET_ARCH=i386
-	wanted_kernel_arch=CONFIG_X86
+        RTAI_TARGET_ARCH=i386
+        arch_supports_lxrt=y
+        arch_supports_leds=y
+        wanted_kernel_arch=CONFIG_X86
         ;;
  arm-*)
-	RTAI_TARGET_ARCH=arm
-	wanted_kernel_arch=CONFIG_ARM
+        RTAI_TARGET_ARCH=arm
+        wanted_kernel_arch=CONFIG_ARM
         ;;
  powerpc-*|ppc-*)
-	RTAI_TARGET_ARCH=ppc
-	wanted_kernel_arch=CONFIG_PPC
+        RTAI_TARGET_ARCH=ppc
+        wanted_kernel_arch=CONFIG_PPC
         ;;
  mips-*)
-	RTAI_TARGET_ARCH=mips
-	wanted_kernel_arch=CONFIG_MIPS
+        RTAI_TARGET_ARCH=mips
+        wanted_kernel_arch=CONFIG_MIPS
         ;;
  cris-*)
-	RTAI_TARGET_ARCH=cris
-	dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
-	dnl so use the root device definition.
-	wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
+        RTAI_TARGET_ARCH=cris
+        dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
+        dnl so use the root device definition.
+        wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
         ;;
  *) echo ""
    echo "*******************************************"
@@ -50,18 +76,42 @@ case "$host" in
    exit 1;;
 esac
 
-AC_CONFIG_SRCDIR([iovec.c])
-AM_CONFIG_HEADER(config/config.h)
+dnl
+dnl Installation directory for modules
+dnl
 
-# Checks for programs.
-AC_PROG_CC
-AC_PROG_CPP
-AC_PROG_INSTALL
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-AC_PROG_RANLIB
-AC_PROG_LD
-#AC_PROG_SED
+AC_MSG_CHECKING([for module installation directory])
+
+AC_ARG_WITH(module-dir,
+    [  --with-module-dir=<module-dir>      Installation directory for modules],
+    [
+        case "$withval" in
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-module-dir.])
+          ;;
+        esac
+        RTAI_MODULE_DIR="$withval"
+    ])
+
+dnl Are we building into the source tree?
+if test "$srcdir" = `pwd`; then
+   CONFIG_RTAI_OLD_FASHIONED_BUILD=y
+else
+   CONFIG_RTAI_OLD_FASHIONED_BUILD=n
+fi
+
+dnl Set a default module dir if unspecified
+if test "x" = "x$RTAI_MODULE_DIR"
+then
+   RTAI_MODULE_DIR=$prefix/modules
+fi
+
+AC_MSG_RESULT([$RTAI_MODULE_DIR])
+CONFIG_RTAI_MODULE_DIR=$RTAI_MODULE_DIR
+
+#
+# define helper function
+#
 
 AC_DEFUN(AC_CHECK_LIBRARY, [dnl
 KSAVE_LIBS="$LIBS"
@@ -71,11 +121,9 @@ $3=`echo "$LIBS" | sed "s% $KSAVE_LIBS$%%"`
 LIBS="$KSAVE_LIBS"
 ])
 
-# Checks for libraries.
-# FIXME: Replace `main' with a function in `-llxrt':
-AC_CHECK_LIBRARY(lxrt, main, LXRT_LIBS)
-AC_SUBST(LXRT_LIBS)
 
+
+# Checks for libraries.
 # FIXME: Replace `main' with a function in `-lncurses':
 AC_CHECK_LIBRARY(ncurses, main, NCURSES_LIBS)
 AC_SUBST(NCURSES_LIBS)
@@ -83,6 +131,7 @@ AC_SUBST(NCURSES_LIBS)
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h])
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -98,6 +147,8 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([inet_ntoa memset socket strchr strerror])
+
+
 
 
 dnl ======================================================================
@@ -232,7 +283,24 @@ dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 dnl ++++++++++++ copied from rtai-unstabel +++ end +++++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+dnl ======================================================================
+dnl		check for NEWLXRT
+dnl ======================================================================
 
+AC_MSG_CHECKING([for RTAI NEWLXRT enabled])
+
+CONFIG_RTAI_NEWLXRT="`sed -n -e "s/^CONFIG_RTAI_NEWLXRT=\(.*\)/\1/p" $RTAI_DIR/.config`"
+
+case $CONFIG_RTAI_NEWLXRT in
+     y | m)
+	CONFIG_NEWLXRT=yes;
+	;;
+     *)
+	unset CONFIG_NEWLXRT;
+	;;
+esac
+AC_MSG_RESULT(${CONFIG_NEWLXRT:-no})
+AM_CONDITIONAL(CONFIG_NEWLXRT,[test "$CONFIG_NEWLXRT" = "yes"])
 
 dnl ======================================================================
 dnl		import settings from RTAI
@@ -245,11 +313,7 @@ KERNEL_CFLAGS=-I$RTAI_LINUX_DIR/include
 AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
-AC_SUBST(CROSS_COMPILE)
 AC_SUBST(LD)
-AC_SUBST(AR)
-
-
 
 dnl ======================================================================
 dnl		network interface card driver
@@ -366,7 +430,7 @@ AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 
 
-AC_OUTPUT([
+AC_CONFIG_FILES([ \
 Makefile \
 examples/Makefile \
 examples/round_trip_time/Makefile \
@@ -384,11 +448,11 @@ ipv4/Makefile \
 packet/Makefile \
 lib/Makefile \
 tools/Makefile \
-rtmac/Makefile
-rtmac/examples/Makefile
-rtmac/examples/event/Makefile
-rtmac/examples/mrtt/Makefile
-rtmac/examples/rtt/Makefile
+rtmac/Makefile \
+rtmac/examples/Makefile \
+rtmac/examples/event/Makefile \
+rtmac/examples/mrtt/Makefile \
+rtmac/examples/rtt/Makefile \
 ])
 
-#examples/rtnet_lxrt/Makefile \
+AC_OUTPUT()

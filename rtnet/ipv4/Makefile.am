@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 noinst_LIBRARIES = libipv4.a
 
 libipv4_a_SOURCES = \

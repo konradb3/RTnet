@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 SUBDIRS = examples
 
 noinst_LIBRARIES = librtmac.a

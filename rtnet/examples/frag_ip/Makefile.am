@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 noinst_LIBRARIES = libfrag_ip.a
 
 libfrag_ip_a_SOURCES = frag_ip.c

@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 noinst_LIBRARIES = libpacket.a
 
 libpacket_a_SOURCES = \

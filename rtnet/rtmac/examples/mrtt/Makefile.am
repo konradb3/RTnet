@@ -1,5 +1,3 @@
-CROSS_COMPILE = @CROSS_COMPILE@
-
 noinst_LIBRARIES = librt_client.a
 noinst_PROGRAMS = showtime
 
