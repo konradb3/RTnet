@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.8.1],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.8.2],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -381,7 +381,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     . ${CONFIG_RTNET_RTAI_CONFIG_FILE}
 
     case "$CONFIG_RTNET_RTAI_VERSION" in
-        30 | 31)	# ---> RTAI 3.x <---
+        30 | 31 | 32)	# ---> RTAI 3.x <---
 
 	    # check for semas, needed by rtnet
 	    AC_MSG_CHECKING([for RTAI semaphores])
