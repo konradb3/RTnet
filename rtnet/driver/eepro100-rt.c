@@ -122,6 +122,7 @@ static int debug = -1;			/* The debug level */
 #include <crc32.h>
 #include <rtnet.h>
 #include <rtnet_internal.h>
+#include <rtnet_port.h>
 //#include "../comdbg.h"
 
 static int cards = INT_MAX;
@@ -1023,7 +1024,7 @@ speedo_open(struct rtnet_device *rtdev)
 	speedo_resume(dev);
 
 	netdevice_start(dev);
-	netif_start_queue(dev);
+	rtnetif_start_queue(rtdev);
 
 	/* Setup the chip and configure the multicast list. */
 	sp->mc_setup_head = NULL;
@@ -1312,7 +1313,7 @@ static void speedo_purge_tx(struct net_device *dev)
 	}
 	sp->mc_setup_tail = NULL;
 	sp->tx_full = 0;
-	netif_start_queue(dev);
+	rtnetif_wake_queue(dev);
 }
 #endif
 
@@ -1424,7 +1425,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
 		// *** RTnet ***
 		rt_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", dev->name);
-		netif_stop_queue(dev);
+		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
 		rt_spin_unlock_irqrestore(flags, &sp->lock);
@@ -1472,7 +1473,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Leave room for set_rx_mode(). If there is no more space than reserved
 	   for multicast filter mark the ring as full. */
 	if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
-		netif_stop_queue(dev);
+		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 	}
 
@@ -1684,7 +1685,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 				&& (int)(sp->cur_tx - sp->dirty_tx) < TX_QUEUE_UNFULL) {
 				/* The ring is no longer full. */
 				sp->tx_full = 0;
-				netif_start_queue(dev); /* Attention: under a spinlock.  --SAW */
+				rtnetif_wake_queue(rtdev); /* Attention: under a spinlock.  --SAW */
 			}
 			rt_spin_unlock(&sp->lock);
 		}
@@ -1959,7 +1960,7 @@ speedo_close(struct rtnet_device *rtdev)
 	int i;
 
 	netdevice_stop(dev);
-	netif_stop_queue(dev);
+	rtnetif_stop_queue(rtdev);
 
 	if (speedo_debug > 1)
 		printk(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n",
@@ -2162,6 +2163,7 @@ static int speedo_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 */
 static void set_rx_mode(struct net_device *dev)
 {
+	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
 	struct speedo_private *sp = (struct speedo_private *)dev->priv;
 	long ioaddr = dev->base_addr;
 	struct descriptor *last_cmd;
@@ -2222,7 +2224,7 @@ static void set_rx_mode(struct net_device *dev)
 		clear_suspend(last_cmd);
 		outb(CUResume, ioaddr + SCBCmd);
 		if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
-			netif_stop_queue(dev);
+			rtnetif_stop_queue(rtdev);
 			sp->tx_full = 1;
 		}
 		spin_unlock_irqrestore(&sp->lock, flags);
@@ -2261,7 +2263,7 @@ static void set_rx_mode(struct net_device *dev)
 		outb(CUResume, ioaddr + SCBCmd);
 
 		if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
-			netif_stop_queue(dev);
+			rtnetif_stop_queue(rtdev);
 			sp->tx_full = 1;
 		}
 		spin_unlock_irqrestore(&sp->lock, flags);
@@ -2337,7 +2339,7 @@ static void set_rx_mode(struct net_device *dev)
 		outb(CUResume, ioaddr + SCBCmd);
 
 		if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
-			netif_stop_queue(dev);
+			rtnetif_stop_queue(rtdev);
 			sp->tx_full = 1;
 		}
 		spin_unlock_irqrestore(&sp->lock, flags);
