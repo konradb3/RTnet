@@ -4,4 +4,4 @@ if CONFIG_RTNET_ENCLOSED_RTAI_RTDM
 OPTDIRS += rtai_rtdm
 endif
 
-SUBDIRS = addons core drivers tools $(OPTDIRS)
+SUBDIRS = stack drivers $(OPTDIRS) addons tools

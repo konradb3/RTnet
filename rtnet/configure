@@ -427,7 +427,7 @@ PACKAGE_VERSION='0.7.1'
 PACKAGE_STRING='RTnet 0.7.1'
 PACKAGE_BUGREPORT='rtnet-users@lists.sourceforge.net'
 
-ac_unique_file="core/rtskb.c"
+ac_unique_file="stack/rtskb.c"
 ac_default_prefix=/usr/local/rtnet
 # Factoring default headers for most tests.
 ac_includes_default="\
@@ -20636,8 +20636,8 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 # check if rtai-3 is installed with DESTDIR
 # e.g.: 'make DESTDIR=/foo install'
 #
-    echo "$as_me:$LINENO: checking for RTAI 3 DESTDIR" >&5
-echo $ECHO_N "checking for RTAI 3 DESTDIR... $ECHO_C" >&6
+    echo "$as_me:$LINENO: checking for RTAI DESTDIR" >&5
+echo $ECHO_N "checking for RTAI DESTDIR... $ECHO_C" >&6
     RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,/*$,,`"		# strip trailing slashes
     if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
 	RTNET_RTAI_DESTDIR="`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,`"
@@ -20657,8 +20657,8 @@ echo "$as_me: error: *** Cannot identify DESTDIR" >&2;}
 echo "${ECHO_T}none" >&6
     fi
 
-    echo "$as_me:$LINENO: checking for RTAI 3 version" >&5
-echo $ECHO_N "checking for RTAI 3 version... $ECHO_C" >&6
+    echo "$as_me:$LINENO: checking for RTAI version" >&5
+echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
     CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
     case "$CONFIG_RTNET_RTAI_3_VERSION" in
@@ -20679,14 +20679,14 @@ echo "$as_me: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION i
 	;;
     esac
 
-    echo "$as_me:$LINENO: checking for RTAI 3 config file" >&5
-echo $ECHO_N "checking for RTAI 3 config file... $ECHO_C" >&6
+    echo "$as_me:$LINENO: checking for RTAI config file" >&5
+echo $ECHO_N "checking for RTAI config file... $ECHO_C" >&6
     CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
     if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
 	CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
 	if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
-	    { { echo "$as_me:$LINENO: error: *** RTAI 3 configuration file not found" >&5
-echo "$as_me: error: *** RTAI 3 configuration file not found" >&2;}
+	    { { echo "$as_me:$LINENO: error: *** RTAI configuration file not found" >&5
+echo "$as_me: error: *** RTAI configuration file not found" >&2;}
    { (exit 1); exit 1; }; }
 	fi
     fi
@@ -21710,12 +21710,12 @@ else
 fi
 
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
-	          ac_config_links="$ac_config_links core/include/rtdm.h:rtai_rtdm/rtdm.h"
+	          ac_config_links="$ac_config_links stack/include/rtdm.h:rtai_rtdm/rtdm.h"
 
-	          ac_config_links="$ac_config_links core/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h"
+	          ac_config_links="$ac_config_links stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h"
 
 else
-	rm -f core/include/rtdm.h core/include/rtdm_driver.h
+	rm -f stack/include/rtdm.h stack/include/rtdm_driver.h
 fi
 
 
@@ -21887,7 +21887,7 @@ RTAI_LXRT_CFLAGS="-D__IN_RTNET__ $RTAI_LXRT_CFLAGS"
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/select/GNUmakefile addons/examples/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile addons/GNUmakefile core/include/GNUmakefile core/rtcfg/GNUmakefile core/rtmac/tdma-v1/GNUmakefile core/rtmac/nomac/GNUmakefile core/rtmac/GNUmakefile core/GNUmakefile drivers/tulip/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/3c59x/GNUmakefile drivers/experimental/GNUmakefile drivers/GNUmakefile rtai_rtdm/GNUmakefile tools/GNUmakefile"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/select/GNUmakefile addons/examples/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile addons/GNUmakefile stack/include/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/tdma-v1/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/GNUmakefile stack/GNUmakefile drivers/tulip/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/3c59x/GNUmakefile drivers/experimental/GNUmakefile drivers/GNUmakefile rtai_rtdm/GNUmakefile tools/GNUmakefile"
 
 
 cat >confcache <<\_ACEOF
@@ -22634,12 +22634,12 @@ do
   "addons/rtcap/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtcap/GNUmakefile" ;;
   "addons/rtnetproxy/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtnetproxy/GNUmakefile" ;;
   "addons/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/GNUmakefile" ;;
-  "core/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/include/GNUmakefile" ;;
-  "core/rtcfg/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/rtcfg/GNUmakefile" ;;
-  "core/rtmac/tdma-v1/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/rtmac/tdma-v1/GNUmakefile" ;;
-  "core/rtmac/nomac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/rtmac/nomac/GNUmakefile" ;;
-  "core/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/rtmac/GNUmakefile" ;;
-  "core/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES core/GNUmakefile" ;;
+  "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
+  "stack/rtcfg/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtcfg/GNUmakefile" ;;
+  "stack/rtmac/tdma-v1/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/tdma-v1/GNUmakefile" ;;
+  "stack/rtmac/nomac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/nomac/GNUmakefile" ;;
+  "stack/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/GNUmakefile" ;;
+  "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
   "drivers/tulip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
   "drivers/8139too/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/8139too/GNUmakefile" ;;
   "drivers/eepro100/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eepro100/GNUmakefile" ;;
@@ -22656,8 +22656,8 @@ do
   "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
   "rtai_rtdm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES rtai_rtdm/GNUmakefile" ;;
   "tools/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES tools/GNUmakefile" ;;
-  "core/include/rtdm.h" ) CONFIG_LINKS="$CONFIG_LINKS core/include/rtdm.h:rtai_rtdm/rtdm.h" ;;
-  "core/include/rtdm_driver.h" ) CONFIG_LINKS="$CONFIG_LINKS core/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h" ;;
+  "stack/include/rtdm.h" ) CONFIG_LINKS="$CONFIG_LINKS stack/include/rtdm.h:rtai_rtdm/rtdm.h" ;;
+  "stack/include/rtdm_driver.h" ) CONFIG_LINKS="$CONFIG_LINKS stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config/rtnet_config_pre.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config/rtnet_config_pre.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -23732,14 +23732,14 @@ fi
 
 
 
-{ echo "$as_me:$LINENO: creating core/include/rtnet_config.h" >&5
-echo "$as_me: creating core/include/rtnet_config.h" >&6;}
+{ echo "$as_me:$LINENO: creating stack/include/rtnet_config.h" >&5
+echo "$as_me: creating stack/include/rtnet_config.h" >&6;}
 sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/rtnet_config_pre.h > core/include/rtnet_config.h.new
-if cmp -s core/include/rtnet_config.h.new core/include/rtnet_config.h; then
-    rm core/include/rtnet_config.h.new
-    { echo "$as_me:$LINENO: core/include/rtnet_config.h is unchanged" >&5
-echo "$as_me: core/include/rtnet_config.h is unchanged" >&6;}
+    config/rtnet_config_pre.h > stack/include/rtnet_config.h.new
+if cmp -s stack/include/rtnet_config.h.new stack/include/rtnet_config.h; then
+    rm stack/include/rtnet_config.h.new
+    { echo "$as_me:$LINENO: stack/include/rtnet_config.h is unchanged" >&5
+echo "$as_me: stack/include/rtnet_config.h is unchanged" >&6;}
 else
-    mv core/include/rtnet_config.h.new core/include/rtnet_config.h
+    mv stack/include/rtnet_config.h.new stack/include/rtnet_config.h
 fi

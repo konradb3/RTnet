@@ -7,7 +7,7 @@ AC_INIT([RTnet],[0.7.1],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
-AC_CONFIG_SRCDIR([core/rtskb.c])
+AC_CONFIG_SRCDIR([stack/rtskb.c])
 AC_PREFIX_DEFAULT([/usr/local/rtnet])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -329,7 +329,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 # check if rtai-3 is installed with DESTDIR
 # e.g.: 'make DESTDIR=/foo install'
 #
-    AC_MSG_CHECKING([for RTAI 3 DESTDIR])
+    AC_MSG_CHECKING([for RTAI DESTDIR])
     RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,[/]*$,,`"		# strip trailing slashes
     if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
 	RTNET_RTAI_DESTDIR="`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,`"
@@ -345,7 +345,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 	AC_MSG_RESULT([none])
     fi
 
-    AC_MSG_CHECKING([for RTAI 3 version])
+    AC_MSG_CHECKING([for RTAI version])
     CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
     case "$CONFIG_RTNET_RTAI_3_VERSION" in
@@ -362,12 +362,12 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 	;;
     esac
 
-    AC_MSG_CHECKING([for RTAI 3 config file])
+    AC_MSG_CHECKING([for RTAI config file])
     CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
     if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
 	CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
 	if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
-	    AC_MSG_ERROR([*** RTAI 3 configuration file not found])
+	    AC_MSG_ERROR([*** RTAI configuration file not found])
 	fi
     fi
     AC_MSG_RESULT([${CONFIG_RTNET_RTAI_CONFIG_FILE}])
@@ -924,10 +924,10 @@ AC_ARG_ENABLE(enclosed-rtdm,
 AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-no}])
 AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"])
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
-	AC_CONFIG_LINKS(core/include/rtdm.h:rtai_rtdm/rtdm.h)
-	AC_CONFIG_LINKS(core/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
+	AC_CONFIG_LINKS(stack/include/rtdm.h:rtai_rtdm/rtdm.h)
+	AC_CONFIG_LINKS(stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
 else
-	rm -f core/include/rtdm.h core/include/rtdm_driver.h
+	rm -f stack/include/rtdm.h stack/include/rtdm_driver.h
 fi
 
 
@@ -1093,12 +1093,12 @@ addons/rtcap/GNUmakefile \
 addons/rtnetproxy/GNUmakefile \
 addons/GNUmakefile \
 \
-core/include/GNUmakefile \
-core/rtcfg/GNUmakefile \
-core/rtmac/tdma-v1/GNUmakefile \
-core/rtmac/nomac/GNUmakefile \
-core/rtmac/GNUmakefile \
-core/GNUmakefile \
+stack/include/GNUmakefile \
+stack/rtcfg/GNUmakefile \
+stack/rtmac/tdma-v1/GNUmakefile \
+stack/rtmac/nomac/GNUmakefile \
+stack/rtmac/GNUmakefile \
+stack/GNUmakefile \
 \
 drivers/tulip/GNUmakefile \
 drivers/8139too/GNUmakefile \
@@ -1126,12 +1126,12 @@ dnl ======================================================================
 dnl             generate include/rtnet_config.h
 dnl ======================================================================
 
-AC_MSG_NOTICE([creating core/include/rtnet_config.h])
+AC_MSG_NOTICE([creating stack/include/rtnet_config.h])
 sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/rtnet_config_pre.h > core/include/rtnet_config.h.new
-if cmp -s core/include/rtnet_config.h.new core/include/rtnet_config.h; then
-    rm core/include/rtnet_config.h.new
-    AC_MSG_NOTICE([core/include/rtnet_config.h is unchanged])
+    config/rtnet_config_pre.h > stack/include/rtnet_config.h.new
+if cmp -s stack/include/rtnet_config.h.new stack/include/rtnet_config.h; then
+    rm stack/include/rtnet_config.h.new
+    AC_MSG_NOTICE([stack/include/rtnet_config.h is unchanged])
 else
-    mv core/include/rtnet_config.h.new core/include/rtnet_config.h
+    mv stack/include/rtnet_config.h.new stack/include/rtnet_config.h
 fi

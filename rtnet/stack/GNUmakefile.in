@@ -37,7 +37,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
 @CONFIG_RTNET_RTCFG_TRUE@am__append_1 = rtcfg
-subdir = core
+subdir = stack
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
@@ -279,8 +279,8 @@ EXTRA_LIBRARIES = libkernel_rtnet.a
 OPTDIRS = $(am__append_1)
 SUBDIRS = rtmac $(OPTDIRS)
 libkernel_rtnet_a_CPPFLAGS = \
-	-I$(top_srcdir)/core/include \
-	-I$(top_builddir)/core/include \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_rtnet_a_SOURCES = \
@@ -326,9 +326,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  core/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  stack/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  core/GNUmakefile
+	  $(AUTOMAKE) --foreign  stack/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \

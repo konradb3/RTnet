@@ -6,8 +6,8 @@ noinst_PROGRAMS = \
 	simpleserver
 
 AM_CFLAGS = \
-	-I$(top_srcdir)/core/include \
-	-I$(top_builddir)/core/include \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include \
         @RTAI_LXRT_CFLAGS@
 
 all-local: \

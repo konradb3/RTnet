@@ -4,8 +4,8 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_rtcfg.a
 
 libkernel_rtcfg_a_CPPFLAGS = \
-	-I$(top_srcdir)/core/include \
-	-I$(top_builddir)/core/include \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_rtcfg_a_SOURCES = \
