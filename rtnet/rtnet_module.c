@@ -168,7 +168,7 @@ static int rtnet_proc_register(void)
     remove_proc_entry("rtnet", 0);
 
   error1:
-    /*ERRMSG*/rtos_print("RTnet: unable to initialize /proc entries\n");
+    /*ERRMSG*/printk("RTnet: unable to initialize /proc entries\n");
     return -1;
 }
 
