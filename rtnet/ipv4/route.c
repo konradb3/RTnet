@@ -439,6 +439,7 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
     struct host_route   *host_rt;
     struct host_route   **last_host_ptr;
     unsigned int        key;
+    u32                 ip;
 
 
     for (key = 0; key < HOST_HASH_TBL_SIZE; key++) {
@@ -465,6 +466,9 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
 
         rtos_spin_unlock_irqrestore(&host_table_lock, flags);
     }
+
+    if ((ip = rtdev->local_ip) != 0)
+        rt_ip_route_del_host(ip);
 }
 
 
