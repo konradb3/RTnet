@@ -1,3 +1,12 @@
+0.8.1
+- added size size enforcement to TDMA
+- revised stack core for channel-based overloadable MTUs
+- catch CONFIG_REGPARM in kernel configuration
+- revised irq abstraction for clean fusion support
+- minor updates of RTDM driver definitions
+- fixed natsemi cleanup
+- further minor corrections
+
 0.8.0
 - TDMA-V2 implementation
   * multiple slots

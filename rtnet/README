@@ -1,4 +1,4 @@
-                             RTnet Version 0.8.0
+                             RTnet Version 0.8.1
                              ===================
 
 What is it?
@@ -13,7 +13,7 @@ What are the requirements?
   Linux kernel 2.6.x: 2.6.8.1 or better
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
   RTAI 3.x: tested on 3.0[r1|r2|r4], 3.1, LXRT when using user space API
-  RTAI/fusion 0.6[.6|.7] (no user space support yet)
+  RTAI/fusion 0.6[.6..9] (no user space support yet)
 - x86 (required for LXRT interface) or PowerPC platform. Other platforms are
   untested yet.
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
@@ -29,8 +29,8 @@ How to install it?
 4. cd rtnet
 5. Run ./configure --with-rtai=<PATH-TO-RTAI> <options> [--prefix=<PREFIX>]
    <PATH-TO-RTAI> is either the configured and compiled source directory of a
-   24.1.x version or the installation directory of a 3.x version. Some of the
-   available options are:
+   24.1.x version or the installation directory of a 3.x or fusion version.
+   Some of the available options are:
        --enable-allpci          compiles all PCI NIC drivers
        --enable-fcc-enet        compiles the MPC8260 FCC driver
        --enable-scc-enet        compiles the MPC8xx SCC driver
