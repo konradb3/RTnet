@@ -371,6 +371,17 @@ AC_MSG_RESULT(${CONFIG_RTNET_VIA_RHINE:-no})
 AM_CONDITIONAL(CONFIG_RTNET_VIA_RHINE,[test "$CONFIG_RTNET_VIA_RHINE" = "yes"])
 
 
+AC_MSG_CHECKING(whether to build NatSemi driver)
+AC_ARG_ENABLE(natsemi,
+	[  --enable-natsemi       build NatSemi driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_NATSEMI=yes;;
+	*) unset CONFIG_RTNET_NATSEMI ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_NATSEMI:-no})
+AM_CONDITIONAL(CONFIG_RTNET_NATSEMI,[test "$CONFIG_RTNET_NATSEMI" = "yes"])
+
+
 AC_MSG_CHECKING(whether to build loopback driver)
 AC_ARG_ENABLE(loopback,
 	[  --enable-loopback      build loopback driver],

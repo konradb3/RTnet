@@ -14,6 +14,7 @@ EXTRA_LIBRARIES = \
 	libeepro100-rt.a \
 	libpcnet32-rt.a \
 	libvia-rhine-rt.a \
+	libnatsemi-rt.a \
 	libloopback-rt.a \
 	libmpc8260_fcc_enet-rt.a \
 	libmpc8xx_enet-rt.a \
@@ -44,6 +45,11 @@ endif
 if CONFIG_RTNET_VIA_RHINE
 libvia_rhine_rt_a_SOURCES = via-rhine-rt.c
 OBJS += via-rhine-rt.o
+endif
+
+if CONFIG_RTNET_NATSEMI
+libnatsemi_rt_a_SOURCES = natsemi-rt.c
+OBJS += natsemi-rt.o
 endif
 
 if CONFIG_RTNET_LOOPBACK
