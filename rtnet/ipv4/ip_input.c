@@ -37,21 +37,17 @@ int rt_ip_local_deliver_finish(struct rtskb *skb)
 	if ( ipprot )
 		ret = ipprot->handler(skb);
 	else {
-        /* If a fallback handler for IP protocol has been installed,
-         * call it! */
-        if (ip_fallback_handler)
-        {
-            ret = ip_fallback_handler(skb);
-            if (ret)
-            {
-                rt_printk("RTnet: fallback handler failed\n");
-            }
-        }
-        else
-        {
-	        rt_printk("RTnet: no protocol found\n");
-	        kfree_rtskb(skb);
-        }
+		/* If a fallback handler for IP protocol has been installed,
+		 * call it! */
+		if (ip_fallback_handler) {
+			ret = ip_fallback_handler(skb);
+			if (ret) {
+				rt_printk("RTnet: fallback handler failed\n");
+			}
+		} else {
+			rt_printk("RTnet: no protocol found\n");
+			kfree_rtskb(skb);
+		}
 	}
 
 	return ret;
@@ -144,6 +140,3 @@ drop:
 	kfree_rtskb(skb);
 	return NET_RX_DROP;
 }
-
-
-
