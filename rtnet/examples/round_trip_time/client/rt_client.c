@@ -37,10 +37,14 @@
 #define MAX_LENGTH_IPv4 15
 static char *local_ip_s  = "127.0.0.1";
 static char *server_ip_s = "127.0.0.1";
+int interval = 500; /* time between two sent packets in ms (1-1000) */
+int packetsize = 58; /* packetsize exclusive headers (1-1400) */
 
 MODULE_PARM (local_ip_s ,"s");
 MODULE_PARM (server_ip_s,"s");
-MODULE_PARM_DESC (local_ip_s, "rt_echo_client: lokal  ip-address");
+MODULE_PARM (interval, "i");
+MODULE_PARM (packetsize,"i");
+MODULE_PARM_DESC (local_ip_s, "rt_echo_client: local ip-address");
 MODULE_PARM_DESC (server_ip_s, "rt_echo_client: server ip-address");
 
 #define TICK_PERIOD	100000
@@ -55,16 +59,15 @@ static struct sockaddr_in local_addr;
 static int sock;
 
 #define BUFSIZE 1500
-static char buffer[BUFSIZE];
+static char buffer[BUFSIZE], sendbuffer[BUFSIZE];
 static RTIME tx_time;
 static RTIME rx_time;
-
-SEM tx_sem;
 
 #define PRINT 0
 
 unsigned long tsc1,tsc2;
 unsigned long cnt = 0;
+unsigned long sent=0, rcvd=0;
 
 void *process(void * arg)
 {
@@ -76,13 +79,14 @@ void *process(void * arg)
 	        rt_task_wait_period();
 
                 /* get time        */
-                tx_time = rt_get_time_ns();
+		tx_time = rt_get_cpu_time_ns();
+
+		memcpy (sendbuffer, &tx_time, sizeof(tx_time));
 
                 /* send the time   */    
 		ret=rt_socket_sendto
-		(sock, &tx_time, sizeof(RTIME), 0, (struct sockaddr *) &server_addr, sizeof(struct sockaddr_in));
-
-		rt_sem_wait(&tx_sem);
+			(sock, &sendbuffer, packetsize, 0, (struct sockaddr *) &server_addr, sizeof(struct sockaddr_in));
+		if (ret) sent++;
 	}
 }
 
@@ -115,16 +119,19 @@ int echo_rcv(int s,void *arg)
 		struct sockaddr_in *sin = msg.msg_name;
 		
 		/* get the time    */
-		rx_time = rt_get_time_ns();
+		rx_time = rt_get_cpu_time_ns();
 		memcpy (&tx_time, buffer, sizeof(RTIME));
+		rcvd++;
 
-		rtf_put(PRINT, &rx_time, sizeof(RTIME));
-		rtf_put(PRINT, &tx_time, sizeof(RTIME));
+		ret = rtf_put(PRINT, &rx_time, sizeof(RTIME));
+		ret = rtf_put(PRINT, &tx_time, sizeof(RTIME));
+		if (0 == ret) {
+			rt_task_suspend(&rt_task);
+			rt_printk("fifo full, sending task suspended\n");
+		}
 
 		/* copy the address */
 		rcv.l = sin->sin_addr.s_addr;
-		
-		rt_sem_signal(&tx_sem);
 	}
 
 	return 0;
@@ -139,11 +146,19 @@ int init_module(void)
 	unsigned long local_ip  = rt_inet_aton(local_ip_s);
 	unsigned long server_ip = rt_inet_aton(server_ip_s);
 
-	rtf_create(PRINT, 40000);
-	rt_sem_init(&tx_sem, 0);
+	if (interval < 1) interval = 1;
+	if (interval > 1000) interval = 1000;
 
-	rt_printk ("local  ip address %s=%8x\n", local_ip_s, local_ip);
-	rt_printk ("server ip address %s=%8x\n", server_ip_s, server_ip);
+	if (packetsize < 1) packetsize = 1;
+	if (packetsize > 1400) packetsize = 1400;
+
+	rt_printk ("***** start of rt_client ***** %s %s *****\n", __DATE__, __TIME__);
+	rt_printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
+	rt_printk ("server ip address %s=%08x\n", server_ip_s, server_ip);
+	rt_printk ("interval = %d\n", interval);
+	rt_printk ("packetsize = %d\n", packetsize);
+
+	rtf_create(PRINT, 8000);
 
 	/* create rt-socket */
 	sock=rt_socket(AF_INET,SOCK_DGRAM,0);
@@ -161,13 +176,12 @@ int init_module(void)
 	server_addr.sin_port = htons(SRV_PORT);
 	server_addr.sin_addr.s_addr = server_ip;
 
-	// set up receiving
+	/* set up receiving */
 	rt_socket_callback(sock, echo_rcv, NULL);
 	
         tick_period = start_rt_timer(nano2count(TICK_PERIOD));
         ret=rt_task_init(&rt_task,(void *)process,0,4096,0,0,NULL);
-        //rt_set_oneshot_mode();
-        ret=rt_task_make_periodic_relative_ns( &rt_task, 1000000, 1000000000);
+        ret=rt_task_make_periodic_relative_ns( &rt_task, 1000000, (RTIME) interval * 1000000);
 	return 0;
 }
 
@@ -185,10 +199,8 @@ void cleanup_module(void)
         /* close th rt-socket */
   	rt_socket_close(sock);
 
-	rt_sem_delete(&tx_sem);
-
 	/* destroy the fifo   */
 	rtf_destroy(PRINT);
+
+	rt_printk ("packets sent:\t\t%10d\npackets received:\t%10d\npacketloss:\t\t%10d\%\n", sent, rcvd, 100-((100*rcvd)/sent));
 }
-
-

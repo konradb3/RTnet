@@ -83,6 +83,7 @@ unsigned long rt_inet_aton(const char *ip)
 }
 
 
+int packetsize = 58;
 
 void *process(void * arg)
 {
@@ -90,8 +91,7 @@ void *process(void * arg)
 	while(1) {
 	        rt_sem_wait(&tx_sem);
 	     	ret=rt_socket_sendto
-	      	    (sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr, sizeof (struct sockaddr_in));
-                rt_task_wait_period();
+	      	    (sock, &tx_msg, packetsize, 0, (struct sockaddr *) &client_addr, sizeof (struct sockaddr_in));
 	}
 }
 
@@ -116,7 +116,9 @@ int echo_rcv(int s,void *arg)
 
 	ret=rt_socket_recvmsg(sock, &msg, 0);
 	if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {		
-		memcpy(&tx_msg, &buffer, 8);
+		if ((0 < ret) && (ret <= 1400))
+			packetsize = ret;
+		memcpy(&tx_msg, &buffer, packetsize);
 		rt_sem_signal(&tx_sem);
 	}
 
@@ -128,15 +130,14 @@ int echo_rcv(int s,void *arg)
 int init_module(void)
 {
 	int ret;
-	RTIME tick_period;
 	struct rtsocket *socket;
 
 	unsigned long local_ip  = rt_inet_aton(local_ip_s);
 	unsigned long client_ip = rt_inet_aton(client_ip_s);
 
 
-	rt_printk ("local  ip address %s=%8x\n", local_ip_s, local_ip);
-	rt_printk ("client ip address %s=%8x\n", client_ip_s, client_ip);
+	rt_printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
+	rt_printk ("client ip address %s=%08x\n", client_ip_s, client_ip);
 
 	/* create rt-socket */
 	rt_printk("create rtsocket\n");	
@@ -169,8 +170,8 @@ int init_module(void)
 
 	/* get socket-structure for printing */
 	if ( (socket=rt_socket_lookup(sock)) ) {
-		rt_printk("src  addr: %x:%x\n", socket->saddr, socket->sport);
-		rt_printk("dest addr: %x:%x\n", socket->daddr, socket->dport);
+		rt_printk("src  addr: %08x:%04x\n", socket->saddr, socket->sport);
+		rt_printk("dest addr: %08x:%04x\n", socket->daddr, socket->dport);
 	}
 
 	/* set up receiving */
@@ -182,9 +183,8 @@ int init_module(void)
 	/* create print-fifo */
 	rtf_create (PRINT, 3000);
 
-	tick_period = start_rt_timer(nano2count(TICK_PERIOD));
 	ret=rt_task_init(&rt_task,(void *)process,0,4096,0,0,NULL);
-	ret=rt_task_make_periodic_relative_ns( &rt_task, 1000000, 1000000000);
+	rt_task_resume (&rt_task);
 
 	return ret;
 }
@@ -194,31 +194,9 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-	stop_rt_timer();
-
 	rt_task_delete(&rt_task);
 	rtf_destroy(PRINT);
 	rt_sem_delete(&tx_sem);
 
   	rt_socket_close(sock);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
