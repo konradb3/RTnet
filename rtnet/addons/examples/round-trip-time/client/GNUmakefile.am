@@ -22,7 +22,7 @@ rt_client.ko: @RTNET_KBUILD_ENV@
 rt_client.ko: $(libkernel_client_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
-all-local: $(OBJS) showtime
+all-local: $(OBJS)
 
 #install-exec-local: $(OBJS)
 #	$(mkinstalldirs) $(moduledir)

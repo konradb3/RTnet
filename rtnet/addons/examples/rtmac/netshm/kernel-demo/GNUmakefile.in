@@ -509,7 +509,7 @@ uninstall-am: uninstall-info-am
 	uninstall-info-am
 
 
-kernek-demo.o: libkernel_kernel-demo.a
+kernel-demo.o: libkernel_kernel-demo.a
 	$(LD) --whole-archive $< -r -o $@
 
 kernel-demo.ko: @RTNET_KBUILD_ENV@

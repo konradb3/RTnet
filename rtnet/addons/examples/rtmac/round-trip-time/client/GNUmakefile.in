@@ -13,6 +13,7 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
+
 SOURCES = $(libkernel_client_a_SOURCES) showtime.c
 
 srcdir = @srcdir@
@@ -36,7 +37,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
-EXTRA_PROGRAMS = showtime$(EXEEXT)
+noinst_PROGRAMS = showtime$(EXEEXT)
 subdir = addons/examples/rtmac/round-trip-time/client
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -53,6 +54,7 @@ libkernel_client_a_LIBADD =
 am_libkernel_client_a_OBJECTS =  \
 	libkernel_client_a-rt_client.$(OBJEXT)
 libkernel_client_a_OBJECTS = $(am_libkernel_client_a_OBJECTS)
+PROGRAMS = $(noinst_PROGRAMS)
 showtime_SOURCES = showtime.c
 showtime_OBJECTS = showtime.$(OBJEXT)
 showtime_LDADD = $(LDADD)
@@ -279,6 +281,13 @@ libkernel_client.a: $(libkernel_client_a_OBJECTS) $(libkernel_client_a_DEPENDENC
 	-rm -f libkernel_client.a
 	$(libkernel_client_a_AR) libkernel_client.a $(libkernel_client_a_OBJECTS) $(libkernel_client_a_LIBADD)
 	$(RANLIB) libkernel_client.a
+
+clean-noinstPROGRAMS:
+	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
 showtime$(EXEEXT): $(showtime_OBJECTS) $(showtime_DEPENDENCIES) 
 	@rm -f showtime$(EXEEXT)
 	$(LINK) $(showtime_LDFLAGS) $(showtime_OBJECTS) $(showtime_LDADD) $(LIBS)
@@ -427,7 +436,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile all-local
+all-am: GNUmakefile $(PROGRAMS) all-local
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -456,7 +465,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -505,16 +515,16 @@ ps-am:
 uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-local ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-info-am
+	clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
+	ctags distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-exec install-exec-am install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
 
 rt_client.o: libkernel_client.a

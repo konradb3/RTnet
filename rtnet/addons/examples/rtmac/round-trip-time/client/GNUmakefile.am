@@ -1,7 +1,7 @@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 
-EXTRA_PROGRAMS = showtime
+noinst_PROGRAMS = showtime
 
 EXTRA_LIBRARIES = libkernel_client.a
 
