@@ -36,6 +36,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
+@CONFIG_NCURSES_TRUE@am__append_1 = showtime
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
@@ -50,6 +51,8 @@ CCAS = @CCAS@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CONFIG_NCURSES_FALSE = @CONFIG_NCURSES_FALSE@
+CONFIG_NCURSES_TRUE = @CONFIG_NCURSES_TRUE@
 CONFIG_NEWLXRT_FALSE = @CONFIG_NEWLXRT_FALSE@
 CONFIG_NEWLXRT_TRUE = @CONFIG_NEWLXRT_TRUE@
 CONFIG_RTNET_3C59X_FALSE = @CONFIG_RTNET_3C59X_FALSE@
@@ -68,6 +71,8 @@ CONFIG_RTNET_NATSEMI_FALSE = @CONFIG_RTNET_NATSEMI_FALSE@
 CONFIG_RTNET_NATSEMI_TRUE = @CONFIG_RTNET_NATSEMI_TRUE@
 CONFIG_RTNET_PCNET32_FALSE = @CONFIG_RTNET_PCNET32_FALSE@
 CONFIG_RTNET_PCNET32_TRUE = @CONFIG_RTNET_PCNET32_TRUE@
+CONFIG_RTNET_PROXY_FALSE = @CONFIG_RTNET_PROXY_FALSE@
+CONFIG_RTNET_PROXY_TRUE = @CONFIG_RTNET_PROXY_TRUE@
 CONFIG_RTNET_SCC_ENET_FALSE = @CONFIG_RTNET_SCC_ENET_FALSE@
 CONFIG_RTNET_SCC_ENET_TRUE = @CONFIG_RTNET_SCC_ENET_TRUE@
 CONFIG_RTNET_TULIP_FALSE = @CONFIG_RTNET_TULIP_FALSE@
@@ -118,7 +123,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
-RTAI_DIR = @RTAI_DIR@
 RTAI_KMOD_CFLAGS = @RTAI_KMOD_CFLAGS@
 RTNET_MODULE_DIR = @RTNET_MODULE_DIR@
 SET_MAKE = @SET_MAKE@
@@ -166,20 +170,22 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 noinst_LIBRARIES = librt_client.a
-noinst_PROGRAMS = showtime
+EXTRA_PROGRAMS = showtime
 
 librt_client_a_SOURCES = rt_client.c
 
 librt_client_a_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
+PROGS = $(am__append_1)
 
 showtime_LDADD = $(NCURSES_LIBS)
 subdir = rtmac/examples/mrtt
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/include/rtnet_config.h
+CONFIG_HEADER = $(top_builddir)/config/config.h
 CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
@@ -187,15 +193,13 @@ librt_client_a_AR = $(AR) cru
 librt_client_a_LIBADD =
 am_librt_client_a_OBJECTS = librt_client_a-rt_client.$(OBJEXT)
 librt_client_a_OBJECTS = $(am_librt_client_a_OBJECTS)
-noinst_PROGRAMS = showtime$(EXEEXT)
-PROGRAMS = $(noinst_PROGRAMS)
-
+EXTRA_PROGRAMS = showtime$(EXEEXT)
 showtime_SOURCES = showtime.c
 showtime_OBJECTS = showtime.$(OBJEXT)
 showtime_DEPENDENCIES =
 showtime_LDFLAGS =
 
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/include
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/librt_client_a-rt_client.Po \
@@ -227,13 +231,6 @@ librt_client.a: $(librt_client_a_OBJECTS) $(librt_client_a_DEPENDENCIES)
 	-rm -f librt_client.a
 	$(librt_client_a_AR) librt_client.a $(librt_client_a_OBJECTS) $(librt_client_a_LIBADD)
 	$(RANLIB) librt_client.a
-
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
 showtime$(EXEEXT): $(showtime_OBJECTS) $(showtime_DEPENDENCIES) 
 	@rm -f showtime$(EXEEXT)
 	$(LINK) $(showtime_LDFLAGS) $(showtime_OBJECTS) $(showtime_LDADD) $(LIBS)
@@ -413,7 +410,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES) $(PROGRAMS) all-local
+all-am: Makefile $(LIBRARIES) all-local
 
 installdirs:
 install: install-am
@@ -443,7 +440,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS mostlyclean-am
+	mostlyclean-am
 
 distclean: distclean-am
 
@@ -488,22 +485,22 @@ ps-am:
 uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS ctags distclean distclean-compile \
-	distclean-depend distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am info info-am install \
-	install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool pdf \
-	pdf-am ps ps-am tags uninstall uninstall-am uninstall-info-am
+	clean-generic clean-libtool clean-noinstLIBRARIES ctags \
+	distclean distclean-compile distclean-depend distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am info \
+	info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-info install-info-am \
+	install-man install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-info-am
 
 
 rt_client.o: librt_client.a
 	$(LD) --whole-archive $< -r -o $@
 
-all-local: rt_client.o showtime
+all-local: rt_client.o $(PROGS)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -1,19 +1,16 @@
 /* config/config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Be build for rtai 24.1.x */
+/* we are building for x86 */
+#undef CONFIG_ARCH_I386
+
+/* we are building for powerpc */
+#undef CONFIG_ARCH_PPC
+
+/* We build for rtai 24.1.x */
 #undef CONFIG_RTAI_24
 
-/* Be build for rtai 3.0.x */
+/* We build for rtai 3.0.x */
 #undef CONFIG_RTAI_30
-
-/* Use Adeos-based HAL */
-#undef CONFIG_RTAI_ADEOS
-
-/* Kconfig */
-#undef CONFIG_RTAI_LINUX24
-
-/* Use legacy RTHAL */
-#undef CONFIG_RTAI_RTHAL
 
 /* Build system alias */
 #undef CONFIG_RTNET_BUILD_STRING
