@@ -65,12 +65,12 @@ static int route_solicit_handler(struct rt_proc_call *call)
 
 
 
-static void cleanup_route_solicit(struct rt_proc_call *call)
+static void cleanup_route_solicit(void *priv_data)
 {
     struct route_solicit_params *param;
 
 
-    param = rtpc_get_priv(call, struct route_solicit_params);
+    param = (struct route_solicit_params *)priv_data;
     rtdev_dereference(param->rtdev);
 }
 

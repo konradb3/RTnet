@@ -92,8 +92,11 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
 
 
     call = kmalloc(sizeof(struct rt_proc_call) + priv_data_size, GFP_KERNEL);
-    if (call == NULL)
+    if (call == NULL) {
+        if (call->cleanup_handler != NULL)
+            call->cleanup_handler(priv_data);
         return -ENOMEM;
+    }
 
     memcpy(call->priv_data, priv_data, priv_data_size);
 
@@ -126,7 +129,7 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
 
     if (atomic_dec_and_test(&call->ref_count)) {
         if (call->cleanup_handler != NULL)
-            call->cleanup_handler(call);
+            call->cleanup_handler(&call->priv_data);
         kfree(call);
     }
 
@@ -214,7 +217,7 @@ static void rtpc_signal_handler(void)
 
         if (atomic_dec_and_test(&call->ref_count)) {
             if (call->cleanup_handler != NULL)
-                call->cleanup_handler(call);
+                call->cleanup_handler(&call->priv_data);
             kfree(call);
         }
     }
@@ -237,7 +240,7 @@ void rtpc_complete_call_nrt(struct rt_proc_call *call, int result)
 
     if (atomic_dec_and_test(&call->ref_count)) {
         if (call->cleanup_handler != NULL)
-            call->cleanup_handler(call);
+            call->cleanup_handler(&call->priv_data);
         kfree(call);
     }
 }

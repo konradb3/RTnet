@@ -34,8 +34,8 @@ struct rt_proc_call;
 
 typedef int (*rtpc_proc)(struct rt_proc_call *call);
 typedef void (*rtpc_copy_back_proc)(struct rt_proc_call *call,
-                                    void* priv_data);
-typedef void (*rtpc_cleanup_proc)(struct rt_proc_call *call);
+                                    void *priv_data);
+typedef void (*rtpc_cleanup_proc)(void *priv_data);
 
 struct rt_proc_call {
     struct list_head    list_entry;
@@ -52,7 +52,7 @@ struct rt_proc_call {
 
 
 int rtpc_dispatch_call(rtpc_proc rt_proc, unsigned int timeout,
-                       void* priv_data, size_t priv_data_size,
+                       void *priv_data, size_t priv_data_size,
                        rtpc_copy_back_proc copy_back_handler,
                        rtpc_cleanup_proc cleanup_handler);
 

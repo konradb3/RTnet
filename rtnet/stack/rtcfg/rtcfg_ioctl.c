@@ -63,13 +63,11 @@ void keep_cmd_add(struct rt_proc_call *call, void *priv_data)
 
 
 
-void cleanup_cmd_add(struct rt_proc_call *call)
+void cleanup_cmd_add(void *priv_data)
 {
-    struct rtcfg_cmd *cmd;
+    struct rtcfg_cmd *cmd = (struct rtcfg_cmd *)priv_data;
     void             *buf;
 
-
-    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
     /* unlock proc and update directory structure */
     rtcfg_unlockwr_proc(cmd->ifindex);
@@ -92,13 +90,11 @@ void cleanup_cmd_add(struct rt_proc_call *call)
 
 
 
-void cleanup_cmd_del(struct rt_proc_call *call)
+void cleanup_cmd_del(void *priv_data)
 {
-    struct rtcfg_cmd *cmd;
+    struct rtcfg_cmd *cmd = (struct rtcfg_cmd *)priv_data;
     void             *buf;
 
-
-    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
     /* unlock proc and update directory structure */
     rtcfg_unlockwr_proc(cmd->ifindex);
@@ -141,14 +137,12 @@ void copy_stage_1_data(struct rt_proc_call *call, void *priv_data)
 
 
 
-void cleanup_cmd_client(struct rt_proc_call *call)
+void cleanup_cmd_client(void *priv_data)
 {
-    struct rtcfg_cmd *cmd;
+    struct rtcfg_cmd *cmd = (struct rtcfg_cmd *)priv_data;
     void             *station_buf;
     struct rtskb     *rtskb;
 
-
-    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
     station_buf = cmd->args.client.station_buf;
     if (station_buf != NULL)
@@ -191,13 +185,11 @@ void copy_stage_2_data(struct rt_proc_call *call, void *priv_data)
 
 
 
-void cleanup_cmd_announce(struct rt_proc_call *call)
+void cleanup_cmd_announce(void *priv_data)
 {
-    struct rtcfg_cmd *cmd;
+    struct rtcfg_cmd *cmd = (struct rtcfg_cmd *)priv_data;
     struct rtskb     *rtskb;
 
-
-    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
     rtskb = cmd->args.announce.rtskb;
     if (rtskb != NULL)
