@@ -28,13 +28,13 @@
 #include <rtnet_sys.h>
 
 
-#define CONFIG_RTCFG_DEBUG
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 
 /***
  * RTcfg debugging
  */
-#ifdef CONFIG_RTCFG_DEBUG
+#ifdef CONFIG_RTNET_RTCFG_DEBUG
 
 extern int rtcfg_debug;
 

@@ -25,6 +25,7 @@
 #include <linux/kernel.h>
 
 #include <rtcfg/rtcfg.h>
+#include <rtcfg/rtcfg_conn_event.h>
 #include <rtcfg/rtcfg_event.h>
 #include <rtcfg/rtcfg_frame.h>
 
@@ -32,31 +33,37 @@
 /****************************** states ***************************************/
 static int rtcfg_conn_state_searching(
     struct rtcfg_connection *conn, RTCFG_EVENT event_id, void* event_data);
-static int rtcfg_conn_state_conn_1(
+static int rtcfg_conn_state_stage_1(
     struct rtcfg_connection *conn, RTCFG_EVENT event_id, void* event_data);
-static int rtcfg_conn_state_established(
+static int rtcfg_conn_state_stage_2(
+    struct rtcfg_connection *conn, RTCFG_EVENT event_id, void* event_data);
+static int rtcfg_conn_state_ready(
     struct rtcfg_connection *conn, RTCFG_EVENT event_id, void* event_data);
 
 
-#ifdef CONFIG_RTCFG_DEBUG
-
+#ifdef CONFIG_RTNET_RTCFG_DEBUG
 const char *rtcfg_conn_state[] = {
     "RTCFG_CONN_SEARCHING",
-    "RTCFG_CONN_1",
-    "RTCFG_CONN_ESTABLISHED"
+    "RTCFG_CONN_STAGE_1",
+    "RTCFG_CONN_STAGE_2",
+    "RTCFG_CONN_READY"
 };
 
 extern char *rtcfg_event[];
+#endif /* CONFIG_RTNET_RTCFG_DEBUG */
 
-#endif /* CONFIG_RTCFG_DEBUG */
+
+static void rtcfg_conn_client_configured(struct rtcfg_connection *conn);
+
 
 
 static int (*state[])(struct rtcfg_connection *conn, RTCFG_EVENT event_id,
                       void* event_data) =
 {
     rtcfg_conn_state_searching,
-    rtcfg_conn_state_conn_1,
-    rtcfg_conn_state_established
+    rtcfg_conn_state_stage_1,
+    rtcfg_conn_state_stage_2,
+    rtcfg_conn_state_ready
 };
 
 
@@ -89,11 +96,41 @@ static void rtcfg_next_conn_state(struct rtcfg_connection *conn,
 static int rtcfg_conn_state_searching(struct rtcfg_connection *conn,
                                       RTCFG_EVENT event_id, void* event_data)
 {
+    struct rtcfg_device       *rtcfg_dev = &device[conn->ifindex];
+    struct rtskb              *rtskb = (struct rtskb *)event_data;
+    struct rtcfg_frm_announce *announce_new;
+    int                       packets;
+
+
     switch (event_id) {
         case RTCFG_FRM_ANNOUNCE_NEW:
-            rtcfg_next_conn_state(conn, RTCFG_CONN_1);
+            announce_new = (struct rtcfg_frm_announce *)rtskb->data;
 
-            rtcfg_send_stage_2(conn);
+            conn->flags = announce_new->flags;
+            if (announce_new->burstrate < conn->burstrate)
+                conn->burstrate = announce_new->burstrate;
+
+            rtcfg_next_conn_state(conn, RTCFG_CONN_STAGE_1);
+
+            rtcfg_dev->stations_found++;
+            if ((conn->flags & RTCFG_FLAG_READY) != 0)
+                rtcfg_dev->stations_ready++;
+
+            if (((conn->flags & RTCFG_FLAG_STAGE_2_DATA) != 0) &&
+                (conn->stage2_file != NULL)) {
+                packets = conn->burstrate - 1;
+
+                rtcfg_send_stage_2(conn, 1);
+
+                while ((conn->cfg_offs < conn->stage2_file->size) &&
+                       (packets > 0)) {
+                    rtcfg_send_stage_2_frag(conn);
+                    packets--;
+                }
+            } else {
+                rtcfg_send_stage_2(conn, 0);
+                conn->flags &= ~RTCFG_FLAG_STAGE_2_DATA;
+            }
 
             break;
 
@@ -107,15 +144,39 @@ static int rtcfg_conn_state_searching(struct rtcfg_connection *conn,
 
 
 
-static int rtcfg_conn_state_conn_1(struct rtcfg_connection *conn,
-                                   RTCFG_EVENT event_id, void* event_data)
+static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
+                                    RTCFG_EVENT event_id, void* event_data)
 {
+    struct rtskb             *rtskb = (struct rtskb *)event_data;
+    struct rtcfg_frm_ack_cfg *ack_cfg;
+    int                      packets;
+
+
     switch (event_id) {
         case RTCFG_FRM_ACK_CFG:
-            /* ... */
+            ack_cfg = (struct rtcfg_frm_ack_cfg *)rtskb->data;
+            conn->cfg_offs = ntohl(ack_cfg->ack_len);
 
-            rtcfg_next_conn_state(conn, RTCFG_CONN_ESTABLISHED);
-            device[conn->ifindex].clients_found++;
+            if ((conn->flags & RTCFG_FLAG_STAGE_2_DATA) != 0) {
+                if (conn->cfg_offs >= conn->stage2_file->size) {
+                    rtcfg_conn_client_configured(conn);
+                    rtcfg_next_conn_state(conn,
+                        ((conn->flags & RTCFG_FLAG_READY) != 0) ?
+                        RTCFG_CONN_READY : RTCFG_CONN_STAGE_2);
+                } else {
+                    packets = conn->burstrate;
+                    while ((conn->cfg_offs < conn->stage2_file->size) &&
+                        (packets > 0)) {
+                        rtcfg_send_stage_2_frag(conn);
+                        packets--;
+                    }
+                }
+            } else {
+                rtcfg_conn_client_configured(conn);
+                rtcfg_next_conn_state(conn,
+                    ((conn->flags & RTCFG_FLAG_READY) != 0) ?
+                    RTCFG_CONN_READY : RTCFG_CONN_STAGE_2);
+            }
 
             break;
 
@@ -129,8 +190,47 @@ static int rtcfg_conn_state_conn_1(struct rtcfg_connection *conn,
 
 
 
-static int rtcfg_conn_state_established(struct rtcfg_connection *conn,
-                                        RTCFG_EVENT event_id, void* event_data)
+static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
+                                    RTCFG_EVENT event_id, void* event_data)
+{
+    struct rtcfg_device *rtcfg_dev = &device[conn->ifindex];
+    struct rt_proc_call *call;
+    struct rtcfg_cmd    *cmd_event;
+
+
+    switch (event_id) {
+        case RTCFG_FRM_READY:
+            rtcfg_next_conn_state(conn, RTCFG_CONN_READY);
+
+            rtcfg_dev->stations_ready++;
+
+            if (rtcfg_dev->stations_ready == rtcfg_dev->other_stations)
+                while (1) {
+                    call = rtcfg_dequeue_blocking_call(conn->ifindex);
+                    if (call == NULL)
+                        break;
+
+                    cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+                    rtpc_complete_call(call,
+                        (cmd_event->event_id == RTCFG_CMD_READY) ?
+                            0 : -EINVAL);
+                }
+
+            break;
+
+        default:
+            RTCFG_DEBUG(1, "RTcfg: unknown event %s for conn %p in %s()\n",
+                        rtcfg_event[event_id], conn, __FUNCTION__);
+            return -EINVAL;
+    }
+    return 0;
+}
+
+
+
+static int rtcfg_conn_state_ready(struct rtcfg_connection *conn,
+                                  RTCFG_EVENT event_id, void* event_data)
 {
     switch (event_id) {
 
@@ -140,4 +240,28 @@ static int rtcfg_conn_state_established(struct rtcfg_connection *conn,
             return -EINVAL;
     }
     return 0;
+}
+
+
+
+static void rtcfg_conn_client_configured(struct rtcfg_connection *conn)
+{
+    struct rtcfg_device *rtcfg_dev = &device[conn->ifindex];
+    struct rt_proc_call *call;
+    struct rtcfg_cmd    *cmd_event;
+
+
+    rtcfg_dev->clients_configured++;
+    if (rtcfg_dev->clients_configured == rtcfg_dev->other_stations)
+        while (1) {
+            call = rtcfg_dequeue_blocking_call(conn->ifindex);
+            if (call == NULL)
+                break;
+
+            cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+            rtpc_complete_call(call,
+                (cmd_event->event_id == RTCFG_CMD_WAIT) ?
+                    0 : -EINVAL);
+        }
 }

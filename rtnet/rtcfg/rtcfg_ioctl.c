@@ -23,9 +23,11 @@
  */
 
 #include <asm/uaccess.h>
+#include <linux/file.h>
 
 #include <rtcfg.h>
 #include <rtnet_rtpc.h>
+#include <rtcfg/rtcfg_conn_event.h>
 #include <rtcfg/rtcfg_event.h>
 #include <rtcfg/rtcfg_frame.h>
 
@@ -41,16 +43,66 @@ int rtcfg_event_handler(struct rt_proc_call *call)
 
 
 
+void keep_cmd_add(struct rt_proc_call *call, void *priv_data)
+{
+    struct rtcfg_cmd *cmd;
+    int              result = rtpc_get_result(call);
+
+
+    /* do nothing on error (<0), or if file already present (=0) */
+    if (result <= 0)
+        return;
+
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    /* Don't cleanup any buffers, we are going to recycle them! */
+    rtpc_set_cleanup_handler(call, NULL);
+}
+
+
+
 void cleanup_cmd_add(struct rt_proc_call *call)
 {
     struct rtcfg_cmd *cmd;
-    void             *conn_buf;
+    void             *buf;
 
 
-    cmd      = rtpc_get_priv(call, struct rtcfg_cmd);
-    conn_buf = cmd->args.add.conn_buf;
-    if (conn_buf != NULL)
-        kfree(conn_buf);
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    buf = cmd->args.add.conn_buf;
+    if (buf != NULL)
+        kfree(buf);
+
+    buf = cmd->args.add.stage1_data;
+    if (buf != NULL)
+        kfree(buf);
+
+    if (cmd->args.add.stage2_file != NULL) {
+        buf = cmd->args.add.stage2_file->buffer;
+        if (buf != NULL)
+            vfree(buf);
+        kfree(cmd->args.add.stage2_file);
+    }
+}
+
+
+
+void copy_stage_1_data(struct rt_proc_call *call, void *priv_data)
+{
+    struct rtcfg_cmd *cmd;
+    int              result = rtpc_get_result(call);
+
+
+    if (result <= 0)
+        return;
+
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    if (cmd->args.client.buffer_size < result)
+        rtpc_set_result(call, -ENOSPC);
+    else if (copy_to_user(cmd->args.client.buffer,
+                          cmd->args.client.rtskb->data, result) != 0)
+        rtpc_set_result(call, -EFAULT);
 }
 
 
@@ -58,13 +110,64 @@ void cleanup_cmd_add(struct rt_proc_call *call)
 void cleanup_cmd_client(struct rt_proc_call *call)
 {
     struct rtcfg_cmd *cmd;
-    void             *addr_buf;
+    void             *station_buf;
+    struct rtskb     *rtskb;
 
 
-    cmd      = rtpc_get_priv(call, struct rtcfg_cmd);
-    addr_buf = cmd->args.client.addr_buf;
-    if (addr_buf != NULL)
-        kfree(addr_buf);
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    station_buf = cmd->args.client.station_buf;
+    if (station_buf != NULL)
+        kfree(station_buf);
+
+    rtskb = cmd->args.client.rtskb;
+    if (rtskb != NULL)
+        kfree_rtskb(rtskb);
+}
+
+
+
+void copy_stage_2_data(struct rt_proc_call *call, void *priv_data)
+{
+    struct rtcfg_cmd *cmd;
+    int              result = rtpc_get_result(call);
+    struct rtskb     *rtskb;
+
+
+    if (result <= 0)
+        return;
+
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    if (cmd->args.announce.buffer_size < result)
+        rtpc_set_result(call, -ENOSPC);
+    else {
+        rtskb = cmd->args.announce.rtskb;
+        do {
+            if (copy_to_user(cmd->args.announce.buffer,
+                             rtskb->data, rtskb->len) != 0) {
+                rtpc_set_result(call, -EFAULT);
+                break;
+            }
+            cmd->args.announce.buffer += rtskb->len;
+            rtskb = rtskb->next;
+        } while (rtskb != NULL);
+    }
+}
+
+
+
+void cleanup_cmd_announce(struct rt_proc_call *call)
+{
+    struct rtcfg_cmd *cmd;
+    struct rtskb     *rtskb;
+
+
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    rtskb = cmd->args.announce.rtskb;
+    if (rtskb != NULL)
+        kfree_rtskb(rtskb);
 }
 
 
@@ -73,7 +176,10 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 {
     struct rtcfg_cmd        cmd;
     struct rtcfg_connection *conn_buf;
-    u8                      *addr_buf;
+    struct rtcfg_file       *file;
+    void                    *data_buf;
+    size_t                  size;
+    struct rtcfg_station    *station_buf;
     int                     ret;
 
 
@@ -87,7 +193,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
     switch (request) {
         case RTCFG_IOC_SERVER:
             ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
-                                     sizeof(cmd), NULL);
+                                     sizeof(cmd), NULL, NULL);
             break;
 
         case RTCFG_IOC_ADD_IP:
@@ -96,32 +202,149 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
                 return -ENOMEM;
             cmd.args.add.conn_buf = conn_buf;
 
+            data_buf = NULL;
+            size = cmd.args.add.stage1_size;
+            if (size > 0) {
+                /* check stage 1 data size */
+                if (sizeof(struct rtcfg_frm_stage_1_cfg) +
+                    2*RTCFG_ADDRSIZE_IP + size > rtdev->mtu) {
+                    kfree(conn_buf);
+                    return -ESTAGE1SIZE;
+                }
+
+                data_buf = kmalloc(size, GFP_KERNEL);
+                if (data_buf == NULL) {
+                    kfree(conn_buf);
+                    return -ENOMEM;
+                }
+
+                ret = copy_from_user(data_buf, cmd.args.add.stage1_data, size);
+                if (ret != 0) {
+                    kfree(conn_buf);
+                    kfree(data_buf);
+                    return -EFAULT;
+                }
+            }
+            cmd.args.add.stage1_data = data_buf;
+
+            file = NULL;
+            if (cmd.args.add.stage2_filename != NULL) {
+                size = strnlen_user(cmd.args.add.stage2_filename, PATH_MAX);
+
+                file = kmalloc(sizeof(struct rtcfg_file) + size, GFP_KERNEL);
+                if (file == NULL) {
+                    kfree(conn_buf);
+                    if (data_buf != NULL)
+                        kfree(data_buf);
+                    return -ENOMEM;
+                }
+
+                file->name   = ((char *)file) + sizeof(struct rtcfg_file);
+                file->buffer = NULL;
+
+                ret = copy_from_user((char *)file->name,
+                                     (char *)cmd.args.add.stage2_filename,
+                                     size);
+                if (ret != 0) {
+                    kfree(conn_buf);
+                    kfree(file);
+                    if (data_buf != NULL)
+                        kfree(data_buf);
+                    return -EFAULT;
+                }
+            }
+            cmd.args.add.stage2_file = file;
+
             ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
-                                     sizeof(cmd), cleanup_cmd_add);
+                                     sizeof(cmd), keep_cmd_add,
+                                     cleanup_cmd_add);
+
+            /* load file if missing */
+            if (ret > 0) {
+                struct file  *filp;
+                mm_segment_t oldfs;
+
+
+                filp = filp_open(file->name, O_RDONLY, 0);
+                if (IS_ERR(filp)) {
+                    kfree(conn_buf);
+                    kfree(file);
+                    if (data_buf != NULL)
+                        kfree(data_buf);
+                    return PTR_ERR(filp);
+                }
+
+                file->size = filp->f_dentry->d_inode->i_size;
+
+                file->buffer = vmalloc(file->size);
+                if (file->buffer == NULL) {
+                    fput(filp);
+                    kfree(conn_buf);
+                    kfree(file);
+                    if (data_buf != NULL)
+                        kfree(data_buf);
+                    return -ENOMEM;
+                }
+
+                oldfs = get_fs();
+                set_fs(KERNEL_DS);
+                filp->f_pos = 0;
+
+                ret = filp->f_op->read(filp, file->buffer, file->size,
+                                       &filp->f_pos);
+
+                set_fs(oldfs);
+                fput(filp);
+
+                if (ret != file->size) {
+                    kfree(conn_buf);
+                    vfree(file->buffer);
+                    kfree(file);
+                    if (data_buf != NULL)
+                        kfree(data_buf);
+                    return -EIO;
+                }
+
+                /* dispatch again, this time with new file attached */
+                ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
+                                         sizeof(cmd), NULL, cleanup_cmd_add);
+            }
+
             break;
 
         case RTCFG_IOC_WAIT:
             ret = rtpc_dispatch_call(rtcfg_event_handler,
                                      cmd.args.wait.timeout, &cmd,
-                                     sizeof(cmd), NULL);
+                                     sizeof(cmd), NULL, NULL);
             break;
 
         case RTCFG_IOC_CLIENT:
-            addr_buf = kmalloc(RTCFG_MAX_ADDRSIZE*cmd.args.client.max_clients,
-                               GFP_KERNEL);
-            if (addr_buf == NULL)
+            station_buf = kmalloc(sizeof(struct rtcfg_station) *
+                                  cmd.args.client.max_stations, GFP_KERNEL);
+            if (station_buf == NULL)
                 return -ENOMEM;
-            cmd.args.client.addr_buf = addr_buf;
+            cmd.args.client.station_buf = station_buf;
+            cmd.args.client.rtskb       = NULL;
 
             ret = rtpc_dispatch_call(rtcfg_event_handler,
                                      cmd.args.client.timeout, &cmd,
-                                     sizeof(cmd), cleanup_cmd_client);
+                                     sizeof(cmd), copy_stage_1_data,
+                                     cleanup_cmd_client);
             break;
 
         case RTCFG_IOC_ANNOUNCE:
+            cmd.args.announce.rtskb = NULL;
+
             ret = rtpc_dispatch_call(rtcfg_event_handler,
                                      cmd.args.announce.timeout, &cmd,
-                                     sizeof(cmd), NULL);
+                                     sizeof(cmd), copy_stage_2_data,
+                                     cleanup_cmd_announce);
+            break;
+
+        case RTCFG_IOC_READY:
+            ret = rtpc_dispatch_call(rtcfg_event_handler,
+                                     cmd.args.ready.timeout, &cmd,
+                                     sizeof(cmd), NULL, NULL);
             break;
 
         default:

@@ -25,10 +25,12 @@
 #ifndef __RTCFG_EVENT_H_
 #define __RTCFG_EVENT_H_
 
+#include <linux/if_ether.h>
 #include <linux/netdevice.h>
 
 #include <rtcfg.h>
 #include <rtdev.h>
+#include <rtnet_rtpc.h>
 
 
 typedef enum {
@@ -39,43 +41,42 @@ typedef enum {
     RTCFG_MAIN_CLIENT_ANNOUNCED,
     RTCFG_MAIN_CLIENT_ALL_KNOWN,
     RTCFG_MAIN_CLIENT_ALL_FRAMES,
-    RTCFG_MAIN_CLIENT_2
+    RTCFG_MAIN_CLIENT_2,
+    RTCFG_MAIN_CLIENT_READY
 } RTCFG_MAIN_STATE;
 
-typedef enum {
-    RTCFG_CONN_SEARCHING,
-    RTCFG_CONN_1,
-    RTCFG_CONN_ESTABLISHED
-} RTCFG_CONN_STATE;
-
-struct rtcfg_connection {
-    struct list_head entry;
-    int              ifindex;
-    RTCFG_CONN_STATE state;
-    u8               mac_addr[MAX_ADDR_LEN];
-    u8               addr_type;
-    union {
-        u32          ip_addr;
-    } addr;
-    u32              cfg_offs;
+struct rtcfg_station {
+    u8 mac_addr[ETH_ALEN]; /* Ethernet-specific! */
+    u8 flags;
 };
 
 struct rtcfg_device {
-    volatile RTCFG_MAIN_STATE state;
-    struct list_head          conn_list;
-    u32                       clients;
-    u32                       clients_found;
-    rtos_res_lock_t           dev_lock;
-    struct list_head          event_calls;
-    rtos_spinlock_t           event_calls_lock;
-    rtos_task_t               timer_task;
+    RTCFG_MAIN_STATE     state;
+    u32                  other_stations;
+    u32                  stations_found;
+    u32                  stations_ready;
+    rtos_res_lock_t      dev_lock;
+    struct list_head     event_calls;
+    rtos_spinlock_t      event_calls_lock;
+    rtos_task_t          timer_task;
+    unsigned int         flags;
 
     /* client related */
-    u8                        addr_type;
-    u8                        srv_mac_addr[MAX_ADDR_LEN];
-    u32                       cfg_offs;
-    u32                       max_clients;
-    u8                        *client_addr_list;
+    unsigned int         addr_type;
+    u8                   srv_mac_addr[ETH_ALEN]; /* Ethernet-specific! */
+    u8                   *stage2_buffer;
+    u32                  cfg_len;
+    u32                  cfg_offs;
+    unsigned int         packet_counter;
+    u32                  chain_len;
+    struct rtskb         *stage2_chain;
+    u32                  max_stations;
+    struct rtcfg_station *station_addr_list;
+
+    /* server related */
+    u32                  clients_configured;
+    struct list_head     conn_list;
+    unsigned int         burstrate;
 };
 
 
@@ -83,6 +84,8 @@ extern struct rtcfg_device device[MAX_RT_DEVICES];
 
 
 int rtcfg_do_main_event(int ifindex, RTCFG_EVENT event_id, void* event_data);
+
+struct rt_proc_call *rtcfg_dequeue_blocking_call(int ifindex);
 
 void rtcfg_init_state_machines(void);
 void rtcfg_cleanup_state_machines(void);

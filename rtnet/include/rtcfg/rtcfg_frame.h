@@ -31,13 +31,16 @@
 #include <rtcfg/rtcfg_event.h>
 
 
+#define ETH_RTCFG                   0x9022
+
 #define RTCFG_ID_STAGE_1_CFG        0
 #define RTCFG_ID_ANNOUNCE_NEW       1
 #define RTCFG_ID_ANNOUNCE_REPLY     2
 #define RTCFG_ID_STAGE_2_CFG        3
 #define RTCFG_ID_STAGE_2_CFG_FRAG   4
 #define RTCFG_ID_ACK_CFG            5
-#define RTCFG_ID_HEARTBEAT          6
+#define RTCFG_ID_READY              6
+#define RTCFG_ID_HEARTBEAT          7
 
 #define RTCFG_ADDR_MAC              0
 #define RTCFG_ADDR_IP               1
@@ -45,6 +48,9 @@
 #define RTCFG_ADDRSIZE_MAC          0
 #define RTCFG_ADDRSIZE_IP           4
 #define RTCFG_MAX_ADDRSIZE          RTCFG_ADDRSIZE_IP
+
+#define RTCFG_FLAG_STAGE_2_DATA     1
+#define RTCFG_FLAG_READY            2
 
 
 struct rtcfg_frm_head {
@@ -57,7 +63,7 @@ struct rtcfg_frm_stage_1_cfg {
     u8                    addr_type;
     u8                    client_addr[0];
     u8                    server_addr[0];
-    u8                    burst_rate;
+    u8                    burstrate;
     u16                   cfg_len;
     u8                    cfg_data[0];
 } __attribute__((packed));
@@ -66,19 +72,14 @@ struct rtcfg_frm_announce {
     struct rtcfg_frm_head head;
     u8                    addr_type;
     u8                    addr[0];
-} __attribute__((packed));
-
-struct rtcfg_frm_announce_new {
-    struct rtcfg_frm_head head;
-    u8                    addr_type;
-    u8                    addr[0];
-    u8                    get_cfg;
-    u8                    burst_rate;
+    u8                    flags;
+    u8                    burstrate;
 } __attribute__((packed));
 
 struct rtcfg_frm_stage_2_cfg {
     struct rtcfg_frm_head head;
-    u32                   clients;
+    u8                    flags;
+    u32                   stations;
     u16                   heartbeat_period;
     u32                   cfg_len;
     u8                    cfg_data[0];
@@ -95,23 +96,22 @@ struct rtcfg_frm_ack_cfg {
     u32                   ack_len;
 } __attribute__((packed));
 
+struct rtcfg_frm_ready {
+    struct rtcfg_frm_head head;
+} __attribute__((packed));
+
 struct rtcfg_frm_heartbeat {
     struct rtcfg_frm_head head;
 } __attribute__((packed));
 
 
-struct rtcfg_frm_event {
-    int                   frm_size;
-    struct rtcfg_frm_head *frm_head;
-    struct sockaddr_ll    *addr;
-};
-
-
 int rtcfg_send_stage_1(struct rtcfg_connection *conn);
-int rtcfg_send_stage_2(struct rtcfg_connection *conn);
+int rtcfg_send_stage_2(struct rtcfg_connection *conn, int send_data);
+int rtcfg_send_stage_2_frag(struct rtcfg_connection *conn);
 int rtcfg_send_announce_new(int ifindex);
 int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr);
 int rtcfg_send_ack(int ifindex);
+int rtcfg_send_ready(int ifindex);
 
 int __init rtcfg_init_frames(void);
 void rtcfg_cleanup_frames(void);

@@ -25,7 +25,35 @@
 #ifndef __RTCFG_CONN_EVENT_H_
 #define __RTCFG_CONN_EVENT_H_
 
-#include <rtcfg/rtcfg_event.h>
+#include <linux/netdevice.h>
+
+#include <rtcfg.h>
+#include <rtcfg/rtcfg_file.h>
+
+
+typedef enum {
+    RTCFG_CONN_SEARCHING,
+    RTCFG_CONN_STAGE_1,
+    RTCFG_CONN_STAGE_2,
+    RTCFG_CONN_READY
+} RTCFG_CONN_STATE;
+
+struct rtcfg_connection {
+    struct list_head  entry;
+    int               ifindex;
+    RTCFG_CONN_STATE  state;
+    u8                mac_addr[MAX_ADDR_LEN];
+    unsigned int      addr_type;
+    union {
+        u32           ip_addr;
+    } addr;
+    void              *stage1_data;
+    size_t            stage1_size;
+    struct rtcfg_file *stage2_file;
+    u32               cfg_offs;
+    unsigned int      flags;
+    unsigned int      burstrate;
+};
 
 
 int rtcfg_do_conn_event(struct rtcfg_connection *conn, RTCFG_EVENT event_id,
