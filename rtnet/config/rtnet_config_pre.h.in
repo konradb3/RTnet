@@ -9,10 +9,10 @@
 /* We build for rtai 24.1.x */
 #undef CONFIG_RTAI_24
 
-/* We build for rtai 3.0.x */
+/* We build for rtai 3.0rx */
 #undef CONFIG_RTAI_30
 
-/* We build for rtai 3.1.x */
+/* We build for rtai 3.1rx */
 #undef CONFIG_RTAI_31
 
 /* Build system alias */

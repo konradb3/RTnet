@@ -40,7 +40,7 @@ if test x"${1}" = x"clean"; then
     exit
 fi
 
-aclocal
+aclocal -I config/m4
 libtoolize --force --copy
 autoheader
 automake --add-missing --copy --gnu -Wall

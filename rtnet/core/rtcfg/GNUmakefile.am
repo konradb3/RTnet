@@ -1,8 +1,14 @@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
+modext = @RTNET_MODULE_EXT@
 
-noinst_LIBRARIES = librtcfg.a
+EXTRA_LIBRARIES = libkernel_rtcfg.a
 
-librtcfg_a_SOURCES = \
+libkernel_rtcfg_a_CPPFLAGS = \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
+	@RTAI_KMOD_CFLAGS@
+
+libkernel_rtcfg_a_SOURCES = \
 	rtcfg_module.c \
 	rtcfg_event.c \
 	rtcfg_client_event.c \
@@ -13,16 +19,20 @@ librtcfg_a_SOURCES = \
 	rtcfg_file.c \
 	rtcfg_proc.c
 
-AM_CFLAGS = \
-	-I$(top_srcdir)/core/include \
-	-I$(top_builddir)/core/include \
-	@RTAI_KMOD_CFLAGS@
+OBJS = rtcfg$(modext)
 
-rtcfg.o: librtcfg.a
+rtcfg.o: libkernel_rtcfg.a
 	$(LD) --whole-archive $< -r -o $@
 
-all-local: rtcfg.o
+rtcfg.ko: @RTNET_KBUILD_ENV@
+rtcfg.ko: $(libkernel_rtcfg_a_SOURCES)
+	@RTNET_KBUILD_CMD@
 
-install-exec-local: rtcfg.o
+all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_rtcfg_a_SOURCES)
+	@RTNET_KBUILD_CLEAN@

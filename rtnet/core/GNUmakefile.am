@@ -9,7 +9,7 @@ if CONFIG_RTNET_RTCFG
 OPTDIRS += rtcfg
 endif
 
-SUBDIRS = $(OPTDIRS) rtmac
+SUBDIRS = rtmac $(OPTDIRS)
 
 libkernel_rtnet_a_CPPFLAGS = \
 	-I$(top_srcdir)/core/include \

@@ -13,8 +13,7 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
-SOURCES = $(libnomac_a_SOURCES)
+SOURCES = $(libkernel_nomac_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -40,26 +39,28 @@ host_triplet = @host@
 subdir = core/rtmac/nomac
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
-libnomac_a_AR = $(AR) $(ARFLAGS)
-libnomac_a_LIBADD =
-am_libnomac_a_OBJECTS = nomac_dev.$(OBJEXT) nomac_ioctl.$(OBJEXT) \
-	nomac_module.$(OBJEXT) nomac_proto.$(OBJEXT)
-libnomac_a_OBJECTS = $(am_libnomac_a_OBJECTS)
+libkernel_nomac_a_AR = $(AR) $(ARFLAGS)
+libkernel_nomac_a_LIBADD =
+am_libkernel_nomac_a_OBJECTS = libkernel_nomac_a-nomac_dev.$(OBJEXT) \
+	libkernel_nomac_a-nomac_ioctl.$(OBJEXT) \
+	libkernel_nomac_a-nomac_module.$(OBJEXT) \
+	libkernel_nomac_a-nomac_proto.$(OBJEXT)
+libkernel_nomac_a_OBJECTS = $(am_libkernel_nomac_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/nomac_dev.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/nomac_ioctl.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/nomac_module.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/nomac_proto.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_nomac_a-nomac_dev.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/libkernel_nomac_a-nomac_module.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/libkernel_nomac_a-nomac_proto.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -68,17 +69,10 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libnomac_a_SOURCES)
-DIST_SOURCES = $(libnomac_a_SOURCES)
-RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
-	html-recursive info-recursive install-data-recursive \
-	install-exec-recursive install-info-recursive \
-	install-recursive installcheck-recursive installdirs-recursive \
-	pdf-recursive ps-recursive uninstall-info-recursive \
-	uninstall-recursive
+SOURCES = $(libkernel_nomac_a_SOURCES)
+DIST_SOURCES = $(libkernel_nomac_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -94,6 +88,8 @@ CCAS = @CCAS@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CONFIG_KBUILD_FALSE = @CONFIG_KBUILD_FALSE@
+CONFIG_KBUILD_TRUE = @CONFIG_KBUILD_TRUE@
 CONFIG_NCURSES_FALSE = @CONFIG_NCURSES_FALSE@
 CONFIG_NCURSES_TRUE = @CONFIG_NCURSES_TRUE@
 CONFIG_NEWLXRT_FALSE = @CONFIG_NEWLXRT_FALSE@
@@ -138,6 +134,7 @@ CONFIG_RTNET_VIA_RHINE_FALSE = @CONFIG_RTNET_VIA_RHINE_FALSE@
 CONFIG_RTNET_VIA_RHINE_TRUE = @CONFIG_RTNET_VIA_RHINE_TRUE@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CROSS_COMPILE = @CROSS_COMPILE@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
@@ -157,7 +154,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-KERNEL_CFLAGS = @KERNEL_CFLAGS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -165,7 +161,6 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
-LXRT_CFLAGS = @LXRT_CFLAGS@
 MAINT = @MAINT@
 MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
@@ -181,6 +176,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
 RTAI_KMOD_CFLAGS = @RTAI_KMOD_CFLAGS@
+RTAI_LXRT_CFLAGS = @RTAI_LXRT_CFLAGS@
 RTNET_KBUILD_CLEAN = @RTNET_KBUILD_CLEAN@
 RTNET_KBUILD_CMD = @RTNET_KBUILD_CMD@
 RTNET_KBUILD_ENV = @RTNET_KBUILD_ENV@
@@ -232,20 +228,21 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
-SUBDIRS = 
-noinst_LIBRARIES = libnomac.a
-libnomac_a_SOURCES = \
+modext = @RTNET_MODULE_EXT@
+EXTRA_LIBRARIES = libkernel_nomac.a
+libkernel_nomac_a_CPPFLAGS = \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
+	@RTAI_KMOD_CFLAGS@
+
+libkernel_nomac_a_SOURCES = \
 	nomac_dev.c \
 	nomac_ioctl.c \
 	nomac_module.c \
 	nomac_proto.c
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/core/include \
-	-I$(top_builddir)/core/include \
-	@RTAI_KMOD_CFLAGS@
-
-all: all-recursive
+OBJS = nomac$(modext)
+all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -278,13 +275,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libnomac.a: $(libnomac_a_OBJECTS) $(libnomac_a_DEPENDENCIES) 
-	-rm -f libnomac.a
-	$(libnomac_a_AR) libnomac.a $(libnomac_a_OBJECTS) $(libnomac_a_LIBADD)
-	$(RANLIB) libnomac.a
+libkernel_nomac.a: $(libkernel_nomac_a_OBJECTS) $(libkernel_nomac_a_DEPENDENCIES) 
+	-rm -f libkernel_nomac.a
+	$(libkernel_nomac_a_AR) libkernel_nomac.a $(libkernel_nomac_a_OBJECTS) $(libkernel_nomac_a_LIBADD)
+	$(RANLIB) libkernel_nomac.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -292,10 +286,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nomac_dev.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nomac_ioctl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nomac_module.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nomac_proto.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_nomac_a-nomac_dev.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_nomac_a-nomac_module.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_nomac_a-nomac_proto.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -321,6 +315,102 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
+libkernel_nomac_a-nomac_dev.o: nomac_dev.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_dev.o -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo" -c -o libkernel_nomac_a-nomac_dev.o `test -f 'nomac_dev.c' || echo '$(srcdir)/'`nomac_dev.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_dev.c' object='libkernel_nomac_a-nomac_dev.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_dev.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_dev.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_dev.o `test -f 'nomac_dev.c' || echo '$(srcdir)/'`nomac_dev.c
+
+libkernel_nomac_a-nomac_dev.obj: nomac_dev.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_dev.obj -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo" -c -o libkernel_nomac_a-nomac_dev.obj `if test -f 'nomac_dev.c'; then $(CYGPATH_W) 'nomac_dev.c'; else $(CYGPATH_W) '$(srcdir)/nomac_dev.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_dev.c' object='libkernel_nomac_a-nomac_dev.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_dev.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_dev.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_dev.obj `if test -f 'nomac_dev.c'; then $(CYGPATH_W) 'nomac_dev.c'; else $(CYGPATH_W) '$(srcdir)/nomac_dev.c'; fi`
+
+libkernel_nomac_a-nomac_dev.lo: nomac_dev.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_dev.lo -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo" -c -o libkernel_nomac_a-nomac_dev.lo `test -f 'nomac_dev.c' || echo '$(srcdir)/'`nomac_dev.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Plo"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_dev.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_dev.c' object='libkernel_nomac_a-nomac_dev.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_dev.Plo' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_dev.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_dev.lo `test -f 'nomac_dev.c' || echo '$(srcdir)/'`nomac_dev.c
+
+libkernel_nomac_a-nomac_ioctl.o: nomac_ioctl.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_ioctl.o -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo" -c -o libkernel_nomac_a-nomac_ioctl.o `test -f 'nomac_ioctl.c' || echo '$(srcdir)/'`nomac_ioctl.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_ioctl.c' object='libkernel_nomac_a-nomac_ioctl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_ioctl.o `test -f 'nomac_ioctl.c' || echo '$(srcdir)/'`nomac_ioctl.c
+
+libkernel_nomac_a-nomac_ioctl.obj: nomac_ioctl.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_ioctl.obj -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo" -c -o libkernel_nomac_a-nomac_ioctl.obj `if test -f 'nomac_ioctl.c'; then $(CYGPATH_W) 'nomac_ioctl.c'; else $(CYGPATH_W) '$(srcdir)/nomac_ioctl.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_ioctl.c' object='libkernel_nomac_a-nomac_ioctl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_ioctl.obj `if test -f 'nomac_ioctl.c'; then $(CYGPATH_W) 'nomac_ioctl.c'; else $(CYGPATH_W) '$(srcdir)/nomac_ioctl.c'; fi`
+
+libkernel_nomac_a-nomac_ioctl.lo: nomac_ioctl.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_ioctl.lo -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo" -c -o libkernel_nomac_a-nomac_ioctl.lo `test -f 'nomac_ioctl.c' || echo '$(srcdir)/'`nomac_ioctl.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Plo"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_ioctl.c' object='libkernel_nomac_a-nomac_ioctl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.Plo' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_ioctl.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_ioctl.lo `test -f 'nomac_ioctl.c' || echo '$(srcdir)/'`nomac_ioctl.c
+
+libkernel_nomac_a-nomac_module.o: nomac_module.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_module.o -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo" -c -o libkernel_nomac_a-nomac_module.o `test -f 'nomac_module.c' || echo '$(srcdir)/'`nomac_module.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_module.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_module.c' object='libkernel_nomac_a-nomac_module.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_module.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_module.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_module.o `test -f 'nomac_module.c' || echo '$(srcdir)/'`nomac_module.c
+
+libkernel_nomac_a-nomac_module.obj: nomac_module.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_module.obj -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo" -c -o libkernel_nomac_a-nomac_module.obj `if test -f 'nomac_module.c'; then $(CYGPATH_W) 'nomac_module.c'; else $(CYGPATH_W) '$(srcdir)/nomac_module.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_module.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_module.c' object='libkernel_nomac_a-nomac_module.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_module.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_module.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_module.obj `if test -f 'nomac_module.c'; then $(CYGPATH_W) 'nomac_module.c'; else $(CYGPATH_W) '$(srcdir)/nomac_module.c'; fi`
+
+libkernel_nomac_a-nomac_module.lo: nomac_module.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_module.lo -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo" -c -o libkernel_nomac_a-nomac_module.lo `test -f 'nomac_module.c' || echo '$(srcdir)/'`nomac_module.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_module.Plo"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_module.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_module.c' object='libkernel_nomac_a-nomac_module.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_module.Plo' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_module.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_module.lo `test -f 'nomac_module.c' || echo '$(srcdir)/'`nomac_module.c
+
+libkernel_nomac_a-nomac_proto.o: nomac_proto.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_proto.o -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo" -c -o libkernel_nomac_a-nomac_proto.o `test -f 'nomac_proto.c' || echo '$(srcdir)/'`nomac_proto.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_proto.c' object='libkernel_nomac_a-nomac_proto.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_proto.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_proto.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_proto.o `test -f 'nomac_proto.c' || echo '$(srcdir)/'`nomac_proto.c
+
+libkernel_nomac_a-nomac_proto.obj: nomac_proto.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_proto.obj -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo" -c -o libkernel_nomac_a-nomac_proto.obj `if test -f 'nomac_proto.c'; then $(CYGPATH_W) 'nomac_proto.c'; else $(CYGPATH_W) '$(srcdir)/nomac_proto.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Po"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_proto.c' object='libkernel_nomac_a-nomac_proto.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_proto.Po' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_proto.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_proto.obj `if test -f 'nomac_proto.c'; then $(CYGPATH_W) 'nomac_proto.c'; else $(CYGPATH_W) '$(srcdir)/nomac_proto.c'; fi`
+
+libkernel_nomac_a-nomac_proto.lo: nomac_proto.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_nomac_a-nomac_proto.lo -MD -MP -MF "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo" -c -o libkernel_nomac_a-nomac_proto.lo `test -f 'nomac_proto.c' || echo '$(srcdir)/'`nomac_proto.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo" "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Plo"; else rm -f "$(DEPDIR)/libkernel_nomac_a-nomac_proto.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='nomac_proto.c' object='libkernel_nomac_a-nomac_proto.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_nomac_a-nomac_proto.Plo' tmpdepfile='$(DEPDIR)/libkernel_nomac_a-nomac_proto.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_nomac_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_nomac_a-nomac_proto.lo `test -f 'nomac_proto.c' || echo '$(srcdir)/'`nomac_proto.c
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -330,65 +420,6 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
-
-# This directory's subdirectories are mostly independent; you can cd
-# into them and run `make' without going through this Makefile.
-# To change the values of `make' variables: instead of editing Makefiles,
-# (1) if the variable is set in `config.status', edit `config.status'
-#     (which will cause the Makefiles to be regenerated when you run `make');
-# (2) otherwise, pass the desired values on the `make' command line.
-$(RECURSIVE_TARGETS):
-	@set fnord $$MAKEFLAGS; amf=$$2; \
-	dot_seen=no; \
-	target=`echo $@ | sed s/-recursive//`; \
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  echo "Making $$target in $$subdir"; \
-	  if test "$$subdir" = "."; then \
-	    dot_seen=yes; \
-	    local_target="$$target-am"; \
-	  else \
-	    local_target="$$target"; \
-	  fi; \
-	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
-	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
-	done; \
-	if test "$$dot_seen" = "no"; then \
-	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
-	fi; test -z "$$fail"
-
-mostlyclean-recursive clean-recursive distclean-recursive \
-maintainer-clean-recursive:
-	@set fnord $$MAKEFLAGS; amf=$$2; \
-	dot_seen=no; \
-	case "$@" in \
-	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
-	  *) list='$(SUBDIRS)' ;; \
-	esac; \
-	rev=''; for subdir in $$list; do \
-	  if test "$$subdir" = "."; then :; else \
-	    rev="$$subdir $$rev"; \
-	  fi; \
-	done; \
-	rev="$$rev ."; \
-	target=`echo $@ | sed s/-recursive//`; \
-	for subdir in $$rev; do \
-	  echo "Making $$target in $$subdir"; \
-	  if test "$$subdir" = "."; then \
-	    local_target="$$target-am"; \
-	  else \
-	    local_target="$$target"; \
-	  fi; \
-	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
-	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
-	done && test -z "$$fail"
-tags-recursive:
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
-	done
-ctags-recursive:
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) ctags); \
-	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -400,23 +431,10 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
-	  include_option=--etags-include; \
-	  empty_fix=.; \
-	else \
-	  include_option=--include; \
-	  empty_fix=; \
-	fi; \
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    test ! -f $$subdir/TAGS || \
-	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
-	  fi; \
-	done; \
 	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
@@ -429,7 +447,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS: ctags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
@@ -478,33 +496,19 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	list='$(SUBDIRS)'; for subdir in $$list; do \
-	  if test "$$subdir" = .; then :; else \
-	    test -d "$(distdir)/$$subdir" \
-	    || mkdir "$(distdir)/$$subdir" \
-	    || exit 1; \
-	    (cd $$subdir && \
-	      $(MAKE) $(AM_MAKEFLAGS) \
-	        top_distdir="../$(top_distdir)" \
-	        distdir="../$(distdir)/$$subdir" \
-	        distdir) \
-	      || exit 1; \
-	  fi; \
-	done
 check-am: all-am
-check: check-recursive
-all-am: GNUmakefile $(LIBRARIES) all-local
-installdirs: installdirs-recursive
-installdirs-am:
-install: install-recursive
-install-exec: install-exec-recursive
-install-data: install-data-recursive
-uninstall: uninstall-recursive
+check: check-am
+all-am: GNUmakefile all-local
+installdirs:
+install: install-am
+install-exec: install-exec-am
+install-data: install-data-am
+uninstall: uninstall-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-recursive
+installcheck: installcheck-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
 	  install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
@@ -520,24 +524,23 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-recursive
+clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
-distclean: distclean-recursive
+distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
 
-dvi: dvi-recursive
+dvi: dvi-am
 
 dvi-am:
 
-html: html-recursive
+html: html-am
 
-info: info-recursive
+info: info-am
 
 info-am:
 
@@ -545,58 +548,60 @@ install-data-am:
 
 install-exec-am: install-exec-local
 
-install-info: install-info-recursive
+install-info: install-info-am
 
 install-man:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-recursive
+maintainer-clean: maintainer-clean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-recursive
+mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
-pdf: pdf-recursive
+pdf: pdf-am
 
 pdf-am:
 
-ps: ps-recursive
+ps: ps-am
 
 ps-am:
 
 uninstall-am: uninstall-info-am
 
-uninstall-info: uninstall-info-recursive
-
-.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am all-local check \
-	check-am clean clean-generic clean-libtool \
-	clean-noinstLIBRARIES clean-recursive ctags ctags-recursive \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-recursive distclean-tags distdir \
-	dvi dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-exec install-exec-am \
-	install-exec-local install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	maintainer-clean-recursive mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool mostlyclean-recursive \
-	pdf pdf-am ps ps-am tags tags-recursive uninstall uninstall-am \
-	uninstall-info-am
+.PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
+	clean-generic clean-libtool clean-local ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-exec \
+	install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
 
-nomac.o: libnomac.a
+nomac.o: libkernel_nomac.a
 	$(LD) --whole-archive $< -r -o $@
 
-all-local: nomac.o
+nomac.ko: @RTNET_KBUILD_ENV@
+nomac.ko: $(libkernel_nomac_a_SOURCES)
+	@RTNET_KBUILD_CMD@
 
-install-exec-local: nomac.o
+all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_nomac_a_SOURCES)
+	@RTNET_KBUILD_CLEAN@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
