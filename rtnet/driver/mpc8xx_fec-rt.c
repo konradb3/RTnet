@@ -479,10 +479,11 @@ fec_enet_interrupt(unsigned int irq, void *rtdev_id)
 	int packets = 0;
 	volatile fec_t	*fecp;
 	uint	int_events;
-	fecp = (volatile fec_t*)rtdev->base_addr;
 	rtos_time_t time_stamp;
 
 	rtos_get_time(&time_stamp);
+
+	fecp = (volatile fec_t*)rtdev->base_addr;
 
 	/* Get the interrupt events that caused us to be here.
 	*/
@@ -520,7 +521,7 @@ fec_enet_interrupt(unsigned int irq, void *rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_enable(irq);
+	rtos_irq_end(irq);
 }
 
 
@@ -678,7 +679,7 @@ while (!(bdp->cbd_sc & BD_ENET_RX_EMPTY)) {
 		rtskb_put(skb,pkt_len-4); /* Make room */
 		memcpy(skb->data, data, pkt_len-4);
 		skb->protocol=rt_eth_type_trans(skb,rtdev);
-		memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+		memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 		rtnetif_rx(skb);
 		(*packets)++;
 	}
