@@ -114,13 +114,13 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
             if (cmd_event->args.announce.burstrate < rtcfg_dev->burstrate)
                 rtcfg_dev->burstrate = cmd_event->args.announce.burstrate;
 
+            rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ANNOUNCED);
+
             ret = rtcfg_send_announce_new(ifindex);
             if (ret < 0) {
                 rtos_res_unlock(&rtcfg_dev->dev_lock);
                 return ret;
             }
-
-            rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ANNOUNCED);
 
             rtos_res_unlock(&rtcfg_dev->dev_lock);
 
@@ -371,11 +371,12 @@ int rtcfg_main_state_client_2(int ifindex, RTCFG_EVENT event_id,
             else
                 rtcfg_queue_blocking_call(ifindex, call);
 
+            rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_READY);
+
             if ((rtcfg_dev->flags & RTCFG_FLAG_READY) == 0) {
                 rtcfg_dev->flags |= RTCFG_FLAG_READY;
                 rtcfg_send_ready(ifindex);
             }
-            rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_READY);
 
             rtos_res_unlock(&rtcfg_dev->dev_lock);
 
@@ -851,8 +852,6 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
         if (rtcfg_dev->stations_found == rtcfg_dev->other_stations)
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ALL_KNOWN);
     } else {
-        rtcfg_send_ack(ifindex);
-
         if (rtcfg_dev->stations_found == rtcfg_dev->other_stations) {
             rtcfg_complete_cmd(ifindex, RTCFG_CMD_ANNOUNCE, 0);
 
@@ -861,6 +860,8 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
                 RTCFG_MAIN_CLIENT_READY : RTCFG_MAIN_CLIENT_2);
         } else
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ALL_FRAMES);
+
+        rtcfg_send_ack(ifindex);
     }
 
     rtos_res_unlock(&rtcfg_dev->dev_lock);
