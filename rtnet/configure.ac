@@ -4,7 +4,7 @@
 AC_PREREQ(2.57)
 
 AC_INIT([RTnet],[0.7.0],[rtnet-users@lists.sourceforge.net])
-AC_CONFIG_HEADERS([include/rtnet_config.h])
+AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_SRCDIR([rtskb.c])
@@ -792,11 +792,8 @@ AC_ARG_ENABLE(enclosed-rtdm,
 AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-no}])
 AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"])
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
-#	RTAI_KMOD_CFLAGS="$RTAI_KMOD_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
-#	LXRT_CFLAGS="$LXRT_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
-	if test \! -d include; then mkdir include; fi
-	if test \! -f include/rtdm.h; then ln -s ../$srcdir/rtai_rtdm/rtdm.h include/rtdm.h; fi
-	if test \! -f include/rtdm_driver.h; then ln -s ../$srcdir/rtai_rtdm/rtdm_driver.h include/rtdm_driver.h; fi
+	AC_CONFIG_LINKS(include/rtdm.h:rtai_rtdm/rtdm.h)
+	AC_CONFIG_LINKS(include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
 else
 	rm -f include/rtdm.h include/rtdm_driver.h
 fi
@@ -927,3 +924,17 @@ rtai_rtdm/Makefile \
 ])
 
 AC_OUTPUT
+
+dnl ======================================================================
+dnl             generate include/rtnet_config.h
+dnl ======================================================================
+
+AC_MSG_NOTICE([creating include/rtnet_config.h])
+sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
+    config/rtnet_config_pre.h >include/rtnet_config.h.new
+if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
+        rm include/rtnet_config.h.new
+        AC_MSG_NOTICE([include/rtnet_config.h is unchanged])
+else
+        mv include/rtnet_config.h.new include/rtnet_config.h
+fi
