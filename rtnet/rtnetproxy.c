@@ -492,9 +492,9 @@ static int __init rtnetproxy_init_module(void)
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
     /* Init the task for transmission */
+    rtos_event_sem_init(&rtnetproxy_event);
     rtos_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0,
                    RTOS_LOWEST_RT_PRIORITY);
-    rtos_event_sem_init(&rtnetproxy_event);
 
     /* Register srq */
     rtos_nrt_signal_init(&rtnetproxy_signal, rtnetproxy_signal_handler);
