@@ -124,6 +124,7 @@ extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask)
 extern struct rtnet_device *rtdev_get_by_name(const char *if_name);
 extern struct rtnet_device *rtdev_get_by_index(int ifindex);
 extern struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
+#define rtdev_reference(rtdev)      atomic_inc(&(rtdev)->refcount)
 #define rtdev_dereference(rtdev)    atomic_dec(&(rtdev)->refcount)
 
 extern int rtdev_xmit(struct rtskb *skb);
