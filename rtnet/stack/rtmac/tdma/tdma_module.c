@@ -35,6 +35,15 @@
 #include <rtmac/tdma/tdma_worker.h>
 
 
+/* RTAI-specific: start scheduling timer */
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
+    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+static int start_timer = 0;
+
+MODULE_PARM(start_timer, "i");
+MODULE_PARM_DESC(start_timer, "set to non-zero to start RTAI timer");
+#endif
+
 #ifdef CONFIG_PROC_FS
 LIST_HEAD(tdma_devices);
 DECLARE_MUTEX(tdma_nrt_lock);
@@ -299,11 +308,20 @@ int __init tdma_init(void)
     int ret;
 
 
-    printk("RTmac/TDMA: init time division multiple access control mechanism\n");
+    printk("RTmac/TDMA: init time division multiple access control "
+           "mechanism\n");
 
     ret = rtmac_disc_register(&tdma_disc);
     if (ret < 0)
         return ret;
+
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
+    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+    if (start_timer) {
+        rt_set_oneshot_mode();
+        start_rt_timer(0);
+    }
+#endif
 
     return 0;
 }
@@ -313,6 +331,12 @@ int __init tdma_init(void)
 void tdma_release(void)
 {
     rtmac_disc_deregister(&tdma_disc);
+
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
+    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+    if (start_timer)
+        stop_rt_timer();
+#endif
 
     printk("RTmac/TDMA: unloaded\n");
 }
