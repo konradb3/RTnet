@@ -1,3 +1,4 @@
+0.7.1
 - extended RTcfg
   * heartbeat support for clients
   * client failure detection and notification
