@@ -164,9 +164,10 @@ int rt_packet_recvmsg(struct rtsocket *sock, struct msghdr *msg, size_t len,
     /* copy the data */
     rt_memcpy_tokerneliovec(msg->msg_iov, skb->data, copy_len);
 
-    if ((flags & MSG_PEEK) == 0)
+    if ((flags & MSG_PEEK) == 0) {
+        rtdev_dereference(skb->rtdev);
         kfree_rtskb(skb);
-    else
+    } else
         rtskb_queue_head(&sock->incoming, skb);
 
     return real_len;
@@ -336,6 +337,7 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
         (rtskb_acquire(skb, &sock->skb_pool) != 0))
         kfree_rtskb(skb);
     else {
+        rtdev_reference(skb->rtdev);
         rtskb_queue_tail(&sock->incoming, skb);
         rtos_event_signal(&sock->wakeup_event);
         if (sock->wakeup != NULL)
