@@ -4,7 +4,7 @@ What is it?
 -----------
 RTnet is real-time UDP/IP protocol stack for RTAI (hard real-time Linux
 extension). It provides a standard socket API to be used with RTAI kernel
-modules and LXRT processes, see header files for details.
+modules and LXRT processes, see rtnet.h header file for details.
 
 What are the requirements?
 --------------------------
@@ -13,7 +13,8 @@ What are the requirements?
 - x86 platform (at least for LXRT extensions, kernel API _should_ work on
   other platforms, too)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
-  AMD PCnet32/PCnetPCI, VIA Rhine network adapter
+  AMD PCnet32/PCnetPCI, VIA Rhine network adapter, MPC8260 FCC, or MPC8xx
+  SCC/FEC on-chip controllers
 
 How to install it?
 ------------------
@@ -30,6 +31,9 @@ How to install it?
        --enable-pcnet32         compiles the PCnet32 driver
        --enable-tulip           compiles the DEC driver
        --enable-via-rhine       compiles the VIA Rhine driver
+       --enable-fcc-enet        compiles the MPC8260 FCC driver
+       --enable-scc-enet        compiles the MPC8xx SCC driver
+       --enable-fec-enet        compiles the MPC8xx FEC driver
 6. make
 7. Copy the desired modules (rtnet.o, rtmac.o, drivers, examples, etc.) to your
    target system
@@ -56,19 +60,19 @@ How to use RTmac? (a very very short guide!)
 -----------------
 I assume that rtnet module has been loaded and configured(rtifconfig).
 1. Load rtmac:
-	# modprobe rtmac dev=rteth0
+    # modprobe rtmac dev=rteth0
    Assumed that your realtime device is rteth0.
 2. On client stations:
-	# rtifconfig rteth0 mac client
+    # rtifconfig rteth0 mac client
 3. On the server station:
-	# rtifconfig rteth0 mac master <cycle-time/us> [<mtu-size/byte>]
-	# rtifconfig rteth0 mac add <ip_client1>
-	# rtifconfig rteth0 mac add <ip_client2>
-	# ...
-	# rtifconfig rteth0 mac up
-	# rtifconfig rteth0 mac offset <ip_client1> <offset/us>
-	# rtifconfig rteth0 mac offset <ip_client2> <offset/us>
-	# ...
+    # rtifconfig rteth0 mac master <cycle-time/us> [<mtu-size/byte>]
+    # rtifconfig rteth0 mac add <ip_client1>
+    # rtifconfig rteth0 mac add <ip_client2>
+    # ...
+    # rtifconfig rteth0 mac up
+    # rtifconfig rteth0 mac offset <ip_client1> <offset/us>
+    # rtifconfig rteth0 mac offset <ip_client2> <offset/us>
+    # ...
 4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
 5. You can furthermore use the associated VNIC (here "vnic0") now.
 
@@ -95,6 +99,8 @@ Mathias Koehrer
 Vinay Sridhara
 <vinaysridhara-at-yahoo.com>            - ICMP support
 Erwin Rol <erwin-at-muffin.org>         - Ethereal plugin, rtnetproxy
+Wolfgang Grandegger
+<wg-at-denx.de>                         - MPC drivers
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
