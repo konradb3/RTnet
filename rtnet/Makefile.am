@@ -34,3 +34,5 @@ all-local: rtnet.o rtnetproxy.o rtnet_lxrt.o
 
 clean-local:
 	rm -rf .extract
+
+.PHONY: rtnet.o
