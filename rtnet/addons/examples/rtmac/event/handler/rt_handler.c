@@ -62,7 +62,7 @@ MODULE_PARM(irq, "i");
 static char* rtmac_dev = "TDMA0";
 static char* my_ip     = "";
 static char* dest_ip   = "10.255.255.255";
-MODULE_PARM(rteth_dev, "s");
+MODULE_PARM(rtmac_dev, "s");
 MODULE_PARM(my_ip, "s");
 MODULE_PARM(dest_ip, "s");
 
