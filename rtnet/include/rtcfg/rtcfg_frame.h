@@ -43,9 +43,6 @@
 #define RTCFG_ID_READY              6
 #define RTCFG_ID_HEARTBEAT          7
 
-#define RTCFG_ADDR_MAC              0
-#define RTCFG_ADDR_IP               1
-
 #define RTCFG_ADDRSIZE_MAC          0
 #define RTCFG_ADDRSIZE_IP           4
 #define RTCFG_MAX_ADDRSIZE          RTCFG_ADDRSIZE_IP

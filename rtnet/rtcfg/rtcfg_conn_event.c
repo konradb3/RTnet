@@ -202,6 +202,7 @@ static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
         case RTCFG_FRM_READY:
             rtcfg_next_conn_state(conn, RTCFG_CONN_READY);
 
+            conn->flags |= RTCFG_FLAG_READY;
             rtcfg_dev->stations_ready++;
 
             if (rtcfg_dev->stations_ready == rtcfg_dev->other_stations)

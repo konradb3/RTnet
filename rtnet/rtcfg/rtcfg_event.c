@@ -111,8 +111,8 @@ static int (*state[])(int ifindex, RTCFG_EVENT event_id, void* event_data) =
 };
 
 
-static int rtcfg_server_add(struct rtcfg_cmd *cmd_event,
-                            unsigned int addr_type);
+static int rtcfg_server_add(struct rtcfg_cmd *cmd_event);
+static int rtcfg_server_del(struct rtcfg_cmd *cmd_event);
 static int rtcfg_server_recv_announce(int ifindex, struct rtskb *rtskb);
 static int rtcfg_server_recv_ack(int ifindex, struct rtskb *rtskb);
 static int rtcfg_server_recv_ready(int ifindex, struct rtskb *rtskb);
@@ -257,31 +257,27 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 
 
     switch (event_id) {
-        case RTCFG_CMD_ADD_IP:
+        case RTCFG_CMD_ADD:
             call      = (struct rt_proc_call *)event_data;
             cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
-            /* MAC address yet unknown -> use broadcast address */
-            rtdev = rtdev_get_by_index(cmd_event->ifindex);
-            if (rtdev == NULL)
-                return -ENODEV;
-            memcpy(cmd_event->args.add.mac_addr, rtdev->broadcast,
-                   MAX_ADDR_LEN);
-            rtdev_dereference(rtdev);
+            if (cmd_event->args.add.addr_type == RTCFG_ADDR_IP) {
+                /* MAC address yet unknown -> use broadcast address */
+                rtdev = rtdev_get_by_index(cmd_event->ifindex);
+                if (rtdev == NULL)
+                    return -ENODEV;
+                memcpy(cmd_event->args.add.mac_addr, rtdev->broadcast,
+                       MAX_ADDR_LEN);
+                rtdev_dereference(rtdev);
+            }
 
-            return rtcfg_server_add(cmd_event, RTCFG_ADDR_IP);
+            return rtcfg_server_add(cmd_event);
 
-        case RTCFG_CMD_ADD_IP_MAC:
+        case RTCFG_CMD_DEL:
             call      = (struct rt_proc_call *)event_data;
             cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
-            return rtcfg_server_add(cmd_event, RTCFG_ADDR_IP);
-
-        case RTCFG_CMD_ADD_MAC:
-            call      = (struct rt_proc_call *)event_data;
-            cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
-
-            return rtcfg_server_add(cmd_event, RTCFG_ADDR_MAC);
+            return rtcfg_server_del(cmd_event);
 
         case RTCFG_CMD_WAIT:
             call = (struct rt_proc_call *)event_data;
@@ -731,14 +727,16 @@ static int rtcfg_main_state_client_ready(int ifindex, RTCFG_EVENT event_id,
 
 /*** Server Command Event Handlers ***/
 
-static int rtcfg_server_add(struct rtcfg_cmd *cmd_event,
-                            unsigned int addr_type)
+static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
 {
     struct rtcfg_connection *conn;
     struct rtcfg_connection *new_conn;
     struct list_head        *entry;
+    unsigned int            addr_type;
     struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
 
+
+    addr_type = cmd_event->args.add.addr_type & RTCFG_ADDR_MASK;
 
     new_conn = cmd_event->args.add.conn_buf;
     memset(new_conn, 0, sizeof(struct rtcfg_connection));
@@ -780,7 +778,8 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event,
                      MAX_ADDR_LEN) == 0))) {
             rtos_res_unlock(&rtcfg_dev->dev_lock);
 
-            if (rtcfg_release_file(new_conn->stage2_file) == 0) {
+            if ((new_conn->stage2_file) &&
+                (rtcfg_release_file(new_conn->stage2_file) == 0)) {
                 /* Note: This assignment cannot overwrite a valid file pointer.
                  * Effectively, it will only be executed when
                  * new_conn->stage2_file is the pointer originally passed by
@@ -805,6 +804,58 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event,
     cmd_event->args.add.stage1_data = NULL;
 
     return 0;
+}
+
+
+
+static int rtcfg_server_del(struct rtcfg_cmd *cmd_event)
+{
+    struct rtcfg_connection *conn;
+    struct list_head        *entry;
+    unsigned int            addr_type;
+    struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
+
+
+    addr_type = cmd_event->args.add.addr_type & RTCFG_ADDR_MASK;
+
+    rtos_res_lock(&rtcfg_dev->dev_lock);
+
+    list_for_each(entry, &rtcfg_dev->conn_list) {
+        conn = list_entry(entry, struct rtcfg_connection, entry);
+
+        if ((addr_type == conn->addr_type) &&
+            (((addr_type == RTCFG_ADDR_IP) &&
+              (conn->addr.ip_addr == cmd_event->args.add.ip_addr)) ||
+             ((addr_type == RTCFG_ADDR_MAC) &&
+              (memcmp(conn->mac_addr, cmd_event->args.add.mac_addr,
+                      MAX_ADDR_LEN) == 0)))) {
+            list_del(&conn->entry);
+            rtcfg_dev->other_stations--;
+
+            if (conn->state > RTCFG_CONN_SEARCHING) {
+                rtcfg_dev->stations_found--;
+                if (conn->state >= RTCFG_CONN_STAGE_2)
+                    rtcfg_dev->clients_configured--;
+                if (conn->flags & RTCFG_FLAG_READY)
+                    rtcfg_dev->stations_ready--;
+            }
+
+            if ((conn->stage2_file) &&
+                (rtcfg_release_file(conn->stage2_file) == 0))
+                cmd_event->args.del.stage2_file = conn->stage2_file;
+
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
+
+            cmd_event->args.del.conn_buf    = conn;
+            cmd_event->args.del.stage1_data = conn->stage1_data;
+
+            return 0;
+        }
+    }
+
+    rtos_res_unlock(&rtcfg_dev->dev_lock);
+
+    return -ENOENT;
 }
 
 

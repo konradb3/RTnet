@@ -127,7 +127,6 @@ void cmd_server(int argc, char *argv[])
 void cmd_add(int argc, char *argv[])
 {
     int               i;
-    unsigned int      ioctl_code;
     struct in_addr    ip_addr;
     struct ether_addr mac_addr;
     const char        *stage1_filename = NULL;
@@ -141,10 +140,10 @@ void cmd_add(int argc, char *argv[])
         help();
 
     if (inet_aton(argv[3], &ip_addr)) {
-        ioctl_code = RTCFG_IOC_ADD_IP;
-        cmd.args.add.ip_addr = ip_addr.s_addr;
+        cmd.args.add.addr_type = RTCFG_ADDR_IP;
+        cmd.args.add.ip_addr   = ip_addr.s_addr;
     } else if (ether_aton_r(argv[3], &mac_addr) != NULL) {
-        ioctl_code = RTCFG_IOC_ADD_MAC;
+        cmd.args.add.addr_type = RTCFG_ADDR_MAC;
         memcpy(cmd.args.add.mac_addr, mac_addr.ether_addr_octet,
                sizeof(mac_addr.ether_addr_octet));
     } else {
@@ -161,7 +160,7 @@ void cmd_add(int argc, char *argv[])
         if (strcmp(argv[i], "-hw") == 0) {
             if ((++i >= argc) || (ether_aton_r(argv[i], &mac_addr) == NULL))
                 help();
-            ioctl_code = RTCFG_IOC_ADD_IP_MAC;
+            cmd.args.add.addr_type = RTCFG_ADDR_IP | ASSIGN_ADDR_BY_MAC;
             memcpy(cmd.args.add.mac_addr, mac_addr.ether_addr_octet,
                    sizeof(mac_addr.ether_addr_octet));
         } else if (strcmp(argv[i], "-stage1") == 0) {
@@ -227,7 +226,7 @@ void cmd_add(int argc, char *argv[])
         }
     }
 
-    i = ioctl(f, ioctl_code, &cmd);
+    i = ioctl(f, RTCFG_IOC_ADD, &cmd);
 
     if (cmd.args.add.stage1_data != NULL)
         free(cmd.args.add.stage1_data);
@@ -266,10 +265,10 @@ void cmd_del(int argc, char *argv[])
         help();
 
     if (inet_aton(argv[3], &ip_addr)) {
-        ioctl_code = RTCFG_IOC_DEL_IP;
-        cmd.args.del.ip_addr = ip_addr.s_addr;
+        cmd.args.del.addr_type = RTCFG_ADDR_IP;
+        cmd.args.del.ip_addr   = ip_addr.s_addr;
     } else if (ether_aton_r(argv[3], &mac_addr) != NULL) {
-        ioctl_code = RTCFG_IOC_DEL_MAC;
+        cmd.args.del.addr_type = RTCFG_ADDR_MAC;
         memcpy(cmd.args.del.mac_addr, mac_addr.ether_addr_octet,
                sizeof(mac_addr.ether_addr_octet));
     } else {
@@ -277,7 +276,7 @@ void cmd_del(int argc, char *argv[])
         exit(1);
     }
 
-    i = ioctl(f, ioctl_code, &cmd);
+    i = ioctl(f, RTCFG_IOC_DEL, &cmd);
     if (i < 0) {
         perror("ioctl");
         exit(1);

@@ -92,6 +92,35 @@ void cleanup_cmd_add(struct rt_proc_call *call)
 
 
 
+void cleanup_cmd_del(struct rt_proc_call *call)
+{
+    struct rtcfg_cmd *cmd;
+    void             *buf;
+
+
+    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    /* unlock proc and update directory structure */
+    rtcfg_unlockwr_proc(cmd->ifindex);
+
+    buf = cmd->args.del.conn_buf;
+    if (buf != NULL)
+        kfree(buf);
+
+    buf = cmd->args.del.stage1_data;
+    if (buf != NULL)
+        kfree(buf);
+
+    if (cmd->args.del.stage2_file != NULL) {
+        buf = cmd->args.del.stage2_file->buffer;
+        if (buf != NULL)
+            vfree(buf);
+        kfree(cmd->args.del.stage2_file);
+    }
+}
+
+
+
 void copy_stage_1_data(struct rt_proc_call *call, void *priv_data)
 {
     struct rtcfg_cmd *cmd;
@@ -324,10 +353,20 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
                                      sizeof(cmd), NULL, NULL);
             break;
 
-        case RTCFG_IOC_ADD_IP:
-        case RTCFG_IOC_ADD_MAC:
-        case RTCFG_IOC_ADD_IP_MAC:
+        case RTCFG_IOC_ADD:
             ret = rtcfg_ioctl_add(rtdev, &cmd);
+            break;
+
+        case RTCFG_IOC_DEL:
+            cmd.args.del.conn_buf    = NULL;
+            cmd.args.del.stage1_data = NULL;
+            cmd.args.del.stage2_file = NULL;
+
+            /* lock proc structure for modification */
+            rtcfg_lockwr_proc(cmd.ifindex);
+
+            ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
+                                     sizeof(cmd), NULL, cleanup_cmd_del);
             break;
 
         case RTCFG_IOC_WAIT:

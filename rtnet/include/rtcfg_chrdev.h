@@ -34,19 +34,22 @@
 #define FLAG_STAGE_2_DATA       1
 #define FLAG_READY              2
 
+#define RTCFG_ADDR_MAC          0x00
+#define RTCFG_ADDR_IP           0x01
+#define RTCFG_ADDR_MASK         0xFF
+
+#define ASSIGN_ADDR_BY_MAC      0x0100
+
 
 typedef enum {
     RTCFG_CMD_SERVER,
-    RTCFG_CMD_ADD_IP,
-    RTCFG_CMD_ADD_MAC,
-    RTCFG_CMD_DEL_IP,
-    RTCFG_CMD_DEL_MAC,
+    RTCFG_CMD_ADD,
+    RTCFG_CMD_DEL,
     RTCFG_CMD_WAIT,
     RTCFG_CMD_CLIENT,
     RTCFG_CMD_ANNOUNCE,
     RTCFG_CMD_READY,
     RTCFG_CMD_DOWN,
-    RTCFG_CMD_ADD_IP_MAC,
 
     /* internal usage only */
     RTCFG_FRM_STAGE_1_CFG,
@@ -77,6 +80,7 @@ struct rtcfg_cmd {
         } server;
 
         struct {
+            unsigned int            addr_type;
             __u32                   ip_addr;
             __u8                    mac_addr[DEV_ADDR_LEN];
             void                    *stage1_data;
@@ -90,6 +94,7 @@ struct rtcfg_cmd {
         } add;
 
         struct {
+            unsigned int            addr_type;
             __u32                   ip_addr;
             __u8                    mac_addr[DEV_ADDR_LEN];
 
@@ -138,13 +143,9 @@ struct rtcfg_cmd {
 
 #define RTCFG_IOC_SERVER        _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_SERVER,  \
                                      struct rtcfg_cmd)
-#define RTCFG_IOC_ADD_IP        _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_ADD_IP,  \
+#define RTCFG_IOC_ADD           _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_ADD,     \
                                      struct rtcfg_cmd)
-#define RTCFG_IOC_ADD_MAC       _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_ADD_MAC, \
-                                     struct rtcfg_cmd)
-#define RTCFG_IOC_DEL_IP        _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DEL_IP,  \
-                                     struct rtcfg_cmd)
-#define RTCFG_IOC_DEL_MAC       _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DEL_MAC, \
+#define RTCFG_IOC_DEL           _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DEL,     \
                                      struct rtcfg_cmd)
 #define RTCFG_IOC_WAIT          _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_WAIT,    \
                                      struct rtcfg_cmd)
@@ -156,7 +157,5 @@ struct rtcfg_cmd {
                                      struct rtcfg_cmd)
 #define RTCFG_IOC_DOWN          _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DOWN,    \
                                      struct rtcfg_cmd)
-#define RTCFG_IOC_ADD_IP_MAC    _IOW(RTNET_IOC_TYPE_RTCFG, \
-                                     RTCFG_CMD_ADD_IP_MAC, struct rtcfg_cmd)
 
 #endif /* __RTCFG_H_ */
