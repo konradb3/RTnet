@@ -26,7 +26,7 @@
  *
  *          ROUTE - implementation of the IP router.
  *
- * Version: $Id: route.c,v 1.9 2003/09/05 10:45:59 kiszka Exp $
+ * Version: $Id: route.c,v 1.10 2003/11/18 14:32:33 kiszka Exp $
  *
  * Authors: Ross Biro, <bir7@leland.Stanford.Edu>
  *          Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -42,6 +42,15 @@
  *          as published by the Free Software Foundation; either version
  *          2 of the License, or (at your option) any later version.
  */
+
+
+// Note:
+// This file and arp.c need some revision. We should combine the specific
+// routing table with the arp table (more precisely: drop the arp table!) and
+// introduce lock protection. Some functions are unused, other should be
+// combined. This code somehow smells...
+// -JK-
+
 
 #include <rtai.h>
 
@@ -233,6 +242,44 @@ struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev,
     rt_rtables=rt;
 
     return rt;
+}
+
+
+
+/***
+ *  ip_route_add_if_new - adds new specific route if it does not exist yet
+ */
+int rt_ip_route_add_if_new(struct rtnet_device *rtdev, u32 daddr, u32 saddr,
+                           unsigned char *hw_addr)
+{
+    struct rt_rtable *rt;
+
+    for (rt=rt_rtables;rt!=NULL;rt=rt->next) {
+        if ( (rt->rt_dst==daddr) && (rt->rt_src==saddr) &&
+             (rt->rt_dev==rtdev) ){
+            return -EEXIST;
+        }
+    }
+
+    rt = rt_alloc();
+    if (!rt)
+        return -ENOMEM;
+
+    rt->rt_dst=daddr;
+    rt->rt_dst_mask=0xffffffff; /* it's specific, safer */
+    rt->rt_src=rtdev->local_addr;
+    rt->rt_dev=rtdev;
+    rt->rt_ifindex=rtdev->ifindex;
+
+    memcpy(rt->rt_dst_mac_addr, hw_addr, RT_ARP_ADDR_LEN);
+
+    if( rt_rtables != NULL)
+        rt_rtables->prev = rt;
+
+    rt->next=rt_rtables;
+    rt_rtables=rt;
+
+    return 0;
 }
 
 

@@ -34,34 +34,39 @@
  *  table is used to discover specific routes when needed.
  */
 struct rt_rtable {
-	struct rt_rtable	*prev;
-	struct rt_rtable	*next;
+    struct rt_rtable    *prev;
+    struct rt_rtable    *next;
 
-	unsigned int 		use_count;
+    unsigned int        use_count;
 
-	__u32			rt_dst;
-	__u32			rt_dst_mask;
-	char			rt_dst_mac_addr[6];
+    __u32               rt_dst;
+    __u32               rt_dst_mask;
+    char                rt_dst_mac_addr[6];
 
-	__u32			rt_src;
-	
-	int			rt_ifindex;
+    __u32               rt_src;
 
-	struct rtnet_device 	*rt_dev;
+    int                 rt_ifindex;
+
+    struct rtnet_device *rt_dev;
 };
 
 
 extern struct rt_rtable *rt_rtables;
 extern struct rt_rtable *rt_rtables_generic;
 
-extern struct rt_rtable *rt_ip_route_add(struct rtnet_device *rtdev, u32 addr, u32 mask);
-extern struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev, u32 addr,
+extern struct rt_rtable *rt_ip_route_add(struct rtnet_device *rtdev, u32 addr,
+                                         u32 mask);
+extern struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev,
+                                                  u32 addr,
                                                   unsigned char *hw_addr);
+extern int rt_ip_route_add_if_new(struct rtnet_device *rtdev, u32 daddr,
+                                  u32 saddr, unsigned char *hw_addr);
 extern void rt_ip_route_del(struct rtnet_device *rtdev);
 extern void rt_ip_route_del_specific(struct rtnet_device *rtdev, u32 addr);
 extern struct rt_rtable *rt_ip_route_find(u32 daddr);
 
-extern int rt_ip_route_input(struct rtskb *skb, u32 daddr, u32 saddr, struct rtnet_device *rtdev);
+extern int rt_ip_route_input(struct rtskb *skb, u32 daddr, u32 saddr,
+                             struct rtnet_device *rtdev);
 extern int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr);
 
 extern void rt_ip_routing_init(void);
