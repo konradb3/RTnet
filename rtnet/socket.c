@@ -315,8 +315,6 @@ int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
     msg_hdr.msg_namelen=tolen;
     msg_hdr.msg_iov=&iov;
     msg_hdr.msg_iovlen=1;
-/*    msg_hdr.msg_control=NULL;     not used
-    msg_hdr.msg_controllen=0; */
 
     return sock->ops->sendmsg(sock, &msg_hdr, len, flags);
 }
@@ -353,13 +351,11 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
     msg_hdr.msg_namelen=*fromlen;
     msg_hdr.msg_iov=&iov;
     msg_hdr.msg_iovlen=1;
-/*    msg_hdr.msg_control=NULL;     not used
-    msg_hdr.msg_controllen=0; */
 
     error = sock->ops->recvmsg(sock, &msg_hdr, len, flags);
 
-    if ( (error>=0) && (*fromlen!=0) )
-        *fromlen=msg_hdr.msg_namelen;
+    if ((error >= 0) && (*fromlen != 0))
+        *fromlen = msg_hdr.msg_namelen;
 
     return error;
 }
@@ -372,15 +368,15 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
 int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
 {
     SOCKET *sock=rt_socket_lookup(s);
-    int len;
+    size_t total_len;
 
     if (sock == NULL)
         return -ENOTSOCK;
 
     ASSERT((sock->ops != NULL) && (sock->ops->sendmsg), return -ENOTSOCK;);
 
-    len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
-    return sock->ops->sendmsg(sock, msg, len, flags);
+    total_len = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
+    return sock->ops->sendmsg(sock, msg, total_len, flags);
 }
 
 
@@ -391,14 +387,14 @@ int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
 int rt_socket_recvmsg(int s, struct msghdr *msg, int flags)
 {
     SOCKET *sock=rt_socket_lookup(s);
-    int total_len;
+    size_t total_len;
 
     if (sock == NULL)
         return -ENOTSOCK;
 
     ASSERT((sock->ops != NULL) && (sock->ops->recvmsg), return -ENOTSOCK;);
 
-    total_len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
+    total_len = rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
     return sock->ops->recvmsg(sock, msg, total_len, flags);
 }
 
@@ -639,8 +635,6 @@ int rt_ssocket_writev(SOCKET *socket, const struct iovec *iov, int count)
     msg_hdr.msg_namelen=0;
     msg_hdr.msg_iov=(struct iovec*)iov;
     msg_hdr.msg_iovlen=count;
-/*    msg_hdr.msg_control=NULL;     not used
-    msg_hdr.msg_controllen=0; */
 
     total_len = rt_iovec_len(iov, count);
     return socket->ops->sendmsg(socket, &msg_hdr, total_len, 0);
@@ -677,10 +671,8 @@ int rt_ssocket_sendto(SOCKET *socket, const void *msg, size_t len, int flags,
 
     msg_hdr.msg_name=(struct sockaddr*)to;
     msg_hdr.msg_namelen=tolen;
-    msg_hdr.msg_iov=(void*)&iov;
+    msg_hdr.msg_iov=&iov;
     msg_hdr.msg_iovlen=1;
-/*    msg_hdr.msg_control=NULL;     not used
-    msg_hdr.msg_controllen=0; */
 
     return socket->ops->sendmsg(socket, &msg_hdr, len, flags);
 }
@@ -692,14 +684,14 @@ int rt_ssocket_sendto(SOCKET *socket, const void *msg, size_t len, int flags,
  */
 int rt_ssocket_sendmsg(SOCKET *socket, const struct msghdr *msg, int flags)
 {
-    int total_len;
+    size_t total_len;
 
     if (socket == NULL)
         return -ENOTSOCK;
 
     ASSERT((socket->ops != NULL) && (socket->ops->sendmsg), return -ENOTSOCK;);
 
-    total_len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
+    total_len = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
     return socket->ops->sendmsg(socket, msg, total_len, flags);
 }
 
@@ -711,7 +703,7 @@ int rt_ssocket_sendmsg(SOCKET *socket, const struct msghdr *msg, int flags)
 int rt_ssocket_readv(SOCKET *socket, const struct iovec *iov, int count)
 {
     struct msghdr msg_hdr;
-    int total_len;
+    size_t total_len;
 
     if (socket == NULL)
         return -ENOTSOCK;
@@ -722,8 +714,6 @@ int rt_ssocket_readv(SOCKET *socket, const struct iovec *iov, int count)
     msg_hdr.msg_namelen=0;
     msg_hdr.msg_iov=(struct iovec*)iov;
     msg_hdr.msg_iovlen=count;
-/*    msg_hdr.msg_control=NULL;     not used
-    msg_hdr.msg_controllen=0; */
 
     total_len = rt_iovec_len(iov, count);
     return socket->ops->recvmsg(socket, &msg_hdr, total_len, 0);
@@ -745,7 +735,7 @@ int rt_ssocket_recv(SOCKET *socket, void *buf, size_t len, int flags)
  *  rt_ssocket_recfrom
  */
 int rt_ssocket_recvfrom(SOCKET *socket, void *buf, size_t len, int flags,
-                        struct sockaddr *from, socklen_t fromlen)
+                        struct sockaddr *from, socklen_t *fromlen)
 {
     struct msghdr msg_hdr;
     struct iovec iov;
@@ -759,15 +749,13 @@ int rt_ssocket_recvfrom(SOCKET *socket, void *buf, size_t len, int flags,
     iov.iov_base=buf;
     iov.iov_len=len;
     msg_hdr.msg_name=from;
-    msg_hdr.msg_namelen=fromlen; //sizeof(struct sockaddr);
+    msg_hdr.msg_namelen=*fromlen;
     msg_hdr.msg_iov=&iov;
     msg_hdr.msg_iovlen=1;
-/*    msg_hdr.msg_control=NULL;     not used
-    msg_hdr.msg_controllen=0; */
 
     error = socket->ops->recvmsg(socket, &msg_hdr, len, flags);
-    if ( (error>=0) && (fromlen!=0) )
-        fromlen=msg_hdr.msg_namelen;
+    if ((error >= 0) && (*fromlen != 0))
+        *fromlen = msg_hdr.msg_namelen;
 
     return error;
 }

@@ -101,7 +101,7 @@ extern int rt_ssocket_sendmsg(SOCKET *socket, const struct msghdr *msg, int flag
 extern int rt_ssocket_readv(SOCKET *socket, const struct iovec *vector, int count);
 extern int rt_ssocket_recv(SOCKET *socket, void *buf, size_t len, int flags);
 extern int rt_ssocket_recvfrom(SOCKET *socket, void *buf, size_t len, int flags,
-                               struct sockaddr *from, socklen_t fromlen);
+                               struct sockaddr *from, socklen_t *fromlen);
 extern int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, int flags);
 extern int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, socklen_t addr_len);
 extern int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg);
