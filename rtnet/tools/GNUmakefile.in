@@ -42,7 +42,8 @@ host_triplet = @host@
 sbin_PROGRAMS = rtifconfig$(EXEEXT) rtroute$(EXEEXT) rtping$(EXEEXT) \
 	$(am__EXEEXT_3)
 subdir = tools
-DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
+DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
+	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/configure.ac
@@ -50,7 +51,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = rtnet rtnet.conf
 @CONFIG_RTNET_RTCFG_TRUE@am__EXEEXT_1 = rtcfg$(EXEEXT)
 @CONFIG_RTNET_NOMAC_TRUE@am__EXEEXT_2 = nomaccfg$(EXEEXT)
 am__EXEEXT_3 = $(am__EXEEXT_1) $(am__EXEEXT_2)
@@ -283,6 +284,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+rtnet: $(top_builddir)/config.status $(srcdir)/rtnet.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+rtnet.conf: $(top_builddir)/config.status $(srcdir)/rtnet.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(sbindir)" || $(mkdir_p) "$(DESTDIR)$(sbindir)"
@@ -500,7 +505,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-data-local
 
 install-exec-am: install-exec-local install-sbinPROGRAMS
 
@@ -534,10 +539,11 @@ uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 	clean-generic clean-libtool clean-sbinPROGRAMS ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-exec-local install-info \
-	install-info-am install-man install-sbinPROGRAMS install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	install install-am install-data install-data-am \
+	install-data-local install-exec install-exec-am \
+	install-exec-local install-info install-info-am install-man \
+	install-sbinPROGRAMS install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-info-am \
@@ -546,9 +552,13 @@ uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 
 all-local: rtifconfig rtroute rtping $(OPTPROGS)
 
-install-exec-local:
+install-exec-local: rtnet
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	$(INSTALL_SCRIPT) $(top_srcdir)/tools/rtnet $(DESTDIR)$(sbindir)
+	$(INSTALL_SCRIPT) $< $(DESTDIR)$(sbindir)
+
+install-data-local: rtnet.conf
+	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
+	$(INSTALL_DATA) $< $(DESTDIR)$(sysconfdir)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
