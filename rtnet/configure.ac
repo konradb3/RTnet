@@ -51,7 +51,6 @@ AC_CONFIG_SRCDIR([iovec.c])
 AM_CONFIG_HEADER(config/config.h)
 
 # Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
