@@ -59,8 +59,8 @@ static inline int in_nrt_context(void)
 }
 
 
-#elif defined(CONFIG_FUSION_065)
-/* fusion 0.65 - intermediate solution */
+#elif defined(CONFIG_FUSION_066)
+/* fusion 0.6.6 - intermediate solution */
 
 #include <nucleus/heap.h>
 #include <rtai/task.h>

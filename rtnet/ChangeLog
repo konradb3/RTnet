@@ -9,7 +9,7 @@
   * improved locking scheme
   * layer version tag
 - kernel 2.6 support
-- experimental RTAI/fusion 0.6.5 support
+- experimental RTAI/fusion 0.6.6 support
 - source tree reorganisation
 - added NoMAC module as skeleton for new disciplines
 - revised and extended rtnet start script

@@ -153,7 +153,7 @@ static inline int rtos_task_init_periodic(rtos_task_t *task,
     if (ret)
         return ret;
 
-    ret = rt_task_set_periodic(task, RT_TIME_INFINITE, period->val);
+    ret = rt_task_set_periodic(task, TM_INFINITE, period->val);
 
     if (!ret)
         ret = rt_task_start(task, (void (*)(void *))task_proc, (void *)arg);
@@ -207,7 +207,7 @@ static inline int rtos_task_set_priority(rtos_task_t *task, int priority)
 
 static inline int rtos_timer_start_oneshot(void)
 {
-    return rt_timer_start(RT_TIMER_ONESHOT);
+    return rt_timer_start(TM_ONESHOT);
 }
 
 static inline void rtos_timer_stop(void)
@@ -275,12 +275,12 @@ static inline void rtos_event_sem_signal(rtos_event_sem_t *event)
 
 static inline int rtos_event_wait(rtos_event_sem_t *event)
 {
-    return rt_sem_p(event, RT_TIME_INFINITE);
+    return rt_sem_p(event, TM_INFINITE);
 }
 
 static inline int rtos_event_sem_wait(rtos_event_sem_t *event)
 {
-    return rt_sem_p(event, RT_TIME_INFINITE);
+    return rt_sem_p(event, TM_INFINITE);
 }
 
 static inline int rtos_event_sem_wait_timed(rtos_event_sem_t *event,
