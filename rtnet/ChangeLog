@@ -1,5 +1,6 @@
 0.8.1
-- added size size enforcement to TDMA
+- added slot size enforcement to TDMA
+- fusion 0.6.9 support
 - revised stack core for channel-based overloadable MTUs
 - catch CONFIG_REGPARM in kernel configuration
 - revised irq abstraction for clean fusion support
