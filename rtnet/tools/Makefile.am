@@ -4,13 +4,13 @@ if CONFIG_RTNET_RTCFG
 OPTPROGS += rtcfg
 endif
 
-sbin_PROGRAMS = rtifconfig rtroute $(OPTPROGS)
+sbin_PROGRAMS = rtifconfig rtroute rtping $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include
 
-all-local: rtifconfig rtroute $(OPTPROGS)
+all-local: rtifconfig rtroute rtping $(OPTPROGS)
 
 install-exec-local:
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
