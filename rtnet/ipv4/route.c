@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.6 2003/05/23 12:32:34 hpbock Exp $
+ * Version:	$Id: route.c,v 1.7 2003/05/23 12:34:25 hpbock Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -508,7 +508,6 @@ int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
 	struct rt_rtable *rt;
 
 	for (rt=rt_rtables; rt; rt=rt->next) {
-		rt_printk("\n");
 		if ( (rt->rt_dst==daddr) && 
 		     (rt->rt_src==saddr) ) {
 			*rp=rt;
