@@ -16,6 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+ 
+// $Log: ip_output.c,v $
+// Revision 1.3  2003/02/06 14:34:06  hpbock
+// skb was net freed, if rtdev->hard_header was NULL.
+//
+
 #include <net/checksum.h>
 
 #include <rtnet.h>
@@ -85,9 +91,12 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 		s=dev_get_by_rtdev(rtdev)->dev_addr;
 
 	}
-	if ( (rtdev->hard_header) &&
-	     (rtdev->hard_header(skb, rtdev, ETH_P_IP, rt->rt_dst_mac_addr, dev_get_by_rtdev(rtdev)->dev_addr, skb->len)<0) )
+
+	if ( !(rtdev->hard_header) ) {
 	     goto error;
+	} else if (rtdev->hard_header(skb, rtdev, ETH_P_IP, rt->rt_dst_mac_addr, dev_get_by_rtdev(rtdev)->dev_addr, skb->len)<0) {
+		goto error;
+	}
 
 	rtdev_xmit(skb);
 	return 0;
