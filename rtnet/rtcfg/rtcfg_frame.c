@@ -38,7 +38,7 @@ MODULE_PARM_DESC(num_rtskbs, "Number of realtime socket buffers used by RTcfg");
 
 static struct rtskb_queue rtcfg_pool;
 static rtos_task_t        rx_task;
-static rtos_event_t       rx_event;
+static rtos_event_sem_t   rx_event;
 static struct rtskb_queue rx_queue;
 static u8                 eth_broadcast[] = { 255, 255, 255, 255, 255, 255 };
 
@@ -49,7 +49,7 @@ static int rtcfg_rx_handler(struct rtskb *rtskb, struct rtpacket_type *pt)
     if (rtskb_acquire(rtskb, &rtcfg_pool) == 0) {
         rtdev_reference(rtskb->rtdev);
         rtskb_queue_tail(&rx_queue, rtskb);
-        rtos_event_signal(&rx_event);
+        rtos_event_sem_signal(&rx_event);
     } else
         kfree_rtskb(rtskb);
 
@@ -66,12 +66,10 @@ static void rtcfg_rx_task(int arg)
 
 
     while (1) {
-        if (RTOS_EVENT_ERROR(rtos_event_wait(&rx_event)))
+        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&rx_event)))
             return;
 
         rtskb = rtskb_dequeue(&rx_queue);
-        if (rtskb == NULL)
-            continue;
         rtdev = rtskb->rtdev;
 
         if (rtskb->pkt_type == PACKET_OTHERHOST) {
@@ -469,7 +467,7 @@ int __init rtcfg_init_frames(void)
 
 
     rtskb_queue_init(&rx_queue);
-    rtos_event_init(&rx_event);
+    rtos_event_sem_init(&rx_event);
 
     if (rtskb_pool_init(&rtcfg_pool, num_rtskbs) < num_rtskbs) {
         ret = -ENOMEM;
@@ -491,7 +489,7 @@ error2:
     rtos_task_delete(&rx_task);
 
 error1:
-    rtos_event_delete(&rx_event);
+    rtos_event_sem_delete(&rx_event);
     rtskb_pool_release(&rtcfg_pool);
 
     return ret;
@@ -510,12 +508,13 @@ void rtcfg_cleanup_frames(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
+    rtos_event_sem_delete(&rx_event);
+    rtos_task_delete(&rx_task);
+
     while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {
         rtdev_dereference(rtskb->rtdev);
         kfree_rtskb(rtskb);
     }
 
-    rtos_event_delete(&rx_event);
-    rtos_task_delete(&rx_task);
     rtskb_pool_release(&rtcfg_pool);
 }
