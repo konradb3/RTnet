@@ -839,6 +839,7 @@ struct vortex_private {
 	rtos_spinlock_t lock;				/* Serialise access to device & its vortex_private */
 	spinlock_t mdio_lock;				/* Serialise access to mdio hardware */
 	u32 power_state[16];
+	rtos_irq_t irq_handle;
 };
 
 /* The action to take with a media selection timer tick.
@@ -887,8 +888,8 @@ static int vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
 static int boomerang_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void vortex_interrupt(unsigned int irq, void *rtdev_id);
-static void boomerang_interrupt(unsigned int irq, void *rtdev_id);
+static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt);
+static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt);
 static int vortex_close(struct rtnet_device *rtdev);
 static void dump_tx_ring(struct rtnet_device *rtdev);
 
@@ -1041,7 +1042,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	// *** RTnet ***
 	struct rtnet_device *rtdev = NULL;
 	// *** RTnet ***
-    
+
 	struct vortex_private *vp;
 	int option;
 	unsigned int eeprom[0x40], checksum = 0;		/* EEPROM contents */
@@ -1062,7 +1063,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 
     // *** RTnet ***
 	rtdev = rt_alloc_etherdev(sizeof(*vp));
-	retval = -ENOMEM;
+    retval = -ENOMEM;
 	if (!rtdev) {
 		printk (KERN_ERR PFX "unable to allocate etherdev, aborting\n");
 		goto out;
@@ -1071,6 +1072,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	memset(rtdev->priv, 0, sizeof(*vp));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	RTNET_SET_MODULE_OWNER(rtdev);
+	rtdev->vers = RTDEV_VERS_2_0;
 	// *** RTnet ***
 
 	vp = rtdev->priv;
@@ -1125,10 +1127,12 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	if (pdev) {
 		/* EISA resources already marked, so only PCI needs to do this here */
 		/* Ignore return value, because Cardbus drivers already allocate for us */
-		if (request_region(ioaddr, vci->io_size, print_name) != NULL)
+		if (!request_region(ioaddr, vci->io_size, print_name))
+			printk(KERN_INFO "rt_3c50x: request region failed\n");
+		else
 			vp->must_free_region = 1;
 
-		/* enable bus-mastering if necessary */		
+		/* enable bus-mastering if necessary */
 		if (vci->flags & PCI_USES_MASTER)
 			pci_set_master (pdev);
 
@@ -1166,7 +1170,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	vp->tx_ring_dma = vp->rx_ring_dma + sizeof(struct boom_rx_desc) * RX_RING_SIZE;
 
 	/* if we are a PCI driver, we store info in pdev->driver_data
-	 * instead of a module list */	
+	 * instead of a module list */
 	if (pdev)
 		pci_set_drvdata(pdev, rtdev);
 
@@ -1190,6 +1194,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 
 	vp->force_fd = vp->full_duplex;
 	vp->options = option;
+
 	/* Read the station address from the EEPROM. */
 	EL3WINDOW(0);
 	{
@@ -1224,6 +1229,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	}
 	if ((checksum != 0x00) && !(vci->drv_flags & IS_TORNADO))
 		printk(" ***INVALID CHECKSUM %4.4x*** ", checksum);
+
 	for (i = 0; i < 3; i++)
 		((u16 *)rtdev->dev_addr)[i] = htons(eeprom[i + 10]);
 	if (print_info) {
@@ -1401,15 +1407,18 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	}
 
 	if (rtskb_pool_init(&vp->skb_pool, RX_RING_SIZE*2) < RX_RING_SIZE*2) {
+		printk(KERN_ERR "rt_3c59x: pool init failed\n");
 		retval = -ENOMEM;
 		goto free_pool;
 	}
 
 	rtdev->stop = vortex_close;
-    rtdev->hard_header = &rt_eth_header;
 	retval = rt_register_rtnetdev(rtdev);
     if (retval)
+	{
+		printk(KERN_ERR "rt_3c59x: rtnet device registration failed %d\n",retval);
         goto free_pool;
+	}
     return 0;
 
     // *** RTnet ***
@@ -1494,7 +1503,11 @@ vortex_up(struct rtnet_device *rtdev)
 
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 		pci_restore_state(vp->pdev, vp->power_state);
+#else
+		pci_restore_state(vp->pdev);
+#endif
 	}
 
 	/* Before initializing select the active media port. */
@@ -1892,13 +1905,13 @@ vortex_open(struct rtnet_device *rtdev)
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	if ((retval = rtos_irq_request(rtdev->irq,
+	if ((retval = rtos_irq_request(&vp->irq_handle, rtdev->irq,
 				(vp->full_bus_master_rx ? boomerang_interrupt : vortex_interrupt),
 				rtdev))) {
 		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", rtdev->name, rtdev->irq);
 		goto out;
 	}
-	rtos_irq_enable(rtdev->irq);
+	rtos_irq_enable(&vp->irq_handle);
 	// *** RTnet ***
 
 	if (vp->full_bus_master_rx) { /* Boomerang bus master. */
@@ -1942,7 +1955,7 @@ vortex_open(struct rtnet_device *rtdev)
 out_free_irq:
 
 	// *** RTnet ***
-    if ( (i=rtos_irq_free(rtdev->irq))<0 )
+    if ( (i=rtos_irq_free(&vp->irq_handle))<0 )
         return i;
 	rt_stack_disconnect(rtdev);
 	// *** RTnet ***
@@ -2248,6 +2261,8 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
+	unsigned long flags;
+	rtos_time_t time;
 
 	/* Put out the doubleword header... */
 	outl(skb->len, ioaddr + TX_FIFO);
@@ -2259,9 +2274,20 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 				ioaddr + Wn7_MasterAddr);
 		outw(len, ioaddr + Wn7_MasterLen);
 		vp->tx_skb = skb;
+
+		rtos_local_irqsave(flags);
+		if (unlikely(skb->xmit_stamp != NULL)) {
+			rtos_get_time(&time);
+			*skb->xmit_stamp = cpu_to_be64(
+			                        rtos_time_to_nanosecs(&time) +
+			                        *skb->xmit_stamp);
+		}
 		outw(StartDMADown, ioaddr + EL3_CMD);
+		rtos_local_irqrestore(flags);
+
 		/* rtnetif_wake_queue() will be called at the DMADone interrupt. */
 	} else {
+		rtos_print("rt_3x59x: UNSUPPORTED CODE PATH (device is lacking DMA support)!\n");
 		/* ... and the packet rounded to a doubleword. */
 		outsl(ioaddr + TX_FIFO, skb->data, (skb->len + 3) >> 2);
 		dev_kfree_rtskb (skb);
@@ -2307,6 +2333,8 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Calculate the next Tx descriptor entry. */
 	int entry = vp->cur_tx % TX_RING_SIZE;
 	struct boom_tx_desc *prev_entry = &vp->tx_ring[(vp->cur_tx-1) % TX_RING_SIZE];
+	unsigned long flags;
+	rtos_time_t time;
 
 	if (vortex_debug > 6) {
 		rtos_print(KERN_DEBUG "boomerang_start_xmit()\n");
@@ -2373,13 +2401,20 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 #endif
 
 	// *** RTnet ***
-	rtos_res_lock(&rtdev->xmit_lock);
-	rtos_irq_disable(rtdev->irq);
+	rtos_irq_disable(&vp->irq_handle);
 	rtos_spin_lock(&vp->lock);
 	// *** RTnet ***
 
 	/* Wait for the stall to complete. */
 	issue_and_wait(rtdev, DownStall);
+
+	rtos_local_irqsave(flags);
+	if (unlikely(skb->xmit_stamp != NULL)) {
+		rtos_get_time(&time);
+		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+		                               *skb->xmit_stamp);
+	}
+
 	prev_entry->next = cpu_to_le32(vp->tx_ring_dma + entry * sizeof(struct boom_tx_desc));
 	if (inl(ioaddr + DownListPtr) == 0) {
 		outl(vp->tx_ring_dma + entry * sizeof(struct boom_tx_desc), ioaddr + DownListPtr);
@@ -2398,9 +2433,8 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 #endif
 	}
 	outw(DownUnstall, ioaddr + EL3_CMD);
-	rtos_spin_unlock(&vp->lock);
-	rtos_irq_enable(rtdev->irq);
-	rtos_res_unlock(&rtdev->xmit_lock);
+	rtos_spin_unlock_irqrestore(&vp->lock, flags);
+	rtos_irq_enable(&vp->irq_handle);
 	//rtdev->trans_start = jiffies;
 	return 0;
 }
@@ -2413,10 +2447,10 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
  * full_bus_master_tx == 0 && full_bus_master_rx == 0
  */
 
-static void vortex_interrupt(unsigned int irq, void *rtdev_id)
+static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 {
 	// *** RTnet ***
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
 	int packets = 0;
 	rtos_time_t time_stamp;
 	// *** RTnet ***
@@ -2512,11 +2546,12 @@ static void vortex_interrupt(unsigned int irq, void *rtdev_id)
 		rtos_print(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
-	rtos_irq_end(rtdev->irq);
+	rtos_irq_end(&vp->irq_handle);
 	rtos_spin_unlock(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	return;
+
+    RTOS_IRQ_RETURN_HANDLED();
 }
 
 /*
@@ -2524,10 +2559,10 @@ handler_exit:
  * full_bus_master_tx == 1 && full_bus_master_rx == 1
  */
 
-static void boomerang_interrupt(unsigned int irq, void *rtdev_id)
+static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 {
 	// *** RTnet ***
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
 	int packets = 0;
 	rtos_time_t time_stamp;
 	// *** RTnet ***
@@ -2652,11 +2687,12 @@ static void boomerang_interrupt(unsigned int irq, void *rtdev_id)
 		rtos_print(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
-	rtos_irq_end(rtdev->irq);
+	rtos_irq_end(&vp->irq_handle);
 	rtos_spin_unlock(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	return;
+
+    RTOS_IRQ_RETURN_HANDLED();
 }
 
 static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
@@ -2893,7 +2929,11 @@ vortex_down(struct rtnet_device *rtdev)
 		outl(0, ioaddr + DownListPtr);
 
 	if (vp->pdev && vp->enable_wol) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 		pci_save_state(vp->pdev, vp->power_state);
+#else
+		pci_save_state(vp->pdev);
+#endif
 		acpi_set_WOL(rtdev);
 	}
 }
@@ -2928,7 +2968,7 @@ vortex_close(struct rtnet_device *rtdev)
 #endif
 
 	// *** RTnet ***
-	if ( (i=rtos_irq_free(rtdev->irq))<0 )
+	if ( (i=rtos_irq_free(&vp->irq_handle))<0 )
 		return i;
 
 	rt_stack_disconnect(rtdev);
@@ -3304,7 +3344,11 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
 		if (vp->pm_state_valid)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 			pci_restore_state(vp->pdev, vp->power_state);
+#else
+			pci_restore_state(vp->pdev);
+#endif
 	}
 
 	pci_free_consistent(pdev,
