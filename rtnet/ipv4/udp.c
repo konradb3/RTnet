@@ -222,7 +222,7 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, size_t len, int flags
     }
 
     /* remove the UDP header */
-    rtskb_pull(skb, sizeof(struct udphdr));
+    __rtskb_pull(skb, sizeof(struct udphdr));
 
     first_skb = skb;
 
@@ -259,8 +259,10 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, size_t len, int flags
 
     if ((flags & MSG_PEEK) == 0)
         kfree_rtskb(first_skb);
-    else
+    else {
+        __rtskb_push(first_skb, sizeof(struct udphdr));
         rtskb_queue_head(&s->incoming, first_skb);
+    }
 
     return copied;
 }
