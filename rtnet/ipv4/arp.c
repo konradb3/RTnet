@@ -107,7 +107,7 @@ void rt_arp_send(int type,
 	    (skb->rtdev->rtmac->disc_type->rt_packet_tx)) {
 		skb->rtdev->rtmac->disc_type->rt_packet_tx(skb, skb->rtdev);
 	} else {
-		rtdev_xmit_if(skb);
+		rtdev_xmit(skb);
 	}
 
 	return;

@@ -941,7 +941,7 @@ static void tdma_expired_sent_conf(struct rtmac_tdma *tdma)
 			skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, ACK_ACK_CONF, data);
 			conf_ack_ack->station = rt_entry->station;
 
-			rtdev_xmit_if(skb);
+			rtdev_xmit(skb);
 		} else { // rt_entry->state != RT_RCVD_CONF
 			/*
 			 * if station has _not_ sent ACK, delete it from list
@@ -1150,7 +1150,7 @@ static void tdma_client_rcvd_conf(struct rtmac_tdma *tdma, struct rtskb *skb)
 	new_skb = tdma_make_msg(skb->rtdev, tdma->master->hw_addr, ACK_CONF, data);
 	memcpy(conf_ack, conf_req, sizeof(struct tdma_conf_msg));
 	//FIXME: crc32
-	rtdev_xmit_if(new_skb);
+	rtdev_xmit(new_skb);
 
 	tdma_timer_start_sent_ack(tdma, TDMA_SENT_CLIENT_ACK_TIMEOUT);
 
@@ -1328,7 +1328,7 @@ static void tdma_send_conf(struct rtmac_tdma *tdma, void *hw_addr, unsigned char
 	/*
 	 * transmit packet
 	 */
-	ret = rtdev_xmit_if(skb);
+	ret = rtdev_xmit(skb);
 	
 	return;
 }

@@ -27,6 +27,8 @@
 
 #include <rtnet.h>
 #include <rtnet_internal.h>
+#include <rtmac/rtmac_disc.h>
+
 
 struct rtnet_device *rtnet_devices = NULL;
 rwlock_t rtnet_devices_lock = RW_LOCK_UNLOCKED;
@@ -263,7 +265,6 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 	if (sizeof_priv)
 		rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
 
-	rt_sem_init(&(rtdev->txsem), 1);
 	rtskb_queue_head_init(&(rtdev->rxqueue));
 	rt_printk("rtdev: allocated and initialized\n");
 
@@ -278,7 +279,6 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 void rtdev_free (struct rtnet_device *rtdev) 
 {
 	if (rtdev!=NULL) {
-		rt_sem_delete(&(rtdev->txsem));
 		rtdev->stack_mbx=NULL;
 		rtdev->rtdev_mbx=NULL;
 		kfree(rtdev);
@@ -336,54 +336,70 @@ int rtdev_close(struct rtnet_device *rtdev)
 
 
 /***
- *	rtdev_xmit
- *	
+ *	rtdev_xmit - send real-time packet
  */
 int rtdev_xmit(struct rtskb *skb) 
 {
-	int ret =0;
-	struct rtnet_device *rtdev = skb->rtdev;
+    struct rtnet_device *rtdev;
+    int ret = 0;
 
-	if (rtdev) {
-		rt_sem_wait(&rtdev->txsem);
 
-		if (rtdev->hard_start_xmit) {
-			ret=rtdev->hard_start_xmit(skb, rtdev);
-			if (ret != 0) {
-				rt_printk("xmit returned %d not 0\n",ret);
-				/* if an error occured, we must free the skb here! */
-				if (skb)
-					kfree_rtskb(skb);
-			}
-		}
+    ASSERT(skb != NULL, return -1;);
+    ASSERT(skb->rtdev != NULL, return -1;);
+    ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
 
-		rt_sem_signal(&rtdev->txsem);
-	}
+    rtdev = skb->rtdev;
 
-	return (ret);
+    ret = rtdev->hard_start_xmit(skb, rtdev);
+    if (ret != 0)
+    {
+        rt_printk("xmit returned %d not 0\n",ret);
+        /* if an error occured, we must free the skb here! */
+        if (skb)
+            kfree_rtskb(skb);
+    }
+
+    return ret;
 }
 
 
 
 /***
- *	rtdev_xmit_if
+ *      rtdev_xmit_proxy - send rtproxy packet
  */
-int rtdev_xmit_if(struct rtskb *skb) 
+int rtdev_xmit_proxy(struct rtskb *skb)
 {
-	int ret =0;
-	struct rtnet_device *rtdev = (struct rtnet_device *)skb->rtdev;
+    struct rtnet_device *rtdev;
+    int ret = 0;
 
-	if ( rtdev && rtdev->hard_start_xmit ) {
-		ret=rtdev->hard_start_xmit(skb, rtdev);
-		if (ret != 0) {
-			rt_printk("xmit_if returned %d not 0\n",ret);
-			/* if an error occured, we must free the skb here! */
-			if (skb)
-				kfree_rtskb(skb);
-		}
-	}
 
-	return (ret);
+    ASSERT(skb != NULL, return -1;);
+    ASSERT(skb->rtdev != NULL, return -1;);
+    ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
+
+
+    rtdev = skb->rtdev;
+
+    /* <temporary solution> */
+    if ((rtdev->rtmac) && /* This code lines are crappy! */
+	(rtdev->rtmac->disc_type) &&
+	(rtdev->rtmac->disc_type->proxy_packet_tx)) {
+	ret = rtdev->rtmac->disc_type->proxy_packet_tx(skb, rtdev);
+    }
+    /* </temporary solution> */
+    else
+    {
+        ret = rtdev->hard_start_xmit(skb, rtdev);
+        if (ret != 0)
+        {
+            rt_printk("xmit returned %d not 0\n",ret);
+            /* if an error occured, we must free the skb here! */
+            if (skb)
+                kfree_rtskb(skb);
+        }
+    }
+
+    return ret;
 }
 
 
@@ -408,6 +424,3 @@ int rtnet_dev_release(void)
 	for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
 	return 0;
 }
-
-
-

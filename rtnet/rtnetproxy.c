@@ -56,7 +56,6 @@
 #include <rtnet_internal.h>
 #include <ipv4/ip_input.h>
 #include <ipv4/route.h>
-#include <rtmac/rtmac_disc.h>
 
 
 /* **************************************************************************
@@ -202,15 +201,8 @@ static inline void send_data_out(struct sk_buff *skb)
         memcpy(pData->ethhdr.h_source, rtdev->dev_addr, rtdev->addr_len);
         memcpy(pData->ethhdr.h_dest, rt->rt_dst_mac_addr, rtdev->addr_len);
 
-        /* Call the actual transmit function (this function is semaphore 
-         * protected): */
-	if ((rtskb->rtdev->rtmac) && /* This code lines are crappy! */
-	    (rtskb->rtdev->rtmac->disc_type) &&
-	    (rtskb->rtdev->rtmac->disc_type->proxy_packet_tx)) {
-	    rtskb->rtdev->rtmac->disc_type->proxy_packet_tx(rtskb, rtskb->rtdev);
-	} else {
-	    rtdev_xmit(rtskb);
-	}
+        /* Call the actual transmit function */
+        rtdev_xmit_proxy(rtskb);
 
         /* The rtskb is freed somewhere deep in the driver... 
          * No need to do it here. */

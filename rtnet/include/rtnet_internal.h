@@ -27,6 +27,16 @@
 #include <rtdev.h>
 
 
+/* #ifdef CONFIG_RTNET_CHECKED */
+#define ASSERT(expr, func) \
+    if (!(expr)) \
+    { \
+        rt_printk("Assertion failed! %s:%s:%d %s\n", \
+        __FILE__, __FUNCTION__, __LINE__, (#expr)); \
+        func \
+    }
+/* #endif */
+
 /* some configurables */
 
 #define RTNET_PROC_NAME		"rtnet"

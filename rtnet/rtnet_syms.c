@@ -74,13 +74,26 @@ EXPORT_SYMBOL(rt_ssocket_recvmsg);
 EXPORT_SYMBOL(rt_ssocket_getsockname);
 EXPORT_SYMBOL(rt_ssocket_callback);
 
-
+/****************************************************************************************
+ * stack_mgr.c										*
+ ****************************************************************************************/
 EXPORT_SYMBOL(rtnetif_rx);
 EXPORT_SYMBOL(rt_mark_stack_mgr);
 EXPORT_SYMBOL(rtnetif_tx);
+EXPORT_SYMBOL(rt_stack_connect);
+EXPORT_SYMBOL(rt_stack_disconnect);
+
+/****************************************************************************************
+ * rtdev_mgr.c										*
+ ****************************************************************************************/
 EXPORT_SYMBOL(rtnetif_err_rx);
 EXPORT_SYMBOL(rtnetif_err_tx);
+EXPORT_SYMBOL(rt_rtdev_connect);
+EXPORT_SYMBOL(rt_rtdev_disconnect);
 
+/****************************************************************************************
+ * rtdev.c										*
+ ****************************************************************************************/
 EXPORT_SYMBOL(rtdev_alloc_name);
 EXPORT_SYMBOL(rtdev_alloc);
 EXPORT_SYMBOL(rtdev_free);
@@ -91,13 +104,7 @@ EXPORT_SYMBOL(rtdev_get_by_hwaddr);
 EXPORT_SYMBOL(rtdev_add_pack);
 EXPORT_SYMBOL(rtdev_remove_pack);
 EXPORT_SYMBOL(rtdev_xmit);
-EXPORT_SYMBOL(rtdev_xmit_if);
-
-EXPORT_SYMBOL(rt_stack_connect);
-EXPORT_SYMBOL(rt_stack_disconnect);
-EXPORT_SYMBOL(rt_rtdev_connect);
-EXPORT_SYMBOL(rt_rtdev_disconnect);
-
+EXPORT_SYMBOL(rtdev_xmit_proxy);
 
 /****************************************************************************************
  * rtnet_init.c										*

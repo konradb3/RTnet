@@ -64,7 +64,6 @@ struct rtnet_device {
 
 	struct rtsocket		*protocols;
 
-	SEM			txsem;		/* tx-Semaphore		*/
 	struct rtskb_head	rxqueue;	/* rx-queue		*/
 
 	unsigned short		flags;	/* interface flags (a la BSD)	*/
@@ -135,7 +134,7 @@ extern struct rtnet_device *rtdev_get_by_index(int ifindex);
 extern struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
 
 extern int rtdev_xmit(struct rtskb *skb);
-extern int rtdev_xmit_if(struct rtskb *skb);
+extern int rtdev_xmit_proxy(struct rtskb *skb);
 
 extern int rtnet_dev_init(void);
 extern int rtnet_dev_release(void);
