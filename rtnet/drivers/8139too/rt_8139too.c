@@ -1049,7 +1049,6 @@ static char mii_2_8139_map[8] = {
         NWayExpansion,
         0
 };
-#endif // 0
 
 #ifdef CONFIG_8139TOO_8129
 /* Syncronize the MII management interface by shifting 32 one bits out. */
@@ -1067,7 +1066,6 @@ static void mdio_sync (void *mdio_addr)
 #endif
 
 
-#if 0 // commented so there is no compiler warning 'defined but not used'
 static int mdio_read (struct net_device *dev, int phy_id, int location)
 {
         struct rtl8139_private *tp = rtdev->priv;
