@@ -35,7 +35,7 @@
 static int start_timer = 1;
 
 MODULE_PARM(start_timer, "i");
-MODULE_PARM_DESC(start_timer, "set to zero if scheduler already runs");
+MODULE_PARM_DESC(start_timer, "set to zero if RTAI timer already runs");
 #endif
 
 __u32 tdma_debug = TDMA_DEFAULT_DEBUG_LEVEL;
@@ -54,6 +54,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
 
     rtos_spin_lock_init(&tdma->delta_t_lock);
 
+    tdma->flags.mac_active = 1;
     tdma->rtdev = rtdev;
 
     /*
@@ -139,8 +140,10 @@ int tdma_rt_packet_tx(struct rtskb *skb, struct rtnet_device *rtdev)
 {
     struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
 
+    rtcap_mark_rtmac_enqueue(skb);
+
     if (tdma->flags.mac_active == 0)
-        return tdma_xmit(skb);
+        return rtmac_xmit(skb);
 
     rtskb_prio_queue_tail(&tdma->tx_queue, skb);
 
@@ -154,8 +157,10 @@ int tdma_nrt_packet_tx(struct rtskb *skb)
     struct rtmac_tdma *tdma =
         (struct rtmac_tdma *)skb->rtdev->mac_priv->disc_priv;
 
+    rtcap_mark_rtmac_enqueue(skb);
+
     if (tdma->flags.mac_active == 0)
-        return -1;
+        return rtmac_xmit(skb);
 
     skb->priority = QUEUE_MIN_PRIO;
     rtskb_prio_queue_tail(&tdma->tx_queue, skb);
