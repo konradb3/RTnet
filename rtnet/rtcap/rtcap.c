@@ -68,10 +68,13 @@ static struct tap_device_t {
 
 void rtcap_rx_hook(struct rtskb *rtskb)
 {
-    if (rtskb_acquire(rtskb, &cap_pool) != 0) {
+    if ((rtskb->cap_comp_skb = rtskb_dequeue(&cap_pool)) == 0) {
         tap_device[rtskb->rtdev->ifindex].tap_dev_stats.rx_dropped++;
         return;
     }
+#ifdef CONFIG_RTNET_CHECKED
+    cap_pool.pool_balance--;
+#endif
 
     if (cap_queue.first == NULL)
         cap_queue.first = rtskb;
@@ -93,10 +96,20 @@ int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
     unsigned long       flags;
 
 
-    if (rtskb_acquire(rtskb, &cap_pool) != 0) {
+    if ((rtskb->cap_comp_skb = rtskb_dequeue(&cap_pool)) == 0) {
         tap_dev->tap_dev_stats.rx_dropped++;
         return tap_dev->orig_xmit(rtskb, rtdev);
     }
+#ifdef CONFIG_RTNET_CHECKED
+    cap_pool.pool_balance--;
+#endif
+
+    rtskb->cap_next  = NULL;
+    rtskb->cap_start = rtskb->data;
+    rtskb->cap_len   = rtskb->len;
+    rtskb->cap_flags |= RTSKB_CAP_SHARED;
+
+    rtos_get_time(&rtskb->time_stamp);
 
     rtos_spin_lock_irqsave(&rtcap_lock, flags);
 
@@ -104,20 +117,58 @@ int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
         cap_queue.first = rtskb;
     else
         cap_queue.last->cap_next = rtskb;
-    cap_queue.last  = rtskb;
-    rtskb->cap_next = NULL;
-
-    rtskb->cap_start = rtskb->data;
-    rtskb->cap_len   = rtskb->len;
-    rtskb->cap_flags |= RTSKB_CAP_SHARED;
-
-    rtos_get_time(&rtskb->time_stamp);
+    cap_queue.last = rtskb;
 
     rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
 
     rtos_pend_nrt_signal(&cap_signal);
 
     return tap_dev->orig_xmit(rtskb, rtdev);
+}
+
+
+
+int rtcap_loopback_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
+{
+    struct tap_device_t *tap_dev = &tap_device[rtskb->rtdev->ifindex];
+
+
+    rtos_get_time(&rtskb->time_stamp);
+
+    return tap_dev->orig_xmit(rtskb, rtdev);
+}
+
+
+
+void rtcap_kfree_rtskb(struct rtskb *rtskb)
+{
+    unsigned long flags;
+    struct rtskb  *comp_skb;
+
+
+    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+
+    if (rtskb->cap_flags & RTSKB_CAP_SHARED) {
+        rtskb->cap_flags &= ~RTSKB_CAP_SHARED;
+
+        comp_skb = rtskb->cap_comp_skb;
+
+        rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+
+        rtskb_queue_tail(comp_skb->pool, comp_skb);
+#ifdef CONFIG_RTNET_CHECKED
+        comp_skb->pool->pool_balance++;
+#endif
+
+        return;
+    }
+
+    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+
+    rtskb_queue_tail(rtskb->pool, rtskb);
+#ifdef CONFIG_RTNET_CHECKED
+    rtskb->pool->pool_balance++;
+#endif
 }
 
 
@@ -156,7 +207,7 @@ static void rtcap_signal_handler(void)
 
         if (active == 0) {
             tap_device[ifindex].tap_dev_stats.rx_dropped++;
-            kfree_rtskb(rtskb);
+            rtcap_kfree_rtskb(rtskb);
             continue;
         }
 
@@ -179,7 +230,7 @@ static void rtcap_signal_handler(void)
                                              &rtmac_skb->stamp);
                 }
 
-                kfree_rtskb(rtskb);
+                rtcap_kfree_rtskb(rtskb);
 
                 stats = &tap_device[ifindex].tap_dev_stats;
                 stats->rx_packets++;
@@ -195,7 +246,7 @@ static void rtcap_signal_handler(void)
                 skb->protocol = eth_type_trans(skb, skb->dev);
                 rtos_time_to_timeval(&rtskb->cap_rtmac_stamp, &skb->stamp);
 
-                kfree_rtskb(rtskb);
+                rtcap_kfree_rtskb(rtskb);
 
                 stats = &tap_device[ifindex].tap_dev_stats;
                 stats->rx_packets++;
@@ -203,10 +254,10 @@ static void rtcap_signal_handler(void)
 
                 netif_rx(skb);
             } else
-                kfree_rtskb(rtskb);
+                rtcap_kfree_rtskb(rtskb);
         } else {
             printk("RTcap: unable to allocate linux skb\n");
-            kfree_rtskb(rtskb);
+            rtcap_kfree_rtskb(rtskb);
         }
     }
 }
@@ -344,6 +395,8 @@ int __init rtcap_init(void)
             }
             tap_device[i].present = TAP_DEV;
 
+            tap_device[i].orig_xmit = rtdev->hard_start_xmit;
+
             if ((rtdev->flags & IFF_LOOPBACK) == 0) {
                 dev = &tap_device[i].rtmac_tap_dev;
                 memset(dev, 0, sizeof(struct net_device));
@@ -360,10 +413,11 @@ int __init rtcap_init(void)
                     goto error2;
                 }
                 tap_device[i].present |= RTMAC_TAP_DEV;
-            }
 
-            tap_device[i].orig_xmit = rtdev->hard_start_xmit;
-            rtdev->hard_start_xmit = rtcap_xmit_hook;
+                rtdev->hard_start_xmit = rtcap_xmit_hook;
+            } else
+                rtdev->hard_start_xmit = rtcap_loopback_xmit_hook;
+
             tap_device[i].present |= XMIT_HOOK;
 
             rtdev_dereference(rtdev);
