@@ -54,6 +54,7 @@ extern char *rtcfg_event[];
 
 
 static void rtcfg_conn_client_configured(struct rtcfg_connection *conn);
+static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn);
 
 
 
@@ -152,8 +153,6 @@ static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
     struct rtskb             *rtskb = (struct rtskb *)event_data;
     struct rtcfg_frm_ack_cfg *ack_cfg;
     int                      packets;
-    rtos_time_t              now;
-    rtos_time_t              deadline;
 
 
     switch (event_id) {
@@ -187,18 +186,7 @@ static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
             break;
 
         case RTCFG_TIMER:
-            if (RTOS_TIME_IS_ZERO(&conn->cfg_timeout))
-                break;
-
-            rtos_get_time(&now);
-            rtos_time_sum(&deadline, &conn->last_frame, &conn->cfg_timeout);
-
-            if (RTOS_TIME_IS_BEFORE(&now, &deadline)) {
-                rtcfg_next_conn_state(conn, RTCFG_CONN_SEARCHING);
-                conn->cfg_offs = 0;
-                conn->flags    = 0;
-            }
-
+            rtcfg_conn_check_cfg_timeout(conn);
             break;
 
         default:
@@ -218,8 +206,6 @@ static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
     struct rtcfg_device *rtcfg_dev = &device[conn->ifindex];
     struct rt_proc_call *call;
     struct rtcfg_cmd    *cmd_event;
-    rtos_time_t         now;
-    rtos_time_t         deadline;
 
 
     switch (event_id) {
@@ -247,18 +233,7 @@ static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
             break;
 
         case RTCFG_TIMER:
-            if (RTOS_TIME_IS_ZERO(&conn->cfg_timeout))
-                break;
-
-            rtos_get_time(&now);
-            rtos_time_sum(&deadline, &conn->last_frame, &conn->cfg_timeout);
-
-            if (RTOS_TIME_IS_BEFORE(&now, &deadline)) {
-                rtcfg_next_conn_state(conn, RTCFG_CONN_SEARCHING);
-                conn->cfg_offs = 0;
-                conn->flags    = 0;
-            }
-
+            rtcfg_conn_check_cfg_timeout(conn);
             break;
 
         default:
@@ -275,6 +250,9 @@ static int rtcfg_conn_state_ready(struct rtcfg_connection *conn,
                                   RTCFG_EVENT event_id, void* event_data)
 {
     switch (event_id) {
+        case RTCFG_TIMER:
+            /* TODO */
+            break;
 
         default:
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for conn %p in %s()\n",
@@ -306,4 +284,35 @@ static void rtcfg_conn_client_configured(struct rtcfg_connection *conn)
                 (cmd_event->event_id == RTCFG_CMD_WAIT) ?
                     0 : -EINVAL);
         }
+}
+
+
+
+static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
+{
+    rtos_time_t         now;
+    rtos_time_t         deadline;
+    struct rtnet_device *rtdev;
+
+
+    if (RTOS_TIME_IS_ZERO(&conn->cfg_timeout))
+        return;
+
+    rtos_get_time(&now);
+    rtos_time_sum(&deadline, &conn->last_frame, &conn->cfg_timeout);
+
+    if (!RTOS_TIME_IS_BEFORE(&now, &deadline)) {
+        rtcfg_next_conn_state(conn, RTCFG_CONN_SEARCHING);
+        conn->cfg_offs = 0;
+        conn->flags    = 0;
+
+        if (conn->addr_type == RTCFG_ADDR_IP) {
+            /* MAC address yet unknown -> use broadcast address */
+            rtdev = rtdev_get_by_index(conn->ifindex);
+            if (rtdev == NULL)
+                return;
+            memcpy(conn->mac_addr, rtdev->broadcast, MAX_ADDR_LEN);
+            rtdev_dereference(rtdev);
+        }
+    }
 }
