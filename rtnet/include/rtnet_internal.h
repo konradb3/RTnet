@@ -52,15 +52,15 @@
 
 struct rtnet_device;
 
-struct rtnet_msg {
+/*struct rtnet_msg {
     int                 msg_type;
     struct rtnet_device *rtdev;
-};
+};*/
 
 
 struct rtnet_mgr {
     RT_TASK task;
-    MBX     mbx;
+/*    MBX     mbx;*/
     SEM     sem;
 };
 

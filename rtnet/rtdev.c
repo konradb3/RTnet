@@ -239,7 +239,7 @@ void rtdev_free (struct rtnet_device *rtdev)
     if (rtdev != NULL) {
         rtskb_pool_shrink(&global_pool, rtdev->add_rtskbs);
         rtdev->stack_sem = NULL;
-        rtdev->rtdev_mbx = NULL;
+/*        rtdev->rtdev_mbx = NULL;*/
         rt_sem_delete(&rtdev->xmit_sem);
         kfree(rtdev);
     }

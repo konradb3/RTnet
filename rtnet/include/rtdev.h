@@ -87,7 +87,7 @@ struct rtnet_device {
 
     int                 rxqueue_len;
     SEM                 *stack_sem;
-    MBX                 *rtdev_mbx;
+/*    MBX                 *rtdev_mbx;*/
 
     SEM                 xmit_sem;
 
