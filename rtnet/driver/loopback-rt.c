@@ -30,6 +30,10 @@
 
 #define DEBUG_LOOPBACK_DRIVER
 
+MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
+MODULE_DESCRIPTION("RTnet loopback driver");
+MODULE_LICENSE("GPL");
+
 static int rt_loopback_in_use;
 static struct rtnet_device* rt_loopback_dev;
 
@@ -157,6 +161,8 @@ static int __init loopback_init(void)
 
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
+
+	strcpy(rtdev->name, "rtlo");
 
 	rtdev->open = &rt_loopback_open;
 	rtdev->stop = &rt_loopback_close;
