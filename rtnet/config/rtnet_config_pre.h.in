@@ -42,6 +42,9 @@
 /* RTcfg debug */
 #undef CONFIG_RTNET_RTCFG_DEBUG
 
+/* RTDM with select support */
+#undef CONFIG_RTNET_RTDM_SELECT
+
 #ifdef __IN_RTNET__
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
