@@ -31,6 +31,7 @@
 #include <rtcfg/rtcfg_conn_event.h>
 #include <rtcfg/rtcfg_event.h>
 #include <rtcfg/rtcfg_frame.h>
+#include <rtcfg/rtcfg_proc.h>
 
 
 int rtcfg_event_handler(struct rt_proc_call *call)
@@ -67,6 +68,10 @@ void cleanup_cmd_add(struct rt_proc_call *call)
     struct rtcfg_cmd *cmd;
     void             *buf;
 
+
+    /* unlock proc and update directory structure */
+    rtcfg_unlock_proc();
+    rtcfg_update_proc();
 
     cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
@@ -198,6 +203,8 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
             break;
 
         case RTCFG_IOC_ADD_IP:
+        case RTCFG_IOC_ADD_MAC:
+        case RTCFG_IOC_ADD_IP_MAC:
             conn_buf = kmalloc(sizeof(struct rtcfg_connection), GFP_KERNEL);
             if (conn_buf == NULL)
                 return -ENOMEM;
@@ -256,6 +263,9 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
             }
             cmd.args.add.stage2_file = file;
 
+            /* prevent rtcfg_proc from accessing any data while adding */
+            rtcfg_lock_proc();
+
             ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
                                      sizeof(cmd), keep_cmd_add,
                                      cleanup_cmd_add);
@@ -268,6 +278,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 
                 filp = filp_open(file->name, O_RDONLY, 0);
                 if (IS_ERR(filp)) {
+                    rtcfg_unlock_proc();
                     kfree(conn_buf);
                     kfree(file);
                     if (data_buf != NULL)
@@ -279,6 +290,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 
                 file->buffer = vmalloc(file->size);
                 if (file->buffer == NULL) {
+                    rtcfg_unlock_proc();
                     fput(filp);
                     kfree(conn_buf);
                     kfree(file);
@@ -298,6 +310,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
                 fput(filp);
 
                 if (ret != (int)file->size) {
+                    rtcfg_unlock_proc();
                     kfree(conn_buf);
                     vfree(file->buffer);
                     kfree(file);
