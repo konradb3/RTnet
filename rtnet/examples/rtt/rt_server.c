@@ -121,7 +121,7 @@ int init_module(void)
 
 	/* create rt-socket */
 	rt_printk("create rtsocket\n");
-	if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
+	if ((sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		rt_printk("socket not created\n");
 		return -ENOMEM;
 	}
@@ -170,11 +170,14 @@ void cleanup_module(void)
 {
 	stop_rt_timer();
 
+    while (rt_socket_close(sock) == -EAGAIN) {
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
+
 	rt_task_delete(&rt_task);
 	rtf_destroy(PRINT);
 	rt_sem_delete(&tx_sem);
-
-  	rt_socket_close(sock);
 }
 
 

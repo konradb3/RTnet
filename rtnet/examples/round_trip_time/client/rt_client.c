@@ -193,11 +193,13 @@ void cleanup_module(void)
         /* stop timer         */ 
   	stop_rt_timer();
 
-        /* rt_task_delete     */ 
-  	rt_task_delete(&rt_task);
+    while (rt_socket_close(sock) == -EAGAIN) {
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
 
-        /* close th rt-socket */
-  	rt_socket_close(sock);
+        /* rt_task_delete     */
+  	rt_task_delete(&rt_task);
 
 	/* destroy the fifo   */
 	rtf_destroy(PRINT);
