@@ -9,7 +9,8 @@ librtcfg_a_SOURCES = \
 	rtcfg_ioctl.c \
 	rtcfg_frame.c \
 	rtcfg_timer.c \
-	rtcfg_file.c
+	rtcfg_file.c \
+	rtcfg_proc.c
 
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \

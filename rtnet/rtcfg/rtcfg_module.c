@@ -28,6 +28,7 @@
 #include <rtcfg/rtcfg_event.h>
 #include <rtcfg/rtcfg_frame.h>
 #include <rtcfg/rtcfg_ioctl.h>
+#include <rtcfg/rtcfg_proc.h>
 
 
 /* RTAI-specific: start scheduling timer */
@@ -66,7 +67,16 @@ int __init rtcfg_init(void)
     if (ret != 0)
         goto error2;
 
+#ifdef CONFIG_PROC_FS
+    ret = rtcfg_init_proc();
+    if (ret != 0)
+        goto error3;
+#endif
+
     return 0;
+
+  error3:
+    rtcfg_cleanup_frames();
 
   error2:
     rtcfg_cleanup_state_machines();
@@ -90,6 +100,9 @@ void rtcfg_cleanup(void)
         stop_rt_timer();
 #endif
 
+#ifdef CONFIG_PROC_FS
+    rtcfg_cleanup_proc();
+#endif
     rtcfg_cleanup_frames();
     rtcfg_cleanup_state_machines();
     rtcfg_cleanup_ioctls();
