@@ -2178,8 +2178,13 @@ static const char smc_info_string[] =
 /*------------------------------------------------------------
  . Sysctl handler for all integer parameters
  .-------------------------------------------------------------*/
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
+				void *buffer, size_t *lenp, loff_t *ppos)
+#else
 static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
 				void *buffer, size_t *lenp)
+#endif
 {
 	struct rtnet_device *dev = (struct rtnet_device*)ctl->extra1;
 	struct smc_local *lp = (struct smc_local *)ctl->extra2;
@@ -2307,7 +2312,7 @@ static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
 		*valp = smc_get_reg(2, ioaddr, PTR_REG);
 		break;
 
-	case CTL_SMC_REG_DR:	// Data 
+	case CTL_SMC_REG_DR:	// Data
 		*valp = smc_get_reg(2, ioaddr, DATA_REG);
 		break;
 
@@ -2408,7 +2413,11 @@ static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
 	val = *valp;
 
 	// Perform the generic integer operation
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	if ((ret = proc_dointvec(ctl, write, filp, buffer, lenp, ppos)) != 0)
+#else
 	if ((ret = proc_dointvec(ctl, write, filp, buffer, lenp)) != 0)
+#endif
 		return(ret);
 
 	// Write changes out to the registers
