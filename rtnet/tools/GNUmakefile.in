@@ -39,6 +39,7 @@ POST_UNINSTALL = :
 host_triplet = @host@
 @CONFIG_RTNET_RTCFG_TRUE@am__append_1 = rtcfg
 @CONFIG_RTNET_NOMAC_TRUE@am__append_2 = nomaccfg
+@CONFIG_RTNET_TDMAV1_TRUE@am__append_3 = rtnet-tdma-v1
 sbin_PROGRAMS = rtifconfig$(EXEEXT) rtroute$(EXEEXT) rtping$(EXEEXT) \
 	tdmacfg$(EXEEXT) $(am__EXEEXT_3)
 subdir = tools
@@ -254,6 +255,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTPROGS = $(am__append_1) $(am__append_2)
+OPTSCRIPTS = $(am__append_3)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
@@ -565,9 +567,11 @@ uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 
 all-local: rtifconfig rtroute rtping $(OPTPROGS)
 
-install-exec-local: rtnet rtnet-tdma-v1
+install-exec-local: rtnet $(OPTSCRIPTS)
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	$(INSTALL_SCRIPT) $< $(DESTDIR)$(sbindir)
+	for FILE in $^; do					\
+ 		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
+	done
 
 install-data-local: rtnet.conf
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
