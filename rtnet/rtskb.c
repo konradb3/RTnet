@@ -51,6 +51,14 @@ static unsigned int rtskb_amount_max=0;
 
 
 
+#ifdef CONFIG_RTAI_MM_VMALLOC
+    #define ALIGN_RTSKB_BUF     SKB_DATA_ALIGN(sizeof(struct rtskb))
+#else
+    #define ALIGN_RTSKB_BUF     ALIGN_RTSKB_STRUCT_LEN
+#endif
+
+
+
 /***
  *  rtskb_copy_and_csum_bits
  */
@@ -161,29 +169,33 @@ static inline int new_rtskb(struct rtskb_head *pool)
 
     ASSERT(pool != NULL, return -EINVAL;);
 
-#ifndef CONFIG_RTNET_RTSKB_USE_KMALLOC
-    /* default case, preserves possibility to create new sockets in real-time
-     * note: CONFIG_RTAI_MM_VMALLOC must not be set!
-     */
-    if ( !(skb = rt_malloc(ALIGN_RTSKB_LEN + len)) ) {
+    if ( !(skb = rt_malloc(ALIGN_RTSKB_STRUCT_LEN + len)) ) {
         rt_printk("RTnet: rtskb allocation failed.\n");
         return -ENOMEM;
     }
-#else
-    /* exectional case, do not use rt_socket within real-time contexts when
-     * this variant is active!
-     */
-    if ( !(skb = kmalloc(ALIGN_RTSKB_LEN + len, GFP_KERNEL)) ) {
-        rt_printk("RTnet: rtskb allocation failed.\n");
-        return -ENOMEM;
-    }
-#endif
 
     /* fill the header with zero */
-    memset(skb, 0, ALIGN_RTSKB_LEN);
+    memset(skb, 0, sizeof(struct rtskb));
+
+#ifdef CONFIG_RTAI_MM_VMALLOC
+    /* align buffer start so that it fits into a single page */
+    skb->buf_start = ((char *)skb) + ALIGN_RTSKB_BUF;
+    if (((unsigned long)skb->buf_start & (PAGE_SIZE-1)) +
+        DEFAULT_MAX_RTSKB_SIZE > PAGE_SIZE)
+        skb->buf_start =
+            (unsigned char*)(((unsigned long)skb->buf_start & ~(PAGE_SIZE-1)) +
+            PAGE_SIZE);
+
+    /* calculate logical buffer page address */
+    skb->buf_page_addr = page_address(vmalloc_to_page(skb->buf_start));
+#undef page_address
+#define page_address(page) __va(((page) - mem_map) << PAGE_SHIFT)
+printk("skb: %X %X %X %X %X %X %X %X\n", skb, skb->buf_start, skb->buf_page_addr, vmalloc_to_page(skb->buf_start), page_address(vmalloc_to_page(skb->buf_start)), mem_map, PAGE_SHIFT, PAGE_OFFSET);
+#else
+    skb->buf_start = ((char *)skb) + ALIGN_RTSKB_BUF;
+#endif
 
     skb->pool = pool;
-    skb->buf_start = ((char *)skb) + ALIGN_RTSKB_LEN;
     skb->buf_len = len;
     skb->buf_end = skb->buf_start+len-1;
 
@@ -206,11 +218,7 @@ static inline void dispose_rtskb(struct rtskb *skb)
 {
     ASSERT(skb != NULL, return;);
 
-#ifndef CONFIG_RTNET_RTSKB_USE_KMALLOC
     rt_free(skb);
-#else
-    kfree(skb);
-#endif
     rtskb_amount--;
 }
 

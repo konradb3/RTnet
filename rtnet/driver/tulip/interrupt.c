@@ -81,7 +81,7 @@ int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev)
 			if (skb == NULL)
 				break;
 
-			mapping = pci_map_single(tp->pdev, skb->tail, PKT_BUF_SZ,
+			mapping = pci_map_single(tp->pdev, RTSKB_KVA(skb, skb->tail), PKT_BUF_SZ, /*RTnet*/
 						 PCI_DMA_FROMDEVICE);
 			tp->rx_buffers[entry].mapping = mapping;
 

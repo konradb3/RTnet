@@ -23,8 +23,12 @@
 
 #ifdef __KERNEL__
 
+#include <linux/skbuff.h>
+
 #include <rtnet_internal.h>
 
+
+struct page;
 
 struct rtskb_head;
 struct rtsocket;
@@ -88,6 +92,10 @@ struct rtskb {
     unsigned char       *tail;
     unsigned char       *end;
     RTIME               rx;
+
+#ifdef CONFIG_RTAI_MM_VMALLOC
+    unsigned char       *buf_page_addr;
+#endif
 };
 
 struct rtskb_head {
@@ -109,27 +117,40 @@ struct rtskb_prio_list {
 };
 
 
-#if defined(CONFIG_RTNET_MM_VMALLOC)
-    #define rt_mem_alloc(size)  malloc (size)
-    #define rt_mem_free(addr)   vfree (addr)
-#else
-    #define rt_mem_alloc(size)  kmalloc (size, GFP_KERNEL)
-    #define rt_mem_free(addr)   kfree (addr)
-#endif
-
-#define DATA_BUF_ALIGN          16 /* align data on 16 bytes boundaries */
-
-/* The rtskb structure and its data buffer are allocated as one chunk. This
-   macro aligns the beginning of the data buffer according to DATA_BUF_ALING
-   by adjusting the structure size. */
-#define ALIGN_RTSKB_LEN         \
-    ((sizeof(struct rtskb)+DATA_BUF_ALIGN-1) & ~(DATA_BUF_ALIGN-1))
-
 /* default values for the module parameter */
 #define DEFAULT_GLOBAL_RTSKBS   0       /* default number of rtskb's in global pool */
 #define DEFAULT_DEVICE_RTSKBS   16      /* default additional rtskbs per network adapter */
 #define DEFAULT_SOCKET_RTSKBS   16      /* default number of rtskb's in socket pools */
 #define DEFAULT_MAX_RTSKB_SIZE  1544    /* maximum space, needed by pcnet32-rt */
+
+#ifdef CONFIG_RTAI_MM_VMALLOC
+    /* sanity check */
+    #if PAGE_SIZE < DEFAULT_MAX_RTSKB_SIZE
+        #error The page size is smaller than the rtskb size. This may prevent
+        #error DMA mapping of non-continuous rtskbs. You have to disable
+        #error CONFIG_RTAI_MM_VMALLOC in RTAI to compile RTnet for the selected
+        #error architecture.
+    #endif
+
+    /* This macro calculates the kernel virtual address which can be passed to
+     * pci_map_single(). */
+    #define RTSKB_KVA(skb, addr) \
+        (void*)((unsigned long)skb->buf_page_addr | ((unsigned long)addr & (PAGE_SIZE-1)))
+
+    /* The rtskb structure and its data buffer are allocated as one chunk. If
+     * vmalloc'ed memory is used for rtskb's, the buffer has to fit into a
+     * single page to allow DMA mapping. This macro extends the rtskb structure
+     * size in order to be able to adjust the buffer start appropriately. */
+    #define ALIGN_RTSKB_STRUCT_LEN      SKB_DATA_ALIGN(sizeof(struct rtskb)) + \
+        SKB_DATA_ALIGN(DEFAULT_MAX_RTSKB_SIZE)
+#else
+    /* Addresses already have correct format */
+    #define RTSKB_KVA(skb, addr) (addr)
+
+    /* This macro aligns the structure size to allow the data buffer alignment
+     * according to DATA_BUF_ALING. */
+    #define ALIGN_RTSKB_STRUCT_LEN      SKB_DATA_ALIGN(sizeof(struct rtskb))
+#endif
 
 extern unsigned int socket_rtskbs;      /* default number of rtskb's in socket pools */
 extern unsigned int rtskb_max_size;     /* rtskb data buffer size */
@@ -190,6 +211,55 @@ static inline int rtskb_queue_empty(struct rtskb_head *list)
 }
 
 /***
+ *  __rtskb_queue_head - queue a buffer at the list head (w/o locks)
+ *  @list: list to use
+ *  @skb: buffer to queue
+ */
+static inline void __rtskb_queue_head(struct rtskb_head *list,
+                                      struct rtskb *skb)
+{
+    skb->head = list;
+    skb->next = list->first;
+
+    list->first = skb;
+    if (list->qlen == 0)
+        list->last = skb;
+    list->qlen++;
+}
+
+/***
+ *  rtskb_queue_head - queue a buffer at the list head (lock protected)
+ *  @list: list to use
+ *  @skb: buffer to queue
+ */
+static inline void rtskb_queue_head(struct rtskb_head *list, struct rtskb *skb)
+{
+    unsigned long flags;
+    flags = rt_spin_lock_irqsave(&list->lock);
+    __rtskb_queue_head(list, skb);
+    rt_spin_unlock_irqrestore(flags, &list->lock);
+}
+
+/***
+ *  rtskb_prio_queue_head - queue a buffer at the prioritized list head
+ *  @list: list to use
+ *  @skb: buffer to queue
+ */
+static inline void rtskb_prio_queue_head(struct rtskb_prio_list *list,
+                                         struct rtskb *skb)
+{
+    unsigned long flags;
+
+    ASSERT(skb->priority <= 31, skb->priority = 31;);
+
+    flags = rt_spin_lock_irqsave(&list->lock);
+    __rtskb_queue_head(&list->queue[skb->priority], skb);
+    __set_bit(skb->priority, &list->usage);
+    list->qlen++;
+    rt_spin_unlock_irqrestore(flags, &list->lock);
+}
+
+/***
  *  __rtskb_queue_tail - queue a buffer at the list tail (w/o locks)
  *  @list: list to use
  *  @skb: buffer to queue
@@ -198,9 +268,9 @@ static inline void __rtskb_queue_tail(struct rtskb_head *list,
                                       struct rtskb *skb)
 {
     skb->head = list;
-    skb->next  = NULL;
+    skb->next = NULL;
 
-    if ( !list->qlen ) {
+    if (list->qlen == 0) {
         list->first = list->last = skb;
     } else {
         list->last->next = skb;
@@ -390,6 +460,15 @@ static inline void rtskb_trim(struct rtskb *skb, unsigned int len)
         skb->len = len;
         skb->tail = skb->data+len;
     }
+}
+
+static inline struct rtskb *rtskb_padto(struct rtskb *rtskb, unsigned int len)
+{
+    ASSERT(len <= (unsigned int)(rtskb->buf_end + 1 - rtskb->data), return NULL;);
+
+    memset(rtskb->data + rtskb->len, 0, len - rtskb->len);
+
+    return rtskb;
 }
 
 static inline int rtskb_acquire(struct rtskb *rtskb,

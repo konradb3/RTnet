@@ -668,7 +668,7 @@ static void tulip_init_ring(/*RTnet*/struct rtnet_device *rtdev)
 		tp->rx_buffers[i].skb = skb;
 		if (skb == NULL)
 			break;
-		mapping = pci_map_single(tp->pdev, skb->tail,
+		mapping = pci_map_single(tp->pdev, RTSKB_KVA(skb, skb->tail), /*RTnet*/
 					 PKT_BUF_SZ, PCI_DMA_FROMDEVICE);
 		tp->rx_buffers[i].mapping = mapping;
 		skb->rtdev = rtdev;			/* Mark as being used by this device. */
@@ -717,7 +717,7 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	entry = tp->cur_tx % TX_RING_SIZE;
 
 	tp->tx_buffers[entry].skb = skb;
-	mapping = pci_map_single(tp->pdev, skb->data,
+	mapping = pci_map_single(tp->pdev, RTSKB_KVA(skb, skb->data), /*RTnet*/
 				 skb->len, PCI_DMA_TODEVICE);
 	tp->tx_buffers[entry].mapping = mapping;
 	tp->tx_ring[entry].buffer1 = cpu_to_le32(mapping);
@@ -1813,7 +1813,7 @@ err_out_free_ring:
 
 err_out_mtable:
 	if (tp->mtable)
-		/*RTnet*/rt_free (tp->mtable);
+		kfree (tp->mtable);
 #ifndef USE_IO_OPS
 	iounmap((void *)ioaddr);
 
@@ -1842,7 +1842,7 @@ static void __devexit tulip_remove_one (struct pci_dev *pdev)
 			     tp->rx_ring, tp->rx_ring_dma);
 	rt_unregister_rtnetdev (rtdev);
 	if (tp->mtable)
-		rt_free (tp->mtable);
+		kfree (tp->mtable);
 #ifndef USE_IO_OPS
 	iounmap((void *)rtdev->base_addr);
 #endif

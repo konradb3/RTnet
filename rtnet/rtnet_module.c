@@ -67,7 +67,7 @@ static int rtnet_mgr_read_proc (char *page, char **start,
             rtdev->rxqueue_len);
     }
 
-    rtskb_len = ALIGN_RTSKB_LEN + SKB_DATA_ALIGN(rtskb_max_size);
+    rtskb_len = ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(rtskb_max_size);
     PROC_PRINT("rtskb pools current/max:       %d / %d\n"
                "rtskbs current/max:            %d / %d\n"
                "rtskb memory need current/max: %d / %d\n\n",

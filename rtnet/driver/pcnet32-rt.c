@@ -1037,7 +1037,8 @@ pcnet32_init_ring(struct rtnet_device *dev) /*** RTnet ***/
 	    }
 	    rtskb_reserve (rx_skbuff, 2); /*** RTnet ***/
 	}
-        lp->rx_dma_addr[i] = pci_map_single(lp->pci_dev, rx_skbuff->tail, rx_skbuff->len, PCI_DMA_FROMDEVICE);
+        lp->rx_dma_addr[i] = pci_map_single(lp->pci_dev, RTSKB_KVA(rx_skbuff, rx_skbuff->tail), /*** RTnet ***/
+                                            rx_skbuff->len, PCI_DMA_FROMDEVICE);
 	lp->rx_ring[i].base = (u32)le32_to_cpu(lp->rx_dma_addr[i]);
 	lp->rx_ring[i].buf_length = le16_to_cpu(-PKT_BUF_SZ);
 	lp->rx_ring[i].status = le16_to_cpu(0x8000);
@@ -1169,7 +1170,8 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
     lp->tx_ring[entry].misc = 0x00000000;
 
     lp->tx_skbuff[entry] = skb;
-    lp->tx_dma_addr[entry] = pci_map_single(lp->pci_dev, skb->data, skb->len, PCI_DMA_TODEVICE);
+    lp->tx_dma_addr[entry] = pci_map_single(lp->pci_dev,
+        RTSKB_KVA(skb, skb->data), skb->len, PCI_DMA_TODEVICE); /*** RTnet ***/
     lp->tx_ring[entry].base = (u32)le32_to_cpu(lp->tx_dma_addr[entry]);
     wmb();
     lp->tx_ring[entry].status = le16_to_cpu(status);
@@ -1405,7 +1407,7 @@ pcnet32_rx(struct rtnet_device *dev) /*** RTnet ***/
 			lp->rx_skbuff[entry] = newskb;
 			newskb->rtdev = dev; /*** RTnet ***/
                         lp->rx_dma_addr[entry] =
-				pci_map_single(lp->pci_dev, newskb->tail,
+				pci_map_single(lp->pci_dev, RTSKB_KVA(newskb, newskb->tail), /*** RTnet ***/
 					newskb->len, PCI_DMA_FROMDEVICE);
 			lp->rx_ring[entry].base = le32_to_cpu(lp->rx_dma_addr[entry]);
 			/*rx_in_place = 1;*/
