@@ -642,10 +642,8 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
     struct rtdm_dev_context *context;
     struct rtdm_operations  *ops;
 
-    rt_printk("\n*** select ***\n");
-    rt_printk("readfds: %08x @ %p\n", *((int*)readfds), (void*)readfds);
+    n = n < MAX_FILDES ? n : MAX_FILDES; /* use the lower number */
     FD_ZERO(&fds);
-    rt_printk("fds: %08x\n", *((int*)&fds));
 
     wq_element_init(&wakeme);
 
@@ -665,7 +663,6 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
     }
 
     /* wait until something happens */
-    rt_printk("fds: %08x\n", *((int*)&fds));
     wq_wait(&wakeme); /* should be wq_wait_timed() */
 
     /* register wq_element on all sockets marked in fds */
