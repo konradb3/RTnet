@@ -6,6 +6,7 @@ AC_INIT([RTnet],[0.5.6],[jan.kiszka@web.de])
 AC_CONFIG_HEADER(config/config.h)
 AC_CONFIG_AUX_DIR(config/autoconf)
 AC_CONFIG_SRCDIR([rtskb.c])
+AC_PREFIX_DEFAULT(/usr/local/rtnet)
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_PROG_INSTALL
@@ -29,7 +30,7 @@ AC_DEFINE_UNQUOTED(CONFIG_RTAI_BUILD_STRING,"$build",[Build system alias])
 RTAI_BUILD_STRING="$build"
 AC_DEFINE_UNQUOTED(CONFIG_RTAI_HOST_STRING,"$host",[Host system alias])
 RTAI_HOST_STRING="$host"
-
+AC_DEFINE_UNQUOTED(CONFIG_RTAI_COMPILER,"`$CC -v 2>&1 | tail -n 1`",[Compiler])
 
 AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2])
 AM_MAINTAINER_MODE
@@ -76,51 +77,16 @@ case "$host" in
    exit 1;;
 esac
 
-dnl
-dnl Installation directory for modules
-dnl
-
-AC_MSG_CHECKING([for module installation directory])
-
-AC_ARG_WITH(module-dir,
-    [  --with-module-dir=<module-dir>      Installation directory for modules],
-    [
-        case "$withval" in
-        "" | y | ye | yes | n | no)
-            AC_MSG_ERROR([You must supply an argument to --with-module-dir.])
-          ;;
-        esac
-        RTAI_MODULE_DIR="$withval"
-    ])
-
-dnl Are we building into the source tree?
-if test "$srcdir" = `pwd`; then
-   CONFIG_RTAI_OLD_FASHIONED_BUILD=y
-else
-   CONFIG_RTAI_OLD_FASHIONED_BUILD=n
-fi
-
-dnl Set a default module dir if unspecified
-if test "x" = "x$RTAI_MODULE_DIR"
-then
-   RTAI_MODULE_DIR=$prefix/modules
-fi
-
-AC_MSG_RESULT([$RTAI_MODULE_DIR])
-CONFIG_RTAI_MODULE_DIR=$RTAI_MODULE_DIR
-
 #
 # define helper function
 #
-
 AC_DEFUN(AC_CHECK_LIBRARY, [dnl
-KSAVE_LIBS="$LIBS"
-LIBS="$$3 $KSAVE_LIBS"
-AC_CHECK_LIB($1,$2)
-$3=`echo "$LIBS" | sed "s% $KSAVE_LIBS$%%"`
-LIBS="$KSAVE_LIBS"
-])
-
+			   KSAVE_LIBS="$LIBS"
+			   LIBS="$$3 $KSAVE_LIBS"
+			   AC_CHECK_LIB($1,$2)
+			   $3=`echo "$LIBS" | sed "s% $KSAVE_LIBS$%%"`
+			   LIBS="$KSAVE_LIBS"
+			   ])
 
 
 # Checks for libraries.
@@ -234,8 +200,12 @@ elif test x${CONFIG_RTHAL} = xy; then
     dnl RTHAL signature inside a kernel tree, that does not rely on
     dnl the Makefile's EXTRAVERSION variable, because it happened that
     dnl some people change its value manually to suit their needs...
-    AC_DEFINE(CONFIG_RTAI_RTHAL,1,[Use classic RTHAL])
-    AC_MSG_RESULT([rthal])
+    AC_DEFINE(CONFIG_RTAI_RTHAL,1,[Use legacy RTHAL])
+    if test "$CONFIG_X86" = y; then
+       AC_MSG_RESULT([legacy RTHAL])
+    else
+       AC_MSG_RESULT([RTHAL])
+    fi
     CONFIG_RTAI_RTHAL=y
     dnl Need Adeos to run Xenomai in native mode.
     unset CONFIG_RTAI_XENOMAI
@@ -282,6 +252,33 @@ fi
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 dnl ++++++++++++ copied from rtai-unstabel +++ end +++++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+dnl ======================================================================
+dnl		Installation directory for modules
+dnl ======================================================================
+
+AC_MSG_CHECKING([for module installation directory])
+
+AC_ARG_WITH(module-dir,
+    [  --with-module-dir=<module-dir>      Installation directory for modules],
+    [
+        case "$withval" in
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-module-dir.])
+          ;;
+        esac
+        RTNET_MODULE_DIR="$withval"
+    ])
+
+dnl Set a default module dir if unspecified
+if test "x" = "x$RTNET_MODULE_DIR"
+then
+   RTNET_MODULE_DIR='${exec_prefix}/modules'
+#  RTNET_MODULE_DIR=/lib/modules/$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL/rtnet
+fi
+
+AC_MSG_RESULT([$RTNET_MODULE_DIR])
+AC_SUBST(RTNET_MODULE_DIR)
 
 dnl ======================================================================
 dnl		check for NEWLXRT

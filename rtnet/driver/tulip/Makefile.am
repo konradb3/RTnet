@@ -1,3 +1,5 @@
+moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
+
 noinst_LIBRARIES = libtulip-rt.a
 
 libtulip_rt_a_SOURCES = \
@@ -19,3 +21,7 @@ tulip-rt.o: libtulip-rt.a
 	$(LD) --whole-archive $< -r -o $@
 
 all-local: tulip-rt.o
+
+install-exec-local: tulip-rt.o
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)

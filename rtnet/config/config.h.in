@@ -6,13 +6,16 @@
 /* Build system alias */
 #undef CONFIG_RTAI_BUILD_STRING
 
+/* Compiler */
+#undef CONFIG_RTAI_COMPILER
+
 /* Host system alias */
 #undef CONFIG_RTAI_HOST_STRING
 
 /* Kconfig */
 #undef CONFIG_RTAI_LINUX24
 
-/* Use classic RTHAL */
+/* Use legacy RTHAL */
 #undef CONFIG_RTAI_RTHAL
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */

@@ -1,3 +1,5 @@
+moduledir = $(DESTDIIR)/@RTNET_MODULE_DIR@
+
 OPTDIRS =
 
 if CONFIG_RTNET_TULIP
@@ -70,3 +72,9 @@ AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@
 
 all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	for FILE in $^; do					\
+		$(INSTALL_DATA) $$FILE $(moduledir);		\
+	done

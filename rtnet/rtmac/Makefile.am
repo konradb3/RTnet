@@ -1,3 +1,5 @@
+moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
+
 SUBDIRS = examples
 
 noinst_LIBRARIES = librtmac.a
@@ -25,3 +27,7 @@ AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@
 
 all-local: rtmac.o
+
+install-exec-local: rtmac.o
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
