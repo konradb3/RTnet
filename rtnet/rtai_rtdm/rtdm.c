@@ -642,9 +642,9 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
     rt_printk("readfds: %08x @ %p\n", *((int*)readfds), (void*)readfds);
     FD_ZERO(&fds);
     rt_printk("fds: %08x\n", *((int*)&fds));
-    
+
     wq_element_init(&wakeme);
-    
+
     /* register wq_element on all sockets marked in readfds */
     for (i=0; i<=n; i++) {
 	if (FD_ISSET(i, readfds)) {
@@ -659,11 +659,11 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 	    }
 	}
     }
-    
+
     /* wait until something happens */
     rt_printk("fds: %08x\n", *((int*)&fds));
     wq_wait(&wakeme); /* should be wq_wait_timed() */
-    
+
     /* register wq_element on all sockets marked in fds */
     for (i=0; i<=n; i++) { /* n vs. RT_SOCKETS */
 	if (FD_ISSET(i, &fds)) {
@@ -680,17 +680,17 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 	    }
 	}
     }
-    
+
     wq_element_delete(&wakeme);
-    
+
     /* check for further messages */
-    
+
     /* On success, select and pselect return the number  of  descriptors  con-
      * tained in the descriptor sets, which may be zero if the timeout expires
      * before anything interesting happens.  On error,  -1  is  returned,  and
      * errno  is  set appropriately; the sets and timeout become undefined, so
      * do not rely on their contents after an error.
-     */    
+     */
     return 0; /* fix this */
 }
 #endif /* CONFIG_RTNET_RTDM_SELECT */
@@ -1337,10 +1337,4 @@ EXPORT_SYMBOL(rtdm_recvmsg);
 EXPORT_SYMBOL(rtdm_sendmsg);
 #ifdef CONFIG_RTNET_RTDM_SELECT
 EXPORT_SYMBOL(rtdm_select);
-#endif CONFIG_RTNET_RTDM_SELECT
-
-/*
- * Local variables:
- * c-basic-offset: 4
- * End:
- */
+#endif /* CONFIG_RTNET_RTDM_SELECT */
