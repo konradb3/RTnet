@@ -1,3 +1,14 @@
+0.2.8
+- enhanched round_trip_time example - Hans-Peter Bock
+  * configurable send intervall
+  * configurable packetsize
+  * accounting of sent and received packets
+  * exact roundtrip time in us
+  * showtime displays minimum/maximum roundtrip time
+- Added rt_ip_setsockopt() for IP_TOS
+- Added experimental tulip driver - Wittawat Yamwong
+- Added rtnetproxy - Mathias Koehrer
+
 0.2.7
 - added new example (rtt), another round trip time example, without
   the bug of the old one, causing equal time.

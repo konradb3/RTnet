@@ -1,4 +1,4 @@
-			RTnet Version 0.2.7
+			RTnet Version 0.2.8
 
 What is it?
 -----------
@@ -62,7 +62,7 @@ I assume that rtnet module has been loaded and configured(rtifconfig).
 	# ...
 4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
 
-More details about RTmac coming soon...
+See README.rtmac for more information.
 
 
 RTnet is free software, and you are welcome to redistribute it under 
@@ -76,6 +76,11 @@ Marc Kleine-Budde			- testing, bug fixing and upcoming
 					  extensions
 Mathias Köhrer				- 3c59x-rt
 Jan Kiszka (jan.kiszka@web.de)		- eepro100-rt and this poor doc
+Wittawat Yamwong
+<wittawat@web.de>			- testing, documents
+Hans-Peter Bock				- testing, bug fixing
+Mathias Koehrer
+<mathias_koehrer@yahoo.de>		- rtnetproxy, testing, bug fixing
 
 Acknowledgements:
 David Schleef			- he wrote the original RTnet, some parts
