@@ -27,27 +27,9 @@
 
 #include <linux/netdevice.h>
 
+#include <rtcfg.h>
 #include <rtdev.h>
 
-
-#define EVENT_PENDING       1000 /* result value for blocked events */
-
-
-typedef enum {
-    RTCFG_CMD_SERVER,
-    RTCFG_CMD_ADD_IP,
-    RTCFG_CMD_DEL,
-    RTCFG_CMD_WAIT,
-    RTCFG_CMD_CLIENT,
-    RTCFG_CMD_ANNOUNCE,
-    RTCFG_FRM_STAGE_1_CFG,
-    RTCFG_FRM_ANNOUNCE_NEW,
-    RTCFG_FRM_ANNOUNCE_REPLY,
-    RTCFG_FRM_STAGE_2_CFG,
-    RTCFG_FRM_STAGE_2_CFG_FRAG,
-    RTCFG_FRM_ACK_CFG,
-    RTCFG_FRM_HEARTBEAT
-} RTCFG_EVENT;
 
 typedef enum {
     RTCFG_MAIN_OFF,
@@ -84,8 +66,8 @@ struct rtcfg_device {
     u32              clients;
     u32              clients_found;
     SEM              dev_sem;
-    struct list_head event_list;
-    spinlock_t       event_list_lock;
+    struct list_head event_calls;
+    spinlock_t       event_calls_lock;
     RT_TASK          timer_task;
 
     /* client related */

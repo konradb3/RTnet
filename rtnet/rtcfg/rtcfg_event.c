@@ -29,13 +29,13 @@
 #include <rtai_sched.h>
 
 #include <rtdev.h>
+#include <rtnet_rtpc.h>
 #include <ipv4/arp.h>
 #include <ipv4/route.h>
 #include <rtcfg/rtcfg.h>
 #include <rtcfg/rtcfg_conn_event.h>
 #include <rtcfg/rtcfg_frame.h>
 #include <rtcfg/rtcfg_timer.h>
-#include <rtcfg/rtcfg_ui.h>
 
 
 /****************************** states ***************************************/
@@ -61,7 +61,9 @@ static int rtcfg_main_state_client_2(
 const char *rtcfg_event[] = {
     "RTCFG_CMD_SERVER",
     "RTCFG_CMD_ADD_IP",
+    "RTCFG_CMD_ADD_MAC",
     "RTCFG_CMD_DEL_IP",
+    "RTCFG_CMD_DEL_MAC",
     "RTCFG_CMD_WAIT",
     "RTCFG_CMD_CLIENT",
     "RTCFG_CMD_ANNOUNCE",
@@ -110,36 +112,35 @@ static int rtcfg_client_recv_announce(
 
 
 
-static void rtcfg_queue_blocking_event(int ifindex,
-                                       struct rtcfg_user_event *event)
+static void rtcfg_queue_blocking_call(int ifindex, struct rt_proc_call *call)
 {
     unsigned long       flags;
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
 
 
-    flags = rt_spin_lock_irqsave(&rtcfg_dev->event_list_lock);
-    list_add_tail(&event->list_entry, &rtcfg_dev->event_list);
-    rt_spin_unlock_irqrestore(flags, &rtcfg_dev->event_list_lock);
+    flags = rt_spin_lock_irqsave(&rtcfg_dev->event_calls_lock);
+    list_add_tail(&call->list_entry, &rtcfg_dev->event_calls);
+    rt_spin_unlock_irqrestore(flags, &rtcfg_dev->event_calls_lock);
 }
 
 
 
-static struct rtcfg_user_event *rtcfg_dequeue_blocking_event(int ifindex)
+static struct rt_proc_call *rtcfg_dequeue_blocking_call(int ifindex)
 {
     unsigned long flags;
-    struct rtcfg_user_event *event;
+    struct rt_proc_call *call;
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
 
 
-    flags = rt_spin_lock_irqsave(&rtcfg_dev->event_list_lock);
-    if (!list_empty(&rtcfg_dev->event_list)) {
-        event = (struct rtcfg_user_event *)rtcfg_dev->event_list.next;
-        list_del(&event->list_entry);
+    flags = rt_spin_lock_irqsave(&rtcfg_dev->event_calls_lock);
+    if (!list_empty(&rtcfg_dev->event_calls)) {
+        call = (struct rt_proc_call *)rtcfg_dev->event_calls.next;
+        list_del(&call->list_entry);
     } else
-        event = NULL;
-    rt_spin_unlock_irqrestore(flags, &rtcfg_dev->event_list_lock);
+        call = NULL;
+    rt_spin_unlock_irqrestore(flags, &rtcfg_dev->event_calls_lock);
 
-    return event;
+    return call;
 }
 
 
@@ -170,13 +171,15 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
                                 void* event_data)
 {
     struct rtcfg_device     *rtcfg_dev = &device[ifindex];
-    struct rtcfg_user_event *event = (struct rtcfg_user_event *)event_data;
+    struct rt_proc_call     *call      = (struct rt_proc_call *)event_data;
+    struct rtcfg_cmd        *cmd_event;
     RTIME                   period;
     int                     ret;
 
+    cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
     switch (event_id) {
         case RTCFG_CMD_SERVER:
-            period = ((RTIME)event->args.server.period) * 1000000;
+            period = ((RTIME)cmd_event->args.server.period) * 1000000;
 
             rt_sem_wait(&rtcfg_dev->dev_sem);
 
@@ -196,19 +199,18 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
         case RTCFG_CMD_CLIENT:
             rt_sem_wait(&rtcfg_dev->dev_sem);
 
-            rtcfg_dev->client_addr_list = event->buffer;
-            rtcfg_dev->max_clients      = event->args.client.max_clients;
+            rtcfg_dev->client_addr_list     = cmd_event->args.client.addr_buf;
+            cmd_event->args.client.addr_buf = NULL;
 
-            event->buffer = NULL;
+            rtcfg_dev->max_clients = cmd_event->args.client.max_clients;
 
-            rtcfg_queue_blocking_event(ifindex,
-                (struct rtcfg_user_event *)event_data);
+            rtcfg_queue_blocking_call(ifindex, call);
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_0);
 
             rt_sem_signal(&rtcfg_dev->dev_sem);
 
-            return -EVENT_PENDING;
+            return -CALL_PENDING;
 
         default:
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
@@ -223,7 +225,8 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
 static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
                                            void* event_data)
 {
-    struct rtcfg_user_event       *user_event;
+    struct rt_proc_call           *call;
+    struct rtcfg_cmd              *cmd_event;
     struct rtcfg_frm_event        *frm_event;
     struct rtcfg_connection       *conn;
     struct rtcfg_connection       *new_conn;
@@ -236,47 +239,47 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 
     switch (event_id) {
         case RTCFG_CMD_ADD_IP:
-            user_event = (struct rtcfg_user_event *)event_data;
-
-            new_conn = (struct rtcfg_connection *)user_event->buffer;
-
-            new_conn->ifindex      = ifindex;
-            new_conn->state        = RTCFG_CONN_SEARCHING;
-            new_conn->addr_type    = RTCFG_ADDR_IP;
-            new_conn->addr.ip_addr = user_event->args.add_ip.ip_addr;
-            new_conn->cfg_offs     = 0;
-
-            /* MAC address yet unknown -> set to broadcast address */
-            memset(new_conn->mac_addr, 0xFF, sizeof(new_conn->mac_addr));
+            call      = (struct rt_proc_call *)event_data;
+            cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
             rt_sem_wait(&rtcfg_dev->dev_sem);
 
             list_for_each(entry, &rtcfg_dev->conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
-                if (conn->addr.ip_addr == user_event->args.add_ip.ip_addr) {
+                if (conn->addr.ip_addr == cmd_event->args.add.ip_addr) {
                     rt_sem_signal(&rtcfg_dev->dev_sem);
                     return -EEXIST;
                 }
             }
+
+            new_conn = cmd_event->args.add.conn_buf;
+            cmd_event->args.add.conn_buf = NULL;
+
+            new_conn->ifindex      = ifindex;
+            new_conn->state        = RTCFG_CONN_SEARCHING;
+            new_conn->addr_type    = RTCFG_ADDR_IP;
+            new_conn->addr.ip_addr = cmd_event->args.add.ip_addr;
+            new_conn->cfg_offs     = 0;
+
+            /* MAC address yet unknown -> set to broadcast address */
+            memset(new_conn->mac_addr, 0xFF, sizeof(new_conn->mac_addr));
 
             list_add_tail(&new_conn->entry, &rtcfg_dev->conn_list);
             rtcfg_dev->clients++;
 
             rt_sem_signal(&rtcfg_dev->dev_sem);
 
-            user_event->buffer = NULL;
-
             break;
 
         case RTCFG_CMD_WAIT:
             rt_sem_wait(&rtcfg_dev->dev_sem);
 
-            rtcfg_queue_blocking_event(ifindex,
-                (struct rtcfg_user_event *)event_data);
+            rtcfg_queue_blocking_call(ifindex,
+                (struct rt_proc_call *)event_data);
 
             rt_sem_signal(&rtcfg_dev->dev_sem);
 
-            return -EVENT_PENDING;
+            return -CALL_PENDING;
 
         case RTCFG_FRM_ANNOUNCE_NEW:
             frm_event = (struct rtcfg_frm_event *)event_data;
@@ -363,13 +366,15 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 
                 if (rtcfg_dev->clients == rtcfg_dev->clients_found)
                     while (1) {
-                        user_event = rtcfg_dequeue_blocking_event(ifindex);
-                        if (user_event == NULL)
+                        call = rtcfg_dequeue_blocking_call(ifindex);
+                        if (call == NULL)
                             break;
 
-                        rtcfg_complete_event(user_event,
-                            (user_event->event_id == RTCFG_CMD_WAIT) ?
-                            0 : -EINVAL);
+                        cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+                        rtpc_complete_call(call,
+                            (cmd_event->event_id == RTCFG_CMD_WAIT) ?
+                                0 : -EINVAL);
                     }
 
                 break;
@@ -393,7 +398,8 @@ static int rtcfg_main_state_client_0(int ifindex, RTCFG_EVENT event_id,
                                      void* event_data)
 {
     struct rtcfg_frm_stage_1_cfg *stage_1_cfg;
-    struct rtcfg_user_event      *user_event;
+    struct rt_proc_call          *call;
+    struct rtcfg_cmd             *cmd_event;
     struct rtcfg_frm_event       *frm_event;
     struct rtcfg_device          *rtcfg_dev = &device[ifindex];
     struct rtnet_device          *rtdev;
@@ -460,12 +466,14 @@ static int rtcfg_main_state_client_0(int ifindex, RTCFG_EVENT event_id,
                            frm_event->addr->sll_addr, 6);
 
                     while (1) {
-                        user_event = rtcfg_dequeue_blocking_event(ifindex);
-                        if (user_event == NULL)
+                        call = rtcfg_dequeue_blocking_call(ifindex);
+                        if (call == NULL)
                             break;
 
-                        rtcfg_complete_event(user_event,
-                            (user_event->event_id == RTCFG_CMD_CLIENT) ?
+                        cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+                        rtpc_complete_call(call,
+                            (cmd_event->event_id == RTCFG_CMD_CLIENT) ?
                                 0 : -EINVAL);
                     }
 
@@ -519,14 +527,14 @@ static int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
                 return ret;
             }
 
-            rtcfg_queue_blocking_event(ifindex,
-                (struct rtcfg_user_event *)event_data);
+            rtcfg_queue_blocking_call(ifindex,
+                (struct rt_proc_call *)event_data);
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ANNOUNCED);
 
             rt_sem_signal(&rtcfg_dev->dev_sem);
 
-            return -EVENT_PENDING;
+            return -CALL_PENDING;
 
         case RTCFG_FRM_ANNOUNCE_NEW:
             frm_event = (struct rtcfg_frm_event *)event_data;
@@ -553,16 +561,19 @@ static int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
 
 static void rtcfg_complete_cmd_announce(int ifindex)
 {
-    struct rtcfg_user_event *user_event;
+    struct rt_proc_call *call;
+    struct rtcfg_cmd    *cmd_event;
 
 
     while (1) {
-        user_event = rtcfg_dequeue_blocking_event(ifindex);
-        if (user_event == NULL)
+        call = rtcfg_dequeue_blocking_call(ifindex);
+        if (call == NULL)
             break;
 
-        rtcfg_complete_event(user_event,
-            (user_event->event_id == RTCFG_CMD_ANNOUNCE) ? 0 : -EINVAL);
+        cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+        rtpc_complete_call(call,
+            (cmd_event->event_id == RTCFG_CMD_ANNOUNCE) ? 0 : -EINVAL);
     }
 }
 
@@ -791,8 +802,8 @@ void rtcfg_init_state_machines(void)
         INIT_LIST_HEAD(&rtcfg_dev->conn_list);
         rt_typed_sem_init(&rtcfg_dev->dev_sem, 1, RES_SEM);
 
-        INIT_LIST_HEAD(&rtcfg_dev->event_list);
-        spin_lock_init(&rtcfg_dev->event_list_lock);
+        INIT_LIST_HEAD(&rtcfg_dev->event_calls);
+        spin_lock_init(&rtcfg_dev->event_calls_lock);
     }
 }
 
@@ -804,7 +815,7 @@ void rtcfg_cleanup_state_machines(void)
     struct rtcfg_device     *rtcfg_dev;
     struct list_head        *entry;
     struct list_head        *tmp;
-    struct rtcfg_user_event *event;
+    struct rt_proc_call     *call;
 
 
     for (i = 0; i < MAX_RT_DEVICES; i++) {
@@ -820,11 +831,11 @@ void rtcfg_cleanup_state_machines(void)
             kfree(rtcfg_dev->client_addr_list);
 
         while (1) {
-            event = rtcfg_dequeue_blocking_event(i);
-            if (event == NULL)
+            call = rtcfg_dequeue_blocking_call(i);
+            if (call == NULL)
                 break;
 
-            rtcfg_complete_event_nrt(event, -ENODEV);
+            rtpc_complete_call_nrt(call, -ENODEV);
         }
     }
 }
