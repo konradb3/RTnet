@@ -132,6 +132,7 @@ EXPORT_SYMBOL(rt_eth_type_trans);
 /****************************************************************************
  * ipv4                                                                     *
  ****************************************************************************/
+EXPORT_SYMBOL(rt_ip_route_add_if_new);
 EXPORT_SYMBOL(rt_ip_route_output);
 EXPORT_SYMBOL(rt_ip_register_fallback);
 
@@ -144,6 +145,7 @@ EXPORT_SYMBOL(rt_inet_aton);
 EXPORT_SYMBOL(rt_arp_table_lookup);
 EXPORT_SYMBOL(rt_rarp_table_lookup);
 EXPORT_SYMBOL(rt_arp_solicit);
+EXPORT_SYMBOL(rt_arp_table_add);
 
 
 /****************************************************************************
