@@ -365,7 +365,9 @@ static void rtnetproxy_rtai_srq(void)
     {
         rtnetproxy_kernel_recv(rtskb);
         /* Place "used" rtskb in backqueue... */
-        write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb);
+	if (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
+	    printk("%s: memory leakage\n", __FUNCTION__);
+	}
     }
 }
 
