@@ -1,5 +1,5 @@
 /* rtnet/rtdev.c - implement a rtnet device
- * 
+ *
  * Copyright (C) 1999      Lineo, Inc
  *               1999,2002 David A. Schleef <ds@schleef.org>
  *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
@@ -204,7 +204,7 @@ static inline struct rtnet_device *__rtdev_get_by_hwaddr(unsigned short type, ch
     struct rtnet_device * rtdev;
 
     for(rtdev=rtnet_devices;rtdev;rtdev=rtdev->next){
-        if ((rtdev->type == type) && 
+        if ((rtdev->type == type) &&
             (!memcmp(rtdev->dev_addr, hw_addr, rtdev->addr_len))) {
             return rtdev;
         }
@@ -228,12 +228,12 @@ struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
 /***
  *  rtdev_alloc_name - allocate a name for the rtnet_device
  *  @rtdev:         the rtnet_device
- *  @name_mask:     a name mask 
+ *  @name_mask:     a name mask
  *                  ("eth%d" for ethernet or "tr%d" for tokenring)
  *
  *  This function have to called from the driver-probe-funtion.
- *  Because we don't know the type of the rtnet_device 
- *  (may be tokenring or ethernet). 
+ *  Because we don't know the type of the rtnet_device
+ *  (may be tokenring or ethernet).
  */
 void rtdev_alloc_name(struct rtnet_device *rtdev, const char *mask)
 {
@@ -273,6 +273,8 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 
     memset(rtdev, 0, alloc_size);
 
+    rt_typed_sem_init(&rtdev->xmit_sem, 1, RES_SEM);
+
     if (sizeof_priv)
         rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
 
@@ -286,11 +288,12 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 /***
  *  rtdev_free
  */
-void rtdev_free (struct rtnet_device *rtdev) 
+void rtdev_free (struct rtnet_device *rtdev)
 {
     if (rtdev!=NULL) {
         rtdev->stack_sem=NULL;
         rtdev->rtdev_mbx=NULL;
+        rt_sem_delete(&rtdev->xmit_sem);
         kfree(rtdev);
     }
 }

@@ -1,7 +1,8 @@
 /***
  * rtnet/rtskb.c - rtskb implementation for rtnet
  *
- * Copyright (C) 2002	U. Marx <marx@fet.uni-hannover.de>
+ * Copyright (C) 2002 Ulrich Marx <marx@fet.uni-hannover.de>,
+ *               2003 Jan Kiszka <jan.kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -29,7 +30,7 @@
 static unsigned int rtskb_pool_default = DEFAULT_RTSKB_POOL_DEF;
 static unsigned int rtskb_pool_min = DEFAULT_MIN_RTSKB_DEF;
 static unsigned int rtskb_pool_max = DEFAULT_MAX_RTSKB_DEF;
-static unsigned int rtskb_max_size = ETH_FRAME_LEN;
+static unsigned int rtskb_max_size = DEFAULT_MAX_RTSKB_SIZE;
 MODULE_PARM(rtskb_pool_default, "i");
 MODULE_PARM(rtskb_pool_min, "i");
 MODULE_PARM(rtskb_pool_max, "i");
@@ -49,525 +50,527 @@ struct rtskb_head rtskb_pool;
 static unsigned int rtskb_amount=0;
 static unsigned int rtskb_amount_max=0;
 
-#define RTSKB_CACHE	       	"rtskb"
-kmem_cache_t			*rtskb_cache;
+#define RTSKB_CACHE         "rtskb"
+kmem_cache_t *rtskb_cache;
 
-#define RTSKB_DATA_CACHE       	"rtskb_data"
-kmem_cache_t			*rtskb_data_cache;
+#define RTSKB_DATA_CACHE    "rtskb_data"
+kmem_cache_t *rtskb_data_cache;
 
 
 
 /***
- *	rtskb_copy_and_csum_bits
+ *  rtskb_copy_and_csum_bits
  */
 unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset, u8 *to, int len, unsigned int csum)
 {
-	int copy;
-	int start = skb->len - skb->data_len;
-	int pos = 0;
+    int copy;
+    int start = skb->len - skb->data_len;
+    int pos = 0;
 
-	/* Copy header. */
-	if ((copy = start-offset) > 0) {
-		if (copy > len)
-			copy = len;
-		csum = csum_partial_copy_nocheck(skb->data+offset, to, copy, csum);
-		if ((len -= copy) == 0)
-			return csum;
-		offset += copy;
-		to += copy;
-		pos = copy;
-	}
+    /* Copy header. */
+    if ((copy = start-offset) > 0) {
+        if (copy > len)
+            copy = len;
+        csum = csum_partial_copy_nocheck(skb->data+offset, to, copy, csum);
+        if ((len -= copy) == 0)
+            return csum;
+        offset += copy;
+        to += copy;
+        pos = copy;
+    }
 
-	BUG();
-	return csum;
+    BUG();
+    return csum;
 }
 
 
 /***
- *	rtskb_copy_and_csum_dev
+ *  rtskb_copy_and_csum_dev
  */
 void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
 {
-	unsigned int csum;
-	unsigned int csstart;
+    unsigned int csum;
+    unsigned int csstart;
 
-	if (skb->ip_summed == CHECKSUM_HW)
-		csstart = skb->h.raw - skb->data;
-	else
-		csstart = skb->len - skb->data_len;
+    if (skb->ip_summed == CHECKSUM_HW)
+        csstart = skb->h.raw - skb->data;
+    else
+        csstart = skb->len - skb->data_len;
 
-	if (csstart > skb->len - skb->data_len)
-		BUG();
+    if (csstart > skb->len - skb->data_len)
+        BUG();
 
-	memcpy(to, skb->data, csstart);
+    memcpy(to, skb->data, csstart);
 
-	csum = 0;
-	if (csstart != skb->len)
-		csum = rtskb_copy_and_csum_bits(skb, csstart, to+csstart, skb->len-csstart, 0);
+    csum = 0;
+    if (csstart != skb->len)
+        csum = rtskb_copy_and_csum_bits(skb, csstart, to+csstart, skb->len-csstart, 0);
 
-	if (skb->ip_summed == CHECKSUM_HW) {
-		unsigned int csstuff = csstart + skb->csum;
+    if (skb->ip_summed == CHECKSUM_HW) {
+        unsigned int csstuff = csstart + skb->csum;
 
-		*((unsigned short *)(to + csstuff)) = csum_fold(csum);
-	}
+        *((unsigned short *)(to + csstuff)) = csum_fold(csum);
+    }
 }
 
 
 
 /**
- *	skb_over_panic		- 	private function
- *	@skb: buffer
- *	@sz: size
- *	@here: address
+ *  skb_over_panic - private function
+ *  @skb: buffer
+ *  @sz: size
+ *  @here: address
  *
- *	Out of line support code for rtskb_put(). Not user callable.
+ *  Out of line support code for rtskb_put(). Not user callable.
  */
 void rtskb_over_panic(struct rtskb *skb, int sz, void *here)
 {
-	char *name;
-	if ( skb->rtdev ) 
-		name=skb->rtdev->name;
-	else 
-		name="<NULL>";
-	rt_printk("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here, skb->len, sz, name );
+    char *name;
+    if ( skb->rtdev )
+        name=skb->rtdev->name;
+    else
+        name="<NULL>";
+    rt_printk("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here, skb->len, sz, name );
 }
 
 
 
 /**
- *	skb_under_panic		- 	private function
- *	@skb: buffer
- *	@sz: size
- *	@here: address
+ *  skb_under_panic - private function
+ *  @skb: buffer
+ *  @sz: size
+ *  @here: address
  *
- *	Out of line support code for rtskb_push(). Not user callable.
+ *  Out of line support code for rtskb_push(). Not user callable.
  */
 void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
 {
-	char *name = "";
-	if ( skb->rtdev ) 
-		name=skb->rtdev->name;
-	else 
-		name="<NULL>";
-		
-        rt_printk("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here, skb->len, sz, name);
+    char *name = "";
+    if ( skb->rtdev )
+        name=skb->rtdev->name;
+    else
+        name="<NULL>";
+
+    rt_printk("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here, skb->len, sz, name);
 }
 
 
 
 /***
- *	rtskb_init		-	constructor for slab 
+ *  rtskb_init - constructor for slab
  *
  */
 static inline void rtskb_init(void *p, kmem_cache_t *cache, unsigned long flags)
 {
-	struct rtskb *skb = p;
-	memset (skb, 0, sizeof(struct rtskb));
+    struct rtskb *skb = p;
+    memset (skb, 0, sizeof(struct rtskb));
 }
 
 
 
 /***
- *	rtskb_data_init		-	constructor for slab 
+ *  rtskb_data_init - constructor for slab
  *
  */
 static inline void rtskb_data_init(void *p, kmem_cache_t *cache, unsigned long flags)
 {
-	unsigned char *skb_data = p;
-	memset (skb_data, 0, SKB_DATA_ALIGN(rtskb_max_size));
+    unsigned char *skb_data = p;
+    memset (skb_data, 0, SKB_DATA_ALIGN(rtskb_max_size));
 }
 
 
 
 
 /***
- *	new_rtskb		-	allocate an new rtskb-Buffer
- *	return:	buffer
+ *  new_rtskb - allocate an new rtskb-Buffer
+ *  return: buffer
  */
 struct rtskb *new_rtskb(void)
 {
-	struct rtskb *skb;
-	unsigned int len = SKB_DATA_ALIGN(rtskb_max_size);
+    struct rtskb *skb;
+    unsigned int len = SKB_DATA_ALIGN(rtskb_max_size);
 
-	if ( !(skb = kmem_cache_alloc(rtskb_cache, GFP_ATOMIC)) ) {
-		printk("RTnet: allocate rtskb failed.\n");
-		return NULL;
-	}
-	memset(skb, 0, sizeof(struct rtskb));
+    if ( !(skb = kmem_cache_alloc(rtskb_cache, GFP_ATOMIC)) ) {
+        printk("RTnet: allocate rtskb failed.\n");
+        return NULL;
+    }
+    memset(skb, 0, sizeof(struct rtskb));
 
-	if ( !(skb->buf_start = kmem_cache_alloc(rtskb_data_cache, GFP_ATOMIC)) ) {
-		printk("RTnet: allocate rtskb->buf_ptr failed.\n");
-		kmem_cache_free(rtskb_cache, skb);
-		return NULL;
-	}
+    if ( !(skb->buf_start = kmem_cache_alloc(rtskb_data_cache, GFP_ATOMIC)) ) {
+        printk("RTnet: allocate rtskb->buf_ptr failed.\n");
+        kmem_cache_free(rtskb_cache, skb);
+        return NULL;
+    }
 
-	memset(skb->buf_start, 0, len);
-	skb->buf_len = len;
-	skb->buf_end = skb->buf_start+len-1;
+    memset(skb->buf_start, 0, len);
+    skb->buf_len = len;
+    skb->buf_end = skb->buf_start+len-1;
 
-	rtskb_amount++;
-	if (rtskb_amount_max < rtskb_amount) {
-		rtskb_amount_max  = rtskb_amount;
-	}
-	return skb;
+    rtskb_amount++;
+    if (rtskb_amount_max < rtskb_amount) {
+        rtskb_amount_max  = rtskb_amount;
+    }
+    return skb;
 }
 
 
 
 /***
- *	dispose_rtskb		-	deallocate the buffer
- *	@skb	rtskb
- */ 
-void dispose_rtskb(struct rtskb *skb) 
-{
-	if ( skb ) {
-		if (skb->buf_start)
-			kmem_cache_free(rtskb_data_cache, skb->buf_start);
-		kmem_cache_free(rtskb_cache, skb);
-		rtskb_amount--;
-	}
-}
-
-
-
-/***
- *	alloc_rtskb
- *	@size: i will need it later.
+ *  dispose_rtskb - deallocate the buffer
+ *  @skb    rtskb
  */
-struct rtskb *alloc_rtskb(unsigned int size) 
+void dispose_rtskb(struct rtskb *skb)
 {
-        struct rtskb *skb;
-
-	if ( rtskb_pool.qlen>0 ) 
-		skb = rtskb_dequeue(&rtskb_pool);
-        else {
-	  //	        skb = new_rtskb(); /* might return NULL and not be safe in this context */
-		rt_pend_linux_srq(inc_pool_srq);
-		return NULL;
-	}
-
-	/* Load the data pointers. */
-	skb->data = skb->buf_start;
-	skb->tail = skb->buf_start;
-	skb->end  = skb->buf_start + size;
-	
-	/* Set up other state */
-	skb->len = 0;
-	skb->cloned = 0;
-	skb->data_len = 0;
-
-        skb->users = 1;
-		
-	if ( rtskb_pool.qlen<rtskb_pool_min )
-		rt_pend_linux_srq(inc_pool_srq);
-
-	return (skb);
+    if ( skb ) {
+        if (skb->buf_start)
+            kmem_cache_free(rtskb_data_cache, skb->buf_start);
+        kmem_cache_free(rtskb_cache, skb);
+        rtskb_amount--;
+    }
 }
 
 
 
 /***
- *	kfree_rtskb
- *	@skb	rtskb
+ *  alloc_rtskb
+ *  @size: required buffer size.
  */
-void kfree_rtskb(struct rtskb *skb) 
+struct rtskb *alloc_rtskb(unsigned int size)
 {
-	if ( skb ) {
-		skb->users = 0; 
-		memset(skb->buf_start, 0, skb->buf_len);
-		
-		rtskb_queue_tail(&rtskb_pool, skb);
-		
-		if ( rtskb_pool.qlen>rtskb_pool_max )
-			rt_pend_linux_srq(dec_pool_srq);
-	}
+    struct rtskb *skb;
+
+
+    ASSERT(size <= rtskb_max_size, return NULL;);
+
+    if ( rtskb_pool.qlen>0 )
+        skb = rtskb_dequeue(&rtskb_pool);
+    else {
+        rt_pend_linux_srq(inc_pool_srq);
+        return NULL;
+    }
+
+    /* Load the data pointers. */
+    skb->data = skb->buf_start;
+    skb->tail = skb->buf_start;
+    skb->end  = skb->buf_start + size;
+
+    /* Set up other state */
+    skb->len = 0;
+    skb->cloned = 0;
+    skb->data_len = 0;
+
+    skb->users = 1;
+
+    if ( rtskb_pool.qlen<rtskb_pool_min )
+        rt_pend_linux_srq(inc_pool_srq);
+
+    return (skb);
 }
 
 
 
 /***
- *	__rtskb_dequeue
- *	@list	rtskb_head
+ *  kfree_rtskb
+ *  @skb    rtskb
+ */
+void kfree_rtskb(struct rtskb *skb)
+{
+    if ( skb ) {
+        skb->users = 0;
+        memset(skb->buf_start, 0, skb->buf_len);
+
+        rtskb_queue_tail(&rtskb_pool, skb);
+
+        if ( rtskb_pool.qlen>rtskb_pool_max )
+            rt_pend_linux_srq(dec_pool_srq);
+    }
+}
+
+
+
+/***
+ *  __rtskb_dequeue
+ *  @list   rtskb_head
  */
 struct rtskb *__rtskb_dequeue(struct rtskb_head *list)
 {
-	struct rtskb *result = NULL;
+    struct rtskb *result = NULL;
 
-	if (list->qlen > 0) {
-		result=list->first;
-		list->first=result->next;
-		result->next=NULL;
-		list->qlen--;
-	}
+    if (list->qlen > 0) {
+        result=list->first;
+        list->first=result->next;
+        result->next=NULL;
+        list->qlen--;
+    }
 
-	return result;
+    return result;
 }
 
 
 
 /***
- *	rtskb_dequeue
- *	@list	rtskb_head
+ *  rtskb_dequeue
+ *  @list   rtskb_head
  */
 struct rtskb *rtskb_dequeue(struct rtskb_head *list)
 {
-	unsigned long flags;
-	struct rtskb *result;
-	
-	flags = rt_spin_lock_irqsave(&list->lock);
-	result = __rtskb_dequeue(list);
-	rt_spin_unlock_irqrestore(flags, &list->lock);
+    unsigned long flags;
+    struct rtskb *result;
 
-	return result;
+    flags = rt_spin_lock_irqsave(&list->lock);
+    result = __rtskb_dequeue(list);
+    rt_spin_unlock_irqrestore(flags, &list->lock);
+
+    return result;
 }
 
 
 
 /***
- *	__rtskb_queue_head
- *	@list
- *	@skb
- */	
+ *  __rtskb_queue_head
+ *  @list
+ *  @skb
+ */
 void __rtskb_queue_head(struct rtskb_head *list, struct rtskb *skb)
 {
-	skb->head = list;
-	skb->next = list->first;
+    skb->head = list;
+    skb->next = list->first;
 
-	if ( !list->qlen ) {
-		list->first = list->last = skb;
-	} else {
-		list->first = skb;
-	}
-	list->qlen++;
+    if ( !list->qlen ) {
+        list->first = list->last = skb;
+    } else {
+        list->first = skb;
+    }
+    list->qlen++;
 }
 
 
 
 /***
- *	rtskb_queue_head
- *	@list
- *	@skb
- */	
+ *  rtskb_queue_head
+ *  @list
+ *  @skb
+ */
 void rtskb_queue_head(struct rtskb_head *list, struct rtskb *skb)
 {
-	unsigned long flags;
+    unsigned long flags;
 
-	flags = rt_spin_lock_irqsave(&list->lock);
-	__rtskb_queue_head(list, skb);
-	rt_spin_unlock_irqrestore(flags, &list->lock);
+    flags = rt_spin_lock_irqsave(&list->lock);
+    __rtskb_queue_head(list, skb);
+    rt_spin_unlock_irqrestore(flags, &list->lock);
 }
 
 
 
 /***
- *	__rtsk_queue_tail
- *	@rtsk_head
- *	@skb
- */ 
+ *  __rtsk_queue_tail
+ *  @rtsk_head
+ *  @skb
+ */
 void __rtskb_queue_tail(struct rtskb_head *list, struct rtskb *skb)
 {
-	skb->head = list;
-	skb->next  = NULL;
+    skb->head = list;
+    skb->next  = NULL;
 
-	if ( !list->qlen ) {
-		list->first = list->last = skb;
-	} else {
-		list->last->next = skb;
-		list->last = skb;
-	}
-	list->qlen++;
+    if ( !list->qlen ) {
+        list->first = list->last = skb;
+    } else {
+        list->last->next = skb;
+        list->last = skb;
+    }
+    list->qlen++;
 }
 
 
 
 /***
- *	rtskb_queue_tail
- *	@rtskb_head
+ *  rtskb_queue_tail
+ *  @rtskb_head
  */
 void rtskb_queue_tail(struct rtskb_head *list, struct rtskb *skb)
 {
-	unsigned long flags;
-	flags = rt_spin_lock_irqsave(&list->lock);
-	__rtskb_queue_tail(list, skb);	
-	rt_spin_unlock_irqrestore(flags, &list->lock);
+    unsigned long flags;
+    flags = rt_spin_lock_irqsave(&list->lock);
+    __rtskb_queue_tail(list, skb);
+    rt_spin_unlock_irqrestore(flags, &list->lock);
 }
 
 
 
 /***
- *	__rtskb_queue_purge
- *	@rtskb_head
+ *  __rtskb_queue_purge
+ *  @rtskb_head
  */
 void __rtskb_queue_purge(struct rtskb_head *list)
 {
-	struct rtskb *skb;
-	while ( (skb=__rtskb_dequeue(list))!=NULL )
-		kfree_rtskb(skb);
+    struct rtskb *skb;
+    while ( (skb=__rtskb_dequeue(list))!=NULL )
+        kfree_rtskb(skb);
 }
 
 
 
 /***
- *	rtskb_queue_purge	- clean the queue
- *	@rtskb_head
+ *  rtskb_queue_purge - clean the queue
+ *  @rtskb_head
  */
 void rtskb_queue_purge(struct rtskb_head *list)
 {
-	struct rtskb *skb;
-	while ( (skb=rtskb_dequeue(list))!=NULL )
-		kfree_rtskb(skb);
+    struct rtskb *skb;
+    while ( (skb=rtskb_dequeue(list))!=NULL )
+        kfree_rtskb(skb);
 }
 
 
 
 /***
- *	rtsk_queue_head_init	- initialize the queue
- *	@rtskb_head
+ *  rtsk_queue_head_init - initialize the queue
+ *  @rtskb_head
  */
 void rtskb_queue_head_init(struct rtskb_head *list)
 {
-	spin_lock_init(&list->lock);
-	list->first = NULL;
-	list->last  = NULL;
-	list->qlen = 0;
+    spin_lock_init(&list->lock);
+    list->first = NULL;
+    list->last  = NULL;
+    list->qlen = 0;
 }
 
 
 
 /***
- *	rtsk_queue_len
- *	@rtskb_head
+ *  rtsk_queue_len
+ *  @rtskb_head
  */
 int rtskb_queue_len(struct rtskb_head *list)
 {
-	return (list->qlen);
+    return (list->qlen);
 }
 
 
 
 /***
- *	rtsk_queue_len
- *	@rtskb_head
+ *  rtsk_queue_len
+ *  @rtskb_head
  */
 int rtskb_queue_empty(struct rtskb_head *list)
 {
-	return (list->qlen == 0);
+    return (list->qlen == 0);
 }
 
 
 
-
-
-
 /***
- *	inc_pool_handler
- */ 
-void inc_pool_handler(void) 
+ *  inc_pool_handler
+ */
+void inc_pool_handler(void)
 {
-	struct rtskb* skb;
-	while ( rtskb_pool.qlen<rtskb_pool_default ) {
-		skb = new_rtskb(); /* might return NULL */
-		if (skb) {
-			rtskb_queue_tail(&rtskb_pool, skb);
-		} else {
-			printk("%s(): new_rtskb() returned NULL, qlen=%d\n", __FUNCTION__, rtskb_pool.qlen);
-			break;
-		}
-	}
+    struct rtskb* skb;
+    while ( rtskb_pool.qlen<rtskb_pool_default ) {
+        skb = new_rtskb(); /* might return NULL */
+        if (skb) {
+            rtskb_queue_tail(&rtskb_pool, skb);
+        } else {
+            printk("%s(): new_rtskb() returned NULL, qlen=%d\n", __FUNCTION__, rtskb_pool.qlen);
+            break;
+        }
+    }
 }
 
 
 
 /***
- *	dec_pool_handler
- */ 
-void dec_pool_handler(void) 
+ *  dec_pool_handler
+ */
+void dec_pool_handler(void)
 {
-	while ( rtskb_pool.qlen>rtskb_pool_default )
-		dispose_rtskb(rtskb_dequeue(&rtskb_pool));
+    while ( rtskb_pool.qlen>rtskb_pool_default )
+        dispose_rtskb(rtskb_dequeue(&rtskb_pool));
 }
 
 
 
 /***
- *	rtskb_pool_init
+ *  rtskb_pool_init
  */
 int rtskb_pool_init(void)
 {
-	unsigned int i;
-	int err = 0;
-	struct rtskb* skb;
+    unsigned int i;
+    int err = 0;
+    struct rtskb* skb;
 
-	rtskb_queue_head_init(&rtskb_pool);
+    if (rtskb_max_size < DEFAULT_MAX_RTSKB_SIZE)
+        return -EINVAL;
 
-	rtskb_cache = kmem_cache_create 
-		(RTSKB_CACHE, sizeof (struct rtskb), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
-	if ( !rtskb_cache ) {
-		rt_printk("RTnet: allocating 'rtskb_cache' failed.");
-		return -ENOMEM;
-	}
-	rtskb_data_cache = kmem_cache_create 
-		(RTSKB_DATA_CACHE, SKB_DATA_ALIGN(rtskb_max_size), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
-	if ( !rtskb_data_cache ) {
-		rt_printk("RTnet: allocating 'rtskb_data_cache' failed.");
-		return -ENOMEM;
-	}
+    rtskb_queue_head_init(&rtskb_pool);
 
-	for (i=0; i<rtskb_pool_default; i++) {
-		skb = new_rtskb(); /* might return NULL */
-		if (skb) {
-			__rtskb_queue_tail(&rtskb_pool, skb);
-		} else {
-			printk("%s(): new_rtskb() returned NULL, qlen=%d\n", __FUNCTION__, rtskb_pool.qlen);
-			break;
-		}
-	}
+    rtskb_cache = kmem_cache_create
+        (RTSKB_CACHE, sizeof (struct rtskb), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+    if ( !rtskb_cache ) {
+        rt_printk("RTnet: allocating 'rtskb_cache' failed.");
+        return -ENOMEM;
+    }
+    rtskb_data_cache = kmem_cache_create
+        (RTSKB_DATA_CACHE, SKB_DATA_ALIGN(rtskb_max_size), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+    if ( !rtskb_data_cache ) {
+        rt_printk("RTnet: allocating 'rtskb_data_cache' failed.");
+        return -ENOMEM;
+    }
 
-	if ( (inc_pool_srq=rt_request_srq (0, inc_pool_handler, 0)) < 0) {
-		rt_printk("RTnet: allocating 'inc_pool_srq=%d' failed.\n", inc_pool_srq);
-		return inc_pool_srq;
-	}
+    for (i=0; i<rtskb_pool_default; i++) {
+        skb = new_rtskb(); /* might return NULL */
+        if (skb) {
+            __rtskb_queue_tail(&rtskb_pool, skb);
+        } else {
+            printk("%s(): new_rtskb() returned NULL, qlen=%d\n", __FUNCTION__, rtskb_pool.qlen);
+            break;
+        }
+    }
 
-	if ( (dec_pool_srq=rt_request_srq (0, dec_pool_handler, 0)) < 0) {
-		rt_printk("RTnet: allocating 'dec_pool_srq=%d' failed.\n", dec_pool_srq);
-		return dec_pool_srq;
-	}
+    if ( (inc_pool_srq=rt_request_srq (0, inc_pool_handler, 0)) < 0) {
+        rt_printk("RTnet: allocating 'inc_pool_srq=%d' failed.\n", inc_pool_srq);
+        return inc_pool_srq;
+    }
 
-	return err;
+    if ( (dec_pool_srq=rt_request_srq (0, dec_pool_handler, 0)) < 0) {
+        rt_printk("RTnet: allocating 'dec_pool_srq=%d' failed.\n", dec_pool_srq);
+        return dec_pool_srq;
+    }
+
+    return err;
 }
 
 
 
 /***
- *	rtskb_pool_release
+ *  rtskb_pool_release
  */
-int rtskb_pool_release(void) 
+int rtskb_pool_release(void)
 {
-	int err = 0;
+    int err = 0;
 
-	if ( rt_free_srq (dec_pool_srq)<0 ) {
-		rt_printk("RTnet: deallocating 'dec_pool_srq=%d' failed.\n", dec_pool_srq);
-		return dec_pool_srq;
-	}
+    if ( rt_free_srq (dec_pool_srq)<0 ) {
+        rt_printk("RTnet: deallocating 'dec_pool_srq=%d' failed.\n", dec_pool_srq);
+        return dec_pool_srq;
+    }
 
-	if ( rt_free_srq (inc_pool_srq)<0 ) {
-		rt_printk("RTnet: deallocating 'inc_pool_srq=%d' failed.\n", inc_pool_srq);
-		return inc_pool_srq;
-	}
+    if ( rt_free_srq (inc_pool_srq)<0 ) {
+        rt_printk("RTnet: deallocating 'inc_pool_srq=%d' failed.\n", inc_pool_srq);
+        return inc_pool_srq;
+    }
 
-	if ( rtskb_pool.qlen>0 ) {
-		int i;		
-		for (i=rtskb_pool.qlen; i>0; i--)
-			dispose_rtskb(__rtskb_dequeue(&rtskb_pool));
-	}
+    if ( rtskb_pool.qlen>0 ) {
+        int i;
+        for (i=rtskb_pool.qlen; i>0; i--)
+            dispose_rtskb(__rtskb_dequeue(&rtskb_pool));
+    }
 
-	if ( rtskb_data_cache && kmem_cache_destroy (rtskb_data_cache) ) {
-		rt_printk("RTnet: deallocating 'rtskb_data_cache' failed.\n");
-	}
-	
-	if ( rtskb_cache && kmem_cache_destroy (rtskb_cache) ) {
-		rt_printk("RTnet: deallocating 'rtnet_skb_cache' failed.\n");
-	}
+    if ( rtskb_data_cache && kmem_cache_destroy (rtskb_data_cache) ) {
+        rt_printk("RTnet: deallocating 'rtskb_data_cache' failed.\n");
+    }
 
-	return err;
+    if ( rtskb_cache && kmem_cache_destroy (rtskb_cache) ) {
+        rt_printk("RTnet: deallocating 'rtnet_skb_cache' failed.\n");
+    }
+
+    return err;
 }

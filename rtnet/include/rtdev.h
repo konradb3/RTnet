@@ -32,7 +32,7 @@
 
 
 /***
- *  rtnet_device 
+ *  rtnet_device
  */
 struct rtnet_device {
     /* Many field are borrowed from struct net_device in
@@ -88,6 +88,8 @@ struct rtnet_device {
     SEM                 *stack_sem;
     MBX                 *rtdev_mbx;
 
+    SEM                 xmit_sem;
+
     /* RTmac related fields */
     struct rtmac_disc   *mac_disc;
     struct rtmac_priv   *mac_priv;
@@ -105,8 +107,8 @@ struct rtnet_device {
 };
 
 
-/*** 
- * network-layer-protocol (Layer-3-Protokoll) 
+/***
+ * network-layer-protocol (Layer-3-Protokoll)
  */
 #define MAX_RT_PROTOCOLS        16
 struct rtpacket_type {
