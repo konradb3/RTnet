@@ -24,6 +24,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/net.h>
 #include <linux/if_packet.h>
 #include <asm/uaccess.h>
 
