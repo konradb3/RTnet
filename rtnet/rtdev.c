@@ -25,9 +25,6 @@
 #include <linux/netdevice.h>
 #include <linux/module.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtnet_internal.h>
 #include <rtskb.h>
 #include <ethernet/eth.h>
@@ -39,9 +36,9 @@ MODULE_PARM(device_rtskbs, "i");
 MODULE_PARM_DESC(device_rtskbs, "Number of additional global realtime socket "
                  "buffers per network adapter");
 
-static struct rtnet_device *rtnet_devices[MAX_RT_DEVICES];
-static spinlock_t rtnet_devices_rt_lock  = SPIN_LOCK_UNLOCKED;
-static spinlock_t rtnet_devices_nrt_lock = SPIN_LOCK_UNLOCKED;
+static struct rtnet_device  *rtnet_devices[MAX_RT_DEVICES];
+static rtos_spinlock_t      rtnet_devices_rt_lock  = RTOS_SPIN_LOCK_UNLOCKED;
+static spinlock_t           rtnet_devices_nrt_lock = SPIN_LOCK_UNLOCKED;
 
 
 
@@ -74,13 +71,13 @@ struct rtnet_device *rtdev_get_by_name(const char *name)
     unsigned long flags;
 
 
-    flags = rt_spin_lock_irqsave(&rtnet_devices_rt_lock);
+    rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags);
 
     rtdev = __rtdev_get_by_name(name);
     if (rtdev != NULL)
         atomic_inc(&rtdev->refcount);
 
-    rt_spin_unlock_irqrestore(flags, &rtnet_devices_rt_lock);
+    rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
 
     return rtdev;
 }
@@ -111,13 +108,13 @@ struct rtnet_device *rtdev_get_by_index(int ifindex)
     if ((ifindex <= 0) || (ifindex > MAX_RT_DEVICES))
         return NULL;
 
-    flags = rt_spin_lock_irqsave(&rtnet_devices_rt_lock);
+    rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags);
 
     rtdev = __rtdev_get_by_index(ifindex);
     if (rtdev != NULL)
         atomic_inc(&rtdev->refcount);
 
-    rt_spin_unlock_irqrestore(flags, &rtnet_devices_rt_lock);
+    rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
 
     return rtdev;
 }
@@ -158,13 +155,13 @@ struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
     unsigned long flags;
 
 
-    flags = rt_spin_lock_irqsave(&rtnet_devices_rt_lock);
+    rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags);
 
     rtdev = __rtdev_get_by_hwaddr(type, hw_addr);
     if (rtdev != NULL)
         atomic_inc(&rtdev->refcount);
 
-    rt_spin_unlock_irqrestore(flags, &rtnet_devices_rt_lock);
+    rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
 
     return rtdev;
 }
@@ -216,7 +213,7 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 
     memset(rtdev, 0, alloc_size);
 
-    rt_typed_sem_init(&rtdev->xmit_sem, 1, RES_SEM);
+    rtos_res_lock_init(&rtdev->xmit_lock);
 
     atomic_set(&rtdev->refcount, 0);
 
@@ -238,9 +235,9 @@ void rtdev_free (struct rtnet_device *rtdev)
 {
     if (rtdev != NULL) {
         rtskb_pool_shrink(&global_pool, rtdev->add_rtskbs);
-        rtdev->stack_sem = NULL;
+        rtdev->stack_event = NULL;
 /*        rtdev->rtdev_mbx = NULL;*/
-        rt_sem_delete(&rtdev->xmit_sem);
+        rtos_res_lock_delete(&rtdev->xmit_lock);
         kfree(rtdev);
     }
 }
@@ -313,11 +310,11 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
         return -EEXIST;
     }
 
-    flags_rt = rt_spin_lock_irqsave(&rtnet_devices_rt_lock);
+    rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags_rt);
 
     rtnet_devices[rtdev->ifindex-1] = rtdev;
 
-    rt_spin_unlock_irqrestore(flags_rt, &rtnet_devices_rt_lock);
+    rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags_rt);
 
     /* Default state at registration is that the device is present. */
     set_bit(__LINK_STATE_PRESENT, &rtdev->state);
@@ -341,8 +338,8 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
 
     RTNET_ASSERT(rtdev->ifindex != 0,
-        rt_printk("RTnet: device %s/%p was not registered\n",
-                  rtdev->name, rtdev);
+        rtos_print("RTnet: device %s/%p was not registered\n",
+                   rtdev->name, rtdev);
         return -ENODEV;);
 
     /* If device is running, close it first. */
@@ -351,10 +348,10 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
     spin_lock_irqsave(&rtnet_devices_nrt_lock, flags_nrt);
 
-    flags_rt = rt_spin_lock_irqsave(&rtnet_devices_rt_lock);
+    rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags_rt);
 
     if (atomic_read(&rtdev->refcount) > 0) {
-        rt_spin_unlock_irqrestore(flags_rt, &rtnet_devices_rt_lock);
+        rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags_rt);
         spin_unlock_irqrestore(&rtnet_devices_nrt_lock, flags_nrt);
 
         printk("RTnet: unable to unregister %s - refcount = %d\n", rtdev->name,
@@ -363,11 +360,11 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
         return -EBUSY;
     }
     RTNET_ASSERT(atomic_read(&rtdev->refcount) == 0,
-           rt_printk("RTnet: rtdev reference counter < 0!\n"););
+           rtos_print("RTnet: rtdev reference counter < 0!\n"););
 
     rtnet_devices[rtdev->ifindex-1] = NULL;
 
-    rt_spin_unlock_irqrestore(flags_rt, &rtnet_devices_rt_lock);
+    rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags_rt);
 
     clear_bit(__LINK_STATE_PRESENT, &rtdev->state);
 
@@ -447,7 +444,7 @@ int rtdev_xmit(struct rtskb *skb)
     ret = rtdev->hard_start_xmit(skb, rtdev);
     if (ret != 0)
     {
-        rt_printk("xmit returned %d\n",ret);
+        rtos_print("xmit returned %d\n", ret);
         /* if an error occured, we must free the skb here! */
         if (skb)
             kfree_rtskb(skb);
@@ -484,7 +481,7 @@ int rtdev_xmit_proxy(struct rtskb *skb)
         ret = rtdev->hard_start_xmit(skb, rtdev);
         if (ret != 0)
         {
-            rt_printk("xmit returned %d not 0\n",ret);
+            rtos_print("xmit returned %d not 0\n", ret);
             /* if an error occured, we must free the skb here! */
             if (skb)
                 kfree_rtskb(skb);

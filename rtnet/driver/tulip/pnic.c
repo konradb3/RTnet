@@ -41,7 +41,7 @@ void pnic_do_nway(/*RTnet*/struct rtnet_device *rtdev)
 			new_csr6 |= 0x00000200;
 		}
 		if (tulip_debug > 1)
-			/*RTnet*/rt_printk(KERN_DEBUG "%s: PNIC autonegotiated status %8.8x, %s.\n",
+			/*RTnet*/rtos_print(KERN_DEBUG "%s: PNIC autonegotiated status %8.8x, %s.\n",
 				   rtdev->name, phy_reg, medianame[rtdev->if_port]);
 		if (tp->csr6 != new_csr6) {
 			tp->csr6 = new_csr6;
@@ -58,7 +58,7 @@ void pnic_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 	int phy_reg = inl(ioaddr + 0xB8);
 
 	if (tulip_debug > 1)
-		/*RTnet*/rt_printk(KERN_DEBUG "%s: PNIC link changed state %8.8x, CSR5 %8.8x.\n",
+		/*RTnet*/rtos_print(KERN_DEBUG "%s: PNIC link changed state %8.8x, CSR5 %8.8x.\n",
 			   rtdev->name, phy_reg, csr5);
 	if (inl(ioaddr + CSR5) & TPLnkFail) {
 		outl((inl(ioaddr + CSR7) & ~TPLnkFail) | TPLnkPass, ioaddr + CSR7);
@@ -114,7 +114,7 @@ void pnic_timer(unsigned long data)
 		int csr5 = inl(ioaddr + CSR5);
 
 		if (tulip_debug > 1)
-			/*RTnet*/rt_printk(KERN_DEBUG "%s: PNIC timer PHY status %8.8x, %s "
+			/*RTnet*/rtos_print(KERN_DEBUG "%s: PNIC timer PHY status %8.8x, %s "
 				   "CSR5 %8.8x.\n",
 				   rtdev->name, phy_reg, medianame[rtdev->if_port], csr5);
 		if (phy_reg & 0x04000000) {	/* Remote link fault */
@@ -126,7 +126,7 @@ void pnic_timer(unsigned long data)
 			next_tick = 60*HZ;
 		} else if (csr5 & TPLnkFail) { /* 100baseTx link beat */
 			if (tulip_debug > 1)
-				/*RTnet*/rt_printk(KERN_DEBUG "%s: %s link beat failed, CSR12 %4.4x, "
+				/*RTnet*/rtos_print(KERN_DEBUG "%s: %s link beat failed, CSR12 %4.4x, "
 					   "CSR5 %8.8x, PHY %3.3x.\n",
 					   rtdev->name, medianame[rtdev->if_port], csr12,
 					   inl(ioaddr + CSR5), inl(ioaddr + 0xB8));
@@ -150,7 +150,7 @@ void pnic_timer(unsigned long data)
 				/* Restart Tx */
 				tulip_restart_rxtx(tp);
 				if (tulip_debug > 1)
-					/*RTnet*/rt_printk(KERN_INFO "%s: Changing PNIC configuration to %s "
+					/*RTnet*/rtos_print(KERN_INFO "%s: Changing PNIC configuration to %s "
 						   "%s-duplex, CSR6 %8.8x.\n",
 						   rtdev->name, medianame[rtdev->if_port],
 						   tp->full_duplex ? "full" : "half", new_csr6);
@@ -161,7 +161,7 @@ too_good_connection:
 	/*RTnet*/MUST_REMOVE_mod_timer(&tp->timer, RUN_AT(next_tick));
 	if(!inl(ioaddr + CSR7)) {
 		if (tulip_debug > 1)
-			/*RTnet*/rt_printk(KERN_INFO "%s: sw timer wakeup.\n", rtdev->name);
+			/*RTnet*/rtos_print(KERN_INFO "%s: sw timer wakeup.\n", rtdev->name);
 		disable_irq(rtdev->irq);
 		tulip_refill_rx(dev);
 		enable_irq(rtdev->irq);

@@ -20,8 +20,7 @@
  */
 
 
-#include <rtai.h>
-
+#include <rtnet_sys.h>
 #include <stack_mgr.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
@@ -36,8 +35,8 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
 
     if (disc == NULL) {
-        rt_printk("RTmac: received RTmac packet on unattached device %s\n",
-                  skb->rtdev->name);
+        rtos_print("RTmac: received RTmac packet on unattached device %s\n",
+                   skb->rtdev->name);
         goto error;
     }
 
@@ -45,8 +44,8 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
     rtskb_pull(skb, sizeof(struct rtmac_hdr));
 
     if (hdr->ver != RTMAC_VERSION) {
-        rt_printk("RTmac: received unsupported RTmac protocol version on "
-                  "device %s\n", skb->rtdev->name);
+        rtos_print("RTmac: received unsupported RTmac protocol version on "
+                   "device %s\n", skb->rtdev->name);
         goto error;
     }
 

@@ -26,7 +26,6 @@
 #include <asm/rtai.h>
 
 #include <rtai_sched.h>
-#include <rt_mem_mgr.h>
 #include <rtai_lxrt.h>
 
 #include <rtnet.h>

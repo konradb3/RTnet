@@ -21,6 +21,8 @@
 #ifndef __RTNET_IP_OUTPUT_H_
 #define __RTNET_IP_OUTPUT_H_
 
+#include <linux/init.h>
+
 #include <rtnet.h>
 #include <rtskb.h>
 #include <rtdev.h>
@@ -28,10 +30,10 @@
 #include <ipv4/route.h>
 
 
-extern int rt_ip_build_xmit(struct rtsocket *sk, 
-		            int getfrag (const void *, char *, unsigned int, unsigned int),
-			    const void *frag, unsigned length, struct rt_rtable *rt, int flags);
-extern void rt_ip_init(void);
+extern int rt_ip_build_xmit(struct rtsocket *sk,
+    int getfrag (const void *, char *, unsigned int, unsigned int),
+    const void *frag, unsigned length, struct rt_rtable *rt, int flags);
+extern void __init rt_ip_init(void);
 extern void rt_ip_release(void);
 
 

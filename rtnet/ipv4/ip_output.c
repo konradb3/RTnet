@@ -18,6 +18,12 @@
  */
 
 // $Log: ip_output.c,v $
+// Revision 1.16  2004/01/13 12:26:06  bet-frogger
+// 	* added rtos abstraction layer
+// 	* added rtai3 detection
+// 	* fixed rtnet_config.h redefine problem
+// 	* added installtion of API headers
+//
 // Revision 1.15  2003/10/28 13:27:43  kiszka
 // * index-based rtdev management
 // * added packet sockets
@@ -86,8 +92,8 @@
 #include <rtmac/rtmac_disc.h>
 
 
-spinlock_t rt_ip_id_lock;
-static u16 rt_ip_id_count = 0;
+static rtos_spinlock_t  rt_ip_id_lock  = RTOS_SPIN_LOCK_UNLOCKED;
+static u16              rt_ip_id_count = 0;
 
 /***
  *  Slow path for fragmented packets
@@ -112,14 +118,13 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
 
 
     #define FRAGHEADERLEN sizeof(struct iphdr)
-//RTIME start = rt_get_time();
 
     fragdatalen  = ((mtu - FRAGHEADERLEN) & ~7);
 
     /* Store id in local variable */
-    flags = rt_spin_lock_irqsave(&rt_ip_id_lock);
+    rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);
     msg_rt_ip_id = rt_ip_id_count++;
-    rt_spin_unlock_irqrestore(flags, &rt_ip_id_lock);
+    rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
 
     rtskb_size = mtu + hh_len + 15;
 
@@ -195,8 +200,6 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
         if (next_err != 0)
             return next_err;
     }
-//start = count2nano(rt_get_time() - start);
-//rt_printk("%X-%X\n", *(((u32*)&start)+1), *((u32*)&start));
     return 0;
 
 error:
@@ -229,9 +232,9 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 
 
     /* Store id in local variable */
-    flags = rt_spin_lock_irqsave(&rt_ip_id_lock);
+    rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);
     msg_rt_ip_id = rt_ip_id_count++;
-    rt_spin_unlock_irqrestore(flags, &rt_ip_id_lock);
+    rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
 
     /*
      *  Try the simple case first. This leaves fragmented frames, and by choice
@@ -310,9 +313,8 @@ static struct rtpacket_type ip_packet_type =
 /***
  *  ip_init
  */
-void rt_ip_init(void)
+void __init rt_ip_init(void)
 {
-    spin_lock_init(&rt_ip_id_lock);
     rtdev_add_pack(&ip_packet_type);
     rt_ip_fragment_init();
 }

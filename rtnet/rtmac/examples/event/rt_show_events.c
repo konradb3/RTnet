@@ -28,8 +28,14 @@
 
 #include <net/ip.h>
 
+#include <rtnet_config.h>
+
 #include <rtai.h>
 #include <rtai_sched.h>
+
+#ifdef HAVE_RTAI_SEM_H
+#include <rtai_sem.h>
+#endif
 
 #include <rtnet.h>
 

@@ -70,7 +70,6 @@
 #error "MDIO for PHY configuration is not yet supported!"
 #endif
 
-#include <rtnet_internal.h>
 #include <rtnet_port.h>
 
 MODULE_AUTHOR("Maintainer: Wolfgang Grandegger <wg@denx.de>");
@@ -82,10 +81,10 @@ MODULE_PARM(rx_pool_size, "i");
 MODULE_PARM_DESC(rx_pool_size, "Receive buffer pool size");
 
 
-#define printk(fmt,args...)	rt_printk ("RTnet: " fmt ,##args)
+#define printk(fmt,args...)	rtos_print ("RTnet: " fmt ,##args)
 
 #if 0
-#define RT_DEBUG(fmt,args...)	rt_printk (fmt ,##args)
+#define RT_DEBUG(fmt,args...)	rtos_print (fmt ,##args)
 #else
 #define RT_DEBUG(fmt,args...)
 #endif
@@ -199,7 +198,7 @@ struct fec_enet_private {
 
 	struct	net_device_stats stats;
 	uint	tx_full;
-	spinlock_t lock;
+	rtos_spinlock_t lock;
 
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 	uint	phy_id;
@@ -226,7 +225,7 @@ struct fec_enet_private {
 static int  fec_enet_open(struct rtnet_device *rtev);
 static int  fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void fec_enet_tx(struct rtnet_device *rtdev);
-static void fec_enet_rx(struct rtnet_device *rtdev, int *packets);
+static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
 static void fec_enet_interrupt(int irq, unsigned long rtdev_id);
 static int  fec_enet_close(struct rtnet_device *dev);
 static void fec_restart(struct rtnet_device *rtdev, int duplex);
@@ -379,9 +378,9 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	flush_dcache_range((unsigned long)skb->data,
 			   (unsigned long)skb->data + skb->len);
 
-	rt_sem_wait(&rtdev->xmit_sem);
-	rt_disable_irq(rtdev->irq);
-	rt_spin_lock(&fep->lock);
+	rtos_res_lock(&rtdev->xmit_lock);
+	rtos_irq_disable(rtdev->irq);
+	rtos_spin_lock(&fep->lock);
 
 	/* Send it on its way.  Tell FEC its ready, interrupt when done,
 	 * its the last BD of the frame, and to put the CRC on the end.
@@ -410,9 +409,9 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	fep->cur_tx = (cbd_t *)bdp;
 
-	rt_spin_unlock(&fep->lock);
-	rt_enable_irq(rtdev->irq);
-	rt_sem_signal(&rtdev->xmit_sem);
+	rtos_spin_unlock(&fep->lock);
+	rtos_irq_enable(rtdev->irq);
+	rtos_res_unlock(&rtdev->xmit_lock);
 
 	return 0;
 }
@@ -481,6 +480,9 @@ fec_enet_interrupt(int irq, unsigned long rtdev_id)
 	volatile fec_t	*fecp;
 	uint	int_events;
 	fecp = (volatile fec_t*)rtdev->base_addr;
+	rtos_time_t time_stamp;
+
+	rtos_get_time(&time_stamp);
 
 	/* Get the interrupt events that caused us to be here.
 	*/
@@ -494,7 +496,7 @@ fec_enet_interrupt(int irq, unsigned long rtdev_id)
 		/* Handle receive event in its own function.
 		 */
 		if (int_events & FEC_ENET_RXF) {
-			fec_enet_rx(rtdev, &packets);
+			fec_enet_rx(rtdev, &packets, &time_stamp);
 		}
 
 		/* Transmit OK, or non-fatal error. Update the buffer
@@ -518,7 +520,7 @@ fec_enet_interrupt(int irq, unsigned long rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rt_enable_irq(irq);
+	rtos_irq_enable(irq);
 }
 
 
@@ -529,7 +531,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
 	struct	fec_enet_private *fep;
 	volatile cbd_t	*bdp;
 	fep = rtdev->priv;
-	rt_spin_lock(&fep->lock);
+	rtos_spin_lock(&fep->lock);
 	bdp = fep->dirty_tx;
 
 	while ((bdp->cbd_sc&BD_ENET_TX_READY) == 0) {
@@ -591,7 +593,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
 		}
 	}
 	fep->dirty_tx = (cbd_t *)bdp;
-	rt_spin_unlock(&fep->lock);
+	rtos_spin_unlock(&fep->lock);
 }
 
 
@@ -601,12 +603,11 @@ fec_enet_tx(struct rtnet_device *rtdev)
  * effectively tossing the packet.
  */
 static void
-fec_enet_rx(struct rtnet_device *rtdev, int *packets) 
+fec_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
 {
 	struct	fec_enet_private *fep;
 	volatile fec_t	*fecp;
 	volatile cbd_t *bdp;
-	RTIME rx;		/* RTmac */
 	struct	rtskb *skb;
 	ushort	pkt_len;
 	__u8 *data;
@@ -620,8 +621,6 @@ fec_enet_rx(struct rtnet_device *rtdev, int *packets)
 	bdp = fep->cur_rx;
 
 while (!(bdp->cbd_sc & BD_ENET_RX_EMPTY)) {
-
-        rx = rt_get_time();	/* RTmac */
 
 #ifndef final_version
 	/* Since we have allocated space to hold a complete frame,
@@ -679,7 +678,7 @@ while (!(bdp->cbd_sc & BD_ENET_RX_EMPTY)) {
 		rtskb_put(skb,pkt_len-4); /* Make room */
 		memcpy(skb->data, data, pkt_len-4);
 		skb->protocol=rt_eth_type_trans(skb,rtdev);
-		skb->rx = rx;		/* RTmac */
+		memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
 		rtnetif_rx(skb);
 		(*packets)++;
 	}
@@ -2033,6 +2032,8 @@ int __init fec_enet_init(void)
 		}
 	}
 
+	rtos_spin_lock_init(&fep->lock);
+
 	/* Set the last buffer to wrap.
 	*/
 	bdp--;
@@ -2040,15 +2041,15 @@ int __init fec_enet_init(void)
 
 	/* Install our interrupt handler. */
 	rt_stack_connect(rtdev, &STACK_manager);
-	i = rt_request_global_irq_ext(FEC_INTERRUPT, 
-				      (void (*)(void))fec_enet_interrupt, 
+	i = rtos_irq_request(FEC_INTERRUPT,
+				      fec_enet_interrupt,
 				      (unsigned long)rtdev);
 	if (i) {
 		MOD_DEC_USE_COUNT;
 		return i;
 	}
-	rt_enable_irq(FEC_INTERRUPT);
-	
+	rtos_irq_enable(FEC_INTERRUPT);
+
 
 	rtdev->base_addr = (unsigned long)fecp;
 
@@ -2162,8 +2163,8 @@ int __init fec_enet_init(void)
 #endif	/* CONFIG_RTAI_RTNET_USE_MDIO */
 
 #ifndef ORIGINAL_VERSION
-	printk("%s: FEC ENET Version 0.3, irq %d, addr %02x:%02x:%02x:%02x:%02x:%02x\n", 
-	       rtdev->name, FEC_INTERRUPT, 
+	printk("%s: FEC ENET Version 0.3, irq %d, addr %02x:%02x:%02x:%02x:%02x:%02x\n",
+	       rtdev->name, FEC_INTERRUPT,
 	       rtdev->dev_addr[0], rtdev->dev_addr[1], rtdev->dev_addr[2],
 	       rtdev->dev_addr[3], rtdev->dev_addr[4], rtdev->dev_addr[5]);
 #else
@@ -2403,8 +2404,8 @@ static void __exit fec_enet_cleanup(void)
 	struct fec_enet_private *fep = rtdev->priv;
 
 	if (rtdev) {
-		rt_disable_irq(rtdev->irq);
-		rt_free_global_irq(rtdev->irq);
+		rtos_irq_disable(rtdev->irq);
+		rtos_irq_free(rtdev->irq);
 
 		consistent_free(fep->rx_bd_base);
 

@@ -19,8 +19,6 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <rtai.h>
-
 #include <ipv4/arp.h>
 #include <rtmac/tdma/tdma.h>
 #include <rtmac/tdma/tdma_cleanup.h>
@@ -33,23 +31,21 @@ void tdma_task_shutdown(struct rtmac_tdma *tdma)
     if (tdma->flags.task_active == 1) {
         tdma->flags.shutdown_task = 1;
 
-        /* In case the application has stopped the timer, it's
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+        /* RTAI-specific:
+         * In case the application has stopped the timer, it's
          * likely that the tx_task will be waiting forever in
-         * rt_task_wait_period().  So we wakeup the task here for
+         * rt_task_wait_period(). So we wakeup the task here for
          * sure.
          * -WY-
          */
         rt_task_wakeup_sleeping(&tdma->tx_task);
+#endif
 
         /*
-         * unblock all tasks by deleting semas
+         * unblock all tasks
          */
-        rt_sem_delete(&tdma->client_tx);    /* tdma_task_client() */
-
-        /*
-         * re-init semas
-         */
-        rt_sem_init(&tdma->client_tx, 0);
+        rtos_event_broadcast(&tdma->client_tx);     /* tdma_task_client() */
     }
 }
 
@@ -71,25 +67,26 @@ int tdma_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsign
 
 
 
-int tdma_task_change_con(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle)
+int tdma_task_change_con(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle_ns)
 {
     struct rtnet_device *rtdev = tdma->rtdev;
+    rtos_time_t cycle_time;
     int ret = 0;
 
     if (tdma->flags.task_active) {
-        rt_printk("RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
-        rt_task_delete(&tdma->tx_task);
+        TDMA_DEBUG(0, "RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
+        rtos_task_delete(&tdma->tx_task);
     }
 
-    ret = rt_task_init(&tdma->tx_task, task, (int)rtdev, 4096, TDMA_PRIO_TX_TASK, 0, 0);
-
-    if (cycle != 0)
-        ret = rt_task_make_periodic_relative_ns(&tdma->tx_task, 1000*1000, cycle);
-    else
-        ret = rt_task_resume(&tdma->tx_task);
-
+    if (cycle_ns != 0) {
+        rtos_nanosecs_to_time(cycle_ns, &cycle_time);
+        ret = rtos_task_init_periodic(&tdma->tx_task, task, (int)rtdev,
+                                      TDMA_PRIO_TX_TASK, &cycle_time);
+    } else
+        ret = rtos_task_init(&tdma->tx_task, task, (int)rtdev,
+                             TDMA_PRIO_TX_TASK);
     if (ret != 0)
-        rt_printk("RTmac: tdma: %s() not successful\n",__FUNCTION__);
+        TDMA_DEBUG(0, "RTmac: tdma: %s() not successful\n",__FUNCTION__);
     else
         TDMA_DEBUG(2, "RTmac: tdma: %s() succsessful\n",__FUNCTION__);
 
@@ -117,7 +114,7 @@ void tdma_task_notify(int rtdev_id)
         /*
          * wait 'till begin of next period
          */
-        rt_task_wait_period();
+        rtos_task_wait_period();
 
         /*
          * transmit packet
@@ -144,6 +141,7 @@ void tdma_task_config(int rtdev_id)
     struct tdma_rt_entry *rt_entry;
     struct list_head *lh;
     int i, max;
+    rtos_time_t time_stamp;
 
     max = TDMA_MASTER_MAX_TEST;
 
@@ -169,7 +167,8 @@ void tdma_task_config(int rtdev_id)
             skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_TEST, data);
             rt_entry->counter = test_msg->counter = i;
             rt_entry->state = RT_SENT_TEST;
-            rt_entry->tx = test_msg->tx = rt_get_time();
+            rtos_get_time(&time_stamp);
+            rt_entry->tx = test_msg->tx = rtos_time_to_nanosecs(&time_stamp);
 
             /*
             * transmit packet
@@ -179,7 +178,7 @@ void tdma_task_config(int rtdev_id)
             /*
             * wait
             */
-            rt_task_wait_period();
+            rtos_task_wait_period();
         }
     }
 
@@ -193,7 +192,7 @@ void tdma_task_config(int rtdev_id)
     return;
 
 out:
-    rt_printk("RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
+    TDMA_DEBUG(0, "RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
         __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
     tdma_cleanup_master_rt(tdma);
     tdma_next_state(tdma, TDMA_DOWN);
@@ -213,7 +212,8 @@ void tdma_task_master(int rtdev_id)
     struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
     struct rtskb *skb;
     void *data;
-    RTIME time_stamp;
+    rtos_time_t time_stamp;
+    nanosecs_t time_ns;
     unsigned long flags;
 
     while (tdma->flags.shutdown_task == 0) {
@@ -224,16 +224,15 @@ void tdma_task_master(int rtdev_id)
 
         skb = tdma_make_msg(rtdev, NULL, START_OF_FRAME, &data);
 
-        if (!skb) {
-            rt_task_wait_period();
-            continue;
-        }
+        rtos_task_wait_period();
 
-        rt_task_wait_period();
+        if (!skb)
+            continue;
 
         /* Store timestamp in SOF. I assume that there is enough space. */
-        time_stamp = rt_get_time_ns();
-        *(RTIME *)data = cpu_to_be64(time_stamp);
+        rtos_get_time(&time_stamp);
+        time_ns = rtos_time_to_nanosecs(&time_stamp);
+        *(nanosecs_t *)data = cpu_to_be64(time_ns);
 
         tdma_xmit(skb);
 
@@ -242,12 +241,13 @@ void tdma_task_master(int rtdev_id)
          * tasks that the SOF has been sent.
          * -JK-
          */
-        time_stamp -= rt_get_time_ns();
-        flags = rt_spin_lock_irqsave(&tdma->delta_t_lock);
-        tdma->delta_t = time_stamp;
-        rt_spin_unlock_irqrestore(flags, &tdma->delta_t_lock);
+        rtos_get_time(&time_stamp);
+        time_ns -= rtos_time_to_nanosecs(&time_stamp);
+        rtos_spin_lock_irqsave(&tdma->delta_t_lock, flags);
+        tdma->delta_t = time_ns;
+        rtos_spin_unlock_irqrestore(&tdma->delta_t_lock, flags);
 
-        rt_sem_broadcast(&tdma->client_tx);
+        rtos_event_broadcast(&tdma->client_tx);
 
         /*
          * get client skb out of queue and send it
@@ -272,12 +272,16 @@ void tdma_task_client(int rtdev_id)
     struct rtskb *skb;
 
     while(tdma->flags.shutdown_task == 0) {
-        if (rt_sem_wait(&tdma->client_tx) == 0xFFFF) {
-            rt_printk("RTmac: tdma: %s() rt_sem_wait(client_tx) failed\n",__FUNCTION__);
+        if (RTOS_EVENT_ERROR(rtos_event_wait(&tdma->client_tx))) {
+            TDMA_DEBUG(0, "RTmac: tdma: %s() rt_sem_wait(client_tx) failed\n",
+                       __FUNCTION__);
             break;
         }
 
-        rt_sleep_until(tdma->wakeup);
+        if (tdma->flags.shutdown_task != 0)
+            break;
+
+        rtos_task_sleep_until(&tdma->wakeup);
 
         skb = rtskb_prio_dequeue(&tdma->tx_queue);
         if (skb)

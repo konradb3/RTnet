@@ -23,42 +23,37 @@
 #include <linux/proc_fs.h>
 #endif
 
-#include <rtai.h>
-
-#ifdef CONFIG_PROC_FS
-#include <rtai_proc_fs.h>
-#endif
-
+#include <rtnet_sys.h>
 #include <rtmac/rtmac_proc.h>
 
 
 #ifdef CONFIG_PROC_FS
 int rtmac_proc_read(char *page, char **start, off_t off, int count, int *eof, void *data)
 {
-	PROC_PRINT_VARS;
-	PROC_PRINT("\nRTmac\n\n");
-	PROC_PRINT_DONE;
+    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT("\nRTmac\n\n");
+    RTNET_PROC_PRINT_DONE;
 }
 
 int rtmac_proc_register(void)
 {
-	static struct proc_dir_entry *rtmac_proc_entry;
+    static struct proc_dir_entry *rtmac_proc_entry;
 
-	rtmac_proc_entry = create_proc_entry(RTMAC_PROC_NAME, S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
+    rtmac_proc_entry = create_proc_entry(RTMAC_PROC_NAME, S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
 
-	if (!rtmac_proc_entry) {
-		rt_printk("RTmac: Unable to initialize: /proc/rtai/rtmac\n"); // FIXME: remove static path
-		return -1;
-	}
+    if (!rtmac_proc_entry) {
+        printk("RTmac: Unable to initialize: /proc/rtai/rtmac\n"); // FIXME: remove static path
+        return -1;
+    }
 
-	rtmac_proc_entry->read_proc = rtmac_proc_read;
+    rtmac_proc_entry->read_proc = rtmac_proc_read;
 
-	return 0;
+    return 0;
 }
 
 void rtmac_proc_release(void)
 {
-	remove_proc_entry(RTMAC_PROC_NAME, rtai_proc_root);
+    remove_proc_entry(RTMAC_PROC_NAME, rtai_proc_root);
 }
 
 

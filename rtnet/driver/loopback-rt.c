@@ -24,9 +24,6 @@
 
 #include <linux/netdevice.h>
 
-#include <crc32.h>
-#include <rtnet.h>
-#include <rtnet_internal.h>
 #include <rtnet_port.h>
 
 /*#define DEBUG_LOOPBACK_DRIVER*/
@@ -84,32 +81,32 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 #ifdef DEBUG_LOOPBACK_DRIVER
     {
         int i, cuantos;
-        rt_printk("\n\nPACKET:");
-        rt_printk("\nskb->protocol = %d", skb->protocol);
-        rt_printk("\nskb->pkt_type = %d", skb->pkt_type);
-        rt_printk("\nskb->csum = %d", skb->csum);
-        rt_printk("\nskb->len = %d", skb->len);
+        rtos_print("\n\nPACKET:");
+        rtos_print("\nskb->protocol = %d", skb->protocol);
+        rtos_print("\nskb->pkt_type = %d", skb->pkt_type);
+        rtos_print("\nskb->csum = %d", skb->csum);
+        rtos_print("\nskb->len = %d", skb->len);
 
-        rt_printk("\n\nETHERNET HEADER:");
-        rt_printk("\nMAC dest: "); for(i=0;i<6;i++){ rt_printk("0x%02X ", skb->buf_start[i+2]); }
-        rt_printk("\nMAC orig: "); for(i=0;i<6;i++){ rt_printk("0x%02X ", skb->buf_start[i+8]); }
-        rt_printk("\nPROTOCOL: "); for(i=0;i<2;i++){ rt_printk("0x%02X ", skb->buf_start[i+14]); }
+        rtos_print("\n\nETHERNET HEADER:");
+        rtos_print("\nMAC dest: "); for(i=0;i<6;i++){ rtos_print("0x%02X ", skb->buf_start[i+2]); }
+        rtos_print("\nMAC orig: "); for(i=0;i<6;i++){ rtos_print("0x%02X ", skb->buf_start[i+8]); }
+        rtos_print("\nPROTOCOL: "); for(i=0;i<2;i++){ rtos_print("0x%02X ", skb->buf_start[i+14]); }
 
-        rt_printk("\n\nIP HEADER:");
-        rt_printk("\nVERSIZE : "); for(i=0;i<1;i++){ rt_printk("0x%02X ", skb->buf_start[i+16]); }
-        rt_printk("\nPRIORITY: "); for(i=0;i<1;i++){ rt_printk("0x%02X ", skb->buf_start[i+17]); }
-        rt_printk("\nLENGTH  : "); for(i=0;i<2;i++){ rt_printk("0x%02X ", skb->buf_start[i+18]); }
-        rt_printk("\nIDENT   : "); for(i=0;i<2;i++){ rt_printk("0x%02X ", skb->buf_start[i+20]); }
-        rt_printk("\nFRAGMENT: "); for(i=0;i<2;i++){ rt_printk("0x%02X ", skb->buf_start[i+22]); }
-        rt_printk("\nTTL     : "); for(i=0;i<1;i++){ rt_printk("0x%02X ", skb->buf_start[i+24]); }
-        rt_printk("\nPROTOCOL: "); for(i=0;i<1;i++){ rt_printk("0x%02X ", skb->buf_start[i+25]); }
-        rt_printk("\nCHECKSUM: "); for(i=0;i<2;i++){ rt_printk("0x%02X ", skb->buf_start[i+26]); }
-        rt_printk("\nIP ORIGE: "); for(i=0;i<4;i++){ rt_printk("0x%02X ", skb->buf_start[i+28]); }
-        rt_printk("\nIP DESTI: "); for(i=0;i<4;i++){ rt_printk("0x%02X ", skb->buf_start[i+32]); }
+        rtos_print("\n\nIP HEADER:");
+        rtos_print("\nVERSIZE : "); for(i=0;i<1;i++){ rtos_print("0x%02X ", skb->buf_start[i+16]); }
+        rtos_print("\nPRIORITY: "); for(i=0;i<1;i++){ rtos_print("0x%02X ", skb->buf_start[i+17]); }
+        rtos_print("\nLENGTH  : "); for(i=0;i<2;i++){ rtos_print("0x%02X ", skb->buf_start[i+18]); }
+        rtos_print("\nIDENT   : "); for(i=0;i<2;i++){ rtos_print("0x%02X ", skb->buf_start[i+20]); }
+        rtos_print("\nFRAGMENT: "); for(i=0;i<2;i++){ rtos_print("0x%02X ", skb->buf_start[i+22]); }
+        rtos_print("\nTTL     : "); for(i=0;i<1;i++){ rtos_print("0x%02X ", skb->buf_start[i+24]); }
+        rtos_print("\nPROTOCOL: "); for(i=0;i<1;i++){ rtos_print("0x%02X ", skb->buf_start[i+25]); }
+        rtos_print("\nCHECKSUM: "); for(i=0;i<2;i++){ rtos_print("0x%02X ", skb->buf_start[i+26]); }
+        rtos_print("\nIP ORIGE: "); for(i=0;i<4;i++){ rtos_print("0x%02X ", skb->buf_start[i+28]); }
+        rtos_print("\nIP DESTI: "); for(i=0;i<4;i++){ rtos_print("0x%02X ", skb->buf_start[i+32]); }
 
         cuantos = (int)(*(unsigned short *)(skb->buf_start+18)) - 20;
-        rt_printk("\n\nDATA (%d):", cuantos);
-        rt_printk("\n:"); for(i=0;i<cuantos;i++){ rt_printk("0x%02X ", skb->buf_start[i+36]); }
+        rtos_print("\n\nDATA (%d):", cuantos);
+        rtos_print("\n:"); for(i=0;i<cuantos;i++){ rtos_print("0x%02X ", skb->buf_start[i+36]); }
     }
 #endif
 
@@ -128,7 +125,7 @@ static int __init loopback_init(void)
     int err;
     struct rtnet_device *rtdev;
 
-    rt_printk("initializing loopback...\n");
+    printk("initializing loopback...\n");
 
     if ((rtdev = rt_alloc_etherdev(0)) == NULL)
         return -ENODEV;
@@ -162,7 +159,7 @@ static void __exit loopback_cleanup(void)
 {
     struct rtnet_device *rtdev = rt_loopback_dev;
 
-    rt_printk("removing loopback...\n");
+    printk("removing loopback...\n");
 
     rt_unregister_rtnetdev(rtdev);
     rt_rtdev_disconnect(rtdev);

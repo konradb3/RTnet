@@ -21,6 +21,7 @@
 #ifndef __RTNET_ROUTE_H_
 #define __RTNET_ROUTE_H_
 
+#include <linux/init.h>
 #include <linux/types.h>
 
 #include <rtdev.h>
@@ -69,7 +70,7 @@ extern int rt_ip_route_input(struct rtskb *skb, u32 daddr, u32 saddr,
                              struct rtnet_device *rtdev);
 extern int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr);
 
-extern void rt_ip_routing_init(void);
+extern void __init rt_ip_routing_init(void);
 extern void rt_ip_routing_release(void);
 
 

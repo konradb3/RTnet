@@ -29,7 +29,6 @@
 #include <linux/if.h>
 #include <sys/ioctl.h>
 
-#include <rtai_lxrt_user.h>
 #include <rtnet.h>
 
 

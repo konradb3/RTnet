@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,9 +23,6 @@
  */
 
 #include <linux/kernel.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
 
 #include <rtcfg/rtcfg.h>
 #include <rtcfg/rtcfg_event.h>

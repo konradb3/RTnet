@@ -27,9 +27,7 @@
 
 #ifdef __KERNEL__
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
+#include <rtnet_sys.h>
 #include <rtmac/tdma/tdma.h>
 
 
@@ -52,17 +50,17 @@ static inline struct rtmac_tdma *tdma_get_by_device(const char *devname)
 
 static inline int tdma_wait_sof(struct rtmac_tdma *tdma)
 {
-    return (rt_sem_wait(&tdma->client_tx) != 0xFFFF) ? 0 : -1;
+    return RTOS_EVENT_ERROR(rtos_event_wait(&tdma->client_tx)) ? -1 : 0;
 }
 
-static inline RTIME tdma_get_delta_t(struct rtmac_tdma *tdma)
+static inline nanosecs_t tdma_get_delta_t(struct rtmac_tdma *tdma)
 {
-    RTIME delta_t;
+    nanosecs_t    delta_t;
     unsigned long flags;
 
-    flags = rt_spin_lock_irqsave(&tdma->delta_t_lock);
+    rtos_spin_lock_irqsave(&tdma->delta_t_lock, flags);
     delta_t = tdma->delta_t;
-    rt_spin_unlock_irqrestore(flags, &tdma->delta_t_lock);
+    rtos_spin_unlock_irqrestore(&tdma->delta_t_lock, flags);
 
     return delta_t;
 }
@@ -98,6 +96,5 @@ struct tdma_config {
                                              sizeof(struct tdma_config))
 #define TDMA_IOC_OFFSET                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 8, \
                                              sizeof(struct tdma_config))
-
 
 #endif /* __TDMA_H_ */

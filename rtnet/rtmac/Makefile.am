@@ -11,20 +11,13 @@ librtmac_a_SOURCES = \
 	rtmac_proto.c \
 	rtmac_syms.c \
 	rtmac_vnic.c
-#	rtmac_tdma.c \
-#	rtmac_chrdev.c \
-#	tdma_cleanup.c \
-#	tdma_event.c \
-#	tdma_ioctl.c \
-#	tdma_rx.c \
-#	tdma_task.c \
-#	tdma_timer.c
 
 rtmac.o: librtmac.a
 	$(LD) --whole-archive $< -r -o $@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 all-local: rtmac.o

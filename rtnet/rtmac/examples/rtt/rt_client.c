@@ -33,14 +33,11 @@
 
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-#include <rtai_fifos.h>
-
 #include <rtnet.h>
-
 /* for sof_sync */
-#include <tdma.h>
+#include <tdma.h>   /* includes rtai.h and rtai_sched.h */
+
+#include <rtai_fifos.h>
 
 static char *local_ip_s  = "";
 static char *server_ip_s = "127.0.0.1";

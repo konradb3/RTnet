@@ -21,6 +21,8 @@
 #ifndef __RTNET_ICMP_H_
 #define __RTNET_ICMP_H_
 
+#include <linux/init.h>
+
 #include <rtskb.h>
 #include <ipv4/protocol.h>
 
@@ -30,7 +32,7 @@
 #define ICMP_REPLY_POOL_SIZE        8
 
 extern struct rtinet_protocol icmp_protocol;
-extern void rt_icmp_init(void);
+extern void __init rt_icmp_init(void);
 extern void rt_icmp_release(void);
 
 

@@ -21,6 +21,7 @@
 #ifndef __RTNET_ARP_H_
 #define __RTNET_ARP_H_
 
+#include <linux/init.h>
 #include <linux/types.h>
 
 #include <rtdev.h>
@@ -33,11 +34,11 @@
 
 
 struct rt_arp_table_struct {
-	struct rt_arp_table_struct	*next;
-	struct rt_arp_table_struct	*prev;
+    struct rt_arp_table_struct  *next;
+    struct rt_arp_table_struct  *prev;
 
-	u32				ip_addr;
-	char				hw_addr[RT_ARP_ADDR_LEN];
+    u32                         ip_addr;
+    char                        hw_addr[RT_ARP_ADDR_LEN];
 };
 
 
@@ -47,8 +48,7 @@ extern struct rt_arp_table_struct *arp_list;
 extern int rt_arp_solicit(struct rtnet_device *dev,u32 target);
 extern void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr);
 extern void rt_arp_table_del(u32 ip_addr);
-extern void rt_arp_table_init(void);
-extern void rt_arp_init(void);
+extern void __init rt_arp_init(void);
 extern void rt_arp_release(void);
 extern struct rt_arp_table_struct *rt_arp_table_lookup(u32 ip_addr);
 extern struct rt_arp_table_struct *rt_rarp_table_lookup(char *hw_addr);

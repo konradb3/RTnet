@@ -65,101 +65,113 @@
 
 #ifndef __KERNEL__
 
+#include <rtnet_config.h>
+
+#ifdef HAVE_RTAI_DECLARE_H
 #include <rtai_declare.h>
+#endif
+
+#ifdef HAVE_RTAI_LXRT_USER_H
 #include <rtai_lxrt_user.h>
+#endif
+
 #include <rtai_lxrt.h>
 
 
 #define SIZARG sizeof(arg)
 
+#ifdef CONFIG_RTAI_24
+#define RTAI_PROTO(type,name,arglist)   DECLARE type name arglist
+#endif
 
-DECLARE int rt_socket(int family, int type, int protocol)
+
+RTAI_PROTO(int, rt_socket, (int family, int type, int protocol))
 {
     struct { int family; int type; int protocol; } arg = { family, type, protocol };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_close(int fd)
+RTAI_PROTO(int, rt_socket_close, (int fd))
 {
     struct { int fd; } arg = { fd };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_CLOSE, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_bind(int fd, struct sockaddr *addr, socklen_t addrlen)
+RTAI_PROTO(int, rt_socket_bind, (int fd, struct sockaddr *addr, socklen_t addrlen))
 {
     struct {int fd; struct sockaddr *addr; socklen_t addrlen; } arg = { fd, addr, addrlen };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_BIND, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_connect(int fd, const struct sockaddr *addr, socklen_t addrlen)
+RTAI_PROTO(int, rt_socket_connect, (int fd, const struct sockaddr *addr, socklen_t addrlen))
 {
     struct {int fd; const struct sockaddr *addr; socklen_t addrlen; } arg = { fd, addr, addrlen };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_CONNECT, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_accept(int fd, struct sockaddr *addr, socklen_t *addrlen)
+RTAI_PROTO(int, rt_socket_accept, (int fd, struct sockaddr *addr, socklen_t *addrlen))
 {
     struct {int fd; struct sockaddr *addr; socklen_t *addrlen; } arg = { fd, addr, addrlen };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_ACCEPT, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_listen(int fd, int backlog)
+RTAI_PROTO(int, rt_socket_listen, (int fd, int backlog))
 {
     struct {int fd; int backlog; } arg = { fd, backlog };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_LISTEN, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_send(int fd, const void *buf, size_t len, int flags)
+RTAI_PROTO(int, rt_socket_send, (int fd, const void *buf, size_t len, int flags))
 {
     struct {int fd; const void *buf; size_t len; int flags;} arg = { fd, buf, len, flags };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_SEND, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_recv(int fd, void *buf, size_t len, int flags)
+RTAI_PROTO(int, rt_socket_recv, (int fd, void *buf, size_t len, int flags))
 {
     struct {int fd; void *buf; size_t len; int flags;} arg = { fd, buf, len, flags };
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_RECV, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_sendto(int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen)
+RTAI_PROTO(int, rt_socket_sendto, (int fd, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen))
 {
     struct {int fd; const void *buf; size_t len; int flags; const struct sockaddr *to; socklen_t tolen;} arg
         = {fd, buf, len, flags, to, tolen};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_SENDTO, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr *from, socklen_t *fromlen)
+RTAI_PROTO(int, rt_socket_recvfrom, (int fd, void *buf, size_t len, int flags, struct sockaddr *from, socklen_t *fromlen))
 {
     struct {int fd; void *buf; size_t len; int flags; struct sockaddr *from; socklen_t *fromlen;} arg
         = {fd, buf, len, flags, from, fromlen};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_RECVFROM, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_sendmsg(int fd, const struct msghdr *msg, int flags)
+RTAI_PROTO(int, rt_socket_sendmsg, (int fd, const struct msghdr *msg, int flags))
 {
     struct {int fd; const struct msghdr *msg; int flags;} arg = {fd, msg, flags};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_SENDMSG, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_recvmsg(int fd, struct msghdr *msg, int flags)
+RTAI_PROTO(int, rt_socket_recvmsg, (int fd, struct msghdr *msg, int flags))
 {
     struct {int fd; struct msghdr *msg; int flags;} arg = {fd, msg, flags};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_RECVMSG, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_getsockname(int fd, struct sockaddr *addr, socklen_t addrlen)
+RTAI_PROTO(int, rt_socket_getsockname, (int fd, struct sockaddr *addr, socklen_t addrlen))
 {
     struct {int fd; struct sockaddr *addr; socklen_t addrlen;} arg = {fd, addr, addrlen};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_GETSOCKNAME, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
+RTAI_PROTO(int, rt_socket_setsockopt, (int fd, int level, int optname, const void *optval, socklen_t optlen))
 {
     struct {int fd; int level; int optname; const void *optval; socklen_t optlen;} arg = {fd, level, optname, optval, optlen};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_SETSOCKOPT, &arg).i[LOW];
 }
 
-DECLARE int rt_socket_ioctl(int fd, int request, void *ioctl_arg)
+RTAI_PROTO(int, rt_socket_ioctl, (int fd, int request, void *ioctl_arg))
 {
     struct {int fd; int request; void *ioctl_arg;} arg = {fd, request, ioctl_arg};
     return (int)rtai_lxrt(LxRTNET_IDX, SIZARG, RT_SOCKET_IOCTL, &arg).i[LOW];

@@ -21,11 +21,13 @@
 #ifndef __RTNET_UDP_H_
 #define __RTNET_UDP_H_
 
+#include <linux/init.h>
+
 #include <ipv4/protocol.h>
 
 
 extern struct rtinet_protocol udp_protocol;
-extern void rt_udp_init(void);
+extern void __init rt_udp_init(void);
 extern void rt_udp_release(void);
 
 

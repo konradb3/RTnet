@@ -37,29 +37,21 @@ typedef void (*rtpc_cleanup_proc)(struct rt_proc_call *call);
 
 struct rt_proc_call {
     struct list_head    list_entry;
-//    int                 call_type;
     volatile int        processed;
     rtpc_proc           proc;
     int                 result;
     atomic_t            ref_count;
     wait_queue_head_t   call_wq;
-//    SEM                 call_sem;
     rtpc_cleanup_proc   cleanup_handler;
     char                priv_data[0];
 };
 
 #define CALL_PENDING    1000 /* result value for blocked calls */
 
-//#define RTPC            0
-//#define NRTPC           1
-
 
 int rtpc_dispatch_call(rtpc_proc rt_proc, unsigned int timeout,
                        void* priv_data, size_t priv_data_size,
                        rtpc_cleanup_proc cleanup_handler);
-//int rtpc_dispatch_nrt_call(rtpc_proc nrt_proc, unsigned int timeout,
-//                           void* priv_data, size_t priv_data_size,
-//                           rtpc_proc cleanup_handler);
 
 
 void rtpc_complete_call(struct rt_proc_call *call, int result);

@@ -22,9 +22,6 @@
 #include <linux/init.h>
 #include <linux/if_ether.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtskb.h>
 #include <rtnet.h>
 

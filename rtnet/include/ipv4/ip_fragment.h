@@ -21,6 +21,8 @@
 #ifndef __RTNET_IP_FRAGMENT_H_
 #define __RTNET_IP_FRAGMENT_H_
 
+#include <linux/init.h>
+
 #include <rtskb.h>
 #include <ipv4/protocol.h>
 
@@ -30,7 +32,7 @@ extern struct rtskb *rt_ip_defrag(struct rtskb *skb,
 
 extern void rt_ip_frag_invalidate_socket(struct rtsocket *sock);
 
-extern int rt_ip_fragment_init(void);
+extern int __init rt_ip_fragment_init(void);
 extern void rt_ip_fragment_cleanup(void);
 
 

@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -61,21 +61,21 @@ struct rtcfg_connection {
 };
 
 struct rtcfg_device {
-    RTCFG_MAIN_STATE state;
-    struct list_head conn_list;
-    u32              clients;
-    u32              clients_found;
-    SEM              dev_sem;
-    struct list_head event_calls;
-    spinlock_t       event_calls_lock;
-    RT_TASK          timer_task;
+    volatile RTCFG_MAIN_STATE state;
+    struct list_head          conn_list;
+    u32                       clients;
+    u32                       clients_found;
+    rtos_res_lock_t           dev_lock;
+    struct list_head          event_calls;
+    rtos_spinlock_t           event_calls_lock;
+    rtos_task_t               timer_task;
 
     /* client related */
-    u8               addr_type;
-    u8               srv_mac_addr[MAX_ADDR_LEN];
-    u32              cfg_offs;
-    u32              max_clients;
-    u8               *client_addr_list;
+    u8                        addr_type;
+    u8                        srv_mac_addr[MAX_ADDR_LEN];
+    u32                       cfg_offs;
+    u32                       max_clients;
+    u8                        *client_addr_list;
 };
 
 

@@ -24,8 +24,6 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 
-#include <rtai.h>
-
 #include <rtnet_internal.h>
 #include <rtskb.h>
 #include <rtmac/rtmac_disc.h>
@@ -37,7 +35,7 @@ static unsigned int vnic_rtskbs = DEFAULT_VNIC_RTSKBS;
 MODULE_PARM(vnic_rtskbs, "i");
 MODULE_PARM_DESC(vnic_rtskbs, "Number of realtime socket buffers per virtual NIC");
 
-static int                  vnic_srq;
+static rtos_nrt_signal_t    vnic_signal;
 static struct rtskb_queue   rx_queue;
 
 
@@ -57,14 +55,14 @@ int rtmac_vnic_rx(struct rtskb *skb, u16 type)
     skb->protocol = type;
 
     rtskb_queue_tail(&rx_queue, skb);
-    rt_pend_linux_srq(vnic_srq);
+    rtos_pend_nrt_signal(&vnic_signal);
 
     return 0;
 }
 
 
 
-static void rtmac_vnic_srq(void)
+static void rtmac_vnic_signal_handler(void)
 {
     struct rtskb            *rtskb;
     struct sk_buff          *skb;
@@ -97,7 +95,7 @@ static void rtmac_vnic_srq(void)
             skb->dev      = &rtskb->rtdev->mac_priv->vnic;
             skb->protocol = eth_type_trans(skb, skb->dev);
 
-            count2timeval(rtskb->rx, &skb->stamp);
+            rtos_time_to_timeval(&rtskb->rx, &skb->stamp);
             stats = &rtskb->rtdev->mac_priv->vnic_stats;
 
             kfree_rtskb(rtskb);
@@ -266,16 +264,12 @@ int __init rtmac_vnic_module_init(void)
 {
     rtskb_queue_init(&rx_queue);
 
-    vnic_srq = rt_request_srq(0, rtmac_vnic_srq, 0);
-    if (vnic_srq < 0)
-        return vnic_srq;
-    else
-        return 0;
+    return rtos_nrt_signal_init(&vnic_signal, rtmac_vnic_signal_handler);
 }
 
 
 
 void rtmac_vnic_module_cleanup(void)
 {
-    rt_free_srq(vnic_srq);
+    rtos_nrt_signal_delete(&vnic_signal);
 }

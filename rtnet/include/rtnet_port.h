@@ -24,11 +24,9 @@
 
 #include <linux/bitops.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtdev.h>
 #include <rtdev_mgr.h>
+#include <rtnet_sys.h>
 #include <stack_mgr.h>
 #include <ethernet/eth.h>
 

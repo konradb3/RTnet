@@ -30,17 +30,15 @@
 #include <linux/slab.h>
 #include <linux/wait.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtnet_rtpc.h>
+#include <rtnet_sys.h>
 
 
-static spinlock_t  pending_calls_lock = SPIN_LOCK_UNLOCKED;
-static spinlock_t  processed_calls_lock = SPIN_LOCK_UNLOCKED;
-static SEM         dispatch_sem;
-static RT_TASK     dispatch_task;
-static int         rtpc_srq;
+static rtos_spinlock_t   pending_calls_lock = RTOS_SPIN_LOCK_UNLOCKED;
+static rtos_spinlock_t   processed_calls_lock = RTOS_SPIN_LOCK_UNLOCKED;
+static rtos_event_t      dispatch_event;
+static rtos_task_t       dispatch_task;
+static rtos_nrt_signal_t rtpc_nrt_signal;
 
 LIST_HEAD(pending_calls);
 LIST_HEAD(processed_calls);
@@ -104,11 +102,11 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
     atomic_set(&call->ref_count, 2);    /* dispatcher + rt-procedure */
     init_waitqueue_head(&call->call_wq);
 
-    flags = rt_spin_lock_irqsave(&pending_calls_lock);
+    rtos_spin_lock_irqsave(&pending_calls_lock, flags);
     list_add_tail(&call->list_entry, &pending_calls);
-    rt_spin_unlock_irqrestore(flags, &pending_calls_lock);
+    rtos_spin_unlock_irqrestore(&pending_calls_lock, flags);
 
-    rt_sem_signal(&dispatch_sem);
+    rtos_event_signal(&dispatch_event);
 
     if (timeout > 0)
         ret = wait_event_interruptible_timeout(call->call_wq,
@@ -135,10 +133,10 @@ static inline struct rt_proc_call *rtpc_dequeue_pending_call(void)
     struct rt_proc_call *call;
 
 
-    flags = rt_spin_lock_irqsave(&pending_calls_lock);
+    rtos_spin_lock_irqsave(&pending_calls_lock, flags);
     call = (struct rt_proc_call *)pending_calls.next;
     list_del(&call->list_entry);
-    rt_spin_unlock_irqrestore(flags, &pending_calls_lock);
+    rtos_spin_unlock_irqrestore(&pending_calls_lock, flags);
 
     return call;
 }
@@ -150,11 +148,11 @@ static inline void rtpc_queue_processed_call(struct rt_proc_call *call)
     unsigned long flags;
 
 
-    flags = rt_spin_lock_irqsave(&processed_calls_lock);
+    rtos_spin_lock_irqsave(&processed_calls_lock, flags);
     list_add_tail(&call->list_entry, &processed_calls);
-    rt_spin_unlock_irqrestore(flags, &processed_calls_lock);
+    rtos_spin_unlock_irqrestore(&processed_calls_lock, flags);
 
-    rt_pend_linux_srq(rtpc_srq);
+    rtos_pend_nrt_signal(&rtpc_nrt_signal);
 }
 
 
@@ -165,13 +163,13 @@ static inline struct rt_proc_call *rtpc_dequeue_processed_call(void)
     struct rt_proc_call *call;
 
 
-    flags = rt_spin_lock_irqsave(&processed_calls_lock);
+    rtos_spin_lock_irqsave(&processed_calls_lock, flags);
     if (!list_empty(&processed_calls)) {
         call = (struct rt_proc_call *)processed_calls.next;
         list_del(&call->list_entry);
     } else
         call = NULL;
-    rt_spin_unlock_irqrestore(flags, &processed_calls_lock);
+    rtos_spin_unlock_irqrestore(&processed_calls_lock, flags);
 
     return call;
 }
@@ -185,7 +183,7 @@ static void rtpc_dispatch_handler(int arg)
 
 
     while (1) {
-        rt_sem_wait(&dispatch_sem);
+        rtos_event_wait(&dispatch_event);
 
         call = rtpc_dequeue_pending_call();
 
@@ -197,7 +195,7 @@ static void rtpc_dispatch_handler(int arg)
 
 
 
-static void rtpc_srq_handler(void)
+static void rtpc_signal_handler(void)
 {
     struct rt_proc_call *call;
 
@@ -243,18 +241,16 @@ int __init rtpc_init(void)
     int ret;
 
 
-    rtpc_srq = rt_request_srq(0, rtpc_srq_handler, 0);
-    if (rtpc_srq < 0)
-        return rtpc_srq;
+    ret = rtos_nrt_signal_init(&rtpc_nrt_signal, rtpc_signal_handler);
+    if (ret < 0)
+        return ret;
 
-    rt_typed_sem_init(&dispatch_sem, 0, CNT_SEM);
+    rtos_event_init(&dispatch_event);
 
-    ret = rt_task_init(&dispatch_task, rtpc_dispatch_handler, 0, 4096,
-                       RT_LOWEST_PRIORITY, 0, NULL);
-    if (ret != 0)
-        rt_free_srq(rtpc_srq);
-    else
-        rt_task_resume(&dispatch_task);
+    ret = rtos_task_init(&dispatch_task, rtpc_dispatch_handler, 0,
+                         RTOS_LOWEST_RT_PRIORITY);
+    if (ret < 0)
+        rtos_nrt_signal_delete(&rtpc_nrt_signal);
 
     return ret;
 }
@@ -263,7 +259,7 @@ int __init rtpc_init(void)
 
 void rtpc_cleanup(void)
 {
-    rt_task_delete(&dispatch_task);
-    rt_sem_delete(&dispatch_sem);
-    rt_free_srq(rtpc_srq);
+    rtos_task_delete(&dispatch_task);
+    rtos_event_delete(&dispatch_event);
+    rtos_nrt_signal_delete(&rtpc_nrt_signal);
 }

@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,9 +25,6 @@
 #include <linux/kernel.h>
 #include <linux/list.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtdev.h>
 #include <rtcfg/rtcfg.h>
 #include <rtcfg/rtcfg_event.h>
@@ -43,7 +40,7 @@ void rtcfg_timer(int ifindex)
 
 
     while (1) {
-        rt_sem_wait(&rtcfg_dev->dev_sem);
+        rtos_res_lock(&rtcfg_dev->dev_lock);
 
         if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING)
             /* TODO: send only limited burst of stage 1 frames */
@@ -63,8 +60,8 @@ void rtcfg_timer(int ifindex)
         else if (rtcfg_dev->state == RTCFG_MAIN_CLIENT_2)
             rtcfg_send_heartbeat(ifindex);*/
 
-        rt_sem_signal(&rtcfg_dev->dev_sem);
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
 
-        rt_task_wait_period();
+        rtos_task_wait_period();
     }
 }

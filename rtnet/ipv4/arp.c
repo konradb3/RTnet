@@ -21,13 +21,9 @@
 #include <linux/netdevice.h>
 #include <linux/in.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #ifdef CONFIG_PROC_FS
 #include <linux/stat.h>
 #include <linux/proc_fs.h>
-#include <rtai_proc_fs.h>
 #endif /* CONFIG_PROC_FS */
 
 #include <rtdev.h>
@@ -247,22 +243,22 @@ static int rt_arp_read_proc(char *page, char **start, off_t off, int count,
     PROC_PRINT_DONE;
 }
 
-static int rt_arp_proc_register(void)
+static int __init rt_arp_proc_register(void)
 {
     static struct proc_dir_entry *proc_rt_arp;
-  
+
     proc_rt_arp =
         create_proc_entry("arp", S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
     if (!proc_rt_arp) {
-        rt_printk("RTnet: unable to initialize proc-file for arp\n");
+        printk("RTnet: unable to initialize proc-file for arp\n");
         return -1;
     }
     proc_rt_arp->read_proc = rt_arp_read_proc;
 
     return 0;
-}       
+}
 
-static void rt_arp_proc_unregister(void) 
+static void rt_arp_proc_unregister(void)
 {
     remove_proc_entry ("arp", rtai_proc_root);
 }
@@ -318,7 +314,7 @@ void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr)
     if (arp_entry == NULL) {
         arp_entry=free_arp_list;
         if (!arp_entry) {
-            rt_printk("RTnet: %s(): no free arp entries\n",__FUNCTION__);
+            rtos_print("RTnet: %s(): no free arp entries\n",__FUNCTION__);
             return;
         }
 
@@ -328,7 +324,7 @@ void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr)
         free_arp_list=free_arp_list->next;
 
         arp_entry->next=arp_list;
-        if (arp_list) 
+        if (arp_list)
             arp_list->prev=arp_entry;
         arp_list=arp_entry;
         /* Billa: for the rt_arp_table_del() not to crash */
@@ -405,7 +401,7 @@ static struct rtpacket_type arp_packet_type = {
 /***
  *  rt_arp_init
  */
-void rt_arp_init(void)
+void __init rt_arp_init(void)
 {
     int i;
     rtdev_add_pack(&arp_packet_type);
@@ -427,7 +423,7 @@ void rt_arp_init(void)
 
 #ifdef CONFIG_PROC_FS
     rt_arp_proc_register();
-#endif 
+#endif
 }
 
 
@@ -442,5 +438,5 @@ void rt_arp_release(void)
 
 #ifdef CONFIG_PROC_FS
     rt_arp_proc_unregister();
-#endif 
+#endif
 }

@@ -50,8 +50,6 @@ extern void rt_stack_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr)
 extern void rt_stack_disconnect (struct rtnet_device *rtdev);
 extern int rt_stack_mgr_init (struct rtnet_mgr *mgr);
 extern void rt_stack_mgr_delete (struct rtnet_mgr *mgr);
-extern int rt_stack_mgr_start (struct rtnet_mgr *mgr);
-extern int rt_stack_mgr_stop (struct rtnet_mgr *mgr);
 
 extern void rtnetif_rx(struct rtskb *skb);
 extern void rtnetif_tx(struct rtnet_device *rtdev);

@@ -2,8 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([RTnet],[0.5.6],[jan.kiszka@web.de])
-AC_CONFIG_HEADER(include/rtnet_config.h)
+
+AC_INIT([RTnet],[0.6.0],[rtnet-users@lists.sourceforge.net])
+AC_CONFIG_HEADERS([config/config.h])
 AC_CONFIG_AUX_DIR(config/autoconf)
 AC_CONFIG_SRCDIR([rtskb.c])
 AC_PREFIX_DEFAULT(/usr/local/rtnet)
@@ -26,11 +27,11 @@ AC_ARG_WITH(CC,
     ])
 AC_PROG_CC
 
-AC_DEFINE_UNQUOTED(CONFIG_RTAI_BUILD_STRING,"$build",[Build system alias])
-RTAI_BUILD_STRING="$build"
-AC_DEFINE_UNQUOTED(CONFIG_RTAI_HOST_STRING,"$host",[Host system alias])
-RTAI_HOST_STRING="$host"
-AC_DEFINE_UNQUOTED(CONFIG_RTAI_COMPILER,"`$CC -v 2>&1 | tail -n 1`",[Compiler])
+AC_DEFINE_UNQUOTED(CONFIG_RTNET_BUILD_STRING,"$build",[Build system alias])
+RTNET_BUILD_STRING="$build"
+AC_DEFINE_UNQUOTED(CONFIG_RTNET_HOST_STRING,"$host",[Host system alias])
+RTNET_HOST_STRING="$host"
+AC_DEFINE_UNQUOTED(CONFIG_RTNET_COMPILER,"`$CC -v 2>&1 | tail -n 1`",[Compiler])
 
 AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2])
 AM_MAINTAINER_MODE
@@ -121,32 +122,73 @@ dnl ======================================================================
 dnl		rtai sources
 dnl ======================================================================
 
-AC_ARG_WITH(rtai,[  --with-rtai=RTAI    path to configured RTAI sources])
+AC_ARG_WITH(rtai,[  --with-rtai=RTAI    path to configured RTAI 24.1.x sources, or RTAI 3 installation])
 if test "$with_rtai" = ""; then
    with_rtai=/usr/src/rtai
+#
+# new default value for rtai-3
+#
+#  with_rtai=/usr/realtime
 fi
 
-AC_MSG_CHECKING(for RTAI source tree)
 
-if test \! -f $with_rtai/Makefile; then
-   AC_MSG_ERROR(*** RTAI not found in $with_rtai)
+dnl ======================================================================
+dnl =========== try to find rtai-24.1.x ==================================
+dnl ======================================================================
+#
+# try to find rtai-24.1.x
+# set CONFIG_RTNET_RTAI_24 to 'n' to prevent it
+#
+unset CONFIG_RTNET_RTAI_24
+
+# first check if there is a Makefile, this means probably rtai-24.1.x
+if test x"$CONFIG_RTNET_RTAI_24" \!= x"n"; then
+    AC_MSG_CHECKING(for RTAI 24.1.x source tree)
+    if test \! -f $with_rtai/Makefile; then
+	CONFIG_RTNET_RTAI_24=n
+	AC_MSG_RESULT(no)
+    fi
 fi
 
-if test "`sed -n -e \"s/^PROJECT = \(.*\)/\1/p\" ${with_rtai}/Makefile`" = "RTAI" -a \
- -f ${with_rtai}/.buildvars; then
-   RTAI_DIR=$with_rtai
-else
-   AC_MSG_ERROR(*** No configured RTAI found in $with_rtai)
+# check for the right Makefile
+if test "$CONFIG_RTNET_RTAI_24" != "n"; then
+    if test "`sed -n -e \"s/^PROJECT = \(.*\)/\1/p\" ${with_rtai}/Makefile`" = "RTAI"; then
+	RTAI_DIR=$with_rtai
+    	AC_MSG_RESULT($RTAI_DIR)
+    else
+ 	CONFIG_RTNET_RTAI_24=n
+	AC_MSG_RESULT(no)
+    fi
 fi
 
-AC_MSG_RESULT($RTAI_DIR)
-AC_SUBST(RTAI_DIR)
+#
+# if we've gone so far, we think that the user gives us a rtai-24.1.x source dir
+# if the following checks, (not configured rtai, kernel, etc) fail, this will be fatal,
+# so we simply stop checking
+#
 
-AC_MSG_CHECKING([for Linux source tree])
-RTAI_LINUX_DIR=`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`
-AC_MSG_RESULT($RTAI_LINUX_DIR)
+if test x"$CONFIG_RTNET_RTAI_24" \!= x"n"; then
+    AC_MSG_CHECKING(for configured RTAI 24.1.x)
+    if test -f ${RTAI_DIR}/.buildvars -a -f ${RTAI_DIR}/.config; then
+	AC_MSG_RESULT(yes)
+    else
+	AC_MSG_ERROR(*** No configured RTAI found in $RTAI_DIR)
+    fi
 
+# source (load) the rtai configuration
+    . ${RTAI_DIR}/.config
 
+    CONFIG_RTNET_RTAI_VERSION=24
+
+    AC_MSG_CHECKING([for Linux source tree])
+    RTAI_LINUX_DIR=`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`
+    AC_MSG_RESULT($RTAI_LINUX_DIR)
+
+#
+# make some checks on the kernel
+#
+# __N_O_T_E__ the if expression ends after the checks copied from RTAI-unstable....
+#
 
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 dnl ++++++++++++ copied from rtai-unstable +++ start +++++++++++++++++++++
@@ -253,6 +295,113 @@ fi
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 dnl ++++++++++++ copied from rtai-unstable +++ end +++++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+fi
+
+dnl ===========	end of rtai 24.1.x detection =============================
+
+
+dnl ======================================================================
+dnl =========== try to find rtai-3 =======================================
+dnl ======================================================================
+#
+# try to find rtai-3, but don't look for it, if...
+# ...we've already found rtai-24.1.x
+#
+if test x"$CONFIG_RTNET_RTAI_24" \!= x"n"; then
+    CONFIG_RTNET_RTAI_3=n
+else
+    unset CONFIG_RTNET_RTAI_3
+fi
+
+#
+# the presence of rtai-config is a good indication for rtai-3
+#
+if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
+    AC_MSG_CHECKING(for RTAI 3 installation)
+    RTAI_CONFIG="${with_rtai}/bin/rtai-config"
+    if test -f ${RTAI_CONFIG}; then
+        RTAI_DIR=$with_rtai
+	AC_MSG_RESULT(${RTAI_DIR})
+    else
+	CONFIG_RTNET_RTAI_3=n
+	AC_MSG_RESULT(no)
+    fi
+fi
+
+#
+# from now we think we've found RTAI-3, so if we got en error
+# it will be fatal, thus exit with AC_MSG_ERROR
+#
+
+if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
+    AC_MSG_CHECKING(for RTAI 3 version)
+    CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
+
+    case "$CONFIG_RTNET_RTAI_3_VERSION" in
+    3.0*)
+	AC_MSG_RESULT(${CONFIG_RTNET_RTAI_3_VERSION})
+	CONFIG_RTNET_RTAI_VERSION=30
+	;;
+    *)
+	AC_MSG_ERROR(*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR)
+	;;
+    esac
+
+    AC_MSG_CHECKING(for RTAI 3 config file)
+    CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
+    if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
+	CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
+	if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
+	    AC_MSG_ERROR(*** RTAI 3 configuration file not found)
+	fi
+    fi
+    AC_MSG_RESULT(${CONFIG_RTNET_RTAI_CONFIG_FILE})
+
+# source (load) the rtai configuration
+    . ${CONFIG_RTNET_RTAI_CONFIG_FILE}
+
+# check for semas, needed by rtnet
+    AC_MSG_CHECKING(for RTAI Semaphores)
+    case "${CONFIG_RTAI_SEM}" in
+	y | m) AC_MSG_RESULT(${CONFIG_RTAI_SEM}) ;;
+	*) AC_MSG_ERROR(*** Please enable Semaphores in RTAI);;
+    esac
+
+# check for RT malloc, needed by rtnet
+    AC_MSG_CHECKING(for RTAI malloc)
+    case "${CONFIG_RTAI_MALLOC}" in
+	y | m) AC_MSG_RESULT(${CONFIG_RTAI_MALLOC}) ;;
+	*) AC_MSG_ERROR(*** Please enable real-time malloc in RTAI);;
+    esac
+
+# check for mailboxes, eventually needed by rtnet
+#    AC_MSG_CHECKING(for RTAI Mailboxes)
+#    case "${CONFIG_RTAI_MBX}" in
+#	y | m) AC_MSG_RESULT(${CONFIG_RTAI_MBX}) ;;
+#	*) AC_MSG_ERROR(*** Please enable Mailboxes in RTAI);;
+#    esac
+fi
+
+dnl ===========	end of rtai 3 detection ==================================
+
+
+
+#
+# now let's see wich version of rtai we've found
+# exit with error if there isn't any version
+#
+case "$CONFIG_RTNET_RTAI_VERSION" in
+    24)
+	AC_DEFINE(CONFIG_RTAI_24,1,[Be build for rtai 24.1.x])
+	;;
+    30)
+	AC_DEFINE(CONFIG_RTAI_30,1,[Be build for rtai 3.0.x])
+	;;
+    *)
+	AC_MSG_ERROR(*** No RTAI found in $with_rtai)
+	;;
+esac
+
 
 dnl ======================================================================
 dnl		Installation directory for modules
@@ -285,17 +434,22 @@ AC_SUBST(RTNET_MODULE_DIR)
 dnl ======================================================================
 dnl		check for NEWLXRT
 dnl ======================================================================
-
 AC_MSG_CHECKING([for RTAI NEWLXRT enabled])
-
-CONFIG_RTAI_NEWLXRT="`sed -n -e "s/^CONFIG_RTAI_NEWLXRT=\(.*\)/\1/p" $RTAI_DIR/.config`"
-
-case $CONFIG_RTAI_NEWLXRT in
-     y | m)
-	CONFIG_NEWLXRT=yes;
+case "${CONFIG_RTNET_RTAI_VERSION}" in
+    24)
+	case "$CONFIG_RTAI_NEWLXRT" in
+	    y | m) CONFIG_NEWLXRT=yes ;;
+	    *) unset CONFIG_NEWLXRT ;;
+	esac
 	;;
-     *)
-	unset CONFIG_NEWLXRT;
+    30)
+	case "${CONFIG_RTAI_SCHED_LXRT}" in
+	    y | m) CONFIG_NEWLXRT=yes ;;
+	    *) unset CONFIG_NEWLXRT ;;
+	esac
+	;;
+    *)
+	AC_MSG_ERROR(*** internal error)
 	;;
 esac
 AC_MSG_RESULT(${CONFIG_NEWLXRT:-no})
@@ -306,27 +460,85 @@ dnl ======================================================================
 dnl		import settings from RTAI
 dnl ======================================================================
 
-RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
-LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
-KERNEL_CFLAGS=-I$RTAI_LINUX_DIR/include
+case "${CONFIG_RTNET_RTAI_VERSION}" in
+    24 )
+	RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
+	LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
+	KERNEL_CFLAGS="-I$RTAI_LINUX_DIR/include"
+	;;
+    30 )
+	RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
+	LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
+	KERNEL_CFLAGS=-I"`${RTAI_CONFIG} --linux-dir`/include"
+	;;
+    * )
+	AC_MSG_ERROR(*** internal error)
+esac
 
 AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
-AC_SUBST(LD)
+
+
+dnl ======================================================================
+dnl		RTAI header checks
+dnl ======================================================================
+
+#ac_save_CFLAGS="${CFLAGS}"
+#CFLAGS="${RTAI_KMOD_CFLAGS}"
+#AC_CHECK_HEADERS([rtai_malloc.h rtai_sem.h rtai_declare.h],[],[],[#include <linux/kernel.h>])
+#CFLAGS="${LXRT_CFLAGS}"
+#AC_CHECK_HEADERS([rtai_lxrt_user.h],[],[],[#include <sys/types.h>])
+#CFLAGS="${ac_save_CFLAGS}"
+
+ac_save_CPPFLAGS="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${LXRT_CFLAGS}"
+
+# mandatory RTAI-30 headers
+AC_CHECK_HEADERS(rtai_sem.h rtai_malloc.h,
+	[],
+	[case "${CONFIG_RTNET_RTAI_VERSION}" in
+	24 ) ;;
+	30 ) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
+	* ) AC_MSG_ERROR(*** internal error)
+	esac])
+
+# mandatory RTAI-24 headers
+AC_CHECK_HEADERS(rtai_lxrt_user.h rtai_declare.h,
+	[],
+	[case "${CONFIG_RTNET_RTAI_VERSION}" in
+	24 ) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
+	30 ) ;;
+	* ) AC_MSG_ERROR(*** internal error)
+	esac])
+
+CPPFLAGS="${ac_save_CFLAGS}"
 
 
 dnl ======================================================================
 dnl		network interface card driver
 dnl ======================================================================
 
+AC_MSG_CHECKING(whether to build all PCI network driver)
+AC_ARG_ENABLE(allpci,
+	[  --enable-allpci        build all PCI NIC driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_ALLPCI=yes ;;
+	*) unset CONFIG_RTNET_ALLPCI ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_ALLPCI:-no})
+
+
 AC_MSG_CHECKING(whether to build 3Com 59x driver)
 AC_ARG_ENABLE(3c59x,
 	[  --enable-3c59x         build 3Com 59x driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_3C59X=yes;;
+	y | yes ) CONFIG_RTNET_3C59X=yes ;;
 	*) unset CONFIG_RTNET_3C59X ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+	CONFIG_RTNET_3C59X=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_3C59X:-no})
 AM_CONDITIONAL(CONFIG_RTNET_3C59X,[test "$CONFIG_RTNET_3C59X" = "yes"])
 
@@ -335,9 +547,12 @@ AC_MSG_CHECKING(whether to build Realtek 8139 driver)
 AC_ARG_ENABLE(8139,
 	[  --enable-8139          build Realtek 8139 driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_8139=yes;;
+	y | yes ) CONFIG_RTNET_8139=yes ;;
 	*) unset CONFIG_RTNET_8139 ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+	CONFIG_RTNET_8139=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_8139:-no})
 AM_CONDITIONAL(CONFIG_RTNET_8139,[test "$CONFIG_RTNET_8139" = "yes"])
 
@@ -346,9 +561,12 @@ AC_MSG_CHECKING(whether to build Intel EtherExpressPro/100 driver)
 AC_ARG_ENABLE(eepro100,
 	[  --enable-eepro100      build Intel EtherExpressPro/100 driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_EEPRO100=yes;;
+	y | yes ) CONFIG_RTNET_EEPRO100=yes ;;
 	*) unset CONFIG_RTNET_EEPRO100 ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+	CONFIG_RTNET_EEPRO100=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_EEPRO100:-no})
 AM_CONDITIONAL(CONFIG_RTNET_EEPRO100,[test "$CONFIG_RTNET_EEPRO100" = "yes"])
 
@@ -357,9 +575,12 @@ AC_MSG_CHECKING(whether to build AMD PCnet32 driver)
 AC_ARG_ENABLE(pcnet32,
 	[  --enable-pcnet32       build AMD PCnet32 driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_PCNET32=yes;;
+	y | yes ) CONFIG_RTNET_PCNET32=yes ;;
 	*) unset CONFIG_RTNET_PCNET32 ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+	CONFIG_RTNET_PCNET32=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_PCNET32:-no})
 AM_CONDITIONAL(CONFIG_RTNET_PCNET32,[test "$CONFIG_RTNET_PCNET32" = "yes"])
 
@@ -368,9 +589,12 @@ AC_MSG_CHECKING(whether to build VIA Rhine driver)
 AC_ARG_ENABLE(via-rhine,
 	[  --enable-via-rhine     build VIA Rhine driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_VIA_RHINE=yes;;
+	y | yes ) CONFIG_RTNET_VIA_RHINE=yes ;;
 	*) unset CONFIG_RTNET_VIA_RHINE ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+	CONFIG_RTNET_VIA_RHINE=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_VIA_RHINE:-no})
 AM_CONDITIONAL(CONFIG_RTNET_VIA_RHINE,[test "$CONFIG_RTNET_VIA_RHINE" = "yes"])
 
@@ -379,31 +603,26 @@ AC_MSG_CHECKING(whether to build NatSemi driver)
 AC_ARG_ENABLE(natsemi,
 	[  --enable-natsemi       build NatSemi driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_NATSEMI=yes;;
+	y | yes ) CONFIG_RTNET_NATSEMI=yes ;;
 	*) unset CONFIG_RTNET_NATSEMI ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+		CONFIG_RTNET_NATSEMI=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_NATSEMI:-no})
 AM_CONDITIONAL(CONFIG_RTNET_NATSEMI,[test "$CONFIG_RTNET_NATSEMI" = "yes"])
-
-
-AC_MSG_CHECKING(whether to build loopback driver)
-AC_ARG_ENABLE(loopback,
-	[  --enable-loopback      build loopback driver],
-	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_LOOPBACK=yes;;
-	*) unset CONFIG_RTNET_LOOPBACK ;;
-	esac])
-AC_MSG_RESULT(${CONFIG_RTNET_LOOPBACK:-no})
-AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
 
 
 AC_MSG_CHECKING(whether to build tulip driver)
 AC_ARG_ENABLE(tulip,
 	[  --enable-tulip         build tulip driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_TULIP=yes;;
+	y | yes ) CONFIG_RTNET_TULIP=yes ;;
 	*) unset CONFIG_RTNET_TULIP ;;
 	esac])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+		CONFIG_RTNET_TULIP=yes
+fi
 AC_MSG_RESULT(${CONFIG_RTNET_TULIP:-no})
 AM_CONDITIONAL(CONFIG_RTNET_TULIP,[test "$CONFIG_RTNET_TULIP" = "yes"])
 
@@ -412,7 +631,7 @@ AC_MSG_CHECKING(whether to build fcc enet driver)
 AC_ARG_ENABLE(fcc-enet,
 	[  --enable-fcc-enet      build fcc enet driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_FCC_ENET=yes;;
+	y | yes ) CONFIG_RTNET_FCC_ENET=yes ;;
 	*) unset CONFIG_RTNET_FCC_ENET ;;
 	esac])
 AC_MSG_RESULT(${CONFIG_RTNET_FCC_ENET:-no})
@@ -423,7 +642,7 @@ AC_MSG_CHECKING(whether to build scc enet driver)
 AC_ARG_ENABLE(scc-enet,
 	[  --enable-scc-enet      build scc enet driver],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_SCC_ENET=yes;;
+	y | yes ) CONFIG_RTNET_SCC_ENET=yes ;;
 	*) unset CONFIG_RTNET_SCC_ENET ;;
 	esac])
 AC_MSG_RESULT(${CONFIG_RTNET_SCC_ENET:-no})
@@ -441,20 +660,48 @@ AC_MSG_RESULT(${CONFIG_RTNET_FEC_ENET:-no})
 AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 
+AC_MSG_CHECKING(whether to build loopback driver)
+AC_ARG_ENABLE(loopback,
+	[  --enable-loopback      build loopback driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_LOOPBACK=yes ;;
+	*) unset CONFIG_RTNET_LOOPBACK ;;
+	esac])
+if test "$CONFIG_RTNET_ALLX86" = "yes"; then
+	CONFIG_RTNET_LOOPBACK=yes
+fi
+AC_MSG_RESULT(${CONFIG_RTNET_LOOPBACK:-no})
+AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
+
+
+dnl ======================================================================
+dnl		rtnetproxy
+dnl ======================================================================
+
+AC_MSG_CHECKING(whether to build rtnetproxy)
+AC_ARG_ENABLE(proxy,
+	[  --enable-proxy         build IP protocol proxy driver (legacy)],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_PROXY=yes ;;
+	*) unset CONFIG_RTNET_PROXY ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_PROXY:-no})
+AM_CONDITIONAL(CONFIG_RTNET_PROXY,[test "$CONFIG_RTNET_PROXY" = "yes"])
+
+
 dnl ======================================================================
 dnl		compilation parameters
 dnl ======================================================================
 
 AC_MSG_CHECKING(whether to enable internal bug checks)
-unset CONFIG_RTNET_CHECKED
 AC_ARG_ENABLE(checks,
 	[  --enable-checks        enable internal bug checks (default: enabled)],
 	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_CHECKED=yes ;;
+	n | no ) CONFIG_RTNET_CHECKED=no ;;
 	*) unset CONFIG_RTNET_CHECKED ;;
 	esac],
 	CONFIG_RTNET_CHECKED=yes)
-AC_MSG_RESULT(${CONFIG_RTNET_CHECKED:-no})
+AC_MSG_RESULT(${CONFIG_RTNET_CHECKED:-yes})
 if test "$CONFIG_RTNET_CHECKED" = "yes"; then
 	AC_DEFINE(CONFIG_RTNET_CHECKED,1,[Bug checks])
 fi
@@ -485,6 +732,22 @@ rtmac/examples/event/Makefile \
 rtmac/examples/mrtt/Makefile \
 rtmac/examples/rtt/Makefile \
 rtcfg/Makefile \
+include/Makefile \
 ])
 
 AC_OUTPUT
+
+
+dnl ======================================================================
+dnl		generate include/rtnet_config.h
+dnl ======================================================================
+
+AC_MSG_NOTICE(creating include/rtnet_config.h)
+sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
+    config/config.h > include/rtnet_config.h.new
+if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
+	rm include/rtnet_config.h.new
+	AC_MSG_NOTICE(config/rtnet_config.h is unchanged)
+else
+	mv include/rtnet_config.h.new include/rtnet_config.h
+fi 

@@ -26,9 +26,6 @@
 
 #include <linux/types.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtdev.h>
 #include <rtskb.h>
 #include <rtnet_internal.h>
@@ -135,10 +132,14 @@ struct rtmac_tdma {
     unsigned long               magic;
     struct rtskb_prio_queue     tx_queue;
 
-    __u8                        __align[(16 - ((sizeof(unsigned long) +
-                                                sizeof(struct rtskb_prio_queue)
-                                               ) & 15)) & 15];
-    RT_TASK                     tx_task;
+#ifdef ALIGN_RTOS_TASK
+    __u8                        __align[(ALIGN_RTOS_TASK -
+                                         ((sizeof(unsigned long) +
+                                           sizeof(struct rtskb_prio_queue)
+                                          ) & (ALIGN_RTOS_TASK-1))
+                                         ) & (ALIGN_RTOS_TASK-1)];
+#endif
+    rtos_task_t                 tx_task;
 
     struct tdma_flags           flags;
 
@@ -162,14 +163,14 @@ struct rtmac_tdma {
     struct rtskb_queue          master_queue;
 
     /*** rt client specific ***/
-    SEM                         client_tx;
-    RTIME                       wakeup;
-    RTIME                       offset; /* in internals counts */
+    rtos_event_t                client_tx;
+    rtos_time_t                 wakeup;
+    rtos_time_t                 offset;
     unsigned char               station;
     struct rt_arp_table_struct  *master;
     struct timer_list           client_sent_ack_timer;
-    spinlock_t                  delta_t_lock;
-    RTIME                       delta_t; /* offset to master clock in ns. */
+    rtos_spinlock_t             delta_t_lock;
+    nanosecs_t                  delta_t; /* offset to master clock */
 };
 
 struct tdma_rt_entry {
@@ -178,7 +179,7 @@ struct tdma_rt_entry {
     struct rt_arp_table_struct  *arp;
     unsigned char               station;
     unsigned int                counter;
-    RTIME                       tx;
+    nanosecs_t                  tx;
     unsigned int                rtt;
     volatile TDMA_RT_STATE      state;
 };
@@ -331,7 +332,8 @@ extern __u32 tdma_debug;
 /* use 0 for production, 1 for verification, >2 for debug */
 #define TDMA_DEFAULT_DEBUG_LEVEL    2
 
-#define TDMA_DEBUG(n, args...) (tdma_debug >= (n)) ? (rt_printk(KERN_DEBUG args)) : 0
+#define TDMA_DEBUG(n, args...) \
+    (tdma_debug >= (n)) ? (rtos_print(KERN_DEBUG args)) : 0
 #else
 #define TDMA_DEBUG(n, args...)
 #endif /* CONFIG_TDMA_DEBUG */

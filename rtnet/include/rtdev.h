@@ -27,8 +27,6 @@
 #include <asm/atomic.h>
 #include <linux/netdevice.h>
 
-#include <rtai_sched.h>
-
 #include <rtskb.h>
 
 
@@ -86,10 +84,10 @@ struct rtnet_device {
     int                 allmulti;
 
     int                 rxqueue_len;
-    SEM                 *stack_sem;
+    rtos_event_t        *stack_event;
 /*    MBX                 *rtdev_mbx;*/
 
-    SEM                 xmit_sem;
+    rtos_res_lock_t     xmit_lock;
 
     unsigned int        add_rtskbs; /* additionally allocated global rtskbs */
 
@@ -111,7 +109,6 @@ struct rtnet_device {
 
 
 extern struct rtnet_device *rtnet_devices[];
-extern rwlock_t rtnet_devices_lock;
 
 extern struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
 extern void rtdev_free(struct rtnet_device *rtdev);

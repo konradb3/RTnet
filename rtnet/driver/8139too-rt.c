@@ -39,13 +39,9 @@
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <crc32.h>
 
 // *** RTnet ***
-#include <rtnet.h>
 #include <rtnet_port.h>
 
 #define DEFAULT_RX_POOL_SIZE    16
@@ -476,7 +472,7 @@ struct rtl8139_private {
         char twistie, twist_row, twist_col;        /* Twister tune state. */
         unsigned int default_port:4;        /* Last rtdev->if_port value. */
         unsigned int medialock:1;        /* Don't sense media type. */
-        spinlock_t lock;
+        rtos_spinlock_t lock;
         chip_t chipset;
         pid_t thr_pid;
         wait_queue_head_t thr_wait;
@@ -633,7 +629,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         /* dev and rtdev->priv zeroed in alloc_etherdev */
         rtdev=rt_alloc_etherdev(sizeof (struct rtl8139_private));
         if (rtdev==NULL) {
-                rt_printk (KERN_ERR PFX "%s: Unable to alloc new net device\n", pdev->slot_name);
+                rtos_print (KERN_ERR PFX "%s: Unable to alloc new net device\n", pdev->slot_name);
                 return -ENOMEM;
         }
         rtdev_alloc_name(rtdev, "rteth%d");
@@ -664,25 +660,25 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
 #ifdef USE_IO_OPS
         /* make sure PCI base addr 0 is PIO */
         if (!(pio_flags & IORESOURCE_IO)) {
-                rt_printk (KERN_ERR PFX "%s: region #0 not a PIO resource, aborting\n", pdev->slot_name);
+                rtos_print (KERN_ERR PFX "%s: region #0 not a PIO resource, aborting\n", pdev->slot_name);
                 rc = -ENODEV;
                 goto err_out;
         }
         /* check for weird/broken PCI region reporting */
         if (pio_len < RTL_MIN_IO_SIZE) {
-                rt_printk (KERN_ERR PFX "%s: Invalid PCI I/O region size(s), aborting\n", pdev->slot_name);
+                rtos_print (KERN_ERR PFX "%s: Invalid PCI I/O region size(s), aborting\n", pdev->slot_name);
                 rc = -ENODEV;
                 goto err_out;
         }
 #else
         /* make sure PCI base addr 1 is MMIO */
         if (!(mmio_flags & IORESOURCE_MEM)) {
-                rt_printk(KERN_ERR PFX "%s: region #1 not an MMIO resource, aborting\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: region #1 not an MMIO resource, aborting\n", pdev->slot_name);
                 rc = -ENODEV;
                 goto err_out;
         }
         if (mmio_len < RTL_MIN_IO_SIZE) {
-                rt_printk(KERN_ERR PFX "%s: Invalid PCI mem region size(s), aborting\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: Invalid PCI mem region size(s), aborting\n", pdev->slot_name);
                 rc = -ENODEV;
                 goto err_out;
         }
@@ -703,7 +699,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         /* ioremap MMIO region */
         ioaddr = ioremap (mmio_start, mmio_len);
         if (ioaddr == NULL) {
-                rt_printk(KERN_ERR PFX "%s: cannot remap MMIO, aborting\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: cannot remap MMIO, aborting\n", pdev->slot_name);
                 rc = -EIO;
                 goto err_out;
         }
@@ -716,7 +712,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
 
         /* check for missing/broken hardware */
         if (RTL_R32 (TxConfig) == 0xFFFFFFFF) {
-                rt_printk(KERN_ERR PFX "%s: Chip not responding, ignoring board\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: Chip not responding, ignoring board\n", pdev->slot_name);
                 rc = -EIO;
                 goto err_out;
         }
@@ -800,16 +796,16 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         {
                 static int printed_version;
                 if (!printed_version++)
-                        rt_printk (KERN_INFO RTL8139_DRIVER_NAME "\n");
+                        rtos_print (KERN_INFO RTL8139_DRIVER_NAME "\n");
         }
 #endif
 
         pci_read_config_byte(pdev, PCI_REVISION_ID, &pci_rev);
         if (pdev->vendor == PCI_VENDOR_ID_REALTEK &&
             pdev->device == PCI_DEVICE_ID_REALTEK_8139 && pci_rev >= 0x20) {
-                rt_printk(KERN_INFO PFX "pci dev %s (id %04x:%04x rev %02x) is an enhanced 8139C+ chip\n",
+                rtos_print(KERN_INFO PFX "pci dev %s (id %04x:%04x rev %02x) is an enhanced 8139C+ chip\n",
                           pdev->slot_name, pdev->vendor, pdev->device, pci_rev);
-                rt_printk(KERN_INFO PFX "Use the \"8139cp\" driver for improved performance and stability.\n");
+                rtos_print(KERN_INFO PFX "Use the \"8139cp\" driver for improved performance and stability.\n");
         }
 
         if ((i=rtl8139_init_board (pdev, &rtdev)) < 0)
@@ -848,7 +844,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         /* note: tp->chipset set in rtl8139_init_board */
         tp->drv_flags = board_info[ent->driver_data].hw_flags;
         tp->mmio_addr = ioaddr;
-        spin_lock_init (&tp->lock);
+        rtos_spin_lock_init (&tp->lock);
         //init_waitqueue_head (&tp->thr_wait);
         //        init_completion (&tp->thr_exited);
 
@@ -878,12 +874,12 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
                         if (mii_status != 0xffff  &&  mii_status != 0x0000) {
                                 u16 advertising = mdio_read(rtdev, phy, 4);
                                 tp->phys[phy_idx++] = phy;
-                                rt_printk(KERN_INFO "%s: MII transceiver %d status 0x%4.4x advertising %4.4x.\n",
+                                rtos_print(KERN_INFO "%s: MII transceiver %d status 0x%4.4x advertising %4.4x.\n",
                                           rtdev->name, phy, mii_status, advertising);
                         }
                 }
                 if (phy_idx == 0) {
-                        rt_printk(KERN_INFO "%s: No MII transceivers found! Assuming SYM transceiver.\n", rtdev->name);
+                        rtos_print(KERN_INFO "%s: No MII transceivers found! Assuming SYM transceiver.\n", rtdev->name);
                         tp->phys[0] = 32;
                 }
         } else
@@ -903,13 +899,13 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         if (board_idx < MAX_UNITS  &&  full_duplex[board_idx] > 0)
                 tp->mii.full_duplex = full_duplex[board_idx];
         if (tp->mii.full_duplex) {
-                rt_printk(KERN_INFO "%s: Media type forced to Full Duplex.\n", rtdev->name);
+                rtos_print(KERN_INFO "%s: Media type forced to Full Duplex.\n", rtdev->name);
                 /* Changing the MII-advertised media because might prevent re-connection. */
                 tp->mii.duplex_lock = 1;
         }
 #endif
         if (tp->default_port) {
-                rt_printk(KERN_INFO "  Forcing %dMbps %s-duplex operation.\n",
+                rtos_print(KERN_INFO "  Forcing %dMbps %s-duplex operation.\n",
                            (option & 0x20 ? 100 : 10),
                            (option & 0x10 ? "full" : "half"));
                 mdio_write(rtdev, tp->phys[0], 0,
@@ -1161,7 +1157,7 @@ static int rtl8139_open (struct rtnet_device *rtdev)
 
         rt_stack_connect(rtdev, &STACK_manager);
 
-        retval = rt_request_global_irq_ext(rtdev->irq, (void (*)(void))rtl8139_interrupt, (unsigned long)rtdev);
+        retval = rtos_irq_request(rtdev->irq, rtl8139_interrupt, (unsigned long)rtdev);
         if (retval)
                 return retval;
 
@@ -1169,7 +1165,7 @@ static int rtl8139_open (struct rtnet_device *rtdev)
         tp->rx_ring = pci_alloc_consistent(tp->pci_dev, RX_BUF_TOT_LEN, &tp->rx_ring_dma);
 
         if (tp->tx_bufs == NULL || tp->rx_ring == NULL) {
-                rt_free_global_irq(rtdev->irq);
+                rtos_irq_free(rtdev->irq);
                 if (tp->tx_bufs)
                         pci_free_consistent(tp->pci_dev, TX_BUF_TOT_LEN, tp->tx_bufs, tp->tx_bufs_dma);
                 if (tp->rx_ring)
@@ -1186,8 +1182,8 @@ static int rtl8139_open (struct rtnet_device *rtdev)
         rtl8139_init_ring (rtdev);
         rtl8139_hw_start (rtdev);
 
-        rt_startup_irq(rtdev->irq);
-        rt_enable_irq(rtdev->irq);
+        rtos_irq_startup(rtdev->irq);
+        rtos_irq_enable(rtdev->irq);
 
         MOD_INC_USE_COUNT;
 
@@ -1315,8 +1311,8 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         unsigned int entry;
         unsigned int len = skb->len;
 
-        rt_sem_wait(&rtdev->xmit_sem);
-        rt_disable_irq(rtdev->irq);
+        rtos_res_lock(&rtdev->xmit_lock);
+        rtos_irq_disable(rtdev->irq);
 
         /* Calculate the next Tx descriptor entry. */
         entry = tp->cur_tx % NUM_TX_DESC;
@@ -1327,27 +1323,27 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         } else {
                 dev_kfree_rtskb(skb);
                 tp->stats.tx_dropped++;
-                rt_enable_irq(rtdev->irq);
-                rt_sem_signal(&rtdev->xmit_sem);
+                rtos_irq_enable(rtdev->irq);
+                rtos_res_unlock(&rtdev->xmit_lock);
                 return 0;
         }
 
 
         /* Note: the chip doesn't have auto-pad! */
-        rt_spin_lock(&tp->lock);
+        rtos_spin_lock(&tp->lock);
         RTL_W32_F (TxStatus0 + (entry * sizeof (u32)), tp->tx_flag | max(len, (unsigned int)ETH_ZLEN));
         //rtdev->trans_start = jiffies;
         tp->cur_tx++;
         wmb();
         if ((tp->cur_tx - NUM_TX_DESC) == tp->dirty_tx)
                 rtnetif_stop_queue (rtdev);
-        rt_spin_unlock(&tp->lock);
+        rtos_spin_unlock(&tp->lock);
 
 #ifdef DEBUG
-        rt_printk ("%s: Queued Tx packet size %u to slot %d.\n", rtdev->name, len, entry);
+        rtos_print ("%s: Queued Tx packet size %u to slot %d.\n", rtdev->name, len, entry);
 #endif
-        rt_enable_irq(rtdev->irq);
-        rt_sem_signal(&rtdev->xmit_sem);
+        rtos_irq_enable(rtdev->irq);
+        rtos_res_unlock(&rtdev->xmit_lock);
         return 0;
 }
 
@@ -1500,11 +1496,11 @@ static void rtl8139_rx_err
 
 
 static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
-                                  struct rtl8139_private *tp, void *ioaddr)
+                                  struct rtl8139_private *tp, void *ioaddr,
+                                  rtos_time_t *time_stamp)
 {
         unsigned char *rx_ring;
         u16 cur_rx;
-        RTIME rx;
 
         rx_ring = tp->rx_ring;
         cur_rx = tp->cur_rx;
@@ -1516,7 +1512,6 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
                 unsigned int pkt_size;
                 struct rtskb *skb;
 
-                rx = rt_get_time();
                 rmb();
 
                 /* read size+status of next frame from DMA ring buffer */
@@ -1556,7 +1551,7 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
 
                 skb = dev_alloc_rtskb (pkt_size + 2, &tp->skb_pool);
                 if (skb) {
-                        skb->rx = rx;
+                        memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
                         skb->rtdev = rtdev;
                         rtskb_reserve (skb, 2);        /* 16 byte align the IP fields. */
 
@@ -1570,7 +1565,7 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
                         tp->stats.rx_bytes += pkt_size;
                         tp->stats.rx_packets++;
                 } else {
-                        rt_printk (KERN_WARNING"%s: Memory squeeze, dropping packet.\n", rtdev->name);
+                        rtos_print (KERN_WARNING"%s: Memory squeeze, dropping packet.\n", rtdev->name);
                         tp->stats.rx_dropped++;
                 }
 
@@ -1590,7 +1585,7 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
                                      void *ioaddr,
                                      int status, int link_changed)
 {
-        rt_printk ("%s: Abnormal interrupt, status %8.8x.\n",
+        rtos_print ("%s: Abnormal interrupt, status %8.8x.\n",
                       rtdev->name, status);
 
         /* Update the error count. */
@@ -1631,7 +1626,7 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
                 pci_read_config_word (tp->pci_dev, PCI_STATUS, &pci_cmd_status);
                 pci_write_config_word (tp->pci_dev, PCI_STATUS, pci_cmd_status);
 
-                rt_printk (KERN_ERR "%s: PCI Bus error %4.4x.\n", rtdev->name, pci_cmd_status);
+                rtos_print (KERN_ERR "%s: PCI Bus error %4.4x.\n", rtdev->name, pci_cmd_status);
         }
 }
 
@@ -1650,10 +1645,11 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
         int link_changed = 0; /* avoid bogus "uninit" warning */
 
         int saved_status = 0;
+        rtos_time_t time_stamp;
 
-        //        MeasureTime = rt_get_time();
+        rtos_get_time(&time_stamp);
 
-        rt_spin_lock(&tp->lock);
+        rtos_spin_lock(&tp->lock);
 
         do {
                 status = RTL_R16 (IntrStatus);
@@ -1679,7 +1675,7 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
 
                 if (rtnetif_running (rtdev) && (status & RxAckBits)) {
                         saved_status |= RxAckBits;
-                        rtl8139_rx_interrupt (rtdev, tp, ioaddr);
+                        rtl8139_rx_interrupt (rtdev, tp, ioaddr, &time_stamp);
                 }
 
                 /* Check uncommon events with one test. */
@@ -1701,14 +1697,14 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
                 boguscnt--;
         } while (boguscnt > 0);
         if (boguscnt <= 0) {
-                rt_printk (KERN_WARNING "%s: Too much work at interrupt, "
+                rtos_print(KERN_WARNING "%s: Too much work at interrupt, "
                            "IntrStatus=0x%4.4x.\n", rtdev->name, status);
                 /* Clear all interrupt sources. */
                 RTL_W16 (IntrStatus, 0xffff);
         }
 
-        rt_enable_irq(rtdev->irq);
-        rt_spin_unlock(&tp->lock);
+        rtos_irq_enable(rtdev->irq);
+        rtos_spin_unlock(&tp->lock);
 
         if (saved_status & RxAckBits) {
                 rt_mark_stack_mgr(rtdev);
@@ -1731,8 +1727,8 @@ static int rtl8139_close (struct rtnet_device *rtdev)
 
         rtnetif_stop_queue (rtdev);
 
-        rt_shutdown_irq(rtdev->irq);
-        if ( (ret=rt_free_global_irq(rtdev->irq))<0 )
+        rtos_irq_shutdown(rtdev->irq);
+        if ( (ret=rtos_irq_free(rtdev->irq))<0 )
                 return ret;
 
         spin_lock_irqsave (&tp->lock, flags);

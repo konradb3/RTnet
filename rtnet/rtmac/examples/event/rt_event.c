@@ -30,11 +30,8 @@
 
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtnet.h>
-#include <tdma.h>
+#include <tdma.h>   /* includes rtai header */
 
 #define PAR_DATA        io
 #define PAR_STATUS      io+1

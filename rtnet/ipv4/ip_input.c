@@ -98,10 +98,10 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
         if (ip_fallback_handler) {
             ret = ip_fallback_handler(skb);
             if (ret) {
-                rt_printk("RTnet: fallback handler failed\n");
+                rtos_print("RTnet: fallback handler failed\n");
             }
         } else {
-            rt_printk("RTnet: no protocol found\n");
+            rtos_print("RTnet: no protocol found\n");
             kfree_rtskb(skb);
             ret = 0;
         }

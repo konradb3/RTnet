@@ -20,9 +20,6 @@
  */
 #include <linux/netdevice.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtdev.h>
 #include <rtnet.h>
 #include <rtnet_internal.h>
@@ -120,16 +117,3 @@ void rt_rtdev_mgr_delete (struct rtnet_mgr *mgr)
 /*    rt_task_delete(&(mgr->task));
     rt_mbx_delete(&(mgr->mbx));*/
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -166,20 +166,20 @@ struct rtskb {
     unsigned char       *data;
     unsigned char       *tail;
     unsigned char       *end;
-    RTIME               rx;         /* arrival time */
+    rtos_time_t         rx; /* arrival time */
 };
 
 struct rtskb_queue {
     struct rtskb        *first;
     struct rtskb        *last;
-    spinlock_t          lock;
+    rtos_spinlock_t     lock;
 };
 
 #define QUEUE_MAX_PRIO          0
 #define QUEUE_MIN_PRIO          31
 
 struct rtskb_prio_queue {
-    spinlock_t          lock;
+    rtos_spinlock_t     lock;
     __u32               usage;  /* bit array encoding non-empty sub-queues */
     struct rtskb_queue  queue[QUEUE_MIN_PRIO+1];
 };
@@ -217,7 +217,7 @@ extern void kfree_rtskb(struct rtskb *skb);
  */
 static inline void rtskb_queue_init(struct rtskb_queue *queue)
 {
-    spin_lock_init(&queue->lock);
+    rtos_spin_lock_init(&queue->lock);
     queue->first = NULL;
     queue->last  = NULL;
 }
@@ -229,7 +229,7 @@ static inline void rtskb_queue_init(struct rtskb_queue *queue)
 static inline void rtskb_prio_queue_init(struct rtskb_prio_queue *prioqueue)
 {
     memset(prioqueue, 0, sizeof(struct rtskb_prio_queue));
-    spin_lock_init(&prioqueue->lock);
+    rtos_spin_lock_init(&prioqueue->lock);
 }
 
 /***
@@ -275,9 +275,10 @@ static inline void __rtskb_queue_head(struct rtskb_queue *queue,
 static inline void rtskb_queue_head(struct rtskb_queue *queue, struct rtskb *skb)
 {
     unsigned long flags;
-    flags = rt_spin_lock_irqsave(&queue->lock);
+
+    rtos_spin_lock_irqsave(&queue->lock, flags);
     __rtskb_queue_head(queue, skb);
-    rt_spin_unlock_irqrestore(flags, &queue->lock);
+    rtos_spin_unlock_irqrestore(&queue->lock, flags);
 }
 
 /***
@@ -292,10 +293,10 @@ static inline void rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
 
     RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
 
-    flags = rt_spin_lock_irqsave(&prioqueue->lock);
+    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
     __rtskb_queue_head(&prioqueue->queue[skb->priority], skb);
     __set_bit(skb->priority, &prioqueue->usage);
-    rt_spin_unlock_irqrestore(flags, &prioqueue->lock);
+    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 }
 
 /***
@@ -325,9 +326,10 @@ static inline void __rtskb_queue_tail(struct rtskb_queue *queue,
 static inline void rtskb_queue_tail(struct rtskb_queue *queue, struct rtskb *skb)
 {
     unsigned long flags;
-    flags = rt_spin_lock_irqsave(&queue->lock);
+
+    rtos_spin_lock_irqsave(&queue->lock, flags);
     __rtskb_queue_tail(queue, skb);
-    rt_spin_unlock_irqrestore(flags, &queue->lock);
+    rtos_spin_unlock_irqrestore(&queue->lock, flags);
 }
 
 /***
@@ -342,10 +344,10 @@ static inline void rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
 
     RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
 
-    flags = rt_spin_lock_irqsave(&prioqueue->lock);
+    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
     __rtskb_queue_tail(&prioqueue->queue[skb->priority], skb);
     __set_bit(skb->priority, &prioqueue->usage);
-    rt_spin_unlock_irqrestore(flags, &prioqueue->lock);
+    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 }
 
 /***
@@ -373,9 +375,9 @@ static inline struct rtskb *rtskb_dequeue(struct rtskb_queue *queue)
     unsigned long flags;
     struct rtskb *result;
 
-    flags = rt_spin_lock_irqsave(&queue->lock);
+    rtos_spin_lock_irqsave(&queue->lock, flags);
     result = __rtskb_dequeue(queue);
-    rt_spin_unlock_irqrestore(flags, &queue->lock);
+    rtos_spin_unlock_irqrestore(&queue->lock, flags);
 
     return result;
 }
@@ -391,7 +393,7 @@ static inline struct rtskb *rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueu
     struct rtskb *result = NULL;
     struct rtskb_queue *sub_queue;
 
-    flags = rt_spin_lock_irqsave(&prioqueue->lock);
+    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
     if (prioqueue->usage) {
         prio      = ffz(~prioqueue->usage);
         sub_queue = &prioqueue->queue[prio];
@@ -399,7 +401,7 @@ static inline struct rtskb *rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueu
         if (rtskb_queue_empty(sub_queue))
             __change_bit(prio, &prioqueue->usage);
     }
-    rt_spin_unlock_irqrestore(flags, &prioqueue->lock);
+    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 
     return result;
 }
@@ -433,9 +435,9 @@ static inline struct rtskb *rtskb_dequeue_chain(struct rtskb_queue *queue)
     unsigned long flags;
     struct rtskb *result;
 
-    flags = rt_spin_lock_irqsave(&queue->lock);
+    rtos_spin_lock_irqsave(&queue->lock, flags);
     result = __rtskb_dequeue_chain(queue);
-    rt_spin_unlock_irqrestore(flags, &queue->lock);
+    rtos_spin_unlock_irqrestore(&queue->lock, flags);
 
     return result;
 }
@@ -453,7 +455,7 @@ static inline
     struct rtskb *result = NULL;
     struct rtskb_queue *sub_queue;
 
-    flags = rt_spin_lock_irqsave(&prioqueue->lock);
+    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
     if (prioqueue->usage) {
         prio      = ffz(~prioqueue->usage);
         sub_queue = &prioqueue->queue[prio];
@@ -461,7 +463,7 @@ static inline
         if (rtskb_queue_empty(sub_queue))
             __change_bit(prio, &prioqueue->usage);
     }
-    rt_spin_unlock_irqrestore(flags, &prioqueue->lock);
+    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 
     return result;
 }

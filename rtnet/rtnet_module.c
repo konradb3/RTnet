@@ -27,13 +27,6 @@
 #include <linux/netdevice.h>
 #endif
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
-#ifdef CONFIG_PROC_FS
-#include <rtai_proc_fs.h>
-#endif
-
 #include <rtdev_mgr.h>
 #include <rtnet_chrdev.h>
 #include <rtnet_crc32.h>
@@ -52,16 +45,18 @@ struct rtnet_mgr RTDEV_manager;
  *      proc filesystem section
  */
 #ifdef CONFIG_PROC_FS
+/* TODO: create /proc/rtnet, restructure content,
+ * check locking (this code here is ok, but the rest...) */
 static int rtnet_mgr_read_proc (char *page, char **start,
                 off_t off, int count, int *eof, void *data)
 {
-    PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS;
     int i;
     struct rtnet_device *rtdev;
     unsigned int rtskb_len;
 
-    PROC_PRINT("\nRTnet\n\n");
-    PROC_PRINT("Devices:\n");
+    RTNET_PROC_PRINT("\nRTnet\n\n");
+    RTNET_PROC_PRINT("Devices:\n");
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
         rtdev = rtdev_get_by_index(i);
         if (rtdev != NULL) {
@@ -74,22 +69,23 @@ static int rtnet_mgr_read_proc (char *page, char **start,
     }
 
     rtskb_len = ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(RTSKB_SIZE);
-    PROC_PRINT("\nrtskb pools current/max:       %d / %d\n"
-               "rtskbs current/max:            %d / %d\n"
-               "rtskb memory need current/max: %d / %d\n\n",
-               rtskb_pools, rtskb_pools_max,
-               rtskb_amount, rtskb_amount_max,
-               rtskb_amount * rtskb_len, rtskb_amount_max * rtskb_len);
+    RTNET_PROC_PRINT("\nrtskb pools current/max:       %d / %d\n"
+                     "rtskbs current/max:            %d / %d\n"
+                     "rtskb memory need current/max: %d / %d\n\n",
+                     rtskb_pools, rtskb_pools_max,
+                     rtskb_amount, rtskb_amount_max,
+                     rtskb_amount * rtskb_len, rtskb_amount_max * rtskb_len);
 
-    PROC_PRINT_DONE;
+    RTNET_PROC_PRINT_DONE;
 }
 
 static int rtnet_proc_register(void)
 {
     static struct proc_dir_entry *proc_rtnet_mgr;
+
     proc_rtnet_mgr = create_proc_entry(RTNET_PROC_NAME, S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
     if (!proc_rtnet_mgr) {
-        rt_printk ("Unable to initialize /proc/rtai/rtnet\n");
+        rtos_print("Unable to initialize /proc/rtai/rtnet\n");
         return -1;
     }
     proc_rtnet_mgr->read_proc = rtnet_mgr_read_proc;
@@ -98,7 +94,7 @@ static int rtnet_proc_register(void)
 
 static void rtnet_proc_unregister(void)
 {
-    remove_proc_entry (RTNET_PROC_NAME, rtai_proc_root);
+    remove_proc_entry(RTNET_PROC_NAME, rtai_proc_root);
 }
 #endif  /* CONFIG_PROC_FS */
 
@@ -108,12 +104,13 @@ static void rtnet_proc_unregister(void)
 /**
  *  rtnet_init()
  */
-int rtnet_init(void)
+int __init rtnet_init(void)
 {
     int err = 0;
 
 
-    printk("\n*** RTnet - built on %s, %s ***\n\n", __DATE__, __TIME__);
+    printk("\n*** RTnet " RTNET_VERSION " - built on %s, %s ***\n\n",
+           __DATE__, __TIME__);
     printk("RTnet: initialising real-time networking\n");
 
     if ((err = init_crc32()) != 0)
@@ -151,7 +148,6 @@ err_out5:
 err_out4:
     rtnet_chrdev_release();
     rt_inet_proto_release();
-    rtsockets_release();
 
     rt_rtdev_mgr_delete(&RTDEV_manager);
 
@@ -187,7 +183,6 @@ void rtnet_release(void)
     rt_rtdev_mgr_delete(&RTDEV_manager);
 
     rt_inet_proto_release();
-    rtsockets_release();
     rtskb_pools_release();
 
     cleanup_crc32();

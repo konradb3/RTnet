@@ -70,10 +70,8 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
         return -EFAULT;
 
     rtdev = rtdev_get_by_name(head.if_name);
-    if (!rtdev) {
-        rt_printk("RTnet: invalid interface %s\n", head.if_name);
+    if (!rtdev)
         return -ENODEV;
-    }
 
     spin_lock_irqsave(&ioctl_handler_lock, flags);
 
@@ -147,7 +145,8 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
              * FIXME: if mac exists shut mac down, then device...
              */
             if( rtdev->mac_disc ) {
-                rt_printk("rtnet: rtmac is active on dev %s, cannot shut down\n", rtdev->name);
+                rtos_print("rtnet: rtmac is active on dev %s, "
+                           "cannot shut down\n", rtdev->name);
                 ret = -ENOTTY;
                 break;
             }
@@ -259,8 +258,8 @@ int __init rtnet_chrdev_init(void)
     int ret = misc_register(&rtnet_chr_misc_dev);
 
     if (ret < 0)
-        rt_printk("RTnet: unable to register rtnet character device "
-                  "(error %d)\n", ret);
+        printk("RTnet: unable to register rtnet character device "
+               "(error %d)\n", ret);
 
     rtnet_register_ioctls(&core_ioctls);
 

@@ -51,7 +51,6 @@
 #error "MDIO for PHY configuration is not yet supported!"
 #endif
 
-#include <rtnet_internal.h>
 #include <rtnet_port.h>
 
 MODULE_AUTHOR("Maintainer: Wolfgang Grandegger <wg@denx.de>");
@@ -67,10 +66,10 @@ MODULE_PARM(rtnet_fcc, "i");
 MODULE_PARM_DESC(rtnet_fcc, "FCCx port for RTnet (default=1)");
 
 
-#define printk(fmt,args...)	rt_printk ("RTnet: " fmt ,##args)
+#define printk(fmt,args...)	rtos_print ("RTnet: " fmt ,##args)
 
 #if 0
-#define RT_DEBUG(fmt,args...)	rt_printk (fmt ,##args)
+#define RT_DEBUG(fmt,args...)	rtos_print (fmt ,##args)
 #else
 #define RT_DEBUG(fmt,args...)
 #endif
@@ -157,7 +156,7 @@ typedef struct {
 
 static int  fcc_enet_open(struct rtnet_device *rtev);
 static int  fcc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
-static int  fcc_enet_rx(struct rtnet_device *rtdev, int *packets);
+static int  fcc_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
 static void fcc_enet_interrupt(int irq, unsigned long rtdev_id);
 static int  fcc_enet_close(struct rtnet_device *dev);
 
@@ -393,7 +392,7 @@ struct fcc_enet_private {
 	volatile fcc_enet_t	*ep;
 	struct	net_device_stats stats;
 	uint	tx_full;
-	spinlock_t lock;
+	rtos_spinlock_t lock;
 
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 	uint	phy_id;
@@ -482,9 +481,9 @@ fcc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	cep->stats.tx_bytes += skb->len;
 	cep->skb_cur = (cep->skb_cur+1) & TX_RING_MOD_MASK;
 
-	rt_sem_wait(&rtdev->xmit_sem);
-	rt_disable_irq(rtdev->irq);
-	rt_spin_lock(&cep->lock);
+	rtos_res_lock(&rtdev->xmit_lock);
+	rtos_irq_disable(rtdev->irq);
+	rtos_spin_lock(&cep->lock);
 
 	/* Send it on its way.  Tell CPM its ready, interrupt when done,
 	 * its the last BD of the frame, and to put the CRC on the end.
@@ -512,9 +511,9 @@ fcc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	cep->cur_tx = (cbd_t *)bdp;
 
-	rt_spin_unlock(&cep->lock);
-	rt_enable_irq(rtdev->irq);
-	rt_sem_signal(&rtdev->xmit_sem);
+	rtos_spin_unlock(&cep->lock);
+	rtos_irq_enable(rtdev->irq);
+	rtos_res_unlock(&rtdev->xmit_lock);
 
 	return 0;
 }
@@ -566,6 +565,9 @@ fcc_enet_interrupt(int irq, unsigned long rtdev_id)
 	volatile cbd_t	*bdp;
 	ushort	int_events;
 	int	must_restart;
+	rtos_time_t time_stamp;
+
+	rtos_get_time(&time_stamp);
 
 	cep = (struct fcc_enet_private *)rtdev->priv;
 
@@ -578,7 +580,7 @@ fcc_enet_interrupt(int irq, unsigned long rtdev_id)
 	/* Handle receive event in its own function.
 	*/
 	if (int_events & FCC_ENET_RXF) {
-		fcc_enet_rx(rtdev, &packets);
+		fcc_enet_rx(rtdev, &packets, &time_stamp);
 	}
 
 	/* Check for a transmit error.  The manual is a little unclear
@@ -593,7 +595,7 @@ fcc_enet_interrupt(int irq, unsigned long rtdev_id)
 	/* Transmit OK, or non-fatal error.  Update the buffer descriptors.
 	*/
 	if (int_events & (FCC_ENET_TXE | FCC_ENET_TXB)) {
-	    rt_spin_lock(&cep->lock);
+	    rtos_spin_lock(&cep->lock);
 	    bdp = cep->dirty_tx;
 	    while ((bdp->cbd_sc&BD_ENET_TX_READY)==0) {
 		if ((bdp==cep->cur_tx) && (cep->tx_full == 0))
@@ -682,7 +684,7 @@ fcc_enet_interrupt(int irq, unsigned long rtdev_id)
 		    		0x0c, CPM_CR_RESTART_TX) | CPM_CR_FLG;
 		while (cp->cp_cpcr & CPM_CR_FLG);
 	    }
-	    rt_spin_unlock(&cep->lock);
+	    rtos_spin_unlock(&cep->lock);
 	}
 
 	/* Check for receive busy, i.e. packets coming but no place to
@@ -694,7 +696,7 @@ fcc_enet_interrupt(int irq, unsigned long rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rt_enable_irq(irq);
+	rtos_irq_enable(irq);
 	return;
 }
 
@@ -704,11 +706,10 @@ fcc_enet_interrupt(int irq, unsigned long rtdev_id)
  * effectively tossing the packet.
  */
 static int
-fcc_enet_rx(struct rtnet_device *rtdev, int* packets)
+fcc_enet_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 {
 	struct	fcc_enet_private *cep;
 	volatile cbd_t	*bdp;
-	RTIME rx;		/* RTmac */
 	struct	rtskb *skb;
 	ushort	pkt_len;
 
@@ -724,8 +725,6 @@ fcc_enet_rx(struct rtnet_device *rtdev, int* packets)
 for (;;) {
 	if (bdp->cbd_sc & BD_ENET_RX_EMPTY)
 		break;
-		
-        rx = rt_get_time();	/* RTmac */
 
 #ifndef final_version
 	/* Since we have allocated space to hold a complete frame, both
@@ -773,7 +772,7 @@ for (;;) {
 			       (unsigned char *)__va(bdp->cbd_bufaddr),
 			       pkt_len);
 			skb->protocol=rt_eth_type_trans(skb,rtdev);
-			skb->rx = rx;		/* RTmac */
+			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
 			rtnetif_rx(skb);
 			(*packets)++;
 		}
@@ -1648,7 +1647,7 @@ int __init fec_enet_init(void)
 		rt_rtdev_connect(rtdev, &RTDEV_manager);
 		SET_MODULE_OWNER(rtdev);
 		cep = (struct fcc_enet_private *)rtdev->priv;
-		spin_lock_init(&cep->lock);
+		rtos_spin_lock_init(&cep->lock);
 		cep->fip = fip;
 		fip->rtdev = rtdev; /* need for cleanup */
 
@@ -2029,15 +2028,15 @@ init_fcc_startup(fcc_info_t *fip, struct rtnet_device *rtdev)
 
 	/* Install our interrupt handler.
 	*/
-	if(rt_request_global_irq_ext(fip->fc_interrupt, 
-				     (void (*)(void))fcc_enet_interrupt, 
+	if(rtos_irq_request(fip->fc_interrupt,
+				     fcc_enet_interrupt,
 				     (unsigned long)rtdev)) {
 		printk("Can't get FCC IRQ %d\n", fip->fc_interrupt);
 		MOD_DEC_USE_COUNT;
 		return;
 	}
 	rt_stack_connect(rtdev, &STACK_manager);
-	rt_enable_irq(fip->fc_interrupt);
+	rtos_irq_enable(fip->fc_interrupt);
 	
 
 #if defined (CONFIG_RTAI_RTNET_USE_MDIO) && !defined (CONFIG_PM826)
@@ -2263,8 +2262,8 @@ static void __exit fcc_enet_cleanup(void)
 		rtdev = fip->rtdev;
 		cep = (struct fcc_enet_private *)rtdev->priv;
 
-		rt_disable_irq(fip->fc_interrupt);
-		rt_free_global_irq(fip->fc_interrupt);
+		rtos_irq_disable(fip->fc_interrupt);
+		rtos_irq_free(fip->fc_interrupt);
 
 		init_fcc_shutdown(fip, cep, immap);
 #if 0

@@ -26,7 +26,7 @@
  *
  *          ROUTE - implementation of the IP router.
  *
- * Version: $Id: route.c,v 1.10 2003/11/18 14:32:33 kiszka Exp $
+ * Version: $Id: route.c,v 1.11 2004/01/13 12:26:06 bet-frogger Exp $
  *
  * Authors: Ross Biro, <bir7@leland.Stanford.Edu>
  *          Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -52,13 +52,11 @@
 // -JK-
 
 
-#include <rtai.h>
+#include <linux/kernel.h>
 
 #ifdef CONFIG_PROC_FS
 #include <linux/stat.h>
 #include <linux/proc_fs.h>
-
-#include <rtai_proc_fs.h>
 #endif /* CONFIG_PROC_FS */
 
 #include <linux/in.h>
@@ -134,14 +132,14 @@ static int rt_route_read_proc(char *page, char **start, off_t off, int count,
 
 
 
-static int rt_route_proc_register(void)
+static int __init rt_route_proc_register(void)
 {
     static struct proc_dir_entry *proc_rt_arp;
 
     proc_rt_arp = create_proc_entry("route", S_IFREG | S_IRUGO | S_IWUSR,
                                     rtai_proc_root);
     if (!proc_rt_arp) {
-        rt_printk("Unable to initialize: /proc/rtai/route\n");
+        printk("Unable to initialize: /proc/rtai/route\n");
         return -1;
     }
     proc_rt_arp->read_proc = rt_route_read_proc;
@@ -173,7 +171,7 @@ static struct rt_rtable *rt_alloc(void)
         rt->next=NULL;
         rt->prev=NULL;
     } else {
-        rt_printk("RTnet: no more routes\n");
+        rtos_print("RTnet: no more routes\n");
     }
 
     return rt;
@@ -491,35 +489,6 @@ route:
 
 
 /***
- *  rt_ip_dev_find
- *
- */
-#if 0
-static struct rtnet_device *rt_ip_dev_find(u32 saddr)
-{
-    if (!saddr)
-        return rtnet_devices;
-    else {
-        struct rtnet_device *rtdev;
-        unsigned long flags;
-
-        flags = rt_spin_lock_irqsave(&rtnet_devices_lock);
-        for (rtdev=rtnet_devices; rtdev!=NULL; rtdev=rtdev->next) {
-            if (saddr==rtdev->local_addr) {
-                rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
-                return rtdev;
-            }
-        }
-        rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
-        rt_printk("RTnet: rt_ip_dev_find() returning NULL\n");
-        return NULL;
-    }
-}
-#endif
-
-
-
-/***
  *  rt_ip_route_output: for every outgoing packet
  */
 int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
@@ -544,8 +513,8 @@ int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
     }
     */
 
-    rt_printk("RTnet: Host %u.%u.%u.%u unreachable (from %u.%u.%u.%u)\n",
-              NIPQUAD(daddr), NIPQUAD(saddr));
+    rtos_print("RTnet: Host %u.%u.%u.%u unreachable (from %u.%u.%u.%u)\n",
+               NIPQUAD(daddr), NIPQUAD(saddr));
 
     return -EHOSTUNREACH;
 }
@@ -556,7 +525,7 @@ int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
  *  rt_ip_routing_init: initialize
  *
  */
-void rt_ip_routing_init(void)
+void __init rt_ip_routing_init(void)
 {
     int i;
 

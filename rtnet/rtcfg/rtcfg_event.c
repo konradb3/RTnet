@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,9 +24,6 @@
 
 #include <linux/kernel.h>
 #include <linux/list.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
 
 #include <rtdev.h>
 #include <rtnet_rtpc.h>
@@ -118,9 +115,9 @@ static void rtcfg_queue_blocking_call(int ifindex, struct rt_proc_call *call)
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
 
 
-    flags = rt_spin_lock_irqsave(&rtcfg_dev->event_calls_lock);
+    rtos_spin_lock_irqsave(&rtcfg_dev->event_calls_lock, flags);
     list_add_tail(&call->list_entry, &rtcfg_dev->event_calls);
-    rt_spin_unlock_irqrestore(flags, &rtcfg_dev->event_calls_lock);
+    rtos_spin_unlock_irqrestore(&rtcfg_dev->event_calls_lock, flags);
 }
 
 
@@ -132,13 +129,13 @@ static struct rt_proc_call *rtcfg_dequeue_blocking_call(int ifindex)
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
 
 
-    flags = rt_spin_lock_irqsave(&rtcfg_dev->event_calls_lock);
+    rtos_spin_lock_irqsave(&rtcfg_dev->event_calls_lock, flags);
     if (!list_empty(&rtcfg_dev->event_calls)) {
         call = (struct rt_proc_call *)rtcfg_dev->event_calls.next;
         list_del(&call->list_entry);
     } else
         call = NULL;
-    rt_spin_unlock_irqrestore(flags, &rtcfg_dev->event_calls_lock);
+    rtos_spin_unlock_irqrestore(&rtcfg_dev->event_calls_lock, flags);
 
     return call;
 }
@@ -173,31 +170,31 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
     struct rtcfg_device     *rtcfg_dev = &device[ifindex];
     struct rt_proc_call     *call      = (struct rt_proc_call *)event_data;
     struct rtcfg_cmd        *cmd_event;
-    RTIME                   period;
+    rtos_time_t             period;
     int                     ret;
 
     cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
     switch (event_id) {
         case RTCFG_CMD_SERVER:
-            period = ((RTIME)cmd_event->args.server.period) * 1000000;
+            rtos_nanosecs_to_time(
+                ((nanosecs_t)cmd_event->args.server.period)*1000000, &period);
 
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
-            ret = rt_task_init(&rtcfg_dev->timer_task, rtcfg_timer, ifindex,
-                               4096, RT_LOWEST_PRIORITY, 0, NULL);
+            ret = rtos_task_init_periodic(&rtcfg_dev->timer_task, rtcfg_timer,
+                                          ifindex, RTOS_LOWEST_RT_PRIORITY,
+                                          &period);
             if (ret < 0)
                 return ret;
-            rt_task_make_periodic_relative_ns(&rtcfg_dev->timer_task, 0,
-                                              period);
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_SERVER_RUNNING);
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             break;
 
         case RTCFG_CMD_CLIENT:
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             rtcfg_dev->client_addr_list     = cmd_event->args.client.addr_buf;
             cmd_event->args.client.addr_buf = NULL;
@@ -208,7 +205,7 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_0);
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             return -CALL_PENDING;
 
@@ -242,12 +239,12 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             call      = (struct rt_proc_call *)event_data;
             cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             list_for_each(entry, &rtcfg_dev->conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
                 if (conn->addr.ip_addr == cmd_event->args.add.ip_addr) {
-                    rt_sem_signal(&rtcfg_dev->dev_sem);
+                    rtos_res_unlock(&rtcfg_dev->dev_lock);
                     return -EEXIST;
                 }
             }
@@ -267,17 +264,20 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             list_add_tail(&new_conn->entry, &rtcfg_dev->conn_list);
             rtcfg_dev->clients++;
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             break;
 
         case RTCFG_CMD_WAIT:
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
-            rtcfg_queue_blocking_call(ifindex,
-                (struct rt_proc_call *)event_data);
+            if (rtcfg_dev->clients == rtcfg_dev->clients_found)
+                rtpc_complete_call((struct rt_proc_call *)event_data, 0);
+            else
+                rtcfg_queue_blocking_call(ifindex,
+                    (struct rt_proc_call *)event_data);
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             return -CALL_PENDING;
 
@@ -293,7 +293,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             announce_new =
                 (struct rtcfg_frm_announce_new *)frm_event->frm_head;
 
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             list_for_each(entry, &rtcfg_dev->conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
@@ -338,7 +338,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             }
 
           out:
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             break;
 
@@ -353,7 +353,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 
             ack_cfg = (struct rtcfg_frm_ack_cfg *)frm_event->frm_head;
 
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             list_for_each(entry, &rtcfg_dev->conn_list) {
                 conn = list_entry(entry, struct rtcfg_connection, entry);
@@ -380,7 +380,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
                 break;
             }
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             break;
 
@@ -458,7 +458,7 @@ static int rtcfg_main_state_client_0(int ifindex, RTCFG_EVENT event_id,
 
                     /* fall trough */
                 case RTCFG_ADDR_MAC:
-                    rt_sem_wait(&rtcfg_dev->dev_sem);
+                    rtos_res_lock(&rtcfg_dev->dev_lock);
 
                     rtcfg_dev->addr_type = addr_type;
 
@@ -479,7 +479,7 @@ static int rtcfg_main_state_client_0(int ifindex, RTCFG_EVENT event_id,
 
                     rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_1);
 
-                    rt_sem_signal(&rtcfg_dev->dev_sem);
+                    rtos_res_unlock(&rtcfg_dev->dev_lock);
 
                     break;
 
@@ -519,11 +519,11 @@ static int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
             break;
 
         case RTCFG_CMD_ANNOUNCE:
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             ret = rtcfg_send_announce_new(ifindex);
             if (ret < 0) {
-                rt_sem_signal(&rtcfg_dev->dev_sem);
+                rtos_res_unlock(&rtcfg_dev->dev_lock);
                 return ret;
             }
 
@@ -532,7 +532,7 @@ static int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ANNOUNCED);
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             return -CALL_PENDING;
 
@@ -603,7 +603,7 @@ static int rtcfg_main_state_client_announced(int ifindex, RTCFG_EVENT event_id,
 
             stage_2_cfg = (struct rtcfg_frm_stage_2_cfg *)frm_event->frm_head;
 
-            rt_sem_wait(&rtcfg_dev->dev_sem);
+            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             rtcfg_dev->clients = ntohl(stage_2_cfg->clients);
 
@@ -616,7 +616,7 @@ static int rtcfg_main_state_client_announced(int ifindex, RTCFG_EVENT event_id,
                 rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_ALL_FRAMES);
             }
 
-            rt_sem_signal(&rtcfg_dev->dev_sem);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             break;
 
@@ -751,7 +751,7 @@ static int rtcfg_client_recv_announce(int ifindex,
             break;*/
     }
 
-    rt_sem_wait(&rtcfg_dev->dev_sem);
+    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     for (i = 0; i < rtcfg_dev->clients_found; i++)
         if (memcmp(&rtcfg_dev->client_addr_list[i*6],
@@ -759,7 +759,7 @@ static int rtcfg_client_recv_announce(int ifindex,
             goto out;
 
     if (rtcfg_dev->clients_found == rtcfg_dev->max_clients) {
-        rt_sem_signal(&rtcfg_dev->dev_sem);
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
 
         RTCFG_DEBUG(1, "RTcfg: %s() reports insufficient memory for storing "
                     "new client address\n", __FUNCTION__);
@@ -780,7 +780,7 @@ static int rtcfg_client_recv_announce(int ifindex,
     }
 
   out:
-    rt_sem_signal(&rtcfg_dev->dev_sem);
+    rtos_res_unlock(&rtcfg_dev->dev_lock);
 
     return 0;
 }
@@ -800,10 +800,10 @@ void rtcfg_init_state_machines(void)
         rtcfg_dev->state = RTCFG_MAIN_OFF;
 
         INIT_LIST_HEAD(&rtcfg_dev->conn_list);
-        rt_typed_sem_init(&rtcfg_dev->dev_sem, 1, RES_SEM);
+        rtos_res_lock_init(&rtcfg_dev->dev_lock);
 
         INIT_LIST_HEAD(&rtcfg_dev->event_calls);
-        spin_lock_init(&rtcfg_dev->event_calls_lock);
+        rtos_spin_lock_init(&rtcfg_dev->event_calls_lock);
     }
 }
 
@@ -821,8 +821,8 @@ void rtcfg_cleanup_state_machines(void)
     for (i = 0; i < MAX_RT_DEVICES; i++) {
         rtcfg_dev = &device[i];
 
-        rt_task_delete(&rtcfg_dev->timer_task);
-        rt_sem_delete(&rtcfg_dev->dev_sem);
+        rtos_task_delete(&rtcfg_dev->timer_task);
+        rtos_res_lock_delete(&rtcfg_dev->dev_lock);
 
         list_for_each_safe(entry, tmp, &rtcfg_dev->conn_list)
             kfree(entry);

@@ -23,6 +23,7 @@
 #include <linux/list.h>
 #include <linux/module.h>
 
+#include <rtnet_sys.h>
 #include <rtmac/tdma/tdma_task.h>
 
 
@@ -95,14 +96,14 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
             rt_add_entry = list_entry(lh, struct tdma_rt_add_entry, list);
 
             list_del(&rt_add_entry->list);
-            rt_free(rt_add_entry);
+            rtos_free(rt_add_entry);
         }
 
         list_for_each_safe(lh, next, &tdma->rt_list) {
             rt_entry = list_entry(lh, struct tdma_rt_entry, list);
 
             list_del(&rt_entry->list);
-            rt_free(rt_entry);
+            rtos_free(rt_entry);
         }
     }
 
@@ -127,16 +128,20 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
 void tdma_cleanup_master_rt_check(struct rtmac_tdma *tdma)
 {
     if (tdma->flags.mac_active != 0)
-        rt_printk("RTmac: tdma: BUG! %s() flags.mac_active != 0\n",__FUNCTION__);
+        TDMA_DEBUG(0, "RTmac: tdma: BUG! %s() flags.mac_active != 0\n",
+                   __FUNCTION__);
 
     if (!rtskb_prio_queue_empty(&tdma->tx_queue))
-        rt_printk("RTmac: tdma: BUG! %s() tx_queue length != 0\n",__FUNCTION__);
+        TDMA_DEBUG(0, "RTmac: tdma: BUG! %s() tx_queue length != 0\n",
+                   __FUNCTION__);
 
     if (list_len(&tdma->rt_add_list) != 0)
-        rt_printk("RTmac: tdma: BUG! %s() rt_add_list length != 0\n",__FUNCTION__);
+        TDMA_DEBUG(0, "RTmac: tdma: BUG! %s() rt_add_list length != 0\n",
+                   __FUNCTION__);
 
     if (list_len(&tdma->rt_list) != 0)
-        rt_printk("RTmac: tdma: BUG! %s() rt_list length != 0\n",__FUNCTION__);
+        TDMA_DEBUG(0, "RTmac: tdma: BUG! %s() rt_list length != 0\n",
+                   __FUNCTION__);
 }
 
 
@@ -185,7 +190,7 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
             rt_entry = list_entry(lh, struct tdma_rt_entry, list_rate);
 
             list_del(&rt_entry->list_rate);
-            rt_free(rt_entry);
+            rtos_free(rt_entry);
         }
     }
 

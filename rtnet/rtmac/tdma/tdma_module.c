@@ -23,20 +23,24 @@
 #include <linux/slab.h>
 #include <linux/netdevice.h>
 
-#include <rtai.h>
-
+#include <rtnet_sys.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/tdma/tdma_cleanup.h>
 #include <rtmac/tdma/tdma_ioctl.h>
 #include <rtmac/tdma/tdma_rx.h>
 
 
+/* RTAI-specific: start scheduling timer */
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
 static int start_timer = 1;
-__u32 tdma_debug       = TDMA_DEFAULT_DEBUG_LEVEL;
 
 MODULE_PARM(start_timer, "i");
-MODULE_PARM(tdma_debug, "i");
 MODULE_PARM_DESC(start_timer, "set to zero if scheduler already runs");
+#endif
+
+__u32 tdma_debug = TDMA_DEFAULT_DEBUG_LEVEL;
+
+MODULE_PARM(tdma_debug, "i");
 MODULE_PARM_DESC(tdma_debug, "tdma debug level");
 
 
@@ -48,16 +52,15 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     memset(tdma, 0, sizeof(struct rtmac_tdma));
     tdma->magic = TDMA_MAGIC;
 
-    spin_lock_init(&tdma->delta_t_lock);
+    rtos_spin_lock_init(&tdma->delta_t_lock);
 
     tdma->rtdev = rtdev;
 
     /*
-     * init semas, they implement a producer consumer between the
-     * sending realtime- and the driver-task
-     *
+     * init event
+     * It is set to signaled state when the SOF arrived at the client.
      */
-    rt_sem_init(&tdma->client_tx, 0);
+    rtos_event_init(&tdma->client_tx);
 
     /*
      * init tx queue
@@ -121,9 +124,10 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     del_timer(&tdma->master_sent_test_timer);
 
     /*
-     * delete tx tasks sema
+     * delete tx tasks event
      */
-    rt_sem_delete(&tdma->client_tx);
+    rtos_event_delete(&tdma->client_tx);
+
     tdma->magic = ~TDMA_MAGIC;
 
     return 0;
@@ -193,10 +197,12 @@ int tdma_init(void)
     if (ret < 0)
         return ret;
 
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
     if (start_timer) {
         rt_set_oneshot_mode();
         start_rt_timer(0);
     }
+#endif
 
     return 0;
 }
@@ -205,8 +211,10 @@ int tdma_init(void)
 
 void tdma_release(void)
 {
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
     if (start_timer)
         stop_rt_timer();
+#endif
 
     rtmac_disc_deregister(&tdma_disc);
 

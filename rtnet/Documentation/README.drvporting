@@ -54,8 +54,8 @@ waiting on hardware events.
 
 10. add to the close function replacing the free_irq call:
 
-    rt_shutdown_irq(dev->irq);
-    if ( (i=rt_free_global_irq(dev->irq))<0 )
+    rtos_irq_shutdown(dev->irq);
+    if ( (i=rtos_irq_free(dev->irq))<0 )
         return i;
 
     rt_stack_disconnect(dev);
@@ -81,15 +81,15 @@ waiting on hardware events.
 
 17. add new xmit lock replacing any standard spin lock calls
 
-    rt_sem_wait(&dev->xmit_sem);
-    rt_disable_irq(dev->irq);
-    rt_spin_lock(&<priv>->lock);
+    rtos_res_lock(&dev->xmit_lock);
+    rtos_irq_disable(dev->irq);
+    rtos_spin_lock(&<priv>->lock);
 
     ...
 
-    rt_spin_unlock(&<priv>->lock);
-    rt_enable_irq(dev->irq);
-    rt_sem_signal(&dev->xmit_sem);
+    rtos_spin_unlock(&<priv>->lock);
+    rtos_irq_enable(dev->irq);
+    rtos_res_unlock(&dev->xmit_lock);
 
 
 18. modify interrupt handler:
@@ -100,11 +100,11 @@ waiting on hardware events.
         ...
 
 
-19. replace spin_[un]lock with rt_spin_[un]lock within the interrupt handler
+19. replace spin_[un]lock with rtos_spin_[un]lock within the interrupt handler
 
 
 20. replace printk in xmit function, interrupt handler, and any function called
-    within this context with rt_printk
+    within this context with rtos_print
 
 
 21. replace dev_kfree_skb[_XXX] with dev_kfree_rtskb
@@ -123,7 +123,7 @@ waiting on hardware events.
 23. replace request_irq in open function with the following lines:
 
     rt_stack_connect(dev, &STACK_manager);
-    retval = rt_request_global_irq_ext(dev->irq, (void (*)(void))XXX_interrupt, (unsigned long)dev);
+    retval = rtos_irq_request(dev->irq, XXX_interrupt, (unsigned long)dev);
     if (retval)
         return retval;
 
@@ -140,13 +140,13 @@ waiting on hardware events.
         return -ENODEV;
 
 
-27. call rt_get_time within receive interrupt and set rx field of skb accordingly
+27. call rtos_get_time within receive interrupt and set rx field of skb accordingly
 
 
 28. add the following lines to the open function (as soon as the IRQ is allowed to occur):
 
-    rt_startup_irq(dev->irq);
-    rt_enable_irq(dev->irq);
+    rtos_irq_startup(dev->irq);
+    rtos_irq_enable(dev->irq);
 
 
 29. initialize new unsigned int old_packet_cnt with <priv>->stats.rx_packets at
@@ -155,8 +155,8 @@ waiting on hardware events.
 
 30. add to the end of the interrupt handler:
 
-    rt_enable_irq(irq);
-    rt_spin_unlock(&<priv>->lock); /* if locking is not done in interrupt main function */
+    rtos_irq_enable(irq);
+    rtos_spin_unlock(&<priv>->lock); /* if locking is not done in interrupt main function */
     if (old_packet_cnt != <priv>->stats.rx_packets)
         rt_mark_stack_mgr(dev);
 
@@ -183,6 +183,12 @@ waiting on hardware events.
 
 
 38. check if MOD_INC_USE_COUNT/MOD_DEC_USE_COUNT is used appropriately
+
+
+39. rename type of lock field in private data from spinlock_t to rtos_spinlock_t
+
+
+40. replace spin_lock_init(&<priv>->lock) with rtos_spin_lock_init(&<priv>->lock)
 
 
 XX. check the critical paths in xmit function and interrupt handler for delays

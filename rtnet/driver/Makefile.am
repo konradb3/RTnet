@@ -1,4 +1,4 @@
-moduledir = $(DESTDIIR)/@RTNET_MODULE_DIR@
+moduledir = $(DESTDIR)/@RTNET_MODULE_DIR@
 
 OPTDIRS =
 
@@ -74,6 +74,7 @@ endif
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	-I$(top_srcdir)/lib \
 	@RTAI_KMOD_CFLAGS@
 

@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,34 +25,36 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtcfg/rtcfg_event.h>
 #include <rtcfg/rtcfg_frame.h>
 #include <rtcfg/rtcfg_ioctl.h>
 
 
+/* RTAI-specific: start scheduling timer */
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
 static int start_timer = 1;
 
 MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(start_timer, "set to zero if scheduler already runs");
+#endif
 
 MODULE_LICENSE("GPL");
 
 
 
-int rtcfg_init(void)
+int __init rtcfg_init(void)
 {
     int ret;
 
 
     printk("RTcfg: init real-time configuration distribution protocol\n");
 
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
     if (start_timer) {
         rt_set_oneshot_mode();
         start_rt_timer(0);
     }
+#endif
 
     ret = rtcfg_init_ioctls();
     if (ret != 0)
@@ -71,8 +73,10 @@ int rtcfg_init(void)
     rtcfg_cleanup_ioctls();
 
   error1:
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
     if (start_timer)
         stop_rt_timer();
+#endif
 
     return ret;
 }
@@ -81,8 +85,10 @@ int rtcfg_init(void)
 
 void rtcfg_cleanup(void)
 {
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
     if (start_timer)
         stop_rt_timer();
+#endif
 
     rtcfg_cleanup_frames();
     rtcfg_cleanup_state_machines();

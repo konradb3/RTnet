@@ -100,7 +100,7 @@ int rt_inet_socket(struct rtsocket *sock, int protocol)
 
         return ret;
     } else {
-        rt_printk("RTnet: protocol with id %d not found\n", protocol);
+        rtos_print("RTnet: protocol with id %d not found\n", protocol);
 
         return -ENOPROTOOPT;
     }

@@ -14,6 +14,7 @@ libtulip_rt_a_SOURCES = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	-I$(top_srcdir)/lib \
 	@RTAI_KMOD_CFLAGS@
 

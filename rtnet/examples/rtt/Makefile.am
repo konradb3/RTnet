@@ -8,14 +8,17 @@ librt_server_a_SOURCES = rt_server.c
 
 librt_client_a_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 librt_client_parport_a_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 librt_server_a_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 

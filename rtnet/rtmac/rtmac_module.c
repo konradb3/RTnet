@@ -23,28 +23,30 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 
+#include <rtnet_sys.h>
+
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proc.h>
 #include <rtmac/rtmac_proto.h>
 #include <rtmac/rtmac_vnic.h>
 
 
-int rtmac_init(void)
+int __init rtmac_init(void)
 {
     int ret = 0;
 
-    rt_printk("RTmac: init realtime media access control\n");
+    printk("RTmac: init realtime media access control\n");
 
     rtmac_proto_init();
 
 #ifdef CONFIG_PROC_FS
     ret = rtmac_proc_register();
-    if (ret)
+    if (ret < 0)
         goto error1;
 #endif
 
     ret = rtmac_vnic_module_init();
-    if (ret)
+    if (ret < 0)
         goto error2;
 
     return 0;

@@ -173,7 +173,6 @@
 #include <asm/uaccess.h>
 
 /*** RTnet ***/
-#include <rtnet_internal.h>
 #include <rtnet_port.h>
 
 #define DEFAULT_RX_POOL_SIZE    16
@@ -688,7 +687,7 @@ struct netdev_private {
 	/* MII transceiver section */
 	u16 advertising;
 	unsigned int iosize;
-	spinlock_t lock;
+	rtos_spinlock_t lock;
 	u32 msg_enable;
 	
 	struct rtskb_queue skb_pool; /*** RTnet ***/
@@ -696,7 +695,7 @@ struct netdev_private {
 
 static int eeprom_read(long ioaddr, int location);
 static int mdio_read(struct rtnet_device *dev, int phy_id, int reg);
-//static void mdio_write(struct rtnet_device *dev, int phy_id, int reg, u16 data);
+/*static void mdio_write(struct rtnet_device *dev, int phy_id, int reg, u16 data);*/
 static void natsemi_reset(struct rtnet_device *dev);
 static void natsemi_reload_eeprom(struct rtnet_device *dev);
 static void natsemi_stop_rxtx(struct rtnet_device *dev);
@@ -704,37 +703,37 @@ static int netdev_open(struct rtnet_device *dev);
 static void do_cable_magic(struct rtnet_device *dev);
 static void undo_cable_magic(struct rtnet_device *dev);
 static void check_link(struct rtnet_device *dev);
-//static void netdev_timer(unsigned long data);
+/*static void netdev_timer(unsigned long data);*/
 static void dump_ring(struct rtnet_device *dev);
-//static void tx_timeout(struct rtnet_device *dev);
+/*static void tx_timeout(struct rtnet_device *dev);*/
 static int alloc_ring(struct rtnet_device *dev);
 static void refill_rx(struct rtnet_device *dev);
 static void init_ring(struct rtnet_device *dev);
 static void drain_tx(struct rtnet_device *dev);
 static void drain_ring(struct rtnet_device *dev);
 static void free_ring(struct rtnet_device *dev);
-//static void reinit_ring(struct rtnet_device *dev);
+/*static void reinit_ring(struct rtnet_device *dev);*/
 static void init_registers(struct rtnet_device *dev);
 static int start_tx(struct rtskb *skb, struct rtnet_device *dev);
-static void intr_handler(int irq, void *dev_instance);//, struct pt_regs *regs);
+static void intr_handler(int irq, unsigned long dev_instance);/*, struct pt_regs *regs);*/
 static void netdev_error(struct rtnet_device *dev, int intr_status);
-static void netdev_rx(struct rtnet_device *dev);
+static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp);
 static void netdev_tx_done(struct rtnet_device *dev);
 static void __set_rx_mode(struct rtnet_device *dev);
-//static void set_rx_mode(struct rtnet_device *dev);
+/*static void set_rx_mode(struct rtnet_device *dev);*/
 static void __get_stats(struct rtnet_device *dev);
-//static struct net_device_stats *get_stats(struct net_device *dev);
-//static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
-//static int netdev_set_wol(struct rtnet_device *dev, u32 newval);
-//static int netdev_get_wol(struct rtnet_device *dev, u32 *supported, u32 *cur);
-//static int netdev_set_sopass(struct rtnet_device *dev, u8 *newval);
-//static int netdev_get_sopass(struct rtnet_device *dev, u8 *data);
-//static int netdev_get_ecmd(struct rtnet_device *dev, struct ethtool_cmd *ecmd);
-//static int netdev_set_ecmd(struct rtnet_device *dev, struct ethtool_cmd *ecmd);
-//static void enable_wol_mode(struct rtnet_device *dev, int enable_intr);
+/*static struct net_device_stats *get_stats(struct net_device *dev);
+static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+static int netdev_set_wol(struct rtnet_device *dev, u32 newval);
+static int netdev_get_wol(struct rtnet_device *dev, u32 *supported, u32 *cur);
+static int netdev_set_sopass(struct rtnet_device *dev, u8 *newval);
+static int netdev_get_sopass(struct rtnet_device *dev, u8 *data);
+static int netdev_get_ecmd(struct rtnet_device *dev, struct ethtool_cmd *ecmd);
+static int netdev_set_ecmd(struct rtnet_device *dev, struct ethtool_cmd *ecmd);
+static void enable_wol_mode(struct rtnet_device *dev, int enable_intr);*/
 static int netdev_close(struct rtnet_device *dev);
-//static int netdev_get_regs(struct rtnet_device *dev, u8 *buf);
-//static int netdev_get_eeprom(struct rtnet_device *dev, u8 *buf);
+/*static int netdev_get_regs(struct rtnet_device *dev, u8 *buf);
+static int netdev_get_eeprom(struct rtnet_device *dev, u8 *buf);*/
 
 
 static int __devinit natsemi_probe1 (struct pci_dev *pdev,
@@ -753,7 +752,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 #ifndef MODULE
 	static int printed_version;
 	if (!printed_version++)
-		rt_printk(version);
+		rtos_print(version);
 #endif
 
 	i = pci_enable_device(pdev);
@@ -786,7 +785,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 /*** RTnet ***/
 	dev = rt_alloc_etherdev(sizeof(struct netdev_private));
 	if (dev == NULL) {
-		rt_printk (KERN_ERR "init_ethernet failed for card #%d\n", find_cnt);
+		rtos_print (KERN_ERR "init_ethernet failed for card #%d\n", find_cnt);
 		goto err_out;
 	}
 	rtdev_alloc_name(dev, "rteth%d");
@@ -833,7 +832,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	np->pci_dev = pdev;
 	pci_set_drvdata(pdev, dev);
 	np->iosize = iosize;
-	spin_lock_init(&np->lock);
+	rtos_spin_lock_init(&np->lock);
 	np->msg_enable = (debug >= 0) ? (1<<debug)-1 : NATSEMI_DEF_MSG;
 	np->hands_off = 0;
 
@@ -857,7 +856,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 		if (option & 0x200)
 			np->full_duplex = 1;
 		if (option & 15)
-			rt_printk(KERN_INFO
+			rtos_print(KERN_INFO
 				"%s: ignoring user supplied media type %d",
 				dev->name, option & 15);
 	}
@@ -890,18 +889,18 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	rtnetif_carrier_off(dev);
 
 	if (netif_msg_drv(np)) {
-		rt_printk(KERN_INFO "%s: %s at %#08lx, ",
+		rtos_print(KERN_INFO "%s: %s at %#08lx, ",
 			dev->name, natsemi_pci_info[chip_idx].name, ioaddr);
 		for (i = 0; i < ETH_ALEN-1; i++)
-				rt_printk("%02x:", dev->dev_addr[i]);
-		rt_printk("%02x, IRQ %d.\n", dev->dev_addr[i], irq);
+				rtos_print("%02x:", dev->dev_addr[i]);
+		rtos_print("%02x, IRQ %d.\n", dev->dev_addr[i], irq);
 	}
 
 	np->advertising = mdio_read(dev, 1, MII_ADVERTISE);
 	if ((readl(ioaddr + ChipConfig) & 0xe000) != 0xe000
 	 && netif_msg_probe(np)) {
 		u32 chip_config = readl(ioaddr + ChipConfig);
-		rt_printk(KERN_INFO "%s: Transceiver default autonegotiation %s "
+		rtos_print(KERN_INFO "%s: Transceiver default autonegotiation %s "
 			"10%s %s duplex.\n",
 			dev->name,
 			chip_config & CfgAnegEnable ?
@@ -910,7 +909,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 			chip_config & CfgAnegFull ? "full" : "half");
 	}
 	if (netif_msg_probe(np))
-		rt_printk(KERN_INFO
+		rtos_print(KERN_INFO
 			"%s: Transceiver status %#04x advertising %#04x.\n",
 			dev->name, mdio_read(dev, 1, MII_BMSR),
 			np->advertising);
@@ -918,7 +917,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	/* save the silicon revision for later querying */
 	np->srr = readl(ioaddr + SiliconRev);
 	if (netif_msg_hw(np))
-		rt_printk(KERN_INFO "%s: silicon revision %#04x.\n",
+		rtos_print(KERN_INFO "%s: silicon revision %#04x.\n",
 				dev->name, np->srr);
 
 
@@ -930,7 +929,7 @@ err_out_unmap:
 err_out_free_res:
 #endif
 	pci_release_regions(pdev);
-//err_out_free_netdev:
+/*err_out_free_netdev:*/
 /*** RTnet ***/
 	rt_rtdev_disconnect(dev);
 	rtdev_free(dev);
@@ -1067,10 +1066,10 @@ static void natsemi_reset(struct rtnet_device *dev)
 		udelay(5);
 	}
 	if (i==NATSEMI_HW_TIMEOUT) {
-		rt_printk(KERN_WARNING "%s: reset did not complete in %d usec.\n",
+		rtos_print(KERN_WARNING "%s: reset did not complete in %d usec.\n",
 			dev->name, i*5);
 	} else if (netif_msg_hw(np)) {
-		rt_printk(KERN_DEBUG "%s: reset completed in %d usec.\n",
+		rtos_print(KERN_DEBUG "%s: reset completed in %d usec.\n",
 			dev->name, i*5);
 	}
 
@@ -1107,10 +1106,10 @@ static void natsemi_reload_eeprom(struct rtnet_device *dev)
 			break;
 	}
 	if (i==NATSEMI_HW_TIMEOUT) {
-		rt_printk(KERN_WARNING "%s: EEPROM did not reload in %d usec.\n",
+		rtos_print(KERN_WARNING "%s: EEPROM did not reload in %d usec.\n",
 			dev->name, i*50);
 	} else if (netif_msg_hw(np)) {
-		rt_printk(KERN_DEBUG "%s: EEPROM reloaded in %d usec.\n",
+		rtos_print(KERN_DEBUG "%s: EEPROM reloaded in %d usec.\n",
 			dev->name, i*50);
 	}
 }
@@ -1128,10 +1127,10 @@ static void natsemi_stop_rxtx(struct rtnet_device *dev)
 		udelay(5);
 	}
 	if (i==NATSEMI_HW_TIMEOUT) {
-		rt_printk(KERN_WARNING "%s: Tx/Rx process did not stop in %d usec.\n",
+		rtos_print(KERN_WARNING "%s: Tx/Rx process did not stop in %d usec.\n",
 			dev->name, i*5);
 	} else if (netif_msg_hw(np)) {
-		rt_printk(KERN_DEBUG "%s: Tx/Rx process stopped in %d usec.\n",
+		rtos_print(KERN_DEBUG "%s: Tx/Rx process stopped in %d usec.\n",
 			dev->name, i*5);
 	}
 }
@@ -1149,25 +1148,24 @@ static int netdev_open(struct rtnet_device *dev)
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rt_request_global_irq_ext(dev->irq, (void (*)(void))intr_handler, (unsigned long)dev);
+	i = rtos_irq_request(dev->irq, intr_handler, (unsigned long)dev);
 /*** RTnet ***/
-//	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);
+/*	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);*/
 	if (i) {
 		MOD_DEC_USE_COUNT;
 		return i;
 	}
 
 	if (netif_msg_ifup(np))
-		rt_printk(KERN_DEBUG "%s: netdev_open() irq %d.\n",
+		rtos_print(KERN_DEBUG "%s: netdev_open() irq %d.\n",
 			dev->name, dev->irq);
 	i = alloc_ring(dev);
 	if (i < 0) {
-		rt_free_global_irq(dev->irq);
+		rtos_irq_free(dev->irq);
 		MOD_DEC_USE_COUNT;
 		return i;
 	}
 	init_ring(dev);
-	rt_spin_lock_irq(&np->lock);
 	init_registers(dev);
 	/* now set the MAC address according to dev->dev_addr */
 	for (i = 0; i < 3; i++) {
@@ -1177,16 +1175,15 @@ static int netdev_open(struct rtnet_device *dev)
 		writew(mac, ioaddr + RxFilterData);
 	}
 	writel(np->cur_rx_mode, ioaddr + RxFilterAddr);
-	rt_spin_unlock_irq(&np->lock); /*** RTnet ***/
 
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
 /*** RTnet ***/
-	rt_startup_irq(dev->irq);
-	rt_enable_irq(dev->irq);
+	rtos_irq_startup(dev->irq);
+	rtos_irq_enable(dev->irq);
 
 	if (netif_msg_ifup(np))
-		rt_printk(KERN_DEBUG "%s: Done netdev_open(), status: %#08x.\n",
+		rtos_print(KERN_DEBUG "%s: Done netdev_open(), status: %#08x.\n",
 			dev->name, (int)readl(ioaddr + ChipCmd));
 
 	/* Set the timer to check for link beat. */
@@ -1268,7 +1265,7 @@ static void check_link(struct rtnet_device *dev)
 	if (!(chipcfg & CfgLink)) {
 		if (rtnetif_carrier_ok(dev)) {
 			if (netif_msg_link(np))
-				rt_printk(KERN_NOTICE "%s: link down.\n",
+				rtos_print(KERN_NOTICE "%s: link down.\n",
 					dev->name);
 			rtnetif_carrier_off(dev);
 			undo_cable_magic(dev);
@@ -1277,7 +1274,7 @@ static void check_link(struct rtnet_device *dev)
 	}
 	if (!rtnetif_carrier_ok(dev)) {
 		if (netif_msg_link(np))
-			rt_printk(KERN_NOTICE "%s: link up.\n", dev->name);
+			rtos_print(KERN_NOTICE "%s: link up.\n", dev->name);
 		rtnetif_carrier_on(dev);
 		do_cable_magic(dev);
 	}
@@ -1287,7 +1284,7 @@ static void check_link(struct rtnet_device *dev)
 	/* if duplex is set then bit 28 must be set, too */
 	if (duplex ^ !!(np->rx_config & RxAcceptTx)) {
 		if (netif_msg_link(np))
-			rt_printk(KERN_INFO
+			rtos_print(KERN_INFO
 				"%s: Setting %s-duplex based on negotiated "
 				"link capability.\n", dev->name,
 				duplex ? "full" : "half");
@@ -1315,7 +1312,7 @@ static void init_registers(struct rtnet_device *dev)
 		udelay(10);
 	}
 	if (i==NATSEMI_HW_TIMEOUT && netif_msg_link(np)) {
-		rt_printk(KERN_INFO
+		rtos_print(KERN_INFO
 			"%s: autonegotiation did not complete in %d usec.\n",
 			dev->name, i*10);
 	}
@@ -1381,7 +1378,7 @@ static void init_registers(struct rtnet_device *dev)
 	np->SavedClkRun = readl(ioaddr + ClkRun);
 	writel(np->SavedClkRun & ~PMEEnable, ioaddr + ClkRun);
 	if (np->SavedClkRun & PMEStatus && netif_msg_wol(np)) {
-		rt_printk(KERN_NOTICE "%s: Wake-up event %#08x\n",
+		rtos_print(KERN_NOTICE "%s: Wake-up event %#08x\n",
 			dev->name, readl(ioaddr + WOLCmd));
 	}
 
@@ -1422,7 +1419,7 @@ static void netdev_timer(unsigned long data)
 		/* DO NOT read the IntrStatus register,
 		 * a read clears any pending interrupts.
 		 */
-		rt_printk(KERN_DEBUG "%s: Media selection timer tick.\n",
+		rtos_print(KERN_DEBUG "%s: Media selection timer tick.\n",
 			dev->name);
 	}
 
@@ -1436,7 +1433,7 @@ static void netdev_timer(unsigned long data)
 		if (!netif_queue_stopped(dev)) {
 			spin_unlock_irq(&np->lock);
 			if (netif_msg_hw(np))
-				rt_printk(KERN_NOTICE "%s: possible phy reset: "
+				rtos_print(KERN_NOTICE "%s: possible phy reset: "
 					"re-initializing\n", dev->name);
 			disable_irq(dev->irq);
 			spin_lock_irq(&np->lock);
@@ -1478,16 +1475,16 @@ static void dump_ring(struct rtnet_device *dev)
 
 	if (netif_msg_pktdata(np)) {
 		int i;
-		rt_printk(KERN_DEBUG "  Tx ring at %p:\n", np->tx_ring);
+		rtos_print(KERN_DEBUG "  Tx ring at %p:\n", np->tx_ring);
 		for (i = 0; i < TX_RING_SIZE; i++) {
-			rt_printk(KERN_DEBUG " #%d desc. %#08x %#08x %#08x.\n",
+			rtos_print(KERN_DEBUG " #%d desc. %#08x %#08x %#08x.\n",
 				i, np->tx_ring[i].next_desc,
 				np->tx_ring[i].cmd_status,
 				np->tx_ring[i].addr);
 		}
-		rt_printk(KERN_DEBUG "  Rx ring %p:\n", np->rx_ring);
+		rtos_print(KERN_DEBUG "  Rx ring %p:\n", np->rx_ring);
 		for (i = 0; i < RX_RING_SIZE; i++) {
-			rt_printk(KERN_DEBUG " #%d desc. %#08x %#08x %#08x.\n",
+			rtos_print(KERN_DEBUG " #%d desc. %#08x %#08x %#08x.\n",
 				i, np->rx_ring[i].next_desc,
 				np->rx_ring[i].cmd_status,
 				np->rx_ring[i].addr);
@@ -1506,7 +1503,7 @@ static void tx_timeout(struct net_device *dev)
 	spin_lock_irq(&np->lock);
 	if (!np->hands_off) {
 		if (netif_msg_tx_err(np))
-			rt_printk(KERN_WARNING
+			rtos_print(KERN_WARNING
 				"%s: Transmit timed out, status %#08x,"
 				" resetting...\n",
 				dev->name, readl(ioaddr + IntrStatus));
@@ -1516,7 +1513,7 @@ static void tx_timeout(struct net_device *dev)
 		reinit_ring(dev);
 		init_registers(dev);
 	} else {
-		rt_printk(KERN_WARNING
+		rtos_print(KERN_WARNING
 			"%s: tx_timeout while in hands_off state?\n",
 			dev->name);
 	}
@@ -1564,7 +1561,7 @@ static void refill_rx(struct rtnet_device *dev)
 	}
 	if (np->cur_rx - np->dirty_rx == RX_RING_SIZE) {
 		if (netif_msg_rx_err(np))
-			rt_printk(KERN_WARNING "%s: going OOM.\n", dev->name);
+			rtos_print(KERN_WARNING "%s: going OOM.\n", dev->name);
 		np->oom = 1;
 	}
 }
@@ -1693,11 +1690,11 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 
 	np->tx_ring[entry].addr = cpu_to_le32(np->tx_dma[entry]);
 
-//	spin_lock_irq(&np->lock);
+/*	spin_lock_irq(&np->lock);*/
 /*** RTnet ***/
-	rt_sem_wait(&dev->xmit_sem);
-	rt_disable_irq(dev->irq);
-	rt_spin_lock(&np->lock);
+	rtos_res_lock(&dev->xmit_lock);
+	rtos_irq_disable(dev->irq);
+	rtos_spin_lock(&np->lock);
 /*** RTnet ***/
 
 	if (!np->hands_off) {
@@ -1718,17 +1715,17 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 		np->stats.tx_dropped++;
 	}
 
-//	spin_unlock_irq(&np->lock);
+/*	spin_unlock_irq(&np->lock);*/
 /*** RTnet ***/
-	rt_spin_unlock(&np->lock);
-	rt_enable_irq(dev->irq);
-	rt_sem_signal(&dev->xmit_sem);
+	rtos_spin_unlock(&np->lock);
+	rtos_irq_enable(dev->irq);
+	rtos_res_unlock(&dev->xmit_lock);
 /*** RTnet ***/
 
-//	dev->trans_start = jiffies;
+/*	dev->trans_start = jiffies;*/
 
 	if (netif_msg_tx_queued(np)) {
-		rt_printk(KERN_DEBUG "%s: Transmit frame #%d queued in slot %d.\n",
+		rtos_print(KERN_DEBUG "%s: Transmit frame #%d queued in slot %d.\n",
 			dev->name, np->cur_tx, entry);
 	}
 	return 0;
@@ -1743,7 +1740,7 @@ static void netdev_tx_done(struct rtnet_device *dev)
 		if (np->tx_ring[entry].cmd_status & cpu_to_le32(DescOwn))
 			break;
 		if (netif_msg_tx_done(np))
-			rt_printk(KERN_DEBUG
+			rtos_print(KERN_DEBUG
 				"%s: tx frame #%d finished, status %#08x.\n",
 					dev->name, np->dirty_tx,
 					le32_to_cpu(np->tx_ring[entry].cmd_status));
@@ -1768,7 +1765,7 @@ static void netdev_tx_done(struct rtnet_device *dev)
 					PCI_DMA_TODEVICE);
 		/* Free the original skb. */
 		dev_kfree_rtskb(np->tx_skbuff[entry]); /*** RTnet ***/
-//		dev_kfree_skb_irq(np->tx_skbuff[entry]);
+/*		dev_kfree_skb_irq(np->tx_skbuff[entry]);*/
 		np->tx_skbuff[entry] = NULL;
 	}
 	if (rtnetif_queue_stopped(dev)
@@ -1780,14 +1777,17 @@ static void netdev_tx_done(struct rtnet_device *dev)
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static void intr_handler(int irq, void *dev_instance)//, struct pt_regs *rgs)
+static void intr_handler(int irq, unsigned long dev_instance)/*, struct pt_regs *rgs)*/
 {
-//	struct net_device *dev = dev_instance;
+/*	struct net_device *dev = dev_instance;*/
 	struct rtnet_device *dev = (struct rtnet_device *)dev_instance; /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
 	unsigned int old_packet_cnt = np->stats.rx_packets; /*** RTnet ***/
 	long ioaddr = dev->base_addr;
 	int boguscnt = max_interrupt_work;
+	rtos_time_t time_stamp; /*** RTnet ***/
+
+	rtos_get_time(&time_stamp); /*** RTnet ***/
 
 	if (np->hands_off)
 		return;
@@ -1796,7 +1796,7 @@ static void intr_handler(int irq, void *dev_instance)//, struct pt_regs *rgs)
 		u32 intr_status = readl(ioaddr + IntrStatus);
 
 		if (netif_msg_intr(np))
-			rt_printk(KERN_DEBUG
+			rtos_print(KERN_DEBUG
 				"%s: Interrupt, status %#08x, mask %#08x.\n",
 				dev->name, intr_status,
 				readl(ioaddr + IntrMask));
@@ -1807,14 +1807,14 @@ static void intr_handler(int irq, void *dev_instance)//, struct pt_regs *rgs)
 		if (intr_status &
 		   (IntrRxDone | IntrRxIntr | RxStatusFIFOOver |
 		    IntrRxErr | IntrRxOverrun)) {
-			netdev_rx(dev);
+			netdev_rx(dev, &time_stamp);
 		}
 
 		if (intr_status &
 		   (IntrTxDone | IntrTxIntr | IntrTxIdle | IntrTxErr)) {
-			rt_spin_lock(&np->lock);
+			rtos_spin_lock(&np->lock);
 			netdev_tx_done(dev);
-			rt_spin_unlock(&np->lock);
+			rtos_spin_unlock(&np->lock);
 		}
 
 		/* Abnormal error summary/uncommon events handlers. */
@@ -1823,7 +1823,7 @@ static void intr_handler(int irq, void *dev_instance)//, struct pt_regs *rgs)
 
 		if (--boguscnt < 0) {
 			if (netif_msg_intr(np))
-				rt_printk(KERN_WARNING
+				rtos_print(KERN_WARNING
 					"%s: Too much work at interrupt, "
 					"status=%#08x.\n",
 					dev->name, intr_status);
@@ -1832,10 +1832,10 @@ static void intr_handler(int irq, void *dev_instance)//, struct pt_regs *rgs)
 	} while (1);
 
 	if (netif_msg_intr(np))
-		rt_printk(KERN_DEBUG "%s: exiting interrupt.\n", dev->name);
+		rtos_print(KERN_DEBUG "%s: exiting interrupt.\n", dev->name);
 		
 /*** RTnet ***/
-	rt_enable_irq(irq);
+	rtos_irq_enable(irq);
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
 		
@@ -1843,9 +1843,8 @@ static void intr_handler(int irq, void *dev_instance)//, struct pt_regs *rgs)
 
 /* This routine is logically part of the interrupt handler, but separated
    for clarity and better register allocation. */
-static void netdev_rx(struct rtnet_device *dev)
+static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp)
 {
-	RTIME rx_time; /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
 	int entry = np->cur_rx % RX_RING_SIZE;
 	int boguscnt = np->dirty_rx + RX_RING_SIZE - np->cur_rx;
@@ -1853,9 +1852,8 @@ static void netdev_rx(struct rtnet_device *dev)
 
 	/* If the driver owns the next entry it's a new packet. Send it up. */
 	while (desc_status < 0) { /* e.g. & DescOwn */
-		rx_time = rt_get_time(); /*** RTnet ***/
 		if (netif_msg_rx_status(np))
-			rt_printk(KERN_DEBUG
+			rtos_print(KERN_DEBUG
 				"  netdev_rx() entry %d status was %#08x.\n",
 				entry, desc_status);
 		if (--boguscnt < 0)
@@ -1863,7 +1861,7 @@ static void netdev_rx(struct rtnet_device *dev)
 		if ((desc_status&(DescMore|DescPktOK|DescRxLong)) != DescPktOK){
 			if (desc_status & DescMore) {
 				if (netif_msg_rx_err(np))
-					rt_printk(KERN_WARNING
+					rtos_print(KERN_WARNING
 						"%s: Oversized(?) Ethernet "
 						"frame spanned multiple "
 						"buffers, entry %#08x "
@@ -1919,7 +1917,7 @@ static void netdev_rx(struct rtnet_device *dev)
 			}
 /*** RTnet ***/
 			skb->protocol = rt_eth_type_trans(skb, dev);
-			skb->rx = rx_time;
+			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
 			rtnetif_rx(skb);
 			/*dev->last_rx = jiffies;*/
 /*** RTnet ***/
@@ -1935,7 +1933,7 @@ static void netdev_rx(struct rtnet_device *dev)
 	/* Restart Rx engine if stopped. */
 	if (np->oom)
 		;
-//		mod_timer(&np->timer, jiffies + 1);
+/*		mod_timer(&np->timer, jiffies + 1);*/
 	else
 		writel(RxOn, dev->base_addr + ChipCmd);
 }
@@ -1945,13 +1943,13 @@ static void netdev_error(struct rtnet_device *dev, int intr_status)
 	struct netdev_private *np = dev->priv;
 	long ioaddr = dev->base_addr;
 
-	rt_spin_lock(&np->lock);
+	rtos_spin_lock(&np->lock);
 	if (intr_status & LinkChange) {
 		u16 adv = mdio_read(dev, 1, MII_ADVERTISE);
 		u16 lpa = mdio_read(dev, 1, MII_LPA);
 		if (mdio_read(dev, 1, MII_BMCR) & BMCR_ANENABLE
 		 && netif_msg_link(np)) {
-			rt_printk(KERN_INFO
+			rtos_print(KERN_INFO
 				"%s: Autonegotiation advertising"
 				" %#04x  partner %#04x.\n", dev->name,
 				adv, lpa);
@@ -1968,31 +1966,31 @@ static void netdev_error(struct rtnet_device *dev, int intr_status)
 		if ((np->tx_config & TxDrthMask) < 62)
 			np->tx_config += 2;
 		if (netif_msg_tx_err(np))
-			rt_printk(KERN_NOTICE
+			rtos_print(KERN_NOTICE
 				"%s: increased Tx threshold, txcfg %#08x.\n",
 				dev->name, np->tx_config);
 		writel(np->tx_config, ioaddr + TxConfig);
 	}
 	if (intr_status & WOLPkt && netif_msg_wol(np)) {
 		int wol_status = readl(ioaddr + WOLCmd);
-		rt_printk(KERN_NOTICE "%s: Link wake-up event %#08x\n",
+		rtos_print(KERN_NOTICE "%s: Link wake-up event %#08x\n",
 			dev->name, wol_status);
 	}
 	if (intr_status & RxStatusFIFOOver) {
 		if (netif_msg_rx_err(np) && netif_msg_intr(np)) {
-			rt_printk(KERN_NOTICE "%s: Rx status FIFO overrun\n",
+			rtos_print(KERN_NOTICE "%s: Rx status FIFO overrun\n",
 				dev->name);
 		}
 		np->stats.rx_fifo_errors++;
 	}
 	/* Hmmmmm, it's not clear how to recover from PCI faults. */
 	if (intr_status & IntrPCIErr) {
-		rt_printk(KERN_NOTICE "%s: PCI error %#08x\n", dev->name,
+		rtos_print(KERN_NOTICE "%s: PCI error %#08x\n", dev->name,
 			intr_status & IntrPCIErr);
 		np->stats.tx_fifo_errors++;
 		np->stats.rx_fifo_errors++;
 	}
-	rt_spin_unlock(&np->lock);
+	rtos_spin_unlock(&np->lock);
 }
 
 static void __get_stats(struct rtnet_device *dev)
@@ -2005,12 +2003,13 @@ static void __get_stats(struct rtnet_device *dev)
 	np->stats.rx_missed_errors += readl(ioaddr + RxMissed);
 }
 
-/*** RTnet ***
+/*** RTnet ***/
+#if 0
 static struct net_device_stats *get_stats(struct net_device *dev)
 {
 	struct netdev_private *np = dev->priv;
 
-	// The chip only need report frame silently dropped. 
+	/* The chip only need report frame silently dropped. */
 	spin_lock_irq(&np->lock);
 	if (netif_running(dev) && !np->hands_off)
 		__get_stats(dev);
@@ -2018,7 +2017,8 @@ static struct net_device_stats *get_stats(struct net_device *dev)
 
 	return &np->stats;
 }
- *** RTnet ***/
+#endif
+/*** RTnet ***/
 
 /**
  * dp83815_crc - computer CRC for hash table entries
@@ -2068,7 +2068,7 @@ static void __set_rx_mode(struct rtnet_device *dev)
 
 	if (dev->flags & IFF_PROMISC) { /* Set promiscuous. */
 		/* Unconditionally log net taps. */
-		rt_printk(KERN_NOTICE "%s: Promiscuous mode enabled.\n",
+		rtos_print(KERN_NOTICE "%s: Promiscuous mode enabled.\n",
 			dev->name);
 		rx_mode = RxFilterEnable | AcceptBroadcast
 			| AcceptAllMulticast | AcceptAllPhys | AcceptMyPhys;
@@ -2101,10 +2101,10 @@ static void __set_rx_mode(struct rtnet_device *dev)
 static void set_rx_mode(struct rtnet_device *dev)
 {
 	struct netdev_private *np = dev->priv;
-	rt_spin_lock_irq(&np->lock);
+	spin_lock_irq(&np->lock);
 	if (!np->hands_off)
 		__set_rx_mode(dev);
-	rt_spin_unlock_irq(&np->lock);
+	spin_unlock_irq(&np->lock);
 }
 RTnet ***/
 /*** RTnet ***/
@@ -2530,7 +2530,7 @@ static int netdev_get_regs(struct rtnet_device *dev, u8 *buf)
 
 	/* the interrupt status is clear-on-read - see if we missed any */
 	if (rbuf[4] & rbuf[5]) {
-		rt_printk(KERN_WARNING
+		rtos_print(KERN_WARNING
 			"%s: shoot, we dropped an interrupt (%#08x)\n",
 			dev->name, rbuf[4] & rbuf[5]);
 	}
@@ -2601,7 +2601,7 @@ static void enable_wol_mode(struct rtnet_device *dev, int enable_intr)
 	struct netdev_private *np = dev->priv;
 
 	if (netif_msg_wol(np))
-		rt_printk(KERN_INFO "%s: remaining active for wake-on-lan\n",
+		rtos_print(KERN_INFO "%s: remaining active for wake-on-lan\n",
 			dev->name);
 
 	/* For WOL we must restart the rx process in silent mode.
@@ -2635,11 +2635,11 @@ static int netdev_close(struct rtnet_device *dev)
 	struct netdev_private *np = dev->priv;
 
 	if (netif_msg_ifdown(np))
-		rt_printk(KERN_DEBUG
+		rtos_print(KERN_DEBUG
 			"%s: Shutting down ethercard, status was %#04x.\n",
 			dev->name, (int)readl(ioaddr + ChipCmd));
 	if (netif_msg_pktdata(np))
-		rt_printk(KERN_DEBUG
+		rtos_print(KERN_DEBUG
 			"%s: Queue pointers were Tx %d / %d,  Rx %d / %d.\n",
 			dev->name, np->cur_tx, np->dirty_tx,
 			np->cur_rx, np->dirty_rx);
@@ -2653,31 +2653,32 @@ static int netdev_close(struct rtnet_device *dev)
 /*** RTnet ***
 	del_timer_sync(&np->timer);
  *** RTnet ***/
-//	disable_irq(dev->irq);
-	rt_shutdown_irq(dev->irq);
-	rt_spin_lock_irq(&np->lock);
+/*	disable_irq(dev->irq);*/
+	rtos_irq_disable(dev->irq);
+	rtos_spin_lock(&np->lock);
 	/* Disable interrupts, and flush posted writes */
 	writel(0, ioaddr + IntrEnable);
 	readl(ioaddr + IntrEnable);
 	np->hands_off = 1;
-	rt_spin_unlock_irq(&np->lock);
+	rtos_spin_unlock(&np->lock);
 
 /*** RTnet ***/
-	if ( (i=rt_free_global_irq(dev->irq))<0 )
+	rtos_irq_shutdown(dev->irq);
+	if ( (i=rtos_irq_free(dev->irq))<0 )
 		return i;
 
 	rt_stack_disconnect(dev);
 /*** RTnet ***/
 
-//	enable_irq(dev->irq);
+/*	enable_irq(dev->irq);*/
 
-//	free_irq(dev->irq, dev);
+/*	free_irq(dev->irq, dev);*/
 
 	/* Interrupt disabled, interrupt handler released,
 	 * queue stopped, timer deleted, rtnl_lock held
 	 * All async codepaths that access the driver are disabled.
 	 */
-	rt_spin_lock_irq(&np->lock);
+	rtos_spin_lock(&np->lock);
 	np->hands_off = 0;
 	readl(ioaddr + IntrMask);
 	readw(ioaddr + MIntrStatus);
@@ -2689,7 +2690,7 @@ static int netdev_close(struct rtnet_device *dev)
 	natsemi_stop_rxtx(dev);
 
 	__get_stats(dev);
-	rt_spin_unlock_irq(&np->lock);
+	rtos_spin_unlock(&np->lock);
 
 	/* clear the carrier last - an interrupt could reenable it otherwise */
 	rtnetif_carrier_off(dev);
@@ -2761,6 +2762,7 @@ static void __devexit natsemi_remove1 (struct pci_dev *pdev)
  * Interrupts must be disabled, otherwise hands_off can cause irq storms.
  */
 
+#if 0
 static int natsemi_suspend (struct pci_dev *pdev, u32 state)
 {
 	struct rtnet_device *dev = pci_get_drvdata (pdev);
@@ -2842,6 +2844,7 @@ out:
 	rtnl_unlock();
 	return 0;
 }
+#endif
 
 #endif /* CONFIG_PM */
 
@@ -2850,7 +2853,8 @@ static struct pci_driver natsemi_driver = {
 	.id_table	= natsemi_pci_tbl,
 	.probe		= natsemi_probe1,
 	.remove		= __devexit_p(natsemi_remove1),
-#ifdef CONFIG_PM
+/*#ifdef CONFIG_PM*/
+#if 0
 	.suspend	= natsemi_suspend,
 	.resume		= natsemi_resume,
 #endif
@@ -2860,7 +2864,7 @@ static int __init natsemi_init_mod (void)
 {
 /* when a module, this is printed whether or not devices are found in probe */
 #ifdef MODULE
-	rt_printk(version);
+	rtos_print(version);
 #endif
 
 	return pci_module_init (&natsemi_driver);

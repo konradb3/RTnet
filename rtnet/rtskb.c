@@ -22,9 +22,6 @@
 #include <linux/slab.h>
 #include <net/checksum.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtdev.h>
 #include <rtnet_internal.h>
 #include <rtskb.h>
@@ -127,7 +124,8 @@ void rtskb_over_panic(struct rtskb *skb, int sz, void *here)
         name=skb->rtdev->name;
     else
         name="<NULL>";
-    rt_printk("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here, skb->len, sz, name );
+    rtos_print("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here, skb->len,
+               sz, name);
 }
 
 
@@ -148,7 +146,8 @@ void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
     else
         name="<NULL>";
 
-    rt_printk("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here, skb->len, sz, name);
+    rtos_print("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here,
+               skb->len, sz, name);
 }
 
 
@@ -330,7 +329,8 @@ unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
     for (i = 0; i < add_rtskbs; i++) {
         /* get rtskb from rtskb cache */
         if (!(skb = rtskb_dequeue(&rtskb_cache))) {
-            rt_printk("RTnet: rtskb allocation from real-time cache failed\n");
+            rtos_print("RTnet: rtskb allocation from real-time cache "
+                       "failed\n");
             break;
         }
 

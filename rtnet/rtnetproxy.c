@@ -53,7 +53,7 @@
 
 #include <rtdev.h>
 #include <rtskb.h>
-#include <rtnet_internal.h>
+#include <rtnet_sys.h>
 #include <ipv4/ip_input.h>
 #include <ipv4/route.h>
 
@@ -94,13 +94,15 @@ static skb_exch_ringbuffer_t  ring_rtskb_rtnet_kernel;
 static skb_exch_ringbuffer_t  ring_rtskb_kernel_rtnet;
 
 /* Spinlock for protected code areas... */
-static spinlock_t skb_spinlock = SPIN_LOCK_UNLOCKED;
+static rtos_spinlock_t skb_spinlock = RTOS_SPIN_LOCK_UNLOCKED;
 
 /* handle for rtai srq: */
-static int rtnetproxy_srq = 0;
+static rtos_nrt_signal_t rtnetproxy_signal;
 
 /* Thread for transmission */
-static RT_TASK rtnetproxy_thread;
+static rtos_task_t rtnetproxy_thread;
+
+static rtos_event_t rtnetproxy_event;
 
 /* ***********************************************************************
  * Returns the next pointer from the ringbuffer or zero if nothing is
@@ -109,13 +111,15 @@ static RT_TASK rtnetproxy_thread;
 static void *read_from_ringbuffer(skb_exch_ringbuffer_t *pRing)
 {
     void *ret = 0;
-    unsigned int flags = rt_spin_lock_irqsave(&skb_spinlock);
+    unsigned int flags;
+
+    rtos_spin_lock_irqsave(&skb_spinlock, flags);
     if (pRing->rd != pRing->wr)
     {
         pRing->rd = (pRing->rd + 1) % SKB_RINGBUFFER_SIZE;
         ret = pRing->ptr[pRing->rd];
     }
-    rt_spin_unlock_irqrestore(flags, &skb_spinlock);
+    rtos_spin_unlock_irqrestore(&skb_spinlock, flags);
     return ret;
 }
 
@@ -128,7 +132,9 @@ static void *write_to_ringbuffer(skb_exch_ringbuffer_t *pRing, void *p)
 {
     void *ret;
     int tmpwr;
-    unsigned int flags = rt_spin_lock_irqsave(&skb_spinlock);
+    unsigned int flags;
+
+    rtos_spin_lock_irqsave(&skb_spinlock, flags);
     tmpwr = (pRing->wr + 1) % SKB_RINGBUFFER_SIZE;
     if (pRing->rd != tmpwr)
     {
@@ -140,7 +146,7 @@ static void *write_to_ringbuffer(skb_exch_ringbuffer_t *pRing, void *p)
     {
         ret = 0;
     }
-    rt_spin_unlock_irqrestore(flags, &skb_spinlock);
+    rtos_spin_unlock_irqrestore(&skb_spinlock, flags);
     return ret;
 }
 
@@ -251,8 +257,8 @@ static void rtnetproxy_transmit_thread(int arg)
             /* Place the "used" skb in the ringbuffer back to kernel */
             write_to_ringbuffer(&ring_skb_rtnet_kernel, skb);
         }
-        /* Suspend self! Will be activated with next frame to send... */
-        rt_task_suspend(&rtnetproxy_thread);
+        /* Will be activated with next frame to send... */
+        rtos_event_wait(&rtnetproxy_event);
     }
 }
 
@@ -280,9 +286,8 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
     }
 
     /* Signal rtnet that there are packets waiting to be processed...
-     * Resume the transmission thread (function rtnetproxy_transmit_thread)
      * */
-    rt_task_resume(&rtnetproxy_thread);
+    rtos_event_signal(&rtnetproxy_event);
 
     /* Delete all "used" skbs that already have been processed... */
     {
@@ -313,19 +318,19 @@ static int rtnetproxy_recv(struct rtskb *rtskb)
 {
     /* Acquire rtskb (JK) */
     if (rtskb_acquire(rtskb, &rtskb_pool) != 0) {
-        rt_printk("rtnetproxy_recv: No free rtskb in pool\n");
+        rtos_print("rtnetproxy_recv: No free rtskb in pool\n");
         kfree_rtskb(rtskb);
     }
     /* Place the rtskb in the ringbuffer: */
     else if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb))
     {
         /* Switch over to kernel context: */
-        rt_pend_linux_srq(rtnetproxy_srq);
+        rtos_pend_nrt_signal(&rtnetproxy_signal);
     }
     else
     {
         /* No space in ringbuffer => Free rtskb here... */
-        rt_printk("rtnetproxy_recv: No space in queue\n");
+        rtos_print("rtnetproxy_recv: No space in queue\n");
         kfree_rtskb(rtskb);
     }
 
@@ -343,7 +348,6 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     struct sk_buff *skb;
     struct net_device *dev = &dev_rtnetproxy;
     struct net_device_stats *stats = dev->priv;
-    RTIME rt;
 
 #define IP_OVERHEAD 34
     int len = rtskb->len + IP_OVERHEAD;
@@ -361,8 +365,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     skb->ip_summed = CHECKSUM_UNNECESSARY;
     skb->pkt_type = PACKET_HOST;  /* Extremely important! Why?!? */
 
-    rt = count2nano( rtskb->rx );
-    count2timeval(rt, &skb->stamp);
+    rtos_time_to_timeval(&rtskb->rx, &skb->stamp);
 
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;
@@ -378,7 +381,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
  * It is activated from rtnetproxy_recv whenever rtnet received a frame to
  * be processed by rtnetproxy.
  * ************************************************************************ */
-static void rtnetproxy_rtai_srq(void)
+static void rtnetproxy_signal_handler(void)
 {
     struct rtskb *rtskb;
 
@@ -386,15 +389,15 @@ static void rtnetproxy_rtai_srq(void)
     {
         rtnetproxy_kernel_recv(rtskb);
         /* Place "used" rtskb in backqueue... */
-	while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
-	    rt_task_resume(&rtnetproxy_thread);
-	}
+        while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
+            rtos_event_signal(&rtnetproxy_event);
+        }
     }
 
     /* Signal rtnet that there are "used" rtskbs waiting to be processed...
      * Resume the rtnetproxy_thread to recycle "used" rtskbs
      * */
-    rt_task_resume(&rtnetproxy_thread);
+    rtos_event_signal(&rtnetproxy_event);
 }
 
 /* ************************************************************************
@@ -489,11 +492,12 @@ static int __init rtnetproxy_init_module(void)
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
     /* Init the task for transmission */
-    rt_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0, 2000,
-                  RT_LOWEST_PRIORITY, 0, 0);
+    rtos_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0,
+                   RTOS_LOWEST_RT_PRIORITY);
+    rtos_event_init(&rtnetproxy_event);
 
     /* Register srq */
-    rtnetproxy_srq = rt_request_srq(0, rtnetproxy_rtai_srq, 0);
+    rtos_nrt_signal_init(&rtnetproxy_signal, rtnetproxy_signal_handler);
 
     /* rtNet stuff: */
     rt_ip_register_fallback(rtnetproxy_recv);
@@ -511,10 +515,10 @@ static void __exit rtnetproxy_cleanup_module(void)
     rt_ip_register_fallback(0);
 
     /* free the rtai srq */
-    rt_free_srq(rtnetproxy_srq);
+    rtos_nrt_signal_delete(&rtnetproxy_signal);
 
-    rt_task_suspend(&rtnetproxy_thread);
-    rt_task_delete(&rtnetproxy_thread);
+    rtos_task_delete(&rtnetproxy_thread);
+    rtos_event_delete(&rtnetproxy_event);
 
     /* Free the ringbuffers... */
     {

@@ -24,13 +24,12 @@
 
 #ifdef __KERNEL__
 
+#include <linux/init.h>
 #include <linux/socket.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
 
 #include <rtdev.h>
 #include <rtnet.h>
+#include <rtnet_sys.h>
 #include <stack_mgr.h>
 
 
@@ -80,11 +79,11 @@ struct rtsocket {
 
     unsigned int        priority;
     unsigned int        flags;      /* see RT_SOCK_xxx defines  */
-    RTIME               timeout;    /* receive timeout, 0 for infinite */
+    rtos_time_t         timeout;    /* receive timeout, 0 for infinite */
 
     int                 (*wakeup)(int s,void *arg); /* callback function */
     void                *wakeup_arg; /* argument of callback function */
-    SEM                 wakeup_sem; /* for blocking calls */
+    rtos_event_t        wakeup_event; /* for blocking calls */
 
     union {
         /* IP specific */
@@ -107,8 +106,7 @@ struct rtsocket {
 #define rt_socket_reference(sock)   atomic_inc(&(sock)->refcount)
 #define rt_socket_dereference(sock) atomic_dec(&(sock)->refcount)
 
-extern void rtsockets_init(void);
-extern void rtsockets_release(void);
+extern void __init rtsockets_init(void);
 
 
 #endif  /* __KERNEL__ */

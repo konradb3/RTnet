@@ -24,17 +24,17 @@
 
 #ifdef __KERNEL__
 
-#include <rtnet_config.h>
+#include <rtnet_sys.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
+#ifdef HAVE_RTAI_SEM_H
+#include <rtai_sem.h>
+#endif
 
 #ifdef CONFIG_RTNET_CHECKED
 #define RTNET_ASSERT(expr, func) \
     if (!(expr)) \
     { \
-        rt_printk("Assertion failed! %s:%s:%d %s\n", \
+        rtos_print("Assertion failed! %s:%s:%d %s\n", \
         __FILE__, __FUNCTION__, __LINE__, (#expr)); \
         func \
     }
@@ -46,7 +46,7 @@
 
 #define RTNET_PROC_NAME         "rtnet"
 #define RTNET_STACK_PRIORITY    1
-#define RTNET_RTDEV_PRIORITY    5
+/*#define RTNET_RTDEV_PRIORITY    5*/
 #define DROPPING_RTSKB          20
 
 
@@ -59,9 +59,9 @@ struct rtnet_device;
 
 
 struct rtnet_mgr {
-    RT_TASK task;
+    rtos_task_t  task;
 /*    MBX     mbx;*/
-    SEM     sem;
+    rtos_event_t event;
 };
 
 

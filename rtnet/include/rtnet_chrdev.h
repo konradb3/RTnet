@@ -24,12 +24,13 @@
 #define __RTNET_CHRDEV_H_
 
 #include <linux/ioctl.h>
-#include <linux/list.h>
 #include <linux/netdevice.h>
 #include <linux/types.h>
 
 
 #ifdef __KERNEL__
+
+#include <linux/list.h>
 
 struct rtnet_device;
 

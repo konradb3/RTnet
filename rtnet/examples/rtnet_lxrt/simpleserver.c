@@ -29,7 +29,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <rtai_lxrt_user.h>
 #include <rtnet.h>
 
 static struct sockaddr_in local_addr;
@@ -103,7 +102,7 @@ int main(int argc, char *argv[]) {
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);
 
-    printf("Received message: \"%s\"\n");
+    printf("Received message: \"%s\"\n", msg);
 
     return 0;
 }

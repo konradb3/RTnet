@@ -355,7 +355,7 @@ static inline int rt_wait_for_cmd_done(long cmd_ioaddr)
 	}
 #ifndef final_version
 	if (wait < 0)
-		rt_printk(KERN_ALERT "eepro100: wait_for_cmd_done timeout!\n");
+		rtos_print(KERN_ALERT "eepro100: wait_for_cmd_done timeout!\n");
 #endif
 	return 1;
 }
@@ -506,7 +506,7 @@ struct speedo_private {
 	dma_addr_t rx_ring_dma[RX_RING_SIZE];
 	struct descriptor *last_cmd;		/* Last command sent. */
 	unsigned int cur_tx, dirty_tx;		/* The ring entries to be free()ed. */
-	spinlock_t lock;					/* Group with Tx control cache line. */
+	rtos_spinlock_t lock;				/* Group with Tx control cache line. */
 	u32 tx_threshold;					/* The value for txdesc.count. */
 	struct RxFD *last_rxf;				/* Last filled RX buffer. */
 	dma_addr_t last_rxf_dma;
@@ -575,7 +575,7 @@ static void speedo_init_rx_ring(struct rtnet_device *rtdev);
 //static void speedo_tx_timeout(struct rtnet_device *rtdev);
 static int speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force);
-static int speedo_rx(struct rtnet_device *rtdev, int* packets);
+static int speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp);
 static void speedo_tx_buffer_gc(struct rtnet_device *rtdev);
 static void speedo_interrupt(int irq, unsigned long rtdev_id);
 static int speedo_close(struct rtnet_device *rtdev);
@@ -1003,13 +1003,13 @@ speedo_open(struct rtnet_device *rtdev)
 	sp->dirty_tx = 0;
 	sp->last_cmd = 0;
 	sp->tx_full = 0;
-	spin_lock_init(&sp->lock);
+	rtos_spin_lock_init(&sp->lock);
 	sp->in_interrupt = 0;
 
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	retval = rt_request_global_irq_ext(rtdev->irq, (void (*)(void))speedo_interrupt, (unsigned long)rtdev);
+	retval = rtos_irq_request(rtdev->irq, speedo_interrupt, (unsigned long)rtdev);
 	if (retval) {
 		MOD_DEC_USE_COUNT;
 		return retval;
@@ -1436,21 +1436,21 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
 	// *** RTnet ***
 
-	rt_sem_wait(&rtdev->xmit_sem);
-	rt_disable_irq(rtdev->irq);
-	rt_spin_lock(&sp->lock);
+	rtos_res_lock(&rtdev->xmit_lock);
+	rtos_irq_disable(rtdev->irq);
+	rtos_spin_lock(&sp->lock);
 	// *** RTnet ***
 
 	/* Check if there are enough space. */
 	if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
 		// *** RTnet ***
-		rt_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", rtdev->name);
+		rtos_print(KERN_ERR "%s: incorrect tbusy state, fixed.\n", rtdev->name);
 		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
-		rt_spin_unlock(&sp->lock);
-		rt_enable_irq(rtdev->irq);
-		rt_sem_signal(&rtdev->xmit_sem);
+		rtos_spin_unlock(&sp->lock);
+		rtos_irq_enable(rtdev->irq);
+		rtos_res_unlock(&rtdev->xmit_lock);
 		// *** RTnet ***
 
 		return 1;
@@ -1491,9 +1491,9 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Trigger the command unit resume. */
 // *** RTnet ***
 	if (rt_wait_for_cmd_done(ioaddr + SCBCmd) != 0) {
-		rt_spin_unlock(&sp->lock);
-		rt_enable_irq(rtdev->irq);
-		rt_sem_signal(&rtdev->xmit_sem);
+		rtos_spin_unlock(&sp->lock);
+		rtos_irq_enable(rtdev->irq);
+		rtos_res_unlock(&rtdev->xmit_lock);
 
 		return 1;
 	}
@@ -1514,9 +1514,9 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	}
 
 	// *** RTnet ***
-	rt_spin_unlock(&sp->lock);
-	rt_enable_irq(rtdev->irq);
-	rt_sem_signal(&rtdev->xmit_sem);
+	rtos_spin_unlock(&sp->lock);
+	rtos_irq_enable(rtdev->irq);
+	rtos_res_unlock(&rtdev->xmit_lock);
 	// *** RTnet ***
 
 	//rtdev->trans_start = jiffies;
@@ -1598,15 +1598,19 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
 	int packets = 0;
+	rtos_time_t time_stamp;
 	// *** RTnet ***
 
 	struct speedo_private *sp;
 	long ioaddr, boguscnt = max_interrupt_work;
 	unsigned short status;
 
+
+	rtos_get_time(&time_stamp);
+
 #ifndef final_version
 	if (rtdev == NULL) {
-		rt_printk(KERN_ERR "speedo_interrupt(): irq %d for unknown device.\n", irq);
+		rtos_print(KERN_ERR "speedo_interrupt(): irq %d for unknown device.\n", irq);
 		return;
 	}
 #endif
@@ -1617,7 +1621,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 #ifndef final_version
 	/* A lock to prevent simultaneous entry on SMP machines. */
 	if (test_and_set_bit(0, (void*)&sp->in_interrupt)) {
-		rt_printk(KERN_ERR"%s: SMP simultaneous entry of an interrupt handler.\n",
+		rtos_print(KERN_ERR"%s: SMP simultaneous entry of an interrupt handler.\n",
 			   rtdev->name);
 		sp->in_interrupt = 0;	/* Avoid halting machine. */
 		return;
@@ -1632,7 +1636,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		outw(status & 0xfc00, ioaddr + SCBStatus);
 
 		if (speedo_debug > 4)
-			rt_printk(KERN_DEBUG "%s: interrupt  status=%#4.4x.\n",
+			rtos_print(KERN_DEBUG "%s: interrupt  status=%#4.4x.\n",
 				   rtdev->name, status);
 
 		if ((status & 0xfc00) == 0)
@@ -1644,24 +1648,24 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		if ((status & 0x5000) ||	/* Packet received, or Rx error. */
 			(sp->rx_ring_state&(RrNoMem|RrPostponed)) == RrPostponed)
 									/* Need to gather the postponed packet. */
-			speedo_rx(rtdev, &packets);
+			speedo_rx(rtdev, &packets, &time_stamp);
 
 		if (status & 0x1000) {
-			rt_spin_lock(&sp->lock);
+			rtos_spin_lock(&sp->lock);
 			if ((status & 0x003c) == 0x0028) {		/* No more Rx buffers. */
 				struct RxFD *rxf;
-				rt_printk(KERN_WARNING "%s: card reports no RX buffers.\n",
+				rtos_print(KERN_WARNING "%s: card reports no RX buffers.\n",
 						rtdev->name);
 				rxf = sp->rx_ringp[sp->cur_rx % RX_RING_SIZE];
 				if (rxf == NULL) {
 					if (speedo_debug > 2)
-						rt_printk(KERN_DEBUG
+						rtos_print(KERN_DEBUG
 								"%s: NULL cur_rx in speedo_interrupt().\n",
 								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
 				} else if (rxf == sp->last_rxf) {
 					if (speedo_debug > 2)
-						rt_printk(KERN_DEBUG
+						rtos_print(KERN_DEBUG
 								"%s: cur_rx is last in speedo_interrupt().\n",
 								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
@@ -1669,18 +1673,18 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 					outb(RxResumeNoResources, ioaddr + SCBCmd);
 			} else if ((status & 0x003c) == 0x0008) { /* No resources. */
 				struct RxFD *rxf;
-				rt_printk(KERN_WARNING "%s: card reports no resources.\n",
+				rtos_print(KERN_WARNING "%s: card reports no resources.\n",
 						rtdev->name);
 				rxf = sp->rx_ringp[sp->cur_rx % RX_RING_SIZE];
 				if (rxf == NULL) {
 					if (speedo_debug > 2)
-						rt_printk(KERN_DEBUG
+						rtos_print(KERN_DEBUG
 								"%s: NULL cur_rx in speedo_interrupt().\n",
 								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
 				} else if (rxf == sp->last_rxf) {
 					if (speedo_debug > 2)
-						rt_printk(KERN_DEBUG
+						rtos_print(KERN_DEBUG
 								"%s: cur_rx is last in speedo_interrupt().\n",
 								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
@@ -1692,14 +1696,14 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 				}
 			}
 			sp->stats.rx_errors++;
-			rt_spin_unlock(&sp->lock);
+			rtos_spin_unlock(&sp->lock);
 		}
 
 		if ((sp->rx_ring_state&(RrNoMem|RrNoResources)) == RrNoResources) {
-			rt_printk(KERN_WARNING
+			rtos_print(KERN_WARNING
 					"%s: restart the receiver after a possible hang.\n",
 					rtdev->name);
-			rt_spin_lock(&sp->lock);
+			rtos_spin_lock(&sp->lock);
 			/* Restart the receiver.
 			   I'm not sure if it's always right to restart the receiver
 			   here but I don't know another way to prevent receiver hangs.
@@ -1708,12 +1712,12 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 				 ioaddr + SCBPointer);
 			outb(RxStart, ioaddr + SCBCmd);
 			sp->rx_ring_state &= ~RrNoResources;
-			rt_spin_unlock(&sp->lock);
+			rtos_spin_unlock(&sp->lock);
 		}
 
 		/* User interrupt, Command/Tx unit interrupt or CU not active. */
 		if (status & 0xA400) {
-			rt_spin_lock(&sp->lock);
+			rtos_spin_lock(&sp->lock);
 			speedo_tx_buffer_gc(rtdev);
 			if (sp->tx_full
 				&& (int)(sp->cur_tx - sp->dirty_tx) < TX_QUEUE_UNFULL) {
@@ -1721,11 +1725,11 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 				sp->tx_full = 0;
 				rtnetif_wake_queue(rtdev); /* Attention: under a spinlock.  --SAW */
 			}
-			rt_spin_unlock(&sp->lock);
+			rtos_spin_unlock(&sp->lock);
 		}
 
 		if (--boguscnt < 0) {
-			rt_printk(KERN_ERR "%s: Too much work at interrupt, status=0x%4.4x.\n",
+			rtos_print(KERN_ERR "%s: Too much work at interrupt, status=0x%4.4x.\n",
 				   rtdev->name, status);
 			/* Clear all interrupt sources. */
 			/* Will change from 0xfc00 to 0xff00 when we start handling
@@ -1736,7 +1740,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 	} while (1);
 
 	if (speedo_debug > 3)
-		rt_printk(KERN_DEBUG "%s: exiting interrupt, status=%#4.4x.\n",
+		rtos_print(KERN_DEBUG "%s: exiting interrupt, status=%#4.4x.\n",
 			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	clear_bit(0, (void*)&sp->in_interrupt);
@@ -1802,7 +1806,7 @@ static int speedo_refill_rx_buf(struct rtnet_device *rtdev, int force)
 			int forw_entry;
 			if (speedo_debug > 2 || !(sp->rx_ring_state & RrOOMReported)) {
 				// *** RTnet ***
-				rt_printk(KERN_WARNING "%s: can't fill rx buffer (force %d)!\n",
+				rtos_print(KERN_WARNING "%s: can't fill rx buffer (force %d)!\n",
 						rtdev->name, force);
 				//speedo_show_state(rtdev);
 				// *** RTnet ***
@@ -1842,27 +1846,19 @@ static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force)
 }
 
 static int
-speedo_rx(struct rtnet_device *rtdev, int* packets)
+speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 {
 	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int entry = sp->cur_rx % RX_RING_SIZE;
 	int rx_work_limit = sp->dirty_rx + RX_RING_SIZE - sp->cur_rx;
 	int alloc_ok = 1;
 
-	//rtmac
-	RTIME rx;
-	//rtmac
-
 	if (speedo_debug > 4)
-		printk(KERN_DEBUG " In speedo_rx().\n");
+		rtos_print(KERN_DEBUG " In speedo_rx().\n");
 	/* If we own the next entry, it's a new packet. Send it up. */
 	while (sp->rx_ringp[entry] != NULL) {
 		int status;
 		int pkt_len;
-
-		//rtmac
-		rx = rt_get_time();
-		//rtmac
 
 		pci_dma_sync_single(sp->pdev, sp->rx_ring_dma[entry],
 			sizeof(struct RxFD), PCI_DMA_FROMDEVICE);
@@ -1881,23 +1877,23 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 			/* Postpone the packet.  It'll be reaped at an interrupt when this
 			   packet is no longer the last packet in the ring. */
 			if (speedo_debug > 2)
-				rt_printk(KERN_DEBUG "%s: RX packet postponed!\n",
+				rtos_print(KERN_DEBUG "%s: RX packet postponed!\n",
 					   rtdev->name);
 			sp->rx_ring_state |= RrPostponed;
 			break;
 		}
 
 		if (speedo_debug > 4)
-			rt_printk(KERN_DEBUG "  speedo_rx() status %8.8x len %d.\n", status,
+			rtos_print(KERN_DEBUG "  speedo_rx() status %8.8x len %d.\n", status,
 				   pkt_len);
 		if ((status & (RxErrTooBig|RxOK|0x0f90)) != RxOK) {
 			if (status & RxErrTooBig)
-				rt_printk(KERN_ERR "%s: Ethernet frame overran the Rx buffer, "
+				rtos_print(KERN_ERR "%s: Ethernet frame overran the Rx buffer, "
 					   "status %8.8x!\n", rtdev->name, status);
 			else if (! (status & RxOK)) {
 				/* There was a fatal error.  This *should* be impossible. */
 				sp->stats.rx_errors++;
-				rt_printk(KERN_ERR "%s: Anomalous event in speedo_rx(), "
+				rtos_print(KERN_ERR "%s: Anomalous event in speedo_rx(), "
 					   "status %8.8x.\n",
 					   rtdev->name, status);
 			}
@@ -1932,7 +1928,7 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 				/* Pass up the already-filled skbuff. */
 				skb = sp->rx_skbuff[entry];
 				if (skb == NULL) {
-					rt_printk(KERN_ERR "%s: Inconsistent Rx descriptor chain.\n",
+					rtos_print(KERN_ERR "%s: Inconsistent Rx descriptor chain.\n",
 						   rtdev->name);
 					break;
 				}
@@ -1944,7 +1940,7 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 			}
 			skb->protocol = rt_eth_type_trans(skb, rtdev);
 			//rtmac
-			skb->rx = rx;
+			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
 			//rtmac
 			rtnetif_rx(skb);
 			(*packets)++;
@@ -1988,8 +1984,8 @@ speedo_close(struct rtnet_device *rtdev)
 	outl(PortPartialReset, ioaddr + SCBPort);
 
 	// *** RTnet ***
-	rt_shutdown_irq(rtdev->irq);
-	if ( (i=rt_free_global_irq(rtdev->irq))<0 )
+	rtos_irq_shutdown(rtdev->irq);
+	if ( (i=rtos_irq_free(rtdev->irq))<0 )
 		return i;
 
 	rt_stack_disconnect(rtdev);

@@ -5,6 +5,7 @@ librt_client_a_SOURCES = rt_client.c
 
 librt_client_a_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 rt_client.o: librt_client.a

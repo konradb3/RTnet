@@ -12,6 +12,7 @@ librtcfg_a_SOURCES = \
 
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
 rtcfg.o: librtcfg.a

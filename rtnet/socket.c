@@ -29,9 +29,6 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 
-#define INTERFACE_TO_LINUX  /* makes RT_LINUX_PRIORITY visible */
-#include <rtai_sched.h>
-
 #include <rtnet.h>
 #include <rtnet_internal.h>
 #include <rtnet_iovec.h>
@@ -46,7 +43,7 @@ MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in so
 
 static struct rtsocket rt_sockets[RT_SOCKETS];
 static struct rtsocket *free_rtsockets;
-static spinlock_t      socket_base_lock;
+static rtos_spinlock_t socket_base_lock = RTOS_SPIN_LOCK_UNLOCKED;
 
 
 /************************************************************************
@@ -64,18 +61,18 @@ static inline struct rtsocket *rt_socket_alloc(void)
     struct rtsocket *sock;
 
 
-    flags = rt_spin_lock_irqsave(&socket_base_lock);
+    rtos_spin_lock_irqsave(&socket_base_lock, flags);
 
     sock = free_rtsockets;
     if (!sock) {
-        rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+        rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
         return NULL;
     }
     free_rtsockets = free_rtsockets->next;
 
     atomic_set(&sock->refcount, 1);
 
-    rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+    rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
 
     sock->priority = SOCK_DEF_PRIO;
     sock->state    = TCP_CLOSE;
@@ -84,15 +81,15 @@ static inline struct rtsocket *rt_socket_alloc(void)
 
     rtskb_queue_init(&sock->incoming);
 
-    rt_sem_init(&sock->wakeup_sem, 0);
+    rtos_event_init(&sock->wakeup_event);
 
     /* detect if running in Linux context */
-    if (rt_whoami()->priority == RT_LINUX_PRIORITY)
-        sock->pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
-    else {
+    if (rtos_in_rt_context()) {
         sock->rt_pool = 1;
         sock->pool_size = rtskb_pool_init_rt(&sock->skb_pool, socket_rtskbs);
-    }
+    } else
+        sock->pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
+
     if (sock->pool_size < socket_rtskbs) {
         /* fix statistics */
         if (sock->pool_size == 0)
@@ -116,7 +113,7 @@ int rt_socket_release(struct rtsocket *sock)
     unsigned int rtskbs = sock->pool_size;
 
 
-    rt_sem_delete(&sock->wakeup_sem);
+    rtos_event_delete(&sock->wakeup_event);
 
     if (sock->pool_size > 0)
     {
@@ -137,10 +134,10 @@ int rt_socket_release(struct rtsocket *sock)
         }
     }
 
-    flags = rt_spin_lock_irqsave(&socket_base_lock);
+    rtos_spin_lock_irqsave(&socket_base_lock, flags);
 
     if (!atomic_dec_and_test(&sock->refcount)) {
-        rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+        rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
         return -EAGAIN;
     }
 
@@ -150,7 +147,7 @@ int rt_socket_release(struct rtsocket *sock)
     /* invalidate file descriptor id */
     sock->fd = (sock->fd + 0x100) & 0x7FFFFFFF;
 
-    rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+    rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
 
     return 0;
 }
@@ -169,14 +166,14 @@ struct rtsocket *rt_socket_lookup(int fd)
 
 
     if ((index = fd & 0xFF) < RT_SOCKETS) {
-        flags = rt_spin_lock_irqsave(&socket_base_lock);
+        rtos_spin_lock_irqsave(&socket_base_lock, flags);
 
         if (rt_sockets[index].fd == fd) {
             sock = &rt_sockets[index];
             atomic_inc(&sock->refcount);
         }
 
-        rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+        rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
     }
     return sock;
 }
@@ -202,7 +199,7 @@ int rt_socket(int family, int type, int protocol)
 
     /* allocate a new socket */
     if ((sock = rt_socket_alloc()) == NULL) {
-        rt_printk("RTnet: no more rt-sockets\n");
+        rtos_print("RTnet: no more rt-sockets\n");
         return -ENOMEM;
     }
 
@@ -567,10 +564,11 @@ int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
                 break;
 
             case RT_SO_TIMEOUT:
-                if (optlen < sizeof(RTIME))
+                if (optlen < sizeof(nanosecs_t))
                     ret = -EINVAL;
                 else
-                    sock->timeout = *(RTIME *)optval;
+                    rtos_nanosecs_to_time(*(nanosecs_t *)optval,
+                                          &sock->timeout);
                 break;
 
             default:
@@ -992,12 +990,10 @@ int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg)
 /***
  *  rtsocket_init
  */
-void rtsockets_init(void)
+void __init rtsockets_init(void)
 {
     int i;
 
-
-    spin_lock_init(&socket_base_lock);
 
     /* initialise the first socket */
     rt_sockets[0].prev  = NULL;
@@ -1018,14 +1014,4 @@ void rtsockets_init(void)
         rt_sockets[i].fd    = i;
     }
     free_rtsockets=&rt_sockets[0];
-}
-
-
-
-/***
- *  rtsocket_release
- */
-void rtsockets_release(void)
-{
-    free_rtsockets=NULL;
 }

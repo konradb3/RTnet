@@ -54,7 +54,7 @@ static struct rtsocket reply_socket;
  *  the registered sockets from any server
  */
 static struct rtsocket  *icmp_sockets;
-static spinlock_t       icmp_socket_base_lock;
+static rtos_spinlock_t  icmp_socket_base_lock = RTOS_SPIN_LOCK_UNLOCKED;
 
 static struct rtsocket_ops rt_icmp_socket_ops = {
     bind:       NULL,
@@ -176,7 +176,7 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
         /* SHOULD NOT BE THE CASE */
         /* DEBUGGING NECESSARY SOMEWHERE */
 
-        rt_printk("RTnet: error in route table\n");
+        rtos_print("RTnet: error in route table\n");
         return;
     }
 
@@ -191,7 +191,7 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 
     if (err)
     {
-        rt_printk("RTnet: error in route daddr %x saddr %x\n", daddr, saddr);
+        rtos_print("RTnet: error in route daddr %x saddr %x\n", daddr, saddr);
         return;
     }
 
@@ -200,7 +200,7 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
             rt, MSG_DONTWAIT);
 
     if (err)
-        rt_printk("RTnet: error in xmit\n");
+        rtos_print("RTnet: error in xmit\n");
 }
 
 
@@ -266,14 +266,12 @@ int rt_icmp_socket(struct rtsocket *sock)
     sock->ops       = &rt_icmp_socket_ops;
 
     /* add to icmp-socket-list */
-    flags = rt_spin_lock_irqsave(&icmp_socket_base_lock);
+    rtos_spin_lock_irqsave(&icmp_socket_base_lock, flags);
     sock->next = icmp_sockets;
     if (icmp_sockets != NULL)
         icmp_sockets->prev = sock;
     icmp_sockets = sock;
-    rt_spin_unlock_irqrestore(flags, &icmp_socket_base_lock);
-
-    rt_printk("RTnet: into rt_icmp_socket\n");
+    rtos_spin_unlock_irqrestore(&icmp_socket_base_lock, flags);
 
     return sock->fd;
 }
@@ -352,26 +350,26 @@ int rt_icmp_rcv(struct rtskb *skb)
 
     if (length < sizeof(struct icmphdr))
     {
-        rt_printk("RTnet: improper length in icmp packet\n");
+        rtos_print("RTnet: improper length in icmp packet\n");
         goto cleanup;
     }
 
     if (ip_compute_csum((unsigned char *)icmpHdr, length))
     {
-        rt_printk("RTnet: invalid checksum in icmp packet %d\n", length);
+        rtos_print("RTnet: invalid checksum in icmp packet %d\n", length);
         goto cleanup;
     }
 
     if (!rtskb_pull(skb, sizeof(struct icmphdr)))
     {
-        rt_printk("RTnet: pull failed %p\n", (skb->sk));
+        rtos_print("RTnet: pull failed %p\n", (skb->sk));
         goto cleanup;
     }
 
 
     if (icmpHdr->type > NR_ICMP_TYPES)
     {
-        rt_printk("RTnet: invalid icmp type\n");
+        rtos_print("RTnet: invalid icmp type\n");
         goto cleanup;
     }
 
@@ -391,7 +389,7 @@ cleanup:
  */
 void rt_icmp_rcv_err(struct rtskb *skb)
 {
-    rt_printk("RTnet: rt_icmp_rcv err\n");
+    rtos_print("RTnet: rt_icmp_rcv err\n");
 }
 
 
@@ -412,7 +410,7 @@ static struct rtinet_protocol icmp_protocol = {
 /***
  *  rt_icmp_init
  */
-void rt_icmp_init(void)
+void __init rt_icmp_init(void)
 {
     unsigned int skbs;
 
@@ -423,9 +421,8 @@ void rt_icmp_init(void)
     /* create the rtskb pool */
     skbs = rtskb_pool_init(&reply_socket.skb_pool, ICMP_REPLY_POOL_SIZE);
     if (skbs < ICMP_REPLY_POOL_SIZE)
-        rt_printk("RTnet: allocated only %d icmp rtskbs\n", skbs);
+        printk("RTnet: allocated only %d icmp rtskbs\n", skbs);
 
-    spin_lock_init(&icmp_socket_base_lock);
     icmp_sockets=NULL;
     rt_inet_add_protocol(&icmp_protocol);
 }

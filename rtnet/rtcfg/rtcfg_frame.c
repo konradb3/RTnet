@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,9 +25,6 @@
 #include <linux/kernel.h>
 #include <linux/if_ether.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
 #include <rtnet.h>
 #include <rtcfg/rtcfg.h>
 #include <rtcfg/rtcfg_frame.h>
@@ -36,8 +33,8 @@
 #define RTCFG_PROTOCOL      0x9022
 
 
-static int     rtcfg_sock;
-static RT_TASK rx_task;
+static int          rtcfg_sock;
+static rtos_task_t  rx_task;
 
 
 
@@ -285,18 +282,16 @@ int __init rtcfg_init_frames(void)
     int ret;
 
 
-    ret = rt_task_init(&rx_task, rtcfg_rx_handler, 0, 4096,
-                       RT_LOWEST_PRIORITY, 0, NULL);
-    if (ret < 0)
-        return ret;
-
     rtcfg_sock = rt_socket(PF_PACKET, SOCK_DGRAM, htons(RTCFG_PROTOCOL));
     if (rtcfg_sock < 0) {
-        rt_task_delete(&rx_task);
         return rtcfg_sock;
     }
 
-    rt_task_resume(&rx_task);
+    ret = rtos_task_init(&rx_task, rtcfg_rx_handler, 0,
+                         RTOS_LOWEST_RT_PRIORITY);
+    if (ret < 0)
+        rt_socket_close(rtcfg_sock);
+        return ret;
 
     return 0;
 }
@@ -311,5 +306,5 @@ void rtcfg_cleanup_frames(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_task_delete(&rx_task);
+    rtos_task_delete(&rx_task);
 }
