@@ -24,6 +24,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/init.h>
 
 #define DEFAULT_VNIC_RTSKBS     32
 
