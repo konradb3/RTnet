@@ -84,7 +84,7 @@ struct rtnet_device {
     int                 allmulti;
 
     int                 rxqueue_len;
-    rtos_event_t        *stack_event;
+    rtos_event_sem_t    *stack_event;
 /*    MBX                 *rtdev_mbx;*/
 
     rtos_res_lock_t     xmit_lock;

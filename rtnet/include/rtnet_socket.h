@@ -33,7 +33,7 @@
 #include <stack_mgr.h>
 
 
-#define RT_SOCKETS          64  /* only increase with care (lockup delays!),
+#define RT_SOCKETS          64  /* only increase with care (lookup delays!),
                                  * must not be greater then 255 */
 #define RT_SOCK_NONBLOCK    0x0001
 
@@ -85,7 +85,7 @@ struct rtsocket {
 
     int                 (*wakeup)(int s,void *arg); /* callback function */
     void                *wakeup_arg; /* argument of callback function */
-    rtos_event_t        wakeup_event; /* for blocking calls */
+    rtos_event_sem_t    wakeup_event; /* for blocking calls */
 
     union {
         /* IP specific */

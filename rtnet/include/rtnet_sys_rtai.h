@@ -47,11 +47,12 @@
 
 
 /* basic types */
-typedef RTIME      rtos_time_t;     /* high precision time */
-typedef spinlock_t rtos_spinlock_t; /* spin locks with hard IRQ locks */
-typedef RT_TASK    rtos_task_t;     /* hard real-time task */
-typedef SEM        rtos_event_t;    /* to signal events to other RT-tasks */
-typedef SEM        rtos_res_lock_t; /* resource lock with prio inheritance */
+typedef RTIME      rtos_time_t;       /* high precision time */
+typedef spinlock_t rtos_spinlock_t;   /* spin locks with hard IRQ locks */
+typedef RT_TASK    rtos_task_t;       /* hard real-time task */
+typedef SEM        rtos_event_t;      /* to signal events (non-storing) */
+typedef SEM        rtos_event_sem_t;  /* to signal events (storing) */
+typedef SEM        rtos_res_lock_t;   /* resource lock with prio inheritance */
 typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
 
 #define ALIGN_RTOS_TASK         16  /* RT_TASK requires 16-bytes alignment */
@@ -172,7 +173,15 @@ static inline int rtos_in_rt_context(void)
 #define RTOS_EVENT_TIMEOUT          SEM_TIMOUT
 #define RTOS_EVENT_ERROR(result)    ((result) == 0xFFFF /* SEM_ERR */)
 
+/* note: event is initially set to a non-signaled state */
 static inline int rtos_event_init(rtos_event_t *event)
+{
+    rt_typed_sem_init(event, 0, CNT_SEM);
+    return 0;
+}
+
+/* note: event is initially set to a non-signaled state */
+static inline int rtos_event_sem_init(rtos_event_sem_t *event)
 {
     rt_typed_sem_init(event, 0, CNT_SEM);
     return 0;
@@ -183,13 +192,11 @@ static inline void rtos_event_delete(rtos_event_t *event)
     rt_sem_delete(event);
 }
 
-
-/* note: wakes up a single waiting task, must store events if no one is
- *       listening */
-static inline void rtos_event_signal(rtos_event_t *event)
+static inline void rtos_event_sem_delete(rtos_event_sem_t *event)
 {
-    rt_sem_signal(event);
+    rt_sem_delete(event);
 }
+
 
 /* note: wakes all waiting tasks, does NOT store events if no one is
  *       listening */
@@ -198,14 +205,26 @@ static inline void rtos_event_broadcast(rtos_event_t *event)
     rt_sem_broadcast(event);
 }
 
+/* note: wakes up a single waiting task, must store events if no one is
+ *       listening */
+static inline void rtos_event_sem_signal(rtos_event_sem_t *event)
+{
+    rt_sem_signal(event);
+}
 
-static inline int rtos_event_wait(rtos_event_t *event)
+
+static inline int rtos_event_wait(rtos_event_sem_t *event)
 {
     return rt_sem_wait(event);
 }
 
-static inline int rtos_event_wait_timeout(rtos_event_t *event,
-                                          rtos_time_t *timeout)
+static inline int rtos_event_sem_wait(rtos_event_sem_t *event)
+{
+    return rt_sem_wait(event);
+}
+
+static inline int rtos_event_sem_wait_timed(rtos_event_sem_t *event,
+                                            rtos_time_t *timeout)
 {
     return rt_sem_wait_timed(event, *timeout);
 }

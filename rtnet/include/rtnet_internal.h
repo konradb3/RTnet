@@ -59,9 +59,9 @@ struct rtnet_device;
 
 
 struct rtnet_mgr {
-    rtos_task_t  task;
+    rtos_task_t      task;
 /*    MBX     mbx;*/
-    rtos_event_t event;
+    rtos_event_sem_t event;
 };
 
 
