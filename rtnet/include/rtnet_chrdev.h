@@ -31,6 +31,7 @@
 #ifdef __KERNEL__
 
 #include <linux/list.h>
+#include <linux/init.h>
 
 struct rtnet_device;
 
