@@ -82,6 +82,7 @@ do {                                                                        \
 
 int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
                        void* priv_data, size_t priv_data_size,
+                       rtpc_copy_back_proc copy_back_handler,
                        rtpc_cleanup_proc cleanup_handler)
 {
     struct rt_proc_call *call;
@@ -113,8 +114,13 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
             call->processed, (timeout * HZ) / 1000);
     else
         ret = wait_event_interruptible(call->call_wq, call->processed);
-    if (ret == 0)
+
+    if (ret == 0) {
         ret = call->result;
+
+        if (copy_back_handler != NULL)
+            copy_back_handler(call, priv_data);
+    }
 
     if (atomic_dec_and_test(&call->ref_count)) {
         if (call->cleanup_handler != NULL)
