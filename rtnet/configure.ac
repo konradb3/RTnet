@@ -6,7 +6,7 @@ AC_PREREQ(2.57)
 AC_INIT([RTnet],[0.6.0],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/config.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
-AC_CONFIG_MACRO_DIR([config/m4])
+#AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_SRCDIR([rtskb.c])
 AC_PREFIX_DEFAULT([/usr/local/rtnet])
 AC_CANONICAL_BUILD
