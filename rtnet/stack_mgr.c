@@ -23,8 +23,9 @@
 
 
 static struct rtskb_queue rxqueue;
-static struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
-static rtos_spinlock_t rt_packets_lock = RTOS_SPIN_LOCK_UNLOCKED;
+
+struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
+rtos_spinlock_t rt_packets_lock = RTOS_SPIN_LOCK_UNLOCKED;
 
 
 

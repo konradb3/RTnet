@@ -70,6 +70,9 @@ EXPORT_SYMBOL(rtnetif_tx);
 EXPORT_SYMBOL(rt_stack_connect);
 EXPORT_SYMBOL(rt_stack_disconnect);
 
+EXPORT_SYMBOL(rt_packets);
+EXPORT_SYMBOL(rt_packets_lock);
+
 
 /****************************************************************************
  * rtdev_mgr.c                                                              *

@@ -60,6 +60,10 @@ static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 }
 
 
+extern struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
+extern rtos_spinlock_t      rt_packets_lock;
+
+
 #endif /* __KERNEL__ */
 
 #endif  /* __STACK_MGR_H_ */
