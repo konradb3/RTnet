@@ -170,15 +170,9 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 
     rt = (struct rt_rtable*)skb->dst;
 
-    if (rt == NULL)
-    {
-        /* NO ROUTE FOR THE REPLY PACKET */
-        /* SHOULD NOT BE THE CASE */
-        /* DEBUGGING NECESSARY SOMEWHERE */
-
-        rtos_print("RTnet: error in route table\n");
-        return;
-    }
+    RTNET_ASSERT(rt != NULL,
+                 rtos_print("RTnet: rt_icmp_reply() error in route table\n");
+                 return;);
 
     icmp_param->data.icmph.checksum = 0;
     icmp_param->csum = 0;
@@ -190,17 +184,14 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
     err = rt_ip_route_output(&rt, daddr, saddr);
 
     if (err)
-    {
-        rtos_print("RTnet: error in route daddr %x saddr %x\n", daddr, saddr);
         return;
-    }
 
     err = rt_ip_build_xmit(&reply_socket, rt_icmp_glue_bits, icmp_param,
             icmp_param->data_len+sizeof(struct icmphdr),
             rt, MSG_DONTWAIT);
 
-    if (err)
-        rtos_print("RTnet: error in xmit\n");
+    RTNET_ASSERT(err == 0,
+                 rtos_print("RTnet: rt_icmp_reply() error in xmit\n"););
 }
 
 
