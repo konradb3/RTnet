@@ -26,16 +26,8 @@
 #include <rtdev.h>
 
 
-extern int tdma_ioctl_client(struct rtnet_device *rtdev);
-extern int tdma_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle, unsigned int mtu);
-extern int tdma_ioctl_up(struct rtnet_device *rtdev);
-extern int tdma_ioctl_down(struct rtnet_device *rtdev);
-extern int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr);
-extern int tdma_ioctl_remove(struct rtnet_device *rtdev, u32 ip_addr);
-extern int tdma_ioctl_cycle(struct rtnet_device *rtdev, unsigned int cycle);
-extern int tdma_ioctl_mtu(struct rtnet_device *rtdev, unsigned int mtu);
-extern int tdma_ioctl_offset(struct rtnet_device *rtdev, u32 ip_addr, unsigned int offset);
-
+extern int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
+                      unsigned long arg);
 
 #endif //__KERNEL__
 

@@ -25,7 +25,10 @@
 #ifdef __KERNEL__
 
 #include <rtdev.h>
+#include <rtmac/rtmac_disc.h>
 
+
+extern struct rtmac_disc tdma_disc;
 
 extern int tdma_init(void);
 extern void tdma_release(void);

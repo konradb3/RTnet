@@ -22,12 +22,14 @@
 #ifndef __TDMA_H_
 #define __TDMA_H_
 
+#include <rtnet_chrdev.h>
+
+
 #ifdef __KERNEL__
 
 #include <rtai.h>
 #include <rtai_sched.h>
 
-#include <rtdev.h>
 #include <rtmac/tdma/tdma.h>
 
 
@@ -65,7 +67,37 @@ static inline RTIME tdma_get_delta_t(struct rtmac_tdma *tdma)
     return delta_t;
 }
 
-
 #endif /* __KERNEL__ */
+
+
+struct tdma_config {
+    struct rtnet_ioctl_head head;
+
+    u32             ip_addr;
+    unsigned int    cycle;
+    unsigned int    mtu;
+    unsigned int    offset;
+};
+
+
+#define TDMA_IOC_CLIENT                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 0, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_MASTER                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 1, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_UP                     _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 2, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_DOWN                   _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 3, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_ADD                    _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 4, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_REMOVE                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 5, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_CYCLE                  _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 6, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_MTU                    _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 7, \
+                                             sizeof(struct tdma_config))
+#define TDMA_IOC_OFFSET                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 8, \
+                                             sizeof(struct tdma_config))
+
 
 #endif /* __TDMA_H_ */

@@ -38,6 +38,8 @@
 
 #define CONFIG_TDMA_DEBUG
 
+#define TDMA_MAGIC                      0xA1B2C301
+
 #define TDMA_RT_REQ_TIMEOUT             100     /* timeout for arp solicit = 100 ms */
 #define TDMA_NOTIFY_TASK_CYCLE          100     /* notify every 100 ms the presence of a master */
 #define TDMA_MASTER_WAIT_TIMEOUT        TDMA_NOTIFY_TASK_CYCLE * 2  /* time to wait (in ms) before we become master */
@@ -130,8 +132,13 @@ struct tdma_flags {
 };
 
 struct rtmac_tdma {
-    RT_TASK                     tx_task;
+    unsigned long               magic;
     struct rtskb_prio_queue     tx_queue;
+
+    __u8                        __align[(16 - ((sizeof(unsigned long) +
+                                                sizeof(struct rtskb_prio_queue)
+                                               ) & 15)) & 15];
+    RT_TASK                     tx_task;
 
     struct tdma_flags           flags;
 

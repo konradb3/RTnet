@@ -28,9 +28,8 @@
 #include <linux/netdevice.h>
 
 #include <rtdev.h>
+#include <rtnet_chrdev.h>
 #include <rtskb.h>
-
-#include <rtmac/rtmac_chrdev.h> /* legacy! */
 
 
 struct rtmac_priv {
@@ -44,25 +43,23 @@ struct rtmac_priv {
 };
 
 struct rtmac_disc {
-    struct list_head        list;
+    struct list_head    list;
 
-    char                    *name;
-    unsigned int            priv_size;      /* size of rtmac_priv.disc_priv */
-    u16                     disc_type;
+    const char          *name;
+    unsigned int        priv_size;      /* size of rtmac_priv.disc_priv */
+    u16                 disc_type;
 
-    int                     (*packet_rx)(struct rtskb *skb);
+    int                 (*packet_rx)(struct rtskb *skb);
     /* rt_packet_tx prototype must be compatible with hard_start_xmit */
-    int                     (*rt_packet_tx)(struct rtskb *skb,
-                                            struct rtnet_device *dev);
-    int                     (*nrt_packet_tx)(struct rtskb *skb);
+    int                 (*rt_packet_tx)(struct rtskb *skb,
+                                        struct rtnet_device *dev);
+    int                 (*nrt_packet_tx)(struct rtskb *skb);
 
-    int                     (*attach)(struct rtnet_device *rtdev, void *disc_priv);
-    int                     (*detach)(struct rtnet_device *rtdev, void *disc_priv);
-    int                     (*ioctl)(struct rtnet_device *rtdev, unsigned int cmd,
-                                     unsigned long arg);
+    int                 (*attach)(struct rtnet_device *rtdev, void *disc_priv);
+    int                 (*detach)(struct rtnet_device *rtdev, void *disc_priv);
+
+    struct rtnet_ioctls ioctls;
     /* todo: interface function(s) to retrieve text-based information about the discipline */
-
-    struct rtmac_ioctl_ops  *ioctl_ops; /* legacy! */
 };
 
 
@@ -70,7 +67,7 @@ extern int rtmac_disc_attach(struct rtnet_device *rtdev,
                              struct rtmac_disc *disc);
 extern int rtmac_disc_detach(struct rtnet_device *rtdev);
 
-extern struct rtmac_disc *rtmac_get_disc_by_name(char *name);
+extern struct rtmac_disc *rtmac_get_disc_by_name(const char *name);
 
 extern int rtmac_disc_register(struct rtmac_disc *disc);
 extern void rtmac_disc_deregister(struct rtmac_disc *disc);
