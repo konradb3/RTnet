@@ -1,7 +1,7 @@
                      RTnet Configuration Service (RTcfg)
                      ===================================
 
-                                Revision: 1.6
+                                Revision: 1.7
 
 
 RTcfg is a configuration service for setting up a RTnet network and
@@ -12,6 +12,9 @@ describes the protocol and the user interface of RTcfg.
 
 Sequence Diagram
 ================
+
+Normal Startup
+--------------
 
 Configuration                                                   Existing
    Server                              New Client                Client
@@ -66,8 +69,15 @@ Configuration                                                   Existing
       .                                     .                      .
       |          Ready (broadcast)          |                      |
       |------------------------------------>|--------------------->|
-      .                                     .                      .
-      .                                     .                      .
+      |                                     |                      |
+
+
+
+Normal Operation
+----------------
+
+Configuration
+   Server                                Client A               Client B
       |         Heartbeat (unicast)         |                      |
       |<------------------------------------|                      |
       |                                     |                      |
@@ -76,6 +86,61 @@ Configuration                                                   Existing
       |         Heartbeat (unicast)         |                      |
       |<-----------------------------------------------------------|
       |                                     |                      |
+
+
+
+Failing Client
+--------------
+
+Configuration
+   Server                                Client A               Client B
+      |                                     |                      |
+     +-+                                    |                      |
+     | |                                    |                      |
+     | | Missing                            |                      |
+     | | Heartbeat                           |                      |
+     | | Detection                          |                      |
+     | |                                    |                      |
+     +-+      Dead Station (broadcast)      |                      |
+      | ----------------------------------> | -------------------> |
+     +-+                                   +-+                    +-+
+     | |                                   | |                    | |
+     | | Update                            | | Update             | | Update
+     | | Tables                            | | Tables             | | Tables
+     | |                                   | |                    | |
+     +-+                                   +-+                    +-+
+      |                                     |                      |
+
+
+
+Server Restart
+--------------
+
+Configuration                            Running                Running
+   Server                                Client A               Client B
+      |                                     |                      |
+      |       Client Config, Stage 1        |                      |
+      |  (unicast/broadcast, single frame)  |   (if broadcasted)   |
+      |-----------------------------------> | -------------------->|
+      |                                    +-+                     |
+      |                                    | |                     |
+      |                                    | | Receive             |
+      |                                    | | Config 1            |
+      |                                    | |                     |
+      |         Announce (unicast)         +-+                     |
+      |<----------------------------------- |                      |
+     +-+                                   +-+                     |
+     | |                                   | |                     |
+     | | Update                            | | Update              |
+     | | Client Status                     | | Server Address      |
+     | | and Tables                        | | and Tables          |
+     | |                                   | |                     |
+     +-+                                   +-+                     |
+      |                                     |                      |
+
+Note: The configuration of a restarted or replace server must not differ from
+      the configuration the currently running clients originally received. The
+      only exception are the servers physical and logical addresses.
 
 
 
@@ -157,7 +222,10 @@ See "Stage 1 Configuration Frame" for valid address types and lengths.
 
 New Announcement frames are sent as broadcast so that every other client can
 update its ARP and routing table appropriately. In contrast, the Reply
-Announcement frame is sent directly to the new client.
+Announcement frame is sent directly to the new client. A Reply Announcement
+frame is also sent to the server if a client received a Stage 1 Configuration
+frame while already being in operation mode. This occurs when the server is
+restarted or replaced after a failure.
 
 Flags are encoded as follows:
 
@@ -210,7 +278,7 @@ Flags are encoded as follows:
 
   Bit Number | Interpretation if set
  ------------+---------------------------------------------------------------
-       0     | <reserved
+       0     | <reserved>
        1     | server is ready (i.e. will not send an explicit Ready frame)
       2-7    | <reserved>
 
@@ -266,8 +334,25 @@ Heartbeat Frame
  | (1 byte) |
  +----------+
 
-Every client has to send Heartbeat frames with the period specified in the
+Every client has to send Heartbeat frames within the period specified in the
 Stage 2 Configuration frame as unicast to the server.
+
+
+
+Dead Station Frame
+------------------
+
+ +----------+----------------+--------------------+--------------------+
+ |  ID: 8   | Client Address |   Logical Client   |  Physical Client   |
+ | (1 byte) |  Type (1 byte) | Address (variable) | Address (32 bytes) |
+ +----------+----------------+--------------------+--------------------+
+
+See "Stage 1 Configuration Frame" for valid address types and lengths.
+
+When the server detects that a client failed to send a heartbeat frame within
+the specified maximum period, it broadcasts a Dead Station frame to all other
+clients. Every station will then remove the corresponding entries from its ARP
+and routing tables.
 
 
 
@@ -372,7 +457,7 @@ Example
 This examples demonstrates how RTcfg can be used to start a RTnet/RTmac
 network. With the current version 0.6.1, only a common startup is possible.
 Future discipline implementations will also support adding new stations (with
-known addresses!) to the network during runtime. These implementation will
+known addresses!) to the network during runtime. These implementations will
 then benefit from the stage 1 configuration mechanism.
 
 
