@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT([RTnet],[0.6.0],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.6.1],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/config.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
@@ -321,8 +321,8 @@ fi
 if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     AC_MSG_CHECKING([for RTAI 3 installation])
     RTAI_CONFIG="${with_rtai}/bin/rtai-config"
-    if test -f ${RTAI_CONFIG}; then
-        RTAI_DIR=$with_rtai
+    if test -x ${RTAI_CONFIG}; then
+        RTAI_DIR="${with_rtai}"
 	AC_MSG_RESULT([${RTAI_DIR}])
     else
 	CONFIG_RTNET_RTAI_3=n
@@ -330,12 +330,33 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     fi
 fi
 
+
 #
 # from now we think we've found RTAI-3, so if we got en error
 # it will be fatal, thus exit with AC_MSG_ERROR
 #
 
 if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
+#
+# check if rtai-3 is installed with DESTDIR
+# e.g.: 'make DESTDIR=/foo install'
+#
+    AC_MSG_CHECKING([for RTAI 3 DESTDIR])
+    RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix`"
+    if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
+	RTNET_RTAI_DESTDIR="`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,`"
+	export DESTDIR="${RTNET_RTAI_DESTDIR}"
+
+	RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix`"
+	if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
+	    AC_MSG_RESULT([${DESTDIR}])
+	else
+	    AC_MSG_ERROR([*** Cannot identify DESTDIR])
+	fi
+    else
+	AC_MSG_RESULT([/])
+    fi
+
     AC_MSG_CHECKING([for RTAI 3 version])
     CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
@@ -679,14 +700,61 @@ AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 AC_MSG_CHECKING([whether to build loopback driver])
 AC_ARG_ENABLE(loopback,
-	AC_HELP_STRING([--enable-loopback], [build loopback driver (default: enabled)]),
+	AC_HELP_STRING([--enable-loopback], [build loopback driver (default=yes)]),
 	[case "$enableval" in
 	n | no ) CONFIG_RTNET_LOOPBACK=no ;;
-	*) unset CONFIG_RTNET_LOOPBACK ;;
+	*) CONFIG_RTNET_LOOPBACK=yes ;;
 	esac],
 	CONFIG_RTNET_LOOPBACK=yes)
 AC_MSG_RESULT([${CONFIG_RTNET_LOOPBACK:-no}])
 AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
+
+
+dnl ======================================================================
+dnl		RTcfg
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to build RTcfg])
+AC_ARG_ENABLE(rtcfg,
+	AC_HELP_STRING([--enable-rtcfg], [build RTcfg (default=yes)]),
+	[case "$enableval" in
+	n | no ) CONFIG_RTNET_RTCFG=no ;;
+	*) CONFIG_RTNET_RTCFG=yes ;;
+	esac],
+	CONFIG_RTNET_RTCFG=yes)
+AC_MSG_RESULT([${CONFIG_RTNET_RTCFG:-no}])
+AM_CONDITIONAL(CONFIG_RTNET_RTCFG,[test "$CONFIG_RTNET_RTCFG" = "yes"])
+
+AC_MSG_CHECKING([whether to enable RTcfg debug support])
+AC_ARG_ENABLE(rtcfg-dbg,
+	AC_HELP_STRING([--enable-rtcfg-dbg], [enable RTcfg debugging (default=yes)]),
+	[case "$enableval" in
+	n | no ) CONFIG_RTNET_RTCFG_DEBUG=no ;;
+	*) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
+	esac],
+	CONFIG_RTNET_RTCFG_DEBUG=yes)
+AC_MSG_RESULT([${CONFIG_RTNET_RTCFG_DEBUG:-yes}])
+if test "$CONFIG_RTNET_RTCFG_DEBUG" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_RTCFG_DEBUG,1,[RTcfg debug])
+fi
+
+
+dnl ======================================================================
+dnl		RTcap
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to enable RTcap support])
+AC_ARG_ENABLE(rtcap,
+	AC_HELP_STRING([--enable-rtcap], [enable RTcap support and build capturing module]),
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_RTCAP=yes ;;
+	*) unset CONFIG_RTNET_RTCAP ;;
+	esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTCAP:-no}])
+AM_CONDITIONAL(CONFIG_RTNET_RTCAP,[test "$CONFIG_RTNET_RTCAP" = "yes"])
+if test "$CONFIG_RTNET_RTCAP" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_RTCAP,1,[RTcap support])
+fi
 
 
 dnl ======================================================================
@@ -702,6 +770,9 @@ AC_ARG_ENABLE(proxy,
 	esac])
 AC_MSG_RESULT([${CONFIG_RTNET_PROXY:-no}])
 AM_CONDITIONAL(CONFIG_RTNET_PROXY,[test "$CONFIG_RTNET_PROXY" = "yes"])
+if test "$CONFIG_RTNET_PROXY" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_PROXY,1,[rtnetproxy support])
+fi
 
 
 dnl ======================================================================
@@ -710,10 +781,10 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to enable internal bug checks])
 AC_ARG_ENABLE(checks,
-	AC_HELP_STRING([--enable-checks], [enable internal bug checks (default: enabled)]),
+	AC_HELP_STRING([--enable-checks], [enable internal bug checks (default=yes)]),
 	[case "$enableval" in
 	n | no ) CONFIG_RTNET_CHECKED=no ;;
-	*) unset CONFIG_RTNET_CHECKED ;;
+	*) CONFIG_RTNET_CHECKED=yes ;;
 	esac],
 	CONFIG_RTNET_CHECKED=yes)
 AC_MSG_RESULT([${CONFIG_RTNET_CHECKED:-yes}])
@@ -748,6 +819,7 @@ rtmac/examples/mrtt/Makefile \
 rtmac/examples/rtt/Makefile \
 rtcfg/Makefile \
 include/Makefile \
+rtcap/Makefile \
 ])
 
 AC_OUTPUT
