@@ -315,12 +315,12 @@ MODULE_PARM(enable_wol, "1-" __MODULE_STRING(8) "i");
 MODULE_PARM(rx_copybreak, "i");
  *** RTnet ***/
 MODULE_PARM(max_interrupt_work, "i");
+/*** RTnet ***
 MODULE_PARM(compaq_ioaddr, "i");
 MODULE_PARM(compaq_irq, "i");
 MODULE_PARM(compaq_device_id, "i");
-// *** RTnet ***
-//MODULE_PARM(watchdog, "i");
-// *** RTnet ***
+MODULE_PARM(watchdog, "i");
+ *** RTnet ***/
 MODULE_PARM_DESC(debug, "3c59x debug level (0-6)");
 MODULE_PARM_DESC(options, "3c59x: Bits 0-3: media type, bit 4: bus mastering, bit 9: full duplex");
 MODULE_PARM_DESC(full_duplex, "3c59x full duplex setting(s) (1)");
@@ -331,10 +331,12 @@ MODULE_PARM_DESC(enable_wol, "3c59x: Turn on Wake-on-LAN for adapter(s) (0-1)");
 MODULE_PARM_DESC(rx_copybreak, "3c59x copy breakpoint for copy-only-tiny-frames");
  *** RTnet ***/
 MODULE_PARM_DESC(max_interrupt_work, "3c59x maximum events handled per interrupt");
+/*** RTnet ***
 MODULE_PARM_DESC(compaq_ioaddr, "3c59x PCI I/O base address (Compaq BIOS problem workaround)");
 MODULE_PARM_DESC(compaq_irq, "3c59x PCI IRQ number (Compaq BIOS problem workaround)");
 MODULE_PARM_DESC(compaq_device_id, "3c59x PCI device ID (Compaq BIOS problem workaround)");
 MODULE_PARM_DESC(watchdog, "3c59x transmit timeout in milliseconds");
+ *** RTnet ***/
 
 /* Operational parameter that usually are not changed. */
 
