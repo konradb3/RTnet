@@ -1,3 +1,22 @@
+0.8.0
+- TDMA-V2 implementation
+  * multiple slots
+  * packet delay compensation
+  * slave hot plugging
+  * backup master
+- new NIC device driver layer
+  * atomic transmission time stamp
+  * improved locking scheme
+  * layer version tag
+- kernel 2.6 support
+- experimental RTAI/fusion 0.6.5 support
+- source tree reorganisation
+- added NoMAC module as skeleton for new disciplines
+- revised and extended rtnet start script
+- worst-case statistics for rtping
+- read stage 1 data for "rtcfg add" from stdin
+- bug fixes in RTcfg, /proc output, legacy tdma-v1, and some other parts
+
 0.7.1
 - extended RTcfg
   * heartbeat support for clients

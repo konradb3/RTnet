@@ -1,17 +1,18 @@
-                             RTnet Version 0.7.1
+                             RTnet Version 0.8.0
                              ===================
 
 What is it?
 -----------
 RTnet is real-time UDP/IP protocol stack for RTAI (hard real-time Linux
 extension). It provides a standard socket API to be used with RTAI kernel
-modules and LXRT processes, see rtnet.h header file for details.
+modules and LXRT processes.
 
 What are the requirements?
 --------------------------
-- Linux kernel 2.4.x
+- Linux kernel 2.4.x: 2.4.19 or better
+  Linux kernel 2.6.x: 2.6.8.1 or better
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
-  RTAI 3.x: tested on 3.0[r1|r2|r4], LXRT when using user space API
+  RTAI 3.x: tested on 3.0[r1|r2|r4], 3.1, LXRT when using user space API
 - x86 (required for LXRT interface) or PowerPC platform. Other platforms are
   untested yet.
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
@@ -46,8 +47,9 @@ How to install it?
 6. make
 7. make install
    This will create the directories <PREFIX>/sbin with all configuration tools,
-   <PREFIX>/modules containing all core modules, and <PREFIX>/include with the
-   required API header files.
+   <PREFIX>/modules containing all core modules, <PREFIX>/include with the
+   required API header files, and <PREFIX>/etc with a startup configuration
+   file to be used with the <PREFIX>/sbin/rtnet.
 8. run "mknod /dev/rtnet c 10 240" on your target system to create the
    configuration interface device node.
 
@@ -60,12 +62,11 @@ How to test it?
    rtai_ksched/rtai_lxrt, rtai_sem)
 3. Load the driver layer module rtai_rtdm.o (currently, this comes with RTnet,
    see <PREFIX>/modules directory)
-4. Copy tools/rtnet.conf to the target's /etc directories and adapt at least
-   the following parameters: RTNET_PATH, RT_DRIVER, IPADDR, TDMA_MODE,
-   TDMA_CLIENTS.
-5. Run <RTNET_PATH>/sbin/rtnet start
+4. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:
+   RT_DRIVER, IPADDR, TDMA_MODE, TDMA_SLAVES.
+5. Run <PREFIX>/sbin/rtnet start
 6. Run rtping <remote-host> or load an application module
-   (like examples/round_trip_time/run)
+   (like addons/examples/round_trip_time/run)
 
 
 RTnet is free software, and you are welcome to redistribute it under
