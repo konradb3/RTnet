@@ -1058,13 +1058,12 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
                 rtdev->broadcast_ip = bcast;
 
                 if ((tmp = rtdev_get_loopback()) != NULL) {
-                    rt_ip_route_add_host(rtdev->local_ip,
-                                         tmp->dev_addr, tmp);
+                    rt_ip_route_add_host(daddr, tmp->dev_addr, tmp);
                     rtdev_dereference(tmp);
                 }
 
                 if (rtdev->flags & IFF_BROADCAST)
-                    rt_ip_route_add_host(daddr, rtdev->broadcast, rtdev);
+                    rt_ip_route_add_host(bcast, rtdev->broadcast, rtdev);
             }
 
             /* update routing table */
