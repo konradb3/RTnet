@@ -9,4 +9,3 @@ EXTRA_CFLAGS += \
 obj-m += $(build_target).o
 
 rtai_rtdm-objs := $(build_objs)
-

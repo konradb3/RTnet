@@ -14,8 +14,7 @@
 
 @SET_MAKE@
 
-
-SOURCES = $(librtdm_a_SOURCES)
+SOURCES = $(libkernel_rtai_rtdm_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -50,16 +49,16 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
-librtdm_a_AR = $(AR) $(ARFLAGS)
-librtdm_a_LIBADD =
-am_librtdm_a_OBJECTS = rtdm.$(OBJEXT)
-librtdm_a_OBJECTS = $(am_librtdm_a_OBJECTS)
+libkernel_rtai_rtdm_a_AR = $(AR) $(ARFLAGS)
+libkernel_rtai_rtdm_a_LIBADD =
+am_libkernel_rtai_rtdm_a_OBJECTS =  \
+	libkernel_rtai_rtdm_a-rtdm.$(OBJEXT)
+libkernel_rtai_rtdm_a_OBJECTS = $(am_libkernel_rtai_rtdm_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtdm.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -68,8 +67,8 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(librtdm_a_SOURCES)
-DIST_SOURCES = $(librtdm_a_SOURCES)
+SOURCES = $(libkernel_rtai_rtdm_a_SOURCES)
+DIST_SOURCES = $(libkernel_rtai_rtdm_a_SOURCES)
 am__installdirs = "$(DESTDIR)$(includedir)"
 nobase_includeHEADERS_INSTALL = $(install_sh_DATA)
 HEADERS = $(nobase_include_HEADERS)
@@ -231,16 +230,18 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
-noinst_LIBRARIES = librtdm.a
+modext = @RTNET_MODULE_EXT@
+EXTRA_LIBRARIES = libkernel_rtai_rtdm.a
 nobase_include_HEADERS = rtdm.h rtdm_driver.h
-librtdm_a_SOURCES = \
-	rtdm.c
-
-AM_CFLAGS = \
+libkernel_rtai_rtdm_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
 	@RTAI_KMOD_CFLAGS@
 
+libkernel_rtai_rtdm_a_SOURCES = \
+	rtdm.c
+
+OBJS = rtai_rtdm$(modext)
 all: all-am
 
 .SUFFIXES:
@@ -274,13 +275,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-librtdm.a: $(librtdm_a_OBJECTS) $(librtdm_a_DEPENDENCIES) 
-	-rm -f librtdm.a
-	$(librtdm_a_AR) librtdm.a $(librtdm_a_OBJECTS) $(librtdm_a_LIBADD)
-	$(RANLIB) librtdm.a
+libkernel_rtai_rtdm.a: $(libkernel_rtai_rtdm_a_OBJECTS) $(libkernel_rtai_rtdm_a_DEPENDENCIES) 
+	-rm -f libkernel_rtai_rtdm.a
+	$(libkernel_rtai_rtdm_a_AR) libkernel_rtai_rtdm.a $(libkernel_rtai_rtdm_a_OBJECTS) $(libkernel_rtai_rtdm_a_LIBADD)
+	$(RANLIB) libkernel_rtai_rtdm.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -288,7 +286,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtdm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -313,6 +311,30 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_rtai_rtdm_a-rtdm.o: rtdm.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtai_rtdm_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtai_rtdm_a-rtdm.o -MD -MP -MF "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo" -c -o libkernel_rtai_rtdm_a-rtdm.o `test -f 'rtdm.c' || echo '$(srcdir)/'`rtdm.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo" "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Po"; else rm -f "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtdm.c' object='libkernel_rtai_rtdm_a-rtdm.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Po' tmpdepfile='$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtai_rtdm_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtai_rtdm_a-rtdm.o `test -f 'rtdm.c' || echo '$(srcdir)/'`rtdm.c
+
+libkernel_rtai_rtdm_a-rtdm.obj: rtdm.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtai_rtdm_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtai_rtdm_a-rtdm.obj -MD -MP -MF "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo" -c -o libkernel_rtai_rtdm_a-rtdm.obj `if test -f 'rtdm.c'; then $(CYGPATH_W) 'rtdm.c'; else $(CYGPATH_W) '$(srcdir)/rtdm.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo" "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Po"; else rm -f "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtdm.c' object='libkernel_rtai_rtdm_a-rtdm.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Po' tmpdepfile='$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtai_rtdm_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtai_rtdm_a-rtdm.obj `if test -f 'rtdm.c'; then $(CYGPATH_W) 'rtdm.c'; else $(CYGPATH_W) '$(srcdir)/rtdm.c'; fi`
+
+libkernel_rtai_rtdm_a-rtdm.lo: rtdm.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtai_rtdm_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtai_rtdm_a-rtdm.lo -MD -MP -MF "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo" -c -o libkernel_rtai_rtdm_a-rtdm.lo `test -f 'rtdm.c' || echo '$(srcdir)/'`rtdm.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo" "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Plo"; else rm -f "$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtdm.c' object='libkernel_rtai_rtdm_a-rtdm.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.Plo' tmpdepfile='$(DEPDIR)/libkernel_rtai_rtdm_a-rtdm.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtai_rtdm_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtai_rtdm_a-rtdm.lo `test -f 'rtdm.c' || echo '$(srcdir)/'`rtdm.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -426,7 +448,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile $(LIBRARIES) $(HEADERS) all-local
+all-am: GNUmakefile $(HEADERS) all-local
 installdirs:
 	for dir in "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
@@ -457,8 +479,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -507,28 +528,34 @@ ps-am:
 uninstall-am: uninstall-info-am uninstall-nobase_includeHEADERS
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-noinstLIBRARIES ctags \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am \
-	install-exec-local install-info install-info-am install-man \
-	install-nobase_includeHEADERS install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am \
-	uninstall-nobase_includeHEADERS
+	clean-generic clean-libtool clean-local ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-exec \
+	install-exec-am install-exec-local install-info \
+	install-info-am install-man install-nobase_includeHEADERS \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-info-am uninstall-nobase_includeHEADERS
 
 
-rtai_rtdm.o: librtdm.a
+rtai_rtdm.o: libkernel_rtai_rtdm.a
 	$(LD) --whole-archive $< -r -o $@
 
-all-local: rtai_rtdm.o
+rtai_rtdm.ko: @RTNET_KBUILD_ENV@
+rtai_rtdm.ko: $(libkernel_rtai_rtdm_a_SOURCES)
+	@RTNET_KBUILD_CMD@
 
-install-exec-local: rtai_rtdm.o
+all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_rtai_rtdm_a_SOURCES)
+	@RTNET_KBUILD_CLEAN@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
