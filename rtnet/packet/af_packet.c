@@ -207,8 +207,10 @@ int rt_packet_close(struct rtdm_dev_context *context, int call_flags)
     rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
 
     /* free packets in incoming queue */
-    while ((del = rtskb_dequeue(&sock->incoming)) != NULL)
+    while ((del = rtskb_dequeue(&sock->incoming)) != NULL) {
+        rtdev_dereference(del->rtdev);
         kfree_rtskb(del);
+    }
 
     if (ret == 0)
         ret = rt_socket_cleanup(context);
@@ -287,7 +289,7 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context, int call_flags,
     else {
         skb = rtskb_dequeue_chain(&sock->incoming);
         if (skb == NULL)
-            return 0;
+            return -EAGAIN;
     }
 
     eth = skb->mac.ethernet;
