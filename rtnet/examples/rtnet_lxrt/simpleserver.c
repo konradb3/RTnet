@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     if (argc == 2) {
         local_addr.sin_family      = AF_INET;
         local_addr.sin_addr.s_addr = INADDR_ANY;
-        local_addr.sin_port        = htons(atoi(argv[2]));
+        local_addr.sin_port        = htons(atoi(argv[1]));
     } else {
         fprintf(stderr,
                 "Usage: "
@@ -73,10 +73,11 @@ int main(int argc, char *argv[]) {
     }
 
     /* Initialize a real time buddy. */
-    lxrtnettsk = rt_task_init(4800, 1, 0, 0);
+    lxrtnettsk = rt_task_init(4900, 1, 0, 0);
     if (NULL == lxrtnettsk) {
-            printf("CANNOT INIT MASTER TASK\n");
-            exit(1);
+        rt_socket_close(sockfd);
+        printf("CANNOT INIT MASTER TASK\n");
+        exit(1);
     }
 
     /* Switch over to hard realtime mode. */
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);
 
-    printf("Received message: %s\n");
+    printf("Received message: \"%s\"\n");
 
     return 0;
 }
