@@ -497,7 +497,7 @@ int rt_udp_rcv (struct rtskb *skb)
 
 
     rtskb_queue_tail(&rtsk->incoming, skb);
-    rtos_event_broadcast(&rtsk->wakeup_event);
+    rtos_event_signal(&rtsk->wakeup_event);
     if (rtsk->wakeup != NULL)
         rtsk->wakeup(rtsk->fd, rtsk->wakeup_arg);
 
