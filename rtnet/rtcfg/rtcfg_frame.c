@@ -504,7 +504,7 @@ void rtcfg_cleanup_frames(void)
 
     while (rtdev_remove_pack(&rtcfg_packet_type) == -EAGAIN) {
         RTCFG_DEBUG(3, "RTcfg: waiting for protocol unregistration\n");
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 

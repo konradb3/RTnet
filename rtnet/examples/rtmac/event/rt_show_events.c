@@ -144,7 +144,7 @@ int init_module(void)
 void cleanup_module(void)
 {
     while (close_rt(sock) == -EAGAIN) {
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 

@@ -206,7 +206,7 @@ void cleanup_module(void)
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
         printk("raw_packets: Socket busy - waiting...\n");
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 

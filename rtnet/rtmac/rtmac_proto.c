@@ -73,7 +73,7 @@ void rtmac_proto_release(void)
 {
     while (rtdev_remove_pack(&rtmac_packet_type) == -EAGAIN) {
         rtos_print("RTmac: waiting for protocol unregistration\n");
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 }

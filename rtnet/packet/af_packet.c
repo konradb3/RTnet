@@ -454,7 +454,7 @@ void rt_packet_proto_release(void)
 {
     while (rtdm_dev_unregister(&packet_proto_dev) == -EAGAIN) {
         printk("RTnet: waiting for remaining open packet sockets\n");
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* sleep 1 second */
     }
 }

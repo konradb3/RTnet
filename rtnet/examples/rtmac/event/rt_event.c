@@ -261,12 +261,12 @@ void cleanup_module(void)
     rt_free_global_irq(irq);
 
     while (close_rt(sock) == -EAGAIN) {
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
     while (close_rt(tdma) == -EAGAIN) {
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 

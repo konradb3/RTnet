@@ -392,7 +392,7 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
         printk("RTnet: unregistering %s deferred- refcount = %d\n",
                rtdev->name, atomic_read(&rtdev->refcount));
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
 
         spin_lock_bh(&rtnet_devices_nrt_lock);

@@ -256,7 +256,7 @@ void rtnet_unregister_ioctls(struct rtnet_ioctls *ioctls)
     while (atomic_read(&ioctls->ref_count) != 0) {
         write_unlock_bh(&ioctl_handler_lock);
 
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
 
         write_lock_bh(&ioctl_handler_lock);

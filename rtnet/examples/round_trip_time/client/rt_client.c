@@ -210,7 +210,7 @@ void cleanup_module(void)
         stop_rt_timer();
 
     while (close_rt(sock) == -EAGAIN) {
-        set_current_state(TASK_INTERRUPTIBLE);
+        set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
