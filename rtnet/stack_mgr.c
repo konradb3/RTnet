@@ -114,7 +114,7 @@ static void do_stacktask(int mgr_id)
             pt = rt_packets[hash];
 
             skb->nh.raw = skb->data;
-            if (pt)
+            if ((pt != NULL) && (pt->type == skb->protocol))
                 pt->handler(skb, pt);
             else {
                 rt_printk("RTnet: unknown layer-3 protocol\n");
