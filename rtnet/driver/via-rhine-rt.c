@@ -212,7 +212,7 @@ static const int multicast_filter_limit = 32;
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "<driver> number of cards to be supported");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
 /*** RTnet ***/
 
 /* These identify the driver base version and may not be removed. */

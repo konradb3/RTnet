@@ -179,7 +179,7 @@
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "<driver> number of cards to be supported");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
 /*** RTnet ***/
 
 #define DRV_NAME	"natsemi-rt"

@@ -63,7 +63,7 @@ DRV_NAME ".c:v" DRV_VERSION " " DRV_RELDATE " Jan.Kiszka@web.de\n";
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "pcnet32 number of cards to be supported");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
 /*** RTnet ***/
 
 /*

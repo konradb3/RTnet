@@ -277,7 +277,7 @@ static int vortex_debug = 1;
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "rc59x number of cards to be supported");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
 // *** RTnet ***
 
 /* Kernel compatibility defines, some common to David Hinds' PCMCIA package.

@@ -50,7 +50,7 @@ static int cards = INT_MAX;
 static unsigned int rx_pool_size = DEFAULT_RX_POOL_SIZE;
 MODULE_PARM(cards, "i");
 MODULE_PARM(rx_pool_size, "i");
-MODULE_PARM_DESC(cards, "rtl8139 number of cards to be supported");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
 MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 // *** RTnet ***
 

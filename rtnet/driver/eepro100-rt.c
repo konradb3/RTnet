@@ -130,7 +130,7 @@ static int debug = -1;			/* The debug level */
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "eepro100 number of cards to be supported");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
 // *** RTnet ***
 
 MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
