@@ -38,6 +38,28 @@ How to test it?
 
 For more details see run-scripts in <RTAI-DIR>/rtnet/examples/round_trip_time
 
+How to use RTmac? (a very very short guide!)
+-----------------
+I assume that rtnet module has been loaded and configured(rtifconfig).
+1. Load rtmac:
+	# modprobe rtmac dev=eth1
+   Assumed that your realtime device is eth1.
+2. On client stations:
+	# rtifconfig eth1 mac client
+3. On the server station:
+	# rtifconfig eth1 mac master <cycle-time/us> [<mtu-size/byte>]
+	# rtifconfig eth1 mac add <ip_client1>
+	# rtifconfig eth1 mac add <ip_client2>
+	# ...
+	# rtifconfig eth1 mac up
+	# rtifconfig eth1 mac offset <ip_client1> <offset/us>
+	# rtifconfig eth1 mac offset <ip_client2> <offset/us>
+	# ...
+4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
+
+More details about RTmac coming soon...
+
+
 RTnet is free software, and you are welcome to redistribute it under 
 the terms of the GNU General Public License. This program comes with 
 ABSOLUTELY NO WARRANTY. See "LICENSE" for details.
