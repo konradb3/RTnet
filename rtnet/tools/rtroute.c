@@ -32,12 +32,12 @@
 #include <netinet/in.h>
 #include <netinet/ether.h>
 
-#include <rtnet_chrdev.h>
+#include <ipv4.h>
 
 
-int                     f;
-struct rtnet_core_cmd   cmd;
-struct in_addr          addr;
+int             f;
+struct ipv4_cmd cmd;
+struct in_addr  addr;
 
 
 void help(void)
@@ -196,7 +196,6 @@ void route_delete(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    __u32       ip_addr;
     const char  rtnet_dev[] = "/dev/rtnet";
 
 
