@@ -56,6 +56,7 @@ static int rtnet_mgr_read_proc (char *page, char **start,
 {
     PROC_PRINT_VARS;
     struct rtnet_device *rtdev;
+    unsigned int rtskb_len;
 
     PROC_PRINT("\nRTnet\n\n");
     PROC_PRINT("Devices:\n");
@@ -66,10 +67,13 @@ static int rtnet_mgr_read_proc (char *page, char **start,
             rtdev->rxqueue_len);
     }
 
-    PROC_PRINT("rtskbpool low/high water mark: %d / %d \n"
-               "rtskbs in pool/allocated/max: %d / %d / %d\n\n",
-               rtskb_pool_min, rtskb_pool_max,
-               rtskb_pool.qlen, rtskb_amount, rtskb_amount_max);
+    rtskb_len = ALIGN_RTSKB_LEN + SKB_DATA_ALIGN(rtskb_max_size);
+    PROC_PRINT("rtskb pools current/max:       %d / %d\n"
+               "rtskbs current/max:            %d / %d\n"
+               "rtskb memory need current/max: %d / %d\n\n",
+               rtskb_pools, rtskb_pools_max,
+               rtskb_amount, rtskb_amount_max,
+               rtskb_amount * rtskb_len, rtskb_amount_max * rtskb_len);
 
     PROC_PRINT_DONE;
 }
@@ -108,7 +112,7 @@ int rtnet_init(void)
     printk("RTnet: init real-time networking\n");
     init_crc32();
 
-    if ( (err=rtskb_pool_init()) )
+    if ( (err=rtskb_global_pool_init()) )
         return err;
 
     rtsockets_init();
@@ -151,7 +155,7 @@ void rtnet_release(void)
     rt_inet_proto_release();
     rtnet_dev_release();
     rtsockets_release();
-    rtskb_pool_release();
+    rtskb_global_pool_release();
 
     cleanup_crc32();
 }
