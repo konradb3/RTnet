@@ -43,7 +43,7 @@ void rtcfg_timer(int ifindex)
     int                     ret;
 
 
-    while (1) {
+    while (!(rtcfg_dev->flags & FLAG_TIMER_SHUTDOWN)) {
         rtos_res_lock(&rtcfg_dev->dev_lock);
 
         if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
@@ -83,4 +83,6 @@ void rtcfg_timer(int ifindex)
 
         rtos_task_wait_period();
     }
+
+    rtcfg_dev->flags &= ~FLAG_TIMER_STARTED;
 }

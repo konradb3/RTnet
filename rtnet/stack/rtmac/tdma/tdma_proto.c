@@ -35,6 +35,7 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     struct rtnet_device     *rtdev = tdma->rtdev;
     struct rtskb            *rtskb;
     struct tdma_frm_sync    *sync;
+    nanosecs_t              offs_ns;
 
 
     rtskb = alloc_rtskb(rtdev->hard_header_len + sizeof(struct rtmac_hdr) +
@@ -57,10 +58,12 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     sync->head.version = __constant_htons(TDMA_FRM_VERSION);
     sync->head.id      = __constant_htons(TDMA_FRM_SYNC);
 
+    offs_ns = rtos_time_to_nanosecs(&tdma->clock_offset);
+
     sync->cycle_no         = htonl(tdma->current_cycle);
-    sync->xmit_stamp       = rtos_time_to_nanosecs(&tdma->clock_offset);
-    sync->sched_xmit_stamp =
-        cpu_to_be64(rtos_time_to_nanosecs(&tdma->current_cycle_start));
+    sync->xmit_stamp       = offs_ns;
+    sync->sched_xmit_stamp = cpu_to_be64(offs_ns +
+        rtos_time_to_nanosecs(&tdma->current_cycle_start));
 
     rtskb->xmit_stamp = &sync->xmit_stamp;
 
@@ -220,8 +223,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             rtos_time_diff(&clock_offset, &clock_offset, &rtskb->time_stamp);
 
             rtos_nanosecs_to_time(
-                be64_to_cpu(SYNC_FRM(head)->sched_xmit_stamp),
-                &cycle_start);
+                be64_to_cpu(SYNC_FRM(head)->sched_xmit_stamp), &cycle_start);
             rtos_time_diff(&cycle_start, &cycle_start, &clock_offset);
 
             rtos_spin_lock_irqsave(&tdma->lock, flags);

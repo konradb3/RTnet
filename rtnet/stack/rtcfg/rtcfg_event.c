@@ -658,10 +658,16 @@ void rtcfg_cleanup_state_machines(void)
         rtcfg_dev = &device[i];
 
         if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
-    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
-            rt_task_wakeup_sleeping(&rtcfg_dev->timer_task);
-#endif
+            rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
+            rtos_task_wakeup(&rtcfg_dev->timer_task);
+
+            while (((volatile unsigned int)rtcfg_dev->flags) &
+                   FLAG_TIMER_STARTED) {
+                RTCFG_DEBUG(3, "RTcfg: waiting for timer shutdown\n");
+                set_current_state(TASK_UNINTERRUPTIBLE);
+                schedule_timeout(HZ/10); /* wait 100 ms */
+            }
+
             rtos_task_delete(&rtcfg_dev->timer_task);
         }
 

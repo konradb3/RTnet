@@ -31,16 +31,14 @@ void tdma_task_shutdown(struct rtmac_tdma *tdma)
     if (tdma->flags.task_active == 1) {
         tdma->flags.shutdown_task = 1;
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
         /* RTAI-specific:
          * In case the application has stopped the timer, it's
          * likely that the tx_task will be waiting forever in
-         * rt_task_wait_period(). So we wakeup the task here for
+         * rtos_task_wait_period(). So we wakeup the task here for
          * sure.
          * -WY-
          */
-        rt_task_wakeup_sleeping(&tdma->tx_task);
-#endif
+        rtos_task_wakeup(&tdma->tx_task);
 
         /*
          * unblock all tasks

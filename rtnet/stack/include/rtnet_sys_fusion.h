@@ -188,6 +188,11 @@ static inline int rtos_task_resume(rtos_task_t *task)
     return rt_task_resume(task);
 }
 
+static inline int rtos_task_wakeup(rtos_task_t *task)
+{
+    return rt_task_unblock(task);
+}
+
 static inline void rtos_task_delete(rtos_task_t *task)
 {
     rt_task_delete(task);

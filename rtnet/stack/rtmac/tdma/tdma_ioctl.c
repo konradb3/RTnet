@@ -63,7 +63,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     cycle_ms = cfg->args.master.cycle_period;
     do_div(cycle_ms, 1000000);
     set_current_state(TASK_UNINTERRUPTIBLE);
-    schedule_timeout((HZ/1000000) * 3*cycle_ms);
+    schedule_timeout((HZ/1000) * 3*cycle_ms);
 
     if (rtskb_pool_init(&tdma->cal_rtskb_pool,
                         cfg->args.master.max_cal_requests) !=
@@ -359,7 +359,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_MASTER, &tdma->flags)) {
-            u32         cycle_no = tdma->current_cycle;
+            u32         cycle_no = (volatile u32)tdma->current_cycle;
             nanosecs_t  cycle_ms;
 
 
@@ -369,11 +369,11 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
             else
                 tdma->sync_job.id = XMIT_SYNC;
 
-            /* wait one cycle period for the mode switch */
+            /* wait two cycle periods for the mode switch */
             cycle_ms = rtos_time_to_nanosecs(&tdma->cycle_period);
             do_div(cycle_ms, 1000000);
             set_current_state(TASK_UNINTERRUPTIBLE);
-            schedule_timeout((HZ/1000000)*cycle_ms);
+            schedule_timeout(2 * (HZ*(unsigned int)cycle_ms)/1000);
 
             /* catch the very unlikely case that the current master died
                while we just switched the mode */

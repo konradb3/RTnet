@@ -35,6 +35,7 @@
 
 
 #define FLAG_TIMER_STARTED          0x00010000
+#define FLAG_TIMER_SHUTDOWN         0x00020000
 
 
 typedef enum {

@@ -125,7 +125,7 @@ void do_master(int argc, char *argv[])
     for (i = 4; i < argc; i++) {
         if (strcmp(argv[i], "-b") == 0)
             tdma_cfg.args.master.backup_sync_offset =
-                getintopt(argc, ++i, argv, 0);
+                getintopt(argc, ++i, argv, 0) * 1000;
         else if (strcmp(argv[i], "-c") == 0)
             tdma_cfg.args.master.cal_rounds = getintopt(argc, ++i, argv, 0);
         else if (strcmp(argv[i], "-i") == 0)

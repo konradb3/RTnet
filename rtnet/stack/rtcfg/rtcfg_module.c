@@ -92,17 +92,17 @@ int __init rtcfg_init(void)
 
 void rtcfg_cleanup(void)
 {
-#ifdef CONFIG_RTOS_STARTSTOP_TIMER
-    if (start_timer)
-        rtos_timer_stop();
-#endif
-
 #ifdef CONFIG_PROC_FS
     rtcfg_cleanup_proc();
 #endif
     rtcfg_cleanup_frames();
     rtcfg_cleanup_state_machines();
     rtcfg_cleanup_ioctls();
+
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
+    if (start_timer)
+        rtos_timer_stop();
+#endif
 
     printk("RTcfg: unloaded\n");
 }
