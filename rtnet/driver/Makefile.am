@@ -11,6 +11,7 @@ EXTRA_LIBRARIES = \
 	lib8139too-rt.a \
 	libeepro100-rt.a \
 	libpcnet32-rt.a \
+	libvia-rhine-rt.a \
 	libloopback-rt.a \
 	libmpc8260_fcc_enet-rt.a \
 	libmpc8xx_enet-rt.a \
@@ -36,6 +37,11 @@ endif
 if CONFIG_RTNET_PCNET32
 libpcnet32_rt_a_SOURCES = pcnet32-rt.c
 OBJS += pcnet32-rt.o
+endif
+
+if CONFIG_RTNET_VIA_RHINE
+libvia_rhine_rt_a_SOURCES = via-rhine-rt.c
+OBJS += via-rhine-rt.o
 endif
 
 if CONFIG_RTNET_LOOPBACK

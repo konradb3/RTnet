@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM AWK SET_MAKE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP LN_S RANLIB ac_ct_RANLIB LXRT_LIBS NCURSES_LIBS EGREP LIBOBJS RTAI_DIR RTAI_KMOD_CFLAGS RTAI_CFLAGS KERNEL_CFLAGS CROSS_COMPILE CONFIG_RTNET_RTSKB_USE_KMALLOC_TRUE CONFIG_RTNET_RTSKB_USE_KMALLOC_FALSE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM AWK SET_MAKE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP LN_S RANLIB ac_ct_RANLIB LXRT_LIBS NCURSES_LIBS EGREP LIBOBJS RTAI_DIR RTAI_KMOD_CFLAGS RTAI_CFLAGS KERNEL_CFLAGS CROSS_COMPILE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_VIA_RHINE_TRUE CONFIG_RTNET_VIA_RHINE_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -854,11 +854,11 @@ Optional Features:
                           (and sometimes confusing) to the casual installer
   --disable-dependency-tracking Speeds up one-time builds
   --enable-dependency-tracking  Do not reject slow dependency extractors
-  --enable-rtskb-kmalloc use kmalloc instead of rt_malloc for creating/extending rtskb pools
   --enable-3c59x         build 3Com 59x driver
   --enable-8139          build Realtek 8139 driver
   --enable-eepro100      build Intel EtherExpressPro/100 driver
   --enable-pcnet32       build AMD PCnet32 driver
+  --enable-via-rhine     build VIA Rhine driver
   --enable-loopback      build loopback driver
   --enable-tulip         build tulip driver
   --enable-fcc-enet      build fcc enet driver
@@ -4784,35 +4784,8 @@ echo $ECHO_N "checking $RTAI_DIR/.config... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: done" >&5
 echo "${ECHO_T}done" >&6
 
-echo "$as_me:$LINENO: checking whether to use kmalloc for rtskb pools" >&5
-echo $ECHO_N "checking whether to use kmalloc for rtskb pools... $ECHO_C" >&6
-# Check whether --enable-rtskb-kmalloc or --disable-rtskb-kmalloc was given.
-if test "${enable_rtskb_kmalloc+set}" = set; then
-  enableval="$enable_rtskb_kmalloc"
-  case "$enableval" in
-	y | yes ) CONFIG_RTNET_RTSKB_USE_KMALLOC=yes;;
-	*) unset CONFIG_RTNET_RTSKB_USE_KMALLOC ;;
-	esac
-fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTSKB_USE_KMALLOC:-no}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTSKB_USE_KMALLOC:-no}" >&6
-
-
-if test "$CONFIG_RTNET_RTSKB_USE_KMALLOC" = "yes"; then
-  CONFIG_RTNET_RTSKB_USE_KMALLOC_TRUE=
-  CONFIG_RTNET_RTSKB_USE_KMALLOC_FALSE='#'
-else
-  CONFIG_RTNET_RTSKB_USE_KMALLOC_TRUE='#'
-  CONFIG_RTNET_RTSKB_USE_KMALLOC_FALSE=
-fi
-
-
-if test "$CONFIG_RTNET_RTSKB_USE_KMALLOC" = "yes"; then
-	CFLAGS="${CFLAGS} -DCONFIG_RTNET_RTSKB_USE_KMALLOC"
-elif test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
-	{ { echo "$as_me:$LINENO: error: *** RTAI memory manager uses vmalloc. Disable this feature or configure RTnet with --enable-rtskb-kmalloc" >&5
-echo "$as_me: error: *** RTAI memory manager uses vmalloc. Disable this feature or configure RTnet with --enable-rtskb-kmalloc" >&2;}
-   { (exit 1); exit 1; }; }
+if test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
+	CFLAGS="${CFLAGS} -DCONFIG_RTAI_MM_VMALLOC"
 fi
 
 
@@ -4910,6 +4883,30 @@ if test "$CONFIG_RTNET_PCNET32" = "yes"; then
 else
   CONFIG_RTNET_PCNET32_TRUE='#'
   CONFIG_RTNET_PCNET32_FALSE=
+fi
+
+
+
+echo "$as_me:$LINENO: checking whether to build VIA Rhine driver" >&5
+echo $ECHO_N "checking whether to build VIA Rhine driver... $ECHO_C" >&6
+# Check whether --enable-via-rhine or --disable-via-rhine was given.
+if test "${enable_via_rhine+set}" = set; then
+  enableval="$enable_via_rhine"
+  case "$enableval" in
+	y | yes ) CONFIG_RTNET_VIA_RHINE=yes;;
+	*) unset CONFIG_RTNET_VIA_RHINE ;;
+	esac
+fi;
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_VIA_RHINE:-no}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_VIA_RHINE:-no}" >&6
+
+
+if test "$CONFIG_RTNET_VIA_RHINE" = "yes"; then
+  CONFIG_RTNET_VIA_RHINE_TRUE=
+  CONFIG_RTNET_VIA_RHINE_FALSE='#'
+else
+  CONFIG_RTNET_VIA_RHINE_TRUE='#'
+  CONFIG_RTNET_VIA_RHINE_FALSE=
 fi
 
 
@@ -5148,13 +5145,6 @@ echo "$as_me: error: conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_RTSKB_USE_KMALLOC_TRUE}" && test -z "${CONFIG_RTNET_RTSKB_USE_KMALLOC_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_RTSKB_USE_KMALLOC\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_RTSKB_USE_KMALLOC\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
 if test -z "${CONFIG_RTNET_3C59X_TRUE}" && test -z "${CONFIG_RTNET_3C59X_FALSE}"; then
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_3C59X\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
@@ -5180,6 +5170,13 @@ if test -z "${CONFIG_RTNET_PCNET32_TRUE}" && test -z "${CONFIG_RTNET_PCNET32_FAL
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_PCNET32\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"CONFIG_RTNET_PCNET32\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTNET_VIA_RHINE_TRUE}" && test -z "${CONFIG_RTNET_VIA_RHINE_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_VIA_RHINE\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_RTNET_VIA_RHINE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -5825,8 +5822,6 @@ s,@RTAI_KMOD_CFLAGS@,$RTAI_KMOD_CFLAGS,;t t
 s,@RTAI_CFLAGS@,$RTAI_CFLAGS,;t t
 s,@KERNEL_CFLAGS@,$KERNEL_CFLAGS,;t t
 s,@CROSS_COMPILE@,$CROSS_COMPILE,;t t
-s,@CONFIG_RTNET_RTSKB_USE_KMALLOC_TRUE@,$CONFIG_RTNET_RTSKB_USE_KMALLOC_TRUE,;t t
-s,@CONFIG_RTNET_RTSKB_USE_KMALLOC_FALSE@,$CONFIG_RTNET_RTSKB_USE_KMALLOC_FALSE,;t t
 s,@CONFIG_RTNET_3C59X_TRUE@,$CONFIG_RTNET_3C59X_TRUE,;t t
 s,@CONFIG_RTNET_3C59X_FALSE@,$CONFIG_RTNET_3C59X_FALSE,;t t
 s,@CONFIG_RTNET_8139_TRUE@,$CONFIG_RTNET_8139_TRUE,;t t
@@ -5835,6 +5830,8 @@ s,@CONFIG_RTNET_EEPRO100_TRUE@,$CONFIG_RTNET_EEPRO100_TRUE,;t t
 s,@CONFIG_RTNET_EEPRO100_FALSE@,$CONFIG_RTNET_EEPRO100_FALSE,;t t
 s,@CONFIG_RTNET_PCNET32_TRUE@,$CONFIG_RTNET_PCNET32_TRUE,;t t
 s,@CONFIG_RTNET_PCNET32_FALSE@,$CONFIG_RTNET_PCNET32_FALSE,;t t
+s,@CONFIG_RTNET_VIA_RHINE_TRUE@,$CONFIG_RTNET_VIA_RHINE_TRUE,;t t
+s,@CONFIG_RTNET_VIA_RHINE_FALSE@,$CONFIG_RTNET_VIA_RHINE_FALSE,;t t
 s,@CONFIG_RTNET_LOOPBACK_TRUE@,$CONFIG_RTNET_LOOPBACK_TRUE,;t t
 s,@CONFIG_RTNET_LOOPBACK_FALSE@,$CONFIG_RTNET_LOOPBACK_FALSE,;t t
 s,@CONFIG_RTNET_TULIP_TRUE@,$CONFIG_RTNET_TULIP_TRUE,;t t

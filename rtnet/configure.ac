@@ -260,20 +260,8 @@ AC_MSG_CHECKING([$RTAI_DIR/.config])
 . $RTAI_DIR/.config
 AC_MSG_RESULT([done])
 
-AC_MSG_CHECKING(whether to use kmalloc for rtskb pools)
-AC_ARG_ENABLE(rtskb-kmalloc,
-	[  --enable-rtskb-kmalloc use kmalloc instead of rt_malloc for creating/extending rtskb pools],
-	[case "$enableval" in
-	y | yes ) CONFIG_RTNET_RTSKB_USE_KMALLOC=yes;;
-	*) unset CONFIG_RTNET_RTSKB_USE_KMALLOC ;;
-	esac])
-AC_MSG_RESULT(${CONFIG_RTNET_RTSKB_USE_KMALLOC:-no})
-AM_CONDITIONAL(CONFIG_RTNET_RTSKB_USE_KMALLOC,[test "$CONFIG_RTNET_RTSKB_USE_KMALLOC" = "yes"])
-
-if test "$CONFIG_RTNET_RTSKB_USE_KMALLOC" = "yes"; then
-	CFLAGS="${CFLAGS} -DCONFIG_RTNET_RTSKB_USE_KMALLOC"
-elif test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
-	AC_MSG_ERROR(*** RTAI memory manager uses vmalloc. Disable this feature or configure RTnet with --enable-rtskb-kmalloc)
+if test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
+	CFLAGS="${CFLAGS} -DCONFIG_RTAI_MM_VMALLOC"
 fi
 
 
@@ -324,6 +312,17 @@ AC_ARG_ENABLE(pcnet32,
 	esac])
 AC_MSG_RESULT(${CONFIG_RTNET_PCNET32:-no})
 AM_CONDITIONAL(CONFIG_RTNET_PCNET32,[test "$CONFIG_RTNET_PCNET32" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build VIA Rhine driver)
+AC_ARG_ENABLE(via-rhine,
+	[  --enable-via-rhine     build VIA Rhine driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_VIA_RHINE=yes;;
+	*) unset CONFIG_RTNET_VIA_RHINE ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_VIA_RHINE:-no})
+AM_CONDITIONAL(CONFIG_RTNET_VIA_RHINE,[test "$CONFIG_RTNET_VIA_RHINE" = "yes"])
 
 
 AC_MSG_CHECKING(whether to build loopback driver)
