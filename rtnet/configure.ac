@@ -1143,6 +1143,7 @@ if test x$CONFIG_KBUILD = xy; then
 	stack/rtcfg \
 	stack/rtmac \
 	stack/rtmac/nomac \
+	stack/rtmac/tdma \
 	stack/rtmac/tdma-v1 \
 	; do
 	    AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
@@ -1206,6 +1207,7 @@ AC_CONFIG_FILES([ \
     stack/rtcfg/GNUmakefile \
     stack/rtmac/GNUmakefile \
     stack/rtmac/nomac/GNUmakefile \
+    stack/rtmac/tdma/GNUmakefile \
     stack/rtmac/tdma-v1/GNUmakefile \
     \
     tools/GNUmakefile \

@@ -8,7 +8,7 @@ if CONFIG_RTNET_NOMAC
 OPTPROGS += nomaccfg
 endif
 
-sbin_PROGRAMS = rtifconfig rtroute rtping $(OPTPROGS)
+sbin_PROGRAMS = rtifconfig rtroute rtping tdmacfg $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \

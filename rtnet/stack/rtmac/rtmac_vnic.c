@@ -154,7 +154,7 @@ static int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
            data_len);
 
     res = rtmac_add_header(rtdev, ethernet->h_dest, rtskb,
-                           ntohs(ethernet->h_proto));
+                           ntohs(ethernet->h_proto), RTMAC_FLAG_TUNNEL);
     if (res < 0) {
         stats->tx_dropped++;
         kfree_rtskb(rtskb);

@@ -1,23 +1,27 @@
-/* rtskb.h
+/***
  *
- * RTnet - real-time networking subsystem
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>,
- *               2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  include/rtskb.h
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  RTnet - real-time networking subsystem
+ *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>,
+ *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #ifndef __RTSKB_H_
 #define __RTSKB_H_
 
@@ -340,7 +344,23 @@ static inline void rtskb_queue_head(struct rtskb_queue *queue, struct rtskb *skb
 }
 
 /***
+ *  __rtskb_prio_queue_head - insert a buffer at the prioritized queue head
+ *                            (w/o locks)
+ *  @queue: queue to use
+ *  @skb: buffer to queue
+ */
+static inline void __rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
+                                           struct rtskb *skb)
+{
+    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
+
+    __rtskb_queue_head(&prioqueue->queue[skb->priority], skb);
+    __set_bit(skb->priority, &prioqueue->usage);
+}
+
+/***
  *  rtskb_prio_queue_head - insert a buffer at the prioritized queue head
+ *                          (lock protected)
  *  @queue: queue to use
  *  @skb: buffer to queue
  */
@@ -349,11 +369,8 @@ static inline void rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
 {
     unsigned long flags;
 
-    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
-
     rtos_spin_lock_irqsave(&prioqueue->lock, flags);
-    __rtskb_queue_head(&prioqueue->queue[skb->priority], skb);
-    __set_bit(skb->priority, &prioqueue->usage);
+    __rtskb_prio_queue_head(prioqueue, skb);
     rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 }
 
@@ -381,7 +398,8 @@ static inline void __rtskb_queue_tail(struct rtskb_queue *queue,
  *  @queue: queue to use
  *  @skb: buffer to queue
  */
-static inline void rtskb_queue_tail(struct rtskb_queue *queue, struct rtskb *skb)
+static inline void rtskb_queue_tail(struct rtskb_queue *queue,
+                                    struct rtskb *skb)
 {
     unsigned long flags;
 
@@ -391,7 +409,23 @@ static inline void rtskb_queue_tail(struct rtskb_queue *queue, struct rtskb *skb
 }
 
 /***
+ *  __rtskb_prio_queue_tail - insert a buffer at the prioritized queue tail
+ *                            (w/o locks)
+ *  @prioqueue: queue to use
+ *  @skb: buffer to queue
+ */
+static inline void __rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
+                                           struct rtskb *skb)
+{
+    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
+
+    __rtskb_queue_tail(&prioqueue->queue[skb->priority], skb);
+    __set_bit(skb->priority, &prioqueue->usage);
+}
+
+/***
  *  rtskb_prio_queue_tail - insert a buffer at the prioritized queue tail
+ *                          (lock protected)
  *  @prioqueue: queue to use
  *  @skb: buffer to queue
  */
@@ -400,11 +434,8 @@ static inline void rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
 {
     unsigned long flags;
 
-    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
-
     rtos_spin_lock_irqsave(&prioqueue->lock, flags);
-    __rtskb_queue_tail(&prioqueue->queue[skb->priority], skb);
-    __set_bit(skb->priority, &prioqueue->usage);
+    __rtskb_prio_queue_tail(prioqueue, skb);
     rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 }
 
@@ -441,17 +472,17 @@ static inline struct rtskb *rtskb_dequeue(struct rtskb_queue *queue)
 }
 
 /***
- *  rtskb_prio_dequeue - remove from the head of the prioritized queue
+ *  __rtskb_prio_dequeue - remove from the head of the prioritized queue
+ *                         (w/o locks)
  *  @prioqueue: queue to remove from
  */
-static inline struct rtskb *rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueue)
+static inline struct rtskb *
+    __rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueue)
 {
-    unsigned long flags;
     int prio;
     struct rtskb *result = NULL;
     struct rtskb_queue *sub_queue;
 
-    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
     if (prioqueue->usage) {
         prio      = ffz(~prioqueue->usage);
         sub_queue = &prioqueue->queue[prio];
@@ -459,6 +490,23 @@ static inline struct rtskb *rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueu
         if (rtskb_queue_empty(sub_queue))
             __change_bit(prio, &prioqueue->usage);
     }
+
+    return result;
+}
+
+/***
+ *  rtskb_prio_dequeue - remove from the head of the prioritized queue
+ *                       (lock protected)
+ *  @prioqueue: queue to remove from
+ */
+static inline struct rtskb *
+    rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueue)
+{
+    unsigned long flags;
+    struct rtskb *result;
+
+    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
+    result = __rtskb_prio_dequeue(prioqueue);
     rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
 
     return result;

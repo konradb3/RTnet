@@ -1,22 +1,25 @@
-/* rtmac_proto.c
+/***
  *
- * rtmac - real-time networking media access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
- *               2003 Jan Kiszka <Jan.Kiszka@web.de>
+ *  rtmac/rtmac_proto.c
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  rtmac - real-time networking media access control subsystem
+ *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 
@@ -49,10 +52,11 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
         goto error;
     }
 
-    if (disc->disc_type == hdr->type)
+    if (hdr->flags & RTMAC_FLAG_TUNNEL) {
+        if (skb->rtdev->mac_priv->vnic_used)
+            return rtmac_vnic_rx(skb, hdr->type);
+    } else if (disc->disc_type == hdr->type)
         return disc->packet_rx(skb);
-    else if (skb->rtdev->mac_priv->vnic_used)
-        return rtmac_vnic_rx(skb, hdr->type);
 
   error:
     kfree_rtskb(skb);

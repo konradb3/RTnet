@@ -45,7 +45,9 @@
 
 
 /* basic types */
-typedef RTIME      rtos_time_t;       /* high precision time */
+typedef struct {
+    RTIME          val;               /* high precision time */
+} rtos_time_t;
 typedef spinlock_t rtos_spinlock_t;   /* spin locks with hard IRQ locks */
 typedef RT_TASK    rtos_task_t;       /* hard real-time task */
 typedef SEM        rtos_event_t;      /* to signal events (non-storing) */
@@ -65,36 +67,44 @@ typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
 /* time handling */
 static inline void rtos_get_time(rtos_time_t *time)
 {
-    *time = rt_get_time();
+    time->val = rt_get_time();
 }
 
 
 static inline void rtos_nanosecs_to_time(nanosecs_t nano, rtos_time_t *time)
 {
-    *time = nano2count(nano);
+    time->val = nano2count(nano);
 }
 
 static inline nanosecs_t rtos_time_to_nanosecs(rtos_time_t *time)
 {
-    return (nanosecs_t)count2nano(*time);
+    return (nanosecs_t)count2nano(time->val);
 }
 
 
 static inline void rtos_time_to_timeval(rtos_time_t *time,
                                         struct timeval *tval)
 {
-    count2timeval(*time, tval);
+    count2timeval(time->val, tval);
 }
 
 
 static inline void rtos_time_sum(rtos_time_t *result,
                                  rtos_time_t *a, rtos_time_t *b)
 {
-    *result = *a + *b;
+    result->val = a->val + b->val;
 }
 
-#define RTOS_TIME_IS_ZERO(time)    (*(time) == 0)
-#define RTOS_TIME_IS_BEFORE(a, b)  (*(a) <= *(b))
+
+static inline void rtos_time_diff(rtos_time_t *result,
+                                  rtos_time_t *a, rtos_time_t *b)
+{
+    result->val = a->val - b->val;
+}
+
+#define RTOS_TIME_IS_ZERO(time)     ((time)->val == 0)
+#define RTOS_TIME_IS_BEFORE(a, b)   ((a)->val < (b)->val)
+#define RTOS_TIME_EQUALS(a, b)      ((a)->val == (b)->val)
 
 
 
@@ -136,7 +146,11 @@ static inline int rtos_task_init(rtos_task_t *task, void (*task_proc)(int),
     if (ret < 0)
         return ret;
 
-    return rt_task_resume(task);
+    ret = rt_task_resume(task);
+    if (ret < 0)
+        rt_task_delete(task);
+
+    return ret;
 }
 
 static inline int rtos_task_init_periodic(rtos_task_t *task,
@@ -149,12 +163,21 @@ static inline int rtos_task_init_periodic(rtos_task_t *task,
     if (ret < 0)
         return ret;
 
-    return rt_task_make_periodic(task, rt_get_time(), *period);
+    ret = rt_task_make_periodic(task, rt_get_time(), period->val);
+    if (ret < 0)
+        rt_task_delete(task);
+
+    return ret;
 }
 
 static inline void rtos_task_delete(rtos_task_t *task)
 {
     rt_task_delete(task);
+}
+
+static inline int rtos_task_set_priority(rtos_task_t *task, int priority)
+{
+    return rt_change_prio(task, priority);
 }
 
 
@@ -163,7 +186,7 @@ static inline void rtos_task_delete(rtos_task_t *task)
 
 static inline void rtos_task_sleep_until(rtos_time_t *wakeup_time)
 {
-    rt_sleep_until(*wakeup_time);
+    rt_sleep_until(wakeup_time->val);
 }
 
 
@@ -231,7 +254,7 @@ static inline int rtos_event_sem_wait(rtos_event_sem_t *event)
 static inline int rtos_event_sem_wait_timed(rtos_event_sem_t *event,
                                             rtos_time_t *timeout)
 {
-    return rt_sem_wait_timed(event, *timeout);
+    return rt_sem_wait_timed(event, timeout->val);
 }
 
 

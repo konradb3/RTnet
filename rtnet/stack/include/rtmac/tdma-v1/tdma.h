@@ -288,7 +288,7 @@ static inline struct rtskb *tdma_make_msg_len(struct rtnet_device *rtdev,
     /*
      * add rtmac and ethernet headers
      */
-    if (rtmac_add_header(rtdev, daddr, skb, ETH_TDMA) <0 )
+    if (rtmac_add_header(rtdev, daddr, skb, ETH_TDMA, 0) <0 )
         goto out;
 
     /*
