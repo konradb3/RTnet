@@ -28,8 +28,8 @@
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
+#include <rtnet_sys.h>
+#include <rtnet.h>
 
 #include <../netshm.h>
 
@@ -50,9 +50,9 @@ MODULE_PARM_DESC(shm_local_offs, "first modifiable integer value");
 
 MODULE_LICENSE("GPL");
 
-static int      netshm;
-static RT_TASK  rt_demo_task;
-static int      *shared_mem;
+static int          netshm;
+static rtos_task_t  rt_demo_task;
+static int          *shared_mem;
 
 
 
@@ -66,14 +66,14 @@ void demo_task(int arg)
 
     while (1) {
         if ((i & 127) == 0) {
-            rt_printk("Cycle %d - memory snapshot "
+            rtos_print("Cycle %d - memory snapshot "
                       "(every 100th and 101th value):\n", i);
             for (j = 0; j < shm_size; j += 100) {
-                rt_printk(" 0x%08X, 0x%08X ", shared_mem[j], shared_mem[j+1]);
+                rtos_print(" 0x%08X, 0x%08X ", shared_mem[j], shared_mem[j+1]);
                 if ((j % 300) == 200)
-                    rt_printk("\n");
+                    rtos_print("\n");
             }
-            rt_printk("\n");
+            rtos_print("\n");
         }
 
         if (shm_local_size > 0) {
@@ -87,7 +87,7 @@ void demo_task(int arg)
 
         ret = ioctl_rt(netshm, NETSHM_RTIOC_CYCLE, NULL);
         if (ret < 0) {
-            rt_printk("ioctl_rt(NETSHM_RTIOC_CYCLE) = %d\n", ret);
+            rtos_print("ioctl_rt(NETSHM_RTIOC_CYCLE) = %d\n", ret);
             break;
         }
 
@@ -110,7 +110,7 @@ int __init init_module(void)
 
     netshm = open_rt(shm_name, O_RDWR);
     if (netshm < 0) {
-        printk("open_rt = %d!\n", netshm);
+        rtos_print("open_rt = %d!\n", netshm);
         vfree(shared_mem);
         return netshm;
     }
@@ -123,33 +123,32 @@ int __init init_module(void)
     params.xmit_prio      = -1; /*default */
     ret = ioctl_rt(netshm, NETSHM_RTIOC_ATTACH, &params);
     if (ret < 0) {
-        printk("ioctl_rt(NETSHM_RTIOC_ATTACH) = %d!\n", ret);
+        rtos_print("ioctl_rt(NETSHM_RTIOC_ATTACH) = %d!\n", ret);
         close_rt(netshm);
         vfree(shared_mem);
         return ret;
     }
 
-    ret = rt_task_init(&rt_demo_task, demo_task, 0, 4096, 9, 0, NULL);
+    ret = rtos_task_init(&rt_demo_task, demo_task, 0, 9);
     if (ret != 0) {
-        printk("rt_task_init = %d!\n", ret);
+        rtos_print("rt_task_init = %d!\n", ret);
         close_rt(netshm);
         vfree(shared_mem);
         return ret;
     }
-    rt_task_resume(&rt_demo_task);
 
-    printk("netshm kernel demo started\n"
+    rtos_print("netshm kernel demo started\n"
            " shm_name       = %s\n"
            " shm_size       = %d (%d bytes)\n",
            shm_name,
            shm_size, shm_size*sizeof(int));
     if (shm_local_size > 0)
-        printk(" shm_local_size = %d (%d bytes)\n"
+        rtos_print(" shm_local_size = %d (%d bytes)\n"
                " shm_local_offs = %d (byte address %d)\n",
                shm_local_size, shm_local_size*sizeof(int),
                shm_local_offs, shm_local_offs*sizeof(int));
     else
-        printk(" - observer mode -\n");
+        rtos_print(" - observer mode -\n");
 
     return 0;
 }
@@ -160,11 +159,11 @@ void cleanup_module(void)
 {
     /* Important: First close the device! */
     while (close_rt(netshm) == -EAGAIN) {
-        printk("netshm_kerndemo: Device busy - waiting...\n");
+        rtos_print("netshm_kerndemo: Device busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_task_delete(&rt_demo_task);
+    rtos_task_delete(&rt_demo_task);
     vfree(shared_mem);
 }

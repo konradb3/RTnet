@@ -2,8 +2,8 @@
  *
  *  rtmac/examples/mrtt/rt_client.c
  *
- *  client part - sends packet, receives echo, passes them by fifo to userspace app
- *                (broadcast variant)
+ *  client part - sends packet, receives echo, passes them by fifo to
+ *                userspace app (broadcast variant)
  *
  *  based on Ulrich Marx's module, adopted to rtmac
  *
@@ -34,10 +34,7 @@
 
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-#include <rtai_fifos.h>
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 
 static char *local_ip_s = "";
@@ -45,22 +42,22 @@ static char *broadcast_ip_s = "127.0.0.1";
 static int cycle = 1*1000*1000; // = 1 s
 
 struct mrtt_rx_packet {
-    long long   rx;
-    long long   tx;
+    nanosecs_t  rx;
+    nanosecs_t  tx;
     u32         ip_addr;
 };
 
-MODULE_PARM (local_ip_s ,"s");
-MODULE_PARM (broadcast_ip_s,"s");
-MODULE_PARM (cycle, "i");
-MODULE_PARM_DESC (local_ip_s, "rt_echo_client: lokal ip-address");
-MODULE_PARM_DESC (broadcast_ip_s, "rt_echo_client: broadcast ip-address");
-MODULE_PARM_DESC (cycle, "cycletime in us");
+MODULE_PARM(local_ip_s ,"s");
+MODULE_PARM(broadcast_ip_s,"s");
+MODULE_PARM(cycle, "i");
+MODULE_PARM_DESC(local_ip_s, "rt_echo_client: lokal ip-address");
+MODULE_PARM_DESC(broadcast_ip_s, "rt_echo_client: broadcast ip-address");
+MODULE_PARM_DESC(cycle, "cycletime in us");
 
 MODULE_LICENSE("GPL");
 
-RT_TASK xmit_task;
-RT_TASK recv_task;
+rtos_task_t xmit_task;
+rtos_task_t recv_task;
 
 #define RCV_PORT    35999
 #define SRV_PORT    36000
@@ -72,24 +69,28 @@ static int sock;
 
 #define BUFSIZE 1500
 static char buffer[BUFSIZE];
-static RTIME tx_time;
-static RTIME rx_time;
 
 #define PRINT_FIFO  0
+rtos_fifo_t print_fifo;
 
 
 void process(void * arg)
 {
+    rtos_time_t time;
+    nanosecs_t  tx_time;
+
+
     while(1) {
-        tx_time = rt_get_time_ns();
+        rtos_get_time(&time);
+        tx_time = rtos_time_to_nanosecs(&time);
 
         /* send the time   */
-        sendto_rt(sock, &tx_time, sizeof(RTIME), 0,
+        sendto_rt(sock, &tx_time, sizeof(tx_time), 0,
                   (struct sockaddr *)&broadcast_addr,
                   sizeof(struct sockaddr_in));
 
         /* wait one period */
-        rt_task_wait_period();
+        rtos_task_wait_period();
     }
 }
 
@@ -102,6 +103,7 @@ void echo_rcv(void *arg)
     struct iovec            iov;
     struct sockaddr_in      addr;
     struct mrtt_rx_packet   rx_packet;
+    rtos_time_t             time;
 
 
     while (1) {
@@ -121,14 +123,13 @@ void echo_rcv(void *arg)
             struct sockaddr_in *sin = msg.msg_name;
 
             /* get the time    */
-            rx_time = rt_get_time_ns();
-            memcpy(&tx_time, buffer, sizeof(RTIME));
-
-            rx_packet.rx = rx_time;
-            rx_packet.tx = tx_time;
+            rtos_get_time(&time);
+            rx_packet.rx = rtos_time_to_nanosecs(&time);
+            memcpy(&rx_packet.tx, buffer, sizeof(rx_packet.tx));
             rx_packet.ip_addr = sin->sin_addr.s_addr;
 
-            rtf_put(PRINT_FIFO, &rx_packet, sizeof(struct mrtt_rx_packet));
+            rtos_fifo_put(&print_fifo, &rx_packet,
+                          sizeof(struct mrtt_rx_packet));
         } else
             break;
     }
@@ -137,11 +138,11 @@ void echo_rcv(void *arg)
 
 int init_module(void)
 {
-    unsigned int add_rtskbs = 30;
-    int ret;
-
-    unsigned long local_ip;
-    unsigned long broadcast_ip;
+    unsigned int    add_rtskbs = 30;
+    rtos_time_t     period;
+    int             ret;
+    unsigned long   local_ip;
+    unsigned long   broadcast_ip;
 
 
     if (strlen(local_ip_s) != 0)
@@ -150,17 +151,17 @@ int init_module(void)
         local_ip = INADDR_ANY;
     broadcast_ip = rt_inet_aton(broadcast_ip_s);
 
-    rtf_create(PRINT_FIFO, 40000);
+    rtos_fifo_create(&print_fifo, PRINT_FIFO, 40000);
 
-    rt_printk ("local     ip address %s=%8x\n", local_ip_s,
-               (unsigned int)local_ip);
-    rt_printk ("broadcast ip address %s=%8x\n", broadcast_ip_s,
-               (unsigned int)broadcast_ip);
+    rtos_print("local     ip address %s=%8x\n", local_ip_s,
+              (unsigned int)local_ip);
+    rtos_print("broadcast ip address %s=%8x\n", broadcast_ip_s,
+              (unsigned int)broadcast_ip);
 
     /* create rt-socket */
-    rt_printk("create rtsocket\n");
+    rtos_print("create rtsocket\n");
     if ((sock = socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        rt_printk("socket not created\n");
+        rtos_print("socket not created\n");
         return sock;
     }
 
@@ -168,7 +169,7 @@ int init_module(void)
     ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
         close_rt(sock);
-        rt_printk("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
+        rtos_print("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
         return -1;
     }
 
@@ -179,7 +180,7 @@ int init_module(void)
     if ((ret = bind_rt(sock, (struct sockaddr *) &local_addr,
                        sizeof(struct sockaddr_in))) < 0) {
         close_rt(sock);
-        rt_printk("can't bind rtsocket\n");
+        rtos_print("can't bind rtsocket\n");
         return ret;
     }
 
@@ -188,11 +189,10 @@ int init_module(void)
     broadcast_addr.sin_port = htons(SRV_PORT);
     broadcast_addr.sin_addr.s_addr = broadcast_ip;
 
-    rt_task_init(&xmit_task,(void *)process,0,4096,10,0,NULL);
-    rt_task_make_periodic_relative_ns( &xmit_task, 10 * 1000*1000, cycle * 1000);
+    rtos_nanosecs_to_time(((nanosecs_t)cycle) * 1000, &period);
+    rtos_task_init_periodic(&xmit_task, (void *)process, 0, 10, &period);
 
-    rt_task_init(&recv_task,(void *)echo_rcv,0,4096,9,0,NULL);
-    rt_task_resume(&recv_task);
+    rtos_task_init(&recv_task, (void *)echo_rcv, 0, 9);
 
     return 0;
 }
@@ -204,13 +204,13 @@ void cleanup_module(void)
 {
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
-        printk("rt_server: Socket busy - waiting...\n");
+        rtos_print("rt_server: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rtf_destroy(PRINT_FIFO);
+    rtos_fifo_destroy(&print_fifo);
 
-    rt_task_delete(&xmit_task);
-    rt_task_delete(&recv_task);
+    rtos_task_delete(&xmit_task);
+    rtos_task_delete(&recv_task);
 }

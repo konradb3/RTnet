@@ -26,30 +26,30 @@
 #include <linux/kernel.h>
 #include <linux/if_packet.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
-
 
 static char *dest_mac_s = "FF:FF:FF:FF:FF:FF";
 static int local_if = 1;
-static int start_timer = 0;
 
 MODULE_PARM(dest_mac_s, "s");
 MODULE_PARM(local_if, "i");
-MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(dest_mac_s, "destination MAC address (XX:XX:XX:XX:XX:XX)");
 MODULE_PARM_DESC(local_if, "local interface for sending and receiving packets (1-n)");
+
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
+static int start_timer = 0;
+MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(start_timer, "set to non-zero to start scheduling timer");
+#endif
 
 MODULE_LICENSE("GPL");
 
 #define PROTOCOL    0x1234
 
 #define CYCLE       1000*1000*1000   /* 1 s */
-RT_TASK rt_xmit_task;
-RT_TASK rt_recv_task;
+rtos_task_t rt_xmit_task;
+rtos_task_t rt_recv_task;
 
 static struct sockaddr_ll dest_addr;
 
@@ -77,12 +77,12 @@ void send_msg(int arg)
         msg.msg_iov     = &iov;
         msg.msg_iovlen  = 1;
 
-        rt_printk("Sending message of %d bytes\n", sizeof(buffer_out));
+        rtos_print("Sending message of %d bytes\n", sizeof(buffer_out));
         ret = sendmsg_rt(sock, &msg, 0);
         if (ret != (int)sizeof(buffer_out))
-            rt_printk(" rt_socket_sendmsg() = %d!\n", ret);
+            rtos_print(" rt_socket_sendmsg() = %d!\n", ret);
 
-        rt_task_wait_period();
+        rtos_task_wait_period();
     }
 }
 
@@ -108,14 +108,14 @@ void recv_msg(int arg)
 
         ret = recvmsg_rt(sock, &msg, 0);
         if (ret <= 0) {
-            rt_printk(" rt_recvmsg() = %d\n", ret);
+            rtos_print(" rt_recvmsg() = %d\n", ret);
             return;
         } else {
-            rt_printk("received packet from %02X:%02X:%02X:%02X:%02X:%02X, "
-                    "length: %d,\ncontent: \"%s\"\n",
-                    addr.sll_addr[0], addr.sll_addr[1], addr.sll_addr[2],
-                    addr.sll_addr[3], addr.sll_addr[4], addr.sll_addr[5],
-                    ret, buffer_in);
+            rtos_print("received packet from %02X:%02X:%02X:%02X:%02X:%02X, "
+                       "length: %d,\ncontent: \"%s\"\n",
+                       addr.sll_addr[0], addr.sll_addr[1], addr.sll_addr[2],
+                       addr.sll_addr[3], addr.sll_addr[4], addr.sll_addr[5],
+                       ret, buffer_in);
         }
     }
 }
@@ -125,6 +125,7 @@ void recv_msg(int arg)
 int init_module(void)
 {
     int ret;
+    rtos_time_t cycle;
     struct sockaddr_ll local_addr;
 
 
@@ -138,11 +139,13 @@ int init_module(void)
     rt_eth_aton(dest_addr.sll_addr, dest_mac_s);
 
     printk("destination mac address: %02X:%02X:%02X:%02X:%02X:%02X\n",
-            dest_addr.sll_addr[0], dest_addr.sll_addr[1],
-            dest_addr.sll_addr[2], dest_addr.sll_addr[3],
-            dest_addr.sll_addr[4], dest_addr.sll_addr[5]);
+           dest_addr.sll_addr[0], dest_addr.sll_addr[1],
+           dest_addr.sll_addr[2], dest_addr.sll_addr[3],
+           dest_addr.sll_addr[4], dest_addr.sll_addr[5]);
     printk("local interface: %d\n", local_if);
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     printk("start timer: %d\n", start_timer);
+#endif
 
     /* create rt-socket */
     sock = socket_rt(PF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
@@ -156,7 +159,8 @@ int init_module(void)
     local_addr.sll_family   = PF_PACKET;
     local_addr.sll_protocol = htons(PROTOCOL);
     local_addr.sll_ifindex  = local_if;
-    ret = bind_rt(sock, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_ll));
+    ret = bind_rt(sock, (struct sockaddr *)&local_addr,
+                  sizeof(struct sockaddr_ll));
     if (ret < 0) {
         printk(" bind_rt() = %d!\n", ret);
         close_rt(sock);
@@ -164,34 +168,27 @@ int init_module(void)
     }
 
 
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer) {
-        rt_set_oneshot_mode();
-        start_rt_timer(0);
+        rtos_timer_start_oneshot();
     }
+#endif
 
-    ret = rt_task_init(&rt_xmit_task, send_msg, 0, 4096, 10, 0, NULL);
+    rtos_nanosecs_to_time(CYCLE, &cycle);
+    ret = rtos_task_init_periodic(&rt_xmit_task, send_msg, 0, 10, &cycle);
     if (ret != 0) {
-        printk(" rt_task_init(rt_xmit_task) = %d!\n", ret);
+        printk(" rtos_task_init_periodic(rt_xmit_task) = %d!\n", ret);
         close_rt(sock);
         return ret;
     }
 
-    ret = rt_task_make_periodic_relative_ns(&rt_xmit_task, 0, CYCLE);
+    ret = rtos_task_init(&rt_recv_task, recv_msg, 0, 9);
     if (ret != 0) {
-        printk(" rt_task_make_periodic_relative_ns() = %d!\n", ret);
+        printk(" rtos_task_init(rt_recv_task) = %d!\n", ret);
         close_rt(sock);
-        rt_task_delete(&rt_xmit_task);
+        rtos_task_delete(&rt_xmit_task);
         return ret;
     }
-
-    ret = rt_task_init(&rt_recv_task, recv_msg, 0, 4096, 9, 0, NULL);
-    if (ret != 0) {
-        printk(" rt_task_init(rt_recv_task) = %d!\n", ret);
-        close_rt(sock);
-        rt_task_delete(&rt_xmit_task);
-        return ret;
-    }
-    rt_task_resume(&rt_recv_task);
 
     return 0;
 }
@@ -200,8 +197,10 @@ int init_module(void)
 
 void cleanup_module(void)
 {
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
+#endif
 
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
@@ -210,6 +209,6 @@ void cleanup_module(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_task_delete(&rt_xmit_task);
-    rt_task_delete(&rt_recv_task);
+    rtos_task_delete(&rt_xmit_task);
+    rtos_task_delete(&rt_recv_task);
 }

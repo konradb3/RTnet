@@ -23,14 +23,13 @@
  */
 
 
+#include <asm/div64.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 
 
@@ -45,28 +44,27 @@ MODULE_PARM(dest_ip, "s");
 
 MODULE_LICENSE("GPL");
 
-static int                sock;
-static RT_TASK            task;
-static struct sockaddr_in local_addr;
-static unsigned long      cur_index  = 0;
-static RTIME              cur_min    = 0;
-static RTIME              cur_max    = 0;
-static unsigned long      max_jitter = 0;
+static int                  sock;
+static rtos_task_t          task;
+static struct sockaddr_in   local_addr;
+static unsigned long        cur_index  = 0;
+static nanosecs_t           cur_min    = 0;
+static nanosecs_t           cur_max    = 0;
+static unsigned long        max_jitter = 0;
 
 
 void recv_handler(int arg)
 {
-    struct msghdr      msg;
-    struct iovec       iov;
-    struct sockaddr_in addr;
+    struct msghdr       msg;
+    struct iovec        iov;
+    struct sockaddr_in  addr;
     struct {
-        RTIME         time_stamp;
-        unsigned long count;
+        nanosecs_t      time_stamp;
+        unsigned long   count;
     } event;
-    unsigned long      time_hi;
-    unsigned long      time_lo;
-    /*char*              addr_bytes = (char*)&addr.sin_addr.s_addr;*/
-    unsigned long      jitter;
+    nanosecs_t          usecs;
+    char                *addr_bytes = (char*)&addr.sin_addr.s_addr;
+    unsigned long       jitter;
 
 
     addr.sin_family      = AF_INET;
@@ -86,10 +84,11 @@ void recv_handler(int arg)
         msg.msg_controllen = 0;
 
         if (recvmsg_rt(sock, &msg, 0) > 0) {
-            time_hi = ulldiv(event.time_stamp, 1000000, &time_lo);
-            /*rt_printk("%d.%d.%d.%d reports event no. #%lu at %lu.%06lu ms global time\n",
-                      addr_bytes[0], addr_bytes[1], addr_bytes[2], addr_bytes[3],
-                      event.count, time_hi, time_lo);*/
+            usecs = event.time_stamp;
+            do_div(usecs, 1000);
+            rtos_print("%d.%d.%d.%d reports event no. #%lu at %lu us global "
+                       "time\n", addr_bytes[0], addr_bytes[1], addr_bytes[2],
+                       addr_bytes[3], event.count, (unsigned long)usecs);
 
             if (event.count == cur_index) {
                 if (event.time_stamp < cur_min)
@@ -101,7 +100,7 @@ void recv_handler(int arg)
                 jitter = (unsigned long)cur_max - cur_min;
                 if (jitter > max_jitter) {
                     max_jitter = jitter;
-                    rt_printk("new worst-case synchronization jitter: %lu us\n", jitter/1000);
+                    rtos_print("new worst-case synchronization jitter: %lu us\n", jitter/1000);
                 }
 
                 cur_min = event.time_stamp;
@@ -129,12 +128,11 @@ int init_module(void)
     if ((ret = bind_rt(sock, (struct sockaddr*)&local_addr,
                        sizeof(struct sockaddr_in))) < 0)
     {
-        rt_printk("ERROR: Can't bind socket!\n");
+        rtos_print("ERROR: Can't bind socket!\n");
         return ret;
     }
 
-    rt_task_init(&task, recv_handler, 0, 4096, 11, 0, NULL);
-    rt_task_resume(&task);
+    rtos_task_init(&task, recv_handler, 0, 11);
 
     return 0;
 }
@@ -148,7 +146,7 @@ void cleanup_module(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_task_delete(&task);
+    rtos_task_delete(&task);
 
     printk("worst-case synchronization jitter was: %lu us\n", max_jitter/1000);
 }

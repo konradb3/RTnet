@@ -31,8 +31,7 @@
 #include <rtnet_chrdev.h>
 
 
-/* RTAI-specific: start scheduling timer */
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
 static int start_timer = 0;
 
 MODULE_PARM(start_timer, "i");
@@ -361,11 +360,9 @@ int __init rtcap_init(void)
 
     printk("RTcap: real-time capturing interface\n");
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
-    if (start_timer) {
-        rt_set_oneshot_mode();
-        start_rt_timer(0);
-    }
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
+    if (start_timer)
+        rtos_timer_start_oneshot();
 #endif
 
     rtskb_queue_init(&cap_queue);
@@ -448,7 +445,7 @@ int __init rtcap_init(void)
              */
             if (rtdev->features & RTNETIF_F_NON_EXCLUSIVE_XMIT)
                 rtdev->start_xmit = rtdev->hard_start_xmit;
-                
+
             tap_device[i].present |= XMIT_HOOK;
             RTNET_MOD_INC_USE_COUNT_EX(rtdev->rt_owner);
 
@@ -483,9 +480,9 @@ int __init rtcap_init(void)
     rtos_nrt_signal_delete(&cap_signal);
 
   error1:
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
 #endif
 
     return ret;
@@ -498,9 +495,9 @@ void rtcap_cleanup(void)
     unsigned long flags;
 
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
 #endif
 
     rtos_nrt_signal_delete(&cap_signal);

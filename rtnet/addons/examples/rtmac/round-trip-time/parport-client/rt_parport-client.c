@@ -35,16 +35,7 @@
 
 #include <net/ip.h>
 
-#include <rtnet_config.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
-#include <rtai_fifos.h>
-
-#ifdef HAVE_RTAI_SEM_H
-#include <rtai_sem.h>
-#endif
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 
 static char *local_ip_s  = "";
@@ -58,8 +49,8 @@ MODULE_PARM_DESC (server_ip_s, "rt_echo_client: server ip-address");
 MODULE_PARM(parport, "i");
 MODULE_PARM(parirq, "i");
 
-RT_TASK xmit_task;
-RT_TASK recv_task;
+rtos_task_t xmit_task;
+rtos_task_t recv_task;
 
 #define RCV_PORT    35999
 #define SRV_PORT    36000
@@ -71,10 +62,8 @@ static int sock;
 
 #define BUFSIZE 1500
 static char buffer[BUFSIZE];
-static RTIME tx_time;
-static RTIME rx_time;
 
-SEM tx_sem;
+rtos_event_sem_t tx_sem;
 
 #define EXT_TRIG
 
@@ -91,29 +80,32 @@ static int parirq  = 7;
 #define KHZ100      0x01
 
 #define PRINT_FIFO 0
-
-unsigned long tsc1,tsc2;
-unsigned long cnt = 0;
+rtos_fifo_t print_fifo;
 
 
 static void parport_irq_handler(void)
 {
     outb(0xF7, PAR_DATA);
-    rt_sem_signal(&tx_sem);
+    rtos_event_sem_signal(&tx_sem);
 }
 
 
 
 void process(void* arg)
 {
-    while(1) {
-        rt_sem_wait(&tx_sem);
+    rtos_time_t time;
+    nanosecs_t  tx_time;
 
-        tx_time = rt_get_time_ns();
+
+    while(1) {
+        rtos_event_sem_wait(&tx_sem);
+
+        rtos_get_time(&time);
+        tx_time = rtos_time_to_nanosecs(&time);
 
         /* send the time   */
-        if (sendto_rt(sock, &tx_time, sizeof(RTIME), 0,
-                      (struct sockaddr *) &server_addr,
+        if (sendto_rt(sock, &tx_time, sizeof(tx_time), 0,
+                      (struct sockaddr *)&server_addr,
                       sizeof(struct sockaddr_in)) < 0)
             break;
     }
@@ -127,6 +119,8 @@ void echo_rcv(void *arg)
     struct msghdr       msg;
     struct iovec        iov;
     struct sockaddr_in  addr;
+    rtos_time_t         time;
+    nanosecs_t          rx_time;
 
 
     while (1) {
@@ -150,11 +144,11 @@ void echo_rcv(void *arg)
             outb(0xFF, PAR_DATA);
 
             /* get the time    */
-            rx_time = rt_get_time_ns();
-            memcpy (&tx_time, buffer, sizeof(RTIME));
+            rtos_get_time(&time);
+            rx_time = rtos_time_to_nanosecs(&time);
 
-            rtf_put(PRINT_FIFO, &rx_time, sizeof(RTIME));
-            rtf_put(PRINT_FIFO, &tx_time, sizeof(RTIME));
+            rtos_fifo_put(&print_fifo, &rx_time, sizeof(rx_time));
+            rtos_fifo_put(&print_fifo, buffer, sizeof(nanosecs_t));
 
             /* copy the address */
             rcv.l = sin->sin_addr.s_addr;
@@ -179,16 +173,16 @@ int init_module(void)
         local_ip = INADDR_ANY;
     server_ip = rt_inet_aton(server_ip_s);
 
-    rtf_create(PRINT_FIFO, 40000);
-    rt_sem_init(&tx_sem, 0);
+    rtos_fifo_create(&print_fifo, PRINT_FIFO, 40000);
+    rtos_event_sem_init(&tx_sem);
 
-    rt_printk("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
-    rt_printk("server ip address %s=%8x\n", server_ip_s, (unsigned int) server_ip);
+    rtos_print("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+    rtos_print("server ip address %s=%8x\n", server_ip_s, (unsigned int) server_ip);
 
     /* create rt-socket */
-    rt_printk("create rtsocket\n");
+    rtos_print("create rtsocket\n");
     if ((sock = socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        rt_printk("socket not created\n");
+        rtos_print("socket not created\n");
         return sock;
     }
 
@@ -196,7 +190,7 @@ int init_module(void)
     ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
         close_rt(sock);
-        rt_printk("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
+        rtos_print("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
         return -1;
     }
 
@@ -207,7 +201,7 @@ int init_module(void)
     if ((ret = bind_rt(sock, (struct sockaddr *)&local_addr,
                        sizeof(struct sockaddr_in))) < 0) {
         close_rt(sock);
-        rt_printk("can't bind rtsocket\n");
+        rtos_print("can't bind rtsocket\n");
         return ret;
     }
 
@@ -216,14 +210,11 @@ int init_module(void)
     server_addr.sin_port = htons(SRV_PORT);
     server_addr.sin_addr.s_addr = server_ip;
 
-    rt_task_init(&xmit_task,(void *)process,0,4096,10,0,NULL);
-    rt_task_resume(&xmit_task);
+    rtos_task_init(&xmit_task,(void *)process,0,10);
 
-    rt_task_init(&recv_task,(void *)echo_rcv,0,4096,9,0,NULL);
-    rt_task_resume(&recv_task);
+    rtos_task_init(&recv_task,(void *)echo_rcv,0,9);
 
-    rt_request_global_irq(parirq, parport_irq_handler);
-    rt_startup_irq(parirq);
+    rtos_irq_request(parirq, (void (*)(unsigned,void *))parport_irq_handler,NULL);
 
     outb(0xFF, PAR_DATA);
     outb(0x14 + KHZ0_1, PAR_CONTROL);
@@ -235,22 +226,21 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    rt_shutdown_irq(parirq);
-    rt_free_global_irq(parirq);
+    rtos_irq_free(parirq);
 
     outb(0, PAR_CONTROL);
 
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
-        printk("rt_server: Socket busy - waiting...\n");
+        rtos_print("rt_server: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_sem_delete(&tx_sem);
+    rtos_event_sem_delete(&tx_sem);
 
-    rt_task_delete(&xmit_task);
-    rt_task_delete(&recv_task);
+    rtos_task_delete(&xmit_task);
+    rtos_task_delete(&recv_task);
 
-    rtf_destroy(PRINT_FIFO);
+    rtos_fifo_destroy(&print_fifo);
 }

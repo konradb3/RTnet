@@ -42,6 +42,7 @@
 #ifdef HAVE_RTAI_SEM_H
 #include <rtai_sem.h>
 #endif
+#include <rtai_fifos.h>
 
 
 /* basic types */
@@ -52,8 +53,11 @@ typedef spinlock_t rtos_spinlock_t;   /* spin locks with hard IRQ locks */
 typedef RT_TASK    rtos_task_t;       /* hard real-time task */
 typedef SEM        rtos_event_t;      /* to signal events (non-storing) */
 typedef SEM        rtos_event_sem_t;  /* to signal events (storing) */
-typedef SEM        rtos_res_lock_t;   /* resource lock with prio inheritance */
+typedef SEM        rtos_res_lock_t;   /* resource lock with prio inheritance*/
 typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
+typedef struct {
+    int minor;
+} rtos_fifo_t;                        /* fifo descriptor */
 
 #define ALIGN_RTOS_TASK         16  /* RT_TASK requires 16-bytes alignment */
 
@@ -170,6 +174,18 @@ static inline int rtos_task_init_periodic(rtos_task_t *task,
     return ret;
 }
 
+static inline int rtos_task_init_suspended(rtos_task_t *task,
+                                           void (*task_proc)(int),
+                                           int arg, int priority)
+{
+    return rt_task_init(task, task_proc, arg, 4096, priority, 0, NULL);
+}
+
+static inline int rtos_task_resume(rtos_task_t *task)
+{
+    return rtos_task_resume(task);
+}
+
 static inline void rtos_task_delete(rtos_task_t *task)
 {
     rt_task_delete(task);
@@ -180,6 +196,19 @@ static inline int rtos_task_set_priority(rtos_task_t *task, int priority)
     return rt_change_prio(task, priority);
 }
 
+#define CONFIG_RTOS_STARTSTOP_TIMER 1
+
+static inline int rtos_timer_start_oneshot(void)
+{
+    rt_set_oneshot_mode();
+    start_rt_timer(0);
+    return 0;
+}
+
+static inline void rtos_timer_stop(void)
+{
+    stop_rt_timer();
+}
 
 #define rtos_task_wait_period()     rt_task_wait_period()
 #define rtos_busy_sleep(nanosecs)   rt_busy_sleep(nanosecs)
@@ -303,7 +332,22 @@ static inline void rtos_pend_nrt_signal(rtos_nrt_signal_t *nrt_sig)
     rt_pend_linux_srq(*nrt_sig);
 }
 
+/* Fifo management */
+static inline int rtos_fifo_create (rtos_fifo_t *fifo, int minor, int size)
+{
+    fifo->minor = minor;
+    return rtf_create(minor, size);
+}
 
+static inline void rtos_fifo_destroy (rtos_fifo_t *fifo)
+{
+    rtf_destroy(fifo->minor);
+}
+
+static inline int rtos_fifo_put (rtos_fifo_t *fifo, void *buf, int size)
+{
+    return rtf_put(fifo->minor, buf, size);
+}
 
 /* RT memory management */
 #define rtos_malloc(size)           rt_malloc(size)

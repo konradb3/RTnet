@@ -29,10 +29,7 @@
 #include <linux/kernel.h>
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
 #include <rtdm_driver.h>
-
 #include <rtnet.h>
 
 
@@ -41,10 +38,10 @@
 static char *local_ip_s  = "";
 static char *client_ip_s = "127.0.0.1";
 
-MODULE_PARM (local_ip_s ,"s");
-MODULE_PARM (client_ip_s,"s");
-MODULE_PARM_DESC (local_ip_s, "local ip-addr");
-MODULE_PARM_DESC (client_ip_s, "client ip-addr");
+MODULE_PARM(local_ip_s ,"s");
+MODULE_PARM(client_ip_s,"s");
+MODULE_PARM_DESC(local_ip_s, "local ip-addr");
+MODULE_PARM_DESC(client_ip_s, "client ip-addr");
 
 MODULE_LICENSE("GPL");
 
@@ -112,8 +109,8 @@ int init_module(void)
     else
         local_ip = INADDR_ANY;
 
-    printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
-    printk ("client ip address %s=%08x\n", client_ip_s, client_ip);
+    printk("local  ip address %s=%08x\n", local_ip_s, local_ip);
+    printk("client ip address %s=%08x\n", client_ip_s, client_ip);
 
     /* create rt-socket */
     printk("create rtsocket\n");

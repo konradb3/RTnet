@@ -36,8 +36,7 @@
 
 
 /* RTAI-specific: start scheduling timer */
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
-    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
 static int start_timer = 0;
 
 MODULE_PARM(start_timer, "i");
@@ -315,12 +314,9 @@ int __init tdma_init(void)
     if (ret < 0)
         return ret;
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
-    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
-    if (start_timer) {
-        rt_set_oneshot_mode();
-        start_rt_timer(0);
-    }
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
+    if (start_timer)
+        rtos_timer_start_oneshot();
 #endif
 
     return 0;
@@ -332,10 +328,9 @@ void tdma_release(void)
 {
     rtmac_disc_deregister(&tdma_disc);
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
-    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
 #endif
 
     printk("RTmac/TDMA: unloaded\n");

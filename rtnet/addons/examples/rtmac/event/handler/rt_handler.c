@@ -29,15 +29,7 @@
 #include <asm/io.h>
 #include <net/ip.h>
 
-#include <rtnet_config.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
-
-#ifdef HAVE_RTAI_SEM_H
-#include <rtai_sem.h>
-#endif
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 #include <rtmac.h>
 
@@ -80,14 +72,17 @@ static unsigned long        irq_count = 0;
 static int                  tdma;
 static int                  sock;
 static struct sockaddr_in   dest_addr;
-static RT_TASK              task;
-static SEM                  event_sem;
-static RTIME                time_stamp;
+static rtos_task_t          task;
+static rtos_event_sem_t     event_sem;
+static nanosecs_t           time_stamp;
 
 
 void irq_handler(void)
 {
-    time_stamp = rt_get_time_ns();
+    rtos_time_t time;
+
+    rtos_get_time(&time);
+    time_stamp = rtos_time_to_nanosecs(&time);
 
     if (mode == MODE_SER) {
         /* clear irq sources */
@@ -103,7 +98,7 @@ void irq_handler(void)
     }
 
     irq_count++;
-    rt_sem_signal(&event_sem);
+    rtos_event_sem_signal(&event_sem);
 }
 
 
@@ -111,27 +106,25 @@ void irq_handler(void)
 void event_handler(int arg)
 {
     struct {
-        RTIME         time_stamp;
-        unsigned long count;
+        nanosecs_t      time_stamp;
+        unsigned long   count;
     } packet;
     int wait_on = RTMAC_WAIT_ON_DEFAULT;
 
 
     while (1) {
-        rt_sem_wait(&event_sem);
-
+        rtos_event_sem_wait(&event_sem);
 
         ioctl_rt(tdma, RTMAC_RTIOC_TIMEOFFSET, &packet.time_stamp);
 
-        rt_disable_irq(irq);
+        rtos_irq_disable(irq);
 
         packet.time_stamp += time_stamp;
         packet.count      = irq_count;
 
-        rt_enable_irq(irq);
+        rtos_irq_enable(irq);
 
         ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, &wait_on);
-
 
         if (sendto_rt(sock, &packet, sizeof(packet), 0,
                       (struct sockaddr*)&dest_addr,
@@ -169,7 +162,7 @@ int init_module(void)
     struct rtnet_callback   callback = {sync_callback, NULL};
 
 
-    printk("rt_event is using the following parameters:\n"
+    rtos_print("rt_event is using the following parameters:\n"
            "    mode    = %s\n"
            "    io      = 0x%04X\n"
            "    irq     = %d\n"
@@ -181,7 +174,7 @@ int init_module(void)
 
     tdma = open_rt(rtmac_dev, O_RDONLY);
     if (tdma < 0) {
-        printk("ERROR: RTmac/TDMA not loaded!\n");
+        rtos_print("ERROR: RTmac/TDMA not loaded!\n");
         return -ENODEV;
     }
 
@@ -206,14 +199,12 @@ int init_module(void)
     ioctl_rt(sock, RTNET_RTIOC_CALLBACK, &callback);
 
 
-    rt_task_init(&task, event_handler, 0, 4096, 10, 0, NULL);
-    rt_sem_init(&event_sem, 0);
+    rtos_event_sem_init(&event_sem);
 
 
-    if (rt_request_global_irq(irq, irq_handler) != 0) {
-        printk("ERROR: irq not available!\n");
-        rt_task_delete(&task);
-        rt_sem_delete(&event_sem);
+    if (rtos_irq_request(irq, (void (*)(unsigned,void *))irq_handler,NULL) != 0) {
+        rtos_print("ERROR: irq not available!\n");
+        rtos_event_sem_delete(&event_sem);
         return -EINVAL;
     }
 
@@ -229,7 +220,7 @@ int init_module(void)
 
         /* clear irq sources */
         while ((inb(SER_IIR) & 0x01) == 0) {
-            printk("Loop init\n");
+            rtos_print("Loop init\n");
             inb(SER_LSR);
             inb(SER_DATA);
             inb(SER_MSR);
@@ -243,22 +234,18 @@ int init_module(void)
         outb(0x0D, SER_IER);
     }
 
-    rt_startup_irq(irq);
-    rt_enable_irq(irq);
+    rtos_irq_enable(irq);
 
 
-    rt_task_resume(&task);
-
-    return 0;
+    return rtos_task_init(&task, event_handler, 0, 10);
 }
 
 
 
 void cleanup_module(void)
 {
-    rt_disable_irq(irq);
-    rt_shutdown_irq(irq);
-    rt_free_global_irq(irq);
+    rtos_irq_disable(irq);
+    rtos_irq_free(irq);
 
     while (close_rt(sock) == -EAGAIN) {
         set_current_state(TASK_UNINTERRUPTIBLE);
@@ -270,6 +257,6 @@ void cleanup_module(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_sem_delete(&event_sem);
-    rt_task_delete(&task);
+    rtos_event_sem_delete(&event_sem);
+    rtos_task_delete(&task);
 }

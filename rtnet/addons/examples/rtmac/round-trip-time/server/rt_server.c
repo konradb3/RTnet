@@ -34,14 +34,12 @@
 
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 
 static char *local_ip_s  = "";
 static char *client_ip_s = "127.0.0.1";
-static unsigned int reply_size = sizeof(RTIME);
+static unsigned int reply_size = sizeof(nanosecs_t);
 
 MODULE_PARM(local_ip_s, "s");
 MODULE_PARM(client_ip_s, "s");
@@ -52,7 +50,7 @@ MODULE_PARM_DESC(reply_size, "size of the reply message (8-65507)");
 
 MODULE_LICENSE("GPL");
 
-RT_TASK rt_task;
+rtos_task_t rt_task;
 
 #define RCV_PORT    36000
 #define XMT_PORT    35999
@@ -62,7 +60,7 @@ static struct sockaddr_in local_addr;
 
 static int sock;
 
-char buffer[sizeof(RTIME)];
+char buffer[sizeof(nanosecs_t)];
 char tx_msg[65536];
 
 
@@ -77,7 +75,7 @@ void process(void* arg)
 
     while(1) {
         iov.iov_base=&buffer;
-        iov.iov_len=sizeof(RTIME);
+        iov.iov_len=sizeof(nanosecs_t);
         msg.msg_name=&addr;
         msg.msg_namelen=sizeof(addr);
         msg.msg_iov=&iov;
@@ -89,10 +87,11 @@ void process(void* arg)
         if ( (ret <= 0) || (msg.msg_namelen != sizeof(struct sockaddr_in)) )
             return;
 
-        memcpy(&tx_msg, &buffer, sizeof(RTIME));
+        memcpy(&tx_msg, &buffer, sizeof(nanosecs_t));
 
-        sendto_rt(sock, &tx_msg, reply_size, 0, (struct sockaddr *) &client_addr,
-                  sizeof (struct sockaddr_in));
+        sendto_rt(sock, &tx_msg, reply_size, 0,
+                  (struct sockaddr *)&client_addr,
+                  sizeof(struct sockaddr_in));
     }
 }
 
@@ -112,22 +111,24 @@ int init_module(void)
     else
         local_ip = INADDR_ANY;
     client_ip = rt_inet_aton(client_ip_s);
-    if (reply_size < sizeof(RTIME))
-        reply_size = sizeof(RTIME);
+    if (reply_size < sizeof(nanosecs_t))
+        reply_size = sizeof(nanosecs_t);
 
-    rt_printk("local  ip address %s(%8x):%d\n", local_ip_s, (unsigned int) local_ip, RCV_PORT);
-    rt_printk("client ip address %s(%8x):%d\n", client_ip_s, (unsigned int) client_ip, XMT_PORT);
-    rt_printk("reply message size=%d\n", reply_size);
+    rtos_print("local  ip address %s(%8x):%d\n", local_ip_s,
+               (unsigned int)local_ip, RCV_PORT);
+    rtos_print("client ip address %s(%8x):%d\n", client_ip_s,
+               (unsigned int)client_ip, XMT_PORT);
+    rtos_print("reply message size=%d\n", reply_size);
 
     /* create rt-socket */
-    rt_printk("create rtsocket\n");
+    rtos_print("create rtsocket\n");
     if ((sock = socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        rt_printk("socket not created\n");
+        rtos_print("socket not created\n");
         return sock;
     }
 
     /* bind the rt-socket to local_addr */
-    rt_printk("bind rtsocket to local address:port\n");
+    rtos_print("bind rtsocket to local address:port\n");
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(RCV_PORT);
@@ -135,12 +136,12 @@ int init_module(void)
     if ((ret = bind_rt(sock, (struct sockaddr *)&local_addr,
                        sizeof(struct sockaddr_in))) < 0) {
         close_rt(sock);
-        rt_printk("can't bind rtsocket\n");
+        rtos_print("can't bind rtsocket\n");
         return ret;
     }
 
     /* set client-addr */
-    rt_printk("connect rtsocket to client address:port\n");
+    rtos_print("connect rtsocket to client address:port\n");
     memset(&client_addr, 0, sizeof(struct sockaddr_in));
     client_addr.sin_family = AF_INET;
     client_addr.sin_port = htons(XMT_PORT);
@@ -148,7 +149,7 @@ int init_module(void)
     if ((ret = connect_rt(sock, (struct sockaddr *)&client_addr,
                           sizeof(struct sockaddr_in))) < 0) {
         close_rt(sock);
-        rt_printk("can't connect rtsocket\n");
+        rtos_print("can't connect rtsocket\n");
         return ret;
     }
 
@@ -156,12 +157,11 @@ int init_module(void)
     ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
         close_rt(sock);
-        rt_printk("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
+        rtos_print("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
         return -1;
     }
 
-    ret = rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
-    ret = rt_task_resume(&rt_task);
+    ret = rtos_task_init(&rt_task, (void *)process, 0, 10);
 
     return ret;
 }
@@ -173,10 +173,10 @@ void cleanup_module(void)
 {
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
-        printk("rt_server: Not all buffers freed yet - waiting...\n");
+        rtos_print("rt_server: Not all buffers freed yet - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_task_delete(&rt_task);
+    rtos_task_delete(&rt_task);
 }

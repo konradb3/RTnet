@@ -31,8 +31,7 @@
 #include <rtcfg/rtcfg_proc.h>
 
 
-/* RTAI-specific: start scheduling timer */
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
 static int start_timer = 1;
 
 MODULE_PARM(start_timer, "i");
@@ -50,11 +49,9 @@ int __init rtcfg_init(void)
 
     printk("RTcfg: init real-time configuration distribution protocol\n");
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
-    if (start_timer) {
-        rt_set_oneshot_mode();
-        start_rt_timer(0);
-    }
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
+    if (start_timer)
+        rtos_timer_start_oneshot();
 #endif
 
     ret = rtcfg_init_ioctls();
@@ -83,9 +80,9 @@ int __init rtcfg_init(void)
     rtcfg_cleanup_ioctls();
 
   error1:
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
 #endif
 
     return ret;
@@ -95,9 +92,9 @@ int __init rtcfg_init(void)
 
 void rtcfg_cleanup(void)
 {
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
 #endif
 
 #ifdef CONFIG_PROC_FS

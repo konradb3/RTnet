@@ -29,32 +29,32 @@
 #include <linux/kernel.h>
 #include <net/ip.h>
 
-#include <rtai.h>
-#include <rtai_sched.h>
-#include <rtai_fifos.h>
+#include <rtnet_sys.h>
 #include <rtdm_driver.h>
-
 #include <rtnet.h>
 
 static char *local_ip_s  = "";
 static char *server_ip_s = "127.0.0.1";
 int interval = 500; /* time between two sent packets in ms (1-1000) */
 int packetsize = 58; /* packetsize exclusive headers (1-1400) */
-static int start_timer = 0;
 
 MODULE_PARM(local_ip_s ,"s");
 MODULE_PARM(server_ip_s,"s");
 MODULE_PARM(interval, "i");
 MODULE_PARM(packetsize,"i");
-MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(local_ip_s, "rt_echo_client: local ip-address");
 MODULE_PARM_DESC(server_ip_s, "rt_echo_client: server ip-address");
+
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
+static int start_timer = 0;
+MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(start_timer, "set to non-zero to start scheduling timer");
+#endif
 
 MODULE_LICENSE("GPL");
 
 #define TICK_PERIOD     100000
-RT_TASK rt_task;
+rtos_task_t rt_task;
 
 #define RCV_PORT        35999
 #define SRV_PORT        36000
@@ -66,26 +66,29 @@ static int sock;
 
 #define BUFSIZE 1500
 static char buffer[BUFSIZE], sendbuffer[BUFSIZE];
-static RTIME tx_time;
-static RTIME rx_time;
+static nanosecs_t tx_time;
+static nanosecs_t rx_time;
 
-#define PRINT 0
+#define PRINT_FIFO 0
+static rtos_fifo_t print_fifo;
 
-unsigned long tsc1,tsc2;
-unsigned long cnt = 0;
-unsigned long sent=0, rcvd=0;
+static unsigned long sent;
+static unsigned long rcvd;
 
 
 void process(void *arg)
 {
-    int ret = 0;
+    int         ret = 0;
+    rtos_time_t time;
+
 
     while (1) {
         /* wait one period */
-        rt_task_wait_period();
+        rtos_task_wait_period();
 
         /* get time        */
-        tx_time = rt_get_cpu_time_ns();
+        rtos_get_time(&time);
+        tx_time = rtos_time_to_nanosecs(&time);
 
         memcpy(sendbuffer, &tx_time, sizeof(tx_time));
 
@@ -93,7 +96,8 @@ void process(void *arg)
         ret = sendto_rt(sock, &sendbuffer, packetsize, 0,
                         (struct sockaddr *)&server_addr,
                         sizeof(struct sockaddr_in));
-        if (ret) sent++;
+        if (ret)
+            sent++;
     }
 }
 
@@ -105,6 +109,7 @@ void echo_rcv(struct rtdm_dev_context *context, void *arg)
     struct msghdr       msg;
     struct iovec        iov;
     struct sockaddr_in  addr;
+    rtos_time_t         time;
 
 
     iov.iov_base=&buffer;
@@ -130,12 +135,12 @@ void echo_rcv(struct rtdm_dev_context *context, void *arg)
         struct sockaddr_in *sin = msg.msg_name;
 
         /* get the time    */
-        rx_time = rt_get_cpu_time_ns();
-        memcpy (&tx_time, buffer, sizeof(RTIME));
+        rtos_get_time(&time);
+        rx_time = rtos_time_to_nanosecs(&time);
         rcvd++;
 
-        rtf_put(PRINT, &rx_time, sizeof(RTIME));
-        rtf_put(PRINT, &tx_time, sizeof(RTIME));
+        rtos_fifo_put(&print_fifo, &rx_time, sizeof(rx_time));
+        rtos_fifo_put(&print_fifo, buffer, sizeof(nanosecs_t));
 
         /* copy the address */
         rcv.l = sin->sin_addr.s_addr;
@@ -145,6 +150,7 @@ void echo_rcv(struct rtdm_dev_context *context, void *arg)
 
 int init_module(void)
 {
+    rtos_time_t             cycle;
     unsigned int            local_ip;
     unsigned int            server_ip = rt_inet_aton(server_ip_s);
     struct rtnet_callback   callback  = {echo_rcv, NULL};
@@ -161,14 +167,17 @@ int init_module(void)
     if (packetsize < 1) packetsize = 1;
     if (packetsize > 1400) packetsize = 1400;
 
-    printk("***** start of rt_client ***** %s %s *****\n", __DATE__, __TIME__);
+    printk("***** start of rt_client ***** %s %s *****\n",
+           __DATE__, __TIME__);
     printk("local  ip address %s=%08x\n", local_ip_s, local_ip);
     printk("server ip address %s=%08x\n", server_ip_s, server_ip);
     printk("interval = %d\n", interval);
     printk("packetsize = %d\n", packetsize);
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     printk("start timer %d\n", start_timer);
+#endif
 
-    rtf_create(PRINT, 8000);
+    rtos_fifo_create(&print_fifo, PRINT_FIFO, 8000);
 
     /* create rt-socket */
     sock = socket_rt(AF_INET,SOCK_DGRAM,0);
@@ -189,14 +198,14 @@ int init_module(void)
     /* set up callback handler */
     ioctl_rt(sock, RTNET_RTIOC_CALLBACK, &callback);
 
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer) {
-        rt_set_oneshot_mode();
-        start_rt_timer(0);
+        rtos_timer_start_oneshot();
     }
+#endif
 
-    rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
-    rt_task_make_periodic_relative_ns(&rt_task, 1000000,
-                                      (RTIME)interval * 1000000);
+    rtos_nanosecs_to_time(((nanosecs_t)interval) * 1000000, &cycle);
+    rtos_task_init_periodic(&rt_task, (void *)process, 0, 10, &cycle);
 
     return 0;
 }
@@ -206,8 +215,10 @@ int init_module(void)
 
 void cleanup_module(void)
 {
+#ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        stop_rt_timer();
+        rtos_timer_stop();
+#endif
 
     while (close_rt(sock) == -EAGAIN) {
         set_current_state(TASK_UNINTERRUPTIBLE);
@@ -215,10 +226,10 @@ void cleanup_module(void)
     }
 
     /* rt_task_delete     */
-    rt_task_delete(&rt_task);
+    rtos_task_delete(&rt_task);
 
     /* destroy the fifo   */
-    rtf_destroy(PRINT);
+    rtos_fifo_destroy(&print_fifo);
 
     printk("packets sent:\t\t%10lu\npackets received:\t%10lu\npacketloss:\t\t"
            "%10lu%%\n", sent, rcvd, 100-((100*rcvd)/sent));

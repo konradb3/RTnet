@@ -45,31 +45,24 @@
 
 #include <net/ip.h>
 
-#include <rtnet_config.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
-#include <rtai_fifos.h>
-
-#ifdef HAVE_RTAI_SEM_H
-#include <rtai_sem.h>
-#endif
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 
 #define MIN_LENGTH_IPv4 7
 #define MAX_LENGTH_IPv4 15
-static char *local_ip_s  = "192.168.6.4";
+static char *local_ip_s = "192.168.6.4";
 
-MODULE_PARM (local_ip_s ,"s");
-MODULE_PARM_DESC (local_ip_s, "local ip-addr");
+MODULE_PARM(local_ip_s ,"s");
+MODULE_PARM_DESC(local_ip_s, "local ip-addr");
 MODULE_LICENSE("GPL");
 
-#define PRINT 0 /* real-time fifo */
-RT_TASK rt_task;
+#define PRINT_FIFO      0 /* real-time fifo */
+rtos_fifo_t print_fifo;
 
-#define RCV_PORT1	36000
-#define RCV_PORT2	45054
+rtos_task_t rt_task;
+
+#define RCV_PORT1       36000
+#define RCV_PORT2       45054
 
 static struct sockaddr_in local_addr1;
 static struct sockaddr_in local_addr2;
@@ -87,15 +80,15 @@ unsigned long rt_inet_aton(const char *ip)
     union { unsigned long l; char c[4]; } u;
     p = n = 0;
     while ((c = *ip++)) {
-	if (c != '.') {
-	    n = n*10 + c-'0';
-	} else {
-	    if (n > 0xFF) {
-		return 0;
-	    }
-	    u.c[p++] = n;
-	    n = 0;
-	}
+        if (c != '.') {
+            n = n*10 + c-'0';
+        } else {
+            if (n > 0xFF) {
+                return 0;
+            }
+            u.c[p++] = n;
+            n = 0;
+        }
     }
     u.c[3] = n;
     return u.l;
@@ -104,13 +97,13 @@ unsigned long rt_inet_aton(const char *ip)
 
 int packetsize = 58;
 
-void* process(void * arg)
+void *process(void *arg)
 {
-    fd_set readfds;
-    struct msghdr		msg;
-    struct iovec		iov;
-    struct sockaddr_in		addr;
-    
+    fd_set              readfds;
+    struct msghdr       msg;
+    struct iovec        iov;
+    struct sockaddr_in  addr;
+
     memset(&msg, 0, sizeof(msg));
     iov.iov_base=&buffer;
     iov.iov_len=BUFSIZE;
@@ -121,30 +114,30 @@ void* process(void * arg)
     msg.msg_control=NULL;
     msg.msg_controllen=0;
 
-    rt_printk(" --> selecting task started\n");
+    rtos_print(" --> selecting task started\n");
     while (0==exit_select) {
-	int ret;
+        int ret;
 
-	FD_ZERO(&readfds);
-	/*
-	  FD_SET((sock1 & (MAX_FILDES - 1)), &readfds);
-	  FD_SET((sock2 & (MAX_FILDES - 1)), &readfds);
-	*/
-	FD_SET(sock1, &readfds);
-	FD_SET(sock2, &readfds);
+        FD_ZERO(&readfds);
+        /*
+          FD_SET((sock1 & (MAX_FILDES - 1)), &readfds);
+          FD_SET((sock2 & (MAX_FILDES - 1)), &readfds);
+         */
+        FD_SET(sock1, &readfds);
+        FD_SET(sock2, &readfds);
 
-	ret = select_rt(0, sock1 > sock2 ? sock1 : sock2,
-			&readfds, 0, 0);
-	
-	while (0<recvmsg_rt(sock1, &msg, MSG_DONTWAIT)) {
-	    rt_printk("  # received data on socket 1\n");
-	}
-	
-	while (0<recvmsg_rt(sock2, &msg, MSG_DONTWAIT)) {
-	    rt_printk("  # received data on socket 2\n");
-	}
+        ret = select_rt(0, sock1 > sock2 ? sock1 : sock2,
+                        &readfds, 0, 0);
+
+        while (0 < recvmsg_rt(sock1, &msg, MSG_DONTWAIT)) {
+            rtos_print("  # received data on socket 1\n");
+        }
+
+        while (0 < recvmsg_rt(sock2, &msg, MSG_DONTWAIT)) {
+            rtos_print("  # received data on socket 2\n");
+        }
     }
-    rt_printk(" --> selecting task finished\n");
+    rtos_print(" --> selecting task finished\n");
     exit_select=2;
     return NULL;
 }
@@ -164,47 +157,44 @@ int init_module(void)
     printk("  * local ip address (%s)\n", local_ip_s);
 
     /* create rt-socket */
-    printk("  * creating socket 1\n");	
+    printk("  * creating socket 1\n");
     if ((sock1=socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-	printk("!!! socket not created\n");
-	return -ENOMEM;
+        printk("!!! socket not created\n");
+        return -ENOMEM;
     }
 
-    printk("  * creating socket 2\n");	
+    printk("  * creating socket 2\n");
     if ((sock2=socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-	printk("!!! socket not created, please reboot\n");
-	return -ENOMEM;
+        printk("!!! socket not created, please reboot\n");
+        return -ENOMEM;
     }
-	
-    /* bind the rt-socket to local_addr */	
+
+    /* bind the rt-socket to local_addr */
     printk("  * binding socket 1 to local address:port\n");
     memset(&local_addr1, 0, sizeof(struct sockaddr_in));
     local_addr1.sin_family = AF_INET;
     local_addr1.sin_port = htons(RCV_PORT1);
     local_addr1.sin_addr.s_addr = local_ip;
     if ( (ret=bind_rt(sock1, (struct sockaddr *) &local_addr1, sizeof(struct sockaddr_in)))<0 ) {
-	printk("!!! can't bind rtsocket, please reboot\n");
-	return ret;
+        printk("!!! can't bind rtsocket, please reboot\n");
+        return ret;
     }
-	
+
     printk("  * binding socket 2 to local address:port\n");
     memset(&local_addr1, 0, sizeof(struct sockaddr_in));
     local_addr2.sin_family = AF_INET;
     local_addr2.sin_port = htons(RCV_PORT2);
     local_addr2.sin_addr.s_addr = local_ip;
     if ( (ret=bind_rt(sock2, (struct sockaddr *) &local_addr2, sizeof(struct sockaddr_in)))<0 ) {
-	printk("!!! can't bind rtsocket, please reboot\n");
-	return ret;
+        printk("!!! can't bind rtsocket, please reboot\n");
+        return ret;
     }
     printk(" --> sockets created: %d / %d.\n", sock1, sock2);
-	
+
     /* create print-fifo */
-    rtf_create(PRINT, 3000);
-    
-    ret=rt_task_init(&rt_task, (void*) process, 0, 4096, 9, 0, NULL);
-    if (0 == ret) {
-	rt_task_resume (&rt_task);
-    }
+    rtos_fifo_create(&print_fifo, PRINT, 3000);
+
+    ret=rtos_task_init(&rt_task, (void*) process, 0, 9);
     printk("==> initialization complete\n");
     return ret;
 }
@@ -218,30 +208,30 @@ void cleanup_module(void)
     /* wait for selecting task to exit */
     exit_select=1;
     while (2 != exit_select) {
-	printk("  * waiting for selecting task to exit (%d)\n", counter++);
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(1*HZ); /* wait a second */
+        printk("  * waiting for selecting task to exit (%d)\n", counter++);
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
     }
-    
+
     /* close sockets */
     counter=0;
     while (close_rt(sock1) == -EAGAIN) {
-	printk("  * waiting for socket 1 to be closed (%d)\n", counter++);
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(1*HZ); /* wait a second */
+        printk("  * waiting for socket 1 to be closed (%d)\n", counter++);
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
     }
     printk(" --> socket 1 closed\n");
     counter=0;
     while (close_rt(sock2) == -EAGAIN) {
-	printk("  * waiting for socket 2 to be closed (%d)\n", counter++);
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(1*HZ); /* wait a second */
+        printk("  * waiting for socket 2 to be closed (%d)\n", counter++);
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
     }
     printk(" --> socket 2 closed\n");
-	
+
     /* delete task and fifo */
     rt_task_delete(&rt_task);
-    rtf_destroy(PRINT);
+    rtos_fifo_destroy(&print_fifo);
     printk("==> module unloaded\n\n");
 }
 

@@ -27,16 +27,8 @@
 #include <linux/if_packet.h>
 #include <asm/uaccess.h>
 
-#include <rtnet_config.h>
-
-#include <rtai.h>
-#include <rtai_sched.h>
 #include <rtdm_driver.h>
-
-#ifdef HAVE_RTAI_SEM_H
-#include <rtai_sem.h>
-#endif
-
+#include <rtnet_sys.h>
 #include <rtnet.h>
 #include <rtmac.h>
 
@@ -59,11 +51,11 @@ struct netshm_hdr {
 } __attribute__((packed));
 
 struct netshm_priv {
-    /* RT_TASK must be aligned. We will move the private structure in
-       rtdm_dev_context appropriately. */
-    RT_TASK                 recv_task;
-    SEM                     recv_sem;
-    SEM                     mem_lock;
+    /* rtos_task_t must be aligned. We will move the private structure
+       in rtdm_dev_context appropriately. */
+    rtos_task_t             recv_task;
+    rtos_event_sem_t        recv_sem;
+    rtos_res_lock_t         mem_lock;
     volatile int            receiver_mode;
     int                     sock;
     struct rtdm_dev_context *sock_ctx;
@@ -72,7 +64,8 @@ struct netshm_priv {
                                             const struct msghdr *msg,
                                             int flags);
     ssize_t                 (*sock_recvmsg)(struct rtdm_dev_context *context,
-                                            int call_flags, struct msghdr *msg,
+                                            int call_flags,
+                                            struct msghdr *msg,
                                             int flags);
     int                     rtmac;
     struct rtdm_dev_context *rtmac_ctx;
@@ -115,12 +108,12 @@ void receive_callback(struct rtdm_dev_context *context, void *arg)
     struct netshm_priv  *priv = (struct netshm_priv *)arg;
 
 
-    rt_sem_wait(&priv->mem_lock);
+    rtos_res_lock(&priv->mem_lock);
 
     if (priv->receiver_mode == MODE_DISABLED)
-        rt_sem_signal(&priv->mem_lock);
+        rtos_res_unlock(&priv->mem_lock);
     else
-        rt_sem_signal(&priv->recv_sem);
+        rtos_event_sem_signal(&priv->recv_sem);
         /* receiver task will release mem_lock */
 }
 
@@ -143,7 +136,7 @@ void receiver(int arg)
 
     RTDM_LOCK_CONTEXT(priv->sock_ctx);
     while (1) {
-        if (rt_sem_wait(&priv->recv_sem) == 0xFFFF)
+        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&priv->recv_sem)))
             goto done; /* we are shutting down */
 
         while (1) {
@@ -171,8 +164,8 @@ void receiver(int arg)
             } else {
                 msg.msg_iovlen  = 2;
 
-                /* write the header to the user buffer as well, will be overwritten
-                with data afterwards. */
+                /* write the header to the user buffer as well, will be
+                 * overwritten with data afterwards. */
                 iov[0].iov_base = priv->mem_start + hdr.offset;
                 iov[0].iov_len  = sizeof(struct netshm_hdr);
                 iov[1].iov_base = iov[0].iov_base;
@@ -185,11 +178,11 @@ void receiver(int arg)
             }
         }
 
-        rt_sem_signal(&priv->mem_lock);
+        rtos_res_unlock(&priv->mem_lock);
     }
 
   done:
-    rt_sem_signal(&priv->mem_lock);
+    rtos_res_unlock(&priv->mem_lock);
     RTDM_UNLOCK_CONTEXT(priv->sock_ctx);
 }
 
@@ -254,13 +247,13 @@ int netshm_open(struct rtdm_dev_context *context, int call_flags, int oflags)
     priv->rtmac_ctx   = getcontext.context;
     priv->rtmac_ioctl = getcontext.context->ops->ioctl_rt;
 
-    ret = rt_task_init(&priv->recv_task, receiver, (int)priv, 4096,
-                       DEFAULT_RECV_TASK_PRIO, 0, NULL);
+    ret = rtos_task_init_suspended(&priv->recv_task, receiver, (int)priv,
+                                   DEFAULT_RECV_TASK_PRIO);
     if (ret < 0)
         goto err_task;
 
-    rt_typed_sem_init(&priv->recv_sem, 0, CNT_SEM);
-    rt_typed_sem_init(&priv->mem_lock, 1, RES_SEM);
+    rtos_event_sem_init(&priv->recv_sem);
+    rtos_res_lock_init(&priv->mem_lock);
 
     priv->msg_out.msg_name        = &broadcast_addr;
     priv->msg_out.msg_namelen     = sizeof(broadcast_addr);
@@ -291,8 +284,8 @@ int netshm_close(struct rtdm_dev_context *context, int call_flags)
     int                 ret;
 
 
-    rt_sem_delete(&priv->recv_sem);
-    rt_sem_delete(&priv->mem_lock);
+    rtos_event_sem_delete(&priv->recv_sem);
+    rtos_res_lock_delete(&priv->mem_lock);
 
     if (atomic_read(&context->close_lock_count) > 1)
         return -EAGAIN;
@@ -311,7 +304,7 @@ int netshm_close(struct rtdm_dev_context *context, int call_flags)
         priv->rtmac = -1;
     }
 
-    rt_task_delete(&priv->recv_task);
+    rtos_task_delete(&priv->recv_task);
     return 0;
 }
 
@@ -362,8 +355,9 @@ int netshm_ioctl_nrt(struct rtdm_dev_context *context, int call_flags,
             priv->msg_out.msg_iov = priv->iov_out;
 
             if (args_ptr->recv_task_prio >= 0)
-                rt_change_prio(&priv->recv_task, args_ptr->recv_task_prio);
-            rt_task_resume(&priv->recv_task);
+                rtos_task_set_priority(&priv->recv_task,
+                                       args_ptr->recv_task_prio);
+            rtos_task_resume(&priv->recv_task);
 
             if (args_ptr->xmit_prio >= 0)
                 ioctl_rt(priv->sock, RTNET_RTIOC_PRIORITY,
@@ -423,16 +417,16 @@ int netshm_ioctl_rt(struct rtdm_dev_context *context, int call_flags,
             priv->receiver_mode = MODE_ENABLED;
 
             /* explicitely wake up receiver to process pending messages */
-            rt_sem_signal(&priv->recv_sem);
+            rtos_event_sem_signal(&priv->recv_sem);
 
             /* wait on completion of communication cycle (second cycle) */
             ret = priv->rtmac_ioctl(priv->rtmac_ctx, call_flags,
                                     RTMAC_RTIOC_WAITONCYCLE, &waiton);
             RTDM_UNLOCK_CONTEXT(priv->rtmac_ctx);
 
-            rt_sem_wait(&priv->mem_lock);
+            rtos_res_lock(&priv->mem_lock);
             priv->receiver_mode = MODE_DISABLED;
-            rt_sem_signal(&priv->mem_lock);
+            rtos_res_unlock(&priv->mem_lock);
 
             break;
 
@@ -472,7 +466,8 @@ static struct rtdm_device netshm_dev = {
     device_sub_class:   100,
     driver_name:        "netshm",
     peripheral_name:    "Simple shared memory over RTnet",
-    provider_name:      "(C) 2004 RTnet Development Team, http://rtnet.sf.net",
+    provider_name:      "(C) 2004 RTnet Development Team, "
+                        "http://rtnet.sf.net",
 
     proc_name:          netshm_dev.device_name
 };
