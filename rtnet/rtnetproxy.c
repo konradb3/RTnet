@@ -174,6 +174,10 @@ static inline void send_data_out(struct sk_buff *skb)
     /* Copy the data from the standard sk_buff to the realtime sk_buff:
      * Both have the same length. */
     rtskb = alloc_rtskb(skb->len);
+    if (NULL == rtskb) {
+        return;
+    }
+
     memcpy(rtskb->data, skb->data, skb->len);
     rtskb->len = skb->len;
 
