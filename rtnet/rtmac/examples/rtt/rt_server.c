@@ -248,5 +248,9 @@ void cleanup_module(void)
     rt_sem_delete(&tx_sem);
 #endif
 
-    rt_socket_close(sock);
+    while (rt_socket_close(sock) == -EAGAIN) {
+        printk("rt_server: Not all buffers freed yet - waiting...\n");
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
 }
