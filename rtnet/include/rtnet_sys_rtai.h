@@ -94,6 +94,7 @@ static inline void rtos_time_sum(rtos_time_t *result,
 }
 
 #define RTOS_TIME_IS_ZERO(time)    (*(time) == 0)
+#define RTOS_TIME_IS_BEFORE(a, b)  (*(a) <= *(b))
 
 
 
