@@ -35,8 +35,8 @@
 #define RT_SOCKET_RECVFROM      9
 #define RT_SOCKET_SENDMSG       10
 #define RT_SOCKET_RECVMSG       11
-#define RT_SOCKET_WRITE	        12
-#define RT_SOCKET_READ	        13
+#define RT_SOCKET_WRITE         12
+#define RT_SOCKET_READ          13
 #define RT_SOCKET_WRITEV        14
 #define RT_SOCKET_READV         15
 #define RT_SOCKET_GETSOCKNAME   16
