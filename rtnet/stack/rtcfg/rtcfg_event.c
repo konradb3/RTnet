@@ -659,7 +659,7 @@ void rtcfg_cleanup_state_machines(void)
 
         if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
 #if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
-    defined(CONFIG_RTAI_31)
+    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
             rt_task_wakeup_sleeping(&rtcfg_dev->timer_task);
 #endif
             rtos_task_delete(&rtcfg_dev->timer_task);

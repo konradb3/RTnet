@@ -27,7 +27,6 @@
 
 #include <rtdev_mgr.h>
 #include <rtnet_chrdev.h>
-#include <rtnet_crc32.h>
 #include <rtnet_internal.h>
 #include <rtnet_rtpc.h>
 #include <stack_mgr.h>
@@ -198,9 +197,6 @@ int __init rtnet_init(void)
            " ***\n\n");
     printk("RTnet: initialising real-time networking\n");
 
-    if ((err = init_crc32()) != 0)
-        goto err_out0;
-
     if ((err = rtskb_pools_init()) != 0)
         goto err_out1;
 
@@ -253,9 +249,6 @@ err_out2:
     rtskb_pools_release();
 
 err_out1:
-    cleanup_crc32();
-
-err_out0:
     return err;
 }
 
@@ -277,8 +270,6 @@ void rtnet_release(void)
     rt_packet_proto_release();
     rt_inet_proto_release();
     rtskb_pools_release();
-
-    cleanup_crc32();
 
 #ifdef CONFIG_PROC_FS
     rtnet_proc_unregister();

@@ -41,8 +41,6 @@ libkernel_rtnet_a_SOURCES = \
 	ipv4/ip_output.c \
 	ipv4/ip_fragment.c \
 	\
-	lib/crc32.c \
-	\
 	packet/af_packet.c
 
 OBJS = rtnet$(modext)

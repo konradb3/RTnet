@@ -205,7 +205,7 @@ fi
 
 . $RTAI_LINUX_DIR/.config
 
-RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL"
+RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
 AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
 
 dnl
@@ -357,6 +357,10 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 	AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
 	CONFIG_RTNET_RTAI_VERSION=31
 	;;
+    3.2*)
+	AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
+	CONFIG_RTNET_RTAI_VERSION=32
+	;;
     *)
 	AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
 	;;
@@ -406,7 +410,7 @@ dnl ===========	end of rtai 3 detection ==================================
 #
 case "$CONFIG_RTNET_RTAI_VERSION" in
     24)
-	AC_DEFINE(CONFIG_RTAI_24,1,[We build for rtai 24.1.x])
+	AC_DEFINE(CONFIG_RTAI_24, 1, [We build for rtai 24.1.x])
 	;;
     30)
 	AC_DEFINE(CONFIG_RTAI_30, 1, [We build for rtai 3.0rx])
@@ -414,10 +418,32 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
     31)
 	AC_DEFINE(CONFIG_RTAI_31, 1, [We build for rtai 3.1rx])
 	;;
+    32)
+	AC_DEFINE(CONFIG_RTAI_32, 1, [We build for rtai 3.2rx])
+	;;
     *)
 	AC_MSG_ERROR([*** No RTAI found in $with_rtai])
 	;;
 esac
+
+
+dnl ======================================================================
+dnl		check linux version
+dnl ======================================================================
+
+case "${RTAI_LINUX_VERSION}" in
+    2.4.*)
+	RTAI_LINUX_VERSION_SUBLEVEL="`echo ${RTAI_LINUX_VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\).*/\1/'`"
+	if test ${RTAI_LINUX_VERSION_SUBLEVEL} -le 18; then
+	    AC_MSG_ERROR([*** Unsupported kernel version $RTAI_LINUX_VERSION - please upgrade at least to 2.4.19])
+	fi
+	;;
+    2.6.*)
+	;;
+    *)
+	AC_MSG_ERROR([*** Unsupported kernel version $RTAI_LINUX_VERSION])
+esac
+
 
 
 dnl ======================================================================
@@ -433,7 +459,7 @@ case "${RTAI_LINUX_VERSION}" in
 	CONFIG_KBUILD=y
 	;;
     *)
-	AC_MSG_ERROR([*** Unsupported kernel version $RTAI_LINUX_VERSION])
+	AC_MSG_ERROR([*** internal error])
 esac
 AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
 
@@ -443,7 +469,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
 	CONFIG_RTNET_RTAI_ARCH="`sed -n -e "s/^ARCH=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
 	;;
-    30 | 31)
+    30 | 31 | 32)
 	RTAI_LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
@@ -457,7 +483,7 @@ if test "$CONFIG_KBUILD" = "y"; then
 	24 | 30)
 	    AC_MSG_ERROR([*** internal error])
 	    ;;
-	31)
+	31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	    ;;
 	*)
@@ -468,7 +494,7 @@ else
 	24)
 	    RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
 	    ;;
-	30 | 31)
+	30 | 31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	    ;;
 	*)
@@ -611,7 +637,7 @@ if test x"${CONFIG_KBUILD}" = x"y"; then
 	[],
 	[case "${CONFIG_RTNET_RTAI_VERSION}" in
 	24 | 30) AC_MSG_ERROR([*** internal error]) ;;
-	31) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
+	31 | 32) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
 	*) AC_MSG_ERROR([*** internal error])
 	esac],
 	[
@@ -623,19 +649,19 @@ else
 	[],
 	[case "${CONFIG_RTNET_RTAI_VERSION}" in
 	24) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
-	30 | 31) ;;
+	30 | 31 | 32) ;;
 	*) AC_MSG_ERROR([*** internal error])
 	esac],
         [
 #include <linux/kernel.h>
         ])
 
-# mandatory RTAI-30 headers
+# mandatory RTAI-3 headers
     AC_CHECK_HEADERS([rtai_sem.h rtai_malloc.h],
 	[],
 	[case "${CONFIG_RTNET_RTAI_VERSION}" in
 	24) ;;
-	30 | 31) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
+	30 | 31 | 32) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
 	*) AC_MSG_ERROR([*** internal error])
 	esac],
         [
@@ -675,7 +701,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) unset CONFIG_NEWLXRT ;;
 	esac
 	;;
-    30 | 31)
+    30 | 31 | 32)
 	case "${CONFIG_RTAI_SCHED_LXRT}" in
 	    y | m) CONFIG_NEWLXRT=yes ;;
 	    *) unset CONFIG_NEWLXRT ;;
@@ -845,7 +871,7 @@ AM_CONDITIONAL(CONFIG_RTNET_SMC91111,[test "$CONFIG_RTNET_SMC91111" = "yes"])
 
 AC_MSG_CHECKING([whether to build loopback driver])
 AC_ARG_ENABLE(loopback,
-	AS_HELP_STRING([--enable-loopback], [build loopback driver (default=yes)]),
+	AS_HELP_STRING([--enable-loopback], [build loopback driver @<:@default=yes@:>@]),
 	[case "$enableval" in
 	n | no) CONFIG_RTNET_LOOPBACK=no ;;
 	*) CONFIG_RTNET_LOOPBACK=yes ;;
@@ -861,7 +887,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build RTcfg])
 AC_ARG_ENABLE(rtcfg,
-	AS_HELP_STRING([--enable-rtcfg], [build RTcfg (default=yes)]),
+	AS_HELP_STRING([--enable-rtcfg], [build RTcfg @<:@default=yes@:>@]),
 	[case "$enableval" in
 	n | no) CONFIG_RTNET_RTCFG=no ;;
 	*) CONFIG_RTNET_RTCFG=yes ;;
@@ -925,7 +951,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build enclosed RTDM])
 AC_ARG_ENABLE(enclosed-rtdm,
-	AS_HELP_STRING([--enable-enclosed-rtdm], [built enclosed RTDM module (default=yes)]),
+	AS_HELP_STRING([--enable-enclosed-rtdm], [built enclosed RTDM module @<:@default=yes@:>@]),
 	[case "$enableval" in
 	n | no) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=no ;;
 	*) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes ;;
@@ -987,7 +1013,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build examples])
 AC_ARG_ENABLE(examples,
-	AS_HELP_STRING([--enable-examples], [build examples (default=yes)]),
+	AS_HELP_STRING([--enable-examples], [build examples @<:@default=yes@:>@]),
 	[case "$enableval" in
 	n | no) CONFIG_RTNET_EXAMPLES=no ;;
 	*) CONFIG_RTNET_EXAMPLES=yes ;;
@@ -1027,7 +1053,7 @@ fi
 
 AC_MSG_CHECKING([whether to enable internal bug checks])
 AC_ARG_ENABLE(checks,
-	AS_HELP_STRING([--enable-checks], [enable internal bug checks (default=yes)]),
+	AS_HELP_STRING([--enable-checks], [enable internal bug checks @<:@default=yes@:>@]),
 	[case "$enableval" in
 	n | no) CONFIG_RTNET_CHECKED=no ;;
 	*) CONFIG_RTNET_CHECKED=yes ;;

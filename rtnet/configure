@@ -1059,18 +1059,18 @@ Optional Features:
   --enable-scc-enet       build scc enet driver
   --enable-fec-enet       build fec enet driver
   --enable-smc91111       build SMSC LAN91C111 driver
-  --enable-loopback       build loopback driver (default=yes)
-  --enable-rtcfg          build RTcfg (default=yes)
+  --enable-loopback       build loopback driver [default=yes]
+  --enable-rtcfg          build RTcfg [default=yes]
   --enable-rtcfg-dbg      enable RTcfg debugging
   --enable-rtcap          enable RTcap support and build capturing module
   --enable-proxy          build IP protocol proxy driver (legacy)
-  --enable-enclosed-rtdm  built enclosed RTDM module (default=yes)
+  --enable-enclosed-rtdm  built enclosed RTDM module [default=yes]
   --enable-nomac          build NoMAC discipline for RTmac
   --enable-rtdm-select    enable select function for RTDM (experimental)
-  --enable-examples       build examples (default=yes)
+  --enable-examples       build examples [default=yes]
   --enable-net-routing    enable IP network routing
   --enable-router         enable IP router
-  --enable-checks         enable internal bug checks (default=yes)
+  --enable-checks         enable internal bug checks [default=yes]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -20515,7 +20515,7 @@ fi
 
 . $RTAI_LINUX_DIR/.config
 
-RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL"
+RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
 echo "$as_me:$LINENO: result: $RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&5
 echo "${ECHO_T}$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&6
 
@@ -20672,6 +20672,11 @@ echo "${ECHO_T}${CONFIG_RTNET_RTAI_3_VERSION}" >&6
 echo "${ECHO_T}${CONFIG_RTNET_RTAI_3_VERSION}" >&6
 	CONFIG_RTNET_RTAI_VERSION=31
 	;;
+    3.2*)
+	echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTAI_3_VERSION}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTAI_3_VERSION}" >&6
+	CONFIG_RTNET_RTAI_VERSION=32
+	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&5
 echo "$as_me: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&2;}
@@ -20756,12 +20761,39 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	;;
+    32)
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTAI_32 1
+_ACEOF
+
+	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** No RTAI found in $with_rtai" >&5
 echo "$as_me: error: *** No RTAI found in $with_rtai" >&2;}
    { (exit 1); exit 1; }; }
 	;;
 esac
+
+
+
+case "${RTAI_LINUX_VERSION}" in
+    2.4.*)
+	RTAI_LINUX_VERSION_SUBLEVEL="`echo ${RTAI_LINUX_VERSION} | sed -e 's/[0-9]*\.[0-9]*\.\([0-9]*\).*/\1/'`"
+	if test ${RTAI_LINUX_VERSION_SUBLEVEL} -le 18; then
+	    { { echo "$as_me:$LINENO: error: *** Unsupported kernel version $RTAI_LINUX_VERSION - please upgrade at least to 2.4.19" >&5
+echo "$as_me: error: *** Unsupported kernel version $RTAI_LINUX_VERSION - please upgrade at least to 2.4.19" >&2;}
+   { (exit 1); exit 1; }; }
+	fi
+	;;
+    2.6.*)
+	;;
+    *)
+	{ { echo "$as_me:$LINENO: error: *** Unsupported kernel version $RTAI_LINUX_VERSION" >&5
+echo "$as_me: error: *** Unsupported kernel version $RTAI_LINUX_VERSION" >&2;}
+   { (exit 1); exit 1; }; }
+esac
+
 
 
 
@@ -20774,8 +20806,8 @@ case "${RTAI_LINUX_VERSION}" in
 	CONFIG_KBUILD=y
 	;;
     *)
-	{ { echo "$as_me:$LINENO: error: *** Unsupported kernel version $RTAI_LINUX_VERSION" >&5
-echo "$as_me: error: *** Unsupported kernel version $RTAI_LINUX_VERSION" >&2;}
+	{ { echo "$as_me:$LINENO: error: *** internal error" >&5
+echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
 esac
 
@@ -20795,7 +20827,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
 	CONFIG_RTNET_RTAI_ARCH="`sed -n -e "s/^ARCH=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
 	;;
-    30 | 31)
+    30 | 31 | 32)
 	RTAI_LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
@@ -20813,7 +20845,7 @@ if test "$CONFIG_KBUILD" = "y"; then
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
 	    ;;
-	31)
+	31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	    ;;
 	*)
@@ -20826,7 +20858,7 @@ else
 	24)
 	    RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
 	    ;;
-	30 | 31)
+	30 | 31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	    ;;
 	*)
@@ -21035,7 +21067,7 @@ else
 	24 | 30) { { echo "$as_me:$LINENO: error: *** internal error" >&5
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; } ;;
-	31) { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
+	31 | 32) { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
 echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
    { (exit 1); exit 1; }; } ;;
 	*) { { echo "$as_me:$LINENO: error: *** internal error" >&5
@@ -21111,7 +21143,7 @@ else
 	24) { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
 echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
    { (exit 1); exit 1; }; } ;;
-	30 | 31) ;;
+	30 | 31 | 32) ;;
 	*) { { echo "$as_me:$LINENO: error: *** internal error" >&5
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
@@ -21121,7 +21153,7 @@ fi
 done
 
 
-# mandatory RTAI-30 headers
+# mandatory RTAI-3 headers
 
 
 for ac_header in rtai_sem.h rtai_malloc.h
@@ -21184,7 +21216,7 @@ _ACEOF
 else
   case "${CONFIG_RTNET_RTAI_VERSION}" in
 	24) ;;
-	30 | 31) { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
+	30 | 31 | 32) { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
 echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
    { (exit 1); exit 1; }; } ;;
 	*) { { echo "$as_me:$LINENO: error: *** internal error" >&5
@@ -21232,7 +21264,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) unset CONFIG_NEWLXRT ;;
 	esac
 	;;
-    30 | 31)
+    30 | 31 | 32)
 	case "${CONFIG_RTAI_SCHED_LXRT}" in
 	    y | m) CONFIG_NEWLXRT=yes ;;
 	    *) unset CONFIG_NEWLXRT ;;

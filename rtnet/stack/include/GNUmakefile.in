@@ -209,15 +209,14 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 nobase_include_HEADERS = \
-		rtnet.h \
-		rtmac.h
+	rtnet.h \
+	rtmac.h
 
 noinst_HEADERS = \
 	comdbg.h \
 	rtdev.h \
 	rtdev_mgr.h \
 	rtnet_chrdev.h \
-	rtnet_crc32.h \
 	rtnet_internal.h \
 	rtnet_iovec.h \
 	rtnet_port.h \
@@ -246,8 +245,6 @@ noinst_HEADERS = \
 	ipv4/route.h \
 	ipv4/udp.h \
 	ipv4_chrdev.h \
-	\
-	lib/crc32.h \
 	\
 	packet/af_packet.h \
 	\
@@ -398,7 +395,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/lib $(distdir)/packet $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma-v1
+	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/packet $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma-v1
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

@@ -15,6 +15,9 @@
 /* We build for rtai 3.1rx */
 #undef CONFIG_RTAI_31
 
+/* We build for rtai 3.2rx */
+#undef CONFIG_RTAI_32
+
 /* Build system alias */
 #undef CONFIG_RTNET_BUILD_STRING
 

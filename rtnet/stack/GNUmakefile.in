@@ -71,7 +71,6 @@ am_libkernel_rtnet_a_OBJECTS = libkernel_rtnet_a-iovec.$(OBJEXT) \
 	libkernel_rtnet_a-icmp.$(OBJEXT) \
 	libkernel_rtnet_a-ip_output.$(OBJEXT) \
 	libkernel_rtnet_a-ip_fragment.$(OBJEXT) \
-	libkernel_rtnet_a-crc32.$(OBJEXT) \
 	libkernel_rtnet_a-af_packet.$(OBJEXT)
 libkernel_rtnet_a_OBJECTS = $(am_libkernel_rtnet_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
@@ -80,7 +79,6 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_rtnet_a-af_inet.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/libkernel_rtnet_a-af_packet.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/libkernel_rtnet_a-arp.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/libkernel_rtnet_a-crc32.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/libkernel_rtnet_a-eth.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/libkernel_rtnet_a-icmp.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/libkernel_rtnet_a-iovec.Po \
@@ -309,8 +307,6 @@ libkernel_rtnet_a_SOURCES = \
 	ipv4/ip_output.c \
 	ipv4/ip_fragment.c \
 	\
-	lib/crc32.c \
-	\
 	packet/af_packet.c
 
 OBJS = rtnet$(modext)
@@ -363,7 +359,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-af_inet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-af_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-arp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-crc32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-eth.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-icmp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnet_a-iovec.Po@am__quote@
@@ -911,30 +906,6 @@ libkernel_rtnet_a-ip_fragment.lo: ipv4/ip_fragment.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtnet_a-ip_fragment.Plo' tmpdepfile='$(DEPDIR)/libkernel_rtnet_a-ip_fragment.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtnet_a-ip_fragment.lo `test -f 'ipv4/ip_fragment.c' || echo '$(srcdir)/'`ipv4/ip_fragment.c
-
-libkernel_rtnet_a-crc32.o: lib/crc32.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtnet_a-crc32.o -MD -MP -MF "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo" -c -o libkernel_rtnet_a-crc32.o `test -f 'lib/crc32.c' || echo '$(srcdir)/'`lib/crc32.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo" "$(DEPDIR)/libkernel_rtnet_a-crc32.Po"; else rm -f "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lib/crc32.c' object='libkernel_rtnet_a-crc32.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtnet_a-crc32.Po' tmpdepfile='$(DEPDIR)/libkernel_rtnet_a-crc32.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtnet_a-crc32.o `test -f 'lib/crc32.c' || echo '$(srcdir)/'`lib/crc32.c
-
-libkernel_rtnet_a-crc32.obj: lib/crc32.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtnet_a-crc32.obj -MD -MP -MF "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo" -c -o libkernel_rtnet_a-crc32.obj `if test -f 'lib/crc32.c'; then $(CYGPATH_W) 'lib/crc32.c'; else $(CYGPATH_W) '$(srcdir)/lib/crc32.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo" "$(DEPDIR)/libkernel_rtnet_a-crc32.Po"; else rm -f "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lib/crc32.c' object='libkernel_rtnet_a-crc32.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtnet_a-crc32.Po' tmpdepfile='$(DEPDIR)/libkernel_rtnet_a-crc32.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtnet_a-crc32.obj `if test -f 'lib/crc32.c'; then $(CYGPATH_W) 'lib/crc32.c'; else $(CYGPATH_W) '$(srcdir)/lib/crc32.c'; fi`
-
-libkernel_rtnet_a-crc32.lo: lib/crc32.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtnet_a-crc32.lo -MD -MP -MF "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo" -c -o libkernel_rtnet_a-crc32.lo `test -f 'lib/crc32.c' || echo '$(srcdir)/'`lib/crc32.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo" "$(DEPDIR)/libkernel_rtnet_a-crc32.Plo"; else rm -f "$(DEPDIR)/libkernel_rtnet_a-crc32.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lib/crc32.c' object='libkernel_rtnet_a-crc32.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_rtnet_a-crc32.Plo' tmpdepfile='$(DEPDIR)/libkernel_rtnet_a-crc32.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtnet_a-crc32.lo `test -f 'lib/crc32.c' || echo '$(srcdir)/'`lib/crc32.c
 
 libkernel_rtnet_a-af_packet.o: packet/af_packet.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtnet_a-af_packet.o -MD -MP -MF "$(DEPDIR)/libkernel_rtnet_a-af_packet.Tpo" -c -o libkernel_rtnet_a-af_packet.o `test -f 'packet/af_packet.c' || echo '$(srcdir)/'`packet/af_packet.c; \

@@ -1,13 +1,12 @@
 nobase_include_HEADERS = \
-		rtnet.h \
-		rtmac.h
+	rtnet.h \
+	rtmac.h
 
 noinst_HEADERS = \
 	comdbg.h \
 	rtdev.h \
 	rtdev_mgr.h \
 	rtnet_chrdev.h \
-	rtnet_crc32.h \
 	rtnet_internal.h \
 	rtnet_iovec.h \
 	rtnet_port.h \
@@ -36,8 +35,6 @@ noinst_HEADERS = \
 	ipv4/route.h \
 	ipv4/udp.h \
 	ipv4_chrdev.h \
-	\
-	lib/crc32.h \
 	\
 	packet/af_packet.h \
 	\
