@@ -1,7 +1,7 @@
 EXTRA_USER_CFLAGS	:= -I../../../lxrt -I../../include
 EXTRA_USER_LIBS		:= -llxrt
 
-A_TARG			:= client linux_server
+A_TARG			:= client linux_server simpleclient simpleserver
 
 ifdef TOPDIR
 include $(TOPDIR)/Rules.make
