@@ -3,7 +3,7 @@
 
 What is it?
 -----------
-RTnet is real-time UDP/IP protocol stack for RTAI (hard real-time Linux
+RTnet is real-time network protocol stack for RTAI (hard real-time Linux
 extension). It provides a standard socket API to be used with RTAI kernel
 modules and LXRT processes.
 
@@ -13,6 +13,7 @@ What are the requirements?
   Linux kernel 2.6.x: 2.6.8.1 or better
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
   RTAI 3.x: tested on 3.0[r1|r2|r4], 3.1, LXRT when using user space API
+  RTAI/fusion 0.6[.6|.7] (no user space support yet)
 - x86 (required for LXRT interface) or PowerPC platform. Other platforms are
   untested yet.
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
@@ -35,7 +36,6 @@ How to install it?
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
        --enable-smc91111        compiles the SMSC LAN91C111 driver
-       --enable-proxy           compiles the IP protocol proxy driver (legacy)
        --enable-rtcap           enables capturing support (see README.rtcap)
        --enable-net-routing     enables network routing (see README.routing)
        --enable-router          enables IP forwarding (see README.routing)
@@ -59,7 +59,8 @@ How to test it?
    remove its driver module (this also means that it must not be compiled
    into the kernel!)
 2. Load required RTAI modules (24.1.x: rtai, rtai_sched; 3.x: rtai_hal,
-   rtai_ksched/rtai_lxrt, rtai_sem)
+   rtai_ksched/rtai_lxrt, rtai_sem; fusion: rtai_hal, rtai_nucleus,
+   rtai_native)
 3. Load the driver layer module rtai_rtdm.o (currently, this comes with RTnet,
    see <PREFIX>/modules directory)
 4. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:

@@ -31,8 +31,11 @@
 #include <net/if_arp.h>
 #include <netinet/in.h>
 
+#include <rtnet_config.h>
 #include <rtnet_chrdev.h>
+#ifdef CONFIG_RTNET_TDMAV1
 #include <tdma-v1_chrdev.h>
+#endif
 
 
 #define PRINT_FLAG_ALL          1
@@ -41,7 +44,9 @@
 
 int                     f;
 struct rtnet_core_cmd   cmd;
+#ifdef CONFIG_RTNET_TDMAV1
 struct tdma_config      tdma_cfg;
+#endif
 
 
 void help(void)
@@ -50,6 +55,7 @@ void help(void)
         "\trtifconfig [-a] [<dev>]\n"
         "\trtifconfig <dev> up [<addr> [netmask <mask>]] [[-]promisc]\n"
         "\trtifconfig <dev> down\n"
+#ifdef CONFIG_RTNET_TDMAV1
         "\trtifconfig <dev> mac client\n"
         "\trtifconfig <dev> mac master <cycle-time/us> [<mtu-size/byte>]\n"
         "\trtifconfig <dev> mac up\n"
@@ -58,7 +64,9 @@ void help(void)
         "\trtifconfig <dev> mac remove <addr>\n"
         "\trtifconfig <dev> mac cycle <time/us>\n"
         "\trtifconfig <dev> mac mtu <size/byte>\n"
-        "\trtifconfig <dev> mac offset <addr> <offset/us>\n");
+        "\trtifconfig <dev> mac offset <addr> <offset/us>\n"
+#endif /* CONFIG_RTNET_TDMAV1 */
+        );
 
     exit(1);
 }
@@ -224,6 +232,7 @@ void do_down(int argc,char *argv[])
 
 
 
+#ifdef CONFIG_RTNET_TDMAV1
 void do_mac_display(void)
 {
     fprintf(stderr, "fixme\n");
@@ -438,6 +447,7 @@ void do_mac(int argc, char *argv[])
 
     help();
 }
+#endif /* CONFIG_RTNET_TDMAV1 */
 
 
 
@@ -472,8 +482,10 @@ int main(int argc, char *argv[])
         do_up(argc,argv);
     if (strcmp(argv[2], "down") == 0)
         do_down(argc,argv);
+#ifdef CONFIG_RTNET_TDMAV1
     if (strcmp(argv[2], "mac") == 0)
         do_mac(argc,argv);
+#endif /* CONFIG_RTNET_TDMAV1 */
 
     help();
 

@@ -1098,6 +1098,9 @@ AC_ARG_ENABLE(tdma-v1,
 	[CONFIG_RTNET_TDMAV1=yes])
 AC_MSG_RESULT([${CONFIG_RTNET_TDMAV1}])
 AM_CONDITIONAL(CONFIG_RTNET_TDMAV1,[test "$CONFIG_RTNET_TDMAV1" = "yes"])
+if test "$CONFIG_RTNET_TDMAV1" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_TDMAV1, 1, [TDMA V1])
+fi
 
 
 dnl ======================================================================
