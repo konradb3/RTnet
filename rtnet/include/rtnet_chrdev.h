@@ -23,15 +23,14 @@
 #ifndef __RTNET_CHRDEV_H_
 #define __RTNET_CHRDEV_H_
 
-#include <linux/ioctl.h>
-#include <linux/netdevice.h>
-#include <linux/types.h>
-
-
 #ifdef __KERNEL__
 
 #include <linux/list.h>
 #include <linux/init.h>
+#include <linux/ioctl.h>
+#include <linux/netdevice.h>
+#include <linux/types.h>
+
 
 struct rtnet_device;
 
@@ -54,6 +53,11 @@ extern void rtnet_unregister_ioctls(struct rtnet_ioctls *ioctls);
 extern int __init rtnet_chrdev_init(void);
 extern void rtnet_chrdev_release(void);
 
+#else   /* ifndef __KERNEL__ */
+
+#include <net/if.h>             /* IFNAMSIZ */
+#include <linux/types.h>
+
 #endif  /* __KERNEL__ */
 
 
@@ -72,6 +76,8 @@ struct rtnet_core_cfg {
     __u32 ip_mask;
     __u32 ip_netaddr;
     __u32 ip_broadcast;
+    __u32 set_dev_flags;
+    __u32 clear_dev_flags;
 };
 
 
@@ -80,18 +86,18 @@ struct rtnet_core_cfg {
 #define RTNET_IOC_TYPE_RTMAC_TDMA       100
 
 #define IOC_RT_IFUP                     _IOW(RTNET_IOC_TYPE_CORE, 0, \
-                                             sizeof(struct rtnet_core_cfg))
+                                             struct rtnet_core_cfg)
 #define IOC_RT_IFDOWN                   _IOW(RTNET_IOC_TYPE_CORE, 1, \
-                                             sizeof(struct rtnet_core_cfg))
+                                             struct rtnet_core_cfg)
 /*#define IOC_RT_IF                       _IOWR(RTNET_IOC_TYPE_CORE, 2, \
-                                              sizeof(struct rtnet_core_cfg))*/
+                                              struct rtnet_core_cfg)*/
 /*#define IOC_RT_ROUTE_ADD                _IOW(RTNET_IOC_TYPE_CORE, 3, \
-                                             sizeof(struct rtnet_core_cfg))*/
+                                             struct rtnet_core_cfg)*/
 #define IOC_RT_ROUTE_SOLICIT            _IOW(RTNET_IOC_TYPE_CORE, 4, \
-                                             sizeof(struct rtnet_core_cfg))
+                                             struct rtnet_core_cfg)
 #define IOC_RT_ROUTE_DELETE             _IOW(RTNET_IOC_TYPE_CORE, 5, \
-                                             sizeof(struct rtnet_core_cfg))
+                                             struct rtnet_core_cfg)
 /*#define IOC_RT_ROUTE_GET                _IOR(RTNET_IOC_TYPE_CORE, 6, \
-                                             sizeof(struct rtnet_core_cfg))*/
+                                             struct rtnet_core_cfg)*/
 
 #endif  /* __RTNET_CHRDEV_H_ */
