@@ -17,7 +17,7 @@ echo -n cleaning up .
     fi
 )
 
-for FILE in aclocal.m4 configure config/config.h.in; do
+for FILE in aclocal.m4 configure config/rtnet_config_pre.h.in; do
     if test -f $FILE; then
 	rm -f $FILE
     fi
