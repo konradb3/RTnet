@@ -102,7 +102,7 @@ static rtos_nrt_signal_t rtnetproxy_signal;
 /* Thread for transmission */
 static rtos_task_t rtnetproxy_thread;
 
-static rtos_event_t rtnetproxy_event;
+static rtos_event_sem_t rtnetproxy_event;
 
 /* ***********************************************************************
  * Returns the next pointer from the ringbuffer or zero if nothing is
@@ -258,7 +258,7 @@ static void rtnetproxy_transmit_thread(int arg)
             write_to_ringbuffer(&ring_skb_rtnet_kernel, skb);
         }
         /* Will be activated with next frame to send... */
-        rtos_event_wait(&rtnetproxy_event);
+        rtos_event_sem_wait(&rtnetproxy_event);
     }
 }
 
@@ -287,7 +287,7 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 
     /* Signal rtnet that there are packets waiting to be processed...
      * */
-    rtos_event_signal(&rtnetproxy_event);
+    rtos_event_sem_signal(&rtnetproxy_event);
 
     /* Delete all "used" skbs that already have been processed... */
     {
@@ -390,14 +390,14 @@ static void rtnetproxy_signal_handler(void)
         rtnetproxy_kernel_recv(rtskb);
         /* Place "used" rtskb in backqueue... */
         while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
-            rtos_event_signal(&rtnetproxy_event);
+            rtos_event_sem_signal(&rtnetproxy_event);
         }
     }
 
     /* Signal rtnet that there are "used" rtskbs waiting to be processed...
      * Resume the rtnetproxy_thread to recycle "used" rtskbs
      * */
-    rtos_event_signal(&rtnetproxy_event);
+    rtos_event_sem_signal(&rtnetproxy_event);
 }
 
 /* ************************************************************************
@@ -494,7 +494,7 @@ static int __init rtnetproxy_init_module(void)
     /* Init the task for transmission */
     rtos_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0,
                    RTOS_LOWEST_RT_PRIORITY);
-    rtos_event_init(&rtnetproxy_event);
+    rtos_event_sem_init(&rtnetproxy_event);
 
     /* Register srq */
     rtos_nrt_signal_init(&rtnetproxy_signal, rtnetproxy_signal_handler);
@@ -518,7 +518,7 @@ static void __exit rtnetproxy_cleanup_module(void)
     rtos_nrt_signal_delete(&rtnetproxy_signal);
 
     rtos_task_delete(&rtnetproxy_thread);
-    rtos_event_delete(&rtnetproxy_event);
+    rtos_event_sem_delete(&rtnetproxy_event);
 
     /* Free the ringbuffers... */
     {

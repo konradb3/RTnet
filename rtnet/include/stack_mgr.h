@@ -56,7 +56,7 @@ extern void rtnetif_tx(struct rtnet_device *rtdev);
 
 static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 {
-    rtos_event_signal(rtdev->stack_event);
+    rtos_event_sem_signal(rtdev->stack_event);
 }
 
 

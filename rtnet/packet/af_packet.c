@@ -119,12 +119,12 @@ int rt_packet_recvmsg(struct rtsocket *sock, struct msghdr *msg, size_t len,
         ((flags & MSG_DONTWAIT) == 0))
         while ((skb = rtskb_dequeue_chain(&sock->incoming)) == NULL) {
             if (RTOS_TIME_IS_ZERO(&sock->timeout)) {
-                ret = rtos_event_wait_timeout(&sock->wakeup_event,
-                                              &sock->timeout);
+                ret = rtos_event_sem_wait_timed(&sock->wakeup_event,
+                                                &sock->timeout);
                 if (ret == RTOS_EVENT_TIMEOUT)
                     return -ETIMEDOUT;
             } else
-                ret = rtos_event_wait(&sock->wakeup_event);
+                ret = rtos_event_sem_wait(&sock->wakeup_event);
 
             if (RTOS_EVENT_ERROR(ret))
                 return -ENOTSOCK;
@@ -339,7 +339,7 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     else {
         rtdev_reference(skb->rtdev);
         rtskb_queue_tail(&sock->incoming, skb);
-        rtos_event_signal(&sock->wakeup_event);
+        rtos_event_sem_signal(&sock->wakeup_event);
         if (sock->wakeup != NULL)
             sock->wakeup(sock->fd, sock->wakeup_arg);
     }

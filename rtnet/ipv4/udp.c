@@ -194,11 +194,11 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, size_t len, int flags
     if (((s->flags & RT_SOCK_NONBLOCK) == 0) && ((flags & MSG_DONTWAIT) == 0))
         while ((skb = rtskb_dequeue_chain(&s->incoming)) == NULL) {
             if (RTOS_TIME_IS_ZERO(&s->timeout)) {
-                ret = rtos_event_wait_timeout(&s->wakeup_event, &s->timeout);
+                ret = rtos_event_sem_wait_timed(&s->wakeup_event, &s->timeout);
                 if (ret == RTOS_EVENT_TIMEOUT)
                     return -ETIMEDOUT;
             } else
-                ret = rtos_event_wait(&s->wakeup_event);
+                ret = rtos_event_sem_wait(&s->wakeup_event);
 
             if (RTOS_EVENT_ERROR(ret))
                 return -ENOTSOCK;
@@ -497,7 +497,7 @@ int rt_udp_rcv (struct rtskb *skb)
 
 
     rtskb_queue_tail(&rtsk->incoming, skb);
-    rtos_event_signal(&rtsk->wakeup_event);
+    rtos_event_sem_signal(&rtsk->wakeup_event);
     if (rtsk->wakeup != NULL)
         rtsk->wakeup(rtsk->fd, rtsk->wakeup_arg);
 

@@ -82,7 +82,7 @@ static inline struct rtsocket *rt_socket_alloc(void)
 
     rtskb_queue_init(&sock->incoming);
 
-    rtos_event_init(&sock->wakeup_event);
+    rtos_event_sem_init(&sock->wakeup_event);
 
     /* detect if running in Linux context */
     if (rtos_in_rt_context()) {
@@ -114,7 +114,7 @@ int rt_socket_release(struct rtsocket *sock)
     unsigned int rtskbs = sock->pool_size;
 
 
-    rtos_event_delete(&sock->wakeup_event);
+    rtos_event_sem_delete(&sock->wakeup_event);
 
     if (sock->pool_size > 0)
     {
