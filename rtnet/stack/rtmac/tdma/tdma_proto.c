@@ -133,6 +133,7 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
     struct tdma_priv    *tdma;
     unsigned long       flags;
     struct tdma_slot    *slot;
+    int                 ret = 0;
 
 
     tdma = (struct tdma_priv *)rtdev->mac_priv->disc_priv;
@@ -143,16 +144,23 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
     slot = tdma->slot_table[(rtskb->priority & RTSKB_CHANNEL_MASK) >>
                             RTSKB_CHANNEL_SHIFT];
-    if (!slot) {
-        rtos_spin_unlock_irqrestore(&tdma->lock, flags);
-        return -EAGAIN;
+
+    if (unlikely(!slot)) {
+        ret = -EAGAIN;
+        goto err_out;
+    }
+
+    if (unlikely(rtskb->len > slot->size)) {
+        ret = -EMSGSIZE;
+        goto err_out;
     }
 
     __rtskb_prio_queue_tail(&slot->queue, rtskb);
 
+  err_out:
     rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
-    return 0;
+    return ret;
 }
 
 
@@ -162,6 +170,7 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb)
     struct tdma_priv    *tdma;
     unsigned long       flags;
     struct tdma_slot    *slot;
+    int                 ret = 0;
 
 
     tdma = (struct tdma_priv *)rtskb->rtdev->mac_priv->disc_priv;
@@ -173,16 +182,23 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb)
     rtos_spin_lock_irqsave(&tdma->lock, flags);
 
     slot = tdma->slot_table[DEFAULT_NRT_SLOT];
-    if (!slot) {
-        rtos_spin_unlock_irqrestore(&tdma->lock, flags);
-        return -EAGAIN;
+
+    if (unlikely(!slot)) {
+        ret = -EAGAIN;
+        goto err_out;
+    }
+
+    if (unlikely(rtskb->len > slot->size)) {
+        ret = -EMSGSIZE;
+        goto err_out;
     }
 
     __rtskb_prio_queue_tail(&slot->queue, rtskb);
 
+  err_out:
     rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
-    return 0;
+    return ret;
 }
 
 

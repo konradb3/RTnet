@@ -287,6 +287,10 @@ provided. By default, this command will not terminate until the calibration is
 completed. The <calibration_timeout> parameter can be used to specify an upper
 time limit.
 
+NOTE: Reconfiguring an existing slot during runtime can cause packet drops on
+the involved output channel. You should stop all applications using this slot
+before reconfiguring it.
+
 tdmacfg <dev> detach
 
 Detaches a master or slave from the given devices <dev>. Past this command,

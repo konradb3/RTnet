@@ -154,9 +154,9 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                 slot_offset = rtos_time_to_nanosecs(&slot->offset) + 500;
                 do_div(slot_offset, 1000);
                 if (!RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
-                                      (unsigned long)slot_offset,
-                                      slot->phasing+1, slot->period,
-                                      slot->size)) {
+                        (unsigned long)slot_offset,
+                        slot->phasing + 1, slot->period,
+                        slot->size - entry->rtdev->hard_header_len)) {
                     up(&entry->rtdev->nrt_sem);
                     goto done;
                 }

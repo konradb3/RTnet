@@ -365,7 +365,10 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *context, int call_flags,
         goto out;
     }
 
-    if ((len < 0) || (len > rtdev->mtu)) {
+    /* If an RTmac discipline is active, this becomes a pure sanity check to
+       avoid writing beyond rtskb boundaries. The hard check is then performed
+       upon rtdev_xmit() by the discipline's xmit handler. */
+    if (len > rtdev->mtu) {
         ret = -EMSGSIZE;
         goto err;
     }
@@ -390,10 +393,8 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *context, int call_flags,
     }
 
     if ((rtdev->flags & IFF_UP) != 0) {
-        if (rtdev_xmit(rtskb) == 0)
+        if ((ret = rtdev_xmit(rtskb)) == 0)
             ret = len;
-        else
-            ret = -EAGAIN;
     } else {
         ret = -ENETDOWN;
         goto err;

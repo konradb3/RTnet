@@ -26,10 +26,15 @@
 
 #include <linux/init.h>
 
+#include <rtmac/rtmac_disc.h>
+
 #define DEFAULT_VNIC_RTSKBS     32
 
 
 extern int rtmac_vnic_rx(struct rtskb *skb, u16 type);
+
+extern void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev,
+                                   unsigned int max_mtu);
 
 extern int rtmac_vnic_add(struct rtnet_device *rtdev);
 extern void rtmac_vnic_unregister(struct rtnet_device *rtdev);

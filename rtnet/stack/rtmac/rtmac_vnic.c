@@ -25,7 +25,7 @@
 #include <linux/etherdevice.h>
 
 #include <rtnet_internal.h>
-#include <rtskb.h>
+#include <rtdev.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
 #include <rtmac/rtmac_vnic.h>
@@ -199,8 +199,22 @@ static int rtmac_vnic_change_mtu(struct net_device *dev, int new_mtu)
 
 
 
+void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev, unsigned int max_mtu)
+{
+    struct rtmac_priv   *mac_priv = rtdev->mac_priv;
+
+
+    mac_priv->vnic_max_mtu = max_mtu - sizeof(struct rtmac_hdr);
+    mac_priv->vnic.mtu     = mac_priv->vnic_max_mtu;
+}
+
+
+
 static int rtmac_vnic_init(struct net_device *dev)
 {
+    struct rtnet_device *rtdev = (struct rtnet_device *)dev->priv;
+
+
     ether_setup(dev);
 
     dev->open            = rtmac_vnic_open;
@@ -209,7 +223,7 @@ static int rtmac_vnic_init(struct net_device *dev)
     dev->change_mtu      = rtmac_vnic_change_mtu;
     dev->set_mac_address = NULL;
 
-    dev->mtu             = 1500 - sizeof(struct rtmac_hdr);
+    dev->mtu             = rtdev->mac_priv->vnic_max_mtu;
     dev->flags           &= ~IFF_MULTICAST;
 
     SET_MODULE_OWNER(dev);
@@ -227,6 +241,7 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
 
 
     mac_priv->vnic_registered = 0;
+    mac_priv->vnic_max_mtu    = rtdev->mtu - sizeof(struct rtmac_hdr);
     memset(&mac_priv->vnic_stats, 0, sizeof(mac_priv->vnic_stats));
 
     /* create the rtskb pool */

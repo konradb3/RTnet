@@ -27,6 +27,7 @@
 #include <asm/uaccess.h>
 
 #include <tdma_chrdev.h>
+#include <rtmac/rtmac_vnic.h>
 #include <rtmac/tdma/tdma.h>
 
 
@@ -295,6 +296,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     struct tdma_slot        *slot, *old_slot;
     struct tdma_job         *job, *prev_job;
     struct tdma_request_cal req_cal;
+    struct rtskb            *rtskb;
     unsigned int            job_list_revision;
     unsigned long           flags;
     int                     ret;
@@ -309,6 +311,11 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
     id = cfg->args.set_slot.id;
     if (id > tdma->max_slot_id)
+        return -EINVAL;
+
+    if (cfg->args.set_slot.size == 0)
+        cfg->args.set_slot.size = rtdev->mtu;
+    else if (cfg->args.set_slot.size > rtdev->mtu)
         return -EINVAL;
 
     slot = (struct tdma_slot *)kmalloc(sizeof(struct tdma_slot), GFP_KERNEL);
@@ -393,7 +400,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     slot->head.ref_count = 0;
     slot->period         = cfg->args.set_slot.period;
     slot->phasing        = cfg->args.set_slot.phasing;
-    slot->size           = cfg->args.set_slot.size;
+    slot->size           = cfg->args.set_slot.size + rtdev->hard_header_len;
     rtos_nanosecs_to_time(cfg->args.set_slot.offset, &slot->offset);
     rtskb_prio_queue_init(&slot->queue);
 
@@ -456,8 +463,18 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
     rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
-    if (old_slot)
+    rtmac_vnic_set_max_mtu(rtdev, cfg->args.set_slot.size);
+
+    if (old_slot) {
+        /* Without any reference to the old job we can safely purge its queue
+           without lock protection.
+           NOTE: Reconfiguring a slot during runtime may lead to packet
+                 drops! */
+        while ((rtskb = __rtskb_prio_dequeue(&slot->queue)))
+            kfree_rtskb(rtskb);
+
         kfree(old_slot);
+    }
 
     return 0;
 }
@@ -496,13 +513,12 @@ int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
         rtos_spin_lock_irqsave(&tdma->lock, flags);
     }
 
-    while ((rtskb = __rtskb_prio_dequeue(&slot->queue))) {
-        rtos_spin_unlock_irqrestore(&tdma->lock, flags);
-        kfree_rtskb(rtskb);
-        rtos_spin_lock_irqsave(&tdma->lock, flags);
-    }
-
     rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+    /* No need to protect the queue access here -
+       no one is referring to this job anymore (ref_count == 0). */
+    while ((rtskb = __rtskb_prio_dequeue(&slot->queue)))
+        kfree_rtskb(rtskb);
 
     kfree(slot);
 
