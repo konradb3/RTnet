@@ -230,7 +230,6 @@ static int tdma_state_down(struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdm
         return -1;
 
     case NOTIFY_MASTER:
-        MOD_INC_USE_COUNT;
         tdma_next_state(tdma, TDMA_OTHER_MASTER);
         break;
 
