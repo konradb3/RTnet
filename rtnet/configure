@@ -20679,6 +20679,9 @@ echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
     0.6.6-fusion)
 	CONFIG_RTNET_RTAI_VERSION=066
 	;;
+    0.6.7-fusion)
+	CONFIG_RTNET_RTAI_VERSION=067
+	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&5
 echo "$as_me: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&2;}
@@ -20743,7 +20746,7 @@ echo "$as_me: error: *** Please enable fifos in RTAI" >&2;}
 
 	    ;;
 
-	066)	# ---> FUSION <---
+	066 | 067)	# ---> FUSION <---
 
 	    # check for native RTAI skin, needed by rtnet
 	    echo "$as_me:$LINENO: checking for RTAI native skin" >&5
@@ -20845,10 +20848,10 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	;;
-    066)
+    066 | 067)
 
 cat >>confdefs.h <<\_ACEOF
-#define CONFIG_FUSION_066 1
+#define CONFIG_FUSION_06 1
 _ACEOF
 
 	;;
@@ -20917,7 +20920,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
-    066)
+    066 | 067)
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
@@ -20939,7 +20942,7 @@ echo "$as_me: error: *** internal error" >&2;}
 	31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	    ;;
-	066)
+	066 | 067)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	    ;;
 	*)
@@ -20956,7 +20959,7 @@ else
 	30 | 31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	    ;;
-	066)
+	066 | 067)
 	    { { echo "$as_me:$LINENO: error: *** internal error" >&5
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
@@ -21188,7 +21191,7 @@ fi
 done
 
             ;;
-	066)
+	066 | 067)
 
 
 
@@ -21397,7 +21400,7 @@ fi
 done
 
 	    ;;
-	066)
+	066 | 067)
 	    { { echo "$as_me:$LINENO: error: *** internal error" >&5
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
@@ -21451,7 +21454,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) CONFIG_NEWLXRT=no ;;
 	esac
 	;;
-    066) CONFIG_NEWLXRT=no
+    066 | 067) CONFIG_NEWLXRT=no
 	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** internal error" >&5
