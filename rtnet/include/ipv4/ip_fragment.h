@@ -26,5 +26,8 @@
 
 extern struct rtskb *rt_ip_defrag(struct rtskb *skb);
 
+extern void rt_ip_fragment_cleanup(void);
+extern void rt_ip_fragment_init(void);
+
 
 #endif  /* __RTNET_IP_FRAGMENT_H_ */

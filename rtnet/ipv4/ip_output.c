@@ -18,6 +18,9 @@
  */
  
 // $Log: ip_output.c,v $
+// Revision 1.9  2003/06/24 13:09:46  kiszka
+// * applied fragmentation patch by Mathias Koehrer
+//
 // Revision 1.8  2003/05/27 09:50:41  kiszka
 // * applied new header file structure
 //
@@ -50,6 +53,7 @@
 #include <net/checksum.h>
 
 #include <rtnet_socket.h>
+#include <ipv4/ip_fragment.h>
 #include <ipv4/ip_input.h>
 #include <ipv4/route.h>
 #include <rtmac/rtmac_disc.h>
@@ -57,6 +61,118 @@
 
 static u16 rt_ip_id_count = 0;
 
+/* The MTU_CORRECTION is at least necessary with my testsetup (eepro100, HUB) - as
+ * the returned mtu value is too large.
+ * */
+#define MTU_CORRECTION 14
+
+/*
+ * Slow path for fragmented packets...
+ * */
+int rt_ip_build_xmit_slow(struct rtsocket *sk, 
+	            int getfrag (const void *, char *, unsigned int, unsigned int),
+		    const void *frag, 
+		    unsigned length, 
+		    struct rt_rtable *rt, 
+		    int flags)
+{
+	int	err=0;
+	struct	rtskb *skb;
+	struct	iphdr *iph;
+	
+	struct	rtnet_device *rtdev=rt->rt_dev;
+        int mtu = rtdev->mtu;
+        unsigned fragheaderlen, fragdatalen;
+        unsigned offset = 0;
+        u16 msg_rt_ip_id;
+
+
+
+        fragheaderlen = sizeof(struct iphdr); /* 20 byte... */
+        
+        fragdatalen  = ((mtu - fragheaderlen - MTU_CORRECTION) & ~7 ); 
+
+        /* Store id in local variable */
+        msg_rt_ip_id = ++rt_ip_id_count;
+       
+        for (offset = 0; offset < length; offset += fragdatalen)
+        {
+            int fraglen; /* The length (IP, including ip-header) of this very fragment */
+            __u16 frag_off = offset >> 3 ;
+
+            if (offset >= length - fragdatalen)
+            {
+                /* last fragment */
+                fraglen = fragheaderlen + length - offset ;
+            }
+            else
+            {
+                fraglen = fragheaderlen + fragdatalen;
+                frag_off |= IP_MF;
+            }
+
+            {
+                int hh_len = (rtdev->hard_header_len+15)&~15;
+
+                skb = alloc_rtskb(fraglen + hh_len + 15);
+                if (skb==NULL)
+                        goto no_rtskb; 
+                rtskb_reserve(skb, hh_len);
+            }
+            
+            skb->dst=rt; 
+            skb->rtdev=rt->rt_dev;
+            skb->nh.iph = iph = (struct iphdr *) rtskb_put(skb, fraglen);
+            
+            
+            iph->version=4;
+            iph->ihl=5;    /* 20 byte header - no options */
+            iph->tos=sk->tos;
+            iph->tot_len = htons(fraglen);
+            iph->id=htons(msg_rt_ip_id);
+            iph->frag_off = htons(frag_off);
+            iph->ttl=255;
+            iph->protocol=sk->protocol;
+            iph->saddr=rt->rt_src;
+            iph->daddr=rt->rt_dst;
+            iph->check=0;
+            iph->check = ip_fast_csum((unsigned char *)iph, iph->ihl);
+            
+            if ( (err=getfrag(frag, ((char *)iph)+iph->ihl*4, offset, fraglen - fragheaderlen)) )
+                    goto error;
+
+            {
+                    unsigned char *d, *s;
+                    
+                    d=rt->rt_dst_mac_addr;
+                    s=rtdev->dev_addr;
+
+            }
+
+
+            if ( !(rtdev->hard_header) ) {
+                 goto error;
+            } else if (rtdev->hard_header(skb, rtdev, ETH_P_IP, rt->rt_dst_mac_addr, rtdev->dev_addr, skb->len)<0) {
+
+                    goto error;
+            }
+
+            err = rtdev_xmit(skb);
+            if (err) {
+                    return -EAGAIN;
+            } 
+
+            
+
+            
+        }
+        return 0;
+	
+error:
+	kfree_rtskb(skb);
+no_rtskb:
+	return err; 
+}
 /*
  *	Fast path for unfragmented packets.
  */
@@ -79,6 +195,12 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 	 *	choice RAW frames within 20 bytes of maximum size(rare) to the long path
 	 */
 	length += sizeof(struct iphdr);
+
+        if (length > (rtdev->mtu - MTU_CORRECTION)) 
+        {
+            return rt_ip_build_xmit_slow(sk, getfrag, frag, 
+                            length - sizeof(struct iphdr), rt, flags);
+        }
 	
 	df = htons(IP_DF);
 
@@ -159,7 +281,7 @@ static struct rtpacket_type ip_packet_type =
 void rt_ip_init(void)
 {
 	rtdev_add_pack(&ip_packet_type);
-
+        rt_ip_fragment_init();
 }
 
 
@@ -169,5 +291,6 @@ void rt_ip_init(void)
  */
 void rt_ip_release(void)
 {
+        rt_ip_fragment_cleanup();
 	rtdev_remove_pack(&ip_packet_type);
 }

@@ -29,12 +29,15 @@
 static unsigned int rtskb_pool_default = DEFAULT_RTSKB_POOL_DEF;
 static unsigned int rtskb_pool_min = DEFAULT_MIN_RTSKB_DEF;
 static unsigned int rtskb_pool_max = DEFAULT_MAX_RTSKB_DEF;
+static unsigned int rtskb_max_size = ETH_FRAME_LEN;
 MODULE_PARM(rtskb_pool_default, "i");
 MODULE_PARM(rtskb_pool_min, "i");
 MODULE_PARM(rtskb_pool_max, "i");
+MODULE_PARM(rtskb_max_size, "i");
 MODULE_PARM_DESC(rtskb_pool_default, "number of Realtime Socket Buffers in pool");
 MODULE_PARM_DESC(rtskb_pool_min, "low water mark");
 MODULE_PARM_DESC(rtskb_pool_max, "high water mark");
+MODULE_PARM_DESC(rtskb_max_size, "Maximum size of an rtskb block (relevant for IP fragmentation)");
 
 /**
  * struct rtskb_pool
@@ -171,7 +174,7 @@ static inline void rtskb_init(void *p, kmem_cache_t *cache, unsigned long flags)
 static inline void rtskb_data_init(void *p, kmem_cache_t *cache, unsigned long flags)
 {
 	unsigned char *skb_data = p;
-	memset (skb_data, 0, SKB_DATA_ALIGN(ETH_FRAME_LEN));
+	memset (skb_data, 0, SKB_DATA_ALIGN(rtskb_max_size));
 }
 
 
@@ -184,7 +187,7 @@ static inline void rtskb_data_init(void *p, kmem_cache_t *cache, unsigned long f
 struct rtskb *new_rtskb(void)
 {
 	struct rtskb *skb;
-	unsigned int len = SKB_DATA_ALIGN(ETH_FRAME_LEN);
+	unsigned int len = SKB_DATA_ALIGN(rtskb_max_size);
 
 	if ( !(skb = kmem_cache_alloc(rtskb_cache, GFP_ATOMIC)) ) {
 		printk("RTnet: allocate rtskb failed.\n");
@@ -504,7 +507,7 @@ int rtskb_pool_init(void)
 		return -ENOMEM;
 	}
 	rtskb_data_cache = kmem_cache_create 
-		(RTSKB_DATA_CACHE, SKB_DATA_ALIGN(ETH_FRAME_LEN), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+		(RTSKB_DATA_CACHE, SKB_DATA_ALIGN(rtskb_max_size), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
 	if ( !rtskb_data_cache ) {
 		rt_printk("RTnet: allocating 'rtskb_data_cache' failed.");
 		return -ENOMEM;
@@ -568,9 +571,3 @@ int rtskb_pool_release(void)
 
 	return err;
 }
-
-
-
-
-
-

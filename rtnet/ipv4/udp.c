@@ -108,7 +108,7 @@ int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, int addrlen)
 {
 	struct sockaddr_in *usin = (struct sockaddr_in *)addr;
 	
-	if ( (s->state!=TCP_CLOSE) || (addrlen<sizeof(struct sockaddr_in)) )
+	if ( (s->state!=TCP_CLOSE) || (addrlen<(int)sizeof(struct sockaddr_in)) )
 		return -EINVAL;
 	
 	/* set the source-addr */	
@@ -130,7 +130,7 @@ int rt_udp_connect(struct rtsocket *s, struct sockaddr *serv_addr, int addrlen)
 {
 	struct sockaddr_in *usin = (struct sockaddr_in *) serv_addr;
 
-	if ( (s->state!=TCP_CLOSE) || (addrlen < sizeof(struct sockaddr_in)) ) 
+	if ( (s->state!=TCP_CLOSE) || (addrlen < (int)sizeof(struct sockaddr_in)) ) 
 	  	return -EINVAL;
 	if ( (usin->sin_family) && (usin->sin_family!=AF_INET) ) {
 		s->saddr=INADDR_ANY;
@@ -178,7 +178,7 @@ int rt_udp_accept(struct rtsocket *s, struct sockaddr *client_addr, int *addr_le
  */
 int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
 {
-	int copied=0;
+	unsigned copied=0;
 	struct rtskb *skb;	
 
 	/* fetch packet from incomming queue */
@@ -194,6 +194,12 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
 
 		/* copy the data */
 		copied = skb->len-sizeof(struct udphdr);
+                /* The data must not be longer than the value of the parameter "len" in
+                 * the socket recvmsg call */
+                if (copied > msg->msg_iov->iov_len)
+                {
+                    copied = msg->msg_iov->iov_len;
+                }
 		rt_memcpy_tokerneliovec(msg->msg_iov, skb->h.raw+sizeof(struct udphdr), copied);
 
 		kfree_rtskb(skb);
@@ -223,20 +229,28 @@ struct udpfakehdr
 static int rt_udp_getfrag(const void *p, char * to, unsigned int offset, unsigned int fraglen) 
 {
 	struct udpfakehdr *ufh = (struct udpfakehdr *)p;
-	
+
 	if (offset==0) {
+
+                /* Checksum of the complete data part of the UDP message: */
+ 		ufh->wcheck = csum_partial(ufh->iov->iov_base, ufh->iov->iov_len, ufh->wcheck);
 	
 		rt_memcpy_fromkerneliovec(to+sizeof(struct udphdr), ufh->iov,fraglen-sizeof(struct udphdr));
 		
- 		ufh->wcheck = csum_partial(to+sizeof(struct udphdr), fraglen-sizeof(struct udphdr), ufh->wcheck);
+                /* Checksum of the udp header: */
  		ufh->wcheck = csum_partial((char *)ufh, sizeof(struct udphdr),ufh->wcheck);
+
 		ufh->uh.check = csum_tcpudp_magic(ufh->saddr, ufh->daddr, ntohs(ufh->uh.len), IPPROTO_UDP, ufh->wcheck);
 		
 		if (ufh->uh.check == 0)
 			ufh->uh.check = -1;
+
 		memcpy(to, ufh, sizeof(struct udphdr));
 		return 0;
 	}
+        
+        rt_memcpy_fromkerneliovec(to, ufh->iov, fraglen);
+        
 	
 	return 0;
 }
@@ -492,7 +506,3 @@ void rt_udp_release(void)
 
 //	rt_sem_delete(&udp_socket_sem);
 }
-
-
-
-
