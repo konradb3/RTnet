@@ -1506,7 +1506,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-          ac_config_headers="$ac_config_headers config/rtnet_config_pre.h"
+          ac_config_headers="$ac_config_headers include/rtnet_config.h"
 
 ac_aux_dir=
 for ac_dir in config/autoconf $srcdir/config/autoconf; do
@@ -18363,18 +18363,9 @@ LIBTOOL='$(SHELL) $(top_builddir)/libtool'
 
 
 
-arch_supports_lxrt=
-arch_supports_leds=
-arch_supports_sim=
-arch_supports_rtailab=
-
 case "$host" in
     i*86*-*)
 	RTNET_TARGET_ARCH=i386
-	arch_supports_lxrt=y
-	arch_supports_leds=y
-	arch_supports_sim=y
-	arch_supports_rtailab=y
 	wanted_kernel_arch=CONFIG_X86
         ;;
 #    arm-*)
@@ -20769,6 +20760,7 @@ fi
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
 #	RTAI_KMOD_CFLAGS="$RTAI_KMOD_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
 #	LXRT_CFLAGS="$LXRT_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
+	if test \! -d include; then mkdir include; fi
 	if test \! -f include/rtdm.h; then ln -s ../$srcdir/rtai_rtdm/rtdm.h include/rtdm.h; fi
 	if test \! -f include/rtdm_driver.h; then ln -s ../$srcdir/rtai_rtdm/rtdm_driver.h include/rtdm_driver.h; fi
 else
@@ -20867,6 +20859,17 @@ _ACEOF
 fi
 
 
+
+
+
+
+
+
+
+
+
+RTAI_KMOD_CFLAGS="-D__IN_RTNET__ $RTAI_KMOD_CFLAGS"
+LXRT_CFLAGS="-D__IN_RTNET__ $LXRT_CFLAGS"
 
 
 
@@ -21597,7 +21600,7 @@ do
   "rtcap/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtcap/Makefile" ;;
   "rtai_rtdm/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtai_rtdm/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-  "config/rtnet_config_pre.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config/rtnet_config_pre.h" ;;
+  "include/rtnet_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/rtnet_config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -22423,19 +22426,4 @@ if test "$no_create" != yes; then
   # Use ||, not &&, to avoid exiting from the if with $? = 1, which
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
-fi
-
-
-
-
-{ echo "$as_me:$LINENO: creating include/rtnet_config.h" >&5
-echo "$as_me: creating include/rtnet_config.h" >&6;}
-sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/rtnet_config_pre.h >include/rtnet_config.h.new
-if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
-	rm include/rtnet_config.h.new
-	{ echo "$as_me:$LINENO: include/rtnet_config.h is unchanged" >&5
-echo "$as_me: include/rtnet_config.h is unchanged" >&6;}
-else
-	mv include/rtnet_config.h.new include/rtnet_config.h
 fi

@@ -185,7 +185,7 @@ SUBDIRS = round_trip_time frag_ip raw_packets rtmac $(OPTDIRS)
 subdir = examples
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
+CONFIG_HEADER = $(top_builddir)/include/rtnet_config.h
 CONFIG_CLEAN_FILES =
 DIST_SOURCES =
 

@@ -190,7 +190,7 @@ libraw_packets_a_CFLAGS = \
 subdir = examples/raw_packets
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
+CONFIG_HEADER = $(top_builddir)/include/rtnet_config.h
 CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
@@ -199,7 +199,7 @@ libraw_packets_a_LIBADD =
 am_libraw_packets_a_OBJECTS = libraw_packets_a-raw_packets.$(OBJEXT)
 libraw_packets_a_OBJECTS = $(am_libraw_packets_a_OBJECTS)
 
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libraw_packets_a-raw_packets.Po

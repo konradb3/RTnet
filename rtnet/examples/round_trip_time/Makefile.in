@@ -184,7 +184,7 @@ noinst_PROGRAMS = linux_client
 subdir = examples/round_trip_time
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
+CONFIG_HEADER = $(top_builddir)/include/rtnet_config.h
 CONFIG_CLEAN_FILES =
 noinst_PROGRAMS = linux_client$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
@@ -195,7 +195,7 @@ linux_client_LDADD = $(LDADD)
 linux_client_DEPENDENCIES =
 linux_client_LDFLAGS =
 
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/linux_client.Po
