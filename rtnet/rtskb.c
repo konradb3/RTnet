@@ -230,8 +230,10 @@ struct rtskb *alloc_rtskb(unsigned int size)
 
 	if ( rtskb_pool.qlen>0 ) 
 		skb = rtskb_dequeue(&rtskb_pool);
-        else
-	        skb = new_rtskb(); 
+        else {
+	  //	        skb = new_rtskb(); /* might return NULL and not be safe in this context */
+		return NULL;
+	}
 
 	/* Load the data pointers. */
 	skb->data = skb->buf_start;
@@ -451,8 +453,16 @@ int rtskb_queue_empty(struct rtskb_head *list)
  */ 
 void inc_pool_handler(void) 
 {
-	while ( rtskb_pool.qlen<DEFAULT_INC_RTSKB )
-		rtskb_queue_tail(&rtskb_pool, new_rtskb());
+	struct rtskb* skb;
+	while ( rtskb_pool.qlen<DEFAULT_INC_RTSKB ) {
+		skb = new_rtskb(); /* might return NULL */
+		if (skb) {
+			rtskb_queue_tail(&rtskb_pool, skb);
+		} else {
+			printk("%s(): new_rtskb() returned NULL, qlen=%d\n", __FUNCTION__, rtskb_pool.qlen);
+			break;
+		}
+	}
 }
 
 
@@ -474,6 +484,7 @@ void dec_pool_handler(void)
 int rtskb_pool_init(void) 
 {
 	int i, err = 0;
+	struct rtskb* skb;
 	
 	rtskb_queue_head_init(&rtskb_pool);
 
@@ -491,7 +502,13 @@ int rtskb_pool_init(void)
 	}
 
 	for (i=0; i<DEFAULT_RTSKB_POOL; i++) {
-		__rtskb_queue_tail(&rtskb_pool, new_rtskb());
+		skb = new_rtskb(); /* might return NULL */
+		if (skb) {
+			__rtskb_queue_tail(&rtskb_pool, skb);
+		} else {
+			printk("%s(): new_rtskb() returned NULL, qlen=%d\n", __FUNCTION__, rtskb_pool.qlen);
+			break;
+		}
 	}
 
 	if ( (inc_pool_srq=rt_request_srq (0, inc_pool_handler, 0)) < 0) {
@@ -500,8 +517,8 @@ int rtskb_pool_init(void)
 	}
 
 	if ( (dec_pool_srq=rt_request_srq (0, dec_pool_handler, 0)) < 0) {
-		rt_printk("RTnet: allocating 'inc_pool_srq=%d' failed.\n", inc_pool_srq);
-		return inc_pool_srq;
+		rt_printk("RTnet: allocating 'dec_pool_srq=%d' failed.\n", dec_pool_srq);
+		return dec_pool_srq;
 	}
 
 	return err;
