@@ -22,6 +22,7 @@
  *
  */
 
+#include <asm/div64.h>
 #include <asm/semaphore.h>
 #include <linux/init.h>
 #include <linux/module.h>
@@ -42,22 +43,79 @@ DECLARE_MUTEX(tdma_nrt_lock);
 int tdma_proc_read(char *buf, char **start, off_t offset, int count,
                     int *eof, void *data)
 {
-    struct tdma_priv *entry;
+    struct tdma_priv    *entry;
+    nanosecs_t          cycle;
     RTNET_PROC_PRINT_VARS;
 
 
-    RTNET_PROC_PRINT("Interface       API Device      Operation Mode\n");
+    RTNET_PROC_PRINT("Interface       API Device      Operation Mode  "
+                     "Cycle\n");
     down(&tdma_nrt_lock);
 
     list_for_each_entry(entry, &tdma_devices, list_entry) {
         RTNET_PROC_PRINT("%-15s %-15s ", entry->rtdev->name,
                          entry->api_device.device_name);
         if (test_bit(TDMA_FLAG_MASTER, &entry->flags)) {
+            cycle = rtos_time_to_nanosecs(&entry->cycle_period);
+            do_div(cycle, 1000);
             if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags))
-                RTNET_PROC_PRINT("Backup ");
-            RTNET_PROC_PRINT("Master\n");
+                RTNET_PROC_PRINT("Backup Master   %ld\n",
+                                 (unsigned long)cycle);
+            else
+                RTNET_PROC_PRINT("Master          %ld\n",
+                                 (unsigned long)cycle);
         } else
-            RTNET_PROC_PRINT("Slave\n");
+            RTNET_PROC_PRINT("Slave           -\n");
+    }
+
+    up(&tdma_nrt_lock);
+
+    RTNET_PROC_PRINT_DONE;
+}
+
+
+
+int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
+                         int *eof, void *data)
+{
+    struct tdma_priv    *entry;
+    struct tdma_slot    *slot;
+    int                 i;
+    rtos_time_t         bak_offs;
+    nanosecs_t          slot_offset;
+    RTNET_PROC_PRINT_VARS;
+
+
+    RTNET_PROC_PRINT("Interface       "
+                     "Slots (id:offset:phasing/period:size)\n");
+    down(&tdma_nrt_lock);
+
+    list_for_each_entry(entry, &tdma_devices, list_entry) {
+        RTNET_PROC_PRINT("%-15s ", entry->rtdev->name);
+
+        if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
+            rtos_time_diff(&bak_offs, &entry->backup_sync_inc,
+                           &entry->cycle_period);
+            slot_offset = rtos_time_to_nanosecs(&bak_offs);
+            do_div(slot_offset, 1000);
+            RTNET_PROC_PRINT("bak:%ld  ", (unsigned long)slot_offset);
+        }
+
+        if (entry->slot_table)
+            for (i = 0; i <= entry->max_slot_id; i++) {
+                slot = entry->slot_table[i];
+                if (!slot ||
+                    ((i == DEFAULT_NRT_SLOT) &&
+                     (entry->slot_table[DEFAULT_SLOT] == slot)))
+                    continue;
+
+                slot_offset = rtos_time_to_nanosecs(&slot->offset);
+                do_div(slot_offset, 1000);
+                RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
+                                 (unsigned long)slot_offset,
+                                 slot->phasing, slot->period, slot->size);
+            }
+        RTNET_PROC_PRINT("\n");
     }
 
     up(&tdma_nrt_lock);
@@ -173,6 +231,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 #ifdef CONFIG_PROC_FS
 struct rtmac_proc_entry tdma_proc_entries[] = {
     { name: "tdma", handler: tdma_proc_read },
+    { name: "tdma_slots", handler: tdma_slots_proc_read },
     { name: NULL, handler: NULL }
 };
 #endif /* CONFIG_PROC_FS */
