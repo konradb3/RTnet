@@ -48,7 +48,6 @@
  */
 struct udp_socket {
     u16             sport;      /* local port */
-    u16             __padding;
     u32             saddr;      /* local ip-addr */
     struct rtsocket *sock;
 };
@@ -84,33 +83,6 @@ MODULE_PARM_DESC(auto_port_mask,
 /***
  *  rt_udp_v4_lookup
  */
-#if 0
-struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
-{
-    struct list_head *entry;
-    struct rtsocket  *sk;
-
-    rtos_res_lock(&udp_socket_base_lock);
-
-    list_for_each(entry, &udp_sockets) {
-        sk = list_entry(entry, struct rtsocket, list_entry);
-        if ((sk->prot.inet.sport == dport) &&
-            ((sk->prot.inet.saddr == INADDR_ANY) ||
-             (sk->prot.inet.saddr == daddr))) {
-            rt_socket_reference(sk);
-
-            rtos_res_unlock(&udp_socket_base_lock);
-
-            return sk;
-        }
-    }
-
-    rtos_res_unlock(&udp_socket_base_lock);
-
-    return NULL;
-}
-#endif
-
 static inline struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
 {
     unsigned long   flags;
