@@ -1,37 +1,47 @@
-/* ipv4/icmp.h
+/***
  *
- * RTnet - real-time networking subsystem
- * Copyright (C) 1999,2000 Zentropic Computing, LLC
- *               2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  ipv4/icmp.h
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  RTnet - real-time networking subsystem
+ *  Copyright (C) 1999,2000 Zentropic Computing, LLC
+ *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #ifndef __RTNET_ICMP_H_
 #define __RTNET_ICMP_H_
 
 #include <linux/init.h>
 
 #include <rtskb.h>
+#include <rtnet_rtpc.h>
 #include <ipv4/protocol.h>
 
 
-#define RT_ICMP_REPLY_PRIO          QUEUE_MIN_PRIO-1
+#define RT_ICMP_PRIO                QUEUE_MIN_PRIO-1
 
 #define ICMP_REPLY_POOL_SIZE        8
 
-extern struct rtinet_protocol icmp_protocol;
+
+extern void rt_icmp_queue_echo_request(struct rt_proc_call *call);
+extern void rt_icmp_cleanup_echo_requests(void);
+extern int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size);
+
 extern void __init rt_icmp_init(void);
 extern void rt_icmp_release(void);
 
