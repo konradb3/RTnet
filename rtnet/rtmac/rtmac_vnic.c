@@ -30,10 +30,12 @@
 #include <rtskb.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
+#include <rtmac/rtmac_vnic.h>
 
 
-#define MAX_RX_QUEUE_LEN    5
-
+static unsigned int vnic_rtskbs = DEFAULT_VNIC_RTSKBS;
+MODULE_PARM(vnic_rtskbs, "i");
+MODULE_PARM_DESC(vnic_rtskbs, "Number of realtime socket buffers per virtual NIC");
 
 static int                  vnic_srq;
 static struct rtskb_head    rx_queue;
@@ -42,17 +44,17 @@ static struct rtskb_head    rx_queue;
 
 int rtmac_vnic_rx(struct rtskb *skb, u16 type)
 {
-    struct net_device_stats *stats =
-        &((struct rtnet_device*)skb->rtdev->priv)->mac_priv->vnic_stats;
+    struct rtmac_priv *mac_priv = skb->rtdev->mac_priv;
+    struct rtskb_head *pool = &mac_priv->vnic_skb_pool;
 
 
-    skb->protocol = type;
-
-    if (rtskb_queue_len(&rx_queue) >= MAX_RX_QUEUE_LEN) {
-        stats->rx_dropped++;
+    if (rtskb_acquire(skb, pool) != 0) {
+        mac_priv->vnic_stats.rx_dropped++;
         kfree_rtskb(skb);
         return -1;
     }
+
+    skb->protocol = type;
 
     rtskb_queue_tail(&rx_queue, skb);
     rt_pend_linux_srq(vnic_srq);
@@ -116,19 +118,8 @@ static void rtmac_vnic_srq(void)
 
 static int rtmac_vnic_open(struct net_device *dev)
 {
-    MOD_INC_USE_COUNT;
-
     memcpy(dev->dev_addr, ((struct rtnet_device*)dev->priv)->dev_addr,
            sizeof(dev->dev_addr));
-
-    return 0;
-}
-
-
-
-static int rtmac_vnic_stop(struct net_device *dev)
-{
-    MOD_DEC_USE_COUNT;
 
     return 0;
 }
@@ -139,13 +130,15 @@ static int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
 {
     struct rtnet_device     *rtdev = (struct rtnet_device*)dev->priv;
     struct net_device_stats *stats = &rtdev->mac_priv->vnic_stats;
+    struct rtskb_head       *pool = &rtdev->mac_priv->vnic_skb_pool;
     struct ethhdr           *ethernet = (struct ethhdr*)skb->data;
     struct rtskb            *rtskb;
     int                     res;
     int                     data_len;
 
 
-    rtskb = alloc_rtskb((skb->len + sizeof(struct rtmac_hdr) + 15) & ~15);
+    rtskb =
+        alloc_rtskb((skb->len + sizeof(struct rtmac_hdr) + 15) & ~15, pool);
     if (!rtskb) {
         stats->tx_dropped++;
         return -ENOMEM;
@@ -170,9 +163,14 @@ static int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
     stats->tx_packets++;
     stats->tx_bytes += skb->len;
 
-    kfree_skb(skb);
+    res = rtdev->mac_disc->nrt_packet_tx(rtskb);
+    if (res < 0) {
+        stats->tx_dropped++;
+        kfree_rtskb(rtskb);
+    } else
+        kfree_skb(skb);
 
-    return rtdev->mac_disc->nrt_packet_tx(rtskb);
+    return res;
 }
 
 
@@ -200,7 +198,6 @@ static int rtmac_vnic_init(struct net_device *dev)
     ether_setup(dev);
 
     dev->open            = rtmac_vnic_open;
-    dev->stop            = rtmac_vnic_stop;
     dev->hard_start_xmit = rtmac_vnic_xmit;
     dev->get_stats       = rtmac_vnic_get_stats;
     dev->change_mtu      = rtmac_vnic_change_mtu;
@@ -226,6 +223,11 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
     mac_priv->vnic_used = 0;
     memset(&mac_priv->vnic_stats, 0, sizeof(mac_priv->vnic_stats));
 
+    if (rtskb_pool_init(&mac_priv->vnic_skb_pool, vnic_rtskbs) < vnic_rtskbs) {
+        rtskb_pool_release(&mac_priv->vnic_skb_pool);
+        return -ENOMEM;
+    }
+
     memset(vnic, 0, sizeof(struct net_device));
     vnic->init = rtmac_vnic_init;
     vnic->priv = rtdev;
@@ -235,6 +237,8 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
     res = register_netdev(vnic);
     if (res == 0)
         mac_priv->vnic_used = 1;
+    else
+        rtskb_pool_release(&mac_priv->vnic_skb_pool);
 
     return res;
 }
@@ -249,6 +253,7 @@ void rtmac_vnic_remove(struct rtnet_device *rtdev)
     if (mac_priv->vnic_used) {
         mac_priv->vnic_used = 0;
         unregister_netdev(&mac_priv->vnic);
+        rtskb_pool_release(&mac_priv->vnic_skb_pool);
     }
 }
 
