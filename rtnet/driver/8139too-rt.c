@@ -1202,8 +1202,8 @@ static void rtl_check_media (struct rtnet_device *rtdev)
                 u16 mii_lpa = mdio_read(rtdev, tp->phys[0], MII_LPA);
                 if (mii_lpa == 0xffff)
                         ;                                        /* Not there */
-                else 
-                  if ( ((mii_lpa & LPA_100FULL) == LPA_100FULL) || 
+                else
+                  if ( ((mii_lpa & LPA_100FULL) == LPA_100FULL) ||
                        ((mii_lpa & 0x00C0) == LPA_10FULL) )
                                tp->mii.full_duplex = 1;
         }
@@ -1326,6 +1326,7 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
                 dev_kfree_rtskb(skb);
                 tp->stats.tx_dropped++;
                 rt_enable_irq(rtdev->irq);
+                rt_sem_signal(&rtdev->xmit_sem);
                 return 0;
         }
 
@@ -1414,7 +1415,7 @@ static void rtl8139_tx_interrupt (struct rtnet_device *rtdev,
 
 
 /* TODO: clean this up!  Rx reset need not be this intensive */
-static void rtl8139_rx_err 
+static void rtl8139_rx_err
 (u32 rx_status, struct rtnet_device *rtdev, struct rtl8139_private *tp, void *ioaddr)
 {
         u8 tmp8;
