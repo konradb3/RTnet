@@ -31,7 +31,7 @@ void tdma_task_shutdown(struct rtmac_tdma *tdma)
     if (tdma->flags.task_active == 1) {
         tdma->flags.shutdown_task = 1;
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
         /* RTAI-specific:
          * In case the application has stopped the timer, it's
          * likely that the tx_task will be waiting forever in

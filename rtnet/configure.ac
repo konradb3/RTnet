@@ -362,6 +362,10 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 	AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
 	CONFIG_RTNET_RTAI_VERSION=30
 	;;
+    3.1*)
+	AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
+	CONFIG_RTNET_RTAI_VERSION=31
+	;;
     *)
 	AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
 	;;
@@ -416,6 +420,9 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
     30)
 	AC_DEFINE(CONFIG_RTAI_30,1,[We build for rtai 3.0.x])
 	;;
+    31)
+	AC_DEFINE(CONFIG_RTAI_31,1,[We build for rtai 3.1.x])
+	;;
     *)
 	AC_MSG_ERROR([*** No RTAI found in $with_rtai])
 	;;
@@ -433,7 +440,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	KERNEL_CFLAGS="-I$RTAI_LINUX_DIR/include"
 	CONFIG_RTNET_RTAI_ARCH="`sed -n -e "s/^ARCH=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
 	;;
-    30 )
+    30 | 31 )
 	RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	KERNEL_CFLAGS="-I`${RTAI_CONFIG} --linux-dir`/include"
@@ -510,7 +517,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) unset CONFIG_NEWLXRT ;;
 	esac
 	;;
-    30)
+    30 | 31)
 	case "${CONFIG_RTAI_SCHED_LXRT}" in
 	    y | m) CONFIG_NEWLXRT=yes ;;
 	    *) unset CONFIG_NEWLXRT ;;
@@ -536,7 +543,7 @@ AC_CHECK_HEADERS(rtai_lxrt_user.h rtai_declare.h,
 	[],
 	[case "${CONFIG_RTNET_RTAI_VERSION}" in
 	24 ) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
-	30 ) ;;
+	30 | 31) ;;
 	* ) AC_MSG_ERROR([*** internal error])
 	esac])
 
@@ -545,7 +552,7 @@ AC_CHECK_HEADERS(rtai_sem.h rtai_malloc.h,
 	[],
 	[case "${CONFIG_RTNET_RTAI_VERSION}" in
 	24 ) ;;
-	30 ) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
+	30 | 31) AC_MSG_ERROR([*** header not found or working, please check RTAI installation]) ;;
 	* ) AC_MSG_ERROR([*** internal error])
 	esac])
 

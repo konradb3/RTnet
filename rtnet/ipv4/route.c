@@ -26,7 +26,7 @@
  *
  *          ROUTE - implementation of the IP router.
  *
- * Version: $Id: route.c,v 1.11 2004/01/13 12:26:06 bet-frogger Exp $
+ * Version: $Id: route.c,v 1.12 2004/04/14 12:24:58 bet-frogger Exp $
  *
  * Authors: Ross Biro, <bir7@leland.Stanford.Edu>
  *          Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -84,7 +84,7 @@ static int rt_route_read_proc(char *page, char **start, off_t off, int count,
     PROC_PRINT_VARS;
     struct rt_rtable *rt_entry;
 
-    PROC_PRINT("specific routing table\n")
+    PROC_PRINT("specific routing table\n");
     PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\t\t\tdev\n");
     for (rt_entry=rt_rtables; rt_entry!=NULL; rt_entry=rt_entry->next) {
         union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
@@ -108,7 +108,7 @@ static int rt_route_read_proc(char *page, char **start, off_t off, int count,
                    dev_name);
     }
 
-    PROC_PRINT("\ngeneric routing table\n")
+    PROC_PRINT("\ngeneric routing table\n");
     PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\n");
     for (rt_entry=rt_rtables_generic; rt_entry!=NULL; rt_entry=rt_entry->next) {
         union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;

@@ -32,7 +32,7 @@
 
 
 /* RTAI-specific: start scheduling timer */
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
 static int start_timer = 0;
 
 MODULE_PARM(start_timer, "i");
@@ -353,7 +353,7 @@ int __init rtcap_init(void)
 
     printk("RTcap: real-time capturing interface\n");
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
     if (start_timer) {
         rt_set_oneshot_mode();
         start_rt_timer(0);
@@ -452,7 +452,7 @@ int __init rtcap_init(void)
     rtos_nrt_signal_delete(&cap_signal);
 
   error1:
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
     if (start_timer)
         stop_rt_timer();
 #endif
@@ -467,7 +467,7 @@ void rtcap_cleanup(void)
     unsigned long flags;
 
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
     if (start_timer)
         stop_rt_timer();
 #endif

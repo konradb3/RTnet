@@ -31,7 +31,7 @@
 
 
 /* RTAI-specific: start scheduling timer */
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
 static int start_timer = 1;
 
 MODULE_PARM(start_timer, "i");
@@ -202,7 +202,7 @@ int tdma_init(void)
     if (ret < 0)
         return ret;
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
     if (start_timer) {
         rt_set_oneshot_mode();
         start_rt_timer(0);
@@ -216,7 +216,7 @@ int tdma_init(void)
 
 void tdma_release(void)
 {
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31)
     if (start_timer)
         stop_rt_timer();
 #endif

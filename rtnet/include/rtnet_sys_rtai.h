@@ -35,10 +35,14 @@
 #include <rtai.h>
 #include <rtai_sched.h>
 
-#ifdef CONFIG_RTAI_30
+/* RTAI-3.x only headers */
+#ifdef HAVE_RTAI_MALLOC_H
 #include <rtai_malloc.h>
+#endif
+#ifdef HAVE_RTAI_SEM_H
 #include <rtai_sem.h>
 #endif
+
 
 #ifdef CONFIG_PROC_FS
 /* TODO: remove it! */
