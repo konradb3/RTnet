@@ -23,7 +23,7 @@
 
 #ifdef __KERNEL__
 
-#include <rtmac/tdma/tdma.h>
+#include <rtmac/tdma-v1/tdma.h>
 
 
 extern void tdma_cleanup_master_rt(struct rtmac_tdma *tdma);

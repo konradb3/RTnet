@@ -29,11 +29,11 @@
 
 #include <rtnet_sys.h>
 #include <rtmac/rtmac_disc.h>
-#include <rtmac/tdma/tdma_cleanup.h>
-#include <rtmac/tdma/tdma_dev.h>
-#include <rtmac/tdma/tdma_event.h>
-#include <rtmac/tdma/tdma_ioctl.h>
-#include <rtmac/tdma/tdma_rx.h>
+#include <rtmac/tdma-v1/tdma_cleanup.h>
+#include <rtmac/tdma-v1/tdma_dev.h>
+#include <rtmac/tdma-v1/tdma_event.h>
+#include <rtmac/tdma-v1/tdma_ioctl.h>
+#include <rtmac/tdma-v1/tdma_rx.h>
 
 
 /* RTAI-specific: start scheduling timer */

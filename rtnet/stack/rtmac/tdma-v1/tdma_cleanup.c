@@ -24,7 +24,7 @@
 #include <linux/module.h>
 
 #include <rtnet_sys.h>
-#include <rtmac/tdma/tdma_task.h>
+#include <rtmac/tdma-v1/tdma_task.h>
 
 
 /*

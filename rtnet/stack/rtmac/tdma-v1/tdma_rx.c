@@ -19,7 +19,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <rtmac/tdma/tdma_event.h>
+#include <rtmac/tdma-v1/tdma_event.h>
 
 
 int tdma_packet_rx(struct rtskb *skb)

@@ -23,7 +23,7 @@
 
 #ifdef __KERNEL__
 
-#include <rtmac/tdma/tdma.h>
+#include <rtmac/tdma-v1/tdma.h>
 
 
 typedef void (*TIMER_CALLBACK)(void *);

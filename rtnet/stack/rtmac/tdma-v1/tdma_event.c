@@ -25,11 +25,11 @@
 #include <linux/if_ether.h>
 
 #include <ipv4/arp.h>
-#include <rtmac/tdma/tdma_cleanup.h>
-#include <rtmac/tdma/tdma_event.h>
-#include <rtmac/tdma/tdma_module.h>
-#include <rtmac/tdma/tdma_task.h>
-#include <rtmac/tdma/tdma_timer.h>
+#include <rtmac/tdma-v1/tdma_cleanup.h>
+#include <rtmac/tdma-v1/tdma_event.h>
+#include <rtmac/tdma-v1/tdma_module.h>
+#include <rtmac/tdma-v1/tdma_task.h>
+#include <rtmac/tdma-v1/tdma_timer.h>
 
 
 /****************************** helper functions ********************************/

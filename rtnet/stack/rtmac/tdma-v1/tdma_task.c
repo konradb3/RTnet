@@ -20,10 +20,10 @@
  */
 
 #include <ipv4/arp.h>
-#include <rtmac/tdma/tdma.h>
-#include <rtmac/tdma/tdma_cleanup.h>
-#include <rtmac/tdma/tdma_event.h>
-#include <rtmac/tdma/tdma_timer.h>
+#include <rtmac/tdma-v1/tdma.h>
+#include <rtmac/tdma-v1/tdma_cleanup.h>
+#include <rtmac/tdma-v1/tdma_event.h>
+#include <rtmac/tdma-v1/tdma_timer.h>
 
 
 void tdma_task_shutdown(struct rtmac_tdma *tdma)

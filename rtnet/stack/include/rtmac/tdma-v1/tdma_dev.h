@@ -25,7 +25,7 @@
 #define __TDMA_DEV_H_
 
 
-#include <rtmac/tdma/tdma.h>
+#include <rtmac/tdma-v1/tdma.h>
 
 
 extern int tdma_dev_init(struct rtnet_device *rtdev, struct rtmac_tdma *tdma);

@@ -24,7 +24,7 @@
 #include <linux/list.h>
 
 #include <rtmac.h>
-#include <rtmac/tdma/tdma.h>
+#include <rtmac/tdma-v1/tdma.h>
 
 
 static int tdma_dev_openclose(void)

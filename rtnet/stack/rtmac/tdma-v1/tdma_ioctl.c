@@ -24,8 +24,8 @@
 #include <linux/netdevice.h>
 
 #include <tdma_chrdev.h>
-#include <rtmac/tdma/tdma_event.h>
-#include <rtmac/tdma/tdma_module.h>
+#include <rtmac/tdma-v1/tdma_event.h>
+#include <rtmac/tdma-v1/tdma_module.h>
 
 
 static inline int tdma_ioctl_client(struct rtnet_device *rtdev)
