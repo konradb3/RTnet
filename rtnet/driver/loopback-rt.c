@@ -137,6 +137,7 @@ static int __init loopback_init(void)
     rtdev->stop = &rt_loopback_close;
     rtdev->hard_start_xmit = &rt_loopback_xmit;
     rtdev->flags |= IFF_LOOPBACK;
+    rtdev->flags &= ~IFF_BROADCAST;
 
     if ((err = rt_register_rtnetdev(rtdev)) != 0)
     {
