@@ -1,3 +1,5 @@
+- fixed compilation problem with RTAI-24 and ADEOS
+
 0.6.1
 - improved RTcfg
   * added stage 1/2 file support
