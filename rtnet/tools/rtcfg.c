@@ -132,8 +132,8 @@ void cmd_add(int argc, char *argv[])
     const char        *stage1_filename = NULL;
     const char        *stage2_filename = NULL;
     int               file;
-    struct stat       file_stat;
     size_t            buf_size;
+    void              *new_buf;
 
 
     if (argc < 4)
@@ -178,31 +178,38 @@ void cmd_add(int argc, char *argv[])
     }
 
     if (stage1_filename != NULL) {
-        file = open(stage1_filename, O_RDONLY);
-        if (file < 0) {
-            perror("open stage 1 file");
-            exit(1);
+        if (strcmp(stage1_filename, "-") == 0)
+            file = 0; /* stdin */
+        else {
+            file = open(stage1_filename, O_RDONLY);
+            if (file < 0) {
+                perror("open stage 1 file");
+                exit(1);
+            }
         }
 
-        i = fstat(file, &file_stat);
-        if (i < 0) {
-            perror("fstat stage 1 file");
-            exit(1);
-        }
+        buf_size = 0;
+        do {
+            buf_size += 4096;
 
-        cmd.args.add.stage1_data = malloc(file_stat.st_size);
-        if (cmd.args.add.stage1_data == NULL) {
-            fprintf(stderr, "insufficient memory\n");
-            exit(1);
-        }
+            new_buf = realloc(cmd.args.add.stage1_data, buf_size);
+            if (new_buf == NULL) {
+                fprintf(stderr, "insufficient memory\n");
+                if (cmd.args.add.stage1_data != NULL)
+                    free(cmd.args.add.stage1_data);
+                exit(1);
+            }
+            cmd.args.add.stage1_data = new_buf;
 
-        i = read(file, cmd.args.add.stage1_data, file_stat.st_size);
-        if (i < 0) {
-            perror("read stage 1 file");
-            free(cmd.args.add.stage1_data);
-            exit(1);
-        }
-        cmd.args.add.stage1_size = file_stat.st_size;
+            i = read(file, cmd.args.add.stage1_data+cmd.args.add.stage1_size,
+                     4096);
+            if (i < 0) {
+                perror("read stage 1 file");
+                free(cmd.args.add.stage1_data);
+                exit(1);
+            }
+            cmd.args.add.stage1_size += i;
+        } while (i == 4096);
 
         close(file);
     }
