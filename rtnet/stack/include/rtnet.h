@@ -44,7 +44,7 @@ struct rtnet_callback {
 
 /* RTnet-specific IOCTLs */
 #define RTNET_RTIOC_PRIORITY    _IOW(RTIOC_TYPE_NETWORK, 0x10, unsigned int)
-#define RTNET_RTIOC_TIMEOUT     _IOW(RTIOC_TYPE_NETWORK, 0x11, __s64)
+#define RTNET_RTIOC_TIMEOUT     _IOW(RTIOC_TYPE_NETWORK, 0x11, int64_t)
 #define RTNET_RTIOC_CALLBACK    _IOW(RTIOC_TYPE_NETWORK, 0x12, \
                                      struct rtnet_callback)
 #define RTNET_RTIOC_NONBLOCK    _IOW(RTIOC_TYPE_NETWORK, 0x13, unsigned int)

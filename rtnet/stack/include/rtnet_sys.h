@@ -5,7 +5,7 @@
  *  RTnet - real-time networking subsystem
  *          RTOS abstraction layer
  *
- *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ typedef __s64   nanosecs_t;     /* used for time calculations and I/O */
 /* Support for RTAI 24.1.x and 3.x */
 #if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
 # include <rtnet_sys_rtai.h>
-#elif defined(CONFIG_FUSION_06)
-/* Support for fusion 0.6.6 or better */
+#elif defined(CONFIG_FUSION_07)
+/* Support for fusion 0.7 or better */
 # include <rtnet_sys_fusion.h>
 #endif
 

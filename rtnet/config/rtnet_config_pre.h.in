@@ -6,8 +6,8 @@
 /* we are building for powerpc */
 #undef CONFIG_ARCH_PPC
 
-/* We build for fusion 0.6.x */
-#undef CONFIG_FUSION_06
+/* We build for fusion 0.7.x */
+#undef CONFIG_FUSION_07
 
 /* RTAI LXRT */
 #undef CONFIG_NEWLXRT

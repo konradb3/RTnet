@@ -1,4 +1,4 @@
-                             RTnet Version 0.8.1
+                             RTnet Version 0.8.2
                              ===================
 
 What is it?
@@ -13,7 +13,7 @@ What are the requirements?
   Linux kernel 2.6.x: 2.6.8.1 or better
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
   RTAI 3.x: tested on 3.0[r1|r2|r4], 3.1, LXRT when using user space API
-  RTAI/fusion 0.6[.6..9] (no user space support yet)
+  RTAI/fusion 0.7 (no user space support yet)
 - x86 (required for LXRT interface) or PowerPC platform. Other platforms are
   untested yet.
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
@@ -92,6 +92,8 @@ Wolfgang Grandegger                     - MPC drivers
 <wg-at-denx.de>
 Erik Buit                               - NatSemi driver
 <e.buit-at-student.utwente.nl>
+Yuchen Zhang                            - FireWire layer
+<zhang-4-at-student.utwente.nl>
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some

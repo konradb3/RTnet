@@ -1087,7 +1087,7 @@ Optional Packages:
   --with-tags[=TAGS]
                           include additional configurations [automatic]
   --with-rtai=RTAI        path to configured RTAI 24.1.x sources, or
-                          installation of RTAI 3, 4 or fusion
+                          installation of RTAI 3.x or fusion
   --with-module-dir=<module-dir>
                           Installation directory for modules
 
@@ -20766,8 +20766,8 @@ echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
     3.2*)
 	CONFIG_RTNET_RTAI_VERSION=32
 	;;
-    0.6.6-fusion | 0.6.7-fusion | 0.6.8-fusion | 0.6.9-fusion | 0.6.99-fusion)
-	CONFIG_RTNET_RTAI_VERSION=06
+    0.7-fusion)
+	CONFIG_RTNET_RTAI_VERSION=fusion-07
 	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&5
@@ -20833,7 +20833,7 @@ echo "$as_me: error: *** Please enable fifos in RTAI" >&2;}
 
 	    ;;
 
-	06)	# ---> FUSION <---
+	fusion-07)	# ---> FUSION <---
 
 	    # check for native RTAI skin, needed by rtnet
 	    echo "$as_me:$LINENO: checking for RTAI native skin" >&5
@@ -20857,7 +20857,7 @@ echo "$as_me: error: *** Please enable semaphores in RTAI" >&2;}
    { (exit 1); exit 1; }; } ;;
 	    esac
 
-	    # malloc support is built-in for RTAI 4
+	    # malloc support is built-in for RTAI/fusion
 
 	    # check for pipes, needed by rtnet
 	    echo "$as_me:$LINENO: checking for RTAI pipes" >&5
@@ -20938,10 +20938,10 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	;;
-    06)
+    fusion-07)
 
 cat >>confdefs.h <<\_ACEOF
-#define CONFIG_FUSION_06 1
+#define CONFIG_FUSION_07 1
 _ACEOF
 
 	;;
@@ -21010,7 +21010,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
-    06)
+    fusion-07)
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
@@ -21032,7 +21032,7 @@ echo "$as_me: error: *** internal error" >&2;}
 	31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	    ;;
-	06)
+	fusion-07)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	    ;;
 	*)
@@ -21049,7 +21049,7 @@ else
 	30 | 31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	    ;;
-	06)
+	fusion-07)
 	    { { echo "$as_me:$LINENO: error: *** internal error" >&5
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
@@ -21281,7 +21281,7 @@ fi
 done
 
             ;;
-	06)
+	fusion-07)
 
 
 
@@ -21492,7 +21492,7 @@ fi
 done
 
 	    ;;
-	06)
+	fusion-07)
 	    { { echo "$as_me:$LINENO: error: *** internal error" >&5
 echo "$as_me: error: *** internal error" >&2;}
    { (exit 1); exit 1; }; }
@@ -21546,7 +21546,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) CONFIG_NEWLXRT=no ;;
 	esac
 	;;
-    06) CONFIG_NEWLXRT=no
+    fusion-07) CONFIG_NEWLXRT=no
 	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** internal error" >&5

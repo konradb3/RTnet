@@ -5,7 +5,7 @@
  *  RTnet - real-time networking subsystem
  *          RTOS abstraction layer - RTAI/fusion version
  *
- *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -126,8 +126,8 @@ static inline void rtos_time_diff(rtos_time_t *result,
 /* RT-tasks */
 #define RTOS_LOWEST_RT_PRIORITY     T_LOPRIO
 #define RTOS_HIGHEST_RT_PRIORITY    T_HIPRIO
-#define RTOS_RAISE_PRIORITY         (-1)
-#define RTOS_LOWER_PRIORITY         (+1)
+#define RTOS_RAISE_PRIORITY         (+1)
+#define RTOS_LOWER_PRIORITY         (-1)
 
 static inline int rtos_task_init(rtos_task_t *task, void (*task_proc)(int),
                                  int arg, int priority)
