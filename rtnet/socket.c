@@ -66,6 +66,7 @@ static inline struct rtsocket *rt_socket_alloc(void)
     sock = free_rtsockets;
     if (!sock) {
         rtos_spin_unlock_irqrestore(&socket_base_lock, flags);
+        rtos_print("RTnet: no more rt-sockets\n");
         return NULL;
     }
     free_rtsockets = free_rtsockets->next;
@@ -198,10 +199,8 @@ int rt_socket(int family, int type, int protocol)
 
 
     /* allocate a new socket */
-    if ((sock = rt_socket_alloc()) == NULL) {
-        rtos_print("RTnet: no more rt-sockets\n");
+    if ((sock = rt_socket_alloc()) == NULL)
         return -ENOMEM;
-    }
 
     sock->type = type;
 
