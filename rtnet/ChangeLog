@@ -1,7 +1,6 @@
 0.7.0
 - ported user API to RTDM (real-time driver model)
 - revised TDMA API based on RTDM
-- lock protection of variable socket parameters
 - revised routing system
   * hash-table-based lookups
   * removed redundant ARP table
@@ -13,9 +12,13 @@
 - added rtping core support and user tool
 - reordered and extended /proc interface
 - improved non-real-time locking (devices and various lists)
+- lock protection of variable socket parameters
+- added netshm example
+- reorganised and cleaned up examples directory
 - fixed UDP port demultiplexing bug
 - fixed return value of non-blocking receive on empty queue
 - fixed queue clean-up bug in packet sockets
+- fixed bug in RTcfg frames on big endian platforms (PPC)
 
 0.6.2
 - removed runtime garbage collection of fragmented IP packets
