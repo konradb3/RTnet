@@ -51,6 +51,7 @@ EXPORT_SYMBOL(rt_socket_sendmsg);
 EXPORT_SYMBOL(rt_socket_recvmsg);
 /*EXPORT_SYMBOL(rt_socket_getsockname);*/
 EXPORT_SYMBOL(rt_socket_setsockopt);
+EXPORT_SYMBOL(rt_socket_ioctl);
 EXPORT_SYMBOL(rt_socket_callback);
 
 /* DISCONTINUED! WILL BE REMOVED SOON */
