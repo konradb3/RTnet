@@ -147,7 +147,7 @@ case "$1" in
     master)
         shift
         init_rtnet
-        TMDA_CLIENTS=$*
+        TDMA_CLIENTS=$*
         start_master
         ;;
 
