@@ -81,12 +81,14 @@ static int parirq  = 7;
 
 #define PRINT_FIFO 0
 rtos_fifo_t print_fifo;
+rtos_irq_t  irq_handle;
 
 
-static void parport_irq_handler(void)
+static RTOS_IRQ_HANDLER_PROTO(parport_irq_handler)
 {
     outb(0xF7, PAR_DATA);
     rtos_event_sem_signal(&tx_sem);
+    RTOS_IRQ_RETURN_HANDLED();
 }
 
 
@@ -214,7 +216,7 @@ int init_module(void)
 
     rtos_task_init(&recv_task,(void *)echo_rcv,0,9);
 
-    rtos_irq_request(parirq, (void (*)(unsigned,void *))parport_irq_handler,NULL);
+    rtos_irq_request(&irq_handle, parirq, parport_irq_handler, NULL);
 
     outb(0xFF, PAR_DATA);
     outb(0x14 + KHZ0_1, PAR_CONTROL);
@@ -226,7 +228,7 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    rtos_irq_free(parirq);
+    rtos_irq_free(&irq_handle);
 
     outb(0, PAR_CONTROL);
 

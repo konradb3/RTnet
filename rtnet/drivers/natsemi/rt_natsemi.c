@@ -689,8 +689,9 @@ struct netdev_private {
 	unsigned int iosize;
 	rtos_spinlock_t lock;
 	u32 msg_enable;
-	
+
 	struct rtskb_queue skb_pool; /*** RTnet ***/
+	rtos_irq_t irq_handle;
 };
 
 static int eeprom_read(long ioaddr, int location);
@@ -715,7 +716,7 @@ static void free_ring(struct rtnet_device *dev);
 /*static void reinit_ring(struct rtnet_device *dev);*/
 static void init_registers(struct rtnet_device *dev);
 static int start_tx(struct rtskb *skb, struct rtnet_device *dev);
-static void intr_handler(unsigned int irq, void *dev_instance);/*, struct pt_regs *regs);*/
+static RTOS_IRQ_HANDLER_PROTO(intr_handler);
 static void netdev_error(struct rtnet_device *dev, int intr_status);
 static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp);
 static void netdev_tx_done(struct rtnet_device *dev);
@@ -1149,7 +1150,7 @@ static int netdev_open(struct rtnet_device *dev)
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rtos_irq_request(dev->irq, intr_handler, dev);
+	i = rtos_irq_request(&np->irq_handle, dev->irq, intr_handler, dev);
 /*** RTnet ***/
 /*	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);*/
 	if (i) {
@@ -1162,7 +1163,7 @@ static int netdev_open(struct rtnet_device *dev)
 			dev->name, dev->irq);
 	i = alloc_ring(dev);
 	if (i < 0) {
-		rtos_irq_free(dev->irq);
+		rtos_irq_free(&np->irq_handle);
 		RTNET_MOD_DEC_USE_COUNT;
 		return i;
 	}
@@ -1180,7 +1181,7 @@ static int netdev_open(struct rtnet_device *dev)
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
 /*** RTnet ***/
-	rtos_irq_enable(dev->irq);
+	rtos_irq_enable(&np->irq_handle);
 
 	if (netif_msg_ifup(np))
 		rtos_print(KERN_DEBUG "%s: Done netdev_open(), status: %#08x.\n",
@@ -1784,10 +1785,10 @@ static void netdev_tx_done(struct rtnet_device *dev)
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static void intr_handler(unsigned int irq, void *dev_instance)/*, struct pt_regs *rgs)*/
+static RTOS_IRQ_HANDLER_PROTO(intr_handler)
 {
 /*	struct net_device *dev = dev_instance;*/
-	struct rtnet_device *dev = (struct rtnet_device *)dev_instance; /*** RTnet ***/
+	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG(); /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
 	unsigned int old_packet_cnt = np->stats.rx_packets; /*** RTnet ***/
 	long ioaddr = dev->base_addr;
@@ -1797,7 +1798,7 @@ static void intr_handler(unsigned int irq, void *dev_instance)/*, struct pt_regs
 	rtos_get_time(&time_stamp); /*** RTnet ***/
 
 	if (np->hands_off)
-		return;
+		RTOS_IRQ_RETURN_UNHANDLED();
 	do {
 		/* Reading automatically acknowledges all int sources. */
 		u32 intr_status = readl((void *)(ioaddr + IntrStatus));
@@ -1840,12 +1841,12 @@ static void intr_handler(unsigned int irq, void *dev_instance)/*, struct pt_regs
 
 	if (netif_msg_intr(np))
 		rtos_print(KERN_DEBUG "%s: exiting interrupt.\n", dev->name);
-		
+
 /*** RTnet ***/
-	rtos_irq_end(irq);
+	rtos_irq_end(&np->irq_handle);
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
-
+	RTOS_IRQ_RETURN_HANDLED();
 }
 
 /* This routine is logically part of the interrupt handler, but separated
@@ -2661,7 +2662,7 @@ static int netdev_close(struct rtnet_device *dev)
 	del_timer_sync(&np->timer);
  *** RTnet ***/
 /*	disable_irq(dev->irq);*/
-	rtos_irq_disable(dev->irq);
+	rtos_irq_disable(&np->irq_handle);
 	rtos_spin_lock(&np->lock);
 	/* Disable interrupts, and flush posted writes */
 	writel(0, (void *)(ioaddr + IntrEnable));
@@ -2670,7 +2671,7 @@ static int netdev_close(struct rtnet_device *dev)
 	rtos_spin_unlock(&np->lock);
 
 /*** RTnet ***/
-	if ( (i=rtos_irq_free(dev->irq))<0 )
+	if ( (i=rtos_irq_free(&np->irq_handle))<0 )
 		return i;
 
 	rt_stack_disconnect(dev);

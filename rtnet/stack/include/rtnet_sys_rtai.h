@@ -58,6 +58,8 @@ typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
 typedef struct {
     int minor;
 } rtos_fifo_t;                        /* fifo descriptor */
+typedef int        rtos_irq_t;        /* handle to requested IRQ */
+typedef void       (*rtos_irq_handler_t)(unsigned int irq, void *arg);
 
 #define ALIGN_RTOS_TASK         16  /* RT_TASK requires 16-bytes alignment */
 
@@ -365,9 +367,16 @@ static inline int rtos_fifo_put(rtos_fifo_t *fifo, void *buf, int size)
 
 
 /* IRQ management */
-static inline int rtos_irq_request(unsigned int irq,
-    void (*handler)(unsigned int, void *), void *arg)
+#define RTOS_IRQ_HANDLER_PROTO(name)    void name(unsigned int irq, void *arg)
+#define RTOS_IRQ_GET_ARG()              (arg)
+#define RTOS_IRQ_RETURN_HANDLED()       return
+#define RTOS_IRQ_RETURN_UNHANDLED()     return
+
+static inline int rtos_irq_request(rtos_irq_t *irq_handle, unsigned int irq,
+                                   rtos_irq_handler_t handler, void *arg)
 {
+    *irq_handle = irq;
+
 #if defined(CONFIG_ARCH_I386)
     return rt_request_global_irq_ext(irq,
         (void (*)(void))handler, (unsigned long)arg);
@@ -379,23 +388,31 @@ static inline int rtos_irq_request(unsigned int irq,
 #endif
 }
 
-static inline int rtos_irq_free(unsigned int irq)
+static inline int rtos_irq_free(rtos_irq_t *irq_handle)
 {
-    return rt_free_global_irq(irq);
+    return rt_free_global_irq(*irq_handle);
 }
 
+static inline void rtos_irq_enable(rtos_irq_t *irq_handle)
+{
+    rt_enable_irq(*irq_handle);
+}
 
-#define rtos_irq_enable(irq)        rt_enable_irq(irq)
-#define rtos_irq_disable(irq)       rt_disable_irq(irq)
+static inline void rtos_irq_disable(rtos_irq_t *irq_handle)
+{
+    rt_disable_irq(*irq_handle);
+}
 
+static inline void rtos_irq_end(rtos_irq_t *irq_handle)
+{
 #if defined(CONFIG_ARCH_I386)
-# define rtos_irq_end(irq)       rt_enable_irq(irq)
+    rt_enable_irq(*irq_handle);
 #elif defined(CONFIG_ARCH_PPC)
-# define rtos_irq_end(irq)       rt_unmask_irq(irq)
+    rt_unmask_irq(*irq_handle);
 #else
 # error Unsupported architecture.
 #endif
-
+}
 
 static inline void rtos_irq_release_lock(void)
 {

@@ -215,9 +215,9 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, rtos_time_t *time_stamp
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-void tulip_interrupt(unsigned int irq, void *__data)
+RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 {
-	/*RTnet*/struct rtnet_device *rtdev = (/*RTnet*/struct rtnet_device *)__data;
+	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();/*RTnet*/
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
 	unsigned int csr5;
@@ -244,7 +244,7 @@ void tulip_interrupt(unsigned int irq, void *__data)
 
 	if ((csr5 & (NormalIntr|AbnormalIntr)) == 0) {
 		rtos_print("%s: unexpected IRQ!\n",rtdev->name);
-		return;
+		RTOS_IRQ_RETURN_UNHANDLED();
 	}
 
 	tp->nir++;
@@ -464,8 +464,8 @@ void tulip_interrupt(unsigned int irq, void *__data)
 	if (tulip_debug > 4)
 		/*RTnet*/rtos_print(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
 			   rtdev->name, inl(ioaddr + CSR5));
-	rtos_irq_end(rtdev->irq);
+	rtos_irq_end(&tp->irq_handle);
 	if (rx)
 		rt_mark_stack_mgr(rtdev);
-	return;
+	RTOS_IRQ_RETURN_HANDLED();
 }

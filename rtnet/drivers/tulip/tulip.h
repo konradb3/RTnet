@@ -392,6 +392,7 @@ struct tulip_private {
 	unsigned long nir;
 	unsigned long base_addr;
 	int pad0, pad1;		/* Used for 8-byte alignment */
+	rtos_irq_t irq_handle;
 };
 
 
@@ -424,7 +425,7 @@ int tulip_read_eeprom(long ioaddr, int location, int addr_len);
 /* interrupt.c */
 extern unsigned int tulip_max_interrupt_work;
 extern int tulip_rx_copybreak;
-void tulip_interrupt(unsigned int irq, void *__data);
+RTOS_IRQ_HANDLER_PROTO(tulip_interrupt);
 int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev);
 
 /* media.c */

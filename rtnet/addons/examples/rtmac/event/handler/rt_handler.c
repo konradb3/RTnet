@@ -75,9 +75,10 @@ static struct sockaddr_in   dest_addr;
 static rtos_task_t          task;
 static rtos_event_sem_t     event_sem;
 static nanosecs_t           time_stamp;
+static rtos_irq_t           irq_handle;
 
 
-void irq_handler(void)
+RTOS_IRQ_HANDLER_PROTO(irq_handler)
 {
     rtos_time_t time;
 
@@ -94,11 +95,12 @@ void irq_handler(void)
 
         /* only trigger on rising CTS edge if using a serial port */
         if ((inb(SER_MSR) & 0x10) == 0)
-            return;
+            RTOS_IRQ_RETURN_HANDLED();
     }
 
     irq_count++;
     rtos_event_sem_signal(&event_sem);
+    RTOS_IRQ_RETURN_HANDLED();
 }
 
 
@@ -117,12 +119,12 @@ void event_handler(int arg)
 
         ioctl_rt(tdma, RTMAC_RTIOC_TIMEOFFSET, &packet.time_stamp);
 
-        rtos_irq_disable(irq);
+        rtos_irq_disable(&irq_handle);
 
         packet.time_stamp += time_stamp;
         packet.count      = irq_count;
 
-        rtos_irq_enable(irq);
+        rtos_irq_enable(&irq_handle);
 
         ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, &wait_on);
 
@@ -202,7 +204,7 @@ int init_module(void)
     rtos_event_sem_init(&event_sem);
 
 
-    if (rtos_irq_request(irq, (void (*)(unsigned,void *))irq_handler,NULL) != 0) {
+    if (rtos_irq_request(&irq_handle, irq, irq_handler, NULL) != 0) {
         rtos_print("ERROR: irq not available!\n");
         rtos_event_sem_delete(&event_sem);
         return -EINVAL;
@@ -234,7 +236,7 @@ int init_module(void)
         outb(0x0D, SER_IER);
     }
 
-    rtos_irq_enable(irq);
+    rtos_irq_enable(&irq_handle);
 
 
     return rtos_task_init(&task, event_handler, 0, 10);
@@ -244,8 +246,8 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    rtos_irq_disable(irq);
-    rtos_irq_free(irq);
+    rtos_irq_disable(&irq_handle);
+    rtos_irq_free(&irq_handle);
 
     while (close_rt(sock) == -EAGAIN) {
         set_current_state(TASK_UNINTERRUPTIBLE);

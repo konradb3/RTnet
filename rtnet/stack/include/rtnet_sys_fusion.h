@@ -32,6 +32,7 @@
 #include <rtai/sem.h>
 #include <rtai/mutex.h>
 #include <rtai/pipe.h>
+#include <rtai/intr.h>
 
 /* basic types */
 typedef struct {
@@ -44,6 +45,8 @@ typedef RT_SEM     rtos_event_sem_t;  /* to signal events (storing) */
 typedef RT_MUTEX   rtos_res_lock_t;   /* resource lock with prio inheritance */
 typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
 typedef RT_PIPE    rtos_fifo_t;       /* fifo descriptor */
+typedef RT_INTR    rtos_irq_t;        /* handle to requested IRQ */
+typedef rt_isr_t   rtos_irq_handler_t;/* IRQ handler prototype */
 
 #define ALIGN_RTOS_TASK   16  /* RT_TASK requires 16-bytes alignment */
 
@@ -369,31 +372,47 @@ static inline int rtos_fifo_put(rtos_fifo_t *fifo, void *buf, int size)
 
 
 /* IRQ management */
-static inline int rtos_irq_request(unsigned int irq,
-    void (*handler)(unsigned int, void *), void *arg)
+#define RTOS_IRQ_HANDLER_PROTO(name)    int name(xnintr_t *cookie)
+#define RTOS_IRQ_GET_ARG()              (I_DESC(cookie)->private_data)
+#define RTOS_IRQ_RETURN_HANDLED()       return (RT_INTR_HANDLED|RT_INTR_ENABLE)
+#define RTOS_IRQ_RETURN_UNHANDLED()     return 0; /* mask, don't propagate */
+
+static inline int rtos_irq_request(rtos_irq_t *irq_handle, unsigned int irq,
+                                   rtos_irq_handler_t handler, void *arg)
 {
-    return rthal_request_irq(irq, handler, arg);
+    int ret;
+
+    ret = rt_intr_create(irq_handle, irq, handler);
+    irq_handle->private_data = arg;
+    return ret;
 }
 
-static inline int rtos_irq_free(unsigned int irq)
+static inline int rtos_irq_free(rtos_irq_t *irq_handle)
 {
-    return rthal_release_irq(irq);
+    return rt_intr_delete(irq_handle);
 }
 
+static inline void rtos_irq_enable(rtos_irq_t *irq_handle)
+{
+    rt_intr_enable(irq_handle);
+}
 
-#define rtos_irq_enable(irq)        rthal_enable_irq(irq)
-#define rtos_irq_disable(irq)       rthal_disable_irq(irq)
-#define rtos_irq_end(irq)           rthal_enable_irq(irq)
+static inline void rtos_irq_disable(rtos_irq_t *irq_handle)
+{
+    rt_intr_disable(irq_handle);
+}
+
+#define rtos_irq_end(irq_handle)    /* done by returning RT_INTR_ENABLE */
 
 static inline void rtos_irq_release_lock(void)
 {
     rt_task_set_mode(0,T_LOCK,NULL);
-    rthal_sti();
+    rthal_hw_enable();
 }
 
 static inline void rtos_irq_reacquire_lock(void)
 {
-    rthal_cli();
+    rthal_hw_disable();
     rt_task_set_mode(T_LOCK,0,NULL);
 }
 
