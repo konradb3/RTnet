@@ -127,6 +127,8 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
     switch (request) {
         case IOC_RT_IFUP:
+            rtdev->flags |= cfg.set_dev_flags;
+            rtdev->flags &= ~cfg.clear_dev_flags;
             ret = rtdev_open(rtdev);    /* also = 0 if dev already up */
             if( ret == 0 ) {
                 rt_ip_route_del(rtdev); /* cleanup routing table */
@@ -160,7 +162,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             params.rtdev   = rtdev;
             params.ip_addr = cfg.ip_addr;
             ret = rtpc_dispatch_call(route_solicit_handler, 0, &params,
-                                     sizeof(params), NULL);
+                                     sizeof(params), NULL, NULL);
             break;
 
         case IOC_RT_ROUTE_DELETE:
