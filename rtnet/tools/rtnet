@@ -67,7 +67,7 @@ case "$1" in
 	    modprobe $MODULE
 	done
 
-	rtifconfig $DEV up $IPADDR $NETMASK
+	rtifconfig $DEV up $IPADDR netmask $NETMASK
 
 	;;
 
