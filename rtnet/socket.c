@@ -582,6 +582,79 @@ int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
 
 
 
+/***
+ *  rt_socket_ioctl
+ */
+int rt_socket_ioctl(int s, int request, void *arg)
+{
+    int ret = 0;
+    SOCKET *sock;
+    union {
+        struct ifconf ifc;
+        struct ifreq ifr;
+    } *args = arg;
+    struct rtnet_device *rtdev;
+    struct sockaddr_in *sin;
+    int i;
+    int size;
+
+
+    if ((sock = rt_socket_lookup(s)) == NULL)
+        return -ENOTSOCK;
+
+    switch (request) {
+        case SIOCGIFCONF:
+            size = 0;
+
+            for (i = 0; i < MAX_RT_DEVICES; i++) {
+                rtdev = rtdev_get_by_index(i);
+                if (rtdev != NULL) {
+                    if ((rtdev->flags & IFF_RUNNING) == 0) {
+                        rtdev_dereference(rtdev);
+                        continue;
+                    }
+
+                    size += sizeof(struct ifreq);
+                    if (size > args->ifc.ifc_len) {
+                        rtdev_dereference(rtdev);
+                        size = args->ifc.ifc_len;
+                        break;
+                    }
+
+                    strncpy(args->ifc.ifc_req->ifr_name, rtdev->name,
+                            IFNAMSIZ);
+                    sin = (struct sockaddr_in *)
+                        &args->ifc.ifc_req->ifr_addr;
+                    sin->sin_family      = AF_INET;
+                    sin->sin_addr.s_addr = rtdev->local_addr;
+
+                    rtdev_dereference(rtdev);
+                }
+            }
+
+            args->ifc.ifc_len = size;
+            break;
+
+        case SIOCGIFFLAGS:
+            rtdev = rtdev_get_by_name(args->ifr.ifr_name);
+            if (rtdev == NULL)
+                ret = -ENODEV;
+            else {
+                args->ifr.ifr_flags = rtdev->flags;
+                rtdev_dereference(rtdev);
+            }
+            break;
+
+        default:
+            ret = -EOPNOTSUPP;
+    }
+
+    rt_socket_dereference(sock);
+    return ret;
+}
+
+
+
 #if 0
 /************************************************************************
  *  static socket interface - DISCONTINUED! WILL BE REMOVED SOON        *
