@@ -94,6 +94,10 @@ static inline SOCKET *rt_socket_alloc(void)
         sock->pool_size = rtskb_pool_init_rt(&sock->skb_pool, socket_rtskbs);
     }
     if (sock->pool_size < socket_rtskbs) {
+        /* fix statistics */
+        if (sock->pool_size == 0)
+            rtskb_pools--;
+
         rt_socket_release(sock);
         return NULL;
     }
@@ -594,6 +598,7 @@ int rt_socket_ioctl(int s, int request, void *arg)
         struct ifreq ifr;
     } *args = arg;
     struct rtnet_device *rtdev;
+    struct ifreq *cur_ifr;
     struct sockaddr_in *sin;
     int i;
     int size;
@@ -605,8 +610,9 @@ int rt_socket_ioctl(int s, int request, void *arg)
     switch (request) {
         case SIOCGIFCONF:
             size = 0;
+            cur_ifr = args->ifc.ifc_req;
 
-            for (i = 0; i < MAX_RT_DEVICES; i++) {
+            for (i = 1; i <= MAX_RT_DEVICES; i++) {
                 rtdev = rtdev_get_by_index(i);
                 if (rtdev != NULL) {
                     if ((rtdev->flags & IFF_RUNNING) == 0) {
@@ -621,13 +627,13 @@ int rt_socket_ioctl(int s, int request, void *arg)
                         break;
                     }
 
-                    strncpy(args->ifc.ifc_req->ifr_name, rtdev->name,
+                    strncpy(cur_ifr->ifr_name, rtdev->name,
                             IFNAMSIZ);
-                    sin = (struct sockaddr_in *)
-                        &args->ifc.ifc_req->ifr_addr;
+                    sin = (struct sockaddr_in *)&cur_ifr->ifr_addr;
                     sin->sin_family      = AF_INET;
                     sin->sin_addr.s_addr = rtdev->local_addr;
 
+                    cur_ifr++;
                     rtdev_dereference(rtdev);
                 }
             }
