@@ -1,0 +1,57 @@
+NETSHM Example
+==============
+
+NETSHM is simple device which provides a distributed pseudo shared memory.
+"Pseudo", because only the read access is shared, write access is just possible
+to exclusive areas assigned to every node.
+
+
+         Begin                                                              End
+           |----------|----------|--------------------|--------|-------------|
+Write      |                                                                 |
+access:    |  node 1     node 2          node 3         node 4     node n    |
+           |                                                                 |
+Read       |                                                                 |
+access:    | any node   any node        any node       any node   any node   |
+
+
+On one hand, this example driver shall demonstrate the Real-Time Driver Model
+(RTDM), especially mechanisms to create a driver stack (here: NETSHM on top of
+RTnet). On the other hand, NETSHM may be used to set-up basic distributed
+process images by filling up the memory areas with local input values from the
+process. Output values would have to be read from the exclusive areas of any
+potential writer (setting up a "real" shared memory segment with concurrent
+write access would also be possible but requires a bit more effort to keep all
+stations in sync in case one misses its update deadline - that's why it's
+skipped in this first approach).
+
+
+When the NETSHM driver is loaded, it creates a RTDM device called "myNETSHM"
+(use module parameter "shm_name" to modify) and attaches itself to the first
+network interface (use shm_if to modify). An application may then open the
+device with open_rt("myNETSHM", O_RDWR) and attach a local memory area to it by
+issuing a NETSHM_RTIOC_ATTACH ioctl. The main real-time loop of the application
+will consist of a processing part and a NETSHM_RTIOC_CYCLE ioctl which
+synchronises the local memory and also blocks until the update process has been
+completed. The update will first wait on the next TDMA cycle and then broadcast
+the local memory image, thus leaving the other TDMA cycle free for other
+traffic like non-real-time data.
+
+netshm_kerndemo implements a demonstration application for kernel mode usage
+(an LXRT version is feasible as well). When loading netshm_kerndemo without
+specifying any parameters, the example will attach itself in listen-only mode
+to the network using the default memory size of 1000 integer variables. To
+switch the demo in an active mode, you have to specify the offset
+(shm_local_offs) and size (shm_local_size) of the local area within the shared
+memory in orders of integer variables.
+
+Example:
+insmod netshm_kerndemo.o shm_size=800 shm_local_offs=250 shm_local_size=150
+
+Loads netshm_kerndemo specifying an overall memory size of 800 integer
+variables. The first writable value within this range would be the 251th (index
+250) and the last the 400th (index 399). Note that the maximum size of a local
+area is 1496 bytes (largest Ethernet packet - NETSHM header) divided by 4
+(sizeof(int)), i.e. 374. The maximum number of nodes is limited by the TDMA
+cycle time and the computing power of the slowest participant which have to
+handle all update packets within one TDMA cycle.
