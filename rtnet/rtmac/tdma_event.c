@@ -1250,7 +1250,7 @@ static void tdma_client_rcvd_station_list(struct rtmac_tdma *tdma, struct rtskb 
 	unsigned char no_of_stations;
 	int i;
 
-	no_of_stations = station_list_hdr->no_of_stations;
+	no_of_stations = MIN(station_list_hdr->no_of_stations, TDMA_MAX_RT);
 	station_list_hdr++;
 	station_list_ptr = (struct tdma_station_list *)station_list_hdr;
 
