@@ -180,6 +180,7 @@ librtnet_a_SOURCES = \
 	rtdev_mgr.c \
 	rtnet_chrdev.c \
 	rtnet_module.c \
+	rtnet_rtpc.c \
 	rtnet_syms.c \
 	rtskb.c \
 	socket.c \
@@ -218,8 +219,9 @@ librtnet_a_AR = $(AR) cru
 librtnet_a_LIBADD =
 am_librtnet_a_OBJECTS = iovec.$(OBJEXT) rtdev.$(OBJEXT) \
 	rtdev_mgr.$(OBJEXT) rtnet_chrdev.$(OBJEXT) \
-	rtnet_module.$(OBJEXT) rtnet_syms.$(OBJEXT) rtskb.$(OBJEXT) \
-	socket.$(OBJEXT) stack_mgr.$(OBJEXT)
+	rtnet_module.$(OBJEXT) rtnet_rtpc.$(OBJEXT) \
+	rtnet_syms.$(OBJEXT) rtskb.$(OBJEXT) socket.$(OBJEXT) \
+	stack_mgr.$(OBJEXT)
 librtnet_a_OBJECTS = $(am_librtnet_a_OBJECTS)
 librtnet_lxrt_a_AR = $(AR) cru
 librtnet_lxrt_a_LIBADD =
@@ -235,9 +237,9 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_chrdev.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_lxrt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_module.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rtnet_syms.Po ./$(DEPDIR)/rtnetproxy.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rtskb.Po ./$(DEPDIR)/socket.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/stack_mgr.Po
+@AMDEP_TRUE@	./$(DEPDIR)/rtnet_rtpc.Po ./$(DEPDIR)/rtnet_syms.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rtnetproxy.Po ./$(DEPDIR)/rtskb.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/socket.Po ./$(DEPDIR)/stack_mgr.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -328,6 +330,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_chrdev.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_lxrt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_module.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_rtpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_syms.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnetproxy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtskb.Po@am__quote@

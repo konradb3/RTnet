@@ -35,10 +35,11 @@
 #endif
 
 #include <rtdev_mgr.h>
+#include <rtnet_chrdev.h>
 #include <rtnet_crc32.h>
 #include <rtnet_internal.h>
+#include <rtnet_rtpc.h>
 #include <rtnet_socket.h>
-#include <rtnet_chrdev.h>
 #include <stack_mgr.h>
 #include <ipv4/af_inet.h>
 
@@ -133,12 +134,19 @@ int rtnet_init(void)
     rt_inet_proto_init();
     rtnet_chrdev_init();
 
+    if ((err = rtpc_init()) != 0)
+        goto err_out4;
+
 #ifdef CONFIG_PROC_FS
     if ((err = rtnet_proc_register()) != 0)
-        goto err_out4;
+        goto err_out5;
 #endif
 
     return 0;
+
+
+err_out5:
+    rtpc_cleanup();
 
 err_out4:
     rtnet_chrdev_release();
@@ -170,6 +178,9 @@ void rtnet_release(void)
 #ifdef CONFIG_PROC_FS
     rtnet_proc_unregister();
 #endif
+
+    rtpc_cleanup();
+
     rtnet_chrdev_release();
 
     rt_stack_mgr_delete(&STACK_manager);

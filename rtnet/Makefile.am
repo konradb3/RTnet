@@ -12,6 +12,7 @@ librtnet_a_SOURCES = \
 	rtdev_mgr.c \
 	rtnet_chrdev.c \
 	rtnet_module.c \
+	rtnet_rtpc.c \
 	rtnet_syms.c \
 	rtskb.c \
 	socket.c \
