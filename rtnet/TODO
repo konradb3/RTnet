@@ -1,14 +1,1 @@
-To be examined / fixed:
-
- * Optimize checksum generation / verification
- * atomic inc of counters (if required),
-    already fixed/checked: ip_fragmentation.c, ip_output.c
- * synchronization of device up/down with the rest of the stack
-
-To be added / improved:
-
- * packet sockets
- * separation of the discipine configuration -> stand-alone discipline modules
- * multicast support
- * revision of routing engine
- * ip forwarding
+See http://www.rts.uni-hannover.de/rtnet/roadmap.html
