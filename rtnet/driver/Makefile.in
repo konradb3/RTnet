@@ -47,6 +47,7 @@ host_triplet = @host@
 @CONFIG_RTNET_FCC_ENET_TRUE@am__append_9 = mpc8260_fcc_enet-rt.o
 @CONFIG_RTNET_SCC_ENET_TRUE@am__append_10 = mpc8xx_enet-rt.o
 @CONFIG_RTNET_FEC_ENET_TRUE@am__append_11 = mpc8xx_fec-rt.o
+@CONFIG_RTNET_SMC91111_TRUE@am__append_12 = smc91111-rt.o
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
@@ -89,6 +90,8 @@ CONFIG_RTNET_RTCFG_FALSE = @CONFIG_RTNET_RTCFG_FALSE@
 CONFIG_RTNET_RTCFG_TRUE = @CONFIG_RTNET_RTCFG_TRUE@
 CONFIG_RTNET_SCC_ENET_FALSE = @CONFIG_RTNET_SCC_ENET_FALSE@
 CONFIG_RTNET_SCC_ENET_TRUE = @CONFIG_RTNET_SCC_ENET_TRUE@
+CONFIG_RTNET_SMC91111_FALSE = @CONFIG_RTNET_SMC91111_FALSE@
+CONFIG_RTNET_SMC91111_TRUE = @CONFIG_RTNET_SMC91111_TRUE@
 CONFIG_RTNET_TULIP_FALSE = @CONFIG_RTNET_TULIP_FALSE@
 CONFIG_RTNET_TULIP_TRUE = @CONFIG_RTNET_TULIP_TRUE@
 CONFIG_RTNET_VIA_RHINE_FALSE = @CONFIG_RTNET_VIA_RHINE_FALSE@
@@ -199,10 +202,11 @@ EXTRA_LIBRARIES = \
 	libloopback-rt.a \
 	libmpc8260_fcc_enet-rt.a \
 	libmpc8xx_enet-rt.a \
-	libmpc8xx_fec-rt.a
+	libmpc8xx_fec-rt.a \
+	libsmc91111-rt.a
 
 
-OBJS = $(am__append_2) $(am__append_3) $(am__append_4) $(am__append_5) $(am__append_6) $(am__append_7) $(am__append_8) $(am__append_9) $(am__append_10) $(am__append_11)
+OBJS = $(am__append_2) $(am__append_3) $(am__append_4) $(am__append_5) $(am__append_6) $(am__append_7) $(am__append_8) $(am__append_9) $(am__append_10) $(am__append_11) $(am__append_12)
 
 @CONFIG_RTNET_3C59X_TRUE@lib3c59x_rt_a_SOURCES = 3c59x-rt.c
 
@@ -223,6 +227,8 @@ OBJS = $(am__append_2) $(am__append_3) $(am__append_4) $(am__append_5) $(am__app
 @CONFIG_RTNET_SCC_ENET_TRUE@libmpc8xx_enet_rt_a_SOURCES = mpc8xx_enet-rt.c
 
 @CONFIG_RTNET_FEC_ENET_TRUE@libmpc8xx_fec_rt_a_SOURCES = mpc8xx_fec-rt.c
+
+@CONFIG_RTNET_SMC91111_TRUE@libsmc91111_rt_a_SOURCES = smc91111-rt.c
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -289,6 +295,12 @@ am__libpcnet32_rt_a_SOURCES_DIST = pcnet32-rt.c
 @CONFIG_RTNET_PCNET32_TRUE@am_libpcnet32_rt_a_OBJECTS = \
 @CONFIG_RTNET_PCNET32_TRUE@	pcnet32-rt.$(OBJEXT)
 libpcnet32_rt_a_OBJECTS = $(am_libpcnet32_rt_a_OBJECTS)
+libsmc91111_rt_a_AR = $(AR) cru
+libsmc91111_rt_a_LIBADD =
+am__libsmc91111_rt_a_SOURCES_DIST = smc91111-rt.c
+@CONFIG_RTNET_SMC91111_TRUE@am_libsmc91111_rt_a_OBJECTS = \
+@CONFIG_RTNET_SMC91111_TRUE@	smc91111-rt.$(OBJEXT)
+libsmc91111_rt_a_OBJECTS = $(am_libsmc91111_rt_a_OBJECTS)
 libvia_rhine_rt_a_AR = $(AR) cru
 libvia_rhine_rt_a_LIBADD =
 am__libvia_rhine_rt_a_SOURCES_DIST = via-rhine-rt.c
@@ -307,6 +319,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/mpc8xx_enet-rt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/mpc8xx_fec-rt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/natsemi-rt.Po ./$(DEPDIR)/pcnet32-rt.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/smc91111-rt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/via-rhine-rt.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -324,6 +337,7 @@ DIST_SOURCES = $(am__lib3c59x_rt_a_SOURCES_DIST) \
 	$(am__libmpc8xx_fec_rt_a_SOURCES_DIST) \
 	$(am__libnatsemi_rt_a_SOURCES_DIST) \
 	$(am__libpcnet32_rt_a_SOURCES_DIST) \
+	$(am__libsmc91111_rt_a_SOURCES_DIST) \
 	$(am__libvia_rhine_rt_a_SOURCES_DIST)
 
 RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
@@ -333,7 +347,7 @@ RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	check-recursive installcheck-recursive
 DIST_COMMON = Makefile.am Makefile.in
 DIST_SUBDIRS = tulip
-SOURCES = $(lib3c59x_rt_a_SOURCES) $(lib8139too_rt_a_SOURCES) $(libeepro100_rt_a_SOURCES) $(libloopback_rt_a_SOURCES) $(libmpc8260_fcc_enet_rt_a_SOURCES) $(libmpc8xx_enet_rt_a_SOURCES) $(libmpc8xx_fec_rt_a_SOURCES) $(libnatsemi_rt_a_SOURCES) $(libpcnet32_rt_a_SOURCES) $(libvia_rhine_rt_a_SOURCES)
+SOURCES = $(lib3c59x_rt_a_SOURCES) $(lib8139too_rt_a_SOURCES) $(libeepro100_rt_a_SOURCES) $(libloopback_rt_a_SOURCES) $(libmpc8260_fcc_enet_rt_a_SOURCES) $(libmpc8xx_enet_rt_a_SOURCES) $(libmpc8xx_fec_rt_a_SOURCES) $(libnatsemi_rt_a_SOURCES) $(libpcnet32_rt_a_SOURCES) $(libsmc91111_rt_a_SOURCES) $(libvia_rhine_rt_a_SOURCES)
 
 all: all-recursive
 
@@ -380,6 +394,10 @@ libpcnet32-rt.a: $(libpcnet32_rt_a_OBJECTS) $(libpcnet32_rt_a_DEPENDENCIES)
 	-rm -f libpcnet32-rt.a
 	$(libpcnet32_rt_a_AR) libpcnet32-rt.a $(libpcnet32_rt_a_OBJECTS) $(libpcnet32_rt_a_LIBADD)
 	$(RANLIB) libpcnet32-rt.a
+libsmc91111-rt.a: $(libsmc91111_rt_a_OBJECTS) $(libsmc91111_rt_a_DEPENDENCIES) 
+	-rm -f libsmc91111-rt.a
+	$(libsmc91111_rt_a_AR) libsmc91111-rt.a $(libsmc91111_rt_a_OBJECTS) $(libsmc91111_rt_a_LIBADD)
+	$(RANLIB) libsmc91111-rt.a
 libvia-rhine-rt.a: $(libvia_rhine_rt_a_OBJECTS) $(libvia_rhine_rt_a_DEPENDENCIES) 
 	-rm -f libvia-rhine-rt.a
 	$(libvia_rhine_rt_a_AR) libvia-rhine-rt.a $(libvia_rhine_rt_a_OBJECTS) $(libvia_rhine_rt_a_LIBADD)
@@ -400,6 +418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc8xx_fec-rt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/natsemi-rt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcnet32-rt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/smc91111-rt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/via-rhine-rt.Po@am__quote@
 
 distclean-depend:

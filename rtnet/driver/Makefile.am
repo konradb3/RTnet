@@ -18,7 +18,8 @@ EXTRA_LIBRARIES = \
 	libloopback-rt.a \
 	libmpc8260_fcc_enet-rt.a \
 	libmpc8xx_enet-rt.a \
-	libmpc8xx_fec-rt.a
+	libmpc8xx_fec-rt.a \
+	libsmc91111-rt.a
 
 OBJS =
 
@@ -70,6 +71,11 @@ endif
 if CONFIG_RTNET_FEC_ENET
 libmpc8xx_fec_rt_a_SOURCES = mpc8xx_fec-rt.c
 OBJS += mpc8xx_fec-rt.o
+endif
+
+if CONFIG_RTNET_SMC91111
+libsmc91111_rt_a_SOURCES = smc91111-rt.c
+OBJS += smc91111-rt.o
 endif
 
 AM_CPPFLAGS = \

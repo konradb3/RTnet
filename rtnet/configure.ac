@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT([RTnet],[0.6.1],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.6.2],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
@@ -693,6 +693,17 @@ AC_ARG_ENABLE(fec-enet,
 	esac])
 AC_MSG_RESULT([${CONFIG_RTNET_FEC_ENET:-no}])
 AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
+
+
+AC_MSG_CHECKING([whether to build SMSC LAN91C111 driver])
+AC_ARG_ENABLE(smc91111,
+	AC_HELP_STRING([--enable-smc91111], [build SMSC LAN91C111 driver]),
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_SMC91111=yes ;;
+	*) unset CONFIG_RTNET_SMC91111 ;;
+	esac])
+AC_MSG_RESULT([${CONFIG_RTNET_SMC91111:-no}])
+AM_CONDITIONAL(CONFIG_RTNET_SMC91111,[test "$CONFIG_RTNET_SMC91111" = "yes"])
 
 
 AC_MSG_CHECKING([whether to build loopback driver])
