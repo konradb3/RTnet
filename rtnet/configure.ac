@@ -50,7 +50,7 @@ arch_supports_sim=
 arch_supports_rtailab=
 
 case "$host" in
- i*86*-*)
+    i*86*-*)
 	RTAI_TARGET_ARCH=i386
 	arch_supports_lxrt=y
 	arch_supports_leds=y
@@ -58,30 +58,27 @@ case "$host" in
 	arch_supports_rtailab=y
 	wanted_kernel_arch=CONFIG_X86
         ;;
- arm-*)
-	RTAI_TARGET_ARCH=arm
-	wanted_kernel_arch=CONFIG_ARM
-        ;;
- powerpc-*|ppc-*)
+#    arm-*)
+#	RTAI_TARGET_ARCH=arm
+#	wanted_kernel_arch=CONFIG_ARM
+#        ;;
+    powerpc-*|ppc-*)
 	RTAI_TARGET_ARCH=ppc
 	wanted_kernel_arch=CONFIG_PPC
         ;;
- mips-*|mipsel-*)
-	RTAI_TARGET_ARCH=mips
-	wanted_kernel_arch=CONFIG_MIPS
-        ;;
- cris-*)
-	RTAI_TARGET_ARCH=cris
-	dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
-	dnl so use the root device definition.
-	wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
-        ;;
- *) echo ""
-   echo "*******************************************"
-   echo "Still unsupported host: $host -- Sorry."
-   echo "*******************************************"
-   echo ""
-   exit 1;;
+#    mips-*|mipsel-*)
+#	RTAI_TARGET_ARCH=mips
+#	wanted_kernel_arch=CONFIG_MIPS
+#        ;;
+#    cris-*)
+#	RTAI_TARGET_ARCH=cris
+#	dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
+#	dnl so use the root device definition.
+#	wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
+#        ;;
+    *)
+	AC_MSG_ERROR([*** sorry - unsupported architecture])
+	;;
 esac
 
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -493,6 +490,7 @@ AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
 
+
 case "${CONFIG_RTNET_RTAI_ARCH}" in
     i386)
 	AC_DEFINE(CONFIG_ARCH_I386,1,[we are building for x86])
@@ -500,14 +498,14 @@ case "${CONFIG_RTNET_RTAI_ARCH}" in
     ppc)
 	AC_DEFINE(CONFIG_ARCH_PPC,1,[we are building for powerpc])
 	;;
-    arm)
-	AC_DEFINE(CONFIG_ARCH_ARM,1,[we are trying to build for arm])
-	;;
-    cris)
-	AC_DEFINE(CONFIG_ARCH_CRIS,1,[we are trying to build for cris])
-	;;
+#    arm)
+#	AC_DEFINE(CONFIG_ARCH_ARM,1,[we are trying to build for arm])
+#	;;
+#    cris)
+#	AC_DEFINE(CONFIG_ARCH_CRIS,1,[we are trying to build for cris])
+#	;;
     *)
-	AC_MSG_ERROR([*** internal error])
+	AC_MSG_ERROR([*** unsupported architecture])
 	;;
 esac
 
