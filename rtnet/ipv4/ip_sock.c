@@ -1,6 +1,6 @@
 /* ip_sock.c
  *
- * Copyright (C) 2002 Hans-Peter Bock <Hans-Peter.Bock@epost.de>
+ * Copyright (C) 2002 Hans-Peter Bock <hpbock@avaapgh.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,9 @@
  */
  
 // $Log: ip_sock.c,v $
+// Revision 1.3  2003/05/21 07:00:23  hpbock
+// Corrected my email address.
+//
 // Revision 1.2  2003/02/05 08:40:08  hpbock
 // This file has been created by me (Hans-Peter Bock) - but I copied the Header from another file, so Ulrich Marx's name was still in it.
 //
