@@ -38,7 +38,6 @@
 #include <rtai_fifos.h>
 
 #include <rtnet.h>
-#include <rtnet_socket.h>
 
 //#define USE_CALLBACKS
 
@@ -62,7 +61,7 @@ SEM     tx_sem;
 #endif
 
 #define RCV_PORT    36000
-#define SRV_PORT    35999
+#define XMT_PORT    35999
 
 static struct sockaddr_in client_addr;
 static struct sockaddr_in local_addr;
@@ -157,7 +156,6 @@ int init_module(void)
 #endif
     unsigned int add_rtskbs = 30;
     int ret;
-    struct rtsocket *socket;
 
     unsigned long local_ip;
     unsigned long client_ip;
@@ -171,15 +169,15 @@ int init_module(void)
     if (reply_size < sizeof(RTIME))
         reply_size = sizeof(RTIME);
 
-    rt_printk("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
-    rt_printk("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
+    rt_printk("local  ip address %s(%8x):%d\n", local_ip_s, (unsigned int) local_ip, RCV_PORT);
+    rt_printk("client ip address %s(%8x):%d\n", client_ip_s, (unsigned int) client_ip, XMT_PORT);
     rt_printk("reply message size=%d\n", reply_size);
 
     /* create rt-socket */
     rt_printk("create rtsocket\n");
-    if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
+    if ((sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         rt_printk("socket not created\n");
-        return -ENOMEM;
+        return sock;
     }
 
     /* bind the rt-socket to local_addr */
@@ -198,18 +196,12 @@ int init_module(void)
     rt_printk("connect rtsocket to client address:port\n");
     memset(&client_addr, 0, sizeof(struct sockaddr_in));
     client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(SRV_PORT);
+    client_addr.sin_port = htons(XMT_PORT);
     client_addr.sin_addr.s_addr = client_ip;
     if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
         rt_socket_close(sock);
         rt_printk("can't connect rtsocket\n");
         return ret;
-    }
-
-    /* get socket-structure for printing */
-    if ( (socket=rt_socket_lookup(sock)) ) {
-        rt_printk("src  addr: %x:%x\n", socket->saddr, socket->sport);
-        rt_printk("dest addr: %x:%x\n", socket->daddr, socket->dport);
     }
 
 #ifdef USE_CALLBACKS
@@ -243,14 +235,15 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    rt_task_delete(&rt_task);
-#ifdef USE_CALLBACKS
-    rt_sem_delete(&tx_sem);
-#endif
-
+    /* Important: First close the socket! */
     while (rt_socket_close(sock) == -EAGAIN) {
         printk("rt_server: Not all buffers freed yet - waiting...\n");
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
+
+    rt_task_delete(&rt_task);
+#ifdef USE_CALLBACKS
+    rt_sem_delete(&tx_sem);
+#endif
 }
