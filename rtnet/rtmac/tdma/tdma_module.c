@@ -31,11 +31,13 @@
 #include <rtmac/tdma/tdma_rx.h>
 
 
-__u32 tdma_debug = TDMA_DEFAULT_DEBUG_LEVEL;
+static int start_timer = 1;
+__u32 tdma_debug       = TDMA_DEFAULT_DEBUG_LEVEL;
+
+MODULE_PARM(start_timer, "i");
 MODULE_PARM(tdma_debug, "i");
-MODULE_PARM_DESC(cards, "tdma debug level");
-
-
+MODULE_PARM_DESC(start_timer, "set to zero if scheduler already runs");
+MODULE_PARM_DESC(tdma_debug, "tdma debug level");
 
 
 int tdma_attach(struct rtnet_device *rtdev, void *priv)
@@ -88,12 +90,6 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     /* client */
     init_timer(&tdma->client_sent_ack_timer);
 
-
-    /*
-     * start timer
-     */
-    rt_set_oneshot_mode();
-    start_rt_timer(0);
 
     return 0;
 }
@@ -188,15 +184,30 @@ struct rtmac_disc tdma_disc = {
 
 int tdma_init(void)
 {
+    int ret;
+
+
     printk("RTmac/TDMA: init time devision multiple access for realtime stations\n");
 
-    return rtmac_disc_register(&tdma_disc);
+    ret = rtmac_disc_register(&tdma_disc);
+    if (ret < 0)
+        return ret;
+
+    if (start_timer) {
+        rt_set_oneshot_mode();
+        start_rt_timer(0);
+    }
+
+    return 0;
 }
 
 
 
 void tdma_release(void)
 {
+    if (start_timer)
+        stop_rt_timer();
+
     rtmac_disc_deregister(&tdma_disc);
 
     printk("RTmac/TDMA: unloaded\n");
