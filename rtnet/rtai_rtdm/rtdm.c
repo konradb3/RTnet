@@ -2,7 +2,7 @@
         rtdm.c  - core driver layer module (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.1
+        Version:    0.5.2
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 
@@ -1190,7 +1190,7 @@ int init_module(void)
 #endif
 
 
-    printk("RTDM Version 0.5.1\n");
+    printk("RTDM Version 0.5.2\n");
 
     if (fildes_count > MAX_FILDES) {
         printk("RTDM: fildes_count exceeds %d\n", MAX_FILDES);
@@ -1288,7 +1288,7 @@ int init_module(void)
     remove_proc_entry("open_fildes", rtdm_proc_root);
     remove_proc_entry("protocol_devices", rtdm_proc_root);
     remove_proc_entry("named_devices", rtdm_proc_root);
-    remove_proc_entry("rtdm", rtdm_proc_root);
+    remove_proc_entry("rtdm", rtai_proc_root);
 #endif /* CONFIG_PROC_FS */
 
     kfree(rtdm_protocol_devices);
@@ -1315,7 +1315,7 @@ void cleanup_module(void)
     remove_proc_entry("open_fildes", rtdm_proc_root);
     remove_proc_entry("protocol_devices", rtdm_proc_root);
     remove_proc_entry("named_devices", rtdm_proc_root);
-    remove_proc_entry("rtdm", rtdm_proc_root);
+    remove_proc_entry("rtdm", rtai_proc_root);
 #endif /* CONFIG_PROC_FS */
 
     /* release file descriptor table */
