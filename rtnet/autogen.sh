@@ -4,13 +4,17 @@ echo -n cleaning up .
 
 # Clean up the generated crud
 (
-    cd config/autoconf
-    for FILE in compile config.guess config.sub depcomp install-sh ltmain.sh missing mkinstalldirs; do
-	if test -f $FILE; then
-	    rm -f $FILE
-	fi
-	echo -n .
-    done
+    if test -d config/autoconf; then
+	cd config/autoconf
+	for FILE in compile config.guess config.sub depcomp install-sh ltmain.sh missing mkinstalldirs; do
+	    if test -f $FILE; then
+		rm -f $FILE
+	    fi
+	    echo -n .
+	done
+    else
+	mkdir -p config/autoconf
+    fi
 )
 
 for FILE in aclocal.m4 configure config/config.h.in; do
@@ -32,7 +36,7 @@ find . -type f -name 'Makefile' -print0 | xargs -r0 rm -f --
 
 echo ' done'
 
-if test "x${1}" = "xclean"; then
+if test x"${1}" = x"clean"; then
     exit
 fi
 
