@@ -36,7 +36,6 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
-@CONFIG_RTNET_RTCFG_TRUE@am__append_1 = rtcfg
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
@@ -173,39 +172,33 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTPROGS = $(am__append_1)
+moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 
-sbin_PROGRAMS = rtifconfig $(OPTPROGS)
+noinst_LIBRARIES = librtcap.a
 
-AM_CPPFLAGS = \
+librtcap_a_SOURCES = rtcap.c
+
+AM_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include
+	-I$(top_builddir)/include \
+	@RTAI_KMOD_CFLAGS@
 
-subdir = tools
+subdir = rtcap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config/config.h
 CONFIG_CLEAN_FILES =
-@CONFIG_RTNET_RTCFG_TRUE@sbin_PROGRAMS = rtifconfig$(EXEEXT) \
-@CONFIG_RTNET_RTCFG_TRUE@	rtcfg$(EXEEXT)
-@CONFIG_RTNET_RTCFG_FALSE@sbin_PROGRAMS = rtifconfig$(EXEEXT)
-PROGRAMS = $(sbin_PROGRAMS)
+LIBRARIES = $(noinst_LIBRARIES)
 
-rtcfg_SOURCES = rtcfg.c
-rtcfg_OBJECTS = rtcfg.$(OBJEXT)
-rtcfg_LDADD = $(LDADD)
-rtcfg_DEPENDENCIES =
-rtcfg_LDFLAGS =
-rtifconfig_SOURCES = rtifconfig.c
-rtifconfig_OBJECTS = rtifconfig.$(OBJEXT)
-rtifconfig_LDADD = $(LDADD)
-rtifconfig_DEPENDENCIES =
-rtifconfig_LDFLAGS =
+librtcap_a_AR = $(AR) cru
+librtcap_a_LIBADD =
+am_librtcap_a_OBJECTS = rtcap.$(OBJEXT)
+librtcap_a_OBJECTS = $(am_librtcap_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg.Po ./$(DEPDIR)/rtifconfig.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcap.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -213,9 +206,9 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES = rtcfg.c rtifconfig.c
+DIST_SOURCES = $(librtcap_a_SOURCES)
 DIST_COMMON = Makefile.am Makefile.in
-SOURCES = rtcfg.c rtifconfig.c
+SOURCES = $(librtcap_a_SOURCES)
 
 all: all-am
 
@@ -223,44 +216,16 @@ all: all-am
 .SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  tools/Makefile
+	  $(AUTOMAKE) --foreign  rtcap/Makefile
 Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
-sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-install-sbinPROGRAMS: $(sbin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	     || test -f $$p1 \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(sbinPROGRAMS_INSTALL) $$p $(DESTDIR)$(sbindir)/$$f"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(sbinPROGRAMS_INSTALL) $$p $(DESTDIR)$(sbindir)/$$f || exit 1; \
-	  else :; fi; \
-	done
 
-uninstall-sbinPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f $(DESTDIR)$(sbindir)/$$f"; \
-	  rm -f $(DESTDIR)$(sbindir)/$$f; \
-	done
-
-clean-sbinPROGRAMS:
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-rtcfg$(EXEEXT): $(rtcfg_OBJECTS) $(rtcfg_DEPENDENCIES) 
-	@rm -f rtcfg$(EXEEXT)
-	$(LINK) $(rtcfg_LDFLAGS) $(rtcfg_OBJECTS) $(rtcfg_LDADD) $(LIBS)
-rtifconfig$(EXEEXT): $(rtifconfig_OBJECTS) $(rtifconfig_DEPENDENCIES) 
-	@rm -f rtifconfig$(EXEEXT)
-	$(LINK) $(rtifconfig_LDFLAGS) $(rtifconfig_OBJECTS) $(rtifconfig_LDADD) $(LIBS)
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+librtcap.a: $(librtcap_a_OBJECTS) $(librtcap_a_DEPENDENCIES) 
+	-rm -f librtcap.a
+	$(librtcap_a_AR) librtcap.a $(librtcap_a_OBJECTS) $(librtcap_a_LIBADD)
+	$(RANLIB) librtcap.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -268,8 +233,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtifconfig.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcap.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -404,10 +368,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) all-local
+all-am: Makefile $(LIBRARIES) all-local
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(sbindir)
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -434,7 +397,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-sbinPROGRAMS mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 
@@ -451,7 +415,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-sbinPROGRAMS
+install-exec-am: install-exec-local
 
 install-info: install-info-am
 
@@ -476,23 +440,26 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
+uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-sbinPROGRAMS ctags distclean \
-	distclean-compile distclean-depend distclean-generic \
+	clean-generic clean-libtool clean-noinstLIBRARIES ctags \
+	distclean distclean-compile distclean-depend distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am info \
 	info-am install install-am install-data install-data-am \
-	install-exec install-exec-am install-info install-info-am \
-	install-man install-sbinPROGRAMS install-strip installcheck \
+	install-exec install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am \
-	uninstall-sbinPROGRAMS
+	tags uninstall uninstall-am uninstall-info-am
 
 
-all-local: rtifconfig $(OPTPROGS)
+all-local: rtcap.o
+
+install-exec-local: rtcap.o
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -72,6 +72,10 @@ CONFIG_RTNET_PCNET32_FALSE = @CONFIG_RTNET_PCNET32_FALSE@
 CONFIG_RTNET_PCNET32_TRUE = @CONFIG_RTNET_PCNET32_TRUE@
 CONFIG_RTNET_PROXY_FALSE = @CONFIG_RTNET_PROXY_FALSE@
 CONFIG_RTNET_PROXY_TRUE = @CONFIG_RTNET_PROXY_TRUE@
+CONFIG_RTNET_RTCAP_FALSE = @CONFIG_RTNET_RTCAP_FALSE@
+CONFIG_RTNET_RTCAP_TRUE = @CONFIG_RTNET_RTCAP_TRUE@
+CONFIG_RTNET_RTCFG_FALSE = @CONFIG_RTNET_RTCFG_FALSE@
+CONFIG_RTNET_RTCFG_TRUE = @CONFIG_RTNET_RTCFG_TRUE@
 CONFIG_RTNET_SCC_ENET_FALSE = @CONFIG_RTNET_SCC_ENET_FALSE@
 CONFIG_RTNET_SCC_ENET_TRUE = @CONFIG_RTNET_SCC_ENET_TRUE@
 CONFIG_RTNET_TULIP_FALSE = @CONFIG_RTNET_TULIP_FALSE@
@@ -178,7 +182,8 @@ librtcfg_a_SOURCES = \
 	rtcfg_conn_event.c \
 	rtcfg_ioctl.c \
 	rtcfg_frame.c \
-	rtcfg_timer.c
+	rtcfg_timer.c \
+	rtcfg_file.c
 
 
 AM_CFLAGS = \
@@ -197,7 +202,8 @@ librtcfg_a_AR = $(AR) cru
 librtcfg_a_LIBADD =
 am_librtcfg_a_OBJECTS = rtcfg_module.$(OBJEXT) rtcfg_event.$(OBJEXT) \
 	rtcfg_conn_event.$(OBJEXT) rtcfg_ioctl.$(OBJEXT) \
-	rtcfg_frame.$(OBJEXT) rtcfg_timer.$(OBJEXT)
+	rtcfg_frame.$(OBJEXT) rtcfg_timer.$(OBJEXT) \
+	rtcfg_file.$(OBJEXT)
 librtcfg_a_OBJECTS = $(am_librtcfg_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
@@ -205,6 +211,7 @@ depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg_conn_event.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_event.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rtcfg_file.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_frame.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_ioctl.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_module.Po \
@@ -245,6 +252,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_conn_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_event.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_frame.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_ioctl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_module.Po@am__quote@
