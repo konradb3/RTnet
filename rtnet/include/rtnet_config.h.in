@@ -1,4 +1,4 @@
-/* config/config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/rtnet_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Use Adeos-based HAL */
 #undef CONFIG_RTAI_ADEOS
@@ -17,6 +17,9 @@
 
 /* Use legacy RTHAL */
 #undef CONFIG_RTAI_RTHAL
+
+/* Bug checks */
+#undef CONFIG_RTNET_CHECKED
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
