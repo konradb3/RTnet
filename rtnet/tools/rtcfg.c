@@ -172,7 +172,7 @@ void cmd_add(int argc, char *argv[])
                 help();
             stage2_filename = argv[i];
         } else if (strcmp(argv[i], "-t") == 0)
-            cmd.args.add.timeout = getintopt(argc, ++i, argv, 1);
+            cmd.args.add.timeout = getintopt(argc, ++i, argv, 0);
         else
             help();
     }
@@ -295,7 +295,7 @@ void cmd_wait(int argc, char *argv[])
 
     for (i = 3; i < argc; i++) {
         if (strcmp(argv[i], "-t") == 0)
-            cmd.args.wait.timeout = getintopt(argc, ++i, argv, 1);
+            cmd.args.wait.timeout = getintopt(argc, ++i, argv, 0);
         else
             help();
     }
@@ -325,7 +325,7 @@ void cmd_client(int argc, char *argv[])
 
     for (i = 3; i < argc; i++) {
         if (strcmp(argv[i], "-t") == 0) {
-            cmd.args.client.timeout = getintopt(argc, ++i, argv, 1);
+            cmd.args.client.timeout = getintopt(argc, ++i, argv, 0);
         } else if (strcmp(argv[i], "-c") == 0) {
             cfg_file    = 1; /* standard output file descriptor */
             buffer_size = DFLT_PACKET_SIZE;
@@ -414,7 +414,7 @@ void cmd_announce(int argc, char *argv[])
 
     for (i = 3; i < argc; i++) {
         if (strcmp(argv[i], "-t") == 0)
-            cmd.args.announce.timeout = getintopt(argc, ++i, argv, 1);
+            cmd.args.announce.timeout = getintopt(argc, ++i, argv, 0);
         else if (strcmp(argv[i], "-c") == 0) {
             cfg_file    = 1; /* standard output file descriptor */
             buffer_size = DFLT_CLIENT_BURST_RATE * DFLT_PACKET_SIZE;
@@ -481,7 +481,7 @@ void cmd_ready(int argc, char *argv[])
 
     for (i = 3; i < argc; i++) {
         if (strcmp(argv[i], "-t") == 0)
-            cmd.args.ready.timeout = getintopt(argc, ++i, argv, 1);
+            cmd.args.ready.timeout = getintopt(argc, ++i, argv, 0);
         else
             help();
     }
