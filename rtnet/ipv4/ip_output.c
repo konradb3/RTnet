@@ -18,6 +18,10 @@
  */
  
 // $Log: ip_output.c,v $
+// Revision 1.7  2003/05/17 19:28:11  hpbock
+// rt_ip_build_xmit():
+// deleted useless code
+//
 // Revision 1.6  2003/05/17 16:28:11  hpbock
 // rtnet and rtnetproxy now use rtmac function hooks to send packets
 // rtmac does not modify hard_start_xmit any more
@@ -102,14 +106,6 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 	
 	if ( (err=getfrag(frag, ((char *)iph)+iph->ihl*4, 0, length-iph->ihl*4)) )
 		goto error;
-
-	{
-		unsigned char *d, *s;
-		
-		d=rt->rt_dst_mac_addr;
-		s=rtdev->dev_addr;
-
-	}
 
 	if ( !(rtdev->hard_header) ) {
 	     goto error;
