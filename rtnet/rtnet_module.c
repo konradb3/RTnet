@@ -101,7 +101,7 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
                                    int count, int *eof, void *data)
 {
     const char verstr[] =
-        "RTnet " RTNET_VERSION " - built on " __DATE__ " " __TIME__ "\n"
+        "RTnet " PACKAGE_VERSION " - built on " __DATE__ " " __TIME__ "\n"
         "RTcap:      "
 #ifdef CONFIG_RTNET_RTCAP
             "yes\n"
@@ -194,7 +194,7 @@ int __init rtnet_init(void)
     int err = 0;
 
 
-    printk("\n*** RTnet " RTNET_VERSION " - built on " __DATE__ " " __TIME__
+    printk("\n*** RTnet " PACKAGE_VERSION " - built on " __DATE__ " " __TIME__
            " ***\n\n");
     printk("RTnet: initialising real-time networking\n");
 

@@ -46,7 +46,7 @@ MODULE_PARM(socket_rtskbs, "i");
 MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in socket pools");
 
 const char rtnet_rtdm_driver_name[] =
-    "RTnet " RTNET_VERSION;
+    "RTnet " PACKAGE_VERSION;
 const char rtnet_rtdm_provider_name[] =
     "(C) 1999-2004 RTnet Development Team, http://rtnet.sf.net";
 
