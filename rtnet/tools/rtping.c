@@ -151,14 +151,14 @@ int main(int argc, char *argv[])
             help();
     }
 
+    if (!inet_aton(argv[i], &addr))
+        help();
+
     f = open(rtnet_dev, O_RDWR);
     if (f < 0) {
         perror(rtnet_dev);
         exit(1);
     }
-
-    if (!inet_aton(argv[i], &addr))
-        help();
 
     printf("Real-time PING %s %d(%d) bytes of data.\n",
            inet_ntoa(addr), cmd.args.ping.msg_size,
