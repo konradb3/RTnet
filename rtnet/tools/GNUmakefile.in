@@ -43,7 +43,8 @@ sbin_PROGRAMS = rtifconfig$(EXEEXT) rtroute$(EXEEXT) rtping$(EXEEXT) \
 	tdmacfg$(EXEEXT) $(am__EXEEXT_3)
 subdir = tools
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
-	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
+	$(srcdir)/rtnet-tdma-v1.in $(srcdir)/rtnet.conf.in \
+	$(srcdir)/rtnet.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/configure.ac
@@ -51,7 +52,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
-CONFIG_CLEAN_FILES = rtnet rtnet.conf
+CONFIG_CLEAN_FILES = rtnet rtnet.conf rtnet-tdma-v1
 @CONFIG_RTNET_RTCFG_TRUE@am__EXEEXT_1 = rtcfg$(EXEEXT)
 @CONFIG_RTNET_NOMAC_TRUE@am__EXEEXT_2 = nomaccfg$(EXEEXT)
 am__EXEEXT_3 = $(am__EXEEXT_1) $(am__EXEEXT_2)
@@ -291,6 +292,8 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 rtnet: $(top_builddir)/config.status $(srcdir)/rtnet.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 rtnet.conf: $(top_builddir)/config.status $(srcdir)/rtnet.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+rtnet-tdma-v1: $(top_builddir)/config.status $(srcdir)/rtnet-tdma-v1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
@@ -560,7 +563,7 @@ uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 
 all-local: rtifconfig rtroute rtping $(OPTPROGS)
 
-install-exec-local: rtnet
+install-exec-local: rtnet rtnet-tdma-v1
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
 	$(INSTALL_SCRIPT) $< $(DESTDIR)$(sbindir)
 
