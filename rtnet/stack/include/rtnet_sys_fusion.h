@@ -55,26 +55,26 @@ typedef RT_PIPE    rtos_fifo_t;       /* fifo descriptor */
 /* time handling */
 static inline void rtos_get_time(rtos_time_t *time)
 {
-    time->val = rt_timer_tsc();
+    time->val = rt_timer_read();
 }
 
 
 static inline void rtos_nanosecs_to_time(nanosecs_t nano, rtos_time_t *time)
 {
-    time->val = (RTIME)rt_timer_ns2ticks((SRTIME)nano);
+    time->val = nano;
 }
 
 static inline nanosecs_t rtos_time_to_nanosecs(rtos_time_t *time)
 {
-    return (nanosecs_t)rt_timer_ticks2ns((SRTIME)time->val);
+    return time->val;
 }
 
 
 static inline void rtos_time_to_timeval(rtos_time_t *time,
                                         struct timeval *tval)
 {
-    tval->tv_sec = rthal_ulldiv(rt_timer_ticks2ns((SRTIME)time->val),
-                                1000000000, (unsigned long *)&tval->tv_usec);
+    tval->tv_sec = rthal_ulldiv(time->val, 1000000000,
+                                (unsigned long *)&tval->tv_usec);
     tval->tv_usec /= 1000;
 }
 
