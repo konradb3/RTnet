@@ -18,15 +18,15 @@ EOF
 }
 
 init_rtnet() {
-    insmod $RTNET_MOD/rtnet.$MODULE_EXT >/dev/null || exit 1
-    insmod $RTNET_MOD/$RT_DRIVER.$MODULE_EXT $RT_DRIVER_OPTIONS >/dev/null || exit 1
+    insmod $RTNET_MOD/rtnet$MODULE_EXT >/dev/null || exit 1
+    insmod $RTNET_MOD/$RT_DRIVER$MODULE_EXT $RT_DRIVER_OPTIONS >/dev/null || exit 1
 
     if [ $RT_LOOPBACK = "yes" ]; then
-        insmod $RTNET_MOD/rt_loopback.$MODULE_EXT >/dev/null || exit 1
+        insmod $RTNET_MOD/rt_loopback$MODULE_EXT >/dev/null || exit 1
     fi
 
     if [ $RTCAP = "yes" ]; then
-        insmod $RTNET_MOD/rtcap.$MODULE_EXT >/dev/null || exit 1
+        insmod $RTNET_MOD/rtcap$MODULE_EXT >/dev/null || exit 1
     fi
 
     $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
@@ -43,9 +43,9 @@ init_rtnet() {
         fi
     fi
 
-    insmod $RTNET_MOD/rtcfg.$MODULE_EXT >/dev/null
-    insmod $RTNET_MOD/rtmac.$MODULE_EXT >/dev/null
-    insmod $RTNET_MOD/tdma-v1.$MODULE_EXT start_timer=0 >/dev/null
+    insmod $RTNET_MOD/rtcfg$MODULE_EXT >/dev/null
+    insmod $RTNET_MOD/rtmac$MODULE_EXT >/dev/null
+    insmod $RTNET_MOD/tdma-v1$MODULE_EXT start_timer=0 >/dev/null
 }
 
 start_master() {
@@ -85,7 +85,8 @@ start_master() {
 }
 
 
-RTNETCFG=/etc/rtnet.conf
+prefix="@prefix@"
+RTNETCFG="@sysconfdir@/rtnet.conf"
 
 if [ "$1" = "-cf" ]; then
     RTNETCFG="$2"
@@ -98,11 +99,6 @@ else
     echo "Could not read $RTNETCFG"
     exit 1
 fi
-
-RTNET_MOD=$RTNET_PATH/modules
-MODULE_EXT=ko
-RTIFCONFIG=$RTNET_PATH/sbin/rtifconfig
-RTCFG=$RTNET_PATH/sbin/rtcfg
 
 NETMASK_OPT=
 if [ ! "$NETMASK" = "" ]; then
@@ -164,9 +160,9 @@ case "$1" in
         ;;
 
     capture)
-        insmod $RTNET_MOD/rtnet.$MODULE_EXT >/dev/null || exit 1
-        insmod $RTNET_MOD/$RT_DRIVER.$MODULE_EXT $RT_DRIVER_OPTIONS >/dev/null || exit 1
-        insmod $RTNET_MOD/rtcap.$MODULE_EXT start_timer=1 >/dev/null || exit 1
+        insmod $RTNET_MOD/rtnet$MODULE_EXT >/dev/null || exit 1
+        insmod $RTNET_MOD/$RT_DRIVER$MODULE_EXT $RT_DRIVER_OPTIONS >/dev/null || exit 1
+        insmod $RTNET_MOD/rtcap$MODULE_EXT start_timer=1 >/dev/null || exit 1
         $RTIFCONFIG rteth0 up $IPADDR promisc
         ifconfig rteth0 up
         ifconfig rteth0-mac up

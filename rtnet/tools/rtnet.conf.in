@@ -1,14 +1,19 @@
 #!/bin/sh
 #
-# Copy this file to /etc/rtnet.conf and adapt it to your system.
+# This file is usually located in <PREFIX>/etc/rtnet.conf
+# Please adapt it to your system.
 # This configuration file is used with the rtnet script.
 #
 
 # RTnet installation path
-RTNET_PATH="/usr/local/rtnet"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+RTNET_MOD="@RTNET_MODULE_DIR@"
+RTIFCONFIG="@sbindir@/rtifconfig"
+RTCFG="@sbindir@/rtcfg"
 
-# Module suffix: "o" for 2.4 kernels, "ko" for later versions
-MODULE_EXT="o"
+# Module suffix: ".o" for 2.4 kernels, ".ko" for later versions
+MODULE_EXT="@RTNET_MODULE_EXT@"
 
 
 

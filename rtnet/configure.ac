@@ -1181,6 +1181,8 @@ AC_CONFIG_FILES([ \
     stack/rtmac/tdma-v1/GNUmakefile \
     \
     tools/GNUmakefile \
+    tools/rtnet \
+    tools/rtnet.conf \
     ])
 
 AC_OUTPUT
