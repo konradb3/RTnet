@@ -24,7 +24,6 @@
 #ifdef __KERNEL__
 
 #include <linux/socket.h>
-#include <net/ip.h>
 
 
 /* socket option names */
@@ -75,7 +74,7 @@ extern int rt_socket_recv       (int s, void *buf, size_t len, int flags);
 extern int rt_socket_recvfrom   (int s, void *buf, size_t len, int flags,
                                  struct sockaddr *from, socklen_t *fromlen);
 extern int rt_socket_recvmsg    (int s, struct msghdr *msg, int flags);
-extern int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen);
+extern int rt_socket_getsockname(int s, struct sockaddr *name, socklen_t *namelen);
 extern int rt_socket_callback   (int s, int (*func)(int,void *), void *arg);
 extern int rt_socket_setsockopt (int s, int level, int optname,
                                  const void *optval, socklen_t optlen);
