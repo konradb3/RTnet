@@ -25,16 +25,19 @@
  */
 
 /***
- * To test the select() function of RTDM simply load this module with the
- * local IP address as parameter local_ip_s and send udp packets to the
- * ports 36000 or 45054 on the RTnet interface from a non realtime host
- * on the same network using the program netcat while watching the system
- * log messages of the RTnet host. For example:
+ * To test the select_rt() function of RTDM simply load this module with
+ * the local IP address as parameter local_ip_s and send udp packets to
+ * the ports 36000 or 45054 on the RTnet interface from a non realtime
+ * host on the same network using the program netcat while watching the
+ * system log messages of the RTnet host. For example:
  *
  * rtnet$ insmod ./rt_server local_ip_s="10.0.0.1"
  *
  * otherhost$ echo test | nc -u -q1 10.0.0.1 36000
  * otherhost$ echo test | nc -u -q1 10.0.0.1 45054
+ *
+ * rtnet$ rmmod rt_server
+ * otherhost$ echo test | nc -u -q1 10.0.0.1 36000
  */
 
 #include <linux/module.h>
@@ -62,7 +65,7 @@ MODULE_PARM (local_ip_s ,"s");
 MODULE_PARM_DESC (local_ip_s, "local ip-addr");
 MODULE_LICENSE("GPL");
 
-#define PRINT 0
+#define PRINT 0 /* real-time fifo */
 RT_TASK rt_task;
 
 #define RCV_PORT1	36000
@@ -119,8 +122,6 @@ void* process(void * arg)
     msg.msg_control=NULL;
     msg.msg_controllen=0;
     
-    rt_printk("readfds: %08x\n", *((int*)&readfds));
-    rt_printk("Setting bits %d and %d in file descriptor set.\n", sock1, sock2);
     /*
       FD_SET((sock1 & (MAX_FILDES - 1)), &readfds);
       FD_SET((sock2 & (MAX_FILDES - 1)), &readfds);
@@ -128,80 +129,82 @@ void* process(void * arg)
     FD_SET(sock1, &readfds);
     FD_SET(sock2, &readfds);
 
-    rt_printk("### FD_SET succeeded.\n");
-    rt_printk("readfds: %08x\n", *((int*)&readfds));
-    
-    while(0==exit_select) {
+    rt_printk(" --> selecting task started\n");
+    while (0==exit_select) {
 	int ret;
 	ret = select_rt(0, sock1 > sock2 ? sock1 : sock2,
 			&readfds, 0, 0);
 	
 	while (0<recvmsg_rt(sock1, &msg, MSG_DONTWAIT)) {
-	    rt_printk("--> Socket %u\n", sock1);
+	    rt_printk("  # received data on socket 1\n");
 	}
 	
 	while (0<recvmsg_rt(sock2, &msg, MSG_DONTWAIT)) {
-	    rt_printk("--> Socket %u\n", sock2);
+	    rt_printk("  # received data on socket 2\n");
 	}
     }
+    rt_printk(" --> selecting task finished\n");
     exit_select=2;
-    rt_printk("==> selecting task exited\n");
     return NULL;
 }
 
 
 int init_module(void)
 {
-    int ret;
-
     unsigned int local_ip = rt_inet_aton(local_ip_s);
+    int ret;
 
     exit_select=0;
 
-    printk("*** Compiled on %s %s ***\n", __DATE__, __TIME__);
-    printk("local ip address 1: %s=%08x\n", local_ip_s, local_ip);
+    printk("*** test module for select_rt() *** 2004 by Hans-Peter Bock <rtnet@avaapgh.de>\n");
+    printk("*** compiled on %s %s\n", __DATE__, __TIME__);
+
+    printk("==> initializing module\n");
+    printk("  * local ip address (%s)\n", local_ip_s);
 
     /* create rt-socket */
-    printk("create rtsocket 1\n");	
+    printk("  * creating socket 1\n");	
     if ((sock1=socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-	printk("socket not created\n");
+	printk("!!! socket not created\n");
 	return -ENOMEM;
     }
 
-    printk("create rtsocket 2\n");	
+    printk("  * creating socket 2\n");	
     if ((sock2=socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-	printk("socket not created\n");
+	printk("!!! socket not created, please reboot\n");
 	return -ENOMEM;
     }
-    printk("Sockets: %d / %d.\n", sock1, sock2);
 	
     /* bind the rt-socket to local_addr */	
-    printk("bind rtsocket 1 to local address:port\n");
+    printk("  * binding socket 1 to local address:port\n");
     memset(&local_addr1, 0, sizeof(struct sockaddr_in));
     local_addr1.sin_family = AF_INET;
     local_addr1.sin_port = htons(RCV_PORT1);
     local_addr1.sin_addr.s_addr = local_ip;
     if ( (ret=bind_rt(sock1, (struct sockaddr *) &local_addr1, sizeof(struct sockaddr_in)))<0 ) {
-	printk("can't bind rtsocket\n");
+	printk("!!! can't bind rtsocket, please reboot\n");
 	return ret;
     }
 	
-    printk("bind rtsocket 2 to local address:port\n");
+    printk("  * binding socket 2 to local address:port\n");
     memset(&local_addr1, 0, sizeof(struct sockaddr_in));
     local_addr2.sin_family = AF_INET;
     local_addr2.sin_port = htons(RCV_PORT2);
     local_addr2.sin_addr.s_addr = local_ip;
     if ( (ret=bind_rt(sock2, (struct sockaddr *) &local_addr2, sizeof(struct sockaddr_in)))<0 ) {
-	printk("can't bind rtsocket\n");
+	printk("!!! can't bind rtsocket, please reboot\n");
 	return ret;
     }
+    printk(" --> sockets created: %d / %d.\n", sock1, sock2);
 	
     /* create print-fifo */
     rtf_create(PRINT, 3000);
-
+    
     ret=rt_task_init(&rt_task, (void*) process, 0, 4096, 9, 0, NULL);
-    rt_task_resume (&rt_task);
-
+    if (0 == ret) {
+	rt_task_resume (&rt_task);
+    }
+    printk("==> initialization complete\n");
     return ret;
 }
 
@@ -209,35 +212,36 @@ int init_module(void)
 void cleanup_module(void)
 {
     int counter=0;
+    printk("==> cleanup of module started\n");
 
     /* wait for selecting task to exit */
     exit_select=1;
     while (2 != exit_select) {
-	printk("* waiting for selecting task to exit (%d)\n", counter++);
+	printk("  * waiting for selecting task to exit (%d)\n", counter++);
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(1*HZ); /* wait a second */
     }
-
+    
     /* close sockets */
     counter=0;
-    printk("trying to close socket 1\n");
     while (close_rt(sock1) == -EAGAIN) {
-	printk("* waiting for socket 1 to be closed (%d)\n", counter++);
+	printk("  * waiting for socket 1 to be closed (%d)\n", counter++);
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(1*HZ); /* wait a second */
     }
+    printk(" --> socket 1 closed\n");
     counter=0;
-    printk("trying to close socket 2\n");
     while (close_rt(sock2) == -EAGAIN) {
-	printk("* waiting for socket 2 to be closed (%d)\n", counter++);
+	printk("  * waiting for socket 2 to be closed (%d)\n", counter++);
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(1*HZ); /* wait a second */
     }
+    printk(" --> socket 2 closed\n");
 	
     /* delete task and fifo */
     rt_task_delete(&rt_task);
     rtf_destroy(PRINT);
-    printk("module unloaded\n\n");
+    printk("==> module unloaded\n\n");
 }
 
 /*
