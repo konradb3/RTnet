@@ -18,6 +18,9 @@
  */
 
 // $Log: ip_output.c,v $
+// Revision 1.18  2004/03/10 17:05:36  kiszka
+// * optimisation: header lenght is constant
+//
 // Revision 1.17  2004/02/14 18:50:51  kiszka
 // * fixed duplicate ip id inc
 // * code cleanup
@@ -181,9 +184,9 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
         iph->saddr    = rt->rt_src;
         iph->daddr    = rt->rt_dst;
         iph->check    = 0; /* required! */
-        iph->check    = ip_fast_csum((unsigned char *)iph, iph->ihl);
+        iph->check    = ip_fast_csum((unsigned char *)iph, 5 /*iph->ihl*/);
 
-        if ( (err=getfrag(frag, ((char *)iph)+iph->ihl*4, offset,
+        if ( (err=getfrag(frag, ((char *)iph) + 5 /*iph->ihl*/ * 4, offset,
                           fraglen - FRAGHEADERLEN)) )
             goto error;
 
@@ -273,9 +276,10 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     iph->saddr    = rt->rt_src;
     iph->daddr    = rt->rt_dst;
     iph->check    = 0; /* required! */
-    iph->check    = ip_fast_csum((unsigned char *)iph, iph->ihl);
+    iph->check    = ip_fast_csum((unsigned char *)iph, 5 /*iph->ihl*/);
 
-    if ( (err=getfrag(frag, ((char *)iph)+iph->ihl*4, 0, length-iph->ihl*4)) )
+    if ( (err=getfrag(frag, ((char *)iph) + 5 /*iph->ihl*/ * 4, 0,
+                      length - 5 /*iph->ihl*/ * 4)) )
         goto error;
 
     if (!(rtdev->hard_header) ||
