@@ -27,7 +27,8 @@
 
 static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
 
-int rt_ip_local_deliver_finish(struct rtskb *skb)
+
+static inline int rt_ip_local_deliver_finish(struct rtskb *skb)
 {
     int ihl  = skb->nh.iph->ihl*4;
     int hash = rt_inet_hashkey(skb->nh.iph->protocol);
@@ -59,11 +60,13 @@ int rt_ip_local_deliver_finish(struct rtskb *skb)
     return ret;
 }
 
+
+
 /* This function can be used to register a fallback handler for incoming
  * ip frames. Typically this is done to move over to the standard linux
  * ip protocol (e.g. for handling TCP).
  * By calling this function with the argument set to zero, the function is
- * unregistered. 
+ * unregistered.
  * Note: Only one function can be registered! */
 int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
 {
@@ -73,11 +76,10 @@ int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
 
 
 
-
 /***
  *  rt_ip_local_deliver
  */
-int rt_ip_local_deliver(struct rtskb *skb)
+static inline int rt_ip_local_deliver(struct rtskb *skb)
 {
     /*
      *  Reassemble IP fragments.
@@ -89,6 +91,7 @@ int rt_ip_local_deliver(struct rtskb *skb)
     }
     return rt_ip_local_deliver_finish(skb);
 }
+
 
 
 /***
@@ -117,13 +120,13 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
      *  4.  Doesn't have a bogus length
      */
     if (iph->ihl < 5 || iph->version != 4)
-        goto drop; 
+        goto drop;
 
-    if ( ip_fast_csum((u8 *)iph, iph->ihl)!=0 ) 
-        goto drop; 
+    if ( ip_fast_csum((u8 *)iph, iph->ihl)!=0 )
+        goto drop;
 
     {
-        __u32 len = ntohs(iph->tot_len); 
+        __u32 len = ntohs(iph->tot_len);
         if ( (skb->len<len) || (len<((__u32)iph->ihl<<2)) )
             goto drop;
 
@@ -132,15 +135,9 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 
     if (skb->dst == NULL)
         if ( rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) )
-            goto drop; 
+            goto drop;
 
-    /* ip_local_deliver */
-    if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
-        skb = rt_ip_defrag(skb);
-        if (!skb)
-            return 0;
-    }
-    return rt_ip_local_deliver_finish(skb);
+    return rt_ip_local_deliver(skb);
 
 drop:
     kfree_rtskb(skb);
