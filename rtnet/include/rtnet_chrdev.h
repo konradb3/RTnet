@@ -1,27 +1,34 @@
-/* rtnet_chrdev.h
+/***
  *
- * RTnet - real-time networking subsystem
- * Copyright (C) 1999    Lineo, Inc
- *               1999,2002 David A. Schleef <ds@schleef.org>
- *               2002, Ulrich Marx <marx@fet.uni-hannover.de>
- *               2003, Jan Kiszka <jan.kiszka@web.de>
+ *  include/rtnet_chrdev.h
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  RTnet - real-time networking subsystem
+ *  Copyright (C) 1999    Lineo, Inc
+ *                1999,2002 David A. Schleef <ds@schleef.org>
+ *                2002 Ulrich Marx <marx@fet.uni-hannover.de>
+ *                2003,2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #ifndef __RTNET_CHRDEV_H_
 #define __RTNET_CHRDEV_H_
+
+#include <rtdev.h>
+
 
 #ifdef __KERNEL__
 
@@ -31,8 +38,6 @@
 #include <linux/netdevice.h>
 #include <linux/types.h>
 
-
-struct rtnet_device;
 
 /* new extensible interface */
 struct rtnet_ioctls {
@@ -59,9 +64,6 @@ extern void rtnet_chrdev_release(void);
 #include <linux/types.h>
 
 #endif  /* __KERNEL__ */
-
-
-#include <rtdev.h>
 
 
 #define RTNET_MINOR             240 /* user interface for /dev/rtnet */
@@ -93,31 +95,6 @@ struct rtnet_core_cmd {
             unsigned int    flags;
             unsigned char   dev_addr[DEV_ADDR_LEN];
         } info;
-
-        /*** rtroute ***/
-        struct {
-            __u32           ip_addr;
-        } solicit;
-
-        struct {
-            __u32           ip_addr;
-            unsigned char   dev_addr[DEV_ADDR_LEN];
-        } addhost;
-
-        struct {
-            __u32           ip_addr;
-        } delhost;
-
-        struct {
-            __u32           net_addr;
-            __u32           net_mask;
-            __u32           gw_addr;
-        } addnet;
-
-        struct {
-            __u32           net_addr;
-            __u32           net_mask;
-        } delnet;
     } args;
 };
 
@@ -126,6 +103,7 @@ struct rtnet_core_cmd {
 
 #define RTNET_IOC_TYPE_CORE             0
 #define RTNET_IOC_TYPE_RTCFG            1
+#define RTNET_IOC_TYPE_IPV4             2
 #define RTNET_IOC_TYPE_RTMAC_TDMA       100
 
 #define IOC_RT_IFUP                     _IOW(RTNET_IOC_TYPE_CORE, 0,    \
@@ -135,18 +113,5 @@ struct rtnet_core_cmd {
 #define IOC_RT_IFINFO                   _IOWR(RTNET_IOC_TYPE_CORE, 2 |  \
                                               RTNET_IOC_NODEV_PARAM,    \
                                               struct rtnet_core_cmd)
-#define IOC_RT_HOST_ROUTE_ADD           _IOW(RTNET_IOC_TYPE_CORE, 3,    \
-                                             struct rtnet_core_cmd)
-#define IOC_RT_HOST_ROUTE_SOLICIT       _IOW(RTNET_IOC_TYPE_CORE, 4,    \
-                                             struct rtnet_core_cmd)
-#define IOC_RT_HOST_ROUTE_DELETE        _IOW(RTNET_IOC_TYPE_CORE, 5 |   \
-                                             RTNET_IOC_NODEV_PARAM,     \
-                                             struct rtnet_core_cmd)
-#define IOC_RT_NET_ROUTE_ADD            _IOR(RTNET_IOC_TYPE_CORE, 6 |   \
-                                             RTNET_IOC_NODEV_PARAM,     \
-                                             struct rtnet_core_cmd)
-#define IOC_RT_NET_ROUTE_DELETE         _IOR(RTNET_IOC_TYPE_CORE, 7 |   \
-                                             RTNET_IOC_NODEV_PARAM,     \
-                                             struct rtnet_core_cmd)
 
 #endif  /* __RTNET_CHRDEV_H_ */
