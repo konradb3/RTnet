@@ -27,7 +27,7 @@
 #include <rtnet.h>
 #include <rtmac.h>
 
-static char *dev = "eth1";
+static char *dev = "rteth0";
 MODULE_PARM(dev, "s");
 MODULE_PARM_DESC(dev, "RTmac: device to be rtnet started on");
 
