@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.1 2003/01/29 16:09:02 yamwong Exp $
+ * Version:	$Id: route.c,v 1.2 2003/03/12 16:30:44 yamwong Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -116,21 +116,25 @@ static int rt_route_read_proc(char *page, char **start, off_t off, int count, in
 	struct rt_rtable *rt_entry;
 	
 	PROC_PRINT("specific routing table\n")
-	PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\n");
+	PROC_PRINT("src\t\tdst\t\tdst_mask\tdst_mac\t\t\tdev\n");
 	for (rt_entry=rt_rtables; rt_entry!=NULL; rt_entry=rt_entry->next) {
 		union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
 		unsigned char *hw_dst;
+		char dev_name[IFNAMSIZ+1];
+		strncpy(dev_name, rt_entry->rt_dev->dev->name, IFNAMSIZ);
+		dev_name[IFNAMSIZ] = '\0';
 		
 		src.l=rt_entry->rt_src;
 		dst.l=rt_entry->rt_dst;
 		dst_mask.l=rt_entry->rt_dst_mask;
 		hw_dst = rt_entry->rt_dst_mac_addr;
 		
-		PROC_PRINT("%d.%d.%d.%d\t%d.%d.%d.%d\t%d.%d.%d.%d\t%02x:%02x:%02x:%02x:%02x:%02x\n", 
+		PROC_PRINT("%d.%d.%d.%d\t%d.%d.%d.%d\t%d.%d.%d.%d\t%02x:%02x:%02x:%02x:%02x:%02x\t%s\n", 
 		           src.c[0], src.c[1], src.c[2], src.c[3], 
 		           dst.c[0], dst.c[1], dst.c[2], dst.c[3], 
 		           dst_mask.c[0], dst_mask.c[1], dst_mask.c[2], dst_mask.c[3], 
-			   hw_dst[0], hw_dst[1], hw_dst[2], hw_dst[3], hw_dst[4], hw_dst[5]);
+		           hw_dst[0], hw_dst[1], hw_dst[2], hw_dst[3], hw_dst[4], hw_dst[5], 
+		           dev_name);
 	}	
 
 	PROC_PRINT("\ngeneric routing table\n")
