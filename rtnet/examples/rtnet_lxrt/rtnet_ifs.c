@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
 
     ret = rt_socket_ioctl(sockfd, SIOCGIFCONF, &ifc);
     if (ret < 0) {
-        rt_socket_close(sockfd);
         rt_make_soft_real_time();
+        rt_socket_close(sockfd);
         rt_task_delete(lxrtnettsk);
 
         printf("Error retrieving device list: %d\n", ret);
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
         memcpy(flags_ifr.ifr_name, ifc.ifc_req[devices].ifr_name, IFNAMSIZ);
         ret = rt_socket_ioctl(sockfd, SIOCGIFFLAGS, &flags_ifr);
         if (ret < 0) {
-            rt_socket_close(sockfd);
             rt_make_soft_real_time();
+            rt_socket_close(sockfd);
             rt_task_delete(lxrtnettsk);
 
             printf("Error retrieving flags for device %s: %d\n",
@@ -104,11 +104,12 @@ int main(int argc, char *argv[])
         devices++;
     }
 
-    /* Close socket. */
-    rt_socket_close(sockfd);
-
     /* Switch over to soft realtime mode. */
     rt_make_soft_real_time();
+
+    /* Close socket.
+     * Note: call must be in soft-mode because socket was created as non-rt! */
+    rt_socket_close(sockfd);
 
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);

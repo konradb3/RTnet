@@ -90,11 +90,12 @@ int main(int argc, char *argv[]) {
     /* Block until packet is received. */
     ret = rt_socket_recv(sockfd, msg, sizeof(msg), 0);
 
-    /* Close socket. */
-    rt_socket_close(sockfd);
-
     /* Switch over to soft realtime mode. */
     rt_make_soft_real_time();
+
+    /* Close socket.
+     * Note: call must be in soft-mode because socket was created as non-rt! */
+    rt_socket_close(sockfd);
 
     /* Stop the timer. */
     stop_rt_timer();

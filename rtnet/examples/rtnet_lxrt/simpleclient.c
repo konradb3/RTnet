@@ -99,11 +99,12 @@ int main(int argc, char *argv[]) {
     /* Send a message. */
     rt_socket_send(sockfd, msg, sizeof(msg), 0);
 
-    /* Close socket. */
-    rt_socket_close(sockfd);
-
     /* Switch over to soft realtime mode. */
     rt_make_soft_real_time();
+
+    /* Close socket.
+     * Note: call must be in soft-mode because socket was created as non-rt! */
+    rt_socket_close(sockfd);
 
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);
