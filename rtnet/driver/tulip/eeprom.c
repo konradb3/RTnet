@@ -174,7 +174,8 @@ subsequent_board:
 		}
 
 		mtable = (struct mediatable *)
-		    /*RTnet*/rt_malloc(sizeof(struct mediatable) + count*sizeof(struct medialeaf));
+		    kmalloc(sizeof(struct mediatable) + count*sizeof(struct medialeaf), GFP_KERNEL);
+
 		if (mtable == NULL)
 			return;				/* Horrible, impossible failure. */
 		last_mediatable = tp->mtable = mtable;
