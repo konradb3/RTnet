@@ -17,15 +17,12 @@ CFLAGS=${CFLAGS:--s}
 
 # Checks for programs.
 AC_ARG_WITH(CC,
-    [  --with-cc=compiler      use specific C compiler],
-    [
-        case "$withval" in
-        "" | y | ye | yes | n | no)
-            AC_MSG_ERROR([*** You must supply an argument to --with-cc.])
-          ;;
-        esac
-        CC="$withval"
-    ])
+    AC_HELP_STRING([--with-cc=compiler], [use specific C compiler]),
+    [case "$withval" in
+    "" | y | ye | yes | n | no)
+	AC_MSG_ERROR([*** You must supply an argument to --with-cc.]) ;;
+    esac
+    CC="$withval"])
 AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_BUILD_STRING,"$build",[Build system alias])
@@ -102,7 +99,7 @@ AC_DEFUN(AC_CHECK_LIBRARY, [dnl
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lncurses':
 AC_CHECK_LIBRARY(ncurses, main, NCURSES_LIBS)
-AM_CONDITIONAL(CONFIG_NCURSES,[test "x${NCURSES_LIBS}" != "x"])
+AM_CONDITIONAL(CONFIG_NCURSES,[test x"${NCURSES_LIBS}" != x""])
 AC_SUBST(NCURSES_LIBS)
 
 
@@ -131,14 +128,13 @@ dnl ======================================================================
 dnl		rtai sources
 dnl ======================================================================
 
-AC_ARG_WITH(rtai,[  --with-rtai=RTAI    path to configured RTAI 24.1.x sources, or RTAI 3 installation])
-if test "$with_rtai" = ""; then
-   with_rtai=/usr/src/rtai
-#
-# new default value for rtai-3
-#
-#  with_rtai=/usr/realtime
-fi
+AC_ARG_WITH(rtai,
+    AC_HELP_STRING([--with-rtai=RTAI], [path to configured RTAI 24.1.x sources, or RTAI 3 installation]),
+    [case "${withval}" in
+    "" | y | ye | yes | n | no)
+	AC_MSG_ERROR([You must supply an argument to --with-rtai.]) ;;
+    esac],
+    with_rtai="/usr/src/rtai")
 
 
 dnl ======================================================================
@@ -474,23 +470,13 @@ dnl ======================================================================
 AC_MSG_CHECKING([for module installation directory])
 
 AC_ARG_WITH(module-dir,
-    [  --with-module-dir=<module-dir>      Installation directory for modules],
-    [
-        case "$withval" in
-        "" | y | ye | yes | n | no)
-            AC_MSG_ERROR([You must supply an argument to --with-module-dir.])
-          ;;
-        esac
-        RTNET_MODULE_DIR="$withval"
-    ])
-
-dnl Set a default module dir if unspecified
-if test "x" = "x$RTNET_MODULE_DIR"
-then
-   RTNET_MODULE_DIR='${exec_prefix}/modules'
-#  RTNET_MODULE_DIR=/lib/modules/$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL/rtnet
-fi
-
+    AC_HELP_STRING([--with-module-dir=<module-dir>], [Installation directory for modules]),
+    [case "${withval}" in
+    "" | y | ye | yes | n | no)
+	AC_MSG_ERROR([You must supply an argument to --with-module-dir.]) ;;
+    esac],
+    with_module_dir='${exec_prefix}/modules')
+RTNET_MODULE_DIR="$with_module_dir"
 AC_MSG_RESULT([$RTNET_MODULE_DIR])
 AC_SUBST(RTNET_MODULE_DIR)
 
@@ -554,7 +540,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build all PCI network driver])
 AC_ARG_ENABLE(allpci,
-	[  --enable-allpci        build all PCI NIC drivers],
+	AC_HELP_STRING([--enable-allpci], [build all PCI NIC drivers]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_ALLPCI=yes ;;
 	*) unset CONFIG_RTNET_ALLPCI ;;
@@ -564,7 +550,7 @@ AC_MSG_RESULT([${CONFIG_RTNET_ALLPCI:-no}])
 
 AC_MSG_CHECKING([whether to build 3Com 59x driver])
 AC_ARG_ENABLE(3c59x,
-	[  --enable-3c59x         build 3Com 59x driver],
+	AC_HELP_STRING([--enable-3c59x], [build 3Com 59x driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_3C59X=yes ;;
 	*) unset CONFIG_RTNET_3C59X ;;
@@ -576,7 +562,7 @@ AM_CONDITIONAL(CONFIG_RTNET_3C59X,[test "$CONFIG_RTNET_3C59X" = "yes"])
 
 AC_MSG_CHECKING([whether to build Realtek 8139 driver])
 AC_ARG_ENABLE(8139,
-	[  --enable-8139          build Realtek 8139 driver],
+	AC_HELP_STRING([--enable-8139], [build Realtek 8139 driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_8139=yes ;;
 	*) unset CONFIG_RTNET_8139 ;;
@@ -590,7 +576,7 @@ AM_CONDITIONAL(CONFIG_RTNET_8139,[test "$CONFIG_RTNET_8139" = "yes"])
 
 AC_MSG_CHECKING([whether to build Intel EtherExpressPro/100 driver])
 AC_ARG_ENABLE(eepro100,
-	[  --enable-eepro100      build Intel EtherExpressPro/100 driver],
+	AC_HELP_STRING([--enable-eepro100], [build Intel EtherExpressPro/100 driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_EEPRO100=yes ;;
 	*) unset CONFIG_RTNET_EEPRO100 ;;
@@ -604,7 +590,7 @@ AM_CONDITIONAL(CONFIG_RTNET_EEPRO100,[test "$CONFIG_RTNET_EEPRO100" = "yes"])
 
 AC_MSG_CHECKING([whether to build AMD PCnet32 driver])
 AC_ARG_ENABLE(pcnet32,
-	[  --enable-pcnet32       build AMD PCnet32 driver],
+	AC_HELP_STRING([--enable-pcnet32], [build AMD PCnet32 driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_PCNET32=yes ;;
 	*) unset CONFIG_RTNET_PCNET32 ;;
@@ -618,7 +604,7 @@ AM_CONDITIONAL(CONFIG_RTNET_PCNET32,[test "$CONFIG_RTNET_PCNET32" = "yes"])
 
 AC_MSG_CHECKING([whether to build VIA Rhine driver])
 AC_ARG_ENABLE(via-rhine,
-	[  --enable-via-rhine     build VIA Rhine driver],
+	AC_HELP_STRING([--enable-via-rhine], [build VIA Rhine driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_VIA_RHINE=yes ;;
 	*) unset CONFIG_RTNET_VIA_RHINE ;;
@@ -632,7 +618,7 @@ AM_CONDITIONAL(CONFIG_RTNET_VIA_RHINE,[test "$CONFIG_RTNET_VIA_RHINE" = "yes"])
 
 AC_MSG_CHECKING([whether to build NatSemi driver])
 AC_ARG_ENABLE(natsemi,
-	[  --enable-natsemi       build NatSemi driver],
+	AC_HELP_STRING([--enable-natsemi], [build NatSemi driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_NATSEMI=yes ;;
 	*) unset CONFIG_RTNET_NATSEMI ;;
@@ -646,7 +632,7 @@ AM_CONDITIONAL(CONFIG_RTNET_NATSEMI,[test "$CONFIG_RTNET_NATSEMI" = "yes"])
 
 AC_MSG_CHECKING([whether to build tulip driver])
 AC_ARG_ENABLE(tulip,
-	[  --enable-tulip         build tulip driver],
+	AC_HELP_STRING([--enable-tulip], [build tulip driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_TULIP=yes ;;
 	*) unset CONFIG_RTNET_TULIP ;;
@@ -660,7 +646,7 @@ AM_CONDITIONAL(CONFIG_RTNET_TULIP,[test "$CONFIG_RTNET_TULIP" = "yes"])
 
 AC_MSG_CHECKING([whether to build fcc enet driver])
 AC_ARG_ENABLE(fcc-enet,
-	[  --enable-fcc-enet      build fcc enet driver],
+	AC_HELP_STRING([--enable-fcc-enet], [build fcc enet driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_FCC_ENET=yes ;;
 	*) unset CONFIG_RTNET_FCC_ENET ;;
@@ -671,7 +657,7 @@ AM_CONDITIONAL(CONFIG_RTNET_FCC_ENET,[test "$CONFIG_RTNET_FCC_ENET" = "yes"])
 
 AC_MSG_CHECKING([whether to build scc enet driver])
 AC_ARG_ENABLE(scc-enet,
-	[  --enable-scc-enet      build scc enet driver],
+	AC_HELP_STRING([--enable-scc-enet], [build scc enet driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_SCC_ENET=yes ;;
 	*) unset CONFIG_RTNET_SCC_ENET ;;
@@ -682,7 +668,7 @@ AM_CONDITIONAL(CONFIG_RTNET_SCC_ENET,[test "$CONFIG_RTNET_SCC_ENET" = "yes"])
 
 AC_MSG_CHECKING([whether to build fec enet driver])
 AC_ARG_ENABLE(fec-enet,
-	[  --enable-fec-enet      build fec enet driver],
+	AC_HELP_STRING([--enable-fec-enet], [build fec enet driver]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_FEC_ENET=yes ;;
 	*) unset CONFIG_RTNET_FEC_ENET ;;
@@ -693,7 +679,7 @@ AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 AC_MSG_CHECKING([whether to build loopback driver])
 AC_ARG_ENABLE(loopback,
-	[  --enable-loopback      build loopback driver (default: enabled)],
+	AC_HELP_STRING([--enable-loopback], [build loopback driver (default: enabled)]),
 	[case "$enableval" in
 	n | no ) CONFIG_RTNET_LOOPBACK=no ;;
 	*) unset CONFIG_RTNET_LOOPBACK ;;
@@ -709,7 +695,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build rtnetproxy])
 AC_ARG_ENABLE(proxy,
-	[  --enable-proxy         build IP protocol proxy driver (legacy)],
+	AC_HELP_STRING([--enable-proxy], [build IP protocol proxy driver (legacy)]),
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_PROXY=yes ;;
 	*) unset CONFIG_RTNET_PROXY ;;
@@ -724,7 +710,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to enable internal bug checks])
 AC_ARG_ENABLE(checks,
-	[  --enable-checks        enable internal bug checks (default: enabled)],
+	AC_HELP_STRING([--enable-checks], [enable internal bug checks (default: enabled)]),
 	[case "$enableval" in
 	n | no ) CONFIG_RTNET_CHECKED=no ;;
 	*) unset CONFIG_RTNET_CHECKED ;;
