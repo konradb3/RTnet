@@ -59,11 +59,11 @@ static inline int in_nrt_context(void)
 }
 
 
-#elif defined(CONFIG_FUSION_064) || defined(CONFIG_FUSION_065)
-/* fusion 0.64 and 0.65 - intermediate solution */
+#elif defined(CONFIG_FUSION_065)
+/* fusion 0.65 - intermediate solution */
 
-//#include <rtnet_sys.h>
-#include <rtnet_internal.h>
+#include <nucleus/heap.h>
+#include <rtai/task.h>
 
 
 #define rt_printk                   printk
@@ -75,7 +75,7 @@ static inline int in_nrt_context(void)
 
 static inline int in_nrt_context(void)
 {
-    return (!rtos_in_rt_context());
+    return adp_current == adp_root;
 }
 
 #endif

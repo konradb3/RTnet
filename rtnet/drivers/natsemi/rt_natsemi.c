@@ -898,9 +898,9 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	}
 
 	np->advertising = mdio_read(dev, 1, MII_ADVERTISE);
-	if ((readl(ioaddr + ChipConfig) & 0xe000) != 0xe000
+	if ((readl((void *)(ioaddr + ChipConfig)) & 0xe000) != 0xe000
 	 && netif_msg_probe(np)) {
-		u32 chip_config = readl(ioaddr + ChipConfig);
+		u32 chip_config = readl((void *)(ioaddr + ChipConfig));
 		rtos_print(KERN_INFO "%s: Transceiver default autonegotiation %s "
 			"10%s %s duplex.\n",
 			dev->name,
@@ -916,7 +916,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 			np->advertising);
 
 	/* save the silicon revision for later querying */
-	np->srr = readl(ioaddr + SiliconRev);
+	np->srr = readl((void *)(ioaddr + SiliconRev));
 	if (netif_msg_hw(np))
 		rtos_print(KERN_INFO "%s: silicon revision %#04x.\n",
 				dev->name, np->srr);
@@ -951,7 +951,7 @@ err_out:
    The old method of using an ISA access as a delay, __SLOW_DOWN_IO__, is
    depricated.
 */
-#define eeprom_delay(ee_addr)	readl(ee_addr)
+#define eeprom_delay(ee_addr)	readl((void *)(ee_addr))
 
 #define EE_Write0 (EE_ChipSelect)
 #define EE_Write1 (EE_ChipSelect | EE_DataIn)
@@ -967,30 +967,30 @@ static int eeprom_read(long addr, int location)
 	int retval = 0;
 	long ee_addr = addr + EECtrl;
 	int read_cmd = location | EE_ReadCmd;
-	writel(EE_Write0, ee_addr);
+	writel(EE_Write0, (void *)ee_addr);
 
 	/* Shift the read command bits out. */
 	for (i = 10; i >= 0; i--) {
 		short dataval = (read_cmd & (1 << i)) ? EE_Write1 : EE_Write0;
-		writel(dataval, ee_addr);
+		writel(dataval, (void *)ee_addr);
 		eeprom_delay(ee_addr);
-		writel(dataval | EE_ShiftClk, ee_addr);
+		writel(dataval | EE_ShiftClk, (void *)ee_addr);
 		eeprom_delay(ee_addr);
 	}
-	writel(EE_ChipSelect, ee_addr);
+	writel(EE_ChipSelect, (void *)ee_addr);
 	eeprom_delay(ee_addr);
 
 	for (i = 0; i < 16; i++) {
-		writel(EE_ChipSelect | EE_ShiftClk, ee_addr);
+		writel(EE_ChipSelect | EE_ShiftClk, (void *)ee_addr);
 		eeprom_delay(ee_addr);
-		retval |= (readl(ee_addr) & EE_DataOut) ? 1 << i : 0;
-		writel(EE_ChipSelect, ee_addr);
+		retval |= (readl((void *)ee_addr) & EE_DataOut) ? 1 << i : 0;
+		writel(EE_ChipSelect, (void *)ee_addr);
 		eeprom_delay(ee_addr);
 	}
 
 	/* Terminate the EEPROM access. */
-	writel(EE_Write0, ee_addr);
-	writel(0, ee_addr);
+	writel(EE_Write0, (void *)ee_addr);
+	writel(0, (void *)ee_addr);
 	return retval;
 }
 
@@ -1001,7 +1001,7 @@ static int eeprom_read(long addr, int location)
 static int mdio_read(struct rtnet_device *dev, int phy_id, int reg)
 {
 	if (phy_id == 1 && reg < 32)
-		return readl(dev->base_addr+BasicControl+(reg<<2))&0xffff;
+		return readl((void *)(dev->base_addr+BasicControl+(reg<<2)))&0xffff;
 	else
 		return 0xffff;
 }
@@ -1043,26 +1043,26 @@ static void natsemi_reset(struct rtnet_device *dev)
 	 */
 
 	/* CFG */
-	cfg = readl(dev->base_addr + ChipConfig) & CFG_RESET_SAVE;
+	cfg = readl((void *)(dev->base_addr + ChipConfig)) & CFG_RESET_SAVE;
 	/* WCSR */
-	wcsr = readl(dev->base_addr + WOLCmd) & WCSR_RESET_SAVE;
+	wcsr = readl((void *)(dev->base_addr + WOLCmd)) & WCSR_RESET_SAVE;
 	/* RFCR */
-	rfcr = readl(dev->base_addr + RxFilterAddr) & RFCR_RESET_SAVE;
+	rfcr = readl((void *)(dev->base_addr + RxFilterAddr)) & RFCR_RESET_SAVE;
 	/* PMATCH */
 	for (i = 0; i < 3; i++) {
-		writel(i*2, dev->base_addr + RxFilterAddr);
-		pmatch[i] = readw(dev->base_addr + RxFilterData);
+		writel(i*2, (void *)(dev->base_addr + RxFilterAddr));
+		pmatch[i] = readw((void *)(dev->base_addr + RxFilterData));
 	}
 	/* SOPAS */
 	for (i = 0; i < 3; i++) {
-		writel(0xa+(i*2), dev->base_addr + RxFilterAddr);
-		sopass[i] = readw(dev->base_addr + RxFilterData);
+		writel(0xa+(i*2), (void *)(dev->base_addr + RxFilterAddr));
+		sopass[i] = readw((void *)(dev->base_addr + RxFilterData));
 	}
 
 	/* now whack the chip */
-	writel(ChipReset, dev->base_addr + ChipCmd);
+	writel(ChipReset, (void *)(dev->base_addr + ChipCmd));
 	for (i=0;i<NATSEMI_HW_TIMEOUT;i++) {
-		if (!(readl(dev->base_addr + ChipCmd) & ChipReset))
+		if (!(readl((void *)(dev->base_addr + ChipCmd)) & ChipReset))
 			break;
 		udelay(5);
 	}
@@ -1075,24 +1075,24 @@ static void natsemi_reset(struct rtnet_device *dev)
 	}
 
 	/* restore CFG */
-	cfg |= readl(dev->base_addr + ChipConfig) & ~CFG_RESET_SAVE;
-	writel(cfg, dev->base_addr + ChipConfig);
+	cfg |= readl((void *)(dev->base_addr + ChipConfig)) & ~CFG_RESET_SAVE;
+	writel(cfg, (void *)(dev->base_addr + ChipConfig));
 	/* restore WCSR */
-	wcsr |= readl(dev->base_addr + WOLCmd) & ~WCSR_RESET_SAVE;
-	writel(wcsr, dev->base_addr + WOLCmd);
+	wcsr |= readl((void *)(dev->base_addr + WOLCmd)) & ~WCSR_RESET_SAVE;
+	writel(wcsr, (void *)(dev->base_addr + WOLCmd));
 	/* read RFCR */
-	rfcr |= readl(dev->base_addr + RxFilterAddr) & ~RFCR_RESET_SAVE;
+	rfcr |= readl((void *)(dev->base_addr + RxFilterAddr)) & ~RFCR_RESET_SAVE;
 	/* restore PMATCH */
 	for (i = 0; i < 3; i++) {
-		writel(i*2, dev->base_addr + RxFilterAddr);
-		writew(pmatch[i], dev->base_addr + RxFilterData);
+		writel(i*2, (void *)(dev->base_addr + RxFilterAddr));
+		writew(pmatch[i], (void *)(dev->base_addr + RxFilterData));
 	}
 	for (i = 0; i < 3; i++) {
-		writel(0xa+(i*2), dev->base_addr + RxFilterAddr);
-		writew(sopass[i], dev->base_addr + RxFilterData);
+		writel(0xa+(i*2), (void *)(dev->base_addr + RxFilterAddr));
+		writew(sopass[i], (void *)(dev->base_addr + RxFilterData));
 	}
 	/* restore RFCR */
-	writel(rfcr, dev->base_addr + RxFilterAddr);
+	writel(rfcr, (void *)(dev->base_addr + RxFilterAddr));
 }
 
 static void natsemi_reload_eeprom(struct rtnet_device *dev)
@@ -1100,10 +1100,10 @@ static void natsemi_reload_eeprom(struct rtnet_device *dev)
 	struct netdev_private *np = dev->priv;
 	int i;
 
-	writel(EepromReload, dev->base_addr + PCIBusCfg);
+	writel(EepromReload, (void *)(dev->base_addr + PCIBusCfg));
 	for (i=0;i<NATSEMI_HW_TIMEOUT;i++) {
 		udelay(50);
-		if (!(readl(dev->base_addr + PCIBusCfg) & EepromReload))
+		if (!(readl((void *)(dev->base_addr + PCIBusCfg)) & EepromReload))
 			break;
 	}
 	if (i==NATSEMI_HW_TIMEOUT) {
@@ -1121,9 +1121,9 @@ static void natsemi_stop_rxtx(struct rtnet_device *dev)
 	struct netdev_private *np = dev->priv;
 	int i;
 
-	writel(RxOff | TxOff, ioaddr + ChipCmd);
+	writel(RxOff | TxOff, (void *)(ioaddr + ChipCmd));
 	for(i=0;i< NATSEMI_HW_TIMEOUT;i++) {
-		if ((readl(ioaddr + ChipCmd) & (TxOn|RxOn)) == 0)
+		if ((readl((void *)(ioaddr + ChipCmd)) & (TxOn|RxOn)) == 0)
 			break;
 		udelay(5);
 	}
@@ -1172,10 +1172,10 @@ static int netdev_open(struct rtnet_device *dev)
 	for (i = 0; i < 3; i++) {
 		u16 mac = (dev->dev_addr[2*i+1]<<8) + dev->dev_addr[2*i];
 
-		writel(i*2, ioaddr + RxFilterAddr);
-		writew(mac, ioaddr + RxFilterData);
+		writel(i*2, (void *)(ioaddr + RxFilterAddr));
+		writew(mac, (void *)(ioaddr + RxFilterData));
 	}
-	writel(np->cur_rx_mode, ioaddr + RxFilterAddr);
+	writel(np->cur_rx_mode, (void *)(ioaddr + RxFilterAddr));
 
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
@@ -1184,7 +1184,7 @@ static int netdev_open(struct rtnet_device *dev)
 
 	if (netif_msg_ifup(np))
 		rtos_print(KERN_DEBUG "%s: Done netdev_open(), status: %#08x.\n",
-			dev->name, (int)readl(ioaddr + ChipCmd));
+			dev->name, (int)readl((void *)(ioaddr + ChipCmd)));
 
 	/* Set the timer to check for link beat. */
 #if 0
@@ -1212,15 +1212,15 @@ static void do_cable_magic(struct rtnet_device *dev)
 	 * activity LED while idle.  This process is based on instructions
 	 * from engineers at National.
 	 */
-	if (readl(dev->base_addr + ChipConfig) & CfgSpeed100) {
+	if (readl((void *)(dev->base_addr + ChipConfig)) & CfgSpeed100) {
 		u16 data;
 
-		writew(1, dev->base_addr + PGSEL);
+		writew(1, (void *)(dev->base_addr + PGSEL));
 		/*
 		 * coefficient visibility should already be enabled via
 		 * DSPCFG | 0x1000
 		 */
-		data = readw(dev->base_addr + TSTDAT) & 0xff;
+		data = readw((void *)(dev->base_addr + TSTDAT)) & 0xff;
 		/*
 		 * the value must be negative, and within certain values
 		 * (these values all come from National)
@@ -1229,13 +1229,13 @@ static void do_cable_magic(struct rtnet_device *dev)
 			struct netdev_private *np = dev->priv;
 
 			/* the bug has been triggered - fix the coefficient */
-			writew(TSTDAT_FIXED, dev->base_addr + TSTDAT);
+			writew(TSTDAT_FIXED, (void *)(dev->base_addr + TSTDAT));
 			/* lock the value */
-			data = readw(dev->base_addr + DSPCFG);
+			data = readw((void *)(dev->base_addr + DSPCFG));
 			np->dspcfg = data | DSPCFG_LOCK;
-			writew(np->dspcfg, dev->base_addr + DSPCFG);
+			writew(np->dspcfg, (void *)(dev->base_addr + DSPCFG));
 		}
-		writew(0, dev->base_addr + PGSEL);
+		writew(0, (void *)(dev->base_addr + PGSEL));
 	}
 }
 
@@ -1247,12 +1247,12 @@ static void undo_cable_magic(struct rtnet_device *dev)
 	if (np->srr >= SRR_DP83816_A5)
 		return;
 
-	writew(1, dev->base_addr + PGSEL);
+	writew(1, (void *)(dev->base_addr + PGSEL));
 	/* make sure the lock bit is clear */
-	data = readw(dev->base_addr + DSPCFG);
+	data = readw((void *)(dev->base_addr + DSPCFG));
 	np->dspcfg = data & ~DSPCFG_LOCK;
-	writew(np->dspcfg, dev->base_addr + DSPCFG);
-	writew(0, dev->base_addr + PGSEL);
+	writew(np->dspcfg, (void *)(dev->base_addr + DSPCFG));
+	writew(0, (void *)(dev->base_addr + PGSEL));
 }
 
 static void check_link(struct rtnet_device *dev)
@@ -1260,7 +1260,7 @@ static void check_link(struct rtnet_device *dev)
 	struct netdev_private *np = dev->priv;
 	long ioaddr = dev->base_addr;
 	int duplex;
-	int chipcfg = readl(ioaddr + ChipConfig);
+	int chipcfg = readl((void *)(ioaddr + ChipConfig));
 
 	if (!(chipcfg & CfgLink)) {
 		if (rtnetif_carrier_ok(dev)) {
@@ -1295,8 +1295,8 @@ static void check_link(struct rtnet_device *dev)
 			np->rx_config &= ~RxAcceptTx;
 			np->tx_config &= ~(TxCarrierIgn | TxHeartIgn);
 		}
-		writel(np->tx_config, ioaddr + TxConfig);
-		writel(np->rx_config, ioaddr + RxConfig);
+		writel(np->tx_config, (void *)(ioaddr + TxConfig));
+		writel(np->rx_config, (void *)(ioaddr + RxConfig));
 	}
 }
 
@@ -1307,7 +1307,7 @@ static void init_registers(struct rtnet_device *dev)
 	int i;
 
 	for (i=0;i<NATSEMI_HW_TIMEOUT;i++) {
-		if (readl(dev->base_addr + ChipConfig) & CfgAnegDone)
+		if (readl((void *)(dev->base_addr + ChipConfig)) & CfgAnegDone)
 			break;
 		udelay(10);
 	}
@@ -1324,27 +1324,27 @@ static void init_registers(struct rtnet_device *dev)
 	   Kennedy) recommends always setting them.  If you don't, you get
 	   errors on some autonegotiations that make the device unusable.
 	*/
-	writew(1, ioaddr + PGSEL);
-	writew(PMDCSR_VAL, ioaddr + PMDCSR);
-	writew(TSTDAT_VAL, ioaddr + TSTDAT);
-	writew(DSPCFG_VAL, ioaddr + DSPCFG);
-	writew(SDCFG_VAL, ioaddr + SDCFG);
-	writew(0, ioaddr + PGSEL);
+	writew(1, (void *)(ioaddr + PGSEL));
+	writew(PMDCSR_VAL, (void *)(ioaddr + PMDCSR));
+	writew(TSTDAT_VAL, (void *)(ioaddr + TSTDAT));
+	writew(DSPCFG_VAL, (void *)(ioaddr + DSPCFG));
+	writew(SDCFG_VAL, (void *)(ioaddr + SDCFG));
+	writew(0, (void *)(ioaddr + PGSEL));
 	np->dspcfg = DSPCFG_VAL;
 
 	/* Enable PHY Specific event based interrupts.  Link state change
 	   and Auto-Negotiation Completion are among the affected.
 	   Read the intr status to clear it (needed for wake events).
 	*/
-	readw(ioaddr + MIntrStatus);
-	writew(MICRIntEn, ioaddr + MIntrCtrl);
+	readw((void *)(ioaddr + MIntrStatus));
+	writew(MICRIntEn, (void *)(ioaddr + MIntrCtrl));
 
 	/* clear any interrupts that are pending, such as wake events */
-	readl(ioaddr + IntrStatus);
+	readl((void *)(ioaddr + IntrStatus));
 
-	writel(np->ring_dma, ioaddr + RxRingPtr);
+	writel(np->ring_dma, (void *)(ioaddr + RxRingPtr));
 	writel(np->ring_dma + RX_RING_SIZE * sizeof(struct netdev_desc),
-		ioaddr + TxRingPtr);
+		(void *)(ioaddr + TxRingPtr));
 
 	/* Initialize other registers.
 	 * Configure the PCI bus bursts and FIFO thresholds.
@@ -1361,13 +1361,13 @@ static void init_registers(struct rtnet_device *dev)
 	 * ATP=1
 	 */
 	np->tx_config = TxAutoPad | TxCollRetry | TxMxdma_256 | (0x1002);
-	writel(np->tx_config, ioaddr + TxConfig);
+	writel(np->tx_config, (void *)(ioaddr + TxConfig));
 
 	/* DRTH 0x10: start copying to memory if 128 bytes are in the fifo
 	 * MXDMA 0: up to 256 byte bursts
 	 */
 	np->rx_config = RxMxdma_256 | 0x20;
-	writel(np->rx_config, ioaddr + RxConfig);
+	writel(np->rx_config, (void *)(ioaddr + RxConfig));
 
 	/* Disable PME:
 	 * The PME bit is initialized from the EEPROM contents.
@@ -1375,22 +1375,22 @@ static void init_registers(struct rtnet_device *dev)
 	 * implementations may have PME set to enable WakeOnLan.
 	 * With PME set the chip will scan incoming packets but
 	 * nothing will be written to memory. */
-	np->SavedClkRun = readl(ioaddr + ClkRun);
-	writel(np->SavedClkRun & ~PMEEnable, ioaddr + ClkRun);
+	np->SavedClkRun = readl((void *)(ioaddr + ClkRun));
+	writel(np->SavedClkRun & ~PMEEnable, (void *)(ioaddr + ClkRun));
 	if (np->SavedClkRun & PMEStatus && netif_msg_wol(np)) {
 		rtos_print(KERN_NOTICE "%s: Wake-up event %#08x\n",
-			dev->name, readl(ioaddr + WOLCmd));
+			dev->name, readl((void *)(ioaddr + WOLCmd)));
 	}
 
 	check_link(dev);
 	__set_rx_mode(dev);
 
 	/* Enable interrupts by setting the interrupt mask. */
-	writel(DEFAULT_INTR, ioaddr + IntrMask);
-	writel(1, ioaddr + IntrEnable);
+	writel(DEFAULT_INTR, (void *)(ioaddr + IntrMask));
+	writel(1, (void *)(ioaddr + IntrEnable));
 
-	writel(RxOn | TxOn, ioaddr + ChipCmd);
-	writel(StatsClear, ioaddr + StatsCtrl); /* Clear Stats */
+	writel(RxOn | TxOn, (void *)(ioaddr + ChipCmd));
+	writel(StatsClear, (void *)(ioaddr + StatsCtrl)); /* Clear Stats */
 }
 
 /*
@@ -1718,7 +1718,7 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 				rtnetif_stop_queue(dev);
 		}
 		/* Wake the potentially-idle transmit channel. */
-		writel(TxOn, dev->base_addr + ChipCmd);
+		writel(TxOn, (void *)(dev->base_addr + ChipCmd));
 	} else {
 		dev_kfree_rtskb(skb); /*** RTnet ***/
 		np->stats.tx_dropped++;
@@ -1800,13 +1800,13 @@ static void intr_handler(unsigned int irq, void *dev_instance)/*, struct pt_regs
 		return;
 	do {
 		/* Reading automatically acknowledges all int sources. */
-		u32 intr_status = readl(ioaddr + IntrStatus);
+		u32 intr_status = readl((void *)(ioaddr + IntrStatus));
 
 		if (netif_msg_intr(np))
 			rtos_print(KERN_DEBUG
 				"%s: Interrupt, status %#08x, mask %#08x.\n",
 				dev->name, intr_status,
-				readl(ioaddr + IntrMask));
+				readl((void *)(ioaddr + IntrMask)));
 
 		if (intr_status == 0)
 			break;
@@ -1942,7 +1942,7 @@ static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp)
 		;
 /*		mod_timer(&np->timer, jiffies + 1);*/
 	else
-		writel(RxOn, dev->base_addr + ChipCmd);
+		writel(RxOn, (void *)(dev->base_addr + ChipCmd));
 }
 
 static void netdev_error(struct rtnet_device *dev, int intr_status)
@@ -1963,7 +1963,7 @@ static void netdev_error(struct rtnet_device *dev, int intr_status)
 		}
 
 		/* read MII int status to clear the flag */
-		readw(ioaddr + MIntrStatus);
+		readw((void *)(ioaddr + MIntrStatus));
 		check_link(dev);
 	}
 	if (intr_status & StatsMax) {
@@ -1976,10 +1976,10 @@ static void netdev_error(struct rtnet_device *dev, int intr_status)
 			rtos_print(KERN_NOTICE
 				"%s: increased Tx threshold, txcfg %#08x.\n",
 				dev->name, np->tx_config);
-		writel(np->tx_config, ioaddr + TxConfig);
+		writel(np->tx_config, (void *)(ioaddr + TxConfig));
 	}
 	if (intr_status & WOLPkt && netif_msg_wol(np)) {
-		int wol_status = readl(ioaddr + WOLCmd);
+		int wol_status = readl((void *)(ioaddr + WOLCmd));
 		rtos_print(KERN_NOTICE "%s: Link wake-up event %#08x\n",
 			dev->name, wol_status);
 	}
@@ -2006,8 +2006,8 @@ static void __get_stats(struct rtnet_device *dev)
 	struct netdev_private *np = dev->priv;
 
 	/* The chip only need report frame silently dropped. */
-	np->stats.rx_crc_errors	+= readl(ioaddr + RxCRCErrs);
-	np->stats.rx_missed_errors += readl(ioaddr + RxMissed);
+	np->stats.rx_crc_errors	+= readl((void *)(ioaddr + RxCRCErrs));
+	np->stats.rx_missed_errors += readl((void *)(ioaddr + RxMissed));
 }
 
 /*** RTnet ***/
@@ -2096,12 +2096,12 @@ static void __set_rx_mode(struct rtnet_device *dev)
 		rx_mode = RxFilterEnable | AcceptBroadcast
 			| AcceptMulticast | AcceptMyPhys;
 		for (i = 0; i < 64; i += 2) {
-			writew(HASH_TABLE + i, ioaddr + RxFilterAddr);
+			writew(HASH_TABLE + i, (void *)(ioaddr + RxFilterAddr));
 			writew((mc_filter[i+1]<<8) + mc_filter[i],
-				ioaddr + RxFilterData);
+				(void *)(ioaddr + RxFilterData));
 		}
 	}
-	writel(rx_mode, ioaddr + RxFilterAddr);
+	writel(rx_mode, (void *)(ioaddr + RxFilterAddr));
 	np->cur_rx_mode = rx_mode;
 }
 /*** RTnet
@@ -2615,23 +2615,23 @@ static void enable_wol_mode(struct rtnet_device *dev, int enable_intr)
 	 * Write NULL to the RxRingPtr. Only possible if
 	 * rx process is stopped
 	 */
-	writel(0, ioaddr + RxRingPtr);
+	writel(0, (void *)(ioaddr + RxRingPtr));
 
 	/* read WoL status to clear */
-	readl(ioaddr + WOLCmd);
+	readl((void *)(ioaddr + WOLCmd));
 
 	/* PME on, clear status */
-	writel(np->SavedClkRun | PMEEnable | PMEStatus, ioaddr + ClkRun);
+	writel(np->SavedClkRun | PMEEnable | PMEStatus, (void *)(ioaddr + ClkRun));
 
 	/* and restart the rx process */
-	writel(RxOn, ioaddr + ChipCmd);
+	writel(RxOn, (void *)(ioaddr + ChipCmd));
 
 	if (enable_intr) {
 		/* enable the WOL interrupt.
 		 * Could be used to send a netlink message.
 		 */
-		writel(WOLPkt | LinkChange, ioaddr + IntrMask);
-		writel(1, ioaddr + IntrEnable);
+		writel(WOLPkt | LinkChange, (void *)(ioaddr + IntrMask));
+		writel(1, (void *)(ioaddr + IntrEnable));
 	}
 }
 
@@ -2644,7 +2644,7 @@ static int netdev_close(struct rtnet_device *dev)
 	if (netif_msg_ifdown(np))
 		rtos_print(KERN_DEBUG
 			"%s: Shutting down ethercard, status was %#04x.\n",
-			dev->name, (int)readl(ioaddr + ChipCmd));
+			dev->name, (int)readl((void *)(ioaddr + ChipCmd)));
 	if (netif_msg_pktdata(np))
 		rtos_print(KERN_DEBUG
 			"%s: Queue pointers were Tx %d / %d,  Rx %d / %d.\n",
@@ -2664,8 +2664,8 @@ static int netdev_close(struct rtnet_device *dev)
 	rtos_irq_disable(dev->irq);
 	rtos_spin_lock(&np->lock);
 	/* Disable interrupts, and flush posted writes */
-	writel(0, ioaddr + IntrEnable);
-	readl(ioaddr + IntrEnable);
+	writel(0, (void *)(ioaddr + IntrEnable));
+	readl((void *)(ioaddr + IntrEnable));
 	np->hands_off = 1;
 	rtos_spin_unlock(&np->lock);
 
@@ -2686,11 +2686,11 @@ static int netdev_close(struct rtnet_device *dev)
 	 */
 	rtos_spin_lock(&np->lock);
 	np->hands_off = 0;
-	readl(ioaddr + IntrMask);
-	readw(ioaddr + MIntrStatus);
+	readl((void *)(ioaddr + IntrMask));
+	readw((void *)(ioaddr + MIntrStatus));
 
 	/* Freeze Stats */
-	writel(StatsFreeze, ioaddr + StatsCtrl);
+	writel(StatsFreeze, (void *)(ioaddr + StatsCtrl));
 
 	/* Stop the chip's Tx and Rx processes. */
 	natsemi_stop_rxtx(dev);
@@ -2707,7 +2707,7 @@ static int netdev_close(struct rtnet_device *dev)
 	free_ring(dev);
 
 	{
-		u32 wol = readl(ioaddr + WOLCmd) & WakeOptsSummary;
+		u32 wol = readl((void *)(ioaddr + WOLCmd)) & WakeOptsSummary;
 		if (wol) {
 			/* restart the NIC in WOL mode.
 			 * The nic must be stopped for this.
@@ -2715,7 +2715,7 @@ static int netdev_close(struct rtnet_device *dev)
 			enable_wol_mode(dev, 0);
 		} else {
 			/* Restore PME enable bit unmolested */
-			writel(np->SavedClkRun, ioaddr + ClkRun);
+			writel(np->SavedClkRun, (void *)(ioaddr + ClkRun));
 		}
 	}
 

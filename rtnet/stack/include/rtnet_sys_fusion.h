@@ -168,26 +168,17 @@ static inline int rtos_task_init_suspended(rtos_task_t *task,
                                            void (*task_proc)(int),
                                            int arg, int priority)
 {
-    int     ret;
-    spl_t   s;
+    int ret;
 
-    ret = rt_task_create(task, NULL, 4096, priority, 0);
+    ret = rt_task_create(task, NULL, 4096, priority, T_SUSP);
 
     if (ret)
         return ret;
 
-    xnpod_check_context(XNPOD_THREAD_CONTEXT);
+    ret = rt_task_start(task, (void (*)(void *))task_proc, (void *)arg);
 
-    xnlock_get_irqsave(&nklock, s);
-
-    xnpod_start_thread(&task->thread_base,
-                       XNSUSP,
-                       0,
-                       XNPOD_ALL_CPUS,
-                       (void (*)(void *))task_proc,
-                       (void *)arg);
-
-    xnlock_put_irqrestore(&nklock, s);
+    if (ret)
+        rt_task_delete(task);
 
     return ret;
 }

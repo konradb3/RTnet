@@ -320,12 +320,12 @@ static inline void io_outw(unsigned int val, unsigned long port)
 #undef outb
 #undef outw
 #undef outl
-#define inb readb
-#define inw readw
-#define inl readl
-#define outb writeb
-#define outw writew
-#define outl writel
+#define inb(addr) readb((void *)(addr))
+#define inw(addr) readw((void *)(addr))
+#define inl(addr) readl((void *)(addr))
+#define outb(val, addr) writeb(val, (void *)(addr))
+#define outw(val, addr) writew(val, (void *)(addr))
+#define outl(val, addr) writel(val, (void *)(addr))
 #endif
 
 /* How to wait for the command unit to accept a command.
