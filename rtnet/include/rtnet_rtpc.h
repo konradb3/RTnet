@@ -4,7 +4,7 @@
  *
  *  RTnet - real-time networking subsystem
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@
 struct rt_proc_call;
 
 typedef int (*rtpc_proc)(struct rt_proc_call *call);
+typedef void (*rtpc_copy_back_proc)(struct rt_proc_call *call,
+                                    void* priv_data);
 typedef void (*rtpc_cleanup_proc)(struct rt_proc_call *call);
 
 struct rt_proc_call {
@@ -51,13 +53,18 @@ struct rt_proc_call {
 
 int rtpc_dispatch_call(rtpc_proc rt_proc, unsigned int timeout,
                        void* priv_data, size_t priv_data_size,
+                       rtpc_copy_back_proc copy_back_handler,
                        rtpc_cleanup_proc cleanup_handler);
 
 
 void rtpc_complete_call(struct rt_proc_call *call, int result);
 void rtpc_complete_call_nrt(struct rt_proc_call *call, int result);
 
-#define rtpc_get_priv(call, type)   (type *)(call->priv_data)
+#define rtpc_get_priv(call, type)           (type *)(call->priv_data)
+#define rtpc_get_result(call)               call->result
+#define rtpc_set_result(call, new_result)   call->result = new_result
+#define rtpc_set_cleanup_handler(call, handler) \
+    call->cleanup_handler = handler;
 
 
 int __init rtpc_init(void);
