@@ -1,4 +1,4 @@
-                             RTnet Version 0.2.9
+                             RTnet Version 0.2.10
 
 What is it?
 -----------
@@ -75,18 +75,21 @@ the terms of the GNU General Public License. This program comes with
 ABSOLUTELY NO WARRANTY. See "LICENSE" for details.
 
 Contributors:
-Ulrich Marx (marx@fet.uni-hannover.de)	- core programming
+Ulrich Marx
+<marx-at-fet.uni-hannover.de>   	- core programming
 Nathan Gustavson			- testing and bug fixing
-Marc Kleine-Budde			- testing, bug fixing and upcoming
-					  extensions
-Mathias Köhrer				- 3c59x-rt
-Jan Kiszka (jan.kiszka@web.de)		- eepro100-rt and this poor doc
-Wittawat Yamwong
-<wittawat@web.de>			- testing, documents
-Hans-Peter Bock <hpbock@web.de>		- testing, bug fixing
+Marc Kleine-Budde			- RTmac, testing, bug fixing
+Jan Kiszka <jan.kiszka-at-web.de>	- eepro100-rt and this poor doc
+Wittawat Yamwong <wittawat-at-web.de>	- testing, documents
+Hans-Peter Bock <hpbock-at-web.de>	- testing, bug fixing
 Mathias Koehrer
-<mathias_koehrer@yahoo.de>		- rtnetproxy, testing, bug fixing
+<mathias_koehrer-at-yahoo.de>		- 3c59x-rt, rtnetproxy, testing,
+                                          bug fixing, ip fragmentation
+Vinay Sridhara
+<vinaysridhara-at-yahoo.com>            - ICMP support
+Erwin Rol <erwin-at-muffin.org>         - Ethereal plugin, rtnetproxy
 
 Acknowledgements:
-David Schleef			- he wrote the original RTnet, some parts
-				  of this version are based on his code
+David Schleef			        - he wrote the original RTnet, some
+                                          parts of this version are based on
+                                          his code
