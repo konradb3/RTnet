@@ -179,7 +179,7 @@ SUBDIRS = round_trip_time rtskb_alloc rtt frag_ip raw_packets $(OPTDIRS)
 subdir = examples
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config/config.h
+CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 DIST_SOURCES =
 

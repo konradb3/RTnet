@@ -1501,7 +1501,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-          ac_config_headers="$ac_config_headers config/config.h"
+          ac_config_headers="$ac_config_headers config/rtnet_config_pre.h"
 
 ac_aux_dir=
 for ac_dir in config/autoconf $srcdir/config/autoconf; do
@@ -18407,8 +18407,8 @@ esac
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lncurses':
-			   ac_save_LIBS="$LIBS"
-			   LIBS="$NCURSES_LIBS $ac_save_LIBS"
+ac_save_LIBS="$LIBS"
+    LIBS="$NCURSES_LIBS $ac_save_LIBS"
 
 echo "$as_me:$LINENO: checking for main in -lncurses" >&5
 echo $ECHO_N "checking for main in -lncurses... $ECHO_C" >&6
@@ -18467,9 +18467,8 @@ _ACEOF
 
 fi
 
-			   NCURSES_LIBS=`echo "$LIBS" | sed "s% $ac_save_LIBS$%%"`
-			   LIBS="$ac_save_LIBS"
-
+    NCURSES_LIBS=`echo "$LIBS" | sed "s% $ac_save_LIBS$%%"`
+    LIBS="$ac_save_LIBS"
 
 
 if test x"${NCURSES_LIBS}" != x""; then
@@ -19623,13 +19622,11 @@ echo "$as_me:$LINENO: checking for RTAI base technology" >&5
 echo $ECHO_N "checking for RTAI base technology... $ECHO_C" >&6
 
 if test -r $RTAI_LINUX_DIR/include/linux/adeos.h; then
-#   AC_DEFINE(CONFIG_RTAI_ADEOS,1,[Use Adeos-based HAL])
    echo "$as_me:$LINENO: result: Adeos" >&5
 echo "${ECHO_T}Adeos" >&6
    CONFIG_RTAI_ADEOS=y
 elif test x${CONFIG_RTHAL} = xy; then
-                                    #    AC_DEFINE(CONFIG_RTAI_RTHAL,1,[Use legacy RTHAL])
-    if test "$CONFIG_X86" = y; then
+                                        if test "$CONFIG_X86" = y; then
        echo "$as_me:$LINENO: result: legacy RTHAL" >&5
 echo "${ECHO_T}legacy RTHAL" >&6
     else
@@ -21435,7 +21432,7 @@ do
   "include/Makefile" ) CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
   "rtcap/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtcap/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-  "config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config/config.h" ;;
+  "config/rtnet_config_pre.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config/rtnet_config_pre.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -22263,12 +22260,11 @@ fi
 { echo "$as_me:$LINENO: creating include/rtnet_config.h" >&5
 echo "$as_me: creating include/rtnet_config.h" >&6;}
 sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/config.h >include/rtnet_config.h.new
+    config/rtnet_config_pre.h >include/rtnet_config.h.new
 if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
 	rm include/rtnet_config.h.new
 	{ echo "$as_me:$LINENO: include/rtnet_config.h is unchanged" >&5
 echo "$as_me: include/rtnet_config.h is unchanged" >&6;}
 else
 	mv include/rtnet_config.h.new include/rtnet_config.h
-
 fi

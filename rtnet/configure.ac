@@ -4,7 +4,7 @@
 AC_PREREQ(2.57)
 
 AC_INIT([RTnet],[0.6.1],[rtnet-users@lists.sourceforge.net])
-AC_CONFIG_HEADERS([config/config.h])
+AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_SRCDIR([rtskb.c])
@@ -227,7 +227,6 @@ unset CONFIG_RTAI_ADEOS
 AC_MSG_CHECKING([for RTAI base technology])
 
 if test -r $RTAI_LINUX_DIR/include/linux/adeos.h; then
-#   AC_DEFINE(CONFIG_RTAI_ADEOS,1,[Use Adeos-based HAL])
    AC_MSG_RESULT([Adeos])
    CONFIG_RTAI_ADEOS=y
 elif test x${CONFIG_RTHAL} = xy; then
@@ -240,7 +239,6 @@ elif test x${CONFIG_RTHAL} = xy; then
     dnl RTHAL signature inside a kernel tree, that does not rely on
     dnl the Makefile's EXTRAVERSION variable, because it happened that
     dnl some people change its value manually to suit their needs...
-#    AC_DEFINE(CONFIG_RTAI_RTHAL,1,[Use legacy RTHAL])
     if test "$CONFIG_X86" = y; then
        AC_MSG_RESULT([legacy RTHAL])
     else
@@ -257,7 +255,7 @@ fi
 case "$linux_VERSION.$linux_PATCHLEVEL" in
   2.4)
     ;;
-  *) 
+  *)
     AC_MSG_ERROR([*** Unsupported kernel version $linux_VERSION.$linux_PATCHLEVEL])
 esac
 
@@ -830,7 +828,7 @@ dnl ======================================================================
 
 AC_MSG_NOTICE([creating include/rtnet_config.h])
 sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/config.h >include/rtnet_config.h.new
+    config/rtnet_config_pre.h >include/rtnet_config.h.new
 if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
 	rm include/rtnet_config.h.new
 	AC_MSG_NOTICE([include/rtnet_config.h is unchanged])

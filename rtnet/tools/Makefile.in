@@ -184,7 +184,7 @@ AM_CPPFLAGS = \
 subdir = tools
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config/config.h
+CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 @CONFIG_RTNET_RTCFG_TRUE@sbin_PROGRAMS = rtifconfig$(EXEEXT) \
 @CONFIG_RTNET_RTCFG_TRUE@	rtcfg$(EXEEXT)
