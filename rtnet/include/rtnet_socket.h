@@ -26,51 +26,62 @@
 
 #include <linux/socket.h>
 
+#include <rtai.h>
+#include <rtai_sched.h>
+
 #include <rtdev.h>
 #include <rtnet.h>
 
 
-#define RT_SOCKETS	64
+#define RT_SOCKETS      64
 
 struct rtsocket_ops {
-	int  (*bind)	(struct rtsocket *s, struct sockaddr *my_addr, int addr_len);
-	int  (*connect)	(struct rtsocket *s, struct sockaddr *serv_addr, int addr_len);
-	int  (*listen)	(struct rtsocket *s, int backlog);
-	int  (*accept)	(struct rtsocket *s, struct sockaddr *client_addr, int *addr_len);
-	int  (*recvmsg)	(struct rtsocket *s, struct msghdr *msg, int len);
-	int  (*sendmsg)	(struct rtsocket *s, const struct msghdr *msg, int len);
-	void (*close)	(struct rtsocket *s, long timeout);
+    int  (*bind)        (struct rtsocket *s, struct sockaddr *my_addr,
+                         int addr_len);
+    int  (*connect)     (struct rtsocket *s, struct sockaddr *serv_addr,
+                         int addr_len);
+    int  (*listen)      (struct rtsocket *s, int backlog);
+    int  (*accept)      (struct rtsocket *s, struct sockaddr *client_addr,
+                         int *addr_len);
+    int  (*recvmsg)     (struct rtsocket *s, struct msghdr *msg, int len);
+    int  (*sendmsg)     (struct rtsocket *s, const struct msghdr *msg, int len);
+    void (*close)       (struct rtsocket *s, long timeout);
+    int  (*setsockopt)  (struct rtsocket *s, int level, int optname,
+                         const void *optval, int optlen);
 };
 
 struct rtsocket {
-	struct rtsocket		*prev;
-	struct rtsocket		*next;				/* next socket in list	*/
+    struct rtsocket     *prev;
+    struct rtsocket     *next;      /* next socket in list */
 
-	int			fd;				/* file descriptor 	*/
+    int                 fd;         /* file descriptor */
 
-	unsigned short		family;
-	unsigned short		typ;
-	unsigned short		protocol;
-	
-	unsigned char		state;
+    unsigned short      family;
+    unsigned short      typ;
+    unsigned short      protocol;
 
-	struct rtsocket_ops	*ops;
-	
-	struct rtskb_head	incoming;
-	
-       	unsigned char		connected;			/* connect any socket!  */
+    unsigned char       state;
 
-	u32			saddr;				/* source ip-addr	*/
-	u16			sport;				/* source port		*/
+    struct rtsocket_ops *ops;
 
-	u32			daddr;				/* destination ip-addr	*/
-	u16			dport;				/* destination port	*/
+    struct rtskb_head   skb_pool;
+    struct rtskb_head   incoming;
 
-	int			(*wakeup)(int s,void *arg);	/* socket wakeup-func	*/
+    unsigned char       connected;  /* connect any socket!  */
 
-	void 			*private;
+    u32                 saddr;      /* source ip-addr */
+    u16                 sport;      /* source port */
 
-	u8			tos;
+    u32                 daddr;      /* destination ip-addr */
+    u16                 dport;      /* destination port */
+
+    int                 (*wakeup)(int s,void *arg); /* socket wakeup-func */
+    SEM                 wakeup_sem; /* for blocking calls */
+
+    void                *private;
+
+    unsigned int        priority;
+    u8                  tos;
 };
 
 extern void rtsockets_init(void);
