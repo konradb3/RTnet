@@ -962,6 +962,7 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
     struct rtcfg_frm_dead_station *dead_station_frm;
     struct rtcfg_device           *rtcfg_dev = &device[ifindex];
     u32                           i;
+    u32                           ip;
 
 
     dead_station_frm = (struct rtcfg_frm_dead_station *)rtskb->data;
@@ -984,8 +985,11 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
                 return;
             }
 
-            /* update routing table */
-            rt_ip_route_del_host(*(u32 *)dead_station_frm->logical_addr);
+            ip = *(u32 *)dead_station_frm->logical_addr;
+
+            /* only delete remote IPs from routing table */
+            if (rtskb->rtdev->local_ip != ip)
+                rt_ip_route_del_host(ip);
 
             dead_station_frm = (struct rtcfg_frm_dead_station *)
                 (((u8 *)dead_station_frm) + RTCFG_ADDRSIZE_IP);
