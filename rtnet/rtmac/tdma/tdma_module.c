@@ -198,6 +198,13 @@ int tdma_nrt_packet_tx(struct rtskb *skb)
 
 
 
+#ifdef CONFIG_PROC_FS
+struct rtmac_proc_entry tdma_proc_entries[] = {
+    { name: "tdma", handler: tdma_proc_read },
+    { name: NULL, handler: NULL }
+};
+#endif /* CONFIG_PROC_FS */
+
 struct rtmac_disc tdma_disc = {
     name:           "TDMA",
     priv_size:      sizeof(struct rtmac_tdma),
@@ -217,9 +224,7 @@ struct rtmac_disc tdma_disc = {
     },
 
 #ifdef CONFIG_PROC_FS
-    proc_entries:   {
-        { name: "tdma", handler: tdma_proc_read }
-    }
+    proc_entries:   tdma_proc_entries
 #endif /* CONFIG_PROC_FS */
 };
 
