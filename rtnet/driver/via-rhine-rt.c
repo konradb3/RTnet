@@ -1165,6 +1165,8 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 	long ioaddr = dev->base_addr;
 	int i;
 
+	MOD_INC_USE_COUNT;
+
 	/* Reset the chip. */
 	writew(CmdReset, ioaddr + ChipCmd);
 
@@ -1172,16 +1174,20 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
 	i = rt_request_global_irq_ext(dev->irq, (void (*)(void))via_rhine_interrupt, (unsigned long)dev);
 /*** RTnet ***/
-	if (i)
+	if (i) {
+		MOD_DEC_USE_COUNT;
 		return i;
+	}
 
 	if (debug > 1)
 		printk(KERN_DEBUG "%s: via_rhine_open() irq %d.\n",
 			   dev->name, np->pdev->irq);
 
 	i = alloc_ring(dev);
-	if (i)
+	if (i) {
+		MOD_DEC_USE_COUNT;
 		return i;
+	}
 	alloc_rbufs(dev);
 	alloc_tbufs(dev);
 	wait_for_reset(dev, np->chip_id, dev->name);
@@ -1970,6 +1976,8 @@ static int via_rhine_close(struct rtnet_device *dev) /*** RTnet ***/
 	free_rbufs(dev);
 	free_tbufs(dev);
 	free_ring(dev);
+
+	MOD_DEC_USE_COUNT;
 
 	return 0;
 }

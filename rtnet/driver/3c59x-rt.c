@@ -1888,6 +1888,8 @@ vortex_open(struct rtnet_device *rtdev)
 	int i;
 	int retval;
 
+	MOD_INC_USE_COUNT;
+
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
@@ -1940,7 +1942,7 @@ vortex_open(struct rtnet_device *rtdev)
 	return 0;
 
 out_free_irq:
-    
+
 	// *** RTnet ***
 	rt_shutdown_irq(rtdev->irq);
     if ( (i=rt_free_global_irq(rtdev->irq))<0 )
@@ -1948,6 +1950,7 @@ out_free_irq:
 	rt_stack_disconnect(rtdev);
 	// *** RTnet ***
 out:
+	MOD_DEC_USE_COUNT;
 	if (vortex_debug > 1)
 		printk(KERN_ERR "%s: vortex_open() fails: returning %d\n", rtdev->name, retval);
 	return retval;
@@ -2917,7 +2920,7 @@ vortex_close(struct rtnet_device *rtdev)
 		printk(KERN_WARNING "Please see http://www.uow.edu.au/~andrewm/zerocopy.html\n");
 	}
 #endif
-		
+
 	// *** RTnet ***
 	rt_shutdown_irq(rtdev->irq);
 	if ( (i=rt_free_global_irq(rtdev->irq))<0 )
@@ -2957,16 +2960,18 @@ vortex_close(struct rtnet_device *rtdev)
 		}
 	}
 
+	MOD_DEC_USE_COUNT;
+
 	return 0;
 }
 
 static void
-dump_tx_ring(struct rtnet_device *rtdev)   
+dump_tx_ring(struct rtnet_device *rtdev)
 {
 	if (vortex_debug > 0) {
 		struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 		long ioaddr = rtdev->base_addr;
-		
+
 		if (vp->full_bus_master_tx) {
 			int i;
 			int stalled = inl(ioaddr + PktStatus) & 0x04;	/* Possible racy. But it's only debug stuff */
