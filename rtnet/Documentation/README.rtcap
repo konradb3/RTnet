@@ -7,8 +7,8 @@ stamp jitter, typically below 10 us (depends on the hardware).
 When it is configured and compiled with --enable-rtcap, some extensions will be
 added to the RTnet stack and an additional module rtcap.o will be created. This
 module has to be loaded *after* all NIC drivers are inserted and *before* any
-RTmac discipline is attached to a device. It will create two read-only Linux
-shadow network devices for every NIC:
+device is started or a RTmac discipline is attached to it. It will create two
+read-only Linux shadow network devices for every NIC:
 
     <rtdevX>     (e.g. rteth0) and
     <rtdevX>-mac (exception: loopback device will only be mirrored to "rtlo").

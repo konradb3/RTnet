@@ -129,4 +129,4 @@ All module parameters at a glance:
   8139too-rt | rx_pool_size     | 16
 
 A statistic of the currently allocated pools is available through the /proc
-interface of RTnet (/proc/rtai/rtnet).
+interface of RTnet (/proc/rtnet/rtskb).
