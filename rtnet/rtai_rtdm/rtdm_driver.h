@@ -2,7 +2,7 @@
         rtdm_driver.h - driver API header (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.0
+        Version:    0.5.1
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 
@@ -84,18 +84,18 @@ struct rtdm_operations {
 };
 
 struct rtdm_dev_context {
-    int         context_flags;
-    int         fd;
-    atomic_t    close_lock_count;
-    struct rtdm_operations *ops;
-    struct rtdm_device *device;
-    char        dev_private[0];
+    int                         context_flags;
+    int                         fd;
+    atomic_t                    close_lock_count;
+    struct rtdm_operations      *ops;
+    volatile struct rtdm_device *device;
+    char                        dev_private[0];
 };
 
 struct rtdm_dev_reserved {
-    struct list_head entry;
-    atomic_t    refcount;
-    struct rtdm_dev_context *exclusive_context;
+    struct list_head            entry;
+    atomic_t                    refcount;
+    struct rtdm_dev_context     *exclusive_context;
 };
 
 struct rtdm_device {
@@ -138,6 +138,10 @@ struct rtdm_device {
 
     struct rtdm_dev_reserved reserved;
 };
+
+
+#define RTDM_LOCK_CONTEXT(context)      atomic_inc(&(context)->close_lock_count)
+#define RTDM_UNLOCK_CONTEXT(context)    atomic_dec(&(context)->close_lock_count)
 
 
 extern int rtdm_dev_register(struct rtdm_device* device);
