@@ -192,7 +192,7 @@ int init_module(void)
     printk(" --> sockets created: %d / %d.\n", sock1, sock2);
 
     /* create print-fifo */
-    rtos_fifo_create(&print_fifo, PRINT, 3000);
+    rtos_fifo_create(&print_fifo, PRINT_FIFO, 3000);
 
     ret=rtos_task_init(&rt_task, (void*) process, 0, 9);
     printk("==> initialization complete\n");
