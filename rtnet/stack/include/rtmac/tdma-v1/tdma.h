@@ -52,7 +52,7 @@
 #define TDMA_MAX_RT                     16
 
 #define TDMA_MAX_TX_QUEUE               4
-#define TDMA_PRIO_TX_TASK               0
+#define TDMA_PRIO_TX_TASK               RTOS_HIGHEST_RT_PRIORITY
 
 #define TDMA_VERSION                    0x01
 #define ETH_TDMA                        0x9031

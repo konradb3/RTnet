@@ -122,6 +122,9 @@ static inline void rtos_time_diff(rtos_time_t *result,
 
 /* RT-tasks */
 #define RTOS_LOWEST_RT_PRIORITY     T_LOPRIO
+#define RTOS_HIGHEST_RT_PRIORITY    T_HIPRIO
+#define RTOS_RAISE_PRIORITY         (-1)
+#define RTOS_LOWER_PRIORITY         (+1)
 
 static inline int rtos_task_init(rtos_task_t *task, void (*task_proc)(int),
                                  int arg, int priority)

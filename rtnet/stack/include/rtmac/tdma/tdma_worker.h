@@ -28,7 +28,7 @@
 #include <rtnet_sys.h>
 
 
-#define DEF_WORKER_PRIO         0
+#define DEF_WORKER_PRIO         RTOS_HIGHEST_RT_PRIORITY
 
 void tdma_worker(int arg);
 

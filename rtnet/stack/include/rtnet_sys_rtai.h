@@ -134,12 +134,16 @@ static inline void rtos_time_diff(rtos_time_t *result,
 
 /* RT-tasks */
 #ifdef CONFIG_RTAI_24
+#define RTOS_HIGHEST_RT_PRIORITY    RT_HIGHEST_PRIORITY
 #define RTOS_LOWEST_RT_PRIORITY     RT_LOWEST_PRIORITY
 #define RTOS_LINUX_PRIORITY         RT_LINUX_PRIORITY
 #else
+#define RTOS_HIGHEST_RT_PRIORITY    RT_SCHED_HIGHEST_PRIORITY
 #define RTOS_LOWEST_RT_PRIORITY     RT_SCHED_LOWEST_PRIORITY
 #define RTOS_LINUX_PRIORITY         RT_SCHED_LINUX_PRIORITY
 #endif
+#define RTOS_RAISE_PRIORITY         (-1)
+#define RTOS_LOWER_PRIORITY         (+1)
 
 static inline int rtos_task_init(rtos_task_t *task, void (*task_proc)(int),
                                  int arg, int priority)
