@@ -204,14 +204,6 @@ int tdma_nrt_packet_tx(struct rtskb *skb)
 
 
 
-int tdma_api_ioctl(struct rtdm_dev_context *context, int call_flags,
-                   int request, void *arg)
-{
-    return -ENOSYS;
-}
-
-
-
 #ifdef CONFIG_PROC_FS
 struct rtmac_proc_entry tdma_proc_entries[] = {
     { name: "tdma", handler: tdma_proc_read },
