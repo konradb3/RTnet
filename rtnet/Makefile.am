@@ -1,4 +1,4 @@
-SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools
+SUBDIRS = driver ethernet examples ipv4 lib packet rtcfg rtmac tools
 
 noinst_LIBRARIES = librtnet.a libnetproxy.a
 

@@ -9459,7 +9459,7 @@ fi
 
 
 
-                                                                                                                                                                                                                            ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/rtt/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/examples/Makefile rtmac/examples/event/Makefile rtmac/examples/mrtt/Makefile rtmac/examples/rtt/Makefile"
+                                                                                                                                                                                                                                      ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/rtt/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/examples/Makefile rtmac/examples/event/Makefile rtmac/examples/mrtt/Makefile rtmac/examples/rtt/Makefile rtcfg/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -10116,6 +10116,7 @@ do
   "rtmac/examples/event/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtmac/examples/event/Makefile" ;;
   "rtmac/examples/mrtt/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtmac/examples/mrtt/Makefile" ;;
   "rtmac/examples/rtt/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtmac/examples/rtt/Makefile" ;;
+  "rtcfg/Makefile" ) CONFIG_FILES="$CONFIG_FILES rtcfg/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5

@@ -453,6 +453,7 @@ rtmac/examples/Makefile \
 rtmac/examples/event/Makefile \
 rtmac/examples/mrtt/Makefile \
 rtmac/examples/rtt/Makefile \
+rtcfg/Makefile \
 ])
 
 AC_OUTPUT()
