@@ -40,6 +40,7 @@
 #define RTMAC_WAIT_ON_XMIT      0x01
 
 /* TDMA-specific Cycle Types */
-#define TDMA_WAIT_ON_SOF        0x10
+#define TDMA_WAIT_ON_SYNC       0x10
+#define TDMA_WAIT_ON_SOF        TDMA_WAIT_ON_SYNC /* legacy support */
 
 #endif /* __RTMAC_H_ */

@@ -40,6 +40,8 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context, int call_flags,
                           int request, void *arg)
 {
     struct tdma_priv    *tdma;
+    rtos_time_t         offset;
+    unsigned long       flags;
 
 
     tdma = (struct tdma_priv *)((char *)context->device -
@@ -47,8 +49,24 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context, int call_flags,
 
     switch (request) {
         case RTMAC_RTIOC_TIMEOFFSET:
+            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            offset = tdma->clock_offset;
+            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+            *(__s64 *)arg = rtos_time_to_nanosecs(&offset);
+            return 0;
 
         case RTMAC_RTIOC_WAITONCYCLE:
+            if (call_flags & RTDM_NRT_CALL)
+                return -EACCES;
+
+            if ((*(int *)arg != RTMAC_WAIT_ON_DEFAULT) &&
+                (*(int *)arg != TDMA_WAIT_ON_SYNC))
+                return -EINVAL;
+
+            if (RTOS_EVENT_ERROR(rtos_event_wait(&tdma->sync_event)))
+                return -ENODEV;
+            return 0;
 
         default:
             return -ENOTTY;

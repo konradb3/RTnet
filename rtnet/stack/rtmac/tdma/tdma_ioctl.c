@@ -23,6 +23,7 @@
  */
 
 #include <linux/module.h>
+#include <asm/div64.h>
 #include <asm/uaccess.h>
 
 #include <tdma_chrdev.h>
@@ -49,6 +50,10 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
         /* note: we don't clean up an unknown discipline */
         return -ENOTTY;
     }
+
+    tdma->cal_rounds = cfg->args.master.cal_rounds;
+//HACK
+set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
 
     if (rtskb_pool_init(&tdma->cal_rtskb_pool,
                         cfg->args.master.max_cal_requests) !=
@@ -86,7 +91,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
                       &tdma->cycle_period);
     }
 
-    tdma->first_job = &tdma->sync_job;
+    tdma->first_job = tdma->current_job = &tdma->sync_job;
 
     rtos_get_time(&tdma->current_cycle_start);
 
@@ -123,6 +128,10 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
         return -ENOTTY;
     }
 
+    tdma->cal_rounds = cfg->args.slave.cal_rounds;
+    if (tdma->cal_rounds == 0)
+        set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
+
     table_size = sizeof(struct tdma_slot *) *
         ((cfg->args.slave.max_slot_id >= 1) ?
             cfg->args.slave.max_slot_id + 1 : 2);
@@ -139,7 +148,7 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
     tdma->wait_sync_job.ref_count = 0;
     INIT_LIST_HEAD(&tdma->wait_sync_job.entry);
 
-    tdma->first_job = &tdma->wait_sync_job;
+    tdma->first_job = tdma->current_job = &tdma->wait_sync_job;
 
     rtos_event_sem_signal(&tdma->worker_wakeup);
 
@@ -153,14 +162,114 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
 
 
 
+static int tdma_ioctl_cal_result_size(struct rtnet_device *rtdev,
+                                      struct tdma_config *cfg)
+{
+    struct tdma_priv    *tdma;
+
+
+    if (rtdev->mac_priv == NULL)
+        return -ENOTTY;
+
+    tdma = (struct tdma_priv *)rtdev->mac_priv->disc_priv;
+    if (tdma->magic != TDMA_MAGIC)
+        return -ENOTTY;
+
+    if (!test_bit(TDMA_FLAG_CALIBRATED, &tdma->flags))
+        return tdma->cal_rounds;
+    else
+        return 0;
+}
+
+
+
+int start_calibration(struct rt_proc_call *call)
+{
+    struct tdma_request_cal *req_cal;
+    struct tdma_priv        *tdma;
+    unsigned long           flags;
+
+
+    req_cal = rtpc_get_priv(call, struct tdma_request_cal);
+    tdma    = req_cal->tdma;
+
+    /* there are no slots yet, simply add this job after first_job */
+    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    tdma->calibration_call = call;
+    tdma->job_list_revision++;
+    list_add(&req_cal->head.entry, &tdma->first_job->entry);
+    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+    return -CALL_PENDING;
+}
+
+
+
+void copyback_calibration(struct rt_proc_call *call, void *priv_data)
+{
+    struct tdma_request_cal *req_cal;
+    struct tdma_priv        *tdma;
+    int                     i;
+    nanosecs_t              value;
+    nanosecs_t              average = 0;
+    nanosecs_t              min = 0x7FFFFFFFFFFFFFFFLL;
+    nanosecs_t              max = 0;
+
+
+    req_cal = rtpc_get_priv(call, struct tdma_request_cal);
+    tdma    = req_cal->tdma;
+
+    for (i = 0; i < tdma->cal_rounds; i++) {
+        value = req_cal->result_buffer[i];
+        average += value;
+        if (value < min)
+            min = value;
+        if (value > max)
+            max = value;
+        if ((req_cal->cal_results) &&
+            (copy_to_user(&req_cal->cal_results[i], &value,
+                          sizeof(value)) != 0))
+            rtpc_set_result(call, -EFAULT);
+    }
+    do_div(average, tdma->cal_rounds);
+    tdma->master_packet_delay_ns = average;
+
+    average += 500;
+    do_div(average, 1000);
+    min += 500;
+    do_div(min, 1000);
+    max += 500;
+    do_div(max, 1000);
+    printk("TDMA: calibrated master-to-slave packet delay: "
+           "%ld us (min/max: %ld/%ld us)\n",
+           (unsigned long)average, (unsigned long)min,
+           (unsigned long)max);
+}
+
+
+
+void cleanup_calibration(void *priv_data)
+{
+    struct tdma_request_cal *req_cal;
+
+
+    req_cal = (struct tdma_request_cal *)priv_data;
+    kfree(req_cal->result_buffer);
+}
+
+
+
 static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
                                struct tdma_config *cfg)
 {
-    struct tdma_priv    *tdma;
-    int                 id;
-    struct tdma_slot    *slot, *old_slot;
-    struct tdma_job     *job, *prev_job;
-    unsigned long       flags;
+    struct tdma_priv        *tdma;
+    int                     id;
+    struct tdma_slot        *slot, *old_slot;
+    struct tdma_job         *job, *prev_job;
+    struct tdma_request_cal req_cal;
+    unsigned int            job_list_revision;
+    unsigned long           flags;
+    int                     ret;
 
 
     if (rtdev->mac_priv == NULL)
@@ -173,6 +282,50 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     id = cfg->args.set_slot.id;
     if (id > tdma->max_slot_id)
         return -EINVAL;
+
+    if (!test_bit(TDMA_FLAG_CALIBRATED, &tdma->flags)) {
+        req_cal.head.id        = XMIT_REQ_CAL;
+        req_cal.head.ref_count = 0;
+        req_cal.tdma           = tdma;
+        req_cal.offset_ns      = cfg->args.set_slot.offset;
+        req_cal.period         = cfg->args.set_slot.period;
+        req_cal.phasing        = cfg->args.set_slot.phasing;
+        req_cal.cal_rounds     = tdma->cal_rounds;
+        req_cal.cal_results    = cfg->args.set_slot.cal_results;
+        rtos_nanosecs_to_time(cfg->args.set_slot.offset, &req_cal.offset);
+
+        req_cal.result_buffer =
+            kmalloc(req_cal.cal_rounds * sizeof(nanosecs_t), GFP_KERNEL);
+        if (!req_cal.result_buffer)
+            return -ENOMEM;
+
+        ret = rtpc_dispatch_call(start_calibration, 0, &req_cal,
+                                 sizeof(req_cal), copyback_calibration,
+                                 cleanup_calibration);
+        if (ret < 0) {
+            /* kick out any pending calibration job before returning */
+            rtos_spin_lock_irqsave(&tdma->lock, flags);
+
+            job = list_entry(tdma->first_job->entry.next, struct tdma_job,
+                             entry);
+            if (job != tdma->first_job) {
+                __list_del(job->entry.prev, job->entry.next);
+
+                while (job->ref_count > 0) {
+                    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                    set_current_state(TASK_UNINTERRUPTIBLE);
+                    schedule_timeout(HZ/10); /* wait 100 ms */
+                    rtos_spin_lock_irqsave(&tdma->lock, flags);
+                }
+            }
+
+            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+            return ret;
+        }
+
+        set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
+    }
 
     slot = (struct tdma_slot *)kmalloc(sizeof(struct tdma_slot), GFP_KERNEL);
     if (!slot)
@@ -191,27 +344,43 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
         (old_slot == tdma->slot_table[DEFAULT_SLOT]))
         old_slot = NULL;
 
+  restart:
+    job_list_revision = tdma->job_list_revision;
+
     if (!old_slot) {
-        prev_job = tdma->first_job;
-        job = list_entry(prev_job->entry.next, struct tdma_job, entry);
-        while (job != tdma->first_job) {
+        job = tdma->first_job;
+        while (1) {
             prev_job = job;
-            if ((job->id >= 0) &&
-                (RTOS_TIME_IS_BEFORE(&slot->offset, &SLOT_JOB(job)->offset) ||
-                 (RTOS_TIME_EQUALS(&slot->offset, &SLOT_JOB(job)->offset) &&
-                  (slot->head.id <= SLOT_JOB(job)->head.id))))
-                break;
             job = list_entry(job->entry.next, struct tdma_job, entry);
+            if (((job->id >= 0) &&
+                 (RTOS_TIME_IS_BEFORE(&slot->offset, &SLOT_JOB(job)->offset) ||
+                  (RTOS_TIME_EQUALS(&slot->offset, &SLOT_JOB(job)->offset) &&
+                   (slot->head.id <= SLOT_JOB(job)->head.id)))) ||
+#ifdef CONFIG_RTNET_TDMA_MASTER
+                ((job->id == XMIT_RPL_CAL) &&
+                  RTOS_TIME_IS_BEFORE(&slot->offset,
+                                      &REPLY_CAL_JOB(job)->reply_offset)) ||
+#endif /* CONFIG_RTNET_TDMA_MASTER */
+                (job == tdma->first_job))
+                break;
         }
 
-        rtos_spin_lock_irqsave(&tdma->lock, flags);
+    } else
+        prev_job = list_entry(old_slot->head.entry.prev,
+                              struct tdma_job, entry);
 
-    } else {
-        prev_job = list_entry(old_slot->head.entry.prev, struct tdma_job, entry);
+    rtos_spin_lock_irqsave(&tdma->lock, flags);
 
-        rtos_spin_lock_irqsave(&tdma->lock, flags);
-        __list_del(old_slot->head.entry.prev, old_slot->head.entry.next);
+    if (job_list_revision != tdma->job_list_revision) {
+        rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+        set_current_state(TASK_UNINTERRUPTIBLE);
+        schedule_timeout(HZ/10); /* wait 100 ms */
+        goto restart;
     }
+
+    if (old_slot)
+        __list_del(old_slot->head.entry.prev, old_slot->head.entry.next);
 
     list_add(&slot->head.entry, &prev_job->entry);
     tdma->slot_table[id] = slot;
@@ -237,17 +406,17 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
 
 
-int tdma_cleanup_slot(struct tdma_priv *tdma, int id)
+int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
 {
-    struct tdma_slot    *slot;
     struct rtskb        *rtskb;
+    unsigned int        id;
     unsigned long       flags;
 
 
-    slot = tdma->slot_table[id];
-
     if (!slot)
         return -EINVAL;
+
+    id = slot->head.id;
 
     rtos_spin_lock_irqsave(&tdma->lock, flags);
 
@@ -302,7 +471,11 @@ static int tdma_ioctl_remove_slot(struct rtnet_device *rtdev,
     if (id > tdma->max_slot_id)
         return -EINVAL;
 
-    return tdma_cleanup_slot(tdma, id);
+    if ((id == DEFAULT_NRT_SLOT) &&
+        (tdma->slot_table[DEFAULT_NRT_SLOT] == tdma->slot_table[DEFAULT_SLOT]))
+        return -EINVAL;
+
+    return tdma_cleanup_slot(tdma, tdma->slot_table[id]);
 }
 
 
@@ -338,7 +511,8 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
     if (ret != 0)
         return -EFAULT;
 
-    down(&rtdev->nrt_sem);
+    if (down_interruptible(&rtdev->nrt_sem))
+        return -ERESTARTSYS;
 
     switch (request) {
 #ifdef CONFIG_RTNET_TDMA_MASTER
@@ -351,6 +525,10 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = tdma_ioctl_slave(rtdev, &cfg);
             break;
 #endif
+        case TDMA_IOC_CAL_RESULT_SIZE:
+            ret = tdma_ioctl_cal_result_size(rtdev, &cfg);
+            break;
+
         case TDMA_IOC_SET_SLOT:
             ret = tdma_ioctl_set_slot(rtdev, &cfg);
             break;

@@ -28,6 +28,9 @@
 #include <rtnet_chrdev.h>
 
 
+#define MIN_SLOT_SIZE       60
+
+
 struct tdma_config {
     struct rtnet_ioctl_head head;
 
@@ -36,14 +39,12 @@ struct tdma_config {
             __u64           cycle_period;
             __u64           backup_sync_offset;
             unsigned int    cal_rounds;
-            //result_buffer
             unsigned int    max_cal_requests;
             unsigned int    max_slot_id;
         } master;
 
         struct {
             unsigned int    cal_rounds;
-            //result_buffer
             unsigned int    max_slot_id;
         } slave;
 
@@ -53,6 +54,8 @@ struct tdma_config {
             unsigned int    period;
             unsigned int    phasing;
             unsigned int    size;
+            unsigned int    cal_timeout;
+            __u64           *cal_results;
         } set_slot;
 
         struct {
@@ -66,11 +69,13 @@ struct tdma_config {
                                              struct tdma_config)
 #define TDMA_IOC_SLAVE                  _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 1, \
                                              struct tdma_config)
-#define TDMA_IOC_SET_SLOT               _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 2, \
+#define TDMA_IOC_CAL_RESULT_SIZE        _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 2, \
                                              struct tdma_config)
-#define TDMA_IOC_REMOVE_SLOT            _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 3, \
+#define TDMA_IOC_SET_SLOT               _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 3, \
                                              struct tdma_config)
-#define TDMA_IOC_DETACH                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 4, \
+#define TDMA_IOC_REMOVE_SLOT            _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 4, \
+                                             struct tdma_config)
+#define TDMA_IOC_DETACH                 _IOW(RTNET_IOC_TYPE_RTMAC_TDMA, 5, \
                                              struct tdma_config)
 
 #endif /* __TDMA_CHRDEV_H_ */

@@ -31,6 +31,7 @@
 #include <rtdm_driver.h>
 
 #include <rtnet_config.h>
+#include <rtnet_rtpc.h>
 #include <rtmac/rtmac_disc.h>
 
 
@@ -51,8 +52,11 @@
 #define WAIT_ON_SYNC            -1
 #define XMIT_SYNC               -2
 #define BACKUP_SYNC             -3
-#define XMIT_CAL_REQ            -4
-#define XMIT_CAL_RPL            -5
+#define XMIT_REQ_CAL            -4
+#define XMIT_RPL_CAL            -5
+
+
+struct tdma_priv;
 
 
 struct tdma_job {
@@ -75,24 +79,30 @@ struct tdma_slot {
 };
 
 
-#define CAL_REQUEST_JOB(job)    ((struct tdma_cal_request *)(job))
+#define REQUEST_CAL_JOB(job)    ((struct tdma_request_cal *)(job))
 
-struct tdma_cal_request {
+struct tdma_request_cal {
     struct tdma_job             head;
 
-    struct tdma_slot            *assigned_slot;
-    struct rtskb                *request_rtskb;
+    struct tdma_priv            *tdma;
+    rtos_time_t                 offset;
+    nanosecs_t                  offset_ns;
+    unsigned int                period;
+    unsigned int                phasing;
+    unsigned int                cal_rounds;
+    nanosecs_t                  *cal_results;
+    nanosecs_t                  *result_buffer;
 };
 
 
-#define CAL_REPLY_JOB(job)      ((struct tdma_cal_reply *)(job))
+#define REPLY_CAL_JOB(job)      ((struct tdma_reply_cal *)(job))
 
-struct tdma_cal_reply {
+struct tdma_reply_cal {
     struct tdma_job             head;
 
     unsigned int                reply_cycle;
     rtos_time_t                 reply_offset;
-    struct rtskb                *request_rtskb;
+    struct rtskb                *reply_rtskb;
 };
 
 struct tdma_priv {
@@ -114,15 +124,21 @@ struct tdma_priv {
     rtos_event_t                sync_event;
 
     unsigned long               flags;
+    unsigned int                cal_rounds;
     unsigned int                current_cycle;
     rtos_time_t                 current_cycle_start;
     nanosecs_t                  master_packet_delay_ns;
     rtos_time_t                 clock_offset;
 
     struct tdma_job             *first_job;
+    struct tdma_job             *current_job;
+    volatile unsigned int       job_list_revision;
 
     unsigned int                max_slot_id;
     struct tdma_slot            **slot_table;
+
+    struct rt_proc_call         *calibration_call;
+    unsigned char               master_hw_addr[MAX_ADDR_LEN];
 
     rtos_spinlock_t             lock;
 
@@ -133,7 +149,6 @@ struct tdma_priv {
     struct tdma_job             sync_job;
 #endif
 #ifdef CONFIG_RTNET_TDMA_SLAVE
-    unsigned char               master_hw_addr[MAX_ADDR_LEN];
     struct tdma_job             wait_sync_job;
 #endif
 
@@ -144,5 +159,13 @@ struct tdma_priv {
 
 
 extern struct rtmac_disc        tdma_disc;
+
+#define print_jobs()            do { \
+    struct tdma_job *entry; \
+    rtos_print("%s:%d - ", __FUNCTION__, __LINE__); \
+    list_for_each_entry(entry, &tdma->first_job->entry, entry) \
+        rtos_print("%d ", entry->id); \
+    rtos_print("\n"); \
+} while (0)
 
 #endif /* __TDMA_H_ */

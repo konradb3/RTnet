@@ -44,7 +44,9 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
                     int *eof, void *data)
 {
     struct tdma_priv    *entry;
+#ifdef CONFIG_RTNET_TDMA_MASTER
     nanosecs_t          cycle;
+#endif
     RTNET_PROC_PRINT_VARS;
 
 
@@ -55,8 +57,9 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
     list_for_each_entry(entry, &tdma_devices, list_entry) {
         RTNET_PROC_PRINT("%-15s %-15s ", entry->rtdev->name,
                          entry->api_device.device_name);
+#ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_MASTER, &entry->flags)) {
-            cycle = rtos_time_to_nanosecs(&entry->cycle_period);
+            cycle = rtos_time_to_nanosecs(&entry->cycle_period) + 500;
             do_div(cycle, 1000);
             if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags))
                 RTNET_PROC_PRINT("Backup Master   %ld\n",
@@ -65,6 +68,7 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
                 RTNET_PROC_PRINT("Master          %ld\n",
                                  (unsigned long)cycle);
         } else
+#endif /* CONFIG_RTNET_TDMA_MASTER */
             RTNET_PROC_PRINT("Slave           -\n");
     }
 
@@ -81,7 +85,9 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     struct tdma_priv    *entry;
     struct tdma_slot    *slot;
     int                 i;
+#ifdef CONFIG_RTNET_TDMA_MASTER
     rtos_time_t         bak_offs;
+#endif
     nanosecs_t          slot_offset;
     RTNET_PROC_PRINT_VARS;
 
@@ -93,15 +99,20 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     list_for_each_entry(entry, &tdma_devices, list_entry) {
         RTNET_PROC_PRINT("%-15s ", entry->rtdev->name);
 
+#ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
             rtos_time_diff(&bak_offs, &entry->backup_sync_inc,
                            &entry->cycle_period);
-            slot_offset = rtos_time_to_nanosecs(&bak_offs);
+            slot_offset = rtos_time_to_nanosecs(&bak_offs) + 500;
             do_div(slot_offset, 1000);
             RTNET_PROC_PRINT("bak:%ld  ", (unsigned long)slot_offset);
         }
+#endif /* CONFIG_RTNET_TDMA_MASTER */
 
-        if (entry->slot_table)
+        if (entry->slot_table) {
+            if (down_interruptible(&entry->rtdev->nrt_sem))
+                break;
+
             for (i = 0; i <= entry->max_slot_id; i++) {
                 slot = entry->slot_table[i];
                 if (!slot ||
@@ -109,12 +120,15 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                      (entry->slot_table[DEFAULT_SLOT] == slot)))
                     continue;
 
-                slot_offset = rtos_time_to_nanosecs(&slot->offset);
+                slot_offset = rtos_time_to_nanosecs(&slot->offset) + 500;
                 do_div(slot_offset, 1000);
                 RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
                                  (unsigned long)slot_offset,
                                  slot->phasing, slot->period, slot->size);
             }
+
+            up(&entry->rtdev->nrt_sem);
+        }
         RTNET_PROC_PRINT("\n");
     }
 
@@ -186,7 +200,8 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
 int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
     struct tdma_priv    *tdma = (struct tdma_priv *)priv;
-    int                 i;
+    struct tdma_job     *job;
+    unsigned long       flags;
     int                 ret;
 
 
@@ -203,13 +218,31 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     rtos_event_delete(&tdma->xmit_event);
     rtos_event_sem_delete(&tdma->worker_wakeup);
 
-    if (tdma->slot_table) {
-        for (i = 0; i <= tdma->max_slot_id; i++)
-            tdma_cleanup_slot(tdma, i);
-        kfree(tdma->slot_table);
+    list_for_each_entry(job, &tdma->first_job->entry, entry) {
+        if (job->id >= 0)
+            tdma_cleanup_slot(tdma, SLOT_JOB(job));
+        else if (job->id == XMIT_RPL_CAL) {
+            rtos_spin_lock_irqsave(&tdma->lock, flags);
+
+            __list_del(job->entry.prev, job->entry.next);
+
+            while (job->ref_count > 0) {
+                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                set_current_state(TASK_UNINTERRUPTIBLE);
+                schedule_timeout(HZ/10); /* wait 100 ms */
+                rtos_spin_lock_irqsave(&tdma->lock, flags);
+            }
+
+            kfree_rtskb(REPLY_CAL_JOB(job)->reply_rtskb);
+
+            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+        }
     }
 
     rtos_task_delete(&tdma->worker_task);
+
+    if (tdma->slot_table)
+        kfree(tdma->slot_table);
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
     rtskb_pool_release(&tdma->cal_rtskb_pool);

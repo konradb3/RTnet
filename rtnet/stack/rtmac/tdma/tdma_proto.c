@@ -23,6 +23,7 @@
  */
 
 #include <linux/init.h>
+#include "asm/div64.h"
 
 #include <rtdev.h>
 #include <rtmac/rtmac_proto.h>
@@ -71,6 +72,57 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     /*ERROR*/rtos_print("TDMA: Failed to transmit sync frame!\n");
     return;
 }
+
+
+
+int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u16 reply_cycle,
+                                u64 reply_slot_offset)
+{
+    struct rtnet_device     *rtdev = tdma->rtdev;
+    struct rtskb            *rtskb;
+    struct tdma_frm_req_cal *req_cal;
+    int                     ret;
+
+
+    rtskb = alloc_rtskb(rtdev->hard_header_len + sizeof(struct rtmac_hdr) +
+                        sizeof(struct tdma_frm_req_cal) + 15, &global_pool);
+    ret = -ENOMEM;
+    if (!rtskb)
+        goto err_out;
+
+    rtskb_reserve(rtskb,
+        (rtdev->hard_header_len + sizeof(struct rtmac_hdr) + 15) & ~15);
+
+    req_cal = (struct tdma_frm_req_cal *)
+        rtskb_put(rtskb, sizeof(struct tdma_frm_req_cal));
+
+    if ((ret = rtmac_add_header(rtdev, tdma->master_hw_addr,
+                                rtskb, RTMAC_TYPE_TDMA, 0)) < 0) {
+        kfree_rtskb(rtskb);
+        goto err_out;
+    }
+
+    req_cal->head.version = __constant_htons(TDMA_FRM_VERSION);
+    req_cal->head.id      = __constant_htons(TDMA_FRM_REQ_CAL);
+
+    req_cal->xmit_stamp        = 0;
+    req_cal->reply_cycle       = htons(reply_cycle);
+    req_cal->reply_slot_offset = cpu_to_be64(reply_slot_offset);
+
+    rtskb->xmit_stamp = &req_cal->xmit_stamp;
+
+    ret = rtmac_xmit(rtskb);
+    if (ret < 0)
+        goto err_out;
+
+    return 0;
+
+  err_out:
+    /*ERROR*/rtos_print("TDMA: Failed to transmit request calibration "
+                        "frame!\n");
+    return ret;
+}
+
 
 
 int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
@@ -137,6 +189,19 @@ int tdma_packet_rx(struct rtskb *rtskb)
 {
     struct tdma_priv        *tdma;
     struct tdma_frm_head    *head;
+    nanosecs_t              delay;
+    rtos_time_t             cycle_start;
+    rtos_time_t             clock_offset;
+    struct rt_proc_call     *call;
+    struct tdma_request_cal *req_cal_job;
+#ifdef CONFIG_RTNET_TDMA_MASTER
+    struct rtskb            *reply_rtskb;
+    struct rtnet_device     *rtdev;
+    struct tdma_frm_rpl_cal *rpl_cal_frm;
+    struct tdma_reply_cal   *rpl_cal_job;
+    struct tdma_job         *job;
+    unsigned long           flags;
+#endif
 
 
     tdma = (struct tdma_priv *)rtskb->rtdev->mac_priv->disc_priv;
@@ -150,26 +215,147 @@ int tdma_packet_rx(struct rtskb *rtskb)
         case __constant_htons(TDMA_FRM_SYNC):
             rtskb_pull(rtskb, sizeof(struct tdma_frm_sync));
 
-            tdma->current_cycle = ntohs(SYNC_FRM(head)->cycle_no);
-
             /* see "Time Arithmetics" in the TDMA specification */
             rtos_nanosecs_to_time(be64_to_cpu(SYNC_FRM(head)->xmit_stamp) +
-                                  tdma->master_packet_delay_ns,
-                                  &tdma->clock_offset);
-            rtos_time_diff(&tdma->clock_offset,
-                           &tdma->clock_offset,
-                           &rtskb->time_stamp);
+                                  tdma->master_packet_delay_ns, &clock_offset);
+            rtos_time_diff(&clock_offset, &clock_offset, &rtskb->time_stamp);
 
             rtos_nanosecs_to_time(
                 be64_to_cpu(SYNC_FRM(head)->sched_xmit_stamp),
-                &tdma->current_cycle_start);
-            rtos_time_diff(&tdma->current_cycle_start,
-                           &tdma->current_cycle_start,
-                           &tdma->clock_offset);
+                &cycle_start);
+            rtos_time_diff(&cycle_start, &cycle_start, &clock_offset);
+
+            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            tdma->current_cycle = ntohs(SYNC_FRM(head)->cycle_no);
+            tdma->current_cycle_start = cycle_start;
+            tdma->clock_offset        = clock_offset;
+            rtos_spin_unlock_irqrestore(&tdma->lock,flags);
+
+            /* note: Ethernet-specific! */
+            memcpy(tdma->master_hw_addr, rtskb->mac.ethernet->h_source,
+                   ETH_ALEN);
 
             set_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags);
 
             rtos_event_broadcast(&tdma->sync_event);
+            break;
+
+#ifdef CONFIG_RTNET_TDMA_MASTER
+        case __constant_htons(TDMA_FRM_REQ_CAL):
+            RTNET_ASSERT(test_bit(TDMA_FLAG_MASTER, &tdma->flags) &&
+                         test_bit(TDMA_FLAG_CALIBRATED, &tdma->flags),
+                         break;);
+
+            rtskb_pull(rtskb, sizeof(struct tdma_frm_req_cal));
+
+            rtdev = rtskb->rtdev;
+
+            reply_rtskb = alloc_rtskb(rtdev->hard_header_len +
+                                      sizeof(struct rtmac_hdr) +
+                                      sizeof(struct tdma_frm_rpl_cal) + 15,
+                                      &tdma->cal_rtskb_pool);
+            if (unlikely(!reply_rtskb)) {
+                /*ERROR*/rtos_print("TDMA: Too many calibration requests "
+                                    "pending!\n");
+                break;
+            }
+
+            rtskb_reserve(reply_rtskb, (rtdev->hard_header_len +
+                          sizeof(struct rtmac_hdr) + 15) & ~15);
+
+            rpl_cal_frm = (struct tdma_frm_rpl_cal *)
+                rtskb_put(reply_rtskb, sizeof(struct tdma_frm_rpl_cal));
+
+            /* note: Ethernet-specific! */
+            if (unlikely(rtmac_add_header(rtdev, rtskb->mac.ethernet->h_source,
+                                          reply_rtskb, RTMAC_TYPE_TDMA,
+                                          0) < 0)) {
+                kfree_rtskb(reply_rtskb);
+                break;
+            }
+
+            rpl_cal_frm->head.version = __constant_htons(TDMA_FRM_VERSION);
+            rpl_cal_frm->head.id      = __constant_htons(TDMA_FRM_RPL_CAL);
+
+            rpl_cal_frm->request_xmit_stamp = REQ_CAL_FRM(head)->xmit_stamp;
+            rpl_cal_frm->reception_stamp    =
+                cpu_to_be64(rtos_time_to_nanosecs(&rtskb->time_stamp));
+            rpl_cal_frm->xmit_stamp         = 0;
+
+            reply_rtskb->xmit_stamp = &rpl_cal_frm->xmit_stamp;
+
+            /* use reply_rtskb memory behind the frame as job buffer */
+            rpl_cal_job = (struct tdma_reply_cal *)reply_rtskb->tail;
+            RTNET_ASSERT(reply_rtskb->tail +
+                sizeof(struct tdma_reply_cal) <= reply_rtskb->buf_end,
+                rtskb_over_panic(reply_rtskb, sizeof(struct tdma_reply_cal),
+                                 current_text_addr()););
+
+            rpl_cal_job->head.id        = XMIT_RPL_CAL;
+            rpl_cal_job->head.ref_count = 0;
+            rpl_cal_job->reply_cycle = ntohs(REQ_CAL_FRM(head)->reply_cycle);
+            rpl_cal_job->reply_rtskb = reply_rtskb;
+            rtos_nanosecs_to_time(
+                be64_to_cpu(REQ_CAL_FRM(head)->reply_slot_offset),
+                &rpl_cal_job->reply_offset);
+
+            rtos_spin_lock_irqsave(&tdma->lock, flags);
+
+            job = tdma->current_job;
+            while (1) {
+                job = list_entry(job->entry.prev, struct tdma_job, entry);
+                if ((job == tdma->first_job) ||
+                    ((job->id >= 0) &&
+                     RTOS_TIME_IS_BEFORE(&SLOT_JOB(job)->offset,
+                                         &rpl_cal_job->reply_offset)) ||
+                    ((job->id == XMIT_RPL_CAL) &&
+                     RTOS_TIME_IS_BEFORE(&REPLY_CAL_JOB(job)->reply_offset,
+                                         &rpl_cal_job->reply_offset)))
+                    break;
+            }
+            list_add(&rpl_cal_job->head.entry, &job->entry);
+            tdma->job_list_revision++;
+
+            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+            break;
+#endif
+
+        case __constant_htons(TDMA_FRM_RPL_CAL):
+            rtskb_pull(rtskb, sizeof(struct tdma_frm_rpl_cal));
+
+            /* see "Time Arithmetics" in the TDMA specification */
+            delay = (rtos_time_to_nanosecs(&rtskb->time_stamp) -
+                     be64_to_cpu(RPL_CAL_FRM(head)->request_xmit_stamp)) -
+                    (be64_to_cpu(RPL_CAL_FRM(head)->xmit_stamp) -
+                     be64_to_cpu(RPL_CAL_FRM(head)->reception_stamp));
+            delay = (delay + 1) >> 1;
+
+            rtos_spin_lock_irqsave(&tdma->lock, flags);
+
+            call = tdma->calibration_call;
+            if (call == NULL) {
+                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                break;
+            }
+            req_cal_job = rtpc_get_priv(call, struct tdma_request_cal);
+
+            req_cal_job->result_buffer[--req_cal_job->cal_rounds] = delay;
+
+            if (req_cal_job->cal_rounds > 0) {
+                tdma->job_list_revision++;
+                list_add(&req_cal_job->head.entry, &tdma->first_job->entry);
+
+                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+            } else {
+                tdma->calibration_call = NULL;
+
+                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+                rtpc_complete_call(call, 0);
+            }
+
             break;
 
         default:

@@ -85,7 +85,8 @@ int nomac_ioctl(struct rtnet_device *rtdev, unsigned int request,
     if (ret != 0)
         return -EFAULT;
 
-    down(&rtdev->nrt_sem);
+    if (down_interruptible(&rtdev->nrt_sem))
+        return -ERESTARTSYS;
 
     switch (request) {
         case NOMAC_IOC_ATTACH:

@@ -33,8 +33,8 @@
 #define TDMA_FRM_VERSION    0x0200
 
 #define TDMA_FRM_SYNC       0x0000
-#define TDMA_FRM_CAL_REQ    0x0010
-#define TDMA_FRM_CAL_RPL    0x0011
+#define TDMA_FRM_REQ_CAL    0x0010
+#define TDMA_FRM_RPL_CAL    0x0011
 
 
 struct tdma_frm_head {
@@ -53,7 +53,29 @@ struct tdma_frm_sync {
 } __attribute__((packed));
 
 
+#define REQ_CAL_FRM(head)   ((struct tdma_frm_req_cal *)(head))
+
+struct tdma_frm_req_cal {
+    struct tdma_frm_head    head;
+    u64                     xmit_stamp;
+    u16                     reply_cycle;
+    u64                     reply_slot_offset;
+} __attribute__((packed));
+
+
+#define RPL_CAL_FRM(head)   ((struct tdma_frm_rpl_cal *)(head))
+
+struct tdma_frm_rpl_cal {
+    struct tdma_frm_head    head;
+    u64                     request_xmit_stamp;
+    u64                     reception_stamp;
+    u64                     xmit_stamp;
+} __attribute__((packed));
+
+
 void tdma_xmit_sync_frame(struct tdma_priv *tdma);
+int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u16 reply_cycle,
+                                u64 reply_slot_offset);
 
 int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev);
 int tdma_nrt_packet_tx(struct rtskb *rtskb);

@@ -23,10 +23,11 @@
  *
  */
 
-#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <tdma_chrdev.h>
 
@@ -39,13 +40,12 @@ void help(void)
 {
     fprintf(stderr, "Usage:\n"
         "\ttdmacfg <dev> master <cycle_period> [-b <backup_offset>]\n"
-        "\t        [-c calibration_rounds] [-l calibration_log_file]\n"
-        "\t        [-m max_calibration_requests] [-i max_slot_id]\n"
-        "\ttdmacfg <dev> slave [-c calibration_rounds] "
-            "[-l calibration_log_file]\n"
-        "\t        [-i max_slot_id]\n"
+        "\t        [-c calibration_rounds] [-i max_slot_id]\n"
+        "\t        [-m max_calibration_requests]\n"
+        "\ttdmacfg <dev> slave [-c calibration_rounds] [-i max_slot_id]\n"
         "\ttdmacfg <dev> slot <id> [<offset> [-p <phasing>/<period>] "
-            "[-s <size>]]\n"
+            "[-s <size>]\n"
+        "\t         [-l calibration_log_file] [-t calibration_timeout]]\n"
         "\ttdmacfg <dev> detach\n");
 
     exit(1);
@@ -70,9 +70,42 @@ int getintopt(int argc, int pos, char *argv[], int min)
 
 
 
+void write_calibration_log(char *log_filename, unsigned int rounds,
+                           __u64 *cal_results)
+{
+    char    str_buf[32];
+    int     log_file;
+    int     i;
+    int     r;
+
+
+    log_file = open(log_filename, O_CREAT | O_WRONLY | O_TRUNC,
+                    S_IREAD | S_IWRITE);
+    if (log_file < 0) {
+        perror("create output file");
+        free(cal_results);
+        exit(1);
+    }
+
+    for (i = rounds-1; i >= 0; i--) {
+        r = sprintf(str_buf, "%llu\n", cal_results[i]);
+        if (write(log_file, str_buf, r) < 0) {
+            perror("write output file");
+            free(cal_results);
+            exit(1);
+        }
+    }
+
+    close(log_file);
+    free(cal_results);
+}
+
+
+
 void do_master(int argc, char *argv[])
 {
-    int r;
+    int     r;
+    int     i;
 
 
     if (argc < 4)
@@ -89,6 +122,21 @@ void do_master(int argc, char *argv[])
     tdma_cfg.args.master.max_cal_requests   = 64;
     tdma_cfg.args.master.max_slot_id        = 7;
 
+    for (i = 4; i < argc; i++) {
+        if (strcmp(argv[i], "-b") == 0)
+            tdma_cfg.args.master.backup_sync_offset =
+                getintopt(argc, ++i, argv, 0);
+        else if (strcmp(argv[i], "-c") == 0)
+            tdma_cfg.args.master.cal_rounds = getintopt(argc, ++i, argv, 0);
+        else if (strcmp(argv[i], "-i") == 0)
+            tdma_cfg.args.master.max_slot_id = getintopt(argc, ++i, argv, 0);
+        else if (strcmp(argv[i], "-m") == 0)
+            tdma_cfg.args.master.max_cal_requests =
+                getintopt(argc, ++i, argv, 1);
+        else
+            help();
+    }
+
     r = ioctl(f, TDMA_IOC_MASTER, &tdma_cfg);
     if (r < 0) {
         perror("ioctl");
@@ -101,7 +149,8 @@ void do_master(int argc, char *argv[])
 
 void do_slave(int argc, char *argv[])
 {
-    int r;
+    int     i;
+    int     r;
 
 
     if (argc < 3)
@@ -109,6 +158,15 @@ void do_slave(int argc, char *argv[])
 
     tdma_cfg.args.slave.cal_rounds  = 100;
     tdma_cfg.args.slave.max_slot_id = 7;
+
+    for (i = 3; i < argc; i++) {
+        if (strcmp(argv[i], "-c") == 0)
+            tdma_cfg.args.slave.cal_rounds = getintopt(argc, ++i, argv, 0);
+        else if (strcmp(argv[i], "-i") == 0)
+            tdma_cfg.args.slave.max_slot_id = getintopt(argc, ++i, argv, 0);
+        else
+            help();
+    }
 
     r = ioctl(f, TDMA_IOC_SLAVE, &tdma_cfg);
     if (r < 0) {
@@ -122,8 +180,11 @@ void do_slave(int argc, char *argv[])
 
 void do_slot(int argc, char *argv[])
 {
-    int             r;
+    char            *log_filename = NULL;
     unsigned int    ioc;
+    int             r;
+    int             i;
+    int             result_size;
 
 
     if (argc < 4)
@@ -143,9 +204,56 @@ void do_slot(int argc, char *argv[])
         }
         tdma_cfg.args.set_slot.offset = ((__u64)r) * 1000;
 
-        tdma_cfg.args.set_slot.period  = 1;
-        tdma_cfg.args.set_slot.phasing = 1;
-        tdma_cfg.args.set_slot.size    = 0;
+        tdma_cfg.args.set_slot.period      = 1;
+        tdma_cfg.args.set_slot.phasing     = 0;
+        tdma_cfg.args.set_slot.size        = 0;
+        tdma_cfg.args.set_slot.cal_timeout = 0;
+        tdma_cfg.args.set_slot.cal_results = NULL;
+
+        for (i = 5; i < argc; i++) {
+            if (strcmp(argv[i], "-l") == 0) {
+                if (++i >= argc)
+                    help();
+                log_filename = argv[i];
+            } else if (strcmp(argv[i], "-p") == 0) {
+                if (++i >= argc)
+                    help();
+                if ((sscanf(argv[i], "%u/%u",
+                            &tdma_cfg.args.set_slot.phasing,
+                            &tdma_cfg.args.set_slot.period) != 2) ||
+                    (tdma_cfg.args.set_slot.phasing < 1) ||
+                    (tdma_cfg.args.set_slot.period < 1) ||
+                    (tdma_cfg.args.set_slot.phasing >
+                        tdma_cfg.args.set_slot.period)) {
+                    fprintf(stderr, "invalid parameter: %s %s\n", argv[i-1],
+                            argv[i]);
+                    exit(1);
+                }
+                tdma_cfg.args.set_slot.phasing--;
+            } else if (strcmp(argv[i], "-s") == 0)
+                tdma_cfg.args.set_slot.size =
+                    getintopt(argc, ++i, argv, MIN_SLOT_SIZE);
+            else if (strcmp(argv[i], "-t") == 0)
+                tdma_cfg.args.set_slot.cal_timeout =
+                    getintopt(argc, ++i, argv, 0);
+            else
+                help();
+        }
+
+        if (log_filename) {
+            /* note: we can reuse tdma_cfg here as the head is the same and
+             *       will remain unmodified */
+            result_size = ioctl(f, TDMA_IOC_CAL_RESULT_SIZE, &tdma_cfg);
+            if (result_size > 0) {
+                tdma_cfg.args.set_slot.cal_results =
+                    (__u64 *)malloc(result_size * sizeof(__u64));
+                if (!tdma_cfg.args.set_slot.cal_results) {
+                    fprintf(stderr, "insufficient memory\n");
+                    exit(1);
+                }
+            } else
+                log_filename = NULL;
+        }
 
         ioc = TDMA_IOC_SET_SLOT;
     } else {
@@ -159,6 +267,10 @@ void do_slot(int argc, char *argv[])
         perror("ioctl");
         exit(1);
     }
+
+    if (log_filename)
+        write_calibration_log(log_filename, result_size,
+                              tdma_cfg.args.set_slot.cal_results);
     exit(0);
 }
 
