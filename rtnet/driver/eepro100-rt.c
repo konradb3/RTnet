@@ -1740,9 +1740,9 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	clear_bit(0, (void*)&sp->in_interrupt);
+	rt_enable_irq(irq);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rt_enable_irq(irq);
 	return;
 }
 
