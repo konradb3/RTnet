@@ -54,6 +54,7 @@ int rtmac_vnic_rx(struct rtskb *skb, u16 type)
 
     skb->protocol = type;
 
+    rtdev_reference(skb->rtdev);
     rtskb_queue_tail(&rx_queue, skb);
     rtos_pend_nrt_signal(&vnic_signal);
 
@@ -68,6 +69,7 @@ static void rtmac_vnic_signal_handler(void)
     struct sk_buff          *skb;
     unsigned                hdrlen;
     struct net_device_stats *stats;
+    struct rtnet_device     *rtdev;
 
 
     while (1)
@@ -76,7 +78,8 @@ static void rtmac_vnic_signal_handler(void)
         if (!rtskb)
             break;
 
-        hdrlen = rtskb->rtdev->hard_header_len;
+        rtdev  = rtskb->rtdev;
+        hdrlen = rtdev->hard_header_len;
 
         skb = dev_alloc_skb(hdrlen + rtskb->len + 2);
         if (skb) {
@@ -95,7 +98,7 @@ static void rtmac_vnic_signal_handler(void)
             skb->dev      = &rtskb->rtdev->mac_priv->vnic;
             skb->protocol = eth_type_trans(skb, skb->dev);
 
-            rtos_time_to_timeval(&rtskb->rx, &skb->stamp);
+            rtos_time_to_timeval(&rtskb->time_stamp, &skb->stamp);
             stats = &rtskb->rtdev->mac_priv->vnic_stats;
 
             kfree_rtskb(rtskb);
@@ -109,6 +112,8 @@ static void rtmac_vnic_signal_handler(void)
             printk("RTmac: VNIC fails to allocate linux skb\n");
             kfree_rtskb(rtskb);
         }
+
+        rtdev_dereference(rtdev);
     }
 }
 
@@ -271,5 +276,13 @@ int __init rtmac_vnic_module_init(void)
 
 void rtmac_vnic_module_cleanup(void)
 {
+    struct rtskb *rtskb;
+
+
     rtos_nrt_signal_delete(&vnic_signal);
+
+    while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {
+        rtdev_dereference(rtskb->rtdev);
+        kfree_rtskb(rtskb);
+    }
 }
