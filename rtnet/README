@@ -1,4 +1,4 @@
-                             RTnet Version 0.5.0
+                             RTnet Version 0.5.5
 
 What is it?
 -----------
@@ -13,7 +13,7 @@ What are the requirements?
 - x86 platform (at least for LXRT extensions, kernel API _should_ work on
   other platforms, too)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
-  AMD PCnet32/PCnetPCI network adapter
+  AMD PCnet32/PCnetPCI, VIA Rhine network adapter
 
 How to install it?
 ------------------
@@ -29,9 +29,7 @@ How to install it?
        --enable-loopback        compiles the loopback driver
        --enable-pcnet32         compiles the PCnet32 driver
        --enable-tulip           compiles the DEC driver
-       --enable-rtskb-kmalloc   uses kmalloc instead of rt_malloc for creating
-                                or extending network buffer pools (required
-                                if the RTAI memory manager uses vmalloc)
+       --enable-via-rhine       compiles the VIA Rhine driver
 6. make
 7. Copy the desired modules (rtnet.o, rtmac.o, drivers, examples, etc.) to your
    target system
@@ -74,7 +72,7 @@ I assume that rtnet module has been loaded and configured(rtifconfig).
 4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
 5. You can furthermore use the associated VNIC (here "vnic0") now.
 
-See README.rtmac for more information.
+See Documentation/README.rtmac for more information.
 
 NOTE FOR RTMAC: ONLY one-shot timer mode is supported by the current RTmac.
 
