@@ -668,7 +668,7 @@ fcc_enet_interrupt(unsigned int irq, void *rtdev_id)
 		 * down.  We now issue a restart transmit.  Since the
 		 * errors close the BD and update the pointers, the restart
 		 * _should_ pick up without having to reset any of our
-		 * pointers either.  Also, To workaround 8260 device erratum 
+		 * pointers either.  Also, To workaround 8260 device erratum
 		 * CPM37, we must disable and then re-enable the transmitter
 		 * following a Late Collision, Underrun, or Retry Limit error.
 		 */
@@ -696,7 +696,7 @@ fcc_enet_interrupt(unsigned int irq, void *rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_enable(irq);
+	rtos_irq_end(irq);
 	return;
 }
 
@@ -772,7 +772,7 @@ for (;;) {
 			       (unsigned char *)__va(bdp->cbd_bufaddr),
 			       pkt_len);
 			skb->protocol=rt_eth_type_trans(skb,rtdev);
-			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 			rtnetif_rx(skb);
 			(*packets)++;
 		}

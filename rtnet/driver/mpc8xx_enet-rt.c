@@ -465,7 +465,7 @@ scc_enet_interrupt(unsigned int irq, void *rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_enable(irq);
+	rtos_irq_end(irq);
 	return;
 }
 
@@ -548,7 +548,7 @@ scc_enet_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 			       (unsigned char *)__va(bdp->cbd_bufaddr),
 			       pkt_len-4);
 			skb->protocol=rt_eth_type_trans(skb,rtdev);
-			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 			rtnetif_rx(skb);
 			(*packets)++;
 		}

@@ -1351,7 +1351,7 @@ pcnet32_interrupt(unsigned int irq, void *rtdev_id) /*** RTnet ***/
 	       dev->name, lp->a.read_csr (ioaddr, 0));
 
 /*** RTnet ***/
-    rtos_irq_enable(irq);
+    rtos_irq_end(irq);
     rtos_spin_unlock(&lp->lock);
 
     if (old_packet_cnt != lp->stats.rx_packets)
@@ -1444,7 +1444,7 @@ pcnet32_rx(struct rtnet_device *dev, rtos_time_t *time_stamp) /*** RTnet ***/
 #endif
 		lp->stats.rx_bytes += skb->len;
 		skb->protocol=rt_eth_type_trans(skb,dev);
-		memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+		memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 		rtnetif_rx(skb);
 		///dev->last_rx = jiffies;
 /*** RTnet ***/

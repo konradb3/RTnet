@@ -1834,10 +1834,10 @@ static void intr_handler(unsigned int irq, void *dev_instance)/*, struct pt_regs
 		rtos_print(KERN_DEBUG "%s: exiting interrupt.\n", dev->name);
 		
 /*** RTnet ***/
-	rtos_irq_enable(irq);
+	rtos_irq_end(irq);
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
-		
+
 }
 
 /* This routine is logically part of the interrupt handler, but separated
@@ -1916,7 +1916,7 @@ static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp)
 			}
 /*** RTnet ***/
 			skb->protocol = rt_eth_type_trans(skb, dev);
-			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 			rtnetif_rx(skb);
 			/*dev->last_rx = jiffies;*/
 /*** RTnet ***/
