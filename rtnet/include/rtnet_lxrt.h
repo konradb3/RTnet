@@ -66,22 +66,22 @@
 
 
 extern int rt_socket_init(int family, int type, int protocol);
-extern int rt_socket_close(int fd);
-extern int rt_socket_bind(int fd, struct sockaddr *addr, int addr_len);
-extern int rt_socket_connect(int fd, struct sockaddr *addr, int addr_len);
-extern int rt_socket_accept(int fd, struct sockaddr *addr, int *addrlen);
-extern int rt_socket_listen(int fd, int backlog);
-extern int rt_socket_send(int fd, void *buf, int len, unsigned int flags);
-extern int rt_socket_recv(int fd,void *buf,int len, unsigned int flags);
-extern int rt_socket_sendto(int fd, void *buf, int len, unsigned int flags,
-                            struct sockaddr *to, int tolen);
-extern int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags,
-                              struct sockaddr *from, int *fromlen);
-extern int rt_socket_sendmsg(int fd, struct msghdr *msg, unsigned int flags);
-extern int rt_socket_recvmsg(int fd, struct msghdr *msg, unsigned int flags);
-extern int rt_socket_getsockname(int fd, struct sockaddr *addr, int addr_len);
-extern int rt_socket_setsockopt(int fd, int level, int optname,
-                                const void *optval, int optlen);
+extern int rt_socket_close(int s);
+extern int rt_socket_bind(int s, struct sockaddr *my_addr, socklen_t addrlen);
+extern int rt_socket_connect(int s, const struct sockaddr *addr, socklen_t addrlen);
+extern int rt_socket_accept(int s, struct sockaddr *addr, socklen_t *addrlen);
+extern int rt_socket_listen(int s, int backlog);
+extern int rt_socket_send(int s, const void *msg, size_t len, int flags);
+extern int rt_socket_recv(int s,void *buf, size_t len, int flags);
+extern int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
+                            const struct sockaddr *to, socklen_t tolen);
+extern int rt_socket_recvfrom(int s, void *buf, size_t len, int flags,
+                              struct sockaddr *from, socklen_t *fromlen);
+extern int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags);
+extern int rt_socket_recvmsg(int s, struct msghdr *msg, int flags);
+extern int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen);
+extern int rt_socket_setsockopt(int s, int level, int optname,
+                                const void *optval, socklen_t optlen);
 
 #define rt_bind                 rt_socket_bind
 #define rt_listen               rt_socket_listen

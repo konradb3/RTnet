@@ -40,17 +40,19 @@
 
 struct rtsocket_ops {
     int  (*bind)        (struct rtsocket *s, struct sockaddr *my_addr,
-                         int addr_len);
-    int  (*connect)     (struct rtsocket *s, struct sockaddr *serv_addr,
-                         int addr_len);
+                         socklen_t addrlen);
+    int  (*connect)     (struct rtsocket *s, const struct sockaddr *serv_addr,
+                         socklen_t addrlen);
     int  (*listen)      (struct rtsocket *s, int backlog);
-    int  (*accept)      (struct rtsocket *s, struct sockaddr *client_addr,
-                         int *addr_len);
-    int  (*recvmsg)     (struct rtsocket *s, struct msghdr *msg, int len);
-    int  (*sendmsg)     (struct rtsocket *s, const struct msghdr *msg, int len);
+    int  (*accept)      (struct rtsocket *s, struct sockaddr *addr,
+                         socklen_t *addrlen);
+    int  (*recvmsg)     (struct rtsocket *s, struct msghdr *msg,
+                         size_t total_len, int flags);
+    int  (*sendmsg)     (struct rtsocket *s, const struct msghdr *msg,
+                         size_t total_len, int flags);
     void (*close)       (struct rtsocket *s, long timeout);
     int  (*setsockopt)  (struct rtsocket *s, int level, int optname,
-                         const void *optval, int optlen);
+                         const void *optval, socklen_t optlen);
 };
 
 struct rtsocket {

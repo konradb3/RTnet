@@ -28,7 +28,7 @@
 /***
  *	rt_iovec_len
  */
-int rt_iovec_len(struct iovec *iov, int iovlen)
+int rt_iovec_len(const struct iovec *iov, int iovlen)
 {
 	int i,len=0;
 	for (i=0; i<iovlen; i++) 

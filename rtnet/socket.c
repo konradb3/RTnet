@@ -168,8 +168,8 @@ int rt_socket(int family, int type, int protocol)
 
     /* create the socket (call the socket creator) */
     if  (rt_inet_protocols[hash]) {
-        int fd;
-        fd = rt_inet_protocols[hash]->socket(sock);
+        int s;
+        s = rt_inet_protocols[hash]->socket(sock);
 
         /* This is the right place to check if sock->ops is not NULL. */
         if (NULL == sock->ops) {
@@ -179,7 +179,7 @@ int rt_socket(int family, int type, int protocol)
              */
         }
         /* This is the right place to check if sock->ops->... are not NULL. */
-        return fd;
+        return s;
     } else {
         rt_printk("RTnet: protocol with id %d not found\n", protocol);
         rt_socket_release(sock);
@@ -193,14 +193,14 @@ int rt_socket(int family, int type, int protocol)
  *  rt_sock_bind
  *  Bind a socket to a sockaddr
  */
-int rt_socket_bind(int fd, struct sockaddr *my_addr, int addr_len)
+int rt_socket_bind(int s, struct sockaddr *my_addr, socklen_t addrlen)
 {
-    SOCKET *sock = rt_socket_lookup(fd);
+    SOCKET *sock = rt_socket_lookup(s);
     if ((NULL == sock) ||
         (NULL == sock->ops) || /* This check shall be obsolete in the future! */
         (NULL == sock->ops->bind)) /* There should be no socket without ops! */
         return -ENOTSOCK;
-    return ( sock->ops->bind(sock, my_addr, addr_len) );
+    return ( sock->ops->bind(sock, my_addr, addrlen) );
 }
 
 
@@ -208,9 +208,9 @@ int rt_socket_bind(int fd, struct sockaddr *my_addr, int addr_len)
 /***
  *  rt_socket_listen
  */
-int rt_socket_listen(int fd, int backlog)
+int rt_socket_listen(int s, int backlog)
 {
-    SOCKET *sock = rt_socket_lookup(fd);
+    SOCKET *sock = rt_socket_lookup(s);
     if ((NULL == sock) ||
         (NULL == sock->ops) || /* This check shall be obsolete in the future! */
         (NULL == sock->ops->listen)) /* There should be no socket without ops! */
@@ -223,14 +223,14 @@ int rt_socket_listen(int fd, int backlog)
 /***
  *  rt_socket_connect
  */
-int rt_socket_connect(int fd, struct sockaddr *serv_addr, int addr_len)
+int rt_socket_connect(int s, const struct sockaddr *serv_addr, socklen_t addrlen)
 {
-    SOCKET *sock = rt_socket_lookup(fd);
+    SOCKET *sock = rt_socket_lookup(s);
     if ((NULL == sock) ||
         (NULL == sock->ops) || /* This check shall be obsolete in the future! */
         (NULL == sock->ops->connect)) /* There should be no socket without ops! */
         return -ENOTSOCK;
-    return ( sock->ops->connect(sock, serv_addr, addr_len) );
+    return ( sock->ops->connect(sock, serv_addr, addrlen) );
 }
 
 
@@ -238,14 +238,14 @@ int rt_socket_connect(int fd, struct sockaddr *serv_addr, int addr_len)
 /***
  *  rt_socket_accept
  */
-int rt_socket_accept(int fd, struct sockaddr *client_addr, int *addr_len)
+int rt_socket_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
-    SOCKET *sock = rt_socket_lookup(fd);
+    SOCKET *sock = rt_socket_lookup(s);
     if ((NULL == sock) ||
         (NULL == sock->ops) || /* This check shall be obsolete in the future! */
         (NULL == sock->ops->accept)) /* There should be no socket without ops! */
         return -ENOTSOCK;
-    return ( sock->ops->accept(sock, client_addr, addr_len) );
+    return ( sock->ops->accept(sock, addr, addrlen) );
 }
 
 
@@ -253,9 +253,9 @@ int rt_socket_accept(int fd, struct sockaddr *client_addr, int *addr_len)
 /***
  *  rt_socket_close
  */
-int rt_socket_close(int fd)
+int rt_socket_close(int s)
 {
-    SOCKET *sock = rt_socket_lookup(fd);
+    SOCKET *sock = rt_socket_lookup(s);
     if ((NULL == sock) ||
         (NULL == sock->ops) || /* This check shall be obsolete in the future! */
         (NULL == sock->ops->close)) /* There should be no socket without ops! */
@@ -271,9 +271,9 @@ int rt_socket_close(int fd)
 /***
  *  rt_socket_send
  */
-int rt_socket_send(int fd, void *buf, int len, unsigned int flags)
+int rt_socket_send(int s, const void *msg, size_t len, int flags)
 {
-    return rt_socket_sendto(fd, buf, len, flags, NULL, 0);
+    return rt_socket_sendto(s, msg, len, flags, NULL, 0);
 }
 
 
@@ -281,10 +281,10 @@ int rt_socket_send(int fd, void *buf, int len, unsigned int flags)
 /***
  *  rt_socket_recv
  */
-int rt_socket_recv(int fd, void *buf, int len, unsigned int flags)
+int rt_socket_recv(int s, void *buf, size_t len, int flags)
 {
     int fromlen=0; /* fix for null pointer dereference-NZG */
-    return rt_socket_recvfrom(fd, buf, len, flags, NULL, &fromlen);
+    return rt_socket_recvfrom(s, buf, len, flags, NULL, &fromlen);
 }
 
 
@@ -292,14 +292,15 @@ int rt_socket_recv(int fd, void *buf, int len, unsigned int flags)
 /***
  *  rt_socket_sendto
  */
-int rt_socket_sendto(int fd, void *buf, int len, unsigned int flags, struct sockaddr *to, int tolen)
+int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
+                     const struct sockaddr *to, socklen_t tolen)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
-    struct msghdr msg;
+    SOCKET *sock=rt_socket_lookup(s);
+    struct msghdr msg_hdr;
     struct iovec iov;
 
     if ( !sock ) {
-        rt_printk("RTnet: socket %d not found\n", fd);
+        rt_printk("RTnet: socket %d not found\n", s);
         return -ENOTSOCK;
     }
 
@@ -307,25 +308,24 @@ int rt_socket_sendto(int fd, void *buf, int len, unsigned int flags, struct sock
         (NULL == sock->ops->sendmsg)) /* There should be no socket without ops! */
         return -ENOTSOCK;
 
-    iov.iov_base=(void *)buf;
+    iov.iov_base=(void *)msg;
     iov.iov_len=len;
 
-    msg.msg_name=to;
-    msg.msg_namelen=tolen;
-    msg.msg_iov=&iov;
-    msg.msg_iovlen=1;
-    msg.msg_control=NULL;
-    msg.msg_controllen=0;
-    msg.msg_flags=flags;
+    msg_hdr.msg_name=(void*)to;
+    msg_hdr.msg_namelen=tolen;
+    msg_hdr.msg_iov=&iov;
+    msg_hdr.msg_iovlen=1;
+/*    msg_hdr.msg_control=NULL;     not used
+    msg_hdr.msg_controllen=0; */
 
-    return sock->ops->sendmsg(sock, &msg, len);
+    return sock->ops->sendmsg(sock, &msg_hdr, len, flags);
 }
 
 
 
 /***
  *  rt_recvfrom
- *  @fd         filedescriptor
+ *  @s          socket descriptor
  *  @buf        buffer
  *  @len        length of buffer
  *  @flags      usermode -> kern
@@ -335,10 +335,10 @@ int rt_socket_sendto(int fd, void *buf, int len, unsigned int flags, struct sock
  *              kern->usermode
  *                  MSG_TRUNC    :
  */
-int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct sockaddr *from, int *fromlen)
+int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr *from, socklen_t *fromlen)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
-    struct msghdr msg;
+    SOCKET *sock=rt_socket_lookup(s);
+    struct msghdr msg_hdr;
     struct iovec iov;
     int error=0;
 
@@ -349,18 +349,17 @@ int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct so
 
     iov.iov_base=buf;
     iov.iov_len=len;
-    msg.msg_name=from;
-    msg.msg_namelen=*fromlen;
-    msg.msg_iov=&iov;
-    msg.msg_iovlen=1;
-    msg.msg_control=NULL;
-    msg.msg_controllen=0;
-    msg.msg_flags=flags;
+    msg_hdr.msg_name=from;
+    msg_hdr.msg_namelen=*fromlen;
+    msg_hdr.msg_iov=&iov;
+    msg_hdr.msg_iovlen=1;
+/*    msg_hdr.msg_control=NULL;     not used
+    msg_hdr.msg_controllen=0; */
 
-    error = sock->ops->recvmsg(sock, &msg, len);
+    error = sock->ops->recvmsg(sock, &msg_hdr, len, flags);
 
     if ( (error>=0) && (*fromlen!=0) )
-        *fromlen=msg.msg_namelen;
+        *fromlen=msg_hdr.msg_namelen;
 
     return error;
 }
@@ -370,16 +369,18 @@ int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct so
 /***
  *  rt_socket_sendmsg
  */
-int rt_socket_sendmsg(int fd, struct msghdr *msg, unsigned int flags)
+int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
+    SOCKET *sock=rt_socket_lookup(s);
     int len;
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->sendmsg)) /* There should be no socket without ops! */
+
+    if (sock == NULL)
         return -ENOTSOCK;
-    len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
-    return sock->ops->sendmsg(sock,msg,len);
+
+    ASSERT((sock->ops != NULL) && (sock->ops->sendmsg), return -ENOTSOCK;);
+
+    len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
+    return sock->ops->sendmsg(sock, msg, len, flags);
 }
 
 
@@ -387,18 +388,18 @@ int rt_socket_sendmsg(int fd, struct msghdr *msg, unsigned int flags)
 /***
  *  rt_socket_recvmsg
  */
-int rt_socket_recvmsg(int fd, struct msghdr *msg, unsigned int flags)
+int rt_socket_recvmsg(int s, struct msghdr *msg, int flags)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
-    int len;
+    SOCKET *sock=rt_socket_lookup(s);
+    int total_len;
 
-    if ((NULL == sock) ||
-        (NULL == sock->ops) || /* This check shall be obsolete in the future! */
-        (NULL == sock->ops->recvmsg)) /* There should be no socket without ops! */
+    if (sock == NULL)
         return -ENOTSOCK;
 
-    len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
-    return sock->ops->recvmsg(sock,msg,len);
+    ASSERT((sock->ops != NULL) && (sock->ops->recvmsg), return -ENOTSOCK;);
+
+    total_len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
+    return sock->ops->recvmsg(sock, msg, total_len, flags);
 }
 
 
@@ -406,16 +407,19 @@ int rt_socket_recvmsg(int fd, struct msghdr *msg, unsigned int flags)
 /***
  *  rt_sock_getsockname
  */
-int rt_socket_getsockname(int fd, struct sockaddr *addr, int addr_len)
+int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
+    SOCKET *sock=rt_socket_lookup(s);
     struct sockaddr_in *usin = (struct sockaddr_in *)addr;
+
+    if (sock == NULL)
+        return -ENOTSOCK;
 
     usin->sin_family=sock->family;
     usin->sin_addr.s_addr=sock->saddr;
     usin->sin_port=sock->sport;
 
-    return ( sizeof(struct sockaddr_in) );
+    return sizeof(struct sockaddr_in);
 }
 
 
@@ -423,11 +427,16 @@ int rt_socket_getsockname(int fd, struct sockaddr *addr, int addr_len)
 /***
  *  rt_socket_callback
  */
-int rt_socket_callback(int fd, int (*func)(int,void *), void *arg)
+int rt_socket_callback(int s, int (*func)(int,void *), void *arg)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
+    SOCKET *sock=rt_socket_lookup(s);
+
+    if (sock == NULL)
+        return -ENOTSOCK;
+
     sock->private=arg;
     sock->wakeup=func;
+
     return 0;
 }
 
@@ -436,17 +445,17 @@ int rt_socket_callback(int fd, int (*func)(int,void *), void *arg)
 /***
  *  rt_socket_setsockopt
  */
-int rt_socket_setsockopt(int fd, int level, int optname, const void *optval,
-                         int optlen)
+int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
+                         socklen_t optlen)
 {
-    SOCKET *sock=rt_socket_lookup(fd);
+    SOCKET *sock=rt_socket_lookup(s);
     int ret = 0;
 
     if (sock == NULL)
         return -ENOTSOCK;
 
     if (level == SOL_SOCKET) {
-        if (optlen < (int)sizeof(unsigned int))
+        if (optlen < sizeof(unsigned int))
             return -EINVAL;
 
         switch (optname) {
@@ -472,7 +481,7 @@ int rt_socket_setsockopt(int fd, int level, int optname, const void *optval,
                 break;
 
             case RT_SO_TIMEOUT:
-                if (optlen < (int)sizeof(RTIME))
+                if (optlen < sizeof(RTIME))
                     ret = -EINVAL;
                 else
                     sock->timeout = *(RTIME *)optval;
@@ -499,17 +508,17 @@ int rt_socket_setsockopt(int fd, int level, int optname, const void *optval,
  */
 int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
 {
-    if (!socket)
+    if (socket == NULL)
         return -ENOTSOCK;
     else {
         unsigned char hash;
 
         /* protol family (PF_INET) and adress family (AF_INET) only */
-        if ( (family!=AF_INET) )
+        if (family!=AF_INET)
             return -EAFNOSUPPORT;
 
         /* only datagram-sockets */
-        if ( type!=SOCK_DGRAM )
+        if (type!=SOCK_DGRAM)
             return -EAFNOSUPPORT;
 
         /* create new file descriptor */
@@ -525,7 +534,7 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
             hash = rt_inet_hashkey(protocol);
 
         /* create the socket (call the socket creator) */
-        if  ( (rt_inet_protocols[hash]) && (rt_inet_protocols[hash]->socket(socket)>0) )
+        if  ((rt_inet_protocols[hash]) && (rt_inet_protocols[hash]->socket(socket) > 0))
             return 0;
         else {
             rt_printk("RTnet: protocol with id %d not found\n", protocol);
@@ -540,13 +549,14 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
 /***
  *  rt_ssocket_bind
  */
-int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, int addr_len)
+int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, socklen_t addrlen)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->bind)) /* There should be no socket without ops! */
+    if (socket == NULL)
         return -ENOTSOCK;
-    return ( socket->ops->bind(socket, addr, addr_len) );
+
+    ASSERT((socket->ops != NULL) && (socket->ops->bind), return -ENOTSOCK;);
+
+    return socket->ops->bind(socket, addr, addrlen);
 }
 
 
@@ -556,11 +566,12 @@ int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, int addr_len)
  */
 int rt_ssocket_listen(SOCKET *socket, int backlog)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->listen)) /* There should be no socket without ops! */
+    if (socket == NULL)
         return -ENOTSOCK;
-    return ( socket->ops->listen(socket, backlog) );
+
+    ASSERT((socket->ops != NULL) && (socket->ops->listen), return -ENOTSOCK;);
+
+    return socket->ops->listen(socket, backlog);
 }
 
 
@@ -568,13 +579,14 @@ int rt_ssocket_listen(SOCKET *socket, int backlog)
 /***
  *  rt_ssocket_connect
  */
-int rt_ssocket_connect(SOCKET *socket, struct sockaddr *addr, int addr_len)
+int rt_ssocket_connect(SOCKET *socket, const struct sockaddr *addr, socklen_t addrlen)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->connect)) /* There should be no socket without ops! */
+    if (socket == NULL)
         return -ENOTSOCK;
-    return ( socket->ops->connect(socket, addr, addr_len) );
+
+    ASSERT((socket->ops != NULL) && (socket->ops->connect), return -ENOTSOCK;);
+
+    return socket->ops->connect(socket, addr, addrlen);
 }
 
 
@@ -582,13 +594,14 @@ int rt_ssocket_connect(SOCKET *socket, struct sockaddr *addr, int addr_len)
 /***
  *  rt_ssocket_accept
  */
-int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addr_len)
+int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, socklen_t *addrlen)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->accept)) /* There should be no socket without ops! */
+    if (socket == NULL)
         return -ENOTSOCK;
-    return ( socket->ops->accept(socket, addr, addr_len) );
+
+    ASSERT((socket->ops != NULL) && (socket->ops->accept), return -ENOTSOCK;);
+
+    return socket->ops->accept(socket, addr, addrlen);
 }
 
 
@@ -598,10 +611,10 @@ int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addr_len)
  */
 int rt_ssocket_close(SOCKET *socket)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->close)) /* There should be no socket without ops! */
+    if (socket == NULL)
         return -ENOTSOCK;
+
+    ASSERT((socket->ops != NULL) && (socket->ops->close), return -ENOTSOCK;);
 
     socket->ops->close(socket, 0);
     return 0;
@@ -612,25 +625,25 @@ int rt_ssocket_close(SOCKET *socket)
 /***
  *  rt_ssocket_writev
  */
-int rt_ssocket_writev(SOCKET *socket, struct iovec *iov, size_t count)
+int rt_ssocket_writev(SOCKET *socket, const struct iovec *iov, int count)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->sendmsg)) /* There should be no socket without ops! */
+    struct msghdr msg_hdr;
+    size_t total_len;
+
+    if (socket == NULL)
         return -ENOTSOCK;
-    else {
-        struct msghdr msg;
 
-        msg.msg_name=NULL;
-        msg.msg_namelen=0;
-        msg.msg_iov=iov;
-        msg.msg_iovlen=1;
-        msg.msg_control=NULL;
-        msg.msg_controllen=0;
-        msg.msg_flags=0;
+    ASSERT((socket->ops != NULL) && (socket->ops->sendmsg), return -ENOTSOCK;);
 
-        return socket->ops->sendmsg(socket, &msg, count);
-    }
+    msg_hdr.msg_name=NULL;
+    msg_hdr.msg_namelen=0;
+    msg_hdr.msg_iov=(struct iovec*)iov;
+    msg_hdr.msg_iovlen=count;
+/*    msg_hdr.msg_control=NULL;     not used
+    msg_hdr.msg_controllen=0; */
+
+    total_len = rt_iovec_len(iov, count);
+    return socket->ops->sendmsg(socket, &msg_hdr, total_len, 0);
 }
 
 
@@ -638,9 +651,9 @@ int rt_ssocket_writev(SOCKET *socket, struct iovec *iov, size_t count)
 /***
  *  rt_ssocket_send
  */
-int rt_ssocket_send(SOCKET *socket, void *buf, int len, unsigned int flags)
+int rt_ssocket_send(SOCKET *socket, const void *msg, size_t len, int flags)
 {
-    return rt_ssocket_sendto(socket, buf, len, flags, NULL, 0);
+    return rt_ssocket_sendto(socket, msg, len, flags, NULL, 0);
 }
 
 
@@ -648,29 +661,28 @@ int rt_ssocket_send(SOCKET *socket, void *buf, int len, unsigned int flags)
 /***
  *  rt_ssocket_sendto
  */
-int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, struct sockaddr *to, int tolen)
+int rt_ssocket_sendto(SOCKET *socket, const void *msg, size_t len, int flags,
+                      const struct sockaddr *to, socklen_t tolen)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->sendmsg)) /* There should be no socket without ops! */
+    struct msghdr msg_hdr;
+    struct iovec iov;
+
+    if (socket == NULL)
         return -ENOTSOCK;
-    else {
-        struct msghdr msg;
-        struct iovec iov;
 
-        iov.iov_base=(void *)buf;
-        iov.iov_len=len;
+    ASSERT((socket->ops != NULL) && (socket->ops->sendmsg), return -ENOTSOCK;);
 
-        msg.msg_name=to;
-        msg.msg_namelen=tolen;
-        msg.msg_iov=&iov;
-        msg.msg_iovlen=1;
-        msg.msg_control=NULL;
-        msg.msg_controllen=0;
-        msg.msg_flags=flags;
+    iov.iov_base=(void *)msg;
+    iov.iov_len=len;
 
-        return socket->ops->sendmsg(socket, &msg, len);
-    }
+    msg_hdr.msg_name=(struct sockaddr*)to;
+    msg_hdr.msg_namelen=tolen;
+    msg_hdr.msg_iov=(void*)&iov;
+    msg_hdr.msg_iovlen=1;
+/*    msg_hdr.msg_control=NULL;     not used
+    msg_hdr.msg_controllen=0; */
+
+    return socket->ops->sendmsg(socket, &msg_hdr, len, flags);
 }
 
 
@@ -678,16 +690,17 @@ int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, st
 /***
  *  rt_socket_sendmsg
  */
-int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
+int rt_ssocket_sendmsg(SOCKET *socket, const struct msghdr *msg, int flags)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->sendmsg)) /* There should be no socket without ops! */
+    int total_len;
+
+    if (socket == NULL)
         return -ENOTSOCK;
-    else {
-        int len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
-        return socket->ops->sendmsg(socket, msg, len);
-    }
+
+    ASSERT((socket->ops != NULL) && (socket->ops->sendmsg), return -ENOTSOCK;);
+
+    total_len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
+    return socket->ops->sendmsg(socket, msg, total_len, flags);
 }
 
 
@@ -695,23 +708,25 @@ int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
 /***
  *  rt_ssocket_readv
  */
-int rt_ssocket_readv(SOCKET *socket, struct iovec *iov, size_t count)
+int rt_ssocket_readv(SOCKET *socket, const struct iovec *iov, int count)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->recvmsg)) /* There should be no socket without ops! */
+    struct msghdr msg_hdr;
+    int total_len;
+
+    if (socket == NULL)
         return -ENOTSOCK;
-    else {
-        struct msghdr msg;
-        msg.msg_name=NULL;
-        msg.msg_namelen=0;
-        msg.msg_iov=iov;
-        msg.msg_iovlen=1;
-        msg.msg_control=NULL;
-        msg.msg_controllen=0;
-        msg.msg_flags=0;
-        return socket->ops->recvmsg(socket, &msg, count);
-    }
+
+    ASSERT((socket->ops != NULL) && (socket->ops->recvmsg), return -ENOTSOCK;);
+
+    msg_hdr.msg_name=NULL;
+    msg_hdr.msg_namelen=0;
+    msg_hdr.msg_iov=(struct iovec*)iov;
+    msg_hdr.msg_iovlen=count;
+/*    msg_hdr.msg_control=NULL;     not used
+    msg_hdr.msg_controllen=0; */
+
+    total_len = rt_iovec_len(iov, count);
+    return socket->ops->recvmsg(socket, &msg_hdr, total_len, 0);
 }
 
 
@@ -719,7 +734,7 @@ int rt_ssocket_readv(SOCKET *socket, struct iovec *iov, size_t count)
 /***
  *  rt_ssocket_recv
  */
-int rt_ssocket_recv(SOCKET *socket, void *buf, int len, unsigned int flags)
+int rt_ssocket_recv(SOCKET *socket, void *buf, size_t len, int flags)
 {
     return rt_ssocket_recvfrom(socket, buf, len, flags, NULL, 0);
 }
@@ -729,31 +744,32 @@ int rt_ssocket_recv(SOCKET *socket, void *buf, int len, unsigned int flags)
 /***
  *  rt_ssocket_recfrom
  */
-int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, struct sockaddr *from, int fromlen)
+int rt_ssocket_recvfrom(SOCKET *socket, void *buf, size_t len, int flags,
+                        struct sockaddr *from, socklen_t fromlen)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->bind)) /* There should be no socket without ops! */
-        return -ENOTSOCK;
-    else {
-        struct msghdr msg;
-        struct iovec iov;
-        int error=0;
+    struct msghdr msg_hdr;
+    struct iovec iov;
+    int error=0;
 
-        iov.iov_base=buf;
-        iov.iov_len=len;
-        msg.msg_name=from;
-        msg.msg_namelen=fromlen; //sizeof(struct sockaddr);
-        msg.msg_iov=&iov;
-        msg.msg_iovlen=1;
-        msg.msg_control=NULL;
-        msg.msg_controllen=0;
-        msg.msg_flags=flags;
-        error = socket->ops->recvmsg(socket, &msg, len);
-        if ( (error>=0) && (fromlen!=0) )
-            fromlen=msg.msg_namelen;
-        return error;
-    }
+    if (socket == NULL)
+        return -ENOTSOCK;
+
+    ASSERT((socket->ops != NULL) && (socket->ops->recvmsg), return -ENOTSOCK;);
+
+    iov.iov_base=buf;
+    iov.iov_len=len;
+    msg_hdr.msg_name=from;
+    msg_hdr.msg_namelen=fromlen; //sizeof(struct sockaddr);
+    msg_hdr.msg_iov=&iov;
+    msg_hdr.msg_iovlen=1;
+/*    msg_hdr.msg_control=NULL;     not used
+    msg_hdr.msg_controllen=0; */
+
+    error = socket->ops->recvmsg(socket, &msg_hdr, len, flags);
+    if ( (error>=0) && (fromlen!=0) )
+        fromlen=msg_hdr.msg_namelen;
+
+    return error;
 }
 
 
@@ -761,16 +777,17 @@ int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, 
 /***
  *  rt_ssocket_recvmsg
  */
-int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
+int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, int flags)
 {
-    if ((NULL == socket) ||
-        (NULL == socket->ops) || /* This check shall be obsolete in the future! */
-        (NULL == socket->ops->recvmsg)) /* There should be no socket without ops! */
+    size_t total_len;
+
+    if (socket == NULL)
         return -ENOTSOCK;
-    else {
-        int len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
-        return socket->ops->recvmsg(socket, msg, len);
-    }
+
+    ASSERT((socket->ops != NULL) && (socket->ops->recvmsg), return -ENOTSOCK;);
+
+    total_len = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
+    return socket->ops->recvmsg(socket, msg, total_len, flags);
 }
 
 
@@ -778,17 +795,19 @@ int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
 /***
  *  rt_ssocket_getsocketname
  */
-int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, int addr_len)
+int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, socklen_t addrlen)
 {
-    if ( !socket )
+    if (socket == NULL)
         return -ENOTSOCK;
+    // Längen-Check!!!
     else {
         struct sockaddr_in *usin = (struct sockaddr_in *)addr;
+
         usin->sin_family=socket->family;
         usin->sin_addr.s_addr=socket->saddr;
         usin->sin_port=socket->sport;
 
-        return ( sizeof(struct sockaddr_in) );
+        return sizeof(struct sockaddr_in);
     }
 }
 
@@ -799,7 +818,7 @@ int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, int addr_len)
  */
 int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg)
 {
-    if ( !socket )
+    if (socket == NULL)
         return -ENOTSOCK;
     else {
         socket->private=arg;

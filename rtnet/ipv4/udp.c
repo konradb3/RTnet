@@ -102,7 +102,7 @@ struct rtsocket *rt_udp_v4_lookup(u32 saddr, u16 sport, u32 daddr, u16 dport)
  *  @s:     socket
  *  @addr:  local address
  */
-int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, int addrlen)
+int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, socklen_t addrlen)
 {
     struct sockaddr_in *usin = (struct sockaddr_in *)addr;
 
@@ -124,7 +124,7 @@ int rt_udp_bind(struct rtsocket *s, struct sockaddr *addr, int addrlen)
 /***
  *  rt_udp_connect
  */
-int rt_udp_connect(struct rtsocket *s, struct sockaddr *serv_addr, int addrlen)
+int rt_udp_connect(struct rtsocket *s, const struct sockaddr *serv_addr, socklen_t addrlen)
 {
     struct sockaddr_in *usin = (struct sockaddr_in *) serv_addr;
 
@@ -163,7 +163,7 @@ int rt_udp_listen(struct rtsocket *s, int backlog)
 /***
  *  rt_udp_accept
  */
-int rt_udp_accept(struct rtsocket *s, struct sockaddr *client_addr, int *addr_len)
+int rt_udp_accept(struct rtsocket *s, struct sockaddr *addr, socklen_t *addrlen)
 {
     /* UDP = connectionless */
     return 0;
@@ -174,22 +174,25 @@ int rt_udp_accept(struct rtsocket *s, struct sockaddr *client_addr, int *addr_le
 /***
  *  rt_udp_recvmsg
  */
-int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
+int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, socklen_t len, int flags)
 {
-    unsigned copied=0;
+    unsigned copied = 0;
     struct rtskb *skb;
 
-    /* block on receive semaphore */
-    if ((s->flags & RT_SOCK_NONBLOCK) == 0) {
-        if (s->timeout > 0) {
-            if (rt_sem_wait_timed(&s->wakeup_sem, nano2count(s->timeout)) == SEM_TIMOUT)
-                return -ETIMEDOUT;
-        } else
-            rt_sem_wait(&s->wakeup_sem);
-    }
 
-    /* fetch packet from incomming queue */
-    if ( (skb=rtskb_dequeue(&s->incoming))!=NULL ) {
+    /* block on receive semaphore */
+    if (((s->flags & RT_SOCK_NONBLOCK) == 0) && ((flags & MSG_DONTWAIT) == 0))
+        while ((skb=rtskb_dequeue(&s->incoming)) == NULL) {
+            if (s->timeout > 0) {
+                if (rt_sem_wait_timed(&s->wakeup_sem, nano2count(s->timeout)) == SEM_TIMOUT)
+                    return -ETIMEDOUT;
+            } else
+                rt_sem_wait(&s->wakeup_sem);
+        }
+    else
+        skb=rtskb_dequeue(&s->incoming);
+
+    if (skb != NULL) {
         struct sockaddr_in *sin=msg->msg_name;
         /* copy the address */
         msg->msg_namelen=sizeof(*sin);
@@ -211,7 +214,10 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
 
         rt_memcpy_tokerneliovec(msg->msg_iov, skb->h.raw+sizeof(struct udphdr), copied);
 
-        kfree_rtskb(skb);
+        if ((flags & MSG_PEEK) == 0)
+            kfree_rtskb(skb);
+        else
+            rtskb_queue_head(&s->incoming, skb);
     }
     return copied;
 }
@@ -239,6 +245,7 @@ static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned
 {
     struct udpfakehdr *ufh = (struct udpfakehdr *)p;
 
+    // We should optimize this function a bit (copy+csum...)!
     if (offset==0) {
         /* Checksum of the complete data part of the UDP message: */
         ufh->wcheck = csum_partial(ufh->iov->iov_base, ufh->iov->iov_len, ufh->wcheck);
@@ -267,7 +274,7 @@ static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned
 /***
  *  rt_udp_sendmsg
  */
-int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, int len)
+int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int flags)
 {
     int ulen = len + sizeof(struct udphdr);
 
@@ -281,10 +288,10 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, int len)
     if ( (len<0) || (len>0xFFFF) )
         return -EMSGSIZE;
 
-    if (msg->msg_flags & MSG_OOB)   /* Mirror BSD error message compatibility */
+    if (flags & MSG_OOB)   /* Mirror BSD error message compatibility */
         return -EOPNOTSUPP;
 
-    if (msg->msg_flags & ~(MSG_DONTROUTE|MSG_DONTWAIT|MSG_NOSIGNAL) )
+    if (flags & ~(MSG_DONTROUTE|MSG_DONTWAIT|MSG_NOSIGNAL) )
         return -EINVAL;
 
     if ( (msg->msg_name) && (msg->msg_namelen==sizeof(struct sockaddr_in)) ) {
@@ -320,7 +327,7 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, int len)
     ufh.iov         = msg->msg_iov;
     ufh.wcheck      = 0;
 
-    err = rt_ip_build_xmit(s, rt_udp_getfrag, &ufh, ulen, rt, msg->msg_flags);
+    err = rt_ip_build_xmit(s, rt_udp_getfrag, &ufh, ulen, rt, flags);
 
 out:
     if (!err) {
@@ -420,8 +427,7 @@ int rt_udp_rcv (struct rtskb *skb)
         goto drop;
 
     rtskb_queue_tail(&rtsk->incoming, skb);
-    if ( (rtsk->flags & RT_SOCK_NONBLOCK) == 0 )
-        rt_sem_signal(&rtsk->wakeup_sem);
+    rt_sem_signal(&rtsk->wakeup_sem);
     if ( rtsk->wakeup != NULL )
         rtsk->wakeup(rtsk->fd, rtsk->private);
 

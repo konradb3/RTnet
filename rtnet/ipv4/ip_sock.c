@@ -18,6 +18,11 @@
  */
 
 // $Log: ip_sock.c,v $
+// Revision 1.6  2003/10/06 09:12:04  kiszka
+// * added MSG_PEEK support for UDP sockets
+// * revised some function declarations to conform the BSD API
+// * fixed some bugs regarding iovec handling (maybe not all...)
+//
 // Revision 1.5  2003/08/20 16:41:53  kiszka
 // * rt_ip_sockopt is now called from generic setsockopt function
 //
@@ -40,7 +45,7 @@
 
 
 int rt_ip_setsockopt(struct rtsocket *s, int level, int optname,
-                     const void *optval, int optlen)
+                     const void *optval, socklen_t optlen)
 {
     int err = 0;
 

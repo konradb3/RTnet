@@ -22,7 +22,7 @@
 
 
 extern int rt_ip_setsockopt(struct rtsocket *s, int level, int optname,
-                            const void *optval, int optlen);
+                            const void *optval, socklen_t optlen);
 
 
 #endif  /* __RTNET_IP_SOCK_H_ */
