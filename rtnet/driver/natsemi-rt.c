@@ -183,7 +183,7 @@ MODULE_PARM_DESC(cards, "number of cards to be supported");
 /*** RTnet ***/
 
 #define DRV_NAME	"natsemi-rt"
-#define DRV_VERSION	"1.07+LK1.0.17-RTnet-0.1"
+#define DRV_VERSION	"1.07+LK1.0.17-RTnet-0.2"
 #define DRV_RELDATE	"Dec 16, 2003"
 
 /* Updated to recommendations in pci-skeleton v2.03. */
@@ -791,6 +791,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	rtdev_alloc_name(dev, "rteth%d");
 	rt_rtdev_connect(dev, &RTDEV_manager);
 	SET_MODULE_OWNER(dev);
+	dev->vers = RTDEV_VERS_2_0;
 /*** RTnet ***/
 
 	i = pci_request_regions(pdev, dev->name);
@@ -1676,6 +1677,10 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
 	unsigned entry;
+/*** RTnet ***/
+	unsigned long flags;
+	rtos_time_t time;
+/*** RTnet ***/
 
 	/* Note: Ordering is important here, set the field with the
 	   "ownership" bit last, and only then increment cur_tx. */
@@ -1691,12 +1696,17 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 
 /*	spin_lock_irq(&np->lock);*/
 /*** RTnet ***/
-	rtos_res_lock(&dev->xmit_lock);
-	rtos_irq_disable(dev->irq);
-	rtos_spin_lock(&np->lock);
+	rtos_spin_lock_irqsave(&np->lock, flags);
 /*** RTnet ***/
 
 	if (!np->hands_off) {
+		/* get and patch time stamp just before the transmission */
+		if (skb->xmit_stamp) {
+			rtos_get_time(&time);
+			*skb->xmit_stamp =
+				cpu_to_be64(rtos_time_to_nanosecs(&time) +
+				*skb->xmit_stamp);
+		}
 		np->tx_ring[entry].cmd_status = cpu_to_le32(DescOwn | skb->len);
 		/* StrongARM: Explicitly cache flush np->tx_ring and
 		 * skb->data,skb->len. */
@@ -1716,9 +1726,7 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 
 /*	spin_unlock_irq(&np->lock);*/
 /*** RTnet ***/
-	rtos_spin_unlock(&np->lock);
-	rtos_irq_enable(dev->irq);
-	rtos_res_unlock(&dev->xmit_lock);
+	rtos_spin_unlock_irqrestore(&np->lock, flags);
 /*** RTnet ***/
 
 /*	dev->trans_start = jiffies;*/

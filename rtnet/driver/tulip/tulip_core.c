@@ -694,20 +694,18 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	int entry;
 	u32 flag;
 	dma_addr_t mapping;
-
 	/*RTnet*/
-	rtos_res_lock(&rtdev->xmit_lock);
-	rtos_irq_disable(rtdev->irq);
-	rtos_spin_lock(&tp->lock);
+	unsigned long flags;
+	rtos_time_t time;
+
+	rtos_spin_lock_irqsave(&tp->lock, flags);
 
 	/* TODO: move to rtdev_xmit, use queue */
 	if (rtnetif_queue_stopped(rtdev)) {
 		dev_kfree_rtskb(skb);
 		tp->stats.tx_dropped++;
 
-		rtos_spin_unlock(&tp->lock);
-		rtos_irq_enable(rtdev->irq);
-		rtos_res_unlock(&rtdev->xmit_lock);
+		rtos_spin_unlock_irqrestore(&tp->lock, flags);
 		return 0;
 	}
 	/*RTnet*/
@@ -737,6 +735,16 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	/* if we were using Transmit Automatic Polling, we would need a
 	 * wmb() here. */
 	tp->tx_ring[entry].status = cpu_to_le32(DescOwned);
+
+	/*RTnet*/
+	/* get and patch time stamp just before the transmission */
+	if (skb->xmit_stamp) {
+		rtos_get_time(&time);
+		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+			*skb->xmit_stamp);
+	}
+	/*RTnet*/
+
 	wmb();
 
 	tp->cur_tx++;
@@ -745,9 +753,7 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	outl(0, rtdev->base_addr + CSR1);
 
 	/*RTnet*/
-	rtos_spin_unlock(&tp->lock);
-	rtos_irq_enable(rtdev->irq);
-	rtos_res_unlock(&rtdev->xmit_lock);
+	rtos_spin_unlock_irqrestore(&tp->lock, flags);
 	/*RTnet*/
 
 	return 0;
@@ -1432,6 +1438,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	//rtdev_alloc_name(rtdev, "eth%d");//Done by register_rtdev()
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
+	rtdev->vers = RTDEV_VERS_2_0;
 
 	if (pci_resource_len (pdev, 0) < tulip_tbl[chip_idx].io_size) {
 		printk(KERN_ERR PFX "%s: I/O region (0x%lx@0x%lx) too small, "

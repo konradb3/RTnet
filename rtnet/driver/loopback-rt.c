@@ -73,7 +73,16 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
     unsigned short          hash;
     struct rtpacket_type    *pt;
     unsigned long           flags;
+    rtos_time_t             time;
 
+
+    /* write transmission stamp - in case any protocol ever gets the idea to
+       ask the lookback device for this service... */
+    if (skb->xmit_stamp) {
+        rtos_get_time(&time);
+        *skb->xmit_stamp =
+            cpu_to_be64(rtos_time_to_nanosecs(&time) + *skb->xmit_stamp);
+    }
 
     /* make sure that critical fields are re-intialised */
     skb->chain_end = skb;
@@ -133,11 +142,13 @@ static int __init loopback_init(void)
 
     strcpy(rtdev->name, "rtlo");
 
+    rtdev->vers = RTDEV_VERS_2_0;
     rtdev->open = &rt_loopback_open;
     rtdev->stop = &rt_loopback_close;
     rtdev->hard_start_xmit = &rt_loopback_xmit;
     rtdev->flags |= IFF_LOOPBACK;
     rtdev->flags &= ~IFF_BROADCAST;
+    rtdev->features |= RTNETIF_F_NON_EXCLUSIVE_XMIT;
 
     if ((err = rt_register_rtnetdev(rtdev)) != 0)
     {

@@ -716,7 +716,6 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 
 	PRINTK3("%s:smc_wait_to_send_packet\n", dev->name);
 
-	rtos_res_lock(&dev->xmit_lock);
 	rtnetif_stop_queue(dev);
 
 	if ( lp->saved_skb) {
@@ -724,7 +723,6 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 		lp->stats.tx_aborted_errors++;
 		rtos_print("%s: Bad Craziness - sent packet while busy.\n",
 			dev->name);
-		rtos_res_unlock(&dev->xmit_lock);
 		return 1;
 	}
 	lp->saved_skb = skb;
@@ -755,7 +753,6 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 		lp->saved_skb = NULL;
 		/* this IS an error, but, i don't want the skb saved */
 		rtnetif_wake_queue(dev);
-		rtos_res_unlock(&dev->xmit_lock);
 		return 0;
 	}
 	/* either way, a packet is waiting now */
@@ -809,7 +806,6 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 		kfree_rtskb(skb);
 		lp->saved_skb = NULL;
 		rtnetif_wake_queue(dev);
-		rtos_res_unlock(&dev->xmit_lock);
 
 		rtos_print("%s: ERROR: unable to allocate card memory for "
 			"packet transmission.\n", dev->name);
@@ -818,7 +814,6 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 	/* or YES! I can send the packet now.. */
 	smc_hardware_send_packet(dev);
 	rtnetif_wake_queue(dev);
-	rtos_res_unlock(&dev->xmit_lock);
 	return 0;
 }
 
@@ -848,6 +843,12 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 	word			length;
 	unsigned short		ioaddr;
 	byte			* buf;
+	unsigned long		flags;
+	rtos_time_t		time;
+	union {
+		nanosecs_t	ns;
+		char		buf[sizeof(nanosecs_t)];
+	} xmit_stamp;
 
 	PRINTK3("%s:smc_hardware_send_packet\n", dev->name);
 
@@ -920,11 +921,29 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 		outb( 0x20, ioaddr + DATA_REG); // Set odd bit in CONTROL BYTE
 	}
 
+	rtos_local_irqsave(flags);
+
+	/* get and patch time stamp just before the transmission */
+	if (skb->xmit_stamp) {
+		rtos_get_time(&time);
+		xmit_stamp.ns = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+			*skb->xmit_stamp);
+
+		/* point to the patch address */
+		outw(PTR_AUTOINC |
+			(4 + (char *)skb->xmit_stamp - (char *)skb->data),
+			ioaddr + PTR_REG);
+		/* we don't check alignments, we just write bytes */
+		outsb(ioaddr + DATA_REG, xmit_stamp.buf, sizeof(xmit_stamp));
+	}
+
 	/* enable the interrupts */
 	SMC_ENABLE_INT( (IM_TX_INT | IM_TX_EMPTY_INT) );
 
 	/* and let the chipset deal with it */
 	outw( MC_ENQUEUE , ioaddr + MMU_CMD_REG );
+
+	rtos_local_irqrestore(flags);
 
 	PRINTK2("%s: Sent packet of length %d \n", dev->name, length);
 
@@ -2032,6 +2051,7 @@ int init_module(void)
 	rtdev_alloc_name(devSMC91111, "rteth%d");
 	rt_rtdev_connect(devSMC91111, &RTDEV_manager);
 	SET_MODULE_OWNER(devSMC91111);
+	devSMC91111->vers = RTDEV_VERS_2_0;
 
 	/* copy the parameters from insmod into the device structure */
 	devSMC91111->base_addr	= io;

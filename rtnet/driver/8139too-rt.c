@@ -20,7 +20,7 @@
  */
 
 #define DRV_NAME        "8139too-rt"
-#define DRV_VERSION        "0.9.24-rt0.2"
+#define DRV_VERSION        "0.9.24-rt0.3"
 
 #include <linux/config.h>
 #include <linux/module.h>
@@ -637,6 +637,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         rt_rtdev_connect(rtdev, &RTDEV_manager);
 
         SET_MODULE_OWNER(rtdev);
+        rtdev->vers = RTDEV_VERS_2_0;
         tp = rtdev->priv;
         tp->pci_dev = pdev;
 
@@ -1309,21 +1310,29 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         void *ioaddr = tp->mmio_addr;
         unsigned int entry;
         unsigned int len = skb->len;
+        unsigned long flags;
+        rtos_time_t time;
 
-        rtos_res_lock(&rtdev->xmit_lock);
         rtos_irq_disable(rtdev->irq);
 
         /* Calculate the next Tx descriptor entry. */
         entry = tp->cur_tx % NUM_TX_DESC;
 
         if (likely(len < TX_BUF_SIZE)) {
+                if (unlikely(skb->xmit_stamp != NULL)) {
+                        rtos_local_irqsave(flags);
+                        rtos_get_time(&time);
+                        *skb->xmit_stamp =
+                                cpu_to_be64(rtos_time_to_nanosecs(&time) +
+                                *skb->xmit_stamp);
+                } else
+                        rtos_saveflags(flags);
+
                 rtskb_copy_and_csum_dev(skb, tp->tx_buf[entry]);
-                dev_kfree_rtskb(skb);
         } else {
                 dev_kfree_rtskb(skb);
                 tp->stats.tx_dropped++;
                 rtos_irq_enable(rtdev->irq);
-                rtos_res_unlock(&rtdev->xmit_lock);
                 return 0;
         }
 
@@ -1336,13 +1345,14 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         wmb();
         if ((tp->cur_tx - NUM_TX_DESC) == tp->dirty_tx)
                 rtnetif_stop_queue (rtdev);
-        rtos_spin_unlock(&tp->lock);
+        rtos_spin_unlock_irqrestore(&tp->lock, flags);
+        rtos_irq_enable(rtdev->irq);
+        
+        dev_kfree_rtskb(skb);
 
 #ifdef DEBUG
         rtos_print ("%s: Queued Tx packet size %u to slot %d.\n", rtdev->name, len, entry);
 #endif
-        rtos_irq_enable(rtdev->irq);
-        rtos_res_unlock(&rtdev->xmit_lock);
         return 0;
 }
 
@@ -1928,7 +1938,7 @@ module_exit(rtl8139_cleanup_module);
 
                 Jean-Jacques Michel - bug fix
 
-                Tobias Ringström - Rx interrupt status checking suggestion
+                Tobias Ringstrï¿½ - Rx interrupt status checking suggestion
 
                 Andrew Morton - Clear blocked signals, avoid
                 buffer overrun setting current->comm.

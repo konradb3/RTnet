@@ -163,6 +163,11 @@ struct rtskb {
 
     rtos_time_t         time_stamp; /* arrival or transmission (RTcap) time */
 
+    /* patch address of the transmission time stamp, can be NULL
+     * calculation: *xmit_stamp = cpu_to_be64(time_in_ns + *xmit_stamp)
+     */
+    nanosecs_t          *xmit_stamp;
+
     /* transport layer */
     union
     {

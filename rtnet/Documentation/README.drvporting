@@ -75,17 +75,63 @@ waiting on hardware events.
 16. replace netif_start_queue with rtnetif_start_queue
 
 
-17. add new xmit lock replacing any standard spin lock calls
+17. revise the xmit routine
 
-    rtos_res_lock(&dev->xmit_lock);
-    rtos_irq_disable(dev->irq);
-    rtos_spin_lock(&<priv>->lock);
+17.1. add new locking scheme replacing any standard spin lock calls:
 
-    ...
+      /* if operation may take several microseconds: */
 
-    rtos_spin_unlock(&<priv>->lock);
-    rtos_irq_enable(dev->irq);
-    rtos_res_unlock(&dev->xmit_lock);
+      rtos_irq_disable(dev->irq);
+      rtos_spin_lock(&<priv>->lock);
+      ...
+      rtos_spin_unlock(&<priv>->lock);
+      rtos_irq_enable(dev->irq);
+
+      /* if only a few operations are required: */
+
+      unsigned long flags;
+      ...
+      rtos_spin_lock_irqsave(&<priv>->lock, flags);
+      ...
+      rtos_spin_unlock_irqrestore(&<priv>->lock, flags);
+
+17.2. add the following code right before the code which triggers the physical
+      transmission (take care if data has to be transfered manually, i.e.
+      without DMA):
+
+      rtos_time_t time;
+      ...
+      /* get and patch time stamp just before the transmission */
+      if (skb->xmit_stamp) {
+          rtos_get_time(&time);
+          *skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+              *skb->xmit_stamp);
+      }
+
+17.3. make the code above and the transmission triggering atomical by switching
+      off all interrupts:
+
+      unsigned long flags;
+      ...
+      rtos_local_irqsave(flags);
+      <patch time stamp>
+      <trigger transmission>
+      rtos_local_irqrestore(flags);
+
+      /* or combined with the spinlock: */
+
+      rtos_spin_lock_irqsave(&<priv>->lock, flags);
+      <prepare transmission>
+      <patch time stamp>
+      <trigger transmission>
+      rtos_spin_unlock_irqrestore(&<priv>->lock, flags);
+      
+      NOTE: Some hardware may require the driver to calculate the frame
+      checksum, thus making a patching of the frame effectively impossible. In
+      this case use the following strategy: switch off the interrupts only if
+      there is actually a time stamp to patch. Normally, frames using this
+      feature are rather short and will not cause long irq locks. Take a look
+      at 8139too-rt or via-rhine-rt to find some examples.
 
 
 18. modify interrupt handler:
@@ -114,6 +160,7 @@ waiting on hardware events.
     rtdev_alloc_name(dev, "rteth%d");
     rt_rtdev_connect(dev, &RTDEV_manager);
     SET_MODULE_OWNER(dev);
+    dev->vers = RTDEV_VERS_2_0;
 
 
 23. replace request_irq in open function with the following lines:

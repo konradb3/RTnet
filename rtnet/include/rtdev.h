@@ -22,7 +22,7 @@
 #ifndef __RTDEV_H_
 #define __RTDEV_H_
 
-#define MAX_RT_DEVICES          8
+#define MAX_RT_DEVICES                  8
 
 
 #ifdef __KERNEL__
@@ -34,8 +34,13 @@
 #include <rtskb.h>
 
 
-#define PRIV_FLAG_UP             0
-#define PRIV_FLAG_ADDING_ROUTE   1
+#define RTDEV_VERS_2_0                  0x0200
+
+#define PRIV_FLAG_UP                    0
+#define PRIV_FLAG_ADDING_ROUTE          1
+
+#define RTNETIF_F_NON_EXCLUSIVE_XMIT    0x00010000
+
 
 /***
  *  rtnet_device
@@ -44,6 +49,8 @@ struct rtnet_device {
     /* Many field are borrowed from struct net_device in
      * <linux/netdevice.h> - WY
      */
+    unsigned int        vers;
+
     char                name[IFNAMSIZ];
 
     unsigned long       rmem_end;   /* shmem "recv" end     */
@@ -73,7 +80,7 @@ struct rtnet_device {
     unsigned short      hard_header_len;    /* hardware hdr length  */
     unsigned int        mtu;        /* eth = 1536, tr = 4...        */
     void                *priv;      /* pointer to private data      */
-    int                 features;   /* NETIF_F_*                    */
+    int                 features;   /* [RT]NETIF_F_*                */
 
     /* Interface address info. */
     unsigned char       broadcast[MAX_ADDR_LEN];    /* hw bcast add */
@@ -90,7 +97,6 @@ struct rtnet_device {
 
     int                 rxqueue_len;
     rtos_event_sem_t    *stack_event;
-/*    MBX                 *rtdev_mbx;*/
 
     rtos_res_lock_t     xmit_lock;  /* protects xmit routine        */
     rtos_spinlock_t     rtdev_lock; /* management lock              */
@@ -114,6 +120,15 @@ struct rtnet_device {
     int                 (*hard_start_xmit)(struct rtskb *skb,
                                            struct rtnet_device *dev);
     int                 (*hw_reset)(struct rtnet_device *rtdev);
+
+    /* Transmission hook, managed by the stack core, RTcap, and RTmac
+     *
+     * If xmit_lock is used, start_xmit points either to rtdev_locked_xmit or
+     * the RTmac discipline handler. If xmit_lock is not required, start_xmit
+     * points to hard_start_xmit or the discipline handler.
+     */
+    int                 (*start_xmit)(struct rtskb *skb,
+                                      struct rtnet_device *dev);
 };
 
 struct rtdev_register_hook {

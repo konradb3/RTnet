@@ -39,8 +39,6 @@ static rwlock_t disc_list_lock = RW_LOCK_UNLOCKED;
 
 LIST_HEAD(disc_list);
 
-int __rtmac_disc_detach(struct rtnet_device *rtdev);
-
 
 
 /***
@@ -52,6 +50,8 @@ int __rtmac_disc_detach(struct rtnet_device *rtdev);
  *  0            success
  *  -EBUSY       other discipline active
  *  -ENOMEM      could not allocate memory
+ *
+ *  Note: must be called with rtdev->nrt_sem acquired
  */
 int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
 {
@@ -63,11 +63,7 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     RTNET_ASSERT(disc != NULL, return -EINVAL;);
     RTNET_ASSERT(disc->attach != NULL, return -EINVAL;);
 
-    if (down_interruptible(&rtdev->nrt_sem))
-        return -ERESTARTSYS;
-
     if (rtdev->mac_disc) {
-        up(&rtdev->nrt_sem);
         printk("RTmac: another discipline for rtdev '%s' active.\n", rtdev->name);
         return -EBUSY;
     }
@@ -76,25 +72,23 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     /* alloc memory */
     priv = kmalloc(sizeof(struct rtmac_priv) + disc->priv_size, GFP_KERNEL);
     if (!priv) {
-        up(&rtdev->nrt_sem);
         printk("RTmac: kmalloc returned NULL for rtmac!\n");
         return -ENOMEM;
     }
-    priv->hard_start_xmit = rtdev->hard_start_xmit;
+    priv->orig_start_xmit = rtdev->start_xmit;
 
     /* call attach function of discipline */
     ret = disc->attach(rtdev, priv->disc_priv);
     if (ret < 0) {
-        up(&rtdev->nrt_sem);
         kfree(priv);
         return ret;
     }
 
     /* now attach RTmac to device */
-    rtdev->hard_start_xmit = disc->rt_packet_tx;
+    rtdev->start_xmit = disc->rt_packet_tx;
     rtdev->mac_disc = disc;
     rtdev->mac_priv = priv;
-    rtdev->mac_detach = __rtmac_disc_detach;
+    rtdev->mac_detach = rtmac_disc_detach;
 
     __MOD_INC_USE_COUNT(rtdev->owner);
     rtdev_reference(rtdev);
@@ -104,8 +98,6 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     if (ret < 0) {
         printk("RTmac: Warning, VNIC creation failed for rtdev %s.\n", rtdev->name);
     }
-
-    up(&rtdev->nrt_sem);
 
     return 0;
 }
@@ -121,32 +113,17 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
  *  -1           discipline has no detach function
  *  -EINVAL      called with rtdev=NULL
  *  -ENODEV      no discipline active on dev
+ *
+ *  Note: must be called with rtdev->nrt_sem acquired
  */
 int rtmac_disc_detach(struct rtnet_device *rtdev)
-{
-    int ret;
-
-
-    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
-
-    if (down_interruptible(&rtdev->nrt_sem))
-        return -ERESTARTSYS;
-
-    ret = __rtmac_disc_detach(rtdev);
-
-    up(&rtdev->nrt_sem);
-
-    return ret;
-}
-
-
-
-int __rtmac_disc_detach(struct rtnet_device *rtdev)
 {
     int                 ret;
     struct rtmac_disc   *disc;
     struct rtmac_priv   *priv;
 
+
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
     disc = rtdev->mac_disc;
     if (!disc)
@@ -165,8 +142,8 @@ int __rtmac_disc_detach(struct rtnet_device *rtdev)
     if (ret < 0)
         return ret;
 
-    /* restore hard_start_xmit */
-    rtdev->hard_start_xmit = priv->hard_start_xmit;
+    /* restore start_xmit */
+    rtdev->start_xmit = priv->orig_start_xmit;
 
     /* remove pointers from rtdev */
     rtdev->mac_disc   = NULL;

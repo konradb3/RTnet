@@ -232,7 +232,8 @@ void tdma_task_master(int rtdev_id)
         /* Store timestamp in SOF. I assume that there is enough space. */
         rtos_get_time(&time_stamp);
         time_ns = rtos_time_to_nanosecs(&time_stamp);
-        *(nanosecs_t *)data = cpu_to_be64(time_ns);
+        *(nanosecs_t *)data = 0;
+        skb->xmit_stamp = (nanosecs_t *)data;
 
         rtmac_xmit(skb);
 

@@ -689,6 +689,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	rtdev_alloc_name(dev, "rteth%d");
 	rt_rtdev_connect(dev, &RTDEV_manager);
 	SET_MODULE_OWNER(dev);
+	dev->vers = RTDEV_VERS_2_0;
 /*** RTnet ***/
 
 	if (pci_request_regions(pdev, shortname))
@@ -1322,6 +1323,10 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	struct netdev_private *np = dev->priv;
 	unsigned entry;
 	u32 intr_status;
+/*** RTnet ***/
+	unsigned long flags;
+	rtos_time_t time;
+/*** RTnet ***/
 
 	/* Caution: the write order is important here, set the field
 	   with the "ownership" bits last. */
@@ -1348,7 +1353,26 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 			np->stats.tx_dropped++;
 			return 0;
 		}
-		rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]); /*** RTnet ***/
+
+/*** RTnet ***/
+		/* get and patch time stamp just before the transmission */
+		if (skb->xmit_stamp) {
+			rtos_spin_lock_irqsave(&np->lock, flags);
+
+			rtos_get_time(&time);
+			*skb->xmit_stamp =
+				cpu_to_be64(rtos_time_to_nanosecs(&time) +
+				*skb->xmit_stamp);
+
+			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
+		} else {
+			 /* no need to block the interrupts */
+			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
+			rtos_saveflags(flags);
+			rtos_spin_lock(&np->lock);
+		}
+/*** RTnet ***/
+
 		np->tx_skbuff_dma[entry] = 0;
 		np->tx_ring[entry].addr = cpu_to_le32(np->tx_bufs_dma +
 										  (np->tx_buf[entry] - np->tx_bufs));
@@ -1356,17 +1380,24 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 		np->tx_skbuff_dma[entry] =
 			pci_map_single(np->pdev, skb->data, skb->len, PCI_DMA_TODEVICE);
 		np->tx_ring[entry].addr = cpu_to_le32(np->tx_skbuff_dma[entry]);
+
+/*** RTnet ***/
+		rtos_spin_lock_irqsave(&np->lock, flags);
+
+		/* get and patch time stamp just before the transmission */
+		if (skb->xmit_stamp) {
+			rtos_get_time(&time);
+			*skb->xmit_stamp =
+				cpu_to_be64(rtos_time_to_nanosecs(&time) +
+				*skb->xmit_stamp);
+		}
+/*** RTnet ***/
 	}
 
 	np->tx_ring[entry].desc_length =
 		cpu_to_le32(TXDESC | (skb->len >= ETH_ZLEN ? skb->len : ETH_ZLEN));
 
 	/* lock eth irq */
-/*** RTnet ***/
-	rtos_res_lock(&dev->xmit_lock);
-	rtos_irq_disable(dev->irq);
-	rtos_spin_lock(&np->lock);
-/*** RTnet ***/
 	wmb();
 	np->tx_ring[entry].tx_status = cpu_to_le32(DescOwn);
 	wmb();
@@ -1391,9 +1422,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	/*dev->trans_start = jiffies; *** RTnet ***/
 
 /*** RTnet ***/
-	rtos_spin_unlock(&np->lock);
-	rtos_irq_enable(dev->irq);
-	rtos_res_unlock(&dev->xmit_lock);
+	rtos_spin_unlock_irqrestore(&np->lock, flags);
 /*** RTnet ***/
 
 	if (debug > 4) {

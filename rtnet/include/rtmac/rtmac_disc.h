@@ -33,7 +33,7 @@
 
 
 struct rtmac_priv {
-    int (*hard_start_xmit)(struct rtskb *skb, struct rtnet_device *dev);
+    int (*orig_start_xmit)(struct rtskb *skb, struct rtnet_device *dev);
     struct net_device       vnic;
     struct net_device_stats vnic_stats;
     struct rtskb_queue      vnic_skb_pool;

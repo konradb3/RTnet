@@ -30,7 +30,7 @@
 */
 
 static const char *version =
-"eepro100-rt.c:1.36-RTnet-0.3 2002,2003 Jan Kiszka <Jan.Kiszka@web.de>\n"
+"eepro100-rt.c:1.36-RTnet-0.4 2002-2004 Jan Kiszka <Jan.Kiszka@web.de>\n"
 "eepro100-rt.c: based on eepro100.c 1.36 by D. Becker, A. V. Savochkin and others\n";
 
 /* A few user-configurable values that apply to all boards.
@@ -700,6 +700,7 @@ static int speedo_found1(struct pci_dev *pdev,
 	memset(rtdev->priv, 0, sizeof(struct speedo_private));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
+	rtdev->vers = RTDEV_VERS_2_0;
 	// *** RTnet ***
 
 	if (rtdev->mem_start > 0)
@@ -1428,11 +1429,12 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
 	int entry;
+	// *** RTnet ***
+	unsigned long flags;
+	rtos_time_t time;
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
-	// *** RTnet ***
 
-	rtos_res_lock(&rtdev->xmit_lock);
 	rtos_irq_disable(rtdev->irq);
 	rtos_spin_lock(&sp->lock);
 	// *** RTnet ***
@@ -1446,7 +1448,6 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 		rtos_spin_unlock(&sp->lock);
 		rtos_irq_enable(rtdev->irq);
-		rtos_res_unlock(&rtdev->xmit_lock);
 		// *** RTnet ***
 
 		return 1;
@@ -1482,16 +1483,22 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		outb(0 , ioaddr + SCBCmd);
 	}
 #endif
-// *** RTnet ***
 
 	/* Trigger the command unit resume. */
-// *** RTnet ***
 	if (rt_wait_for_cmd_done(ioaddr + SCBCmd) != 0) {
 		rtos_spin_unlock(&sp->lock);
 		rtos_irq_enable(rtdev->irq);
-		rtos_res_unlock(&rtdev->xmit_lock);
 
 		return 1;
+	}
+
+	rtos_local_irqsave(flags);
+
+	/* get and patch time stamp just before the transmission */
+	if (skb->xmit_stamp) {
+		rtos_get_time(&time);
+		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+			*skb->xmit_stamp);
 	}
 // *** RTnet ***
 
@@ -1510,9 +1517,8 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	}
 
 	// *** RTnet ***
-	rtos_spin_unlock(&sp->lock);
+	rtos_spin_unlock_irqrestore(&sp->lock, flags);
 	rtos_irq_enable(rtdev->irq);
-	rtos_res_unlock(&rtdev->xmit_lock);
 	// *** RTnet ***
 
 	//rtdev->trans_start = jiffies;

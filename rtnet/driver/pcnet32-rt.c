@@ -23,7 +23,7 @@
  *************************************************************************/
 
 #define DRV_NAME	"pcnet32-rt"
-#define DRV_VERSION	"1.27a-RTnet-0.1"
+#define DRV_VERSION	"1.27a-RTnet-0.2"
 #define DRV_RELDATE	"2003-09-24"
 #define PFX		DRV_NAME ": "
 
@@ -648,6 +648,7 @@ pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
     rtdev_alloc_name(dev, "rteth%d");
     rt_rtdev_connect(dev, &RTDEV_manager);
     SET_MODULE_OWNER(dev);
+    dev->vers = RTDEV_VERS_2_0;
 /*** RTnet ***/
 
     printk(KERN_INFO PFX "%s at %#3lx,", chipname, ioaddr);
@@ -1126,7 +1127,8 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
     unsigned long ioaddr = dev->base_addr;
     u16 status;
     int entry;
-    //unsigned long flags; /*** RTnet ***/
+    unsigned long flags;
+    rtos_time_t time; /*** RTnet ***/
 
     if (pcnet32_debug > 3) {
 	rtos_print(KERN_DEBUG "%s: pcnet32_start_xmit() called, csr0 %4.4x.\n",
@@ -1134,9 +1136,7 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
     }
 
 /*** RTnet ***/
-    rtos_res_lock(&dev->xmit_lock);
-    rtos_irq_disable(dev->irq);
-    rtos_spin_lock(&lp->lock);
+    rtos_spin_lock_irqsave(&lp->lock, flags);
 /*** RTnet ***/
 
     /* Default status -- will not enable Successful-TxDone
@@ -1171,6 +1171,16 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
     lp->tx_dma_addr[entry] = pci_map_single(lp->pci_dev,
         skb->data, skb->len, PCI_DMA_TODEVICE);
     lp->tx_ring[entry].base = (u32)le32_to_cpu(lp->tx_dma_addr[entry]);
+
+/*** RTnet ***/
+    /* get and patch time stamp just before the transmission */
+    if (skb->xmit_stamp) {
+        rtos_get_time(&time);
+        *skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+            *skb->xmit_stamp);
+    }
+/*** RTnet ***/
+
     wmb();
     lp->tx_ring[entry].status = le16_to_cpu(status);
 
@@ -1189,9 +1199,7 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 	rtnetif_stop_queue(dev); /*** RTnet ***/
     }
 /*** RTnet ***/
-    rtos_spin_unlock(&lp->lock);
-    rtos_irq_enable(dev->irq);
-    rtos_res_unlock(&dev->xmit_lock);
+    rtos_spin_unlock_irqrestore(&lp->lock, flags);
 /*** RTnet ***/
     return 0;
 }

@@ -188,6 +188,7 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     skb->chain_end = skb;
     skb->len = 0;
     skb->pkt_type = PACKET_HOST;
+    skb->xmit_stamp = NULL;
 
 #ifdef CONFIG_RTNET_RTCAP
     skb->cap_flags = 0;

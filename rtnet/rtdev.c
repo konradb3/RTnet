@@ -45,6 +45,8 @@ static rtos_spinlock_t      rtnet_devices_rt_lock  = RTOS_SPIN_LOCK_UNLOCKED;
 LIST_HEAD(register_hook_list);
 DECLARE_MUTEX(rtnet_devices_nrt_lock);
 
+static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
+
 
 
 /***
@@ -268,7 +270,6 @@ void rtdev_free (struct rtnet_device *rtdev)
     if (rtdev != NULL) {
         rtskb_pool_shrink(&global_pool, rtdev->add_rtskbs);
         rtdev->stack_event = NULL;
-/*        rtdev->rtdev_mbx = NULL;*/
         rtos_res_lock_delete(&rtdev->xmit_lock);
         kfree(rtdev);
     }
@@ -332,6 +333,15 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     struct rtdev_register_hook  *hook;
     unsigned long               flags;
 
+
+    /* requires at least driver layer version 2.0 */
+    if (rtdev->vers < RTDEV_VERS_2_0)
+        return -EINVAL;
+        
+    if (rtdev->features & RTNETIF_F_NON_EXCLUSIVE_XMIT)
+        rtdev->start_xmit = rtdev->hard_start_xmit;
+    else
+        rtdev->start_xmit = rtdev_locked_xmit;
 
     down(&rtnet_devices_nrt_lock);
 
@@ -505,6 +515,20 @@ int rtdev_close(struct rtnet_device *rtdev)
 
 
 
+static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
+{
+    int ret;
+    
+    
+    rtos_res_lock(&rtdev->xmit_lock);
+    ret = rtdev->hard_start_xmit(skb, rtdev);
+    rtos_res_unlock(&rtdev->xmit_lock);
+    
+    return ret;
+}
+
+
+
 /***
  *  rtdev_xmit - send real-time packet
  */
@@ -516,11 +540,10 @@ int rtdev_xmit(struct rtskb *skb)
 
     RTNET_ASSERT(skb != NULL, return -1;);
     RTNET_ASSERT(skb->rtdev != NULL, return -1;);
-    RTNET_ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
 
     rtdev = skb->rtdev;
 
-    ret = rtdev->hard_start_xmit(skb, rtdev);
+    ret = rtdev->start_xmit(skb, rtdev);
     if (ret != 0)
     {
         rtos_print("hard_start_xmit returned %d\n", ret);
@@ -559,7 +582,7 @@ int rtdev_xmit_proxy(struct rtskb *skb)
     }
     else
     {
-        ret = rtdev->hard_start_xmit(skb, rtdev);
+        ret = rtdev->start_xmit(skb, rtdev);
         if (ret != 0)
         {
             rtos_print("hard_start_xmit returned %d\n", ret);
