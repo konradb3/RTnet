@@ -23,6 +23,7 @@
 #include <linux/module.h>
 
 #include <rtmac/rtmac_disc.h>
+#include <rtmac/rtmac_vnic.h>
 
 
 EXPORT_SYMBOL(rtmac_disc_register);
@@ -30,3 +31,5 @@ EXPORT_SYMBOL(rtmac_disc_deregister);
 
 EXPORT_SYMBOL(rtmac_disc_attach);
 EXPORT_SYMBOL(rtmac_disc_detach);
+
+EXPORT_SYMBOL(rtmac_vnic_set_max_mtu);

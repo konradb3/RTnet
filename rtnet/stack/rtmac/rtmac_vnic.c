@@ -23,6 +23,7 @@
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
+#include <linux/rtnetlink.h>
 
 #include <rtnet_internal.h>
 #include <rtdev.h>
@@ -202,10 +203,27 @@ static int rtmac_vnic_change_mtu(struct net_device *dev, int new_mtu)
 void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev, unsigned int max_mtu)
 {
     struct rtmac_priv   *mac_priv = rtdev->mac_priv;
+    unsigned int        prev_mtu  = mac_priv->vnic_max_mtu;
 
 
     mac_priv->vnic_max_mtu = max_mtu - sizeof(struct rtmac_hdr);
-    mac_priv->vnic.mtu     = mac_priv->vnic_max_mtu;
+
+    /* set vnic mtu in case max_mtu is smaller than the current mtu or
+       the current mtu was set to previous max_mtu */
+    rtnl_lock();
+    if ((mac_priv->vnic.mtu > mac_priv->vnic_max_mtu) || (prev_mtu == mac_priv->vnic_max_mtu)) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+        dev_set_mtu(&mac_priv->vnic, mac_priv->vnic_max_mtu);
+#else   /* LINUX_VERSION_CODE < 2.6.x */
+        if (mac_priv->vnic.flags & IFF_UP) {
+            dev_close(&mac_priv->vnic);
+            mac_priv->vnic.mtu = mac_priv->vnic_max_mtu;
+            dev_open(&mac_priv->vnic);
+        } else
+            mac_priv->vnic.mtu = mac_priv->vnic_max_mtu;
+#endif  /* LINUX_VERSION_CODE < 2.6.x */
+    }
+    rtnl_unlock();
 }
 
 

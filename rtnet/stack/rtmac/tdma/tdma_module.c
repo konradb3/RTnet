@@ -141,7 +141,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
         if (entry->slot_table) {
-            if (down_interruptible(&entry->rtdev->nrt_sem))
+            if (down_interruptible(&entry->rtdev->nrt_lock))
                 break;
 
             for (i = 0; i <= entry->max_slot_id; i++) {
@@ -154,15 +154,14 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                 slot_offset = rtos_time_to_nanosecs(&slot->offset) + 500;
                 do_div(slot_offset, 1000);
                 if (!RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
-                        (unsigned long)slot_offset,
-                        slot->phasing + 1, slot->period,
-                        slot->size - entry->rtdev->hard_header_len)) {
-                    up(&entry->rtdev->nrt_sem);
+                        (unsigned long)slot_offset, slot->phasing + 1,
+                        slot->period, slot->mtu)) {
+                    up(&entry->rtdev->nrt_lock);
                     goto done;
                 }
             }
 
-            up(&entry->rtdev->nrt_sem);
+            up(&entry->rtdev->nrt_lock);
         }
         if (!RTNET_PROC_PRINT("\n"))
             break;
@@ -314,6 +313,8 @@ struct rtmac_disc tdma_disc = {
     packet_rx:      tdma_packet_rx,
     rt_packet_tx:   tdma_rt_packet_tx,
     nrt_packet_tx:  tdma_nrt_packet_tx,
+
+    get_mtu:        tdma_get_mtu,
 
     attach:         tdma_attach,
     detach:         tdma_detach,

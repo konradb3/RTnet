@@ -34,6 +34,9 @@
 
 #define ETH_RTCFG                   0x9022
 
+#define RTCFG_SKB_PRIO \
+    RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO-1, RTSKB_DEF_NRT_CHANNEL)
+
 #define RTCFG_ID_STAGE_1_CFG        0
 #define RTCFG_ID_ANNOUNCE_NEW       1
 #define RTCFG_ID_ANNOUNCE_REPLY     2

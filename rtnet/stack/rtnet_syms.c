@@ -40,27 +40,6 @@
 
 
 /****************************************************************************
- * socket.c                                                                 *
- ****************************************************************************/
-/*EXPORT_SYMBOL(rt_socket);
-EXPORT_SYMBOL(rt_socket_accept);
-EXPORT_SYMBOL(rt_socket_bind);
-EXPORT_SYMBOL(rt_socket_close);
-EXPORT_SYMBOL(rt_socket_connect);
-EXPORT_SYMBOL(rt_socket_listen);
-EXPORT_SYMBOL(rt_socket_send);
-EXPORT_SYMBOL(rt_socket_recv);
-EXPORT_SYMBOL(rt_socket_sendto);
-EXPORT_SYMBOL(rt_socket_recvfrom);
-EXPORT_SYMBOL(rt_socket_sendmsg);
-EXPORT_SYMBOL(rt_socket_recvmsg);
-EXPORT_SYMBOL(rt_socket_getsockname);
-EXPORT_SYMBOL(rt_socket_setsockopt);
-EXPORT_SYMBOL(rt_socket_ioctl);
-EXPORT_SYMBOL(rt_socket_callback);*/
-
-
-/****************************************************************************
  * stack_mgr.c                                                              *
  ****************************************************************************/
 EXPORT_SYMBOL(rtdev_add_pack);
@@ -111,6 +90,8 @@ EXPORT_SYMBOL(rtdev_xmit);
 #ifdef CONFIG_RTNET_PROXY
 EXPORT_SYMBOL(rtdev_xmit_proxy);
 #endif
+
+EXPORT_SYMBOL(rt_hard_mtu);
 
 
 /****************************************************************************

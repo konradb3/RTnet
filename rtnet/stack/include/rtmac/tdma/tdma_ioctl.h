@@ -28,9 +28,9 @@
 #include <rtmac/tdma/tdma.h>
 
 
-extern int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot);
+int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot);
 
-extern int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
-                      unsigned long arg);
+int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
+               unsigned long arg);
 
 #endif /* __TDMA_IOCTL_H_ */

@@ -247,7 +247,7 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 
     rtos_res_lock_init(&rtdev->xmit_lock);
     rtos_spin_lock_init(&rtdev->rtdev_lock);
-    init_MUTEX(&rtdev->nrt_sem);
+    init_MUTEX(&rtdev->nrt_lock);
 
     atomic_set(&rtdev->refcount, 0);
 
@@ -301,6 +301,7 @@ struct rtnet_device *rt_alloc_etherdev(int sizeof_priv)
     rtdev->mtu             = 1500; /* eth_mtu */
     rtdev->addr_len        = ETH_ALEN;
     rtdev->flags           = IFF_BROADCAST; /* TODO: IFF_MULTICAST; */
+    rtdev->get_mtu         = rt_hard_mtu;
 
     memset(rtdev->broadcast, 0xFF, ETH_ALEN);
     strcpy(rtdev->name, "rteth%d");
@@ -337,7 +338,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     /* requires at least driver layer version 2.0 */
     if (rtdev->vers < RTDEV_VERS_2_0)
         return -EINVAL;
-        
+
     if (rtdev->features & RTNETIF_F_NON_EXCLUSIVE_XMIT)
         rtdev->start_xmit = rtdev->hard_start_xmit;
     else
@@ -518,12 +519,12 @@ int rtdev_close(struct rtnet_device *rtdev)
 static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
     int ret;
-    
-    
+
+
     rtos_res_lock(&rtdev->xmit_lock);
     ret = rtdev->hard_start_xmit(skb, rtdev);
     rtos_res_unlock(&rtdev->xmit_lock);
-    
+
     return ret;
 }
 
@@ -595,3 +596,10 @@ int rtdev_xmit_proxy(struct rtskb *skb)
     return ret;
 }
 #endif /* CONFIG_RTNET_PROXY */
+
+
+
+unsigned int rt_hard_mtu(struct rtnet_device *rtdev, unsigned int priority)
+{
+    return rtdev->mtu;
+}

@@ -264,7 +264,7 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long a
     if (ret != 0)
         return -EFAULT;
 
-    down(&rtdev->nrt_sem);
+    down(&rtdev->nrt_lock);
 
     switch (request) {
         case TDMA_IOC_CLIENT:
@@ -307,7 +307,7 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long a
             ret = -ENOTTY;
     }
 
-    up(&rtdev->nrt_sem);
+    up(&rtdev->nrt_lock);
 
     return ret;
 }

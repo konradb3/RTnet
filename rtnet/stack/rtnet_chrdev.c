@@ -114,7 +114,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
     switch (request) {
         case IOC_RT_IFUP:
-            if (down_interruptible(&rtdev->nrt_sem))
+            if (down_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             set_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
@@ -152,11 +152,11 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                 }
             }
 
-            up(&rtdev->nrt_sem);
+            up(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_IFDOWN:
-            if (down_interruptible(&rtdev->nrt_sem))
+            if (down_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             /* spin lock required for sync with routing code */
@@ -165,7 +165,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (test_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags)) {
                 rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
 
-                up(&rtdev->nrt_sem);
+                up(&rtdev->nrt_lock);
                 return -EBUSY;
             }
             clear_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
@@ -181,7 +181,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                 ret = rtdev_close(rtdev);
             }
 
-            up(&rtdev->nrt_sem);
+            up(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_IFINFO:
@@ -192,7 +192,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (rtdev == NULL)
                 return -ENODEV;
 
-            if (down_interruptible(&rtdev->nrt_sem)) {
+            if (down_interruptible(&rtdev->nrt_lock)) {
                 rtdev_dereference(rtdev);
                 return -ERESTARTSYS;
             }
@@ -206,7 +206,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             cmd.args.info.flags        = rtdev->flags;
             memcpy(cmd.args.info.dev_addr, rtdev->dev_addr, MAX_ADDR_LEN);
 
-            up(&rtdev->nrt_sem);
+            up(&rtdev->nrt_lock);
 
             rtdev_dereference(rtdev);
 

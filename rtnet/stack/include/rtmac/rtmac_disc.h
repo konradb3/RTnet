@@ -62,6 +62,9 @@ struct rtmac_disc {
                                         struct rtnet_device *dev);
     int                 (*nrt_packet_tx)(struct rtskb *skb);
 
+    unsigned int        (*get_mtu)(struct rtnet_device *rtdev,
+                                   unsigned int priority);
+
     int                 (*attach)(struct rtnet_device *rtdev, void *disc_priv);
     int                 (*detach)(struct rtnet_device *rtdev, void *disc_priv);
 
@@ -71,18 +74,17 @@ struct rtmac_disc {
 };
 
 
-extern int rtmac_disc_attach(struct rtnet_device *rtdev,
-                             struct rtmac_disc *disc);
-extern int rtmac_disc_detach(struct rtnet_device *rtdev);
+int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc);
+int rtmac_disc_detach(struct rtnet_device *rtdev);
 
-extern struct rtmac_disc *rtmac_get_disc_by_name(const char *name);
+struct rtmac_disc *rtmac_get_disc_by_name(const char *name);
 
-extern int rtmac_disc_register(struct rtmac_disc *disc);
-extern void rtmac_disc_deregister(struct rtmac_disc *disc);
+int rtmac_disc_register(struct rtmac_disc *disc);
+void rtmac_disc_deregister(struct rtmac_disc *disc);
 
 #ifdef CONFIG_PROC_FS
-extern int rtmac_proc_read_disc(char *buf, char **start, off_t offset,
-                                int count, int *eof, void *data);
+int rtmac_proc_read_disc(char *buf, char **start, off_t offset,
+                         int count, int *eof, void *data);
 #endif /* CONFIG_PROC_FS */
 
 

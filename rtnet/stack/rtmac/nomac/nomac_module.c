@@ -133,6 +133,8 @@ struct rtmac_disc nomac_disc = {
     rt_packet_tx:   nomac_rt_packet_tx,
     nrt_packet_tx:  nomac_nrt_packet_tx,
 
+    get_mtu:        NULL,
+
     attach:         nomac_attach,
     detach:         nomac_detach,
 

@@ -76,6 +76,7 @@ struct tdma_slot {
     rtos_time_t                 offset;
     unsigned int                period;
     unsigned int                phasing;
+    unsigned int                mtu;
     unsigned int                size;
     struct rtskb_prio_queue     queue;
 };

@@ -41,7 +41,7 @@ static u16              rt_ip_id_count = 0;
 int rt_ip_build_xmit_slow(struct rtsocket *sk,
         int getfrag(const void *, char *, unsigned int, unsigned int),
         const void *frag, unsigned length, struct dest_route *rt,
-        int msg_flags)
+        int msg_flags, unsigned int mtu)
 {
     int             err, next_err;
     struct rtskb    *skb;
@@ -49,7 +49,6 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
     struct          iphdr *iph;
 
     struct          rtnet_device *rtdev = rt->rtdev;
-    int             mtu = rtdev->mtu;
     unsigned int    fragdatalen;
     unsigned int    offset = 0;
     u16             msg_rt_ip_id;
@@ -68,6 +67,9 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
     rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
 
     rtskb_size = mtu + hh_len + 15;
+
+    /* TODO: delay previous skb until ALL errors are catched which may occure
+             during next skb setup */
 
     /* Preallocate first rtskb */
     skb = alloc_rtskb(rtskb_size, &sk->skb_pool);
@@ -164,13 +166,14 @@ int rt_ip_build_xmit(struct rtsocket *sk,
         const void *frag, unsigned length, struct dest_route *rt,
         int msg_flags)
 {
-    int                     err=0;
+    int                     err = 0;
     struct rtskb            *skb;
     struct iphdr            *iph;
     int                     hh_len;
     u16                     msg_rt_ip_id;
     unsigned long           flags;
     struct  rtnet_device    *rtdev = rt->rtdev;
+    unsigned int            mtu = rtdev->get_mtu(rtdev, sk->priority);
 
 
     /*
@@ -179,9 +182,10 @@ int rt_ip_build_xmit(struct rtsocket *sk,
      */
     length += sizeof(struct iphdr);
 
-    if (length > rtdev->mtu)
+    if (length > mtu)
         return rt_ip_build_xmit_slow(sk, getfrag, frag,
-                                length - sizeof(struct iphdr), rt, msg_flags);
+                                     length - sizeof(struct iphdr),
+                                     rt, msg_flags, mtu);
 
     /* Store id in local variable */
     rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);

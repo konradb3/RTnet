@@ -483,8 +483,8 @@ int __init init_module(void)
     printk("netshm: loading\n");
     broadcast_addr.sll_ifindex = shm_if;
 
-    strncpy(netshm_dev.device_name, shm_name, MAX_DEV_NAME_LENGTH);
-    netshm_dev.device_name[MAX_DEV_NAME_LENGTH] = 0;
+    strncpy(netshm_dev.device_name, shm_name, RTDM_MAX_DEVNAME_LEN);
+    netshm_dev.device_name[RTDM_MAX_DEVNAME_LEN] = 0;
 
     return rtdm_dev_register(&netshm_dev);
 }

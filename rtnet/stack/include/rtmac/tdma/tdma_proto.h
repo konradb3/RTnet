@@ -82,4 +82,6 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb);
 
 int tdma_packet_rx(struct rtskb *rtskb);
 
+unsigned int tdma_get_mtu(struct rtnet_device *rtdev, unsigned int priority);
+
 #endif /* __TDMA_PROTO_H_ */

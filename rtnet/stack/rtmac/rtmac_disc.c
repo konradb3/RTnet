@@ -87,9 +87,11 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     }
 
     /* now attach RTmac to device */
-    rtdev->start_xmit = disc->rt_packet_tx;
     rtdev->mac_disc = disc;
     rtdev->mac_priv = priv;
+    rtdev->start_xmit = disc->rt_packet_tx;
+    if (disc->get_mtu)
+        rtdev->get_mtu = disc->get_mtu;
     rtdev->mac_detach = rtmac_disc_detach;
 
     RTNET_MOD_INC_USE_COUNT_EX(rtdev->rt_owner);
@@ -145,8 +147,9 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
 
     rtmac_vnic_cleanup(rtdev);
 
-    /* restore start_xmit */
+    /* restore start_xmit and get_mtu */
     rtdev->start_xmit = priv->orig_start_xmit;
+    rtdev->get_mtu    = rt_hard_mtu;
 
     /* remove pointers from rtdev */
     rtdev->mac_disc   = NULL;

@@ -128,17 +128,17 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
     switch (request) {
         case IOC_RT_HOST_ROUTE_ADD:
-            if (down_interruptible(&rtdev->nrt_sem))
+            if (down_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             ret = rt_ip_route_add_host(cmd.args.addhost.ip_addr,
                                        cmd.args.addhost.dev_addr, rtdev);
 
-            up(&rtdev->nrt_sem);
+            up(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_HOST_ROUTE_SOLICIT:
-            if (down_interruptible(&rtdev->nrt_sem))
+            if (down_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             rtdev_reference(rtdev);
@@ -151,7 +151,7 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
                                      sizeof(params), NULL,
                                      cleanup_route_solicit);
 
-            up(&rtdev->nrt_sem);
+            up(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_HOST_ROUTE_DELETE:

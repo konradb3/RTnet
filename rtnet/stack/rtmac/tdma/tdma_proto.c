@@ -383,3 +383,33 @@ int tdma_packet_rx(struct rtskb *rtskb)
     kfree_rtskb(rtskb);
     return 0;
 }
+
+
+
+unsigned int tdma_get_mtu(struct rtnet_device *rtdev, unsigned int priority)
+{
+    struct tdma_priv    *tdma;
+    unsigned long       flags;
+    struct tdma_slot    *slot;
+    unsigned int        mtu;
+
+
+    tdma = (struct tdma_priv *)rtdev->mac_priv->disc_priv;
+
+    rtos_spin_lock_irqsave(&tdma->lock, flags);
+
+    slot = tdma->slot_table[(priority & RTSKB_CHANNEL_MASK) >>
+                            RTSKB_CHANNEL_SHIFT];
+
+    if (unlikely(!slot)) {
+        mtu = rtdev->mtu;
+        goto out;
+    }
+
+    mtu = slot->mtu;
+
+  out:
+    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
+    return mtu;
+}

@@ -101,8 +101,7 @@ struct rtnet_device {
 
     rtos_res_lock_t     xmit_lock;  /* protects xmit routine        */
     rtos_spinlock_t     rtdev_lock; /* management lock              */
-    // should be named nrt_lock; it's a mutex... */
-    struct semaphore    nrt_sem;    /* non-real-time locking        */
+    struct semaphore    nrt_lock;   /* non-real-time locking        */
 
     unsigned int        add_rtskbs; /* additionally allocated global rtskbs */
 
@@ -130,6 +129,10 @@ struct rtnet_device {
      */
     int                 (*start_xmit)(struct rtskb *skb,
                                       struct rtnet_device *dev);
+
+    /* MTU hook, managed by the stack core and RTmac */
+    unsigned int        (*get_mtu)(struct rtnet_device *rtdev,
+                                   unsigned int priority);
 };
 
 struct rtdev_register_hook {
@@ -162,6 +165,9 @@ extern int rtdev_xmit(struct rtskb *skb);
 #ifdef CONFIG_RTNET_PROXY
 extern int rtdev_xmit_proxy(struct rtskb *skb);
 #endif
+
+extern unsigned int rt_hard_mtu(struct rtnet_device *rtdev,
+                                unsigned int priority);
 
 extern int rtdev_open(struct rtnet_device *rtdev);
 extern int rtdev_close(struct rtnet_device *rtdev);

@@ -82,6 +82,6 @@ static inline int rtmac_xmit(struct rtskb *skb)
 extern struct rtpacket_type rtmac_packet_type;
 
 #define rtmac_proto_init()  rtdev_add_pack(&rtmac_packet_type)
-extern void rtmac_proto_release(void);
+void rtmac_proto_release(void);
 
 #endif /* __RTMAC_PROTO_H_ */

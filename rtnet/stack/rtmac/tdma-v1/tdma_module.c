@@ -220,6 +220,8 @@ struct rtmac_disc tdma_disc = {
     rt_packet_tx:   tdma_rt_packet_tx,
     nrt_packet_tx:  tdma_nrt_packet_tx,
 
+    get_mtu:        NULL,
+
     attach:         tdma_attach,
     detach:         tdma_detach,
 

@@ -26,11 +26,11 @@
 #define __RTMAC_PROC_H_
 
 
-extern int rtmac_disc_proc_register(struct rtmac_disc *disc);
-extern void rtmac_disc_proc_unregister(struct rtmac_disc *disc);
+int rtmac_disc_proc_register(struct rtmac_disc *disc);
+void rtmac_disc_proc_unregister(struct rtmac_disc *disc);
 
-extern int rtmac_proc_register(void);
-extern void rtmac_proc_release(void);
+int rtmac_proc_register(void);
+void rtmac_proc_release(void);
 
 
 #endif /* __RTMAC_PROC_H_ */

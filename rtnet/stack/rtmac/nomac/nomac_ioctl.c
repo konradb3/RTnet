@@ -85,7 +85,7 @@ int nomac_ioctl(struct rtnet_device *rtdev, unsigned int request,
     if (ret != 0)
         return -EFAULT;
 
-    if (down_interruptible(&rtdev->nrt_sem))
+    if (down_interruptible(&rtdev->nrt_lock))
         return -ERESTARTSYS;
 
     switch (request) {
@@ -101,7 +101,7 @@ int nomac_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = -ENOTTY;
     }
 
-    up(&rtdev->nrt_sem);
+    up(&rtdev->nrt_lock);
 
     return ret;
 }

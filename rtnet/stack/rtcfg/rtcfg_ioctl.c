@@ -216,8 +216,8 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
     size = cmd->args.add.stage1_size;
     if (size > 0) {
         /* check stage 1 data size */
-        if (sizeof(struct rtcfg_frm_stage_1_cfg) +
-            2*RTCFG_ADDRSIZE_IP + size > rtdev->mtu) {
+        if (sizeof(struct rtcfg_frm_stage_1_cfg) + 2*RTCFG_ADDRSIZE_IP + size >
+                rtdev->get_mtu(rtdev, RTCFG_SKB_PRIO)) {
             ret = -ESTAGE1SIZE;
             goto err;
         }

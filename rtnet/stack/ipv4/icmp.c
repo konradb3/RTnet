@@ -35,6 +35,7 @@
 #include <rtnet_socket.h>
 #include <ipv4_chrdev.h>
 #include <ipv4/icmp.h>
+#include <ipv4/ip_fragment.h>
 #include <ipv4/ip_output.h>
 #include <ipv4/protocol.h>
 #include <ipv4/route.h>
@@ -109,6 +110,9 @@ void rt_icmp_cleanup_echo_requests(void)
         rtpc_complete_call_nrt((struct rt_proc_call *)entry, -EINTR);
         entry = next;
     }
+
+    /* purge any pending ICMP fragments */
+    rt_ip_frag_invalidate_socket(&icmp_socket);
 }
 
 
@@ -130,10 +134,9 @@ static int rt_icmp_glue_reply_bits(const void *p, char *to,
     unsigned long csum;
 
 
-    RTNET_ASSERT(offset == 0,
-                 rtos_print("RTnet: %s() does not support fragmentation.",
-                            __FUNCTION__);
-                 return -1;);
+    /* TODO: add support for fragmented ICMP packets */
+    if (offset != 0)
+        return -EMSGSIZE;
 
     csum = csum_partial_copy_nocheck((void *)&icmp_param->head, to,
                                      icmp_param->head_len, icmp_param->csum);
@@ -256,8 +259,9 @@ static int rt_icmp_glue_request_bits(const void *p, char *to,
     unsigned long csum;
 
 
+    /* TODO: add support for fragmented ICMP packets */
     RTNET_ASSERT(offset == 0,
-                 rtos_print("RTnet: %s() does not support fragmentation.",
+                 rtos_print("RTnet: %s() does not support fragmentation.\n",
                              __FUNCTION__);
                  return -1;);
 
@@ -284,6 +288,7 @@ static int rt_icmp_glue_request_bits(const void *p, char *to,
 static int rt_icmp_send_request(u32 daddr, struct icmp_bxm *icmp_param)
 {
     struct dest_route   rt;
+    unsigned int        size;
     int                 err;
 
 
@@ -293,9 +298,13 @@ static int rt_icmp_send_request(u32 daddr, struct icmp_bxm *icmp_param)
     if ((err = rt_ip_route_output(&rt, daddr)) < 0)
         return err;
 
-    err = rt_ip_build_xmit(&icmp_socket, rt_icmp_glue_request_bits, icmp_param,
-                           icmp_param->head_len + icmp_param->data_len,
-                           &rt, MSG_DONTWAIT);
+    /* TODO: add support for fragmented ICMP packets */
+    size = icmp_param->head_len + icmp_param->data_len;
+    if (size + 20 /* ip header */ > rt.rtdev->get_mtu(rt.rtdev, RT_ICMP_PRIO))
+        err = -EMSGSIZE;
+    else
+        err = rt_ip_build_xmit(&icmp_socket, rt_icmp_glue_request_bits,
+                               icmp_param, size, &rt, MSG_DONTWAIT);
 
     rtdev_dereference(rt.rtdev);
 
@@ -314,6 +323,9 @@ int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
     unsigned char   pattern_buf[msg_size];
     off_t           pos;
 
+
+    /* first purge any potentially pending ICMP fragments */
+    rt_ip_frag_invalidate_socket(&icmp_socket);
 
     icmp_param.head.icmph.type = ICMP_ECHO;
     icmp_param.head.icmph.code = 0;

@@ -105,8 +105,7 @@ int rtcfg_send_frame(struct rtskb *rtskb, struct rtnet_device *rtdev,
 
 
     rtskb->rtdev    = rtdev;
-    rtskb->priority =
-        RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO-1, RTSKB_DEF_NRT_CHANNEL);
+    rtskb->priority = RTCFG_SKB_PRIO;
 
     if (rtdev->hard_header) {
         ret = rtdev->hard_header(rtskb, rtdev, ETH_RTCFG, dest_addr,
@@ -209,8 +208,8 @@ int rtcfg_send_stage_2(struct rtcfg_connection *conn, int send_data)
 
     if (send_data) {
         total_size = conn->stage2_file->size;
-        frag_size  = MIN(rtdev->mtu - sizeof(struct rtcfg_frm_stage_2_cfg),
-                         total_size);
+        frag_size  = MIN(rtdev->get_mtu(rtdev, RTCFG_SKB_PRIO) -
+                         sizeof(struct rtcfg_frm_stage_2_cfg), total_size);
     } else {
         total_size = 0;
         frag_size  = 0;
@@ -260,7 +259,8 @@ int rtcfg_send_stage_2_frag(struct rtcfg_connection *conn)
     if (rtdev == NULL)
         return -ENODEV;
 
-    frag_size = MIN(rtdev->mtu - sizeof(struct rtcfg_frm_stage_2_cfg_frag),
+    frag_size = MIN(rtdev->get_mtu(rtdev, RTCFG_SKB_PRIO) -
+                    sizeof(struct rtcfg_frm_stage_2_cfg_frag),
                     conn->stage2_file->size - conn->cfg_offs);
 
     rtskb_size = rtdev->hard_header_len +

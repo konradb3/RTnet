@@ -26,7 +26,7 @@
 #define __NOMAC_IOCTL_H_
 
 
-extern int nomac_ioctl(struct rtnet_device *rtdev, unsigned int request,
-                       unsigned long arg);
+int nomac_ioctl(struct rtnet_device *rtdev, unsigned int request,
+                unsigned long arg);
 
 #endif /* __NOMAC_IOCTL_H_ */

@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.8.0],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.8.1],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])

@@ -400,6 +400,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     slot->head.ref_count = 0;
     slot->period         = cfg->args.set_slot.period;
     slot->phasing        = cfg->args.set_slot.phasing;
+    slot->mtu            = cfg->args.set_slot.size;
     slot->size           = cfg->args.set_slot.size + rtdev->hard_header_len;
     rtos_nanosecs_to_time(cfg->args.set_slot.offset, &slot->offset);
     rtskb_prio_queue_init(&slot->queue);
@@ -585,7 +586,7 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
     if (ret != 0)
         return -EFAULT;
 
-    if (down_interruptible(&rtdev->nrt_sem))
+    if (down_interruptible(&rtdev->nrt_lock))
         return -ERESTARTSYS;
 
     switch (request) {
@@ -619,7 +620,7 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = -ENOTTY;
     }
 
-    up(&rtdev->nrt_sem);
+    up(&rtdev->nrt_lock);
 
     return ret;
 }
