@@ -25,6 +25,7 @@
  */
 
 #include <linux/types.h>
+#include <linux/socket.h>
 #include <linux/in.h>
 #include <linux/ip.h>
 #include <linux/icmp.h>

@@ -22,6 +22,8 @@
 #ifndef __RTNET_INTERNAL_H_
 #define __RTNET_INTERNAL_H_
 
+#include <linux/module.h>
+
 #include <rtnet_sys.h>
 
 #ifdef HAVE_RTAI_SEM_H

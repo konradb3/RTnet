@@ -761,7 +761,11 @@ static int speedo_found1(struct pci_dev *pdev,
 	if (eeprom[3] & 0x0100)
 		product = "OEM i82557/i82558 10/100 Ethernet";
 	else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,22)
 		product = pci_name(pdev);
+#else
+		product = pdev->name;
+#endif
 
 	printk(KERN_INFO "%s: %s, ", rtdev->name, product);
 
