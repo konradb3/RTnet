@@ -173,7 +173,7 @@ librtcfg_a_SOURCES = \
 	rtcfg_module.c \
 	rtcfg_event.c \
 	rtcfg_conn_event.c \
-	rtcfg_ui.c \
+	rtcfg_ioctl.c \
 	rtcfg_frame.c \
 	rtcfg_timer.c
 
@@ -192,7 +192,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 librtcfg_a_AR = $(AR) cru
 librtcfg_a_LIBADD =
 am_librtcfg_a_OBJECTS = rtcfg_module.$(OBJEXT) rtcfg_event.$(OBJEXT) \
-	rtcfg_conn_event.$(OBJEXT) rtcfg_ui.$(OBJEXT) \
+	rtcfg_conn_event.$(OBJEXT) rtcfg_ioctl.$(OBJEXT) \
 	rtcfg_frame.$(OBJEXT) rtcfg_timer.$(OBJEXT)
 librtcfg_a_OBJECTS = $(am_librtcfg_a_OBJECTS)
 
@@ -202,8 +202,9 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/rtcfg_conn_event.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_event.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_frame.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rtcfg_ioctl.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtcfg_module.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rtcfg_timer.Po ./$(DEPDIR)/rtcfg_ui.Po
+@AMDEP_TRUE@	./$(DEPDIR)/rtcfg_timer.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -241,9 +242,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_conn_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_frame.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_ioctl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_module.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_timer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg_ui.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
