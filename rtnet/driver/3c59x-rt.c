@@ -1,9 +1,11 @@
 
-#warning  This driver is probably not real-time safe! Under certain conditions,
+#warning  *********************************************************************
+#warning  This driver is probably not real-time safe! Under certain conditions
 #warning  it can cause interrupt locks of up to 1 second (issue_and_wait). We
 #warning  need a rewrite of critical parts, but we are lacking the knowledge
 #warning  about the hardware details (e.g. how long does a normal delay take =>
 #warning  apply this value and throw an error message on timeouts).
+#warning  *********************************************************************
 
 /* EtherLinkXL.c: A 3Com EtherLink PCI III/XL ethernet driver for linux / RTnet. */
 /*
@@ -199,12 +201,14 @@
 /* A few values that may be tweaked. */
 /* Keep the ring sizes a power of two for efficiency. */
 #define TX_RING_SIZE	16
-#define RX_RING_SIZE	32
+#define RX_RING_SIZE	8 /*** RTnet ***/
 #define PKT_BUF_SZ		1536			/* Size of each temporary Rx buffer.*/
 
 /* "Knobs" that adjust features and parameters. */
 /* Set the copy breakpoint for the copy-only-tiny-frames scheme.
    Setting to > 1512 effectively disables this feature. */
+/*** RTnet ***/
+#if 0
 #ifndef __arm__
 static const int rx_copybreak = 200;
 #else
@@ -212,6 +216,8 @@ static const int rx_copybreak = 200;
    transfer capability of these cards. -- rmk */
 static const int rx_copybreak = 1513;
 #endif
+#endif
+/*** RTnet ***/
 /* Allow setting MTU to a larger size, bypassing the normal ethernet setup. */
 static const int mtu = 1500;
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
@@ -308,7 +314,9 @@ MODULE_PARM(full_duplex, "1-" __MODULE_STRING(8) "i");
 MODULE_PARM(hw_checksums, "1-" __MODULE_STRING(8) "i");
 MODULE_PARM(flow_ctrl, "1-" __MODULE_STRING(8) "i");
 MODULE_PARM(enable_wol, "1-" __MODULE_STRING(8) "i");
+/*** RTnet ***
 MODULE_PARM(rx_copybreak, "i");
+ *** RTnet ***/
 MODULE_PARM(max_interrupt_work, "i");
 MODULE_PARM(compaq_ioaddr, "i");
 MODULE_PARM(compaq_irq, "i");
@@ -322,7 +330,9 @@ MODULE_PARM_DESC(full_duplex, "3c59x full duplex setting(s) (1)");
 MODULE_PARM_DESC(hw_checksums, "3c59x Hardware checksum checking by adapter(s) (0-1)");
 MODULE_PARM_DESC(flow_ctrl, "3c59x 802.3x flow control usage (PAUSE only) (0-1)");
 MODULE_PARM_DESC(enable_wol, "3c59x: Turn on Wake-on-LAN for adapter(s) (0-1)");
+/*** RTnet ***
 MODULE_PARM_DESC(rx_copybreak, "3c59x copy breakpoint for copy-only-tiny-frames");
+ *** RTnet ***/
 MODULE_PARM_DESC(max_interrupt_work, "3c59x maximum events handled per interrupt");
 MODULE_PARM_DESC(compaq_ioaddr, "3c59x PCI I/O base address (Compaq BIOS problem workaround)");
 MODULE_PARM_DESC(compaq_irq, "3c59x PCI IRQ number (Compaq BIOS problem workaround)");
@@ -782,8 +792,9 @@ struct vortex_private {
     // *** RTnet ***
 	struct rtskb *tx_skbuff[TX_RING_SIZE];
 	struct rtskb *rx_skbuff[RX_RING_SIZE];
+	struct rtskb_head skb_pool;
 	// *** RTnet ***
-    
+
 	struct rtnet_device *next_module;		/* NULL if PCI device */
 	unsigned int cur_rx, cur_tx;		/* The next free ring entry */
 	unsigned int dirty_rx, dirty_tx;	/* The ring entries to be free()ed. */
@@ -1390,18 +1401,22 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 				(rtdev->features & NETIF_F_IP_CSUM) ? "en":"dis");
 	}
 
+	if (rtskb_pool_init(&vp->skb_pool, RX_RING_SIZE*2) < RX_RING_SIZE*2) {
+		retval = -ENOMEM;
+		goto free_pool;
+	}
+
 	rtdev->stop = vortex_close;
     rtdev->hard_header = &rt_eth_header;
 	retval = rt_register_rtnetdev(rtdev);
     if (retval)
-    {
-        rtdev_free(rtdev);
-        return retval;
-    }
+        goto free_pool;
     return 0;
 
     // *** RTnet ***
 
+free_pool:
+    rtskb_pool_release(&vp->skb_pool);
 free_ring:
 	pci_free_consistent(pdev,
 						sizeof(struct boom_rx_desc) * RX_RING_SIZE
@@ -1876,9 +1891,9 @@ vortex_open(struct rtnet_device *rtdev)
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	if ((retval = rt_request_global_irq_ext(rtdev->irq, 
+	if ((retval = rt_request_global_irq_ext(rtdev->irq,
                                 (void (*)(void))(vp->full_bus_master_rx ?
-				                   boomerang_interrupt : vortex_interrupt), 
+				                   boomerang_interrupt : vortex_interrupt),
                                 (unsigned long)rtdev))) {
 		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", rtdev->name, rtdev->irq);
 		goto out;
@@ -1894,7 +1909,7 @@ vortex_open(struct rtnet_device *rtdev)
 			vp->rx_ring[i].next = cpu_to_le32(vp->rx_ring_dma + sizeof(struct boom_rx_desc) * (i+1));
 			vp->rx_ring[i].status = 0;	/* Clear complete bit. */
 			vp->rx_ring[i].length = cpu_to_le32(PKT_BUF_SZ | LAST_FRAG);
-			skb = dev_alloc_rtskb(PKT_BUF_SZ);
+			skb = dev_alloc_rtskb(PKT_BUF_SZ, &vp->skb_pool);
 			vp->rx_skbuff[i] = skb;
 			if (skb == NULL)
 				break;			/* Bad news!  */
@@ -2660,7 +2675,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 			int pkt_len = rx_status & 0x1fff;
 			struct rtskb *skb;
 
-			skb = dev_alloc_rtskb(pkt_len + 5);
+			skb = dev_alloc_rtskb(pkt_len + 5, &vp->skb_pool);
 			if (vortex_debug > 4)
 				printk(KERN_DEBUG "Receiving packet size %d status %4.4x.\n",
 					   pkt_len, rx_status);
@@ -2688,7 +2703,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 				//rtdev->last_rx = jiffies;
 				vp->stats.rx_packets++;
                 (*packets)++;
-                
+
 				/* Wait a limited time to go to next packet. */
 				for (i = 200; i >= 0; i--)
 					if ( ! (inw(ioaddr + EL3_STATUS) & CmdInProgress))
@@ -2743,7 +2758,9 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets)
 
 			/* Check if the packet is long enough to just accept without
 			   copying to a properly sized skbuff. */
-			if (pkt_len < rx_copybreak && (skb = dev_alloc_rtskb(pkt_len + 2)) != 0) {
+/*** RTnet ***/
+#if 0
+			if (pkt_len < rx_copybreak && (skb = dev_alloc_rtskb(pkt_len + 2, &vp->skb_pool)) != 0) {
 				skb->rtdev = rtdev;
 				rtskb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
 				pci_dma_sync_single(vp->pdev, dma, PKT_BUF_SZ, PCI_DMA_FROMDEVICE);
@@ -2753,6 +2770,9 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets)
 					   pkt_len);
 				vp->rx_copy++;
 			} else {
+#endif
+			{
+/*** RTnet ***/
 				/* Pass up the skbuff already on the Rx ring. */
 				skb = vp->rx_skbuff[entry];
 				vp->rx_skbuff[entry] = NULL;
@@ -2782,7 +2802,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets)
 		struct rtskb *skb;
 		entry = vp->dirty_rx % RX_RING_SIZE;
 		if (vp->rx_skbuff[entry] == NULL) {
-			skb = dev_alloc_rtskb(PKT_BUF_SZ);
+			skb = dev_alloc_rtskb(PKT_BUF_SZ, &vp->skb_pool);
 			if (skb == NULL) {
 				static unsigned long last_jif;
 				if ((jiffies - last_jif) > 10 * HZ) {
@@ -3222,7 +3242,7 @@ static void mdio_write(struct rtnet_device *rtdev, int phy_id, int location, int
 	spin_unlock_bh(&vp->mdio_lock);
 	return;
 }
-
+
 /* ACPI: Advanced Configuration and Power Interface. */
 /* Set Wake-On-LAN mode and put the board into D3 (power-down) state. */
 static void acpi_set_WOL(struct rtnet_device *rtdev)
@@ -3249,7 +3269,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	// *** RTnet ***
 	struct rtnet_device *rtdev = pci_get_drvdata (pdev);
 
-	
+
 
 	if (!rtdev) {
 		printk("vortex_remove_one called for EISA device!\n");
@@ -3280,6 +3300,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	if (vp->must_free_region)
 		release_region(rtdev->base_addr, vp->io_size);
 	// *** RTnet ***
+	rtskb_pool_release(&vp->skb_pool);
 	rtdev_free(rtdev);
 	// *** RTnet ***
 }
