@@ -5,9 +5,10 @@ AC_PREREQ(2.57)
 
 AC_INIT([RTnet],[0.6.0],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/config.h])
-AC_CONFIG_AUX_DIR(config/autoconf)
+AC_CONFIG_AUX_DIR([config/autoconf])
+AC_CONFIG_MACRO_DIR([config/m4])
 AC_CONFIG_SRCDIR([rtskb.c])
-AC_PREFIX_DEFAULT(/usr/local/rtnet)
+AC_PREFIX_DEFAULT([/usr/local/rtnet])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_PROG_INSTALL
@@ -188,9 +189,7 @@ if test x"$CONFIG_RTNET_RTAI_24" \!= x"n"; then
 
     CONFIG_RTNET_RTAI_VERSION=24
 
-    AC_MSG_CHECKING([for Linux source tree])
     RTAI_LINUX_DIR=`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`
-    AC_MSG_RESULT([$RTAI_LINUX_DIR])
 
 #
 # make some checks on the kernel
