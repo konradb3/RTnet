@@ -6,7 +6,7 @@ librtcfg_a_SOURCES = \
 	rtcfg_module.c \
 	rtcfg_event.c \
 	rtcfg_conn_event.c \
-	rtcfg_ui.c \
+	rtcfg_ioctl.c \
 	rtcfg_frame.c \
 	rtcfg_timer.c
 
