@@ -234,11 +234,11 @@ int rtmac_disc_register(struct rtmac_disc *disc)
     }
 #endif /* CONFIG_PROC_FS */
 
-    read_lock_bh(&disc_list_lock);
+    write_lock_bh(&disc_list_lock);
 
     list_add(&disc->list, &disc_list);
 
-    read_unlock_bh(&disc_list_lock);
+    write_unlock_bh(&disc_list_lock);
 
     return 0;
 }
@@ -249,11 +249,11 @@ void rtmac_disc_deregister(struct rtmac_disc *disc)
 {
     RTNET_ASSERT(disc != NULL, return;);
 
-    read_lock_bh(&disc_list_lock);
+    write_lock_bh(&disc_list_lock);
 
     list_del(&disc->list);
 
-    read_unlock_bh(&disc_list_lock);
+    write_unlock_bh(&disc_list_lock);
 
     rtnet_unregister_ioctls(&disc->ioctls);
 
