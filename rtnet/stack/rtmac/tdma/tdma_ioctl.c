@@ -51,6 +51,11 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
         return -ENOTTY;
     }
 
+    if (test_bit(TDMA_FLAG_ATTACHED, &tdma->flags)) {
+        /* already attached */
+        return -EBUSY;
+    }
+
     tdma->cal_rounds = cfg->args.master.cal_rounds;
 //HACK
 set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
@@ -97,6 +102,8 @@ set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
 
     rtos_event_sem_signal(&tdma->worker_wakeup);
 
+    set_bit(TDMA_FLAG_ATTACHED, &tdma->flags);
+
     return 0;
 
   err_out:
@@ -128,6 +135,11 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
         return -ENOTTY;
     }
 
+    if (test_bit(TDMA_FLAG_ATTACHED, &tdma->flags)) {
+        /* already attached */
+        return -EBUSY;
+    }
+
     tdma->cal_rounds = cfg->args.slave.cal_rounds;
     if (tdma->cal_rounds == 0)
         set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
@@ -151,6 +163,8 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
     tdma->first_job = tdma->current_job = &tdma->wait_sync_job;
 
     rtos_event_sem_signal(&tdma->worker_wakeup);
+
+    set_bit(TDMA_FLAG_ATTACHED, &tdma->flags);
 
     return 0;
 

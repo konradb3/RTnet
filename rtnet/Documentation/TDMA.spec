@@ -1,9 +1,7 @@
                      TDMA Media Access Control Discipline
                      ====================================
 
-                                Revision: 2.0
-
-                                   [DRAFT]
+                                Revision: 2.1
 
 
 This document describes the second generation of a TDMA-based (Time Division
@@ -242,17 +240,17 @@ in the related document. The hexadecimal RTmac type identifier is 0x0001. All
 frame fields are encoded in network byte order (big endian). Version
 identifiers of TDMA frames shall only be changed if the format becomes
 incompatible to the previous revision. Currently, all frames carry the
-hexadecimal value 0x0200. 
+hexadecimal value 0x0200.
 
 
 
 Synchronisation Frame
 ---------------------
 
- +------------------+------------------+------------------+ - -
- | Version: 0x0200  | Frame ID: 0x0000 |   Cycle Number   |
- |    (2 bytes)     |    (2 bytes)     |    (2 bytes)     |
- +------------------+------------------+------------------+ - -
+ +------------------+------------------+----------------------+ - -
+ | Version: 0x0200  | Frame ID: 0x0000 |     Cycle Number     |
+ |    (2 bytes)     |    (2 bytes)     |      (4 bytes)       |
+ +------------------+------------------+----------------------+ - -
   - - +-----------------------------+-----------------------------+
       |   Transmission Time Stamp   | Scheduled Transmission Time |
       |          (8 bytes)          |          (8 bytes)          |
@@ -288,10 +286,10 @@ Request Calibration Frame:
  | Version: 0x0200  | Frame ID: 0x0010 |   Transmission Time Stamp   |
  |    (2 bytes)     |    (2 bytes)     |          (8 bytes)          |
  +------------------+------------------+-----------------------------+ - -
-  - - +------------------+-----------------------------+
-      |   Reply Cycle    |      Reply Slot Offset      |
-      | Number (2 bytes) |          (8 bytes)          |
-  - - +------------------+-----------------------------+
+  - - +----------------------+-----------------------------+
+      |     Reply Cycle      |      Reply Slot Offset      |
+      |   Number (4 bytes)   |          (8 bytes)          |
+  - - +----------------------+-----------------------------+
 
 Reply Calibration Frame:
  +------------------+------------------+-----------------------------+ - -
@@ -317,7 +315,7 @@ in which cycle (Reply Cycle Number) and with which offset relative to the
 cycle's Synchronisation frame (Reply Slot Offset) the master shall send the
 reply. Only time slots actually owned by the slave can be specified here, and
 the slave must not use these released slots for own transmissions in the
-following. 
+following.
 
 The Transmission Time Stamp field of the Request Calibration frame is copied
 into the Request Transmission Time field of the Reply Calibration frame. On
@@ -418,7 +416,7 @@ Calibration of the Transmission Delay
 
 Calculate the transmission delay:
         t_trans = 1/2 * ((T'_recv_rpl - T'_xmit_req) -
-                         (T_xmit_rpl - T_recv_req)) 
+                         (T_xmit_rpl - T_recv_req))
 
 The overall transmission delay shall be averaged over several calibration
 rounds. As the measuring is only performed against the main master, backup
@@ -476,7 +474,7 @@ Time slots carry an internal ID number, unique per participant. These numbers
 are used when determining the slot in which an outgoing packet shall be
 transmitted. The TDMA discipline contains no automatic scheduling mechanism.
 Instead, the sender, i.e. an user or a service, either explicitly provides a
-desired slot ID or a default slot is used. 
+desired slot ID or a default slot is used.
 
   Slot ID | Description
  ---------+-----------------------------------------------------------------
@@ -536,20 +534,34 @@ following, the usage of this tool is described.
 Commands
 --------
 
-tdmacfg <dev> master <cycle> [-b <backup_offset>]
+tdmacfg <dev> master <cycle_period> [-b <backup_offset>]
+        [-c calibration_rounds] [-i max_slot_id] [-m max_calibration_requests]
 
 Starts a TDMA master on the specified device <dev>. The cycle period length is
-given in microseconds using the <cycle> parameter. If <backup_offset> is
-provided, the master becomes a backup system. In case the main master fails,
-the backup master with the smallest <backup_offset> will start sending
+given in microseconds using the <cycle_period> parameter. If <backup_offset>
+is provided, the master becomes a backup system. In case the main master
+fails, the backup master with the smallest <backup_offset> will start sending
 Synchronisation frames with the specified offset in microseconds relative to
-the scheduled cycle start.
+the scheduled cycle start. <calibration_rounds> specifies the number of clock
+calibration requests the master will send to any other potentially already
+active master during startup. By default, 100 rounds are performed. The
+calibration will be performed when the first slot is added. By default, a
+master can handle up to 64 calibration requests at the same time. This value
+can be adapted by specifying the <max_calibration_requests> parameter. The
+largest used slot ID is tunable by providing <max_slot_id> or will be limited
+to 7 if this parameter is omitted.
 
-tdmacfg <dev> slave
+tdmacfg <dev> slave [-c calibration_rounds] [-i max_slot_id]
 
-Starts a TDMA slave on the specified device <dev>.
+Starts a TDMA slave on the specified device <dev>. <calibration_rounds>
+specifies the number of clock calibration requests the slave sends to the
+active master during startup. By default, 100 rounds are performed. The
+calibration will be performed when the first slot is added. The largest used
+slot ID is tunable by providing <max_slot_id> or will be limited to 7 if this
+parameter is omitted.
 
 tdmacfg <dev> slot <id> [<offset> [-p <phasing>/<period>] [-s <size>]]
+        [-l calibration_log_file] [-t calibration_timeout]
 
 Adds, reconfigures, or removes a time slot for outgoing data on a started TDMA
 master or slave. <id> is used to distinguish between multiple slots. See above
@@ -562,7 +574,12 @@ By providing <phasing> and <period>, the slot will only be occupied in every
 another slot, the usage of the physical time slot will alternate between both
 slot owners. The <size> parameter limits the maximum payload size in bytes
 which can be transmitted within this slot. If no <size> parameter is provided,
-the maximum size the hardware supports is applied.
+the maximum size the hardware supports is applied. The addition of the
+station's first slot will trigger the clock calibration process. To store the
+results of each calibration handshake, a <calibration_log_file> can be
+provided. By default, this command will not terminate until the calibration is
+completed. The <calibration_timeout> parameter can be used to specify an upper
+time limit.
 
 tdmacfg <dev> detach
 
@@ -572,5 +589,3 @@ remaining real-time network participants.
 
 
 2004, Jan Kiszka <jan.kiszka-at-web.de>
-
-

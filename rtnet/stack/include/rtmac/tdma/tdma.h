@@ -44,6 +44,7 @@
 #define TDMA_FLAG_RECEIVED_SYNC 2
 #define TDMA_FLAG_MASTER        3   /* also set for backup masters */
 #define TDMA_FLAG_BACKUP_MASTER 4
+#define TDMA_FLAG_ATTACHED      5
 
 #define DEFAULT_SLOT            0
 #define DEFAULT_NRT_SLOT        1
@@ -100,7 +101,7 @@ struct tdma_request_cal {
 struct tdma_reply_cal {
     struct tdma_job             head;
 
-    unsigned int                reply_cycle;
+    u32                         reply_cycle;
     rtos_time_t                 reply_offset;
     struct rtskb                *reply_rtskb;
 };
@@ -125,7 +126,7 @@ struct tdma_priv {
 
     unsigned long               flags;
     unsigned int                cal_rounds;
-    unsigned int                current_cycle;
+    u32                         current_cycle;
     rtos_time_t                 current_cycle_start;
     nanosecs_t                  master_packet_delay_ns;
     rtos_time_t                 clock_offset;

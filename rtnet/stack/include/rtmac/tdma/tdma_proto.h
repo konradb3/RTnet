@@ -47,7 +47,7 @@ struct tdma_frm_head {
 
 struct tdma_frm_sync {
     struct tdma_frm_head    head;
-    u16                     cycle_no;
+    u32                     cycle_no;
     u64                     xmit_stamp;
     u64                     sched_xmit_stamp;
 } __attribute__((packed));
@@ -58,7 +58,7 @@ struct tdma_frm_sync {
 struct tdma_frm_req_cal {
     struct tdma_frm_head    head;
     u64                     xmit_stamp;
-    u16                     reply_cycle;
+    u32                     reply_cycle;
     u64                     reply_slot_offset;
 } __attribute__((packed));
 

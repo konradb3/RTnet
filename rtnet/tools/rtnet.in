@@ -171,6 +171,7 @@ start_master() {
     ifconfig vnic0 up $IPADDR $NETMASK_OPT
 
     echo -n "Waiting for all slaves..."
+    $RTCFG rteth0 wait
     $RTCFG rteth0 ready
     echo
 }
@@ -209,7 +210,8 @@ case "$1" in
             $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
             echo -n "Stage 1: searching for master..."
-            sh -c `echo; $RTCFG rteth0 client -c`
+            sh -c "`$RTCFG rteth0 client -c`"
+            echo
 
             echo -n "Stage 2: waiting for other slaves..."
             if [ ! "$STAGE_2_DST" = "" ]; then
