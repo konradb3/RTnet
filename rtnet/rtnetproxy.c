@@ -365,7 +365,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     skb->ip_summed = CHECKSUM_UNNECESSARY;
     skb->pkt_type = PACKET_HOST;  /* Extremely important! Why?!? */
 
-    rtos_time_to_timeval(&rtskb->rx, &skb->stamp);
+    rtos_time_to_timeval(&rtskb->time_stamp, &skb->stamp);
 
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;
