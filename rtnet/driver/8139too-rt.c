@@ -46,6 +46,7 @@
 
 // *** RTnet ***
 #include <rtnet.h>
+#include <rtnet_port.h>
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
@@ -1268,7 +1269,7 @@ static void rtl8139_hw_start (struct rtnet_device *rtdev)
 	/* Enable all known interrupts by setting the interrupt mask. */
 	RTL_W16 (IntrMask, rtl8139_intr_mask);
 
-	netif_start_queue (dev);
+	rtnetif_start_queue (rtdev);
 }
 
 
@@ -1330,7 +1331,7 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
 	tp->cur_tx++;
 	wmb();
 	if ((tp->cur_tx - NUM_TX_DESC) == tp->dirty_tx)
-		netif_stop_queue (dev);
+		rtnetif_stop_queue (rtdev);
 	rt_spin_unlock_irq(&tp->lock);
 
 #ifdef DEBUG
@@ -1346,6 +1347,7 @@ static void rtl8139_tx_interrupt (struct net_device *dev,
 				  void *ioaddr)
 {
 	unsigned long dirty_tx, tx_left;
+	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
 
 	dirty_tx = tp->dirty_tx;
 	tx_left = tp->cur_tx - dirty_tx;
@@ -1399,8 +1401,8 @@ static void rtl8139_tx_interrupt (struct net_device *dev,
 	if (tp->dirty_tx != dirty_tx) {
 		tp->dirty_tx = dirty_tx;
 		mb();
-		if (netif_queue_stopped (dev))
-			netif_start_queue (dev);
+		if (rtnetif_queue_stopped (rtdev))
+			rtnetif_wake_queue (rtdev);
 	}
 }
 
@@ -1719,7 +1721,7 @@ static int rtl8139_close (struct rtnet_device *rtdev)
 
 	printk ("%s: Shutting down ethercard, status was 0x%4.4x.\n", dev->name, RTL_R16 (IntrStatus));
 
-	netif_stop_queue (dev);
+	rtnetif_stop_queue (rtdev);
 
 	rt_disable_irq(dev->irq);
         if ( (ret=rt_free_global_irq(dev->irq))<0 )
