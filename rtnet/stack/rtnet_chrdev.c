@@ -56,7 +56,7 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
     int                     ret;
 
 
-    if (!suser())
+    if (!capable(CAP_SYS_ADMIN))
         return -EPERM;
 
     ret = copy_from_user(&head, (void *)arg, sizeof(head));

@@ -236,7 +236,7 @@ struct rtskb_queue {
 
 struct rtskb_prio_queue {
     rtos_spinlock_t     lock;
-    __u32               usage;  /* bit array encoding non-empty sub-queues */
+    unsigned long       usage;  /* bit array encoding non-empty sub-queues */
     struct rtskb_queue  queue[QUEUE_MIN_PRIO+1];
 };
 

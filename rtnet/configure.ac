@@ -509,6 +509,8 @@ case "${CONFIG_RTNET_RTAI_ARCH}" in
 	;;
 esac
 
+AC_SUBST(RTNET_TARGET_ARCH)
+
 
 dnl ======================================================================
 dnl		crosscompiling
@@ -557,11 +559,12 @@ else
 		ARCH=\$(RTNET_TARGET_ARCH)								\
 		M=\"\`pwd\`\"										\
 		V=\$(V)											\
-		rtai_dir=\"${RTNET_RTAI_PREFIX}\"								\
+		rtai_dir=\"${RTNET_RTAI_PREFIX}\"							\
 		top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"						\
 		top_builddir=\"\`cd \$(top_builddir) && pwd\`\"						\
 		srcdir=\"\`cd \$(srcdir) && pwd\`\"							\
 		build_objs='\$(call src2obj,c,\$^)'							\
+		build_target='\$(basename \$@)'								\
 		modules											\
 		"
    RTNET_KBUILD_CLEAN="											\
@@ -605,7 +608,7 @@ if test x"${CONFIG_KBUILD}" = x"y"; then
 	*) AC_MSG_ERROR([*** internal error])
 	esac],
 	[
-include <linux/kernel.h>
+#include <linux/kernel.h>
 	])
 else
 # mandatory RTAI-24 headers
@@ -1065,60 +1068,114 @@ AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(RTAI_LXRT_CFLAGS)
 
 
+dnl ======================================================================
+dnl		create links to Makefiles used by linux-2.6.x
+dnl ======================================================================
+
+if test x$CONFIG_KBUILD = xy; then
+    for DIR in \
+	addons/examples/frag-ip \
+	addons/examples/raw-packets \
+	addons/examples/round-trip-time/client \
+	addons/examples/round-trip-time/server \
+	addons/examples/rtmac/event/collector \
+	addons/examples/rtmac/event/handler \
+	addons/examples/rtmac/netshm \
+	addons/examples/rtmac/netshm/kernel-demo \
+	addons/examples/rtmac/round-trip-time/client \
+	addons/examples/rtmac/round-trip-time/multi-client \
+	addons/examples/rtmac/round-trip-time/parport-client \
+	addons/examples/rtmac/round-trip-time/server \
+	addons/examples/select \
+	\
+	addons/rtcap \
+	addons/rtnetproxy \
+	\
+	drivers/8139too \
+	drivers/eepro100 \
+	drivers/experimental \
+	drivers/loopback \
+	drivers/mpc8260_fcc_enet \
+	drivers/mpc8xx_enet \
+	drivers/mpc8xx_fec \
+	drivers/natsemi \
+	drivers/pcnet32 \
+	drivers/smc91111 \
+	drivers/tulip \
+	drivers/via-rhine \ 
+        drivers/experimental/3c59x \
+	\			    
+	rtai_rtdm \
+	\
+	stack \
+	stack/rtcfg \
+	stack/rtmac \
+	stack/rtmac/nomac \
+	stack/rtmac/tdma-v1 \
+	; do
+	    AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
+	done
+fi
+
+
+dnl ======================================================================
+dnl		generate output
+dnl ======================================================================
+
 AC_CONFIG_FILES([ \
-GNUmakefile \
-\
-addons/examples/frag-ip/GNUmakefile \
-addons/examples/raw-packets/GNUmakefile \
-addons/examples/round-trip-time/client/GNUmakefile \
-addons/examples/round-trip-time/server/GNUmakefile \
-addons/examples/round-trip-time/linux-client/GNUmakefile \
-addons/examples/round-trip-time/GNUmakefile \
-addons/examples/rtmac/event/handler/GNUmakefile \
-addons/examples/rtmac/event/collector/GNUmakefile \
-addons/examples/rtmac/event/GNUmakefile \
-addons/examples/rtmac/netshm/kernel-demo/GNUmakefile \
-addons/examples/rtmac/netshm/GNUmakefile \
-addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile \
-addons/examples/rtmac/round-trip-time/client/GNUmakefile \
-addons/examples/rtmac/round-trip-time/server/GNUmakefile \
-addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile \
-addons/examples/rtmac/round-trip-time/GNUmakefile \
-addons/examples/rtmac/GNUmakefile \
-addons/examples/lxrt/GNUmakefile \
-addons/examples/select/GNUmakefile \
-addons/examples/GNUmakefile \
-\
-addons/rtcap/GNUmakefile \
-addons/rtnetproxy/GNUmakefile \
-addons/GNUmakefile \
-\
-stack/include/GNUmakefile \
-stack/rtcfg/GNUmakefile \
-stack/rtmac/tdma-v1/GNUmakefile \
-stack/rtmac/nomac/GNUmakefile \
-stack/rtmac/GNUmakefile \
-stack/GNUmakefile \
-\
-drivers/tulip/GNUmakefile \
-drivers/8139too/GNUmakefile \
-drivers/eepro100/GNUmakefile \
-drivers/loopback/GNUmakefile \
-drivers/mpc8260_fcc_enet/GNUmakefile \
-drivers/mpc8xx_enet/GNUmakefile \
-drivers/mpc8xx_fec/GNUmakefile \
-drivers/natsemi/GNUmakefile \
-drivers/pcnet32/GNUmakefile \
-drivers/smc91111/GNUmakefile \
-drivers/via-rhine/GNUmakefile \
-drivers/experimental/3c59x/GNUmakefile \
-drivers/experimental/GNUmakefile \
-drivers/GNUmakefile \
-\
-rtai_rtdm/GNUmakefile \
-\
-tools/GNUmakefile \
-])
+    GNUmakefile \
+    \
+    addons/GNUmakefile \
+    addons/examples/GNUmakefile \
+    addons/examples/frag-ip/GNUmakefile \
+    addons/examples/lxrt/GNUmakefile \
+    addons/examples/raw-packets/GNUmakefile \
+    addons/examples/round-trip-time/GNUmakefile \
+    addons/examples/round-trip-time/client/GNUmakefile \
+    addons/examples/round-trip-time/linux-client/GNUmakefile \
+    addons/examples/round-trip-time/server/GNUmakefile \
+    addons/examples/rtmac/GNUmakefile \
+    addons/examples/rtmac/event/GNUmakefile \
+    addons/examples/rtmac/event/collector/GNUmakefile \
+    addons/examples/rtmac/event/handler/GNUmakefile \
+    addons/examples/rtmac/netshm/GNUmakefile \
+    addons/examples/rtmac/netshm/kernel-demo/GNUmakefile \
+    addons/examples/rtmac/round-trip-time/GNUmakefile \
+    addons/examples/rtmac/round-trip-time/client/GNUmakefile \
+    addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile \
+    addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile \
+    addons/examples/rtmac/round-trip-time/server/GNUmakefile \
+    addons/examples/select/GNUmakefile \
+    \
+    addons/rtcap/GNUmakefile \
+    addons/rtnetproxy/GNUmakefile \
+    \
+    drivers/GNUmakefile \
+    drivers/8139too/GNUmakefile \
+    drivers/eepro100/GNUmakefile \
+    drivers/loopback/GNUmakefile \
+    drivers/mpc8260_fcc_enet/GNUmakefile \
+    drivers/mpc8xx_enet/GNUmakefile \
+    drivers/mpc8xx_fec/GNUmakefile \
+    drivers/natsemi/GNUmakefile \
+    drivers/pcnet32/GNUmakefile \
+    drivers/smc91111/GNUmakefile \
+    drivers/tulip/GNUmakefile \
+    drivers/via-rhine/GNUmakefile \
+    drivers/experimental/GNUmakefile \
+    drivers/experimental/3c59x/GNUmakefile \
+    \
+    rtai_rtdm/GNUmakefile \
+    \
+    stack/GNUmakefile \
+    stack/include/GNUmakefile \
+    stack/rtcfg/GNUmakefile \
+    stack/rtmac/GNUmakefile \
+    stack/rtmac/nomac/GNUmakefile \
+    stack/rtmac/tdma-v1/GNUmakefile \
+    \
+    tools/GNUmakefile \
+    ])
 
 AC_OUTPUT
 

@@ -69,7 +69,13 @@ struct udp_socket {
 static unsigned int         auto_port_start = 1024;
 static unsigned int         auto_port_mask  = ~(RT_UDP_SOCKETS-1);
 static int                  free_ports      = RT_UDP_SOCKETS;
+#if BITS_PER_LONG == 32
+static unsigned long        port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
+#elif BITS_PER_LONG == 64
 static u32                  port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
+#else
+#error please include asm/types.h
+#endif
 static struct udp_socket    port_registry[RT_UDP_SOCKETS];
 static rtos_spinlock_t      udp_socket_base_lock;
 
@@ -89,7 +95,13 @@ static inline struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
     int             index;
     int             bit;
     int             bitmap_index;
+#if BITS_PER_LONG == 32
+    unsigned long   bitmap;
+#elif BITS_PER_LONG == 64
     u32             bitmap;
+#else
+#error please include asm/types.h
+#endif
     struct rtsocket *sock;
 
 

@@ -25,6 +25,8 @@
  */
 
 #include <linux/types.h>
+#include <linux/in.h>
+#include <linux/ip.h>
 #include <linux/icmp.h>
 #include <net/checksum.h>
 

@@ -22,6 +22,7 @@
 
 #include <linux/module.h>
 #include <net/checksum.h>
+#include <net/ip.h>
 
 #include <rtdev.h>
 #include <rtnet_internal.h>

@@ -118,7 +118,7 @@ struct rtdm_operations {
 };
 
 struct rtdm_dev_context {
-    int                         context_flags;
+    unsigned long               context_flags;
     int                         fd;
     atomic_t                    close_lock_count;
     struct rtdm_operations      *ops;

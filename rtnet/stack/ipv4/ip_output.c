@@ -21,7 +21,9 @@
  *
  */
 
+#include <linux/ip.h>
 #include <net/checksum.h>
+#include <net/ip.h>
 
 #include <rtnet_socket.h>
 #include <stack_mgr.h>

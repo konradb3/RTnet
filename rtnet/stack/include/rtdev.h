@@ -75,7 +75,7 @@ struct rtnet_device {
     struct module       *owner;
 
     unsigned int        flags;      /* interface flags (a la BSD)   */
-    unsigned int        priv_flags; /* internal flags               */
+    unsigned long       priv_flags; /* internal flags               */
     unsigned short      type;       /* interface hardware type      */
     unsigned short      hard_header_len;    /* hardware hdr length  */
     unsigned int        mtu;        /* eth = 1536, tr = 4...        */

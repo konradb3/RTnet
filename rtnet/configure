@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS LIBOBJS CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_MODULE_DIR CONFIG_NEWLXRT_TRUE CONFIG_NEWLXRT_FALSE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_VIA_RHINE_TRUE CONFIG_RTNET_VIA_RHINE_FALSE CONFIG_RTNET_NATSEMI_TRUE CONFIG_RTNET_NATSEMI_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE CONFIG_RTNET_SMC91111_TRUE CONFIG_RTNET_SMC91111_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTCAP_TRUE CONFIG_RTNET_RTCAP_FALSE CONFIG_RTNET_PROXY_TRUE CONFIG_RTNET_PROXY_FALSE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_RTDM_SELECT_TRUE CONFIG_RTNET_RTDM_SELECT_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTAI_KMOD_CFLAGS RTAI_LXRT_CFLAGS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS LIBOBJS CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_MODULE_DIR CONFIG_NEWLXRT_TRUE CONFIG_NEWLXRT_FALSE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_VIA_RHINE_TRUE CONFIG_RTNET_VIA_RHINE_FALSE CONFIG_RTNET_NATSEMI_TRUE CONFIG_RTNET_NATSEMI_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE CONFIG_RTNET_SMC91111_TRUE CONFIG_RTNET_SMC91111_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTCAP_TRUE CONFIG_RTNET_RTCAP_FALSE CONFIG_RTNET_PROXY_TRUE CONFIG_RTNET_PROXY_FALSE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_RTDM_SELECT_TRUE CONFIG_RTNET_RTDM_SELECT_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTAI_KMOD_CFLAGS RTAI_LXRT_CFLAGS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -20884,6 +20884,8 @@ esac
 
 
 
+
+
 echo "$as_me:$LINENO: checking for CROSS_COMPILE" >&5
 echo $ECHO_N "checking for CROSS_COMPILE... $ECHO_C" >&6
 if test "${CROSS_COMPILE}" = ""; then
@@ -20929,11 +20931,12 @@ else
 		ARCH=\$(RTNET_TARGET_ARCH)								\
 		M=\"\`pwd\`\"										\
 		V=\$(V)											\
-		rtai_dir=\"${RTNET_RTAI_PREFIX}\"								\
+		rtai_dir=\"${RTNET_RTAI_PREFIX}\"							\
 		top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"						\
 		top_builddir=\"\`cd \$(top_builddir) && pwd\`\"						\
 		srcdir=\"\`cd \$(srcdir) && pwd\`\"							\
 		build_objs='\$(call src2obj,c,\$^)'							\
+		build_target='\$(basename \$@)'								\
 		modules											\
 		"
    RTNET_KBUILD_CLEAN="											\
@@ -20985,7 +20988,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-include <linux/kernel.h>
+#include <linux/kernel.h>
 
 
 #include <$ac_header>
@@ -21887,7 +21890,56 @@ RTAI_LXRT_CFLAGS="-D__IN_RTNET__ $RTAI_LXRT_CFLAGS"
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/select/GNUmakefile addons/examples/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile addons/GNUmakefile stack/include/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/tdma-v1/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/GNUmakefile stack/GNUmakefile drivers/tulip/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/3c59x/GNUmakefile drivers/experimental/GNUmakefile drivers/GNUmakefile rtai_rtdm/GNUmakefile tools/GNUmakefile"
+
+if test x$CONFIG_KBUILD = xy; then
+    for DIR in \
+	addons/examples/frag-ip \
+	addons/examples/raw-packets \
+	addons/examples/round-trip-time/client \
+	addons/examples/round-trip-time/server \
+	addons/examples/rtmac/event/collector \
+	addons/examples/rtmac/event/handler \
+	addons/examples/rtmac/netshm \
+	addons/examples/rtmac/netshm/kernel-demo \
+	addons/examples/rtmac/round-trip-time/client \
+	addons/examples/rtmac/round-trip-time/multi-client \
+	addons/examples/rtmac/round-trip-time/parport-client \
+	addons/examples/rtmac/round-trip-time/server \
+	addons/examples/select \
+	\
+	addons/rtcap \
+	addons/rtnetproxy \
+	\
+	drivers/8139too \
+	drivers/eepro100 \
+	drivers/experimental \
+	drivers/loopback \
+	drivers/mpc8260_fcc_enet \
+	drivers/mpc8xx_enet \
+	drivers/mpc8xx_fec \
+	drivers/natsemi \
+	drivers/pcnet32 \
+	drivers/smc91111 \
+	drivers/tulip \
+	drivers/via-rhine \
+        drivers/experimental/3c59x \
+	\
+	rtai_rtdm \
+	\
+	stack \
+	stack/rtcfg \
+	stack/rtmac \
+	stack/rtmac/nomac \
+	stack/rtmac/tdma-v1 \
+	; do
+	              ac_config_links="$ac_config_links ${DIR}/Makefile:${DIR}/Makefile.kbuild"
+
+	done
+fi
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile addons/GNUmakefile addons/examples/GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/select/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/3c59x/GNUmakefile rtai_rtdm/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma-v1/GNUmakefile tools/GNUmakefile"
 
 
 cat >confcache <<\_ACEOF
@@ -22611,36 +22663,30 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
-  "addons/examples/frag-ip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/frag-ip/GNUmakefile" ;;
-  "addons/examples/raw-packets/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/raw-packets/GNUmakefile" ;;
-  "addons/examples/round-trip-time/client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/client/GNUmakefile" ;;
-  "addons/examples/round-trip-time/server/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/server/GNUmakefile" ;;
-  "addons/examples/round-trip-time/linux-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/linux-client/GNUmakefile" ;;
-  "addons/examples/round-trip-time/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/GNUmakefile" ;;
-  "addons/examples/rtmac/event/handler/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/handler/GNUmakefile" ;;
-  "addons/examples/rtmac/event/collector/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/collector/GNUmakefile" ;;
-  "addons/examples/rtmac/event/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/GNUmakefile" ;;
-  "addons/examples/rtmac/netshm/kernel-demo/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/netshm/kernel-demo/GNUmakefile" ;;
-  "addons/examples/rtmac/netshm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/netshm/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/client/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/server/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/server/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/GNUmakefile" ;;
-  "addons/examples/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/GNUmakefile" ;;
-  "addons/examples/lxrt/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/lxrt/GNUmakefile" ;;
-  "addons/examples/select/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/select/GNUmakefile" ;;
+  "addons/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/GNUmakefile" ;;
   "addons/examples/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/GNUmakefile" ;;
+  "addons/examples/frag-ip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/frag-ip/GNUmakefile" ;;
+  "addons/examples/lxrt/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/lxrt/GNUmakefile" ;;
+  "addons/examples/raw-packets/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/raw-packets/GNUmakefile" ;;
+  "addons/examples/round-trip-time/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/GNUmakefile" ;;
+  "addons/examples/round-trip-time/client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/client/GNUmakefile" ;;
+  "addons/examples/round-trip-time/linux-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/linux-client/GNUmakefile" ;;
+  "addons/examples/round-trip-time/server/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/server/GNUmakefile" ;;
+  "addons/examples/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/GNUmakefile" ;;
+  "addons/examples/rtmac/event/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/GNUmakefile" ;;
+  "addons/examples/rtmac/event/collector/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/collector/GNUmakefile" ;;
+  "addons/examples/rtmac/event/handler/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/handler/GNUmakefile" ;;
+  "addons/examples/rtmac/netshm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/netshm/GNUmakefile" ;;
+  "addons/examples/rtmac/netshm/kernel-demo/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/netshm/kernel-demo/GNUmakefile" ;;
+  "addons/examples/rtmac/round-trip-time/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/GNUmakefile" ;;
+  "addons/examples/rtmac/round-trip-time/client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/client/GNUmakefile" ;;
+  "addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile" ;;
+  "addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile" ;;
+  "addons/examples/rtmac/round-trip-time/server/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/server/GNUmakefile" ;;
+  "addons/examples/select/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/select/GNUmakefile" ;;
   "addons/rtcap/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtcap/GNUmakefile" ;;
   "addons/rtnetproxy/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtnetproxy/GNUmakefile" ;;
-  "addons/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/GNUmakefile" ;;
-  "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
-  "stack/rtcfg/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtcfg/GNUmakefile" ;;
-  "stack/rtmac/tdma-v1/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/tdma-v1/GNUmakefile" ;;
-  "stack/rtmac/nomac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/nomac/GNUmakefile" ;;
-  "stack/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/GNUmakefile" ;;
-  "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
-  "drivers/tulip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
+  "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
   "drivers/8139too/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/8139too/GNUmakefile" ;;
   "drivers/eepro100/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eepro100/GNUmakefile" ;;
   "drivers/loopback/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/loopback/GNUmakefile" ;;
@@ -22650,14 +22696,21 @@ do
   "drivers/natsemi/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/natsemi/GNUmakefile" ;;
   "drivers/pcnet32/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/pcnet32/GNUmakefile" ;;
   "drivers/smc91111/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/smc91111/GNUmakefile" ;;
+  "drivers/tulip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
   "drivers/via-rhine/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/via-rhine/GNUmakefile" ;;
-  "drivers/experimental/3c59x/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/3c59x/GNUmakefile" ;;
   "drivers/experimental/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/GNUmakefile" ;;
-  "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
+  "drivers/experimental/3c59x/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/3c59x/GNUmakefile" ;;
   "rtai_rtdm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES rtai_rtdm/GNUmakefile" ;;
+  "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
+  "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
+  "stack/rtcfg/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtcfg/GNUmakefile" ;;
+  "stack/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/GNUmakefile" ;;
+  "stack/rtmac/nomac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/nomac/GNUmakefile" ;;
+  "stack/rtmac/tdma-v1/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/rtmac/tdma-v1/GNUmakefile" ;;
   "tools/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES tools/GNUmakefile" ;;
   "stack/include/rtdm.h" ) CONFIG_LINKS="$CONFIG_LINKS stack/include/rtdm.h:rtai_rtdm/rtdm.h" ;;
   "stack/include/rtdm_driver.h" ) CONFIG_LINKS="$CONFIG_LINKS stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h" ;;
+  "${DIR}/Makefile" ) CONFIG_LINKS="$CONFIG_LINKS ${DIR}/Makefile:${DIR}/Makefile.kbuild" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config/rtnet_config_pre.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config/rtnet_config_pre.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -22821,6 +22874,7 @@ s,@NCURSES_LIBS@,$NCURSES_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@CONFIG_KBUILD_TRUE@,$CONFIG_KBUILD_TRUE,;t t
 s,@CONFIG_KBUILD_FALSE@,$CONFIG_KBUILD_FALSE,;t t
+s,@RTNET_TARGET_ARCH@,$RTNET_TARGET_ARCH,;t t
 s,@CROSS_COMPILE@,$CROSS_COMPILE,;t t
 s,@RTNET_MODULE_EXT@,$RTNET_MODULE_EXT,;t t
 s,@RTNET_KBUILD_ENV@,$RTNET_KBUILD_ENV,;t t
