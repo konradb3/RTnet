@@ -5,7 +5,7 @@ What is it?
 -----------
 RTnet is real-time network protocol stack for RTAI (hard real-time Linux
 extension). It provides a standard socket API to be used with RTAI kernel
-modules and LXRT processes.
+modules and LXRT user space processes.
 
 What are the requirements?
 --------------------------
@@ -48,8 +48,8 @@ How to install it?
 7. make install
    This will create the directories <PREFIX>/sbin with all configuration tools,
    <PREFIX>/modules containing all core modules, <PREFIX>/include with the
-   required API header files, and <PREFIX>/etc with a startup configuration
-   file to be used with the <PREFIX>/sbin/rtnet.
+   required API header files, and <PREFIX>/etc with configuration files to be
+   used with the rtnet startup script.
 8. run "mknod /dev/rtnet c 10 240" on your target system to create the
    configuration interface device node.
 
@@ -61,7 +61,7 @@ How to test it?
 2. Load required RTAI modules (24.1.x: rtai, rtai_sched; 3.x: rtai_hal,
    rtai_ksched/rtai_lxrt, rtai_sem; fusion: rtai_hal, rtai_nucleus,
    rtai_native)
-3. Load the driver layer module rtai_rtdm.o (currently, this comes with RTnet,
+3. Load the driver layer module rtai_rtdm (currently, this comes with RTnet,
    see <PREFIX>/modules directory)
 4. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:
    RT_DRIVER, IPADDR, TDMA_MODE, TDMA_SLAVES.

@@ -3,7 +3,7 @@
   * multiple slots
   * packet delay compensation
   * slave hot plugging
-  * backup master
+  * backup masters
 - new NIC device driver layer
   * atomic transmission time stamp
   * improved locking scheme
