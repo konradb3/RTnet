@@ -331,6 +331,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     struct sk_buff *skb;
     struct net_device *dev = &dev_rtnetproxy;
     struct net_device_stats *stats = dev->priv;
+    RTIME rt;
     
 #define IP_OVERHEAD 34
     int len = rtskb->len + IP_OVERHEAD;
@@ -348,10 +349,14 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     skb->ip_summed = CHECKSUM_UNNECESSARY;
     skb->pkt_type = PACKET_HOST;  /* Extremely important! Why?!? */
 
+    rt = count2nano( rtskb->rx );
+    skb->stamp.tv_sec = rt / 1000000000;
+    skb->stamp.tv_usec = ( rt % 1000000000 ) / 1000;
+     
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;
     stats->rx_packets++;
-   
+          
     
     netif_rx(skb);  /* pass it to the received stuff */
         
