@@ -219,7 +219,8 @@ int rt_packet_sendmsg(struct rtsocket *sock, const struct msghdr *msg,
 
     rt_memcpy_fromkerneliovec(rtskb_put(rtskb, len), msg->msg_iov, len);
 
-    rtskb->rtdev = rtdev;
+    rtskb->rtdev    = rtdev;
+    rtskb->priority = sock->priority;
 
     if (rtdev->hard_header) {
         ret = rtdev->hard_header(rtskb, rtdev, ntohs(sll->sll_protocol),
