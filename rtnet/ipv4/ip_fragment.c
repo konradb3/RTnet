@@ -172,6 +172,9 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
 
             /* Extend the chain */
             first_skb->chain_end = skb;
+#ifdef CONFIG_RTNET_CHECKED
+            first_skb->chain_len++;
+#endif
 
             /* Sanity check: unordered fragments are not allowed! */
             if (offset != p_coll->buf_size) {
