@@ -340,7 +340,7 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
     unsigned long flags_nrt, flags_rt;
 
 
-    ASSERT(rtdev->ifindex != 0,
+    RTNET_ASSERT(rtdev->ifindex != 0,
         rt_printk("RTnet: device %s/%p was not registered\n",
                   rtdev->name, rtdev);
         return -ENODEV;);
@@ -362,7 +362,7 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
         return -EBUSY;
     }
-    ASSERT(atomic_read(&rtdev->refcount) == 0,
+    RTNET_ASSERT(atomic_read(&rtdev->refcount) == 0,
            rt_printk("RTnet: rtdev reference counter < 0!\n"););
 
     rtnet_devices[rtdev->ifindex-1] = NULL;
@@ -438,9 +438,9 @@ int rtdev_xmit(struct rtskb *skb)
     int ret = 0;
 
 
-    ASSERT(skb != NULL, return -1;);
-    ASSERT(skb->rtdev != NULL, return -1;);
-    ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
+    RTNET_ASSERT(skb != NULL, return -1;);
+    RTNET_ASSERT(skb->rtdev != NULL, return -1;);
+    RTNET_ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
 
     rtdev = skb->rtdev;
 
@@ -467,15 +467,15 @@ int rtdev_xmit_proxy(struct rtskb *skb)
     int ret = 0;
 
 
-    ASSERT(skb != NULL, return -1;);
-    ASSERT(skb->rtdev != NULL, return -1;);
-    ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
+    RTNET_ASSERT(skb != NULL, return -1;);
+    RTNET_ASSERT(skb->rtdev != NULL, return -1;);
+    RTNET_ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
 
 
     rtdev = skb->rtdev;
 
     if (rtdev->mac_disc) {
-        ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, return -1;);
+        RTNET_ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, return -1;);
 
         ret = rtdev->mac_disc->nrt_packet_tx(skb);
     }

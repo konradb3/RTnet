@@ -303,7 +303,8 @@ static inline int tdma_xmit(struct rtskb *skb)
     int ret;
 
 
-    ASSERT(rtdev->mac_priv->hard_start_xmit != NULL, kfree_rtskb(skb); return -1;);
+    RTNET_ASSERT(rtdev->mac_priv->hard_start_xmit != NULL, kfree_rtskb(skb);
+                 return -1;);
     ret = rtdev->mac_priv->hard_start_xmit(skb, rtdev);
     if (ret != 0)
         kfree_rtskb(skb);

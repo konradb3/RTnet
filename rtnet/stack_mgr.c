@@ -78,7 +78,7 @@ int rtdev_remove_pack(struct rtpacket_type *pt)
     int ret = 0;
 
 
-    ASSERT(pt != NULL, return -EINVAL;);
+    RTNET_ASSERT(pt != NULL, return -EINVAL;);
 
     if (pt->type == htons(ETH_P_ALL))
         return -EINVAL;
@@ -133,8 +133,8 @@ void rtnetif_rx(struct rtskb *skb)
     unsigned long flags;
 
 
-    ASSERT(skb != NULL, return;);
-    ASSERT(skb->rtdev != NULL, return;);
+    RTNET_ASSERT(skb != NULL, return;);
+    RTNET_ASSERT(skb->rtdev != NULL, return;);
     rtdev = skb->rtdev;
 
     flags = rt_spin_lock_irqsave(&rxqueue.lock);

@@ -290,7 +290,7 @@ static inline void rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
 {
     unsigned long flags;
 
-    ASSERT(skb->priority <= 31, skb->priority = 31;);
+    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
 
     flags = rt_spin_lock_irqsave(&prioqueue->lock);
     __rtskb_queue_head(&prioqueue->queue[skb->priority], skb);
@@ -340,7 +340,7 @@ static inline void rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
 {
     unsigned long flags;
 
-    ASSERT(skb->priority <= 31, skb->priority = 31;);
+    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
 
     flags = rt_spin_lock_irqsave(&prioqueue->lock);
     __rtskb_queue_tail(&prioqueue->queue[skb->priority], skb);
@@ -560,7 +560,8 @@ static inline void rtskb_trim(struct rtskb *skb, unsigned int len)
 
 static inline struct rtskb *rtskb_padto(struct rtskb *rtskb, unsigned int len)
 {
-    ASSERT(len <= (unsigned int)(rtskb->buf_end + 1 - rtskb->data), return NULL;);
+    RTNET_ASSERT(len <= (unsigned int)(rtskb->buf_end + 1 - rtskb->data),
+                 return NULL;);
 
     memset(rtskb->data + rtskb->len, 0, len - rtskb->len);
 

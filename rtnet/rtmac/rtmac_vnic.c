@@ -158,7 +158,8 @@ static int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
         return res;
     }
 
-    ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, kfree_rtskb(rtskb); return -1;);
+    RTNET_ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, kfree_rtskb(rtskb);
+                 return -1;);
 
     stats->tx_packets++;
     stats->tx_bytes += skb->len;

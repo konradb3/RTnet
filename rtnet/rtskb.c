@@ -57,7 +57,8 @@ static unsigned int rtskb_amount_max=0;
 /***
  *  rtskb_copy_and_csum_bits
  */
-unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset, u8 *to, int len, unsigned int csum)
+unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset,
+                                      u8 *to, int len, unsigned int csum)
 {
     int copy;
     int start = skb->len - skb->data_len;
@@ -162,7 +163,7 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     struct rtskb *skb;
 
 
-    ASSERT(size <= SKB_DATA_ALIGN(RTSKB_SIZE), return NULL;);
+    RTNET_ASSERT(size <= SKB_DATA_ALIGN(RTSKB_SIZE), return NULL;);
 
     skb = rtskb_dequeue(pool);
     if (!skb)
@@ -189,8 +190,8 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
  */
 void kfree_rtskb(struct rtskb *skb)
 {
-    ASSERT(skb != NULL, return;);
-    ASSERT(skb->pool != NULL, return;);
+    RTNET_ASSERT(skb != NULL, return;);
+    RTNET_ASSERT(skb->pool != NULL, return;);
 
     rtskb_queue_tail(skb->pool, skb);
 }
@@ -288,7 +289,7 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
     unsigned int i;
     struct rtskb *skb;
 
-    ASSERT(pool != NULL, return -EINVAL;);
+    RTNET_ASSERT(pool != NULL, return -EINVAL;);
 
     for (i = 0; i < add_rtskbs; i++) {
         /* get rtskb from slab pool */
@@ -324,7 +325,7 @@ unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
     unsigned int i;
     struct rtskb *skb;
 
-    ASSERT(pool != NULL, return -EINVAL;);
+    RTNET_ASSERT(pool != NULL, return -EINVAL;);
 
     for (i = 0; i < add_rtskbs; i++) {
         /* get rtskb from rtskb cache */

@@ -77,6 +77,7 @@ extern int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen
 extern int rt_socket_callback   (int s, int (*func)(int,void *), void *arg);
 extern int rt_socket_setsockopt (int s, int level, int optname,
                                  const void *optval, socklen_t optlen);
+extern int rt_socket_ioctl      (int s, int request, void *arg);
 
 #define rt_bind                 rt_socket_bind
 #define rt_listen               rt_socket_listen
@@ -88,6 +89,7 @@ extern int rt_socket_setsockopt (int s, int level, int optname,
 #define rt_recvfrom             rt_socket_recvfrom
 #define rt_recvmsg              rt_socket_recvmsg
 #define rt_setsockopt           rt_socket_setsockopt
+#define rt_ioctl                rt_socket_ioctl
 
 #if 0
 /* static interface - DISCONTINUED! WILL BE REMOVED SOON */
@@ -114,8 +116,10 @@ extern int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *ar
 /* utils */
 extern unsigned long rt_inet_aton(const char *ip);
 extern int rt_eth_aton(char *addr_buf, const char *mac);
-extern int rt_get_if_list(void /* buffer, size */);
 
+#else   /* !__KERNEL__ */
+
+#include <rtnet_lxrt.h>
 
 #endif  /* __KERNEL__ */
 

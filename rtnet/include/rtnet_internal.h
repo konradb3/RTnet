@@ -29,7 +29,7 @@
 
 
 /* #ifdef CONFIG_RTNET_CHECKED */
-#define ASSERT(expr, func) \
+#define RTNET_ASSERT(expr, func) \
     if (!(expr)) \
     { \
         rt_printk("Assertion failed! %s:%s:%d %s\n", \

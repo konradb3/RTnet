@@ -48,9 +48,9 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     struct rtmac_priv   *priv;
 
 
-    ASSERT(rtdev != NULL, return -EINVAL;);
-    ASSERT(disc != NULL, return -EINVAL;);
-    ASSERT(disc->attach != NULL, return -EINVAL;);
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->attach != NULL, return -EINVAL;);
 
     if (rtdev->mac_disc) {
         printk("RTmac: another discipline for rtdev '%s' active.\n", rtdev->name);
@@ -107,17 +107,17 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
     struct rtmac_priv   *priv;
 
 
-    ASSERT(rtdev != NULL, return -EINVAL;);
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
     disc = rtdev->mac_disc;
     if (!disc) {
         printk("RTmac: no discipline active on rtdev '%s'\n", rtdev->name);
         return -ENODEV;
     }
-    ASSERT(disc->detach != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->detach != NULL, return -EINVAL;);
 
     priv = rtdev->mac_priv;
-    ASSERT(priv != NULL, return -EINVAL;);
+    RTNET_ASSERT(priv != NULL, return -EINVAL;);
 
     /* remove the VNIC */
     rtmac_vnic_remove(rtdev);
@@ -158,14 +158,14 @@ struct rtmac_disc *rtmac_get_disc_by_name(char *name)
 
 int rtmac_disc_register(struct rtmac_disc *disc)
 {
-    ASSERT(disc != NULL, return -EINVAL;);
-    ASSERT(disc->name != NULL, return -EINVAL;);
-    ASSERT(disc->rt_packet_tx != NULL, return -EINVAL;);
-    ASSERT(disc->nrt_packet_tx != NULL, return -EINVAL;);
-    ASSERT(disc->attach != NULL, return -EINVAL;);
-    ASSERT(disc->detach != NULL, return -EINVAL;);
-    /*ASSERT(disc->ioctl != NULL, return -EINVAL;);*/ /* not supported yet */
-    ASSERT(disc->ioctl_ops != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->name != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->rt_packet_tx != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->nrt_packet_tx != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->attach != NULL, return -EINVAL;);
+    RTNET_ASSERT(disc->detach != NULL, return -EINVAL;);
+    /*RTNET_ASSERT(disc->ioctl != NULL, return -EINVAL;);*/ /* not supported yet */
+    RTNET_ASSERT(disc->ioctl_ops != NULL, return -EINVAL;);
 
     if (rtmac_get_disc_by_name(disc->name) != NULL)
     {
@@ -181,7 +181,7 @@ int rtmac_disc_register(struct rtmac_disc *disc)
 
 void rtmac_disc_deregister(struct rtmac_disc *disc)
 {
-    ASSERT(disc != NULL, return;);
+    RTNET_ASSERT(disc != NULL, return;);
 
     list_del(&disc->list);
 }

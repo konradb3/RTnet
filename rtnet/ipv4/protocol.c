@@ -88,15 +88,15 @@ int rt_inet_socket(SOCKET *sock, int protocol)
     if ((prot != NULL) && (prot->protocol == protocol)) {
         int ret = prot->init_socket(sock);
 
-        ASSERT(sock->ops             != NULL, return -EPROTO;);
-        ASSERT(sock->ops->bind       != NULL, return -EPROTO;);
-        ASSERT(sock->ops->connect    != NULL, return -EPROTO;);
-        ASSERT(sock->ops->listen     != NULL, return -EPROTO;);
-        ASSERT(sock->ops->accept     != NULL, return -EPROTO;);
-        ASSERT(sock->ops->recvmsg    != NULL, return -EPROTO;);
-        ASSERT(sock->ops->sendmsg    != NULL, return -EPROTO;);
-        ASSERT(sock->ops->close      != NULL, return -EPROTO;);
-        ASSERT(sock->ops->setsockopt != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops             != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->bind       != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->connect    != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->listen     != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->accept     != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->recvmsg    != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->sendmsg    != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->close      != NULL, return -EPROTO;);
+        RTNET_ASSERT(sock->ops->setsockopt != NULL, return -EPROTO;);
 
         return ret;
     } else {
