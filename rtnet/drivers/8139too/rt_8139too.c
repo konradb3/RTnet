@@ -636,7 +636,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
 
         rt_rtdev_connect(rtdev, &RTDEV_manager);
 
-        SET_MODULE_OWNER(rtdev);
+        RTNET_SET_MODULE_OWNER(rtdev);
         rtdev->vers = RTDEV_VERS_2_0;
         tp = rtdev->priv;
         tp->pci_dev = pdev;

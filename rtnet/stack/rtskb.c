@@ -44,10 +44,10 @@ static struct rtskb_queue rtskb_cache;
 struct rtskb_queue global_pool;
 
 /* pool statistics */
-static unsigned int rtskb_pools=0;
-static unsigned int rtskb_pools_max=0;
-static unsigned int rtskb_amount=0;
-static unsigned int rtskb_amount_max=0;
+unsigned int rtskb_pools=0;
+unsigned int rtskb_pools_max=0;
+unsigned int rtskb_amount=0;
+unsigned int rtskb_amount_max=0;
 
 #ifdef CONFIG_RTNET_RTCAP
 /* RTcap interface */

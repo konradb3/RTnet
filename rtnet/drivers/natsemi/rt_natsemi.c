@@ -790,7 +790,7 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	}
 	rtdev_alloc_name(dev, "rteth%d");
 	rt_rtdev_connect(dev, &RTDEV_manager);
-	SET_MODULE_OWNER(dev);
+	RTNET_SET_MODULE_OWNER(dev);
 	dev->vers = RTDEV_VERS_2_0;
 /*** RTnet ***/
 

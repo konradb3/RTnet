@@ -699,7 +699,7 @@ static int speedo_found1(struct pci_dev *pdev,
 	rtdev_alloc_name(rtdev, "rteth%d");
 	memset(rtdev->priv, 0, sizeof(struct speedo_private));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
-	SET_MODULE_OWNER(rtdev);
+	RTNET_SET_MODULE_OWNER(rtdev);
 	rtdev->vers = RTDEV_VERS_2_0;
 	// *** RTnet ***
 

@@ -1437,7 +1437,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	}
 	//rtdev_alloc_name(rtdev, "eth%d");//Done by register_rtdev()
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
-	SET_MODULE_OWNER(rtdev);
+	RTNET_SET_MODULE_OWNER(rtdev);
 	rtdev->vers = RTDEV_VERS_2_0;
 
 	if (pci_resource_len (pdev, 0) < tulip_tbl[chip_idx].io_size) {

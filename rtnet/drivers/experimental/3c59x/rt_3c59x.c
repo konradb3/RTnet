@@ -1070,7 +1070,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	rtdev_alloc_name(rtdev, "rteth%d");
 	memset(rtdev->priv, 0, sizeof(*vp));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
-	SET_MODULE_OWNER(rtdev);
+	RTNET_SET_MODULE_OWNER(rtdev);
 	// *** RTnet ***
 
 	vp = rtdev->priv;

@@ -78,7 +78,7 @@ const char *rtcfg_main_state[] = {
     "RTCFG_MAIN_CLIENT_READY"
 };
 
-static int rtcfg_debug = RTCFG_DEFAULT_DEBUG_LEVEL;
+int rtcfg_debug = RTCFG_DEFAULT_DEBUG_LEVEL;
 #endif /* CONFIG_RTNET_RTCFG_DEBUG */
 
 

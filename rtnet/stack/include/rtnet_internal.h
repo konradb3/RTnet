@@ -1,4 +1,4 @@
-/***
+ /***
  * rtnet_internal.h - internal declarations
  *
  * Copyright (C) 1999      Lineo, Inc
@@ -145,5 +145,8 @@ static inline void RTNET_MOD_DEC_USE_COUNT_EX(struct module *module)
 
 #define RTNET_MOD_INC_USE_COUNT RTNET_MOD_INC_USE_COUNT_EX(THIS_MODULE)
 #define RTNET_MOD_DEC_USE_COUNT RTNET_MOD_DEC_USE_COUNT_EX(THIS_MODULE)
+
+#define RTNET_SET_MODULE_OWNER(some_struct) \
+    do { (some_struct)->rt_owner = THIS_MODULE; } while (0)
 
 #endif /* __RTNET_INTERNAL_H_ */

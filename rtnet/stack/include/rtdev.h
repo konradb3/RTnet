@@ -72,7 +72,8 @@ struct rtnet_device {
     int                 ifindex;
     atomic_t            refcount;
 
-    struct module       *owner;
+    struct module       *rt_owner;  /* like classic owner, but      *
+                                     * forces correct macro usage   */
 
     unsigned int        flags;      /* interface flags (a la BSD)   */
     unsigned long       priv_flags; /* internal flags               */

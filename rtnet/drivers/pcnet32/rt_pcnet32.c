@@ -650,7 +650,7 @@ pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
         return -ENOMEM;
     rtdev_alloc_name(dev, "rteth%d");
     rt_rtdev_connect(dev, &RTDEV_manager);
-    SET_MODULE_OWNER(dev);
+    RTNET_SET_MODULE_OWNER(dev);
     dev->vers = RTDEV_VERS_2_0;
 /*** RTnet ***/
 

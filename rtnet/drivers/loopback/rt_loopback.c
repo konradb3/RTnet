@@ -138,7 +138,7 @@ static int __init loopback_init(void)
         return -ENODEV;
 
     rt_rtdev_connect(rtdev, &RTDEV_manager);
-    SET_MODULE_OWNER(rtdev);
+    RTNET_SET_MODULE_OWNER(rtdev);
 
     strcpy(rtdev->name, "rtlo");
 
