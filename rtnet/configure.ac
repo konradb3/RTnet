@@ -555,7 +555,7 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build all PCI network driver])
 AC_ARG_ENABLE(allpci,
-	[  --enable-allpci        build all PCI NIC driver],
+	[  --enable-allpci        build all PCI NIC drivers],
 	[case "$enableval" in
 	y | yes ) CONFIG_RTNET_ALLPCI=yes ;;
 	*) unset CONFIG_RTNET_ALLPCI ;;
