@@ -31,13 +31,14 @@ compensation when an incoming packet needs to be stored until the user fetches
 it and when a packet is prepared for transmission. The initial pool size can be
 set with "socket_rtskbs".
 
-During runtime the be extended (RT_SO_EXTPOOL) or shrunk (RT_SO_SHRPOOL) using
-the rt_socket_setsockopt() function. When a socket is to be created within a
-real-time context (e.g. a kernel RT-task), the buffers are allocated from the
-real-time rtskb cache (see below) instead of using a Linux system call. When a
-real-time-created socket is closed again, the buffers return to that cache.
-Note that a rt_socket_close() call can fail if not all buffers have yet return
-to the socket pool. In this case, be patient and retry later. :)
+During runtime the pool can be extended (RT_SO_EXTPOOL) or shrunk
+(RT_SO_SHRPOOL) using the rt_socket_setsockopt() function. When a socket is to
+be created within a real-time context (e.g. a kernel RT-task), the buffers are
+allocated from the real-time rtskb cache (see below) instead of using a Linux
+system call. When a real-time-created socket is closed again, the buffers
+return to that cache. Note that a rt_socket_close() call can fail if not all
+buffers have yet return to the socket pool. In this case, be patient and retry
+later. :)
 
 
 2. Global Pool
