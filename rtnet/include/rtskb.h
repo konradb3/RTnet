@@ -126,12 +126,10 @@ struct rtskb_prio_list {
     ((sizeof(struct rtskb)+DATA_BUF_ALIGN-1) & ~(DATA_BUF_ALIGN-1))
 
 /* default values for the module parameter */
-#define DEFAULT_GLOBAL_RTSKBS   0  /* default number of rtskb's in global pool */
-#define DEFAULT_DEVICE_RTSKBS   16  /* default additional rtskbs per network adapter */
-#define DEFAULT_SOCKET_RTSKBS   16  /* default number of rtskb's in socket pools */
-#define DEFAULT_MAX_RTSKB_SIZE  ETH_FRAME_LEN + 2 + 20
-                                    /* 2  = offset to align IP header */
-                                    /* 20 = max. additional space needed by eepro100-rt */
+#define DEFAULT_GLOBAL_RTSKBS   0       /* default number of rtskb's in global pool */
+#define DEFAULT_DEVICE_RTSKBS   16      /* default additional rtskbs per network adapter */
+#define DEFAULT_SOCKET_RTSKBS   16      /* default number of rtskb's in socket pools */
+#define DEFAULT_MAX_RTSKB_SIZE  1544    /* maximum space, needed by pcnet32-rt */
 
 extern unsigned int socket_rtskbs;      /* default number of rtskb's in socket pools */
 extern unsigned int rtskb_max_size;     /* rtskb data buffer size */
