@@ -26,10 +26,16 @@
 #include <linux/socket.h>
 
 
+#define RT_SO_EXTPOOL   0xFF01
+#define RT_SO_SHRPOOL   0xFF02
+#define RT_SO_PRIORITY  0xFF03
+#define RT_SO_NONBLOCK  0xFF04
+
+
 /***
- *	rtsocket
+ *  rtsocket
  */
- 
+
 struct rtsocket;
 typedef struct rtsocket SOCKET;
 
@@ -39,35 +45,42 @@ typedef struct rtsocket SOCKET;
 extern struct rtsocket *rt_socket_lookup(int fd);
 
 /* file descriptor interface */
-extern int rt_socket		(int family, int type, int protocol);
-extern int rt_socket_bind	(int fd, struct sockaddr *my_addr, int addr_len);
-extern int rt_socket_listen	(int fd, int backlog);
-extern int rt_socket_connect	(int fd, struct sockaddr *addr, int addr_len);
-extern int rt_socket_accept	(int fd, struct sockaddr *addr, int *addrlen);
-extern int rt_socket_close	(int fd);
-extern int rt_socket_writev	(int fd, struct iovec *vector, size_t count);
-extern int rt_socket_send	(int fd, void *buf, int len, unsigned int flags);
-extern int rt_socket_sendto	(int fd, void *buf, int len, unsigned int flags, 
-				struct sockaddr *to, int tolen);
-extern int rt_socket_sendmsg	(int fd, struct msghdr *msg, unsigned int flags);
-extern int rt_socket_readv	(int fd, struct iovec *vector, size_t count);
-extern int rt_socket_recv	(int fd, void *buf, int len, unsigned int flags);
-extern int rt_socket_recvfrom	(int fd, void *buf, int len, unsigned int flags, 
-				struct sockaddr *from, int *fromlen);
-extern int rt_socket_recvmsg	(int s, struct msghdr *msg, unsigned int flags);
+extern int rt_socket            (int family, int type, int protocol);
+extern int rt_socket_bind       (int fd, struct sockaddr *my_addr,
+                                 int addr_len);
+extern int rt_socket_listen     (int fd, int backlog);
+extern int rt_socket_connect    (int fd, struct sockaddr *addr, int addr_len);
+extern int rt_socket_accept     (int fd, struct sockaddr *addr, int *addrlen);
+extern int rt_socket_close      (int fd);
+extern int rt_socket_writev     (int fd, struct iovec *vector, size_t count);
+extern int rt_socket_send       (int fd, void *buf, int len,
+                                 unsigned int flags);
+extern int rt_socket_sendto     (int fd, void *buf, int len,
+                                 unsigned int flags, struct sockaddr *to,
+                                 int tolen);
+extern int rt_socket_sendmsg    (int fd, struct msghdr *msg,
+                                 unsigned int flags);
+extern int rt_socket_readv      (int fd, struct iovec *vector, size_t count);
+extern int rt_socket_recv       (int fd, void *buf, int len,
+                                 unsigned int flags);
+extern int rt_socket_recvfrom   (int fd, void *buf, int len,
+                                 unsigned int flags, struct sockaddr *from,
+                                 int *fromlen);
+extern int rt_socket_recvmsg    (int s, struct msghdr *msg,
+                                 unsigned int flags);
 extern int rt_socket_getsockname(int fd, struct sockaddr *addr, int addr_len);
-extern int rt_socket_callback	(int fd, int (*func)(int,void *), void *arg);
+extern int rt_socket_callback   (int fd, int (*func)(int,void *), void *arg);
+extern int rt_socket_setsockopt (int fd, int level, int optname,
+                                 const void *optval, int optlen);
 
-extern int rt_ip_setsockopt (int fd, int optname, char *optval, int optlen);
-
-#define rt_bind		rt_socket_bind
-#define rt_listen	rt_socket_listen
-#define rt_connect	rt_socket_connect
-#define rt_accept	rt_socket_accept
-#define rt_close	rt_socket_close
-#define rt_sendto	rt_socket_sendto
-#define rt_recvfrom	rt_socket_recvfrom
-#define rt_setsockopt	rt_ip_setsockopt
+#define rt_bind                 rt_socket_bind
+#define rt_listen               rt_socket_listen
+#define rt_connect              rt_socket_connect
+#define rt_accept               rt_socket_accept
+#define rt_close                rt_socket_close
+#define rt_sendto               rt_socket_sendto
+#define rt_recvfrom             rt_socket_recvfrom
+#define rt_setsockopt           rt_socket_setsockopt
 
 /* static interface */
 extern int rt_ssocket(SOCKET* socket, int family, int type, int protocol);
@@ -78,13 +91,13 @@ extern int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addrlen
 extern int rt_ssocket_close(SOCKET *socket);
 extern int rt_ssocket_writev(SOCKET *socket, struct iovec *vector, size_t count);
 extern int rt_ssocket_send(SOCKET *socket, void *buf, int len, unsigned int flags);
-extern int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, 
-				struct sockaddr *to, int tolen);
+extern int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags,
+                             struct sockaddr *to, int tolen);
 extern int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags);
 extern int rt_ssocket_readv(SOCKET *socket, struct iovec *vector, size_t count);
 extern int rt_ssocket_recv(SOCKET *socket, void *buf, int len, unsigned int flags);
-extern int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, 
-				struct sockaddr *from, int fromlen);
+extern int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags,
+                               struct sockaddr *from, int fromlen);
 extern int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags);
 extern int rt_ssocket_getsockname(SOCKET *socket, struct sockaddr *addr, int addr_len);
 extern int rt_ssocket_callback(SOCKET *socket, int (*func)(int,void *), void *arg);
