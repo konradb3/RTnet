@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.4 2003/05/16 19:31:52 hpbock Exp $
+ * Version:	$Id: route.c,v 1.5 2003/05/21 16:14:18 kiszka Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -73,6 +73,9 @@
  *	Tobias Ringstrom	:	Uninitialized res.type in ip_route_output_slow.
  *	Vladimir V. Ivanov	:	IP rule info (flowid) is really useful.
  *		Marc Boucher	:	routing by fwmark
+ *
+ * RTnet-Fixes:
+ *		Billa		:	added rt_ip_route_del_specific
  *
  *		This program is free software; you can redistribute it and/or
  *		modify it under the terms of the GNU General Public License
@@ -331,6 +334,45 @@ void rt_ip_route_del(struct rtnet_device *rtdev)
 	}
 
 
+}
+
+
+
+/***
+ *	rt_ip_route_del_specific: delete an specific route
+ *
+ */
+void rt_ip_route_del_specific(struct rtnet_device *rtdev, u32 addr)
+{
+	struct rt_rtable *rt = rt_rtables_generic;
+	struct rt_rtable *next;
+
+	// remove entries from the specific routing table
+	rt = rt_rtables;
+	while(rt != NULL) {
+		next = rt->next;
+
+		if( rt->rt_dev == rtdev && rt->rt_dst == addr ) {
+			struct rt_rtable *prev = rt->prev;
+
+			if( prev != NULL )
+				prev->next = next;
+			if( next != NULL )
+				next->prev = prev;
+
+			memset(rt, 0, sizeof(struct rt_rtable));
+
+			// add rt_rtable to free list
+			rt->prev = NULL;
+			rt->next = rt_rtable_free_list;
+			rt_rtable_free_list = rt;
+
+			// if we deleted the first elemet, set head to next
+			if(rt == rt_rtables)
+				rt_rtables = next;
+		}
+		rt = next;
+	}
 }
 
 

@@ -640,6 +640,7 @@ extern struct rt_rtable *rt_rtables_generic;
 extern struct rt_rtable *rt_ip_route_add(struct rtnet_device *rtdev, u32 addr, u32 mask);
 extern struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev, u32 addr, unsigned char *hw_addr);
 extern void rt_ip_route_del(struct rtnet_device *rtdev);
+extern void rt_ip_route_del_specific(struct rtnet_device *rtdev, u32 addr);
 extern struct rt_rtable *rt_ip_route_find(u32 daddr);
 
 extern int rt_ip_route_input(struct rtskb *skb, u32 daddr, u32 saddr, struct rtnet_device *rtdev);

@@ -330,6 +330,8 @@ void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr)
 		if (arp_list) 
 			arp_list->prev=arp_entry;
 		arp_list=arp_entry;
+		// Billa: for the rt_arp_table_del() not to crash
+		arp_list->prev=NULL;
 	}
 	//	rt_sem_signal(&arp_sem);
 }

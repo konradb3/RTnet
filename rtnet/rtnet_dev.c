@@ -96,7 +96,13 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	case IOC_RT_ROUTE_SOLICIT:
 		rt_arp_solicit(rtdev,cfg.ip_addr);
 		return 0;
-		
+
+	case IOC_RT_ROUTE_DELETE:
+		// Billa: delete an ARP & ROUTE element in the lists
+		rt_arp_table_del(cfg.ip_addr);
+		rt_ip_route_del_specific(rtdev,cfg.ip_addr);
+		return 0;
+
 	default:
 		return -ENOTTY;
 	}
