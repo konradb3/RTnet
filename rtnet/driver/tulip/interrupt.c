@@ -215,7 +215,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, rtos_time_t *time_stamp
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-void tulip_interrupt(int irq, unsigned long __data)
+void tulip_interrupt(unsigned int irq, void *__data)
 {
 	/*RTnet*/struct rtnet_device *rtdev = (/*RTnet*/struct rtnet_device *)__data;
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;

@@ -270,7 +270,7 @@ MODULE_PARM(rx_copybreak, "i");
  *** RTnet ***/
 MODULE_PARM(options, "1-" __MODULE_STRING(MAX_UNITS) "i");
 MODULE_PARM(full_duplex, "1-" __MODULE_STRING(MAX_UNITS) "i");
-MODULE_PARM_DESC(max_interrupt_work, 
+MODULE_PARM_DESC(max_interrupt_work,
 	"DP8381x maximum events handled per interrupt");
 MODULE_PARM_DESC(mtu, "DP8381x MTU (all boards)");
 MODULE_PARM_DESC(debug, "DP8381x default debug level");
@@ -715,7 +715,7 @@ static void free_ring(struct rtnet_device *dev);
 /*static void reinit_ring(struct rtnet_device *dev);*/
 static void init_registers(struct rtnet_device *dev);
 static int start_tx(struct rtskb *skb, struct rtnet_device *dev);
-static void intr_handler(int irq, unsigned long dev_instance);/*, struct pt_regs *regs);*/
+static void intr_handler(unsigned int irq, void *dev_instance);/*, struct pt_regs *regs);*/
 static void netdev_error(struct rtnet_device *dev, int intr_status);
 static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp);
 static void netdev_tx_done(struct rtnet_device *dev);
@@ -1148,7 +1148,7 @@ static int netdev_open(struct rtnet_device *dev)
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rtos_irq_request(dev->irq, intr_handler, (unsigned long)dev);
+	i = rtos_irq_request(dev->irq, intr_handler, dev);
 /*** RTnet ***/
 /*	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);*/
 	if (i) {
@@ -1179,7 +1179,6 @@ static int netdev_open(struct rtnet_device *dev)
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
 /*** RTnet ***/
-	rtos_irq_startup(dev->irq);
 	rtos_irq_enable(dev->irq);
 
 	if (netif_msg_ifup(np))
@@ -1777,7 +1776,7 @@ static void netdev_tx_done(struct rtnet_device *dev)
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static void intr_handler(int irq, unsigned long dev_instance)/*, struct pt_regs *rgs)*/
+static void intr_handler(unsigned int irq, void *dev_instance)/*, struct pt_regs *rgs)*/
 {
 /*	struct net_device *dev = dev_instance;*/
 	struct rtnet_device *dev = (struct rtnet_device *)dev_instance; /*** RTnet ***/
@@ -2663,7 +2662,6 @@ static int netdev_close(struct rtnet_device *dev)
 	rtos_spin_unlock(&np->lock);
 
 /*** RTnet ***/
-	rtos_irq_shutdown(dev->irq);
 	if ( (i=rtos_irq_free(dev->irq))<0 )
 		return i;
 

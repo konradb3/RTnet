@@ -885,8 +885,8 @@ static int vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
 static int boomerang_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void vortex_interrupt(int irq, unsigned long rtdev_id);
-static void boomerang_interrupt(int irq, unsigned long rtdev_id);
+static void vortex_interrupt(unsigned int irq, void *rtdev_id);
+static void boomerang_interrupt(unsigned int irq, void *rtdev_id);
 static int vortex_close(struct rtnet_device *rtdev);
 static void dump_tx_ring(struct rtnet_device *rtdev);
 
@@ -1892,11 +1892,10 @@ vortex_open(struct rtnet_device *rtdev)
 
 	if ((retval = rtos_irq_request(rtdev->irq,
 				(vp->full_bus_master_rx ? boomerang_interrupt : vortex_interrupt),
-				(unsigned long)rtdev))) {
+				rtdev))) {
 		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", rtdev->name, rtdev->irq);
 		goto out;
 	}
-	rtos_irq_startup(rtdev->irq);
 	rtos_irq_enable(rtdev->irq);
 	// *** RTnet ***
 
@@ -1941,7 +1940,6 @@ vortex_open(struct rtnet_device *rtdev)
 out_free_irq:
 
 	// *** RTnet ***
-	rtos_irq_shutdown(rtdev->irq);
     if ( (i=rtos_irq_free(rtdev->irq))<0 )
         return i;
 	rt_stack_disconnect(rtdev);
@@ -2413,7 +2411,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
  * full_bus_master_tx == 0 && full_bus_master_rx == 0
  */
 
-static void vortex_interrupt(int irq, unsigned long rtdev_id)
+static void vortex_interrupt(unsigned int irq, void *rtdev_id)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
@@ -2524,7 +2522,7 @@ handler_exit:
  * full_bus_master_tx == 1 && full_bus_master_rx == 1
  */
 
-static void boomerang_interrupt(int irq, unsigned long rtdev_id)
+static void boomerang_interrupt(unsigned int irq, void *rtdev_id)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
@@ -2928,7 +2926,6 @@ vortex_close(struct rtnet_device *rtdev)
 #endif
 
 	// *** RTnet ***
-	rtos_irq_shutdown(rtdev->irq);
 	if ( (i=rtos_irq_free(rtdev->irq))<0 )
 		return i;
 

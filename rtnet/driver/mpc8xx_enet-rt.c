@@ -172,7 +172,7 @@ struct scc_enet_private {
 static int scc_enet_open(struct rtnet_device *rtdev);
 static int scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void scc_enet_interrupt(int irq, unsigned long rtdev_id);
+static void scc_enet_interrupt(unsigned int irq, void *rtdev_id);
 static int scc_enet_close(struct rtnet_device *rtdev);
 
 #ifdef ORIGINAL_VERSION
@@ -330,7 +330,7 @@ scc_enet_timeout(struct net_device *dev)
  * This is called from the CPM handler, not the MPC core interrupt.
  */
 static void
-scc_enet_interrupt(int irq, unsigned long rtdev_id)
+scc_enet_interrupt(unsigned int irq, void *rtdev_id)
 {
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
 	int packets = 0;
@@ -957,8 +957,7 @@ int __init scc_enet_init(void)
 	*/
 	rtdev->irq = CPM_IRQ_OFFSET + CPMVEC_ENET;
 	i = rtos_irq_request(rtdev->irq,
-				      scc_enet_interrupt,
-				      (unsigned long)rtdev);
+				      scc_enet_interrupt, rtdev);
 	if (i) {
 		printk(KERN_ERR "Couldn't request IRQ %d\n", rtdev->irq);
 		MOD_DEC_USE_COUNT;

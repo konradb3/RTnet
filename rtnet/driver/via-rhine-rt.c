@@ -550,7 +550,7 @@ static void via_rhine_check_duplex(struct rtnet_device *dev);
 /*static void via_rhine_timer(unsigned long data);
 static void via_rhine_tx_timeout(struct net_device *dev);*/
 static int  via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev);
-static void via_rhine_interrupt(int irq, unsigned long dev_instance);
+static void via_rhine_interrupt(unsigned int irq, void *dev_instance);
 static void via_rhine_tx(struct rtnet_device *dev);
 static void via_rhine_rx(struct rtnet_device *dev, rtos_time_t *time_stamp);
 static void via_rhine_error(struct rtnet_device *dev, int intr_status);
@@ -1171,7 +1171,7 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rtos_irq_request(dev->irq, via_rhine_interrupt, (unsigned long)dev);
+	i = rtos_irq_request(dev->irq, via_rhine_interrupt, dev);
 /*** RTnet ***/
 	if (i) {
 		MOD_DEC_USE_COUNT;
@@ -1200,7 +1200,6 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
 /*** RTnet ***/
-	rtos_irq_startup(dev->irq);
 	rtos_irq_enable(dev->irq);
 
 	/* Set the timer to check for link beat. */
@@ -1406,7 +1405,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static void via_rhine_interrupt(int irq, unsigned long dev_instance) /*** RTnet ***/
+static void via_rhine_interrupt(unsigned int irq, void *dev_instance) /*** RTnet ***/
 {
 	struct rtnet_device *dev = (struct rtnet_device *)dev_instance; /*** RTnet ***/
 	long ioaddr;
@@ -1967,7 +1966,6 @@ static int via_rhine_close(struct rtnet_device *dev) /*** RTnet ***/
 	rtos_spin_unlock_irqrestore(&np->lock, flags); /*** RTnet ***/
 
 /*** RTnet ***/
-	rtos_irq_shutdown(dev->irq);
 	if ( (i=rtos_irq_free(dev->irq))<0 )
 		return i;
 

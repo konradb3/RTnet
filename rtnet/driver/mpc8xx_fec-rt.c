@@ -226,7 +226,7 @@ static int  fec_enet_open(struct rtnet_device *rtev);
 static int  fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void fec_enet_tx(struct rtnet_device *rtdev);
 static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void fec_enet_interrupt(int irq, unsigned long rtdev_id);
+static void fec_enet_interrupt(unsigned int irq, void *rtdev_id);
 static int  fec_enet_close(struct rtnet_device *dev);
 static void fec_restart(struct rtnet_device *rtdev, int duplex);
 static void fec_stop(struct rtnet_device *rtdev);
@@ -473,7 +473,7 @@ fec_timeout(struct net_device *dev)
  * This is called from the MPC core interrupt.
  */
 static	void
-fec_enet_interrupt(int irq, unsigned long rtdev_id)
+fec_enet_interrupt(unsigned int irq, void *rtdev_id)
 {
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
 	int packets = 0;
@@ -2042,8 +2042,7 @@ int __init fec_enet_init(void)
 	/* Install our interrupt handler. */
 	rt_stack_connect(rtdev, &STACK_manager);
 	i = rtos_irq_request(FEC_INTERRUPT,
-				      fec_enet_interrupt,
-				      (unsigned long)rtdev);
+				      fec_enet_interrupt, rtdev);
 	if (i) {
 		MOD_DEC_USE_COUNT;
 		return i;

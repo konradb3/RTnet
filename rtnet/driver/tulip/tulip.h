@@ -424,7 +424,7 @@ int tulip_read_eeprom(long ioaddr, int location, int addr_len);
 /* interrupt.c */
 extern unsigned int tulip_max_interrupt_work;
 extern int tulip_rx_copybreak;
-void tulip_interrupt(int irq, unsigned long);
+void tulip_interrupt(unsigned int irq, void *__data);
 int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev);
 
 /* media.c */

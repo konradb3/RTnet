@@ -511,7 +511,7 @@ static void mdio_write (struct net_device *dev, int phy_id, int location, int va
 
 static int rtl8139_open (struct rtnet_device *rtdev);
 static int rtl8139_close (struct rtnet_device *rtdev);
-static void rtl8139_interrupt (int irq, unsigned long rtdev_id);
+static void rtl8139_interrupt (unsigned int irq, void *rtdev_id);
 static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev);
 
 
@@ -1157,7 +1157,7 @@ static int rtl8139_open (struct rtnet_device *rtdev)
 
         rt_stack_connect(rtdev, &STACK_manager);
 
-        retval = rtos_irq_request(rtdev->irq, rtl8139_interrupt, (unsigned long)rtdev);
+        retval = rtos_irq_request(rtdev->irq, rtl8139_interrupt, rtdev);
         if (retval)
                 return retval;
 
@@ -1182,7 +1182,6 @@ static int rtl8139_open (struct rtnet_device *rtdev)
         rtl8139_init_ring (rtdev);
         rtl8139_hw_start (rtdev);
 
-        rtos_irq_startup(rtdev->irq);
         rtos_irq_enable(rtdev->irq);
 
         MOD_INC_USE_COUNT;
@@ -1632,7 +1631,7 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
+static void rtl8139_interrupt (unsigned int irq, void *rtdev_id)
 {
         struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
         struct rtl8139_private *tp = rtdev->priv;
@@ -1727,7 +1726,6 @@ static int rtl8139_close (struct rtnet_device *rtdev)
 
         rtnetif_stop_queue (rtdev);
 
-        rtos_irq_shutdown(rtdev->irq);
         if ( (ret=rtos_irq_free(rtdev->irq))<0 )
                 return ret;
 

@@ -499,8 +499,7 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 	MOD_INC_USE_COUNT;
 
 	if ((retval = /*RTnet*/
-	     rtos_irq_request(rtdev->irq, tulip_interrupt,
-					(unsigned long)rtdev))) {
+	     rtos_irq_request(rtdev->irq, tulip_interrupt, rtdev))) {
 		printk("%s: Unable to install ISR for IRQ %d\n",
 			  rtdev->name,rtdev->irq);
 		MOD_DEC_USE_COUNT;
@@ -513,7 +512,6 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 
 	tulip_up (rtdev);
 
-	rtos_irq_startup(rtdev->irq);
 	rtos_irq_enable(rtdev->irq);
 
 	rtnetif_start_queue (rtdev);
@@ -843,7 +841,6 @@ static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 		printk(KERN_DEBUG "%s: Shutting down ethercard, status was %2.2x.\n",
 			rtdev->name, inl (ioaddr + CSR5));
 
-	rtos_irq_shutdown(rtdev->irq);
 	rtos_irq_free(rtdev->irq);
 
 	/* Free all the skbuffs in the Rx queue. */

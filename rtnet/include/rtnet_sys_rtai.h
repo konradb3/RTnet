@@ -266,15 +266,16 @@ static inline void rtos_pend_nrt_signal(rtos_nrt_signal_t *nrt_sig)
 
 /* IRQ management */
 static inline int rtos_irq_request(unsigned int irq,
-    void (*handler)(int, unsigned long), unsigned long arg)
+    void (*handler)(unsigned int, void *), void *arg)
 {
 #if defined(CONFIG_ARCH_I386)
-    return rt_request_global_irq_ext(irq, (void (*)(void))handler, arg);
+    return rt_request_global_irq_ext(irq,
+        (void (*)(void))handler, (unsigned long)arg);
 #elif defined(CONFIG_ARCH_PPC)
     return rt_request_global_irq_ext(irq,
-        (int (*)(unsigned int, unsigned long))handler, arg);
+        (int (*)(unsigned int, unsigned long))handler, (unsigned long)arg);
 #else
-    #error Unsupported architecture
+    #error Unsupported architecture.
 #endif
 }
 
@@ -286,9 +287,6 @@ static inline int rtos_irq_free(unsigned int irq)
 
 #define rtos_irq_enable(irq)        rt_enable_irq(irq)
 #define rtos_irq_disable(irq)       rt_disable_irq(irq)
-
-#define rtos_irq_startup(irq)       rt_startup_irq(irq)
-#define rtos_irq_shutdown(irq)      rt_shutdown_irq(irq)
 
 
 

@@ -54,7 +54,6 @@ waiting on hardware events.
 
 10. add to the close function replacing the free_irq call:
 
-    rtos_irq_shutdown(dev->irq);
     if ( (i=rtos_irq_free(dev->irq))<0 )
         return i;
 
@@ -94,7 +93,7 @@ waiting on hardware events.
 
 18. modify interrupt handler:
 
-    static void XXX_interrupt(int irq, unsigned long rtdev_id)
+    static void XXX_interrupt(unsigned int irq, void *rtdev_id)
     {
         struct rtnet_device *dev = (struct rtnet_device *)rtdev_id;
         ...
@@ -123,7 +122,7 @@ waiting on hardware events.
 23. replace request_irq in open function with the following lines:
 
     rt_stack_connect(dev, &STACK_manager);
-    retval = rtos_irq_request(dev->irq, XXX_interrupt, (unsigned long)dev);
+    retval = rtos_irq_request(dev->irq, XXX_interrupt, dev);
     if (retval)
         return retval;
 
@@ -143,9 +142,8 @@ waiting on hardware events.
 27. call rtos_get_time within receive interrupt and set rx field of skb accordingly
 
 
-28. add the following lines to the open function (as soon as the IRQ is allowed to occur):
+28. add the following line to the open function (as soon as the IRQ is allowed to occur):
 
-    rtos_irq_startup(dev->irq);
     rtos_irq_enable(dev->irq);
 
 

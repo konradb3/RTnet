@@ -157,7 +157,7 @@ typedef struct {
 static int  fcc_enet_open(struct rtnet_device *rtev);
 static int  fcc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int  fcc_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void fcc_enet_interrupt(int irq, unsigned long rtdev_id);
+static void fcc_enet_interrupt(unsigned int irq, void *rtdev_id);
 static int  fcc_enet_close(struct rtnet_device *dev);
 
 #ifdef ORIGINAL_VERSION
@@ -557,7 +557,7 @@ fcc_enet_timeout(struct net_device *dev)
 
 /* The interrupt handler. */
 static void
-fcc_enet_interrupt(int irq, unsigned long rtdev_id)
+fcc_enet_interrupt(unsigned int irq, void *rtdev_id)
 {
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
 	int packets = 0;
@@ -2029,15 +2029,14 @@ init_fcc_startup(fcc_info_t *fip, struct rtnet_device *rtdev)
 	/* Install our interrupt handler.
 	*/
 	if(rtos_irq_request(fip->fc_interrupt,
-				     fcc_enet_interrupt,
-				     (unsigned long)rtdev)) {
+				     fcc_enet_interrupt, rtdev)) {
 		printk("Can't get FCC IRQ %d\n", fip->fc_interrupt);
 		MOD_DEC_USE_COUNT;
 		return;
 	}
 	rt_stack_connect(rtdev, &STACK_manager);
 	rtos_irq_enable(fip->fc_interrupt);
-	
+
 
 #if defined (CONFIG_RTAI_RTNET_USE_MDIO) && !defined (CONFIG_PM826)
 # ifndef PHY_INTERRUPT

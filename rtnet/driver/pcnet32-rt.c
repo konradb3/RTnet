@@ -346,7 +346,7 @@ static int  pcnet32_init_ring(struct rtnet_device *);
 static int  pcnet32_start_xmit(struct rtskb *, struct rtnet_device *);
 static int  pcnet32_rx(struct rtnet_device *, rtos_time_t *time_stamp);
 //static void pcnet32_tx_timeout (struct net_device *dev);
-static void pcnet32_interrupt(int, unsigned long);
+static void pcnet32_interrupt(unsigned int, void *);
 static int  pcnet32_close(struct rtnet_device *);
 //static struct net_device_stats *pcnet32_get_stats(struct net_device *);
 //static void pcnet32_set_multicast_list(struct net_device *);
@@ -866,11 +866,10 @@ pcnet32_open(struct rtnet_device *dev) /*** RTnet ***/
 
     rt_stack_connect(dev, &STACK_manager);
 
-    i = rtos_irq_request(dev->irq, pcnet32_interrupt, (unsigned long)dev);
+    i = rtos_irq_request(dev->irq, pcnet32_interrupt, dev);
     if (i)
         return i;
 
-    rtos_irq_startup(dev->irq);
     rtos_irq_enable(dev->irq);
 /*** RTnet ***/
 
@@ -1199,7 +1198,7 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 
 /* The PCNET32 interrupt handler. */
 static void
-pcnet32_interrupt(int irq, unsigned long rtdev_id) /*** RTnet ***/
+pcnet32_interrupt(unsigned int irq, void *rtdev_id) /*** RTnet ***/
 {
     struct rtnet_device *dev = (struct rtnet_device *)rtdev_id; /*** RTnet ***/
     struct pcnet32_private *lp;
@@ -1489,7 +1488,6 @@ pcnet32_close(struct rtnet_device *dev) /*** RTnet ***/
     lp->a.write_bcr (ioaddr, 20, 4);
 
 /*** RTnet ***/
-    rtos_irq_shutdown(dev->irq);
     if ( (i=rtos_irq_free(dev->irq))<0 )
         return i;
 
