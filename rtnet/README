@@ -35,10 +35,9 @@ How to install it?
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
 6. make
-7. Copy the desired modules (rtnet.o, rtmac.o, drivers, examples, etc.) to your
-   target system
+7. Copy the desired modules (rtnet.o, rtmac.o, tdma.o, drivers, examples, etc.)
+   to your target system
 8. run "mknod /dev/rtnet c 10 240" on your target system
-9. run "mknod /dev/rtmac c 10 241" if you want to use rtmac
 
 How to test it?
 ---------------
@@ -59,8 +58,9 @@ to /etc/rtnet.conf and modify it for your system.
 How to use RTmac? (a very very short guide!)
 -----------------
 I assume that rtnet module has been loaded and configured(rtifconfig).
-1. Load rtmac:
-    # modprobe rtmac dev=rteth0
+1. Load RTmac with the TDMA discipline:
+    # insmod rtmac
+    # insmod tdma
    Assumed that your realtime device is rteth0.
 2. On client stations:
     # rtifconfig rteth0 mac client
