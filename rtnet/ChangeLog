@@ -4,6 +4,7 @@
   * added ready mechanism
   * native send/receive using rtskbs
   * fixed several bugs
+- revised rtnet start script with full RTmac/TDMA and RTcfg support
 - added real-time capturing support RTcap
 - device promisc flag settable on rtifconfig up
 - improved TDMA
