@@ -24,6 +24,7 @@
 
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
+#include <rtmac/rtmac_vnic.h>
 
 
 
@@ -50,8 +51,10 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
     if (disc->disc_type == hdr->type)
         return disc->packet_rx(skb);
+    else if (skb->rtdev->mac_priv->vnic_used)
+        return rtmac_vnic_rx(skb, hdr->type);
     else
-        return -1; /*rtmac_vnic_rx*/
+        return -1;
 }
 
 

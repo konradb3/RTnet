@@ -144,6 +144,7 @@ EXPORT_SYMBOL(rtskb_queue_tail);
 EXPORT_SYMBOL(rtskb_queue_head_init);
 EXPORT_SYMBOL(rtskb_queue_empty);
 EXPORT_SYMBOL(rtskb_queue_purge);
+EXPORT_SYMBOL(rtskb_queue_len);
 
 EXPORT_SYMBOL(rtskb_copy_and_csum_bits);
 EXPORT_SYMBOL(rtskb_copy_and_csum_dev);

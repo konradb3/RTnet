@@ -66,8 +66,6 @@ struct rtnet_device {
 
     struct rtsocket     *protocols;
 
-    struct rtskb_head   rxqueue;    /* rx-queue */
-
     unsigned short      flags;      /* interface flags (a la BSD)   */
     unsigned short      gflags;
     unsigned int        mtu;        /* eth = 1536, tr = 4...        */
@@ -86,7 +84,8 @@ struct rtnet_device {
     int                 promiscuity;
     int                 allmulti;
 
-    MBX                 *stack_mbx;
+    int                 rxqueue_len;
+    SEM                 *stack_sem;
     MBX                 *rtdev_mbx;
 
     /* RTmac related fields */

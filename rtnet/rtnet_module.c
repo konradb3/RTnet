@@ -52,43 +52,43 @@ struct rtnet_mgr RTDEV_manager;
  */
 #ifdef CONFIG_PROC_FS
 static int rtnet_mgr_read_proc (char *page, char **start,
-				off_t off, int count, int *eof, void *data)
+                off_t off, int count, int *eof, void *data)
 {
-	PROC_PRINT_VARS;
-	struct rtnet_device *rtdev;
-	
-	PROC_PRINT("\nRTnet\n\n");
-	PROC_PRINT("Devices:\n");
-	for (rtdev = rtnet_devices; rtdev; rtdev = rtdev->next) {
-		PROC_PRINT("  %s: %s rxq=%d\n",
-			   rtdev->name,
-			   (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
-			   rtskb_queue_len(&rtdev->rxqueue));
-	}
+    PROC_PRINT_VARS;
+    struct rtnet_device *rtdev;
 
-        PROC_PRINT("rtskbpool low/high water mark: %d / %d \n"
-		   "rtskbs in pool/allocated/max: %d / %d / %d\n\n",
-		   rtskb_pool_min, rtskb_pool_max,
-		   rtskb_pool.qlen, rtskb_amount, rtskb_amount_max);
-	
-	PROC_PRINT_DONE;
+    PROC_PRINT("\nRTnet\n\n");
+    PROC_PRINT("Devices:\n");
+    for (rtdev = rtnet_devices; rtdev; rtdev = rtdev->next) {
+        PROC_PRINT("  %s: %s rxq=%d\n",
+            rtdev->name,
+            (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
+            rtdev->rxqueue_len);
+    }
+
+    PROC_PRINT("rtskbpool low/high water mark: %d / %d \n"
+               "rtskbs in pool/allocated/max: %d / %d / %d\n\n",
+               rtskb_pool_min, rtskb_pool_max,
+               rtskb_pool.qlen, rtskb_amount, rtskb_amount_max);
+
+    PROC_PRINT_DONE;
 }
 
 static int rtnet_mgr_proc_register(void)
 {
-        static struct proc_dir_entry *proc_rtnet_mgr;
-        proc_rtnet_mgr = create_proc_entry(RTNET_PROC_NAME, S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
-        if (!proc_rtnet_mgr) {
-                rt_printk ("Unable to initialize: /proc/rtai/rtnet_mgr\n");
-                return -1;
-        }
-        proc_rtnet_mgr->read_proc = rtnet_mgr_read_proc;
-        return 0;
+    static struct proc_dir_entry *proc_rtnet_mgr;
+    proc_rtnet_mgr = create_proc_entry(RTNET_PROC_NAME, S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
+    if (!proc_rtnet_mgr) {
+        rt_printk ("Unable to initialize: /proc/rtai/rtnet_mgr\n");
+        return -1;
+    }
+    proc_rtnet_mgr->read_proc = rtnet_mgr_read_proc;
+    return 0;
 }
 
 static void rtnet_mgr_proc_unregister(void)
 {
-        remove_proc_entry (RTNET_PROC_NAME, rtai_proc_root);
+    remove_proc_entry (RTNET_PROC_NAME, rtai_proc_root);
 }
 #endif  /* CONFIG_PROC_FS */
 
@@ -101,33 +101,34 @@ static void rtnet_mgr_proc_unregister(void)
  */
 int rtnet_init(void)
 {
-        int err = 0;
+    int err = 0;
 
-	printk("\n*** RTnet - built on %s, %s ***\n\n", __DATE__, __TIME__);
-        printk("RTnet: init real-time networking\n");
-        init_crc32();
 
-        if ( (err=rtskb_pool_init()) )
-                return err;
+    printk("\n*** RTnet - built on %s, %s ***\n\n", __DATE__, __TIME__);
+    printk("RTnet: init real-time networking\n");
+    init_crc32();
 
-        rtsockets_init();
-        rtnet_dev_init();
-        rt_inet_proto_init();
-        rtnet_chrdev_init();
+    if ( (err=rtskb_pool_init()) )
+        return err;
+
+    rtsockets_init();
+    rtnet_dev_init();
+    rt_inet_proto_init();
+    rtnet_chrdev_init();
 
 #ifdef CONFIG_PROC_FS
-        err = rtnet_mgr_proc_register ();
+    err = rtnet_mgr_proc_register ();
 #endif
 
-        /* initialise the Stack-Manager */
-        if ( (err=rt_stack_mgr_init(&STACK_manager)) )
-		return err;
+    /* initialise the Stack-Manager */
+    if ( (err=rt_stack_mgr_init(&STACK_manager)) )
+        return err;
 
-        /* initialise the RTDEV-Manager */
-        if ( (err=rt_rtdev_mgr_init(&RTDEV_manager)) )
-		return err;
+    /* initialise the RTDEV-Manager */
+    if ( (err=rt_rtdev_mgr_init(&RTDEV_manager)) )
+        return err;
 
-        return 0;
+    return 0;
 }
 
 
@@ -139,26 +140,23 @@ int rtnet_init(void)
  */
 void rtnet_release(void)
 {
-        rt_printk("RTnet: End real-time networking\n");
-	rt_stack_mgr_delete(&STACK_manager);
-	rt_rtdev_mgr_delete(&RTDEV_manager);
+    rt_printk("RTnet: End real-time networking\n");
+    rt_stack_mgr_delete(&STACK_manager);
+    rt_rtdev_mgr_delete(&RTDEV_manager);
 
 #ifdef CONFIG_PROC_FS
-        rtnet_mgr_proc_unregister ();
+    rtnet_mgr_proc_unregister ();
 #endif
-        rtnet_chrdev_release();
-        rt_inet_proto_release();
-        rtnet_dev_release();
-        rtsockets_release();
-        rtskb_pool_release();
+    rtnet_chrdev_release();
+    rt_inet_proto_release();
+    rtnet_dev_release();
+    rtsockets_release();
+    rtskb_pool_release();
 
-        cleanup_crc32();
+    cleanup_crc32();
 }
 
 
 
 module_init(rtnet_init);
 module_exit(rtnet_release);
-
-
-

@@ -131,7 +131,7 @@ struct tdma_flags {
 
 struct rtmac_tdma {
     RT_TASK                     tx_task;
-    SEM                         free;
+//    SEM                         free;
     SEM                         full;
     struct rtskb_head           tx_queue;
 

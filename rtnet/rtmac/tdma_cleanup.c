@@ -56,7 +56,7 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
      * if a sending task is waiting due to maximum length of tx queue,
      * it will become runable and send skb into queue
      */
-    rt_sem_delete(&tdma->free);
+//    rt_sem_delete(&tdma->free);
     rt_sem_delete(&tdma->full);
 
 
@@ -125,7 +125,7 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
     /*
      * re-init semas
      */
-    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+//    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
     rt_sem_init(&tdma->full, 0);
 
     /*
@@ -174,7 +174,7 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
      * if a sending task is waiting due to maximum length of tx queue,
      * it will become runable and send skb into queue
      */
-    rt_sem_delete(&tdma->free);
+//    rt_sem_delete(&tdma->free);
     rt_sem_delete(&tdma->full);
 
     /*
@@ -214,7 +214,7 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
     /*
      * re-init semas
      */
-    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+//    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
     rt_sem_init(&tdma->full, 0);
 
     /*

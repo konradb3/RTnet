@@ -1,4 +1,4 @@
-/* stack_mgr.c - Stack-Manager 
+/* stack_mgr.c - Stack-Manager
  *
  * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *
@@ -23,19 +23,18 @@
 #include <rtnet.h>
 #include <rtnet_internal.h>
 
+
+static struct rtskb_head rxqueue;
+
+
+
 /***
- *  rt_mark_stack_mgr 
+ *  rt_mark_stack_mgr
  *
  */
-void rt_mark_stack_mgr(struct rtnet_device *rtdev) 
+void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 {
-    struct rtnet_msg msg;
-
-    if (rtdev) {
-        msg.msg_type=Rx_PACKET;
-        msg.rtdev=rtdev;
-        rt_mbx_send_if(msg.rtdev->stack_mbx, &msg, sizeof (struct rtnet_msg));
-    }
+    rt_sem_signal(rtdev->stack_sem);
 }
 
 
@@ -49,15 +48,23 @@ void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 void rtnetif_rx(struct rtskb *skb)
 {
     struct rtnet_device *rtdev;
-    if (skb && (rtdev=skb->rtdev)) {
-        if (rtskb_queue_len(&rtdev->rxqueue) < DROPPING_RTSKB) {
-            rtskb_queue_tail(&rtdev->rxqueue, skb);
-        } else {
-            rt_printk("RTnet: dropping packet in %s()\n",__FUNCTION__);
-            kfree_rtskb(skb);
-        }
-    } else {
-        rt_printk("RTnet: called %s() with skb=<NULL>\n",__FUNCTION__);
+    unsigned long flags;
+
+
+    ASSERT(skb != NULL, return;);
+    ASSERT(skb->rtdev != NULL, return;);
+    rtdev = skb->rtdev;
+
+    flags = rt_spin_lock_irqsave(&rxqueue.lock);
+    if (rtdev->rxqueue_len < DROPPING_RTSKB) {
+        rtdev->rxqueue_len++;
+        __rtskb_queue_tail(&rxqueue, skb);
+        rt_spin_unlock_irqrestore(flags, &rxqueue.lock);
+    }
+    else {
+        rt_spin_unlock_irqrestore(flags, &rxqueue.lock);
+        rt_printk("RTnet: dropping packet in %s()\n",__FUNCTION__);
+        kfree_rtskb(skb);
     }
 }
 
@@ -76,38 +83,42 @@ void rtnetif_tx(struct rtnet_device *rtdev)
 
 
 
-
-char *msg = "neue Reihe\n";
-
 /***
  *      do_stacktask
  */
 static void do_stacktask(int mgr_id)
 {
-    struct rtnet_msg msg;
-    struct rtnet_mgr *mgr = (struct rtnet_mgr *)mgr_id;
+    struct rtnet_mgr        *mgr = (struct rtnet_mgr *)mgr_id;
+    struct rtskb            *skb;
+    unsigned short          hash;
+    struct rtpacket_type    *pt;
+    unsigned long           flags;
+
 
     rt_printk("RTnet: stack-mgr started\n");
     while(1) {
-        rt_mbx_receive(&(mgr->mbx), &msg, sizeof(struct rtnet_msg));
+        rt_sem_wait(&mgr->sem);
 
-        if ( (msg.rtdev) && (msg.msg_type==Rx_PACKET) ) {
-            while ( !rtskb_queue_empty(&msg.rtdev->rxqueue) ) {
-                struct rtskb *skb = rtskb_dequeue(&msg.rtdev->rxqueue);
+        while (1) {
+            flags = rt_spin_lock_irqsave(&rxqueue.lock);
 
-                if ( skb ) {
-                    unsigned short hash =
-                        ntohs(skb->protocol) & (MAX_RT_PROTOCOLS-1);
-                    struct rtpacket_type *pt = rt_packets[hash];
+            skb = rtskb_dequeue(&rxqueue);
+            if (!skb) {
+                rt_spin_unlock_irqrestore(flags, &rxqueue.lock);
+                break;
+            }
+            skb->rtdev->rxqueue_len--;
+            rt_spin_unlock_irqrestore(flags, &rxqueue.lock);
 
-                    skb->nh.raw = skb->data;
-                    if (pt) {
-                        pt->handler (skb, pt);
-                    } else {
-                        rt_printk("RTnet: unknown layer-3 protocol\n");
-                        kfree_rtskb(skb);
-                    }
-                }
+            hash = ntohs(skb->protocol) & (MAX_RT_PROTOCOLS-1);
+            pt = rt_packets[hash];
+
+            skb->nh.raw = skb->data;
+            if (pt)
+                pt->handler(skb, pt);
+            else {
+                rt_printk("RTnet: unknown layer-3 protocol\n");
+                kfree_rtskb(skb);
             }
         }
     }
@@ -120,8 +131,8 @@ static void do_stacktask(int mgr_id)
  */
 void rt_stack_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr)
 {
-    rtdev->stack_mbx=&(mgr->mbx);
-} 
+    rtdev->stack_sem=&mgr->sem;
+}
 
 
 /***
@@ -129,8 +140,8 @@ void rt_stack_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr)
  */
 void rt_stack_disconnect (struct rtnet_device *rtdev)
 {
-    rtdev->stack_mbx=NULL;
-} 
+    rtdev->stack_sem=NULL;
+}
 
 
 /***
@@ -138,7 +149,7 @@ void rt_stack_disconnect (struct rtnet_device *rtdev)
  */
 int rt_stack_mgr_start (struct rtnet_mgr *mgr)
 {
-    return (rt_task_resume(&(mgr->task)));
+    return (rt_task_resume(&mgr->task));
 }
 
 
@@ -148,7 +159,7 @@ int rt_stack_mgr_start (struct rtnet_mgr *mgr)
  */
 int rt_stack_mgr_stop (struct rtnet_mgr *mgr)
 {
-    return (rt_task_suspend(&(mgr->task)));
+    return (rt_task_suspend(&mgr->task));
 }
 
 
@@ -160,12 +171,14 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 {
     int ret;
 
-    if ( (ret=rt_mbx_init (&(mgr->mbx), sizeof(struct rtnet_msg))) )
+
+    rtskb_queue_head_init(&rxqueue);
+
+    rt_sem_init(&mgr->sem, 0);
+    if ((ret=rt_task_init(&mgr->task, &do_stacktask, (int)mgr, 4096,
+                           RTNET_STACK_PRIORITY, 0, 0)))
         return ret;
-    if ( (ret=rt_task_init(&(mgr->task), &do_stacktask, (int)mgr, 4096, 
-                           RTNET_STACK_PRIORITY, 0, 0)) )
-        return ret;
-    if ( (ret=rt_task_resume(&(mgr->task))) )
+    if ((ret=rt_task_resume(&mgr->task)))
         return ret;
 
     return 0;
@@ -174,11 +187,10 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 
 
 /***
- *  rt_stack_mgr_delete 
+ *  rt_stack_mgr_delete
  */
 void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
 {
-    rt_task_suspend(&(mgr->task));
-    rt_task_delete(&(mgr->task));
-    rt_mbx_delete(&(mgr->mbx));
+    rt_task_delete(&mgr->task);
+    rt_sem_delete(&mgr->sem);
 }

@@ -54,7 +54,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
      * sending realtime- and the driver-task
      *
      */
-    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+//    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
     rt_sem_init(&tdma->full, 0);
     rt_sem_init(&tdma->client_tx, 0);
 
@@ -134,7 +134,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     /*
      * delete tx tasks sema
      */
-    rt_sem_delete(&tdma->free);
+//    rt_sem_delete(&tdma->free);
     rt_sem_delete(&tdma->full);
     rt_sem_delete(&tdma->client_tx);
 
@@ -151,7 +151,7 @@ int tdma_rt_packet_tx(struct rtskb *skb, struct rtnet_device *rtdev)
     if (tdma->flags.mac_active == 0) {
 	    ret = tdma_xmit(skb);
     } else {
-        rt_sem_wait(&tdma->free);
+//        rt_sem_wait(&tdma->free);
         rtskb_queue_tail(&tdma->tx_queue, skb);
         rt_sem_signal(&tdma->full);
     }

@@ -1,6 +1,6 @@
 /* rtnet_mgr.c
  *
- * rtnet_mgr:	RTnet-Manager handled device-errors 
+ * rtnet_mgr: RTnet-Manager handled device-errors
  *
  * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *
@@ -27,98 +27,97 @@
 #include <rtnet_internal.h>
 
 /***
- *	rtnetif_err_rx: will be called from the  driver
+ *  rtnetif_err_rx: will be called from the  driver
  *
  *
- *	@rtdev - the network-device
+ *  @rtdev - the network-device
  */
 void rtnetif_err_rx(struct rtnet_device *rtdev)
 {
 }
 
 /***
- *	rtnetif_err_tx: will be called from the  driver
+ *  rtnetif_err_tx: will be called from the  driver
  *
  *
- *	@rtdev - the network-device
+ *  @rtdev - the network-device
  */
 void rtnetif_err_tx(struct rtnet_device *rtdev)
 {
 }
 
 /***
- *	do_rtdev_task
+ *  do_rtdev_task
  */
 static void do_rtdev_task(int mgr_id)
 {
-	struct rtnet_msg msg;
-	struct rtnet_mgr *mgr = (struct rtnet_mgr *)mgr_id;
+    struct rtnet_msg msg;
+    struct rtnet_mgr *mgr = (struct rtnet_mgr *)mgr_id;
 
-	while (1) {
-		rt_mbx_receive(&(mgr->mbx), &msg, sizeof(struct rtnet_msg));
-		if (msg.rtdev) {
-			rt_printk("RTnet: error on rtdev %s\n", msg.rtdev->name);
-		}	
-	}
+    while (1) {
+        rt_mbx_receive(&(mgr->mbx), &msg, sizeof(struct rtnet_msg));
+        if (msg.rtdev) {
+            rt_printk("RTnet: error on rtdev %s\n", msg.rtdev->name);
+        }
+    }
 }
 
 /***
- *	rt_rtdev_connect
+ *  rt_rtdev_connect
  */
 void rt_rtdev_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr)
 {
-	rtdev->rtdev_mbx=&(mgr->mbx);
-} 
+    rtdev->rtdev_mbx=&(mgr->mbx);
+}
 
 /***
- *	rt_rtdev_disconnect
+ *  rt_rtdev_disconnect
  */
 void rt_rtdev_disconnect (struct rtnet_device *rtdev)
 {
-	rtdev->rtdev_mbx=NULL;
-} 
+    rtdev->rtdev_mbx=NULL;
+}
 
 /***
- *	rt_rtdev_mgr_start
+ *  rt_rtdev_mgr_start
  */
 int rt_rtdev_mgr_start (struct rtnet_mgr *mgr)
 {
-	return (rt_task_resume(&(mgr->task)));
+    return (rt_task_resume(&(mgr->task)));
 }
 
 /***
- *	rt_rtdev_mgr_stop
+ *  rt_rtdev_mgr_stop
  */
 int rt_rtdev_mgr_stop (struct rtnet_mgr *mgr)
 {
-	return (rt_task_suspend(&(mgr->task)));
+    return (rt_task_suspend(&(mgr->task)));
 }
 
 /***
- *	rt_rtdev_mgr_init
+ *  rt_rtdev_mgr_init
  */
 int rt_rtdev_mgr_init (struct rtnet_mgr *mgr)
 {
-	int ret = 0;
+    int ret = 0;
 
-	if ( (ret=rt_mbx_init (&(mgr->mbx), sizeof(struct rtnet_msg))) )
-		return ret;
-	if ( (ret=rt_task_init(&(mgr->task), &do_rtdev_task, (int)mgr, 4096, RTNET_RTDEV_PRIORITY, 0, 0)) )
-		return ret;
-	if ( (ret=rt_task_resume(&(mgr->task))) )
-		return ret;
+    if ( (ret=rt_mbx_init (&(mgr->mbx), sizeof(struct rtnet_msg))) )
+        return ret;
+    if ( (ret=rt_task_init(&(mgr->task), &do_rtdev_task, (int)mgr, 4096, RTNET_RTDEV_PRIORITY, 0, 0)) )
+        return ret;
+    if ( (ret=rt_task_resume(&(mgr->task))) )
+        return ret;
 
-	return (ret);
+    return (ret);
 }
 
 /***
- *	rt_rtdev_mgr_delete 
+ *  rt_rtdev_mgr_delete
  */
 void rt_rtdev_mgr_delete (struct rtnet_mgr *mgr)
 {
-	rt_task_suspend(&(mgr->task));
-	rt_task_delete(&(mgr->task));
-	rt_mbx_delete(&(mgr->mbx));
+    rt_task_delete(&(mgr->task));
+    rt_mbx_delete(&(mgr->mbx));
 }
 
 

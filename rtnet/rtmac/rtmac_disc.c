@@ -25,6 +25,7 @@
 
 #include <rtnet_internal.h>
 #include <rtmac/rtmac_disc.h>
+#include <rtmac/rtmac_vnic.h>
 
 
 
@@ -73,10 +74,16 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
         return ret;
     }
 
-    /* Now attach RTmac to device */
+    /* now attach RTmac to device */
     rtdev->hard_start_xmit = disc->rt_packet_tx;
     rtdev->mac_disc = disc;
     rtdev->mac_priv = priv;
+
+    /* create the VNIC */
+    ret = rtmac_vnic_add(rtdev);
+    if (ret < 0) {
+        printk("RTmac: Warning, VNIC creation failed for rtdev %s.\n", rtdev->name);
+    }
 
     return 0;
 }
@@ -111,6 +118,9 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
 
     priv = rtdev->mac_priv;
     ASSERT(priv != NULL, return -EINVAL;);
+
+    /* remove the VNIC */
+    rtmac_vnic_remove(rtdev);
 
     /* call release function of discipline */
     ret = disc->detach(rtdev, priv->disc_priv);

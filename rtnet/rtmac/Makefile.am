@@ -11,6 +11,7 @@ librtmac_a_SOURCES = \
 	rtmac_proc.c \
 	rtmac_proto.c \
 	rtmac_tdma.c \
+	rtmac_vnic.c \
 	tdma_cleanup.c \
 	tdma_event.c \
 	tdma_ioctl.c \

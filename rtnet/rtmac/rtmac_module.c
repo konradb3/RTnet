@@ -26,6 +26,7 @@
 #include <rtmac/rtmac_chrdev.h>
 #include <rtmac/rtmac_proc.h>
 #include <rtmac/rtmac_proto.h>
+#include <rtmac/rtmac_vnic.h>
 
 #include <rtmac/rtmac_disc.h>       /* legacy */
 #include <rtmac/tdma/tdma_module.h> /* legacy */
@@ -53,6 +54,10 @@ int rtmac_init(void)
     if (ret)
         goto error2;
 
+    ret = rtmac_vnic_module_init();
+    if (ret)
+        goto error3;
+
     /* legacy */
     {
         struct rtmac_disc *tdma;
@@ -61,8 +66,8 @@ int rtmac_init(void)
         ret = tdma_init();
         if (ret)
         {
-            rtmac_chrdev_release();
-            goto error2;
+            rtmac_vnic_module_cleanup();
+            goto error3;
         }
 
         tdma = rtmac_get_disc_by_name("TDMA1");
@@ -71,12 +76,15 @@ int rtmac_init(void)
         if (ret)
         {
             tdma_release();
-            rtmac_chrdev_release();
-            goto error2;
+            rtmac_vnic_module_cleanup();
+            goto error3;
         }
     } /* end of legacy */
 
     return 0;
+
+error3:
+    rtmac_chrdev_release();
 
 error2:
 #ifdef CONFIG_PROC_FS
@@ -102,6 +110,7 @@ void rtmac_release(void)
     rtmac_proc_release();
 #endif
     rtmac_chrdev_release();
+    rtmac_vnic_module_cleanup();
 }
 
 

@@ -39,31 +39,27 @@
 
 /* some configurables */
 
-#define RTNET_PROC_NAME		"rtnet"
-#define RTNET_STACK_PRIORITY	1
-#define RTNET_RTDEV_PRIORITY	5
-#define DROPPING_RTSKB		20
+#define RTNET_PROC_NAME         "rtnet"
+#define RTNET_STACK_PRIORITY    1
+#define RTNET_RTDEV_PRIORITY    5
+#define DROPPING_RTSKB          20
 
-
-enum RTnet_MSG {
-	Rx_PACKET = 1,
-	Tx_PACKET = 2,
-};
 
 struct rtnet_msg {
-	int			msg_type;
-	struct rtnet_device	*rtdev;
+    int                 msg_type;
+    struct rtnet_device *rtdev;
 };
 
+
 struct rtnet_mgr {
-	RT_TASK	task;
-	MBX	mbx;
+    RT_TASK task;
+    MBX     mbx;
+    SEM     sem;
 };
 
 
 extern struct rtnet_mgr STACK_manager;
 extern struct rtnet_mgr RTDEV_manager;
-extern struct rtnet_mgr RTMAC_manager;
 
 
 #endif /* __KERNEL__ */

@@ -276,7 +276,6 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
     if (sizeof_priv)
         rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
 
-    rtskb_queue_head_init(&(rtdev->rxqueue));
     rt_printk("rtdev: allocated and initialized\n");
 
     return rtdev;
@@ -290,7 +289,7 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 void rtdev_free (struct rtnet_device *rtdev) 
 {
     if (rtdev!=NULL) {
-        rtdev->stack_mbx=NULL;
+        rtdev->stack_sem=NULL;
         rtdev->rtdev_mbx=NULL;
         kfree(rtdev);
     }
@@ -301,13 +300,13 @@ void rtdev_free (struct rtnet_device *rtdev)
 /***
  *  rtdev_open
  *
- *  Prepare an interface for use. 
+ *  Prepare an interface for use.
  */
 int rtdev_open(struct rtnet_device *rtdev)
 {
     int ret = 0;
 
-    if (rtdev->flags & IFF_UP)              /* Is it already up?                */ 
+    if (rtdev->flags & IFF_UP)              /* Is it already up?                */
         return 0;
 
     if (rtdev->open)                        /* Call device private open method  */
