@@ -98,6 +98,9 @@ EXPORT_SYMBOL(rtdev_alloc_name);
 EXPORT_SYMBOL(rt_register_rtnetdev);
 EXPORT_SYMBOL(rt_unregister_rtnetdev);
 
+EXPORT_SYMBOL(rtdev_add_register_hook);
+EXPORT_SYMBOL(rtdev_del_register_hook);
+
 EXPORT_SYMBOL(rtdev_get_by_name);
 EXPORT_SYMBOL(rtdev_get_by_index);
 EXPORT_SYMBOL(rtdev_get_by_hwaddr);

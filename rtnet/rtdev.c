@@ -1,9 +1,9 @@
 /* rtnet/rtdev.c - implement a rtnet device
  *
- * Copyright (C) 1999      Lineo, Inc
- *               1999,2002 David A. Schleef <ds@schleef.org>
- *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
- *               2003      Jan Kiszka <jan.kiszka@web.de>
+ * Copyright (C) 1999       Lineo, Inc
+ *               1999, 2002 David A. Schleef <ds@schleef.org>
+ *               2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *               2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+#include <asm/semaphore.h>
 #include <linux/spinlock.h>
 #include <linux/if.h>
 #include <linux/if_arp.h> /* ARPHRD_ETHER */
@@ -39,7 +41,9 @@ MODULE_PARM_DESC(device_rtskbs, "Number of additional global realtime socket "
 static struct rtnet_device  *rtnet_devices[MAX_RT_DEVICES];
 static struct rtnet_device  *loopback_device;
 static rtos_spinlock_t      rtnet_devices_rt_lock  = RTOS_SPIN_LOCK_UNLOCKED;
-static spinlock_t           rtnet_devices_nrt_lock = SPIN_LOCK_UNLOCKED;
+
+LIST_HEAD(register_hook_list);
+DECLARE_MUTEX(rtnet_devices_nrt_lock);
 
 
 
@@ -241,7 +245,7 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 
     rtos_res_lock_init(&rtdev->xmit_lock);
     rtos_spin_lock_init(&rtdev->rtdev_lock);
-    sema_init(&rtdev->nrt_sem, 1);
+    init_MUTEX(&rtdev->nrt_sem);
 
     atomic_set(&rtdev->refcount, 0);
 
@@ -324,10 +328,12 @@ static inline int __rtdev_new_index(void)
  */
 int rt_register_rtnetdev(struct rtnet_device *rtdev)
 {
-    unsigned long   flags;
+    struct list_head            *entry;
+    struct rtdev_register_hook  *hook;
+    unsigned long               flags;
 
 
-    spin_lock_bh(&rtnet_devices_nrt_lock);
+    down(&rtnet_devices_nrt_lock);
 
     rtdev->ifindex = __rtdev_new_index();
 
@@ -335,7 +341,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
         rtdev_alloc_name(rtdev, rtdev->name);
 
     if (__rtdev_get_by_name(rtdev->name) != NULL) {
-        spin_unlock_bh(&rtnet_devices_nrt_lock);
+        up(&rtnet_devices_nrt_lock);
         return -EEXIST;
     }
 
@@ -345,7 +351,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
         /* allow only one loopback device */
         if (loopback_device) {
             rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
-            spin_unlock_bh(&rtnet_devices_nrt_lock);
+            up(&rtnet_devices_nrt_lock);
             return -EEXIST;
         }
         loopback_device = rtdev;
@@ -354,7 +360,13 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
 
     rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
 
-    spin_unlock_bh(&rtnet_devices_nrt_lock);
+    list_for_each(entry, &register_hook_list) {
+        hook = list_entry(entry, struct rtdev_register_hook, entry);
+        if (hook->register_device)
+            hook->register_device(rtdev);
+    }
+
+    up(&rtnet_devices_nrt_lock);
 
     /* Default state at registration is that the device is present. */
     set_bit(__LINK_STATE_PRESENT, &rtdev->state);
@@ -372,7 +384,9 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
  */
 int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 {
-    unsigned long   flags;
+    struct list_head            *entry;
+    struct rtdev_register_hook  *hook;
+    unsigned long               flags;
 
 
     RTNET_ASSERT(rtdev->ifindex != 0,
@@ -383,19 +397,19 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
     if (rtdev->flags & IFF_UP)
         rtdev_close(rtdev);
 
-    spin_lock_bh(&rtnet_devices_nrt_lock);
+    down(&rtnet_devices_nrt_lock);
     rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags);
 
     while (atomic_read(&rtdev->refcount) > 0) {
         rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
-        spin_unlock_bh(&rtnet_devices_nrt_lock);
+        up(&rtnet_devices_nrt_lock);
 
         printk("RTnet: unregistering %s deferred- refcount = %d\n",
                rtdev->name, atomic_read(&rtdev->refcount));
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
 
-        spin_lock_bh(&rtnet_devices_nrt_lock);
+        down(&rtnet_devices_nrt_lock);
         rtos_spin_lock_irqsave(&rtnet_devices_rt_lock, flags);
     }
     rtnet_devices[rtdev->ifindex-1] = NULL;
@@ -403,7 +417,14 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
         loopback_device = NULL;
 
     rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
-    spin_unlock_bh(&rtnet_devices_nrt_lock);
+
+    list_for_each(entry, &register_hook_list) {
+        hook = list_entry(entry, struct rtdev_register_hook, entry);
+        if (hook->unregister_device)
+            hook->unregister_device(rtdev);
+    }
+
+    up(&rtnet_devices_nrt_lock);
 
     clear_bit(__LINK_STATE_PRESENT, &rtdev->state);
 
@@ -413,6 +434,24 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
     printk("RTnet: unregistered %s\n", rtdev->name);
 
     return 0;
+}
+
+
+
+void rtdev_add_register_hook(struct rtdev_register_hook *hook)
+{
+    down(&rtnet_devices_nrt_lock);
+    list_add(&hook->entry, &register_hook_list);
+    up(&rtnet_devices_nrt_lock);
+}
+
+
+
+void rtdev_del_register_hook(struct rtdev_register_hook *hook)
+{
+    down(&rtnet_devices_nrt_lock);
+    list_del(&hook->entry);
+    up(&rtnet_devices_nrt_lock);
 }
 
 

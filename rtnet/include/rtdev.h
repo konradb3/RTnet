@@ -94,6 +94,7 @@ struct rtnet_device {
 
     rtos_res_lock_t     xmit_lock;  /* protects xmit routine        */
     rtos_spinlock_t     rtdev_lock; /* management lock              */
+    // should be named nrt_lock; it's a mutex... */
     struct semaphore    nrt_sem;    /* non-real-time locking        */
 
     unsigned int        add_rtskbs; /* additionally allocated global rtskbs */
@@ -115,12 +116,21 @@ struct rtnet_device {
     int                 (*hw_reset)(struct rtnet_device *rtdev);
 };
 
+struct rtdev_register_hook {
+    struct list_head    entry;
+    void                (*register_device)(struct rtnet_device *rtdev);
+    void                (*unregister_device)(struct rtnet_device *rtdev);
+};
+
 
 extern struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
 extern void rtdev_free(struct rtnet_device *rtdev);
 
 extern int rt_register_rtnetdev(struct rtnet_device *rtdev);
 extern int rt_unregister_rtnetdev(struct rtnet_device *rtdev);
+
+extern void rtdev_add_register_hook(struct rtdev_register_hook *hook);
+extern void rtdev_del_register_hook(struct rtdev_register_hook *hook);
 
 extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
 
