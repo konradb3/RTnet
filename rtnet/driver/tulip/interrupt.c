@@ -77,7 +77,7 @@ int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev)
 			struct /*RTnet*/rtskb *skb;
 			dma_addr_t mapping;
 
-			skb = tp->rx_buffers[entry].skb = /*RTnet*/dev_alloc_rtskb(PKT_BUF_SZ);
+			skb = tp->rx_buffers[entry].skb = /*RTnet*/dev_alloc_rtskb(PKT_BUF_SZ, &tp->skb_pool);
 			if (skb == NULL)
 				break;
 
@@ -157,6 +157,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, RTIME time_stamp)
 			}
 #endif
 
+#if 0 /*RTnet*/
 			/* Check if the packet is long enough to accept without copying
 			   to a minimally-sized skbuff. */
 			if (pkt_len < tulip_rx_copybreak
@@ -178,6 +179,8 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, RTIME time_stamp)
 				       pkt_len);
 #endif
 			} else { 	/* Pass up the skb already on the Rx ring. */
+#endif /*RTnet*/
+			{
 				char *temp = /*RTnet*/rtskb_put(skb = tp->rx_buffers[entry].skb,
 						     pkt_len);
 
@@ -219,7 +222,7 @@ int tulip_interrupt(int irq, unsigned long __data)
 	/*RTnet*/struct rtnet_device *rtdev = (/*RTnet*/struct rtnet_device *)__data;
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
-	int csr5;
+	unsigned int csr5;
 	int entry;
 	int missed;
 	int rx = 0;
@@ -461,7 +464,7 @@ int tulip_interrupt(int irq, unsigned long __data)
 	if (tulip_debug > 4)
 		/*RTnet*/rt_printk(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
 			   rtdev->name, inl(ioaddr + CSR5));
-        rt_enable_irq(rtdev->irq);
+	rt_enable_irq(rtdev->irq);
 	if (rx)
 		rt_mark_stack_mgr(rtdev);
 	return 0;

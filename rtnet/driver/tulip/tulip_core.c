@@ -13,7 +13,7 @@
 	Web page at http://sourceforge.net/projects/tulip/
 
 */
-		
+
 /* Ported to RTnet by Wittawat Yamwong <wittawat@web.de> */
 
 #define DRV_NAME	"tulip-rt"
@@ -489,7 +489,7 @@ media_picked:
 	/* Set the timer to switch to check for link beat and perhaps switch
 	   to an alternate media type. */
 	tp->timer.expires = RUN_AT(next_tick);
-	/*RTnet*/ /*MUST_REMOVE*/add_timer(&tp->timer);
+	/*RTnet*/ //MUST_REMOVE_add_timer(&tp->timer);
 }
 
 
@@ -664,7 +664,7 @@ static void tulip_init_ring(/*RTnet*/struct rtnet_device *rtdev)
 		/* Note the receive buffer must be longword aligned.
 		   dev_alloc_skb() provides 16 byte alignment.  But do *not*
 		   use skb_reserve() to align the IP header! */
-		struct /*RTnet*/rtskb *skb = /*RTnet*/dev_alloc_rtskb(PKT_BUF_SZ);
+		struct /*RTnet*/rtskb *skb = /*RTnet*/dev_alloc_rtskb(PKT_BUF_SZ, &tp->skb_pool);
 		tp->rx_buffers[i].skb = skb;
 		if (skb == NULL)
 			break;
@@ -695,17 +695,23 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	int entry;
 	u32 flag;
 	dma_addr_t mapping;
-	unsigned long eflags;
 
-	eflags = rt_spin_lock_irqsave(&tp->lock);
+	/*RTnet*/
+	rt_sem_wait(&rtdev->xmit_sem);
+	rt_disable_irq(rtdev->irq);
+	rt_spin_lock(&tp->lock);
 
 	/* TODO: move to rtdev_xmit, use queue */
 	if (rtnetif_queue_stopped(rtdev)) {
 		dev_kfree_rtskb(skb);
 		tp->stats.tx_dropped++;
-		rt_spin_unlock_irqrestore(eflags,&tp->lock);
+
+		rt_spin_unlock(&tp->lock);
+		rt_enable_irq(rtdev->irq);
+		rt_sem_signal(&rtdev->xmit_sem);
 		return 0;
 	}
+	/*RTnet*/
 
 	/* Calculate the next Tx descriptor entry. */
 	entry = tp->cur_tx % TX_RING_SIZE;
@@ -740,7 +746,11 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	/* Trigger an immediate transmit demand. */
 	outl(0, rtdev->base_addr + CSR1);
 
-	rt_spin_unlock_irqrestore(eflags, &tp->lock);
+	/*RTnet*/
+	rt_spin_unlock(&tp->lock);
+	rt_enable_irq(rtdev->irq);
+	rt_sem_signal(&rtdev->xmit_sem);
+	/*RTnet*/
 
 	return 0;
 }
@@ -787,7 +797,7 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 	struct tulip_private *tp = (struct tulip_private *) rtdev->priv;
 	unsigned long flags;
 
-	/*RTnet*/ /*MUST_REMOVE*/del_timer_sync (&tp->timer);
+	/*RTnet*/ //MUST_REMOVE_del_timer_sync (&tp->timer);
 
 	flags = rt_spin_lock_irqsave (&tp->lock);
 
@@ -812,7 +822,7 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 
 	rt_spin_unlock_irqrestore (flags, &tp->lock);
 
-	/*RTnet*/ /*MUST_REMOVE*/init_timer(&tp->timer);
+	init_timer(&tp->timer);
 	tp->timer.data = (unsigned long)rtdev;
 	tp->timer.function = tulip_tbl[tp->chip_id].media_timer;
 
@@ -1313,7 +1323,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	static int last_irq;
 	static int multiport_cnt;	/* For four-port boards w/one EEPROM */
 	u8 chip_rev;
-	int i, irq;
+	unsigned int i, irq;
 	unsigned short sum;
 	u8 ee_data[EEPROM_SIZE];
 	/*RTnet*/struct rtnet_device *rtdev;
@@ -1468,7 +1478,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	tp->csr0 = csr0;
 	spin_lock_init(&tp->lock);
 	spin_lock_init(&tp->mii_lock);
-	/*RTnet*/ /*MUST_REMOVE*/init_timer(&tp->timer);
+	init_timer(&tp->timer);
 	tp->timer.data = (unsigned long)rtdev;
 	tp->timer.function = tulip_tbl[tp->chip_id].media_timer;
 
@@ -1568,7 +1578,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
                }
 #endif
 #ifdef CONFIG_MIPS_COBALT
-               if ((pdev->bus->number == 0) && 
+               if ((pdev->bus->number == 0) &&
                    ((PCI_SLOT(pdev->devfn) == 7) ||
                     (PCI_SLOT(pdev->devfn) == 12))) {
                        /* Cobalt MAC address in first EEPROM locations. */
@@ -1624,6 +1634,11 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 
 	/* The lower four bits are the media type. */
 	if (board_idx >= 0  &&  board_idx < MAX_UNITS) {
+		/* Somehow required for this RTnet version, don't ask me why... */
+		if (!options[board_idx])
+			tp->default_port = 11; /*MII*/
+		/*RTnet*/
+
 		if (options[board_idx] & MEDIA_MASK)
 			tp->default_port = options[board_idx] & MEDIA_MASK;
 		if ((options[board_idx] & FullDuplex) || full_duplex[board_idx] > 0)
@@ -1691,9 +1706,16 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	rtdev->hard_header = rt_eth_header;
 	rtdev->hard_start_xmit = tulip_start_xmit;
 
-
-	if (/*RTnet*/rt_register_rtnetdev(rtdev))
+	/*RTnet*/
+	if (rtskb_pool_init(&tp->skb_pool, RX_RING_SIZE*2) < RX_RING_SIZE*2)
 		goto err_out_free_ring;
+	/*RTnet*/
+
+
+	if (/*RTnet*/rt_register_rtnetdev(rtdev)) {
+		/*RTnet*/rtskb_pool_release(&tp->skb_pool);
+		goto err_out_free_ring;
+	}
 
 	/*RTnet*/rt_printk(KERN_INFO "%s: %s rev %d at %#3lx,",
 	       rtdev->name, tulip_tbl[chip_idx].chip_name, chip_rev, ioaddr);
@@ -1824,8 +1846,11 @@ static void __devexit tulip_remove_one (struct pci_dev *pdev)
 #ifndef USE_IO_OPS
 	iounmap((void *)rtdev->base_addr);
 #endif
+	/*RTnet*/
 	rt_rtdev_disconnect(rtdev);
+	rtskb_pool_release(&tp->skb_pool);
 	rtdev_free (rtdev);
+	/*RTnet*/
 	pci_release_regions (pdev);
 	pci_set_drvdata (pdev, NULL);
 

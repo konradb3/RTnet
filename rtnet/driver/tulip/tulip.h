@@ -45,7 +45,7 @@
 
 struct tulip_chip_table {
 	char *chip_name;
-	int io_size;
+	unsigned int io_size;
 	int valid_intrs;	/* CSR7 interrupt enable settings */
 	int flags;
 	void (*media_timer) (unsigned long data);
@@ -263,7 +263,7 @@ enum t21143_csr6_bits {
    bonding and packet priority.
    There are no ill effects from too-large receive rings. */
 #define TX_RING_SIZE	16
-#define RX_RING_SIZE	32
+#define RX_RING_SIZE	8 /* RTnet: RX_RING_SIZE*2 rtskbs will be preallocated */
 
 #define MEDIA_MASK     31
 
@@ -340,6 +340,7 @@ struct ring_info {
 struct tulip_private {
 	const char *product_name;
 	/*RTnet*/struct rtnet_device *next_module;
+	/*RTnet*/struct rtskb_head skb_pool;
 	struct tulip_rx_desc *rx_ring;
 	struct tulip_tx_desc *tx_ring;
 	dma_addr_t rx_ring_dma;
