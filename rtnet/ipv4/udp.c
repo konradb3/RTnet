@@ -72,7 +72,7 @@ MODULE_PARM_DESC(auto_port_mask,
 struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
 {
     struct list_head *entry;
-    struct rtsocket  *sk = NULL;
+    struct rtsocket  *sk;
 
     rtos_res_lock(&udp_socket_base_lock);
 
@@ -82,13 +82,16 @@ struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
             ((sk->prot.inet.saddr == INADDR_ANY) ||
              (sk->prot.inet.saddr == daddr))) {
             rt_socket_reference(sk);
-            break;
+
+            rtos_res_unlock(&udp_socket_base_lock);
+
+            return sk;
         }
     }
 
     rtos_res_unlock(&udp_socket_base_lock);
 
-    return sk;
+    return NULL;
 }
 
 
@@ -398,7 +401,10 @@ int rt_udp_close(struct rtsocket *s)
     s->state=TCP_CLOSE;
 
     rtos_res_lock(&udp_socket_base_lock);
-    list_del(&s->list_entry);
+    if (s->list_entry.next != NULL) {
+        list_del(&s->list_entry);
+        s->list_entry.next = NULL;
+    }
     rtos_res_unlock(&udp_socket_base_lock);
 
     /* cleanup already collected fragments */
