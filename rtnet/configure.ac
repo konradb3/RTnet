@@ -37,6 +37,7 @@ AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2])
 AM_MAINTAINER_MODE
 AC_PROG_LIBTOOL
 AM_PROG_AS
+AC_SUBST(LD)
 
 
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -92,18 +93,20 @@ dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # define helper function
 #
 AC_DEFUN(AC_CHECK_LIBRARY, [dnl
-			   KSAVE_LIBS="$LIBS"
-			   LIBS="$$3 $KSAVE_LIBS"
+			   ac_save_LIBS="$LIBS"
+			   LIBS="$$3 $ac_save_LIBS"
 			   AC_CHECK_LIB($1,$2)
-			   $3=`echo "$LIBS" | sed "s% $KSAVE_LIBS$%%"`
-			   LIBS="$KSAVE_LIBS"
+			   $3=`echo "$LIBS" | sed "s% $ac_save_LIBS$%%"`
+			   LIBS="$ac_save_LIBS"
 			   ])
 
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lncurses':
 AC_CHECK_LIBRARY(ncurses, main, NCURSES_LIBS)
+AM_CONDITIONAL(CONFIG_NCURSES,[test "x${NCURSES_LIBS}" != "x"])
 AC_SUBST(NCURSES_LIBS)
+
 
 # Checks for header files.
 AC_HEADER_STDC
