@@ -157,6 +157,9 @@ int rt_socket(int family, int type, int protocol)
     /* create new file descriptor */
     sock->fd=new_rtsocket_fd();
 
+    /* default priority */
+    sock->priority = SOCK_DEF_PRIO;
+
     /* default UDP-Protocol */
     if (!protocol)
         hash = rt_inet_hashkey(IPPROTO_UDP);
@@ -457,6 +460,24 @@ int rt_socket_setsockopt(int fd, int level, int optname, const void *optval,
                                         *(unsigned int *)optval);
                 break;
 
+            case RT_SO_PRIORITY:
+                sock->priority = *(unsigned int *)optval;
+                break;
+
+            case RT_SO_NONBLOCK:
+                if (*(unsigned int *)optval != 0)
+                    sock->flags |= RT_SOCK_NONBLOCK;
+                else
+                    sock->flags &= ~RT_SOCK_NONBLOCK;
+                break;
+
+            case RT_SO_TIMEOUT:
+                if (optlen < (int)sizeof(RTIME))
+                    ret = -EINVAL;
+                else
+                    sock->timeout = *(RTIME *)optval;
+                break;
+
             default:
                 ret = -ENOPROTOOPT;
                 break;
@@ -493,6 +514,9 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
 
         /* create new file descriptor */
         socket->fd=new_rtsocket_fd();
+
+        /* default priority */
+        socket->priority = SOCK_DEF_PRIO;
 
         /* default UDP-Protocol */
         if (!protocol)

@@ -33,7 +33,10 @@
 #include <rtnet.h>
 
 
-#define RT_SOCKETS      64
+#define RT_SOCKETS          64
+
+#define RT_SOCK_NONBLOCK    0x0001
+
 
 struct rtsocket_ops {
     int  (*bind)        (struct rtsocket *s, struct sockaddr *my_addr,
@@ -67,7 +70,8 @@ struct rtsocket {
     struct rtskb_head   skb_pool;
     struct rtskb_head   incoming;
 
-    unsigned char       connected;  /* connect any socket!  */
+    unsigned int        flags;      /* see RT_SOCK_xxx defines  */
+    RTIME               timeout;    /* receive timeout, 0 for infinite */
 
     u32                 saddr;      /* source ip-addr */
     u16                 sport;      /* source port */
