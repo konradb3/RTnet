@@ -29,7 +29,7 @@
 #include <linux/spinlock.h>
 
 #ifdef CONFIG_RTAI_24
-#define INTERFACE_TO_LINUX  /* makes RT_LINUX_PRIORITY visible */
+# define INTERFACE_TO_LINUX	/* makes RT_LINUX_PRIORITY visible */
 #endif
 
 #include <rtai.h>
@@ -37,10 +37,10 @@
 
 /* RTAI-3.x only headers */
 #ifdef HAVE_RTAI_MALLOC_H
-#include <rtai_malloc.h>
+# include <rtai_malloc.h>
 #endif
 #ifdef HAVE_RTAI_SEM_H
-#include <rtai_sem.h>
+# include <rtai_sem.h>
 #endif
 #include <rtai_fifos.h>
 
@@ -378,12 +378,13 @@ static inline int rtos_irq_free(unsigned int irq)
 
 #define rtos_irq_enable(irq)        rt_enable_irq(irq)
 #define rtos_irq_disable(irq)       rt_disable_irq(irq)
+
 #if defined(CONFIG_ARCH_I386)
-    #define rtos_irq_end(irq)       rt_enable_irq(irq)
+# define rtos_irq_end(irq)       rt_enable_irq(irq)
 #elif defined(CONFIG_ARCH_PPC)
-    #define rtos_irq_end(irq)       rt_unmask_irq(irq)
+# define rtos_irq_end(irq)       rt_unmask_irq(irq)
 #else
-    #error Unsupported architecture.
+# error Unsupported architecture.
 #endif
 
 

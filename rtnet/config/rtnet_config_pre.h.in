@@ -6,6 +6,12 @@
 /* we are building for powerpc */
 #undef CONFIG_ARCH_PPC
 
+/* We build for fusion 0.6.4 */
+#undef CONFIG_FUSION_064
+
+/* We build for fusion 0.6.5 */
+#undef CONFIG_FUSION_065
+
 /* We build for rtai 24.1.x */
 #undef CONFIG_RTAI_24
 
@@ -38,6 +44,9 @@
 
 /* Router */
 #undef CONFIG_RTNET_ROUTER
+
+/* RTAI LXRT */
+#undef CONFIG_RTNET_RTAI_LXRT
 
 /* RTcap support */
 #undef CONFIG_RTNET_RTCAP
@@ -83,11 +92,20 @@
 /* Define to 1 if you have the <rtai_declare.h> header file. */
 #undef HAVE_RTAI_DECLARE_H
 
+/* Define to 1 if you have the <rtai_fifos.h> header file. */
+#undef HAVE_RTAI_FIFOS_H
+
 /* Define to 1 if you have the <rtai_lxrt_user.h> header file. */
 #undef HAVE_RTAI_LXRT_USER_H
 
 /* Define to 1 if you have the <rtai_malloc.h> header file. */
 #undef HAVE_RTAI_MALLOC_H
+
+/* Define to 1 if you have the <rtai/mutex.h> header file. */
+#undef HAVE_RTAI_MUTEX_H
+
+/* Define to 1 if you have the <rtai/pipe.h> header file. */
+#undef HAVE_RTAI_PIPE_H
 
 /* Define to 1 if you have the <rtai_sem.h> header file. */
 #undef HAVE_RTAI_SEM_H

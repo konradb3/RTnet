@@ -8,7 +8,7 @@ noinst_PROGRAMS = \
 AM_CFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
-        @RTAI_LXRT_CFLAGS@
+        @RTAI_USER_CFLAGS@
 
 all-local: \
 	linux_client \
