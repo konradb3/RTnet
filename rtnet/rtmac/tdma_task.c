@@ -43,13 +43,13 @@ void tdma_task_shutdown(struct rtmac_tdma *tdma)
 		/*
 		 * unblock all tasks by deleting semas
 		 */
-		//rt_sem_delete(&tdma->client_tx);	//tdma_task_client()
+		rt_sem_delete(&tdma->client_tx);	//tdma_task_client()
 		rt_sem_delete(&tdma->free);		//tdma_packet_tx()
 
 		/*
 		 * re-init semas
 		 */
-		//rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+		rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
 		rt_sem_init(&tdma->client_tx, 0);
 	}
 }
@@ -260,7 +260,7 @@ void tdma_task_client(int rtdev_id)
        
 	while(tdma->flags.shutdown_task == 0) {
 		if (rt_sem_wait(&tdma->client_tx) == 0xFFFF) {
-			TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() rt_sem_wait(client_tx) failed\n");
+			rt_printk("RTmac: tdma: "__FUNCTION__"() rt_sem_wait(client_tx) failed\n");
 			break;
 		}
 
