@@ -10,6 +10,7 @@ EXTRA_LIBRARIES = \
 	lib3c59x-rt.a \
 	lib8139too-rt.a \
 	libeepro100-rt.a \
+	libpcnet32-rt.a \
 	libloopback-rt.a \
 	libmpc8260_fcc_enet-rt.a \
 	libmpc8xx_enet-rt.a \
@@ -30,6 +31,11 @@ endif
 if CONFIG_RTNET_EEPRO100
 libeepro100_rt_a_SOURCES = eepro100-rt.c
 OBJS += eepro100-rt.o
+endif
+
+if CONFIG_RTNET_PCNET32
+libpcnet32_rt_a_SOURCES = pcnet32-rt.c
+OBJS += pcnet32-rt.o
 endif
 
 if CONFIG_RTNET_LOOPBACK
