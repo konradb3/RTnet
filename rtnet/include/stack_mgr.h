@@ -55,8 +55,6 @@ extern int rt_stack_mgr_stop (struct rtnet_mgr *mgr);
 
 extern void rtnetif_rx(struct rtskb *skb);
 extern void rtnetif_tx(struct rtnet_device *rtdev);
-extern void rtnetif_err_tx(struct rtnet_device *rtdev);
-extern void rtnetif_err_rx(struct rtnet_device *rtdev);
 extern void rt_mark_stack_mgr(struct rtnet_device *rtdev);
 
 
