@@ -274,8 +274,9 @@ Stage 2 Configuration frame as unicast to the server.
 Management Tool
 ===============
 
-The RTcfg server and client functionality is controlled by the new command
-line tool rtcfg.
+The RTcfg server and client functionality is controlled by the command line
+tool rtcfg.
+
 
 Server Commands
 ---------------
@@ -327,7 +328,6 @@ startup phase, and waits until all other stations are reporting to be ready as
 well. If <timeout> (in milliseconds) is given, rtcfg will return an error code
 when the synchronisation cannot be completed within the specified time. The
 default timeout is infinite.
-
 
 
 Client Commands
