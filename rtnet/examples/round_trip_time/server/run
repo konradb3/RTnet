@@ -3,6 +3,6 @@ insmod rtai_sched
 insmod rtai_fifos
 
 insmod rtnet
-insmod rtnet8139too
+insmod 8139too-rt	# or other drivers
 
 ../../../tools/rtifconfig rteth0 up 192.168.0.1 255.0.0.0

@@ -1,5 +1,5 @@
 ../../../tools/rtifconfig eth0 down
-rmmod rtnet8139too
+rmmod 8139too-rt
 rmmod rtnet
 
 rmmod rtai_fifos
