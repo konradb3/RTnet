@@ -166,7 +166,7 @@ int rt_socket(int family, int type, int protocol)
 int rt_socket_bind(int fd, struct sockaddr *my_addr, int addr_len)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock && !sock->ops && !sock->ops->bind)
+	if ( !sock || !sock->ops || !sock->ops->bind)
 		return -ENOTSOCK;
 	return ( sock->ops->bind(sock, my_addr, addr_len) );
 }
@@ -177,7 +177,7 @@ int rt_socket_bind(int fd, struct sockaddr *my_addr, int addr_len)
 int rt_socket_listen(int fd, int backlog)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock && !sock->ops && !sock->ops->listen)
+	if ( !sock || !sock->ops || !sock->ops->listen)
 		return -ENOTSOCK;
 	return ( sock->ops->listen(sock, backlog) );
 }
@@ -188,7 +188,7 @@ int rt_socket_listen(int fd, int backlog)
 int rt_socket_connect(int fd, struct sockaddr *serv_addr, int addr_len)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock && !sock->ops && !sock->ops->connect)
+	if ( !sock || !sock->ops || !sock->ops->connect)
 		return -ENOTSOCK;
 	return ( sock->ops->connect(sock, serv_addr, addr_len) );
 }
@@ -199,7 +199,7 @@ int rt_socket_connect(int fd, struct sockaddr *serv_addr, int addr_len)
 int rt_socket_accept(int fd, struct sockaddr *client_addr, int *addr_len)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock && !sock->ops && !sock->ops->accept)
+	if ( !sock || !sock->ops || !sock->ops->accept)
 		return -ENOTSOCK;
 	return ( sock->ops->accept(sock, client_addr, addr_len) );
 }
@@ -210,7 +210,7 @@ int rt_socket_accept(int fd, struct sockaddr *client_addr, int *addr_len)
 int rt_socket_close(int fd)
 {
 	SOCKET *sock = rt_socket_lookup(fd);
-	if ( !sock && !sock->ops && !sock->ops->close)
+	if ( !sock || !sock->ops || !sock->ops->close)
 		return -ENOTSOCK;
 
 	sock->ops->close(sock,0);
@@ -282,7 +282,7 @@ int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct so
 	struct iovec iov;
 	int error=0;
 
-	if ( !sock && !sock->ops && !sock->ops->recvmsg)
+	if ( !sock || !sock->ops || !sock->ops->recvmsg)
 		return -ENOTSOCK;
 
 	iov.iov_base=buf;
@@ -326,7 +326,7 @@ int rt_socket_recvmsg(int fd, struct msghdr *msg, unsigned int flags)
 	SOCKET *sock=rt_socket_lookup(fd);
 	int len;
 	
-	if (!sock && !sock->ops && !sock->ops->recvmsg)
+	if (!sock || !sock->ops || !sock->ops->recvmsg)
 		return -ENOTSOCK;
 
 	len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
@@ -408,7 +408,7 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
  */
 int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, int addr_len)
 {
-	if ( !socket && !socket->ops && !socket->ops->bind)
+	if ( !socket || !socket->ops || !socket->ops->bind)
 		return -ENOTSOCK;
 	return ( socket->ops->bind(socket, addr, addr_len) );
 }
@@ -418,7 +418,7 @@ int rt_ssocket_bind(SOCKET *socket, struct sockaddr *addr, int addr_len)
  */
 int rt_ssocket_listen(SOCKET *socket, int backlog)
 {
-	if ( !socket && !socket->ops && !socket->ops->listen)
+	if ( !socket || !socket->ops || !socket->ops->listen)
 		return -ENOTSOCK;
 	return ( socket->ops->listen(socket, backlog) );
 }
@@ -428,7 +428,7 @@ int rt_ssocket_listen(SOCKET *socket, int backlog)
  */
 int rt_ssocket_connect(SOCKET *socket, struct sockaddr *addr, int addr_len)
 {
-	if ( !socket && !socket->ops && !socket->ops->connect)
+	if ( !socket || !socket->ops || !socket->ops->connect)
 		return -ENOTSOCK;
 	return ( socket->ops->connect(socket, addr, addr_len) );
 }
@@ -438,7 +438,7 @@ int rt_ssocket_connect(SOCKET *socket, struct sockaddr *addr, int addr_len)
  */
 int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addr_len)
 {
-	if ( !socket && !socket->ops && !socket->ops->accept)
+	if ( !socket || !socket->ops || !socket->ops->accept)
 		return -ENOTSOCK;
 	return ( socket->ops->accept(socket, addr, addr_len) );
 }
@@ -448,7 +448,7 @@ int rt_ssocket_accept(SOCKET *socket, struct sockaddr *addr, int *addr_len)
  */
 int rt_ssocket_close(SOCKET *socket)
 {
-	if ( !socket && !socket->ops && !socket->ops->close)
+	if ( !socket || !socket->ops || !socket->ops->close)
 		return -ENOTSOCK;
 
 	socket->ops->close(socket, 0);
@@ -460,7 +460,7 @@ int rt_ssocket_close(SOCKET *socket)
  */
 int rt_ssocket_writev(SOCKET *socket, struct iovec *iov, size_t count)
 {
-	if ( !socket && !socket->ops && !socket->ops->sendmsg)
+	if ( !socket || !socket->ops || !socket->ops->sendmsg)
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -490,7 +490,7 @@ int rt_ssocket_send(SOCKET *socket, void *buf, int len, unsigned int flags)
  */
 int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, struct sockaddr *to, int tolen)
 {
-	if ( !socket && !socket->ops && !socket->ops->sendmsg)
+	if ( !socket || !socket->ops || !socket->ops->sendmsg)
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -516,7 +516,7 @@ int rt_ssocket_sendto(SOCKET *socket, void *buf, int len, unsigned int flags, st
  */
 int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
 {
-	if ( !socket && !socket->ops && !socket->ops->sendmsg)
+	if ( !socket || !socket->ops || !socket->ops->sendmsg)
 		return -ENOTSOCK;
 	else {
 		int len=rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
@@ -529,7 +529,7 @@ int rt_ssocket_sendmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
  */
 int rt_ssocket_readv(SOCKET *socket, struct iovec *iov, size_t count)
 {
-	if ( !socket && !socket->ops && !socket->ops->recvmsg)
+	if ( !socket || !socket->ops || !socket->ops->recvmsg)
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -557,7 +557,7 @@ int rt_ssocket_recv(SOCKET *socket, void *buf, int len, unsigned int flags)
  */
 int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, struct sockaddr *from, int fromlen)
 {
-	if ( !socket && !socket->ops && !socket->ops->bind)
+	if ( !socket || !socket->ops || !socket->ops->bind)
 		return -ENOTSOCK;
 	else {
 		struct msghdr msg;
@@ -585,7 +585,7 @@ int rt_ssocket_recvfrom(SOCKET *socket, void *buf, int len, unsigned int flags, 
  */
 int rt_ssocket_recvmsg(SOCKET *socket, struct msghdr *msg, unsigned int flags)
 {
-	if ( !socket && !socket->ops && !socket->ops->recvmsg)
+	if ( !socket || !socket->ops || !socket->ops->recvmsg)
 		return -ENOTSOCK;
 	else {
 		int len=rt_iovec_len(msg->msg_iov,msg->msg_iovlen);
