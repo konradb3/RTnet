@@ -44,11 +44,14 @@
 
 static char *local_ip_s  = "";
 static char *client_ip_s = "127.0.0.1";
+static int reply_size = sizeof(RTIME);
 
-MODULE_PARM (local_ip_s ,"s");
-MODULE_PARM (client_ip_s,"s");
-MODULE_PARM_DESC (local_ip_s, "local ip-addr");
-MODULE_PARM_DESC (client_ip_s, "client ip-addr");
+MODULE_PARM(local_ip_s, "s");
+MODULE_PARM(client_ip_s, "s");
+MODULE_PARM(reply_size, "i");
+MODULE_PARM_DESC(local_ip_s, "local ip-addr");
+MODULE_PARM_DESC(client_ip_s, "client ip-addr");
+MODULE_PARM_DESC(reply_size, "size of the reply message (8-65535)");
 
 #define PRINT_FIFO  0
 RT_TASK rt_task;
@@ -65,9 +68,8 @@ static struct sockaddr_in local_addr;
 
 static int sock;
 
-#define BUFSIZE 1500
-char buffer[BUFSIZE];
-char tx_msg[BUFSIZE];
+char buffer[sizeof(RTIME)];
+char tx_msg[65536];
 
 
 
@@ -78,7 +80,7 @@ void *process(void* arg)
 {
     while(1) {
         rt_sem_wait(&tx_sem);
-        rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr,
+        rt_socket_sendto(sock, &tx_msg, reply_size, 0, (struct sockaddr *) &client_addr,
                          sizeof (struct sockaddr_in));
     }
 }
@@ -95,7 +97,7 @@ int echo_rcv(int s,void *arg)
 
     memset(&msg, 0, sizeof(msg));
     iov.iov_base=&buffer;
-    iov.iov_len=BUFSIZE;
+    iov.iov_len=sizeof(RTIME);
     msg.msg_name=&addr;
     msg.msg_namelen=sizeof(addr);
     msg.msg_iov=&iov;
@@ -124,7 +126,7 @@ void process(void* arg)
     while(1) {
         memset(&msg, 0, sizeof(msg));
         iov.iov_base=&buffer;
-        iov.iov_len=BUFSIZE;
+        iov.iov_len=sizeof(RTIME);
         msg.msg_name=&addr;
         msg.msg_namelen=sizeof(addr);
         msg.msg_iov=&iov;
@@ -136,9 +138,9 @@ void process(void* arg)
         if ( (ret <= 0) || (msg.msg_namelen != sizeof(struct sockaddr_in)) )
             return;
 
-        memcpy(&tx_msg, &buffer, 8);
+        memcpy(&tx_msg, &buffer, sizeof(RTIME));
 
-        rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr,
+        rt_socket_sendto(sock, &tx_msg, reply_size, 0, (struct sockaddr *) &client_addr,
                          sizeof (struct sockaddr_in));
     }
 }
@@ -164,9 +166,12 @@ int init_module(void)
     else
         local_ip = INADDR_ANY;
     client_ip = rt_inet_aton(client_ip_s);
+    if (reply_size < sizeof(RTIME))
+        reply_size = sizeof(RTIME);
 
-    rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
-    rt_printk ("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
+    rt_printk("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+    rt_printk("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
+    rt_printk("reply message size=%d\n", reply_size);
 
     /* create rt-socket */
     rt_printk("create rtsocket\n");
