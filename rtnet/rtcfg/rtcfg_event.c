@@ -60,15 +60,14 @@ static int rtcfg_main_state_client_ready(
 #ifdef CONFIG_RTNET_RTCFG_DEBUG
 const char *rtcfg_event[] = {
     "RTCFG_CMD_SERVER",
-    "RTCFG_CMD_ADD_IP",
-    "RTCFG_CMD_ADD_MAC",
-    "RTCFG_CMD_DEL_IP",
-    "RTCFG_CMD_DEL_MAC",
+    "RTCFG_CMD_ADD",
+    "RTCFG_CMD_DEL",
     "RTCFG_CMD_WAIT",
     "RTCFG_CMD_CLIENT",
     "RTCFG_CMD_ANNOUNCE",
     "RTCFG_CMD_READY",
     "RTCFG_CMD_DOWN",
+    "RTCFG_TIMER",
     "RTCFG_FRM_STAGE_1_CFG",
     "RTCFG_FRM_ANNOUNCE_NEW",
     "RTCFG_FRM_ANNOUNCE_REPLY",
@@ -743,7 +742,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
 
     new_conn->ifindex      = cmd_event->ifindex;
     new_conn->state        = RTCFG_CONN_SEARCHING;
-    new_conn->addr_type    = addr_type;
+    new_conn->addr_type    = cmd_event->args.add.addr_type;
     new_conn->addr.ip_addr = cmd_event->args.add.ip_addr;
     new_conn->stage1_data  = cmd_event->args.add.stage1_data;
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
@@ -889,7 +888,7 @@ static int rtcfg_server_recv_announce(int ifindex, struct rtskb *rtskb)
 
         switch (announce_new->addr_type) {
             case RTCFG_ADDR_IP:
-                if ((conn->addr_type == RTCFG_ADDR_IP) &&
+                if (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) &&
                     (*(u32 *)announce_new->addr ==
                         conn->addr.ip_addr)) {
                     /* save MAC address - Ethernet-specific! */
