@@ -27,15 +27,15 @@
 #include <ipv4/arp.h>
 #include <rtmac/tdma/tdma_cleanup.h>
 #include <rtmac/tdma/tdma_event.h>
+#include <rtmac/tdma/tdma_module.h>
 #include <rtmac/tdma/tdma_task.h>
 #include <rtmac/tdma/tdma_timer.h>
 
 
 /****************************** helper functions ********************************/
-static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr);
-static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr);
+static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int offset);
 static int tdma_client_add_rt_rate(struct rtmac_tdma *tdma, u32 ip_addr, unsigned char station);
-static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr);
+static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int offset);
 static void tdma_remove_rt(struct rtmac_tdma *tdma, u32 ip_addr);
 static void tdma_expired_add_rt(struct rtmac_tdma *tdma);
 static int tdma_master_request_up(struct rtmac_tdma *tdma);
@@ -261,7 +261,7 @@ static int tdma_state_master_wait(struct rtmac_tdma *tdma, TDMA_EVENT event, str
         break;
 
     case REQUEST_ADD_RT:
-        ret = tdma_master_add_rt(tdma, info->ip_addr);
+        ret = tdma_master_add_rt(tdma, info->ip_addr, info->offset);
         break;
 
     case REQUEST_REMOVE_RT:
@@ -323,7 +323,7 @@ static int tdma_state_master_down(struct rtmac_tdma *tdma, TDMA_EVENT event, str
         break;
 
     case REQUEST_ADD_RT:
-        ret = tdma_master_add_rt(tdma, info->ip_addr);
+        ret = tdma_master_add_rt(tdma, info->ip_addr, info->offset);
         break;
 
     case REQUEST_REMOVE_RT:
@@ -627,7 +627,7 @@ static int tdma_state_client_rcvd_ack(struct rtmac_tdma *tdma, TDMA_EVENT event,
 
 
 /****************************** helper functions ********************************/
-static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
+static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int offset)
 {
     struct rtnet_device *rtdev = tdma->rtdev;
     struct list_head *lh;
@@ -668,7 +668,7 @@ static int tdma_master_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
     /*
      * call real add_rt function...
      */
-    return tdma_add_rt(tdma, ip_addr);
+    return tdma_add_rt(tdma, ip_addr, offset);
 }
 
 
@@ -709,7 +709,7 @@ static int tdma_client_add_rt_rate(struct rtmac_tdma *tdma, u32 ip_addr, unsigne
 
 
 
-static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
+static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr, unsigned int offset)
 {
     struct rtnet_device *rtdev = tdma->rtdev;
     struct tdma_rt_add_entry *rt_add_entry;
@@ -733,6 +733,7 @@ static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
         INIT_LIST_HEAD(&rt_entry->list_rate);
 
         rt_entry->arp = arp_entry;
+        rt_entry->offset = offset;
         list_add_tail(&rt_entry->list, &tdma->rt_list);
 
         return 0;
@@ -752,6 +753,7 @@ static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
     INIT_LIST_HEAD(&rt_add_entry->list);
 
     rt_add_entry->ip_addr = ip_addr;
+    rt_add_entry->offset  = offset;
     rt_add_entry->timeout = TDMA_RT_REQ_TIMEOUT * HZ/1000;
 
     list_add_tail(&rt_add_entry->list, &tdma->rt_add_list);
@@ -828,6 +830,7 @@ static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
             INIT_LIST_HEAD(&rt_entry->list);
 
             rt_entry->arp = arp_entry;
+            rt_entry->offset = rt_add_entry->offset;
 
             list_add_tail(&rt_entry->list, &tdma->rt_list);
         } else if (rt_add_entry->timeout <= jiffies) {
@@ -920,7 +923,7 @@ static void tdma_expired_sent_conf(struct rtmac_tdma *tdma)
             skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, ACK_ACK_CONF, data);
             conf_ack_ack->station = rt_entry->station;
 
-            tdma_xmit(skb);
+            rtmac_xmit(skb);
         } else { /* rt_entry->state != RT_RCVD_CONF */
             /*
              * if station has _not_ sent ACK, delete it from list
@@ -978,7 +981,7 @@ static void tdma_master_rcvd_test_ack(struct rtmac_tdma *tdma, struct rtskb *skb
              * must transform then to ns....
              */
             rt_entry->state = RT_RCVD_TEST;
-            rtt = (unsigned int)(rtos_time_to_nanosecs(&skb->rx) -
+            rtt = (unsigned int)(rtos_time_to_nanosecs(&skb->time_stamp) -
                                  rt_entry->tx);
             rt_entry->rtt = MAX(rt_entry->rtt, rtt);
 
@@ -997,6 +1000,10 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
     struct list_head *lh, *next, *lh_rate;
     unsigned char station_list[TDMA_MAX_RT * sizeof(struct tdma_station_list)];
     unsigned int max;
+    struct rtskb *skb;
+    struct tdma_offset_msg *offset_msg;
+    void *data = &offset_msg;
+
 
     max = TDMA_MASTER_MAX_TEST;
 
@@ -1057,6 +1064,13 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
         rt_entry = list_entry(lh, struct tdma_rt_entry, list);
 
         tdma_send_station_list(tdma, rt_entry->arp->hw_addr, station_list);
+
+        skb = tdma_make_msg(tdma->rtdev, rt_entry->arp->hw_addr, REQUEST_CHANGE_OFFSET, data);
+
+        offset_msg->offset = htonl(rt_entry->offset);
+
+        skb->priority = QUEUE_MAX_PRIO;
+        rtmac_xmit(skb);
     }
 
     return;
@@ -1081,7 +1095,8 @@ static void tdma_master_change_offset(struct rtmac_tdma *tdma, u32 ip_addr, unsi
 
             offset_msg->offset = htonl(offset);
 
-            tdma_xmit(skb);
+            skb->priority = QUEUE_MAX_PRIO;
+            tdma_rt_packet_tx(skb, skb->rtdev);
             break;
         }
     }
@@ -1126,8 +1141,9 @@ static void tdma_client_rcvd_conf(struct rtmac_tdma *tdma, struct rtskb *skb)
     TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf acknowledge to master %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(arp_entry->ip_addr));
     new_skb = tdma_make_msg(skb->rtdev, tdma->master->hw_addr, ACK_CONF, data);
     memcpy(conf_ack, conf_req, sizeof(struct tdma_conf_msg));
+
     /*FIXME: crc32*/
-    tdma_xmit(new_skb);
+    rtmac_xmit(new_skb);
 
     tdma_timer_start_sent_ack(tdma, TDMA_SENT_CLIENT_ACK_TIMEOUT);
 
@@ -1211,7 +1227,7 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
      * ...and send it
      * FIXME: note: transmit, even if mac is active...
      */
-    tdma_xmit(new_skb);
+    rtmac_xmit(new_skb);
 
     TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet back to master %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(tdma->master->ip_addr));
 }
@@ -1267,9 +1283,9 @@ static void tdma_rcvd_sof(struct rtmac_tdma *tdma, struct rtskb *skb)
     nanosecs_t      new_delta_t;
 
 
-    rtos_time_sum(&tdma->wakeup, &skb->rx, &tdma->offset);
+    rtos_time_sum(&tdma->wakeup, &skb->time_stamp, &tdma->offset);
 
-    new_delta_t = be64_to_cpu(*(nanosecs_t *)(skb->data)) - rtos_time_to_nanosecs(&skb->rx);
+    new_delta_t = be64_to_cpu(*(nanosecs_t *)(skb->data)) - rtos_time_to_nanosecs(&skb->time_stamp);
 
     rtos_spin_lock_irqsave(&tdma->delta_t_lock, flags);
     memcpy(&tdma->delta_t, &new_delta_t, sizeof(new_delta_t));
@@ -1312,7 +1328,7 @@ static void tdma_send_conf(struct rtmac_tdma *tdma, void *hw_addr, unsigned char
     /*
      * transmit packet
      */
-    ret = tdma_xmit(skb);
+    ret = rtmac_xmit(skb);
 
     return;
 }
@@ -1373,7 +1389,7 @@ static void tdma_send_station_list(struct rtmac_tdma *tdma, void *hw_addr, void 
     /*
      * send packet
      */
-    tdma_xmit(skb);
+    rtmac_xmit(skb);
 
     return;
 }
