@@ -153,24 +153,24 @@ static int rt_icmp_glue_bits(const void *p, char *to, unsigned int offset, unsig
  */
 static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 {
-    struct rt_rtable    *rt;
-    u32                 saddr;
+    struct dest_route   rt;
     u32                 daddr;
     int                 err;
 
-    saddr = skb->rtdev->local_addr;
+
     daddr = skb->nh.iph->saddr;
 
     icmp_param->data.icmph.checksum = 0;
     icmp_param->csum = 0;
 
-    err = rt_ip_route_output(&rt, daddr, saddr);
-    if (err)
+    if (rt_ip_route_output(&rt, daddr) != 0)
         return;
 
     err = rt_ip_build_xmit(&reply_socket, rt_icmp_glue_bits, icmp_param,
-            icmp_param->data_len+sizeof(struct icmphdr),
-            rt, MSG_DONTWAIT);
+                           icmp_param->data_len+sizeof(struct icmphdr),
+                           &rt, MSG_DONTWAIT);
+
+    rtdev_dereference(rt.rtdev);
 
     RTNET_ASSERT(err == 0,
                  rtos_print("RTnet: rt_icmp_reply() error in xmit\n"););

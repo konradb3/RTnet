@@ -1,36 +1,30 @@
-/* arp.c - Adress Resolution for rtnet
+/***
  *
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  ipv4/arp.h - Adress Resolution Protocol for RTnet
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
-#include <linux/if.h>
-#include <linux/if_arp.h>
-#include <linux/netdevice.h>
-#include <linux/in.h>
-
-#ifdef CONFIG_PROC_FS
-#include <linux/stat.h>
-#include <linux/proc_fs.h>
-#endif /* CONFIG_PROC_FS */
 
 #include <rtdev.h>
 #include <stack_mgr.h>
 #include <ipv4/arp.h>
-#include <ipv4/route.h>
-#include <rtmac/rtmac_disc.h>
+
 
 /***
  *  arp_send:   Create and send an arp packet. If (dest_hw == NULL),
@@ -105,9 +99,10 @@ void rt_arp_send(int type,
 
     return;
 
-out:
+  out:
     kfree_rtskb(skb);
 }
+
 
 
 /***
@@ -127,9 +122,9 @@ int rt_arp_rcv(struct rtskb *skb, struct rtpacket_type *pt)
      *  of the device.  Similarly, the hardware types should match.  The
      *  device should be ARP-able.  Also, if pln is not 4, then the lookup
      *  is not from an IP number.  We can't currently handle this, so toss
-     *  it. 
-     */  
-    if ((arp->ar_hln != rtdev->addr_len) || 
+     *  it.
+     */
+    if ((arp->ar_hln != rtdev->addr_len) ||
         (rtdev->flags & IFF_NOARP) ||
         (skb->pkt_type == PACKET_OTHERHOST) ||
         (skb->pkt_type == PACKET_LOOPBACK) ||
@@ -174,217 +169,17 @@ int rt_arp_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     arp_ptr += rtdev->addr_len;
     memcpy(&tip, arp_ptr, 4);
 
-    /* 
-     *  Check for bad requests for 127.x.x.x and requests for multicast
-     *  addresses.  If this is one such, delete it.
-     */
-    if (LOOPBACK(tip) || MULTICAST(tip))
-        goto out;
+    /* process only requests/replies directed to us */
+    if (tip == rtdev->local_ip) {
+        rt_ip_route_add_host(sip, sha, rtdev);
 
-    if (dev_type == ARPHRD_DLCI)
-        sha = rtdev->broadcast;
-
-    /*
-     *  Process entry.  The idea here is we want to send a reply if it is a
-     *  request for us or if it is a request for someone else that we hold
-     *  a proxy for.  We want to add an entry to our cache if it is a reply
-     *  to us or if it is a request for our address.  
-     *  (The assumption for this last is that if someone is requesting our 
-     *  address, they are probably intending to talk to us, so it saves time 
-     *  if we cache their address.  Their address is also probably not in 
-     *  our cache, since ours is not in their cache.)
-     * 
-     *  Putting this another way, we only care about replies if they are to
-     *  us, in which case we add them to the cache.  For requests, we care
-     *  about those for us and those for our proxies.  We reply to both,
-     *  and in the case of requests for us we add the requester to the arp 
-     *  cache.
-     */
-
-    if ( rt_ip_route_input(skb, tip, sip, rtdev)==0 ) {
-        rt_arp_table_add(sip, sha);
-        if ( arp->ar_op==__constant_htons(ARPOP_REQUEST) )
+        if (arp->ar_op == __constant_htons(ARPOP_REQUEST))
             rt_arp_send(ARPOP_REPLY, ETH_P_ARP, sip, rtdev, tip, sha,
                         rtdev->dev_addr, sha);
     }
 
 out:
     kfree_rtskb(skb);
-    return 0;
-}
-
-struct rt_arp_table_struct *free_arp_list;
-struct rt_arp_table_struct *arp_list;
-struct rt_arp_table_struct rt_arp_table_list[RT_ARP_TABLE_LEN];
-
-
-/***
- *  proc filesystem section 
- */ 
-#ifdef CONFIG_PROC_FS
-static int rt_arp_read_proc(char *page, char **start, off_t off, int count,
-                            int *eof, void *data)
-{
-    PROC_PRINT_VARS;
-    struct rt_arp_table_struct *arp_entry;
-
-    PROC_PRINT("IPaddress\t\tHWaddress\n");
-    for (arp_entry=arp_list; arp_entry!=NULL; arp_entry=arp_entry->next) {
-        union { unsigned long l; unsigned char c[4]; } u;
-        unsigned char *a;
-
-        u.l=arp_entry->ip_addr;
-        a = arp_entry->hw_addr;
-
-        PROC_PRINT("%d.%d.%d.%d\t\t%02x:%02x:%02x:%02x:%02x:%02x\n", 
-                   u.c[0], u.c[1], u.c[2], u.c[3], 
-                   a[0], a[1], a[2], a[3], a[4], a[5]);
-    }
-    PROC_PRINT_DONE;
-}
-
-static int __init rt_arp_proc_register(void)
-{
-    static struct proc_dir_entry *proc_rt_arp;
-
-    proc_rt_arp =
-        create_proc_entry("arp", S_IFREG | S_IRUGO | S_IWUSR, rtai_proc_root);
-    if (!proc_rt_arp) {
-        printk("RTnet: unable to initialize proc-file for arp\n");
-        return -1;
-    }
-    proc_rt_arp->read_proc = rt_arp_read_proc;
-
-    return 0;
-}
-
-static void rt_arp_proc_unregister(void)
-{
-    remove_proc_entry ("arp", rtai_proc_root);
-}
-#endif  /* CONFIG_PROC_FS */
-
-
-
-/***
- *  rt_arp_table_lookup
- */
-struct rt_arp_table_struct *rt_arp_table_lookup(u32 ip_addr)
-{
-    struct rt_arp_table_struct *arp_entry;
-
-    /*rt_sem_wait(&arp_sem);*/
-
-    for (arp_entry=arp_list;arp_entry;arp_entry=arp_entry->next)
-        if(arp_entry->ip_addr==ip_addr)
-            return arp_entry;
-
-    /*rt_sem_signal(&arp_sem);*/
-
-    return NULL;
-}
-
-
-
-struct rt_arp_table_struct *rt_rarp_table_lookup(char *hw_addr)
-{
-    struct rt_arp_table_struct *arp_entry;
-
-    /*rt_sem_wait(&arp_sem);*/
-
-    for (arp_entry = arp_list; arp_entry; arp_entry = arp_entry->next)
-        if (memcmp(arp_entry->hw_addr, hw_addr, RT_ARP_ADDR_LEN) == 0)
-            return arp_entry;
-
-    /*rt_sem_signal(&arp_sem);*/
-
-    return NULL;
-}
-
-
-/***
- *  rt_arp_table_add
- */
-void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr)
-{
-    struct rt_arp_table_struct *arp_entry=rt_arp_table_lookup(ip_addr);
-
-    /*rt_sem_wait(&arp_sem);*/
-
-    if (arp_entry == NULL) {
-        arp_entry=free_arp_list;
-        if (!arp_entry) {
-            rtos_print("RTnet: %s(): no free arp entries\n",__FUNCTION__);
-            return;
-        }
-
-        arp_entry->ip_addr=ip_addr;
-        memcpy(arp_entry->hw_addr,hw_addr,RT_ARP_ADDR_LEN);
-
-        free_arp_list=free_arp_list->next;
-
-        arp_entry->next=arp_list;
-        if (arp_list)
-            arp_list->prev=arp_entry;
-        arp_list=arp_entry;
-        /* Billa: for the rt_arp_table_del() not to crash */
-        arp_list->prev=NULL;
-    }
-    /*rt_sem_signal(&arp_sem);*/
-}
-
-
-
-/***
- *  rt_arp_table_del
- */
-void rt_arp_table_del(u32 ip_addr)
-{
-    struct rt_arp_table_struct *list = arp_list;
-    struct rt_arp_table_struct *next;
-
-    /*rt_sem_wait(&arp_sem);*/
-
-    while(list != NULL) {
-        next = list->next;
-
-        if (list->ip_addr==ip_addr) {
-            struct rt_arp_table_struct *prev = list->prev;
-
-            if ( prev!=NULL )
-                prev->next=next;
-            if ( next!=NULL )
-                next->prev=prev;
-
-            memset(list, 0, sizeof(struct rt_arp_table_struct));
-
-            /* add to free list; */
-            list->prev=NULL;
-            list->next=free_arp_list;
-            free_arp_list=list;
-
-            /* if we delete the first element, set head to next */
-            if(list == arp_list)
-                arp_list = next;
-        }
-
-        list = next;
-    }
-
-    /*rt_sem_signal(&arp_sem);*/
-}
-
-
-
-/***
- *  rt_arp_table_solicit
- */
-int rt_arp_solicit(struct rtnet_device *rtdev,u32 target)
-{
-    u32 saddr=rtdev->local_addr;
-    rt_arp_send(ARPOP_REQUEST, ETH_P_ARP, target, rtdev, saddr,
-                NULL, NULL, NULL);
-
     return 0;
 }
 
@@ -403,27 +198,7 @@ static struct rtpacket_type arp_packet_type = {
  */
 void __init rt_arp_init(void)
 {
-    int i;
     rtdev_add_pack(&arp_packet_type);
-
-    (rt_arp_table_list+RT_ARP_TABLE_LEN-1)->prev =
-        (rt_arp_table_list+RT_ARP_TABLE_LEN-2);
-    (rt_arp_table_list+RT_ARP_TABLE_LEN-1)->next = NULL;
-    (rt_arp_table_list)->prev = NULL;
-    (rt_arp_table_list)->next = (rt_arp_table_list+1);
-
-    for (i=1; i<RT_ARP_TABLE_LEN-1; i++) {
-        (rt_arp_table_list+i)->prev=(rt_arp_table_list+i-1);
-        (rt_arp_table_list+i)->next=(rt_arp_table_list+i+1);
-    }
-    free_arp_list=rt_arp_table_list;
-    arp_list=NULL;
-
-    /*rt_typed_sem_init(&arp_sem, 1, CNT_SEM);*/
-
-#ifdef CONFIG_PROC_FS
-    rt_arp_proc_register();
-#endif
 }
 
 
@@ -433,10 +208,5 @@ void __init rt_arp_init(void)
  */
 void rt_arp_release(void)
 {
-    free_arp_list=arp_list=NULL;
     rtdev_remove_pack(&arp_packet_type);
-
-#ifdef CONFIG_PROC_FS
-    rt_arp_proc_unregister();
-#endif
 }

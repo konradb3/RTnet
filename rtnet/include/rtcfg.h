@@ -28,8 +28,6 @@
 #include <rtnet_chrdev.h>
 
 
-#define MAC_ADDR_LEN            32  /* avoids inconsistent MAX_ADDR_LEN */
-
 #define ERTCFG_START            0x0F00
 #define ESTAGE1SIZE             ERTCFG_START
 
@@ -79,7 +77,7 @@ struct rtcfg_cmd {
 
         struct {
             __u32                   ip_addr;
-            __u8                    mac_addr[MAC_ADDR_LEN];
+            __u8                    mac_addr[DEV_ADDR_LEN];
             void                    *stage1_data;
             size_t                  stage1_size;
             const char              *stage2_filename;
@@ -92,7 +90,7 @@ struct rtcfg_cmd {
 
         struct {
             __u32                   ip_addr;
-            __u8                    mac_addr[MAC_ADDR_LEN];
+            __u8                    mac_addr[DEV_ADDR_LEN];
 
             /* internal usage only */
             struct rtcfg_connection *conn_buf;

@@ -177,8 +177,8 @@ static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev);
 static inline void send_data_out(struct sk_buff *skb)
 {
 
-    struct rtskb *rtskb;
-    struct rt_rtable *rt;
+    struct rtskb        *rtskb;
+    struct dest_route   rt;
 
     struct skb_data_format
     {
@@ -207,23 +207,33 @@ static inline void send_data_out(struct sk_buff *skb)
 
     /* Determine the device to use: Only ip routing is used here.
      * Non-ip protocols are not supported... */
-    rc = rt_ip_route_output(&rt, pData->ip_dst, pData->ip_src);
+    rc = rt_ip_route_output(&rt, pData->ip_dst);
     if (rc == 0)
     {
-        struct rtnet_device *rtdev = rt->rt_dev;
-        rtskb->dst = rt;
-        rtskb->rtdev = rt->rt_dev;
+        struct rtnet_device *rtdev = rt.rtdev;
+
+
+        /* check if IP source address fits */
+        if (rtdev->local_ip != pData->ip_src) {
+            rtdev_dereference(rtdev);
+            kfree_rtskb(rtskb);
+            return;
+        }
+
+        rtskb->rtdev = rtdev;
 
         /* Fill in the ethernet headers: There is already space for the header
          * but they contain zeros only => Fill it */
         memcpy(pData->ethhdr.h_source, rtdev->dev_addr, rtdev->addr_len);
-        memcpy(pData->ethhdr.h_dest, rt->rt_dst_mac_addr, rtdev->addr_len);
+        memcpy(pData->ethhdr.h_dest, rt.dev_addr, rtdev->addr_len);
 
         /* Call the actual transmit function */
         rtdev_xmit_proxy(rtskb);
 
         /* The rtskb is freed somewhere deep in the driver...
          * No need to do it here. */
+
+        rtdev_dereference(rtdev);
     }
     else
     {

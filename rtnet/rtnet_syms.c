@@ -1,24 +1,27 @@
 /***
- * rtnet/rtnet_syms.c - export kernel symbols
  *
- * Copyright (C) 1999      Lineo, Inc
- *               1999,2002 David A. Schleef <ds@schleef.org>
- *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  rtnet/rtnet_syms.c - export kernel symbols
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 1999      Lineo, Inc
+ *                1999,2002 David A. Schleef <ds@schleef.org>
+ *                2002      Ulrich Marx <marx@kammer.uni-hannover.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 
@@ -116,6 +119,7 @@ EXPORT_SYMBOL(rtnet_unregister_ioctls);
 /****************************************************************************
  * rtnet_module.c                                                             *
  ****************************************************************************/
+EXPORT_SYMBOL(rtnet_proc_root);
 EXPORT_SYMBOL(STACK_manager);
 EXPORT_SYMBOL(RTDEV_manager);
 
@@ -128,25 +132,30 @@ EXPORT_SYMBOL(rt_eth_type_trans);
 
 
 /****************************************************************************
- * ipv4                                                                     *
+ * ipv4/arp.c                                                               *
  ****************************************************************************/
-EXPORT_SYMBOL(rt_ip_route_add_if_new);
+EXPORT_SYMBOL(rt_arp_send);
+
+
+/****************************************************************************
+ * ipv4/route.c                                                             *
+ ****************************************************************************/
+EXPORT_SYMBOL(rt_ip_route_add_host);
 EXPORT_SYMBOL(rt_ip_route_output);
 
+
+/****************************************************************************
+ * ipv4/ip_input.c                                                          *
+ ****************************************************************************/
 #ifdef CONFIG_RTNET_PROXY
 EXPORT_SYMBOL(rt_ip_register_fallback);
 #endif
 
-EXPORT_SYMBOL(rt_inet_aton);
-
 
 /****************************************************************************
- * ipv4/arp.c                                                               *
+ * ipv4/protocol.c                                                          *
  ****************************************************************************/
-EXPORT_SYMBOL(rt_arp_table_lookup);
-EXPORT_SYMBOL(rt_rarp_table_lookup);
-EXPORT_SYMBOL(rt_arp_solicit);
-EXPORT_SYMBOL(rt_arp_table_add);
+EXPORT_SYMBOL(rt_inet_aton);
 
 
 /****************************************************************************

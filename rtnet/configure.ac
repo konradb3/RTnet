@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.57)
 
-AC_INIT([RTnet],[0.6.2],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.7.0],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
@@ -793,6 +793,30 @@ fi
 dnl ======================================================================
 dnl		compilation parameters
 dnl ======================================================================
+
+AC_MSG_CHECKING([whether to enable IP network routing])
+AC_ARG_ENABLE(net-routing,
+	AC_HELP_STRING([--enable-net-routing], [enable IP network routing]),
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_NETWORK_ROUTING=yes ;;
+	*) unset CONFIG_RTNET_NETWORK_ROUTING ;;
+	esac])
+AC_MSG_RESULT([${CONFIG_RTNET_NETWORK_ROUTING:-no}])
+if test "$CONFIG_RTNET_NETWORK_ROUTING" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_NETWORK_ROUTING,1,[Network routing])
+fi
+
+AC_MSG_CHECKING([whether to enable IP router support])
+AC_ARG_ENABLE(router,
+	AC_HELP_STRING([--enable-router], [enable IP router]),
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_ROUTER=yes ;;
+	*) unset CONFIG_RTNET_ROUTER ;;
+	esac])
+AC_MSG_RESULT([${CONFIG_RTNET_ROUTER:-no}])
+if test "$CONFIG_RTNET_ROUTER" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_ROUTER,1,[Router])
+fi
 
 AC_MSG_CHECKING([whether to enable internal bug checks])
 AC_ARG_ENABLE(checks,

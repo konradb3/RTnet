@@ -1,20 +1,24 @@
-/* ip_input.c
+/***
  *
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  ipv4/ip_input.c - process incoming IP packets
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <net/checksum.h>
@@ -154,12 +158,14 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 
     rtskb_trim(skb, len);
 
-    if (rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) != 0)
-        goto drop;
+#ifdef CONFIG_RTNET_ROUTER
+    if (rt_ip_route_forward(skb, iph->daddr))
+        return 0;
+#endif /* CONFIG_RTNET_ROUTER */
 
     return rt_ip_local_deliver(skb);
 
-drop:
+  drop:
     kfree_rtskb(skb);
     return NET_RX_DROP;
 }

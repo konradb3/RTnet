@@ -194,8 +194,6 @@ struct rtskb {
     unsigned char       ip_summed;
     unsigned int        csum;
 
-    struct rt_rtable    *dst; /* to-do: remove! */
-
     unsigned char       *data;
     unsigned char       *tail;
     unsigned char       *end;

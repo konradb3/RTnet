@@ -623,7 +623,7 @@ int rt_socket_ioctl(int s, int request, void *arg)
                             IFNAMSIZ);
                     sin = (struct sockaddr_in *)&cur_ifr->ifr_addr;
                     sin->sin_family      = AF_INET;
-                    sin->sin_addr.s_addr = rtdev->local_addr;
+                    sin->sin_addr.s_addr = rtdev->local_ip;
 
                     cur_ifr++;
                     rtdev_dereference(rtdev);

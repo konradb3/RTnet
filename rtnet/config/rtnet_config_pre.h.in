@@ -27,8 +27,14 @@
 /* Host system alias */
 #undef CONFIG_RTNET_HOST_STRING
 
+/* Network routing */
+#undef CONFIG_RTNET_NETWORK_ROUTING
+
 /* rtnetproxy support */
 #undef CONFIG_RTNET_PROXY
+
+/* Router */
+#undef CONFIG_RTNET_ROUTER
 
 /* RTcap support */
 #undef CONFIG_RTNET_RTCAP

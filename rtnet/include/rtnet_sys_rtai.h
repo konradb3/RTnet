@@ -44,12 +44,6 @@
 #endif
 
 
-#ifdef CONFIG_PROC_FS
-/* TODO: remove it! */
-#include <rtai_proc_fs.h>
-#endif
-
-
 /* basic types */
 typedef RTIME      rtos_time_t;       /* high precision time */
 typedef spinlock_t rtos_spinlock_t;   /* spin locks with hard IRQ locks */
@@ -330,14 +324,6 @@ static inline void rtos_irq_reacquire_lock(void)
     hard_cli();
     rt_sched_unlock();
 }
-
-
-
-/* proc filesystem */
-/* TODO: make it RTOS independent (it's part of Linux!) */
-#define RTNET_PROC_PRINT_VARS       PROC_PRINT_VARS
-#define RTNET_PROC_PRINT            PROC_PRINT
-#define RTNET_PROC_PRINT_DONE       PROC_PRINT_DONE
 
 
 #endif /* __RTNET_SYS_RTAI_H_ */

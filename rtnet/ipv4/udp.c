@@ -1,22 +1,25 @@
-/* ipv4/udp.c
+/***
  *
- * rtnet - real-time networking subsystem
- * Copyright (C) 1999,2000 Zentropic Computing, LLC
- *               2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  ipv4/udp.c - UDP implementation for RTnet
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 1999,2000 Zentropic Computing, LLC
+ *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <linux/module.h>
@@ -324,14 +327,13 @@ static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned
  */
 int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int flags)
 {
-    int ulen = len + sizeof(struct udphdr);
+    int                 ulen = len + sizeof(struct udphdr);
+    struct udpfakehdr   ufh;
+    struct dest_route   rt;
+    u32                 daddr;
+    u16                 dport;
+    int                 err;
 
-    struct udpfakehdr ufh;
-    struct rt_rtable *rt = NULL;
-
-    u32 daddr;
-    u16 dport;
-    int err;
 
     if ((len < 0) || (len > 0xFFFF-sizeof(struct iphdr)-sizeof(struct udphdr)))
         return -EMSGSIZE;
@@ -364,12 +366,20 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
     if ((daddr==0) || (dport==0))
         return -EINVAL;
 
-    err = rt_ip_route_output(&rt, daddr, s->prot.inet.saddr);
+    /* get output route */
+    err = rt_ip_route_output(&rt, daddr);
     if (err)
-        goto out;
+        return err;
+
+    /* check if specified source address fits */
+    if ((s->prot.inet.saddr != INADDR_ANY) &&
+        (s->prot.inet.saddr != rt.rtdev->local_ip)) {
+        rtdev_dereference(rt.rtdev);
+        return -EHOSTUNREACH;
+    }
 
     /* we found a route, remember the routing dest-addr could be the netmask */
-    ufh.saddr     = rt->rt_src;
+    ufh.saddr     = rt.rtdev->local_ip;
     ufh.daddr     = daddr;
     ufh.uh.source = s->prot.inet.sport;
     ufh.uh.dest   = dport;
@@ -379,9 +389,10 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
     ufh.iovlen    = msg->msg_iovlen;
     ufh.wcheck    = 0;
 
-    err = rt_ip_build_xmit(s, rt_udp_getfrag, &ufh, ulen, rt, flags);
+    err = rt_ip_build_xmit(s, rt_udp_getfrag, &ufh, ulen, &rt, flags);
 
-out:
+    rtdev_dereference(rt.rtdev);
+
     if (!err)
         return len;
     else
@@ -434,10 +445,11 @@ static inline unsigned short rt_udp_check(struct udphdr *uh, int len,
 
 struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
 {
-    struct udphdr   *uh   = skb->h.uh;
-    unsigned short  ulen  = ntohs(uh->len);
-    u32             saddr = skb->nh.iph->saddr;
-    u32             daddr = skb->nh.iph->daddr;
+    struct udphdr           *uh   = skb->h.uh;
+    unsigned short          ulen  = ntohs(uh->len);
+    u32                     saddr = skb->nh.iph->saddr;
+    u32                     daddr = skb->nh.iph->daddr;
+    struct rtnet_device*    rtdev = skb->rtdev;
 
 
     if (uh->check == 0)
@@ -455,6 +467,10 @@ struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
 
     if (skb->ip_summed != CHECKSUM_UNNECESSARY)
         skb->csum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
+
+    /* patch broadcast daddr */
+    if (daddr == rtdev->broadcast_ip)
+        daddr = rtdev->local_ip;
 
     /* find the destination socket */
     skb->sk = rt_udp_v4_lookup(daddr, uh->dest);
