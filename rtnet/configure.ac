@@ -358,14 +358,8 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     3.2*)
 	CONFIG_RTNET_RTAI_VERSION=32
 	;;
-    0.6.6-fusion)
-	CONFIG_RTNET_RTAI_VERSION=066
-	;;
-    0.6.7-fusion)
-	CONFIG_RTNET_RTAI_VERSION=067
-	;;
-    0.6.8-fusion)
-	CONFIG_RTNET_RTAI_VERSION=068
+    0.6.6-fusion | 0.6.7-fusion | 0.6.8-fusion | 0.6.9-fusion)
+	CONFIG_RTNET_RTAI_VERSION=06
 	;;
     *)
 	AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
@@ -412,7 +406,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 
 	    ;;
 
-	06*)	# ---> FUSION <---
+	06)	# ---> FUSION <---
 
 	    # check for native RTAI skin, needed by rtnet
 	    AC_MSG_CHECKING([for RTAI native skin])
@@ -479,7 +473,7 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
     32)
 	AC_DEFINE(CONFIG_RTAI_32, 1, [We build for rtai 3.2rx])
 	;;
-    06*)
+    06)
 	AC_DEFINE(CONFIG_FUSION_06, 1, [We build for fusion 0.6.x])
 	;;
     *)
@@ -536,7 +530,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
-    06*)
+    06)
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
@@ -554,7 +548,7 @@ if test "$CONFIG_KBUILD" = "y"; then
 	31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	    ;;
-	06*)
+	06)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	    ;;
 	*)
@@ -569,7 +563,7 @@ else
 	30 | 31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	    ;;
-	06*)
+	06)
 	    AC_MSG_ERROR([*** internal error])
 	    ;;
 	*)
@@ -730,7 +724,7 @@ if test "${CONFIG_KBUILD}" = "y"; then	# building against linux-2.6
 #include <linux/kernel.h>
 		])
             ;;
-	06*)
+	06)
 	    BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h],
 		[],
 		[AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -760,7 +754,7 @@ else					# building against linux-2.4
 #include <linux/kernel.h>
             ])
 	    ;;
-	06*)
+	06)
 	    AC_MSG_ERROR([*** internal error])
 	    ;;
 	*)
@@ -807,7 +801,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) CONFIG_NEWLXRT=no ;;
 	esac
 	;;
-    06*) CONFIG_NEWLXRT=no
+    06) CONFIG_NEWLXRT=no
 	;;
     *)
 	AC_MSG_ERROR([*** internal error])
