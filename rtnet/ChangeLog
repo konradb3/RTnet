@@ -1,3 +1,8 @@
+0.5.6
+- Added first version of RTcfg
+- improved loopback-rt throughput
+- fixed several tiny bugs
+
 0.5.5
 - Revised IP fragmentation/defragmentation engine
 - Added packet sockets (incl. example)
