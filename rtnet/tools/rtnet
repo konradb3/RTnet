@@ -1,24 +1,26 @@
-#! /bin/bash
+#!/bin/sh
 #
 # A simple script for loading/unloading RTnet and RTmac
 #
 
 RTNETCFG=/etc/rtnet.conf
 
-# The following values are set in the configuration file.
-#IP=1
-#DEV=eth1
-#ARP_START=1
-#ARP_END=3
-#RT_DRIVER=8139too-rt
-#SUBNET=192.168.0
-#NETMASK=255.255.255.0
+# The following values are set in the configuration file:
+#  - RT_DRIVER
+#  - DEV
+#  - VNIC
+#  - NETMASK
+#  - IPADDR
+#  - ARP_PREFIX
+#  - ARP_LIST
 
 usage_rtnet() {
 	cat << EOF
 Usage:
 	$0 {start|up}
-	$0 mac
+	$0 arp
+	$0 mac ...
+	$0 proxy ...
 	$0 {stop|down}
 EOF
 }
@@ -29,7 +31,7 @@ Usage:
 	On client side:
 	$0 mac client
 	(...run your application...)
-	$0 mac down
+	$0 mac {down|stop}
 
 	On master side:
 	$0 mac master <cycle/us> [mtu/bytes]
@@ -37,10 +39,17 @@ Usage:
 	$0 mac up
 	$0 mac offset <ip> <offset/us>
 	(...run your applications...)
-	$0 mac down
+	$0 mac {down|stop}
 EOF
 }
 
+usage_proxy() {
+	cat << EOF
+Usage:
+	$0 {start|up}
+	$0 {stop|down}
+EOF
+}
 
 if [ -r $RTNETCFG ]; then
 	. $RTNETCFG
@@ -53,18 +62,18 @@ ADD_MODULES="rtai_fifos"
 
 case "$1" in
     start|up)
-	modprobe $RT_DRIVER
+	modprobe $RT_DRIVER || exit 1
 	for MODULE in $ADD_MODULES; do
 	    modprobe $MODULE
 	done
 
-	rtifconfig $DEV up $SUBNET.$IP $NETMASK
+	rtifconfig $DEV up $IPADDR $NETMASK
 
-        echo Start all other stacks to perform ARP. Press RETURN to continue!
-	read
+	;;
 
-	for ARP_IP in $(seq $ARP_START $ARP_END); do
-	    rtifconfig $DEV route solicit $SUBNET.$ARP_IP
+    arp)
+	for i in $ARP_LIST; do
+	    rtifconfig $DEV route solicit $ARP_PREFIX.$i
 	done
 
 	echo "*** ARP table"
@@ -77,11 +86,11 @@ case "$1" in
 
     stop|down)
 	rtifconfig $DEV down
-	modprobe -r $RT_DRIVER
-
 	for MODULE in $ADD_MODULES; do
-	    modprobe -r $MODULE
+	    rmmod -r $MODULE
 	done
+	rmmod -r $RT_DRIVER
+
 	;;
 
     mac)
@@ -89,11 +98,13 @@ case "$1" in
 	    master)
 		modprobe rtmac dev=$DEV
 		rtifconfig $DEV mac master $3 $4
+		ifconfig $VNIC up $IPADDR netmask $NETMASK
 		;;
 
 	    client)
 		modprobe rtmac dev=$DEV
 		rtifconfig $DEV mac client
+		ifconfig $VNIC up $IPADDR netmask $NETMASK
 		;;
 
 	    add)
@@ -108,7 +119,8 @@ case "$1" in
 		rtifconfig $DEV mac up
 		;;
 
-	    down)
+	    down|stop)
+		ifconfig $VNIC down
 		rtifconfig $DEV mac down
 		rmmod rtmac
 		;;
@@ -121,6 +133,21 @@ case "$1" in
 		usage_rtmac
 		exit 1
 		;;
+	esac
+	;;
+
+    proxy)
+	case "$2" in
+	    up|start)
+		modprobe rtnetproxy && ifconfig rtproxy up $IPADDR
+		;;
+	    down|stop)
+		ifconfig rtproxy down
+		rmmod rtnetproxy
+		;;
+	    *)
+		usage_proxy
+		exit 1
 	esac
 	;;
 
