@@ -121,8 +121,13 @@ void* process(void * arg)
     
     rt_printk("readfds: %08x\n", *((int*)&readfds));
     rt_printk("Setting bits %d and %d in file descriptor set.\n", sock1, sock2);
-    FD_SET((sock1&255), &readfds);
-    FD_SET((sock2&255), &readfds);
+    /*
+      FD_SET((sock1 & (MAX_FILDES - 1)), &readfds);
+      FD_SET((sock2 & (MAX_FILDES - 1)), &readfds);
+    */
+    FD_SET(sock1, &readfds);
+    FD_SET(sock2, &readfds);
+
     rt_printk("### FD_SET succeeded.\n");
     rt_printk("readfds: %08x\n", *((int*)&readfds));
     
@@ -222,6 +227,7 @@ void cleanup_module(void)
 	schedule_timeout(1*HZ); /* wait a second */
     }
     counter=0;
+    printk("trying to close socket 2\n");
     while (close_rt(sock2) == -EAGAIN) {
 	printk("* waiting for socket 2 to be closed (%d)\n", counter++);
 	set_current_state(TASK_INTERRUPTIBLE);

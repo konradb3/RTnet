@@ -374,9 +374,13 @@ static void cleanup_instance(struct rtdm_device *device,
 
         fildes->context = NULL;
 
+#ifdef CONFIG_RTNET_RTDM_SELECT
+#warning high bits of instance_id will not be incremented when compiling with select()
+#else /* !CONFIG_RTNET_RTDM_SELECT */
         /* assuming that sizeof(int) >= 32 bits */
         fildes->instance_id = (fildes->instance_id + 1) &
             ((1 << (31 - FILDES_INDEX_BITS)) - 1);
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
         rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
     }
