@@ -29,7 +29,6 @@
 
 #include <rtdev.h>
 #include <rtnet_chrdev.h>
-#include <rtskb.h>
 
 
 struct rtmac_priv {
