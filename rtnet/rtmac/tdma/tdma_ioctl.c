@@ -30,7 +30,7 @@
 #include <rtmac/tdma/tdma_module.h>
 
 
-int tdma_ioctl_client(struct rtnet_device *rtdev)
+static inline int tdma_ioctl_client(struct rtnet_device *rtdev)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -56,7 +56,7 @@ int tdma_ioctl_client(struct rtnet_device *rtdev)
 
 
 
-int tdma_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle, unsigned int mtu)
+static inline int tdma_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle, unsigned int mtu)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -93,7 +93,7 @@ int tdma_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle, unsigned i
 
 
 
-int tdma_ioctl_up(struct rtnet_device *rtdev)
+static inline int tdma_ioctl_up(struct rtnet_device *rtdev)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -115,7 +115,7 @@ int tdma_ioctl_up(struct rtnet_device *rtdev)
 
 
 
-int tdma_ioctl_down(struct rtnet_device *rtdev)
+static inline int tdma_ioctl_down(struct rtnet_device *rtdev)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -142,7 +142,7 @@ int tdma_ioctl_down(struct rtnet_device *rtdev)
 
 
 
-int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
+static inline int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -165,7 +165,7 @@ int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
 
 
 
-int tdma_ioctl_remove(struct rtnet_device *rtdev, u32 ip_addr)
+static inline int tdma_ioctl_remove(struct rtnet_device *rtdev, u32 ip_addr)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -188,7 +188,7 @@ int tdma_ioctl_remove(struct rtnet_device *rtdev, u32 ip_addr)
 
 
 
-int tdma_ioctl_cycle(struct rtnet_device *rtdev, unsigned int cycle)
+static inline int tdma_ioctl_cycle(struct rtnet_device *rtdev, unsigned int cycle)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -215,7 +215,7 @@ int tdma_ioctl_cycle(struct rtnet_device *rtdev, unsigned int cycle)
 
 
 
-int tdma_ioctl_mtu(struct rtnet_device *rtdev, unsigned int mtu)
+static inline int tdma_ioctl_mtu(struct rtnet_device *rtdev, unsigned int mtu)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
@@ -242,7 +242,7 @@ int tdma_ioctl_mtu(struct rtnet_device *rtdev, unsigned int mtu)
 
 
 
-int tdma_ioctl_offset(struct rtnet_device *rtdev, u32 ip_addr, unsigned int offset)
+static inline int tdma_ioctl_offset(struct rtnet_device *rtdev, u32 ip_addr, unsigned int offset)
 {
     struct rtmac_tdma   *tdma;
     struct tdma_info    info;
