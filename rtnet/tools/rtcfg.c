@@ -297,7 +297,8 @@ void cmd_wait(int argc, char *argv[])
 
     i = ioctl(f, RTCFG_IOC_WAIT, &cmd);
     if (i < 0) {
-        perror("ioctl");
+        if (errno != ETIME)
+            perror("ioctl");
         exit(1);
     }
     exit(0);
@@ -307,11 +308,11 @@ void cmd_wait(int argc, char *argv[])
 
 void cmd_client(int argc, char *argv[])
 {
-    int    i;
-    int    cfg_size;
-    int    cfg_file      = -1;
-    char   *cfg_filename = NULL;
-    size_t buffer_size   = 0;
+    int  i;
+    int  cfg_size;
+    int  cfg_file      = -1;
+    char *cfg_filename = NULL;
+    int  buffer_size   = 0;
 
 
     cmd.args.client.timeout      = 0; /* infinite */
@@ -361,7 +362,8 @@ void cmd_client(int argc, char *argv[])
     }
 
     if (cfg_size < 0) {
-        perror("ioctl");
+        if (errno != ETIME)
+            perror("ioctl");
         if (cmd.args.client.buffer_size > 0)
             free(cmd.args.client.buffer);
         exit(1);
@@ -456,7 +458,8 @@ void cmd_announce(int argc, char *argv[])
         free(cmd.args.announce.buffer);
 
     if (i < 0) {
-        perror("ioctl");
+        if (errno != ETIME)
+            perror("ioctl");
         exit(1);
     }
     exit(0);
@@ -480,7 +483,8 @@ void cmd_ready(int argc, char *argv[])
 
     i = ioctl(f, RTCFG_IOC_READY, &cmd);
     if (i < 0) {
-        perror("ioctl");
+        if (errno != ETIME)
+            perror("ioctl");
         exit(1);
     }
     exit(0);
