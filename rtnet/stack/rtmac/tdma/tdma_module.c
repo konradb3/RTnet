@@ -52,6 +52,7 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
                     int *eof, void *data)
 {
     struct tdma_priv    *entry;
+    const char          *state;
 #ifdef CONFIG_RTNET_TDMA_MASTER
     nanosecs_t          cycle;
 #endif
@@ -61,29 +62,39 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
     down(&tdma_nrt_lock);
 
     if (!RTNET_PROC_PRINT("Interface       API Device      Operation Mode  "
-                          "Cycle\n"))
+                          "Cycle   State\n"))
         goto done;
 
     list_for_each_entry(entry, &tdma_devices, list_entry) {
         if (!RTNET_PROC_PRINT("%-15s %-15s ", entry->rtdev->name,
                               entry->api_device.device_name))
             break;
+        if (test_bit(TDMA_FLAG_CALIBRATED, &entry->flags)) {
+#ifdef CONFIG_RTNET_TDMA_MASTER
+            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags) &&
+                !test_bit(TDMA_FLAG_BACKUP_ACTIVE, &entry->flags))
+                state = "stand-by";
+            else
+#endif /* CONFIG_RTNET_TDMA_MASTER */
+                state = "active";
+        } else
+            state = "init";
 #ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_MASTER, &entry->flags)) {
             cycle = rtos_time_to_nanosecs(&entry->cycle_period) + 500;
             do_div(cycle, 1000);
             if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
-                if (!RTNET_PROC_PRINT("Backup Master   %ld\n",
-                                      (unsigned long)cycle))
+                if (!RTNET_PROC_PRINT("Backup Master   %-7ld %s\n",
+                                      (unsigned long)cycle, state))
                     break;
             } else {
-                if (!RTNET_PROC_PRINT("Master          %ld\n",
-                                      (unsigned long)cycle))
+                if (!RTNET_PROC_PRINT("Master          %-7ld %s\n",
+                                      (unsigned long)cycle, state))
                     break;
             }
         } else
 #endif /* CONFIG_RTNET_TDMA_MASTER */
-            if (!RTNET_PROC_PRINT("Slave           -\n"))
+            if (!RTNET_PROC_PRINT("Slave           -       %s\n", state))
                 break;
     }
 

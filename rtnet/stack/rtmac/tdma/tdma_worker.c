@@ -94,7 +94,10 @@ void tdma_worker(int arg)
                 rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
                 tdma_xmit_sync_frame(tdma);
-            }
+
+                set_bit(TDMA_FLAG_BACKUP_ACTIVE, &tdma->flags);
+            } else
+                clear_bit(TDMA_FLAG_BACKUP_ACTIVE, &tdma->flags);
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
         } else if (job->id == XMIT_REQ_CAL) {

@@ -49,10 +49,13 @@ init_rtnet() {
 submit_cfg() {
     case "$STATION_TYPE" in
         master)
-            $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
+            $RTIFCONFIG rteth0 up $STATION_IP
 
             $TDMACFG rteth0 master $TDMA_CYCLE
-            /bin/sh -c "$TDMA_SLOTS"
+            /bin/sh -c "TDMACFG=$TDMACFG;$TDMA_SLOTS"
+
+            IPADDR=$STATION_IP
+            NETMASK_OPT=
             ;;
         slave)
             if [ ! "$STATION_IP" = "" ]; then
@@ -70,13 +73,35 @@ submit_cfg() {
             echo "$TDMA_SLOTS$ADD_STAGE1_CMDS" | \
                 $RTCFG rteth0 add $RTCFG_CLIENT -stage1 -
             ;;
+        backup-master)
+            if [ ! "$STATION_IP" = "" ]; then
+                if [ ! "$STATION_MAC" = "" ]; then
+                    RTCFG_CLIENT="$STATION_IP -hw $STATION_MAC"
+                else
+                    RTCFG_CLIENT="$STATION_IP"
+                fi
+            else
+                RTCFG_CLIENT="$STATION_MAC"
+            fi
+
+            ADD_STAGE1_CMDS="ifconfig vnic0 up $STATION_IP"
+
+            STAGE_2_OPT=
+            if [ ! "$STATION_STAGE_2_SRC" = "" ]; then
+                STAGE_2_OPT="-stage2 $STATION_STAGE_2_SRC"
+            fi
+
+            echo "\$TDMACFG rteth0 detach;\$TDMACFG rteth0 master $TDMA_CYCLE -b $TDMA_BACKUP_OFFS;$TDMA_SLOTS$ADD_STAGE1_CMDS" | \
+                $RTCFG rteth0 add $RTCFG_CLIENT -stage1 - $STAGE_2_OPT
+            ;;
     esac
 
     STATION_TYPE=
     STATION_IP=
     STATION_MAC=
+    STATION_STAGE_2_SRC=
     TDMA_SLOTS=
-    TDMA_CYCLE=
+    TDMA_BACKUP_OFFS=
 }
 
 start_master() {
@@ -99,8 +124,7 @@ start_master() {
 
         OFFSET=$TDMA_OFFSET
         for SLAVE in $TDMA_SLAVES; do
-            echo "$SLAVE_TDMACFG rteth0 slot 0 $OFFSET;" \
-                "ifconfig vnic0 up \$IPADDR \$NETMASK_OPT" | \
+            echo "$SLAVE_TDMACFG rteth0 slot 0 $OFFSET;ifconfig vnic0 up \$IPADDR \$NETMASK_OPT" | \
                 $RTCFG rteth0 add $SLAVE -stage1 - $STAGE_2_OPT
             let OFFSET=$OFFSET+$TDMA_OFFSET
         done
@@ -108,20 +132,31 @@ start_master() {
         # Get setup from TDMA_CONFIG file:
         #
         # master:
+        # [ip 1.2.3.4]
         # cycle <cycle_in_us>
-        #
-        # slave:
-        # ip 1.2.3.4
-        # mac AA:BB:CC:DD:EE:FF
         # slot <id> <offset_in_us> [<phasing>/<period> [<size>]]
         # slot ...
         #
         # slave:
         # ip 1.2.3.4
+        # mac AA:BB:CC:DD:EE:FF
+        # [stage2 <file>]
+        # slot ...
+        #
+        # slave:
+        # ip 1.2.3.4
+        # [stage2 <file>]
         # slot ...
         #
         # slave:
         # mac AA:BB:CC:DD:EE:FF
+        # [stage2 <file>]
+        # slot ...
+        #
+        # backup-master:
+        # ip 1.2.3.4    (or ip+mac or mac only, just like slaves)
+        # backup-slot <offset_in_us>
+        # [stage2 <file>]
         # slot ...
         #
 
@@ -139,6 +174,13 @@ start_master() {
                 "cycle")
                     TDMA_CYCLE="$ARG2"
                     ;;
+                "backup-master:")
+                    submit_cfg
+                    STATION_TYPE=backup-master
+                    ;;
+                "backup-offset")
+                    TDMA_BACKUP_OFFS="$ARG2"
+                    ;;
                 "slave:")
                     submit_cfg
                     STATION_TYPE=slave
@@ -149,12 +191,11 @@ start_master() {
                 "mac")
                     STATION_MAC="$ARG2"
                     ;;
+                "stage2")
+                    STATION_STAGE_2="$ARG2"
+                    ;;
                 "slot")
-                    if [ "$STATION_TYPE" = "slave" ]; then
-                        TDMA_SLOTS="$TDMA_SLOTS$SLAVE_TDMACFG rteth0 slot $ARG2 $ARG3"
-                    else
-                        TDMA_SLOTS="$TDMA_SLOTS $TDMACFG rteth0 slot $ARG2 $ARG3"
-                    fi
+                    TDMA_SLOTS="$TDMA_SLOTS\$TDMACFG rteth0 slot $ARG2 $ARG3"
                     if [ ! "$ARG4" = "" ]; then
                         TDMA_SLOTS="$TDMA_SLOTS -p $ARG4"
                     fi
@@ -210,7 +251,7 @@ case "$1" in
             $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
             echo -n "Stage 1: searching for master..."
-            /bin/sh -c "IPADDR=$IPADDR; NETMASK_OPT=$NETMASK_OPT; `$RTCFG rteth0 client -c`"
+            /bin/sh -c "TDMACFG=$TDMACFG;IPADDR=$IPADDR;NETMASK_OPT=$NETMASK_OPT;`$RTCFG rteth0 client -c`"
             echo
 
             echo -n "Stage 2: waiting for other slaves..."

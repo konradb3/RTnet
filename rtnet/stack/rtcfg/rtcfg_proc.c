@@ -61,7 +61,7 @@ int rtcfg_proc_read_dev_state(char *buf, char **start, off_t offset, int count,
     if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
         RTNET_PROC_PRINT("configured clients:\t%d\n"
                          "burstrate:\t\t%d\n"
-                         "heartbeat periode:\t%d ms\n",
+                         "heartbeat period:\t%d ms\n",
                          rtcfg_dev->spec.srv.clients_configured,
                          rtcfg_dev->burstrate, rtcfg_dev->spec.srv.heartbeat);
     } else if (rtcfg_dev->state != RTCFG_MAIN_OFF) {

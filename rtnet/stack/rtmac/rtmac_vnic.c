@@ -83,6 +83,9 @@ static void rtmac_vnic_signal_handler(void)
 
         skb = dev_alloc_skb(hdrlen + rtskb->len + 2);
         if (skb) {
+            /* the rtskb stamp is useless (different clock), get new one */
+            do_gettimeofday(&skb->stamp);
+
             skb_reserve(skb, 2); /* Align IP on 16 byte boundaries */
 
             /* copy Ethernet header */
@@ -98,7 +101,6 @@ static void rtmac_vnic_signal_handler(void)
             skb->dev      = &rtskb->rtdev->mac_priv->vnic;
             skb->protocol = eth_type_trans(skb, skb->dev);
 
-            rtos_time_to_timeval(&rtskb->time_stamp, &skb->stamp);
             stats = &rtskb->rtdev->mac_priv->vnic_stats;
 
             kfree_rtskb(rtskb);

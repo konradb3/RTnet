@@ -59,11 +59,11 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
 
     tdma->cal_rounds = cfg->args.master.cal_rounds;
 
-    /* search at least 3 x cycle period for other masters */
+    /* search at least 3 cycle periods for other masters */
     cycle_ms = cfg->args.master.cycle_period;
     do_div(cycle_ms, 1000000);
     set_current_state(TASK_UNINTERRUPTIBLE);
-    schedule_timeout((HZ/1000) * 3*cycle_ms);
+    schedule_timeout(1 + (3 * (unsigned int)cycle_ms * HZ)/1000);
 
     if (rtskb_pool_init(&tdma->cal_rtskb_pool,
                         cfg->args.master.max_cal_requests) !=
@@ -102,12 +102,14 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     }
 
     /* did we detect another active master? */
-    if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
+    if (test_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
+        /* become a slave, we need to calibrate first */
+        tdma->sync_job.id = WAIT_ON_SYNC;
+    } else {
+        if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags))
+            printk("TDMA: warning, no primary master detected!\n");
         set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
         rtos_get_time(&tdma->current_cycle_start);
-    } else {
-        /* become a slave if we need to calibrate first */
-        tdma->sync_job.id = WAIT_ON_SYNC;
     }
 
     tdma->first_job = tdma->current_job = &tdma->sync_job;
@@ -369,11 +371,11 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
             else
                 tdma->sync_job.id = XMIT_SYNC;
 
-            /* wait two cycle periods for the mode switch */
+            /* wait 2 cycle periods for the mode switch */
             cycle_ms = rtos_time_to_nanosecs(&tdma->cycle_period);
             do_div(cycle_ms, 1000000);
             set_current_state(TASK_UNINTERRUPTIBLE);
-            schedule_timeout(2 * (HZ*(unsigned int)cycle_ms)/1000);
+            schedule_timeout(1 + (2 * (unsigned int)cycle_ms * HZ)/1000);
 
             /* catch the very unlikely case that the current master died
                while we just switched the mode */

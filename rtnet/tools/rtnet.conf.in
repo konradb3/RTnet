@@ -23,6 +23,9 @@ RT_DRIVER="rt_eepro100"
 RT_DRIVER_OPTIONS="cards=1"
 
 # IP address and netmask of this station
+#   The TDMA_CONFIG file overrides these parameters for masters and backup
+#   masters. Leave blank if you do not use IP addresses or if this station is
+#   intended to retrieve its IP from the master based on its MAC address.
 IPADDR="10.0.0.1"
 NETMASK=""
 
@@ -35,6 +38,7 @@ RTCAP="no"
 
 
 # Common RTcfg stage 2 config data (master mode only)
+#   The TDMA_CONFIG file overrides this parameter.
 STAGE_2_SRC=""
 
 # Stage 2 config data destination file (slave mode only)
@@ -46,7 +50,10 @@ STAGE_2_CMDS=""
 
 
 # TDMA mode of the station ("master" or "slave")
+#   Start backup masters in slave mode, it will then be switched to master
+#   mode automatically during startup.
 TDMA_MODE="master"
+
 
 # Master parameters
 
@@ -61,8 +68,5 @@ TDMA_OFFSET="200"
 
 # Advanced setup: Config file containing all TDMA station parameters
 #   To use this mode, uncomment the following line and disable the
-#   three master parameters above.
+#   three master parameters above (SLAVES, CYCLE, and OFFSET).
 #TDMA_CONFIG="@sysconfdir@/tdma.conf"
-
-# Path of tdmacfg on the slave system
-SLAVE_TDMACFG="@sbindir@/tdmacfg"

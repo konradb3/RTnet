@@ -45,6 +45,7 @@
 #define TDMA_FLAG_MASTER        3   /* also set for backup masters */
 #define TDMA_FLAG_BACKUP_MASTER 4
 #define TDMA_FLAG_ATTACHED      5
+#define TDMA_FLAG_BACKUP_ACTIVE 6
 
 #define DEFAULT_SLOT            0
 #define DEFAULT_NRT_SLOT        1

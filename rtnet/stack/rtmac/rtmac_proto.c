@@ -38,8 +38,10 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
 
     if (disc == NULL) {
-        rtos_print("RTmac: received RTmac packet on unattached device %s\n",
-                   skb->rtdev->name);
+#if 0 /* switch this warning off until we control error message output */
+        /*ERROR*/rtos_print("RTmac: received RTmac packet on unattached "
+                            "device %s\n", skb->rtdev->name);
+#endif
         goto error;
     }
 
