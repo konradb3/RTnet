@@ -27,6 +27,7 @@
 
 #include <linux/init.h>
 #include <linux/if_packet.h>
+#include <asm/byteorder.h>
 
 #include <rtcfg/rtcfg_event.h>
 
@@ -54,8 +55,15 @@
 
 
 struct rtcfg_frm_head {
+#ifdef __LITTLE_ENDIAN
     u8 id:5,
        version:3;
+#elif __BIG_ENDIAN
+    u8 version:3,
+       id:5;
+#else
+    #error unsupported byte order
+#endif
 } __attribute__((packed));
 
 struct rtcfg_frm_stage_1_cfg {
