@@ -477,11 +477,13 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
 	LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
 	KERNEL_CFLAGS="-I$RTAI_LINUX_DIR/include"
+	CONFIG_RTNET_RTAI_ARCH="`sed -n -e "s/^ARCH=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
 	;;
     30 )
 	RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
-	KERNEL_CFLAGS=-I"`${RTAI_CONFIG} --linux-dir`/include"
+	KERNEL_CFLAGS="-I`${RTAI_CONFIG} --linux-dir`/include"
+	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
     * )
 	AC_MSG_ERROR([*** internal error])
@@ -490,6 +492,24 @@ esac
 AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(LXRT_CFLAGS)
 AC_SUBST(KERNEL_CFLAGS)
+
+case "${CONFIG_RTNET_RTAI_ARCH}" in
+    i386)
+	AC_DEFINE(CONFIG_ARCH_I386,1,[we are building for x86])
+	;;
+    ppc)
+	AC_DEFINE(CONFIG_ARCH_PPC,1,[we are building for powerpc])
+	;;
+    arm)
+	AC_DEFINE(CONFIG_ARCH_ARM,1,[we are trying to build for arm])
+	;;
+    cris)
+	AC_DEFINE(CONFIG_ARCH_CRIS,1,[we are trying to build for cris])
+	;;
+    *)
+	AC_MSG_ERROR([*** internal error])
+	;;
+esac
 
 
 dnl ======================================================================
