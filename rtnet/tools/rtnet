@@ -61,8 +61,8 @@ start_master() {
     DELAY=0
     for CLIENT in $TDMA_CLIENTS; do
         $RTIFCONFIG rteth0 mac add $CLIENT $OFFSET
-        let OFFSET+=$TDMA_OFFSET
-        let DELAY+=5
+        let OFFSET=$OFFSET+$TDMA_OFFSET
+        let DELAY=$DELAY+5
         sleep 3
     done
 
