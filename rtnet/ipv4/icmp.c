@@ -328,7 +328,8 @@ int rt_icmp_rcv(struct rtskb *skb)
     struct icmphdr *icmpHdr = skb->h.icmph;
     unsigned int length = skb->len;
 
-    if (length < sizeof(struct icmphdr))
+    /* check header sanity and don't accept fragmented packets */
+    if ((length < sizeof(struct icmphdr)) || (skb->next != NULL))
     {
         rtos_print("RTnet: improper length in icmp packet\n");
         goto cleanup;
