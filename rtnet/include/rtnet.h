@@ -36,7 +36,7 @@ typedef struct rtsocket SOCKET;
 
 
 /* the external interface */
-extern struct rtsocket *rt_socket_lookup(unsigned int fd);
+extern struct rtsocket *rt_socket_lookup(int fd);
 
 /* file descriptor interface */
 extern int rt_socket		(int family, int type, int protocol);

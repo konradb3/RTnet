@@ -94,7 +94,7 @@ void rt_socket_release (SOCKET *sock)
  *	rt_scoket_lookup
  *	@fd - file descriptor 
  */
-SOCKET *rt_socket_lookup (unsigned int fd) 
+SOCKET *rt_socket_lookup (int fd) 
 {
 	int i;
 	for (i=0; i<RT_SOCKETS; i++) {

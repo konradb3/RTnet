@@ -34,14 +34,14 @@ struct timer_task_change_data {
 	unsigned int		cycle;
 };
 
-void tdma_timer_start(struct timer_list *ptimer, int timeout, void *data, TIMER_CALLBACK callback);
+void tdma_timer_start(struct timer_list *ptimer, unsigned long timeout, void *data, TIMER_CALLBACK callback);
 
-extern void tdma_timer_start_rt_add(struct rtmac_tdma *tdma, int timeout);
-extern void tdma_timer_start_master_wait(struct rtmac_tdma *tdma, int timeout);
-extern void tdma_timer_start_sent_conf(struct rtmac_tdma *tdma, int timeout);
-extern int tdma_timer_start_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle, int timeout);
-extern void tdma_timer_start_sent_ack(struct rtmac_tdma *tdma, int timeout);
-extern void tdma_timer_start_sent_test(struct rtmac_tdma *tdma, int timeout);
+extern void tdma_timer_start_rt_add(struct rtmac_tdma *tdma, unsigned long timeout);
+extern void tdma_timer_start_master_wait(struct rtmac_tdma *tdma, unsigned long timeout);
+extern void tdma_timer_start_sent_conf(struct rtmac_tdma *tdma, unsigned long timeout);
+extern int tdma_timer_start_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle, unsigned long timeout);
+extern void tdma_timer_start_sent_ack(struct rtmac_tdma *tdma, unsigned long timeout);
+extern void tdma_timer_start_sent_test(struct rtmac_tdma *tdma, unsigned long timeout);
 
 
 #endif //__KERNEL__

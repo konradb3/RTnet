@@ -26,9 +26,9 @@
 #include <rtnet.h>
 #include <rtnet_internal.h>
 
-static int rtskb_pool_default = DEFAULT_RTSKB_POOL_DEF;
-static int rtskb_pool_min = DEFAULT_MIN_RTSKB_DEF;
-static int rtskb_pool_max = DEFAULT_MAX_RTSKB_DEF;
+static unsigned int rtskb_pool_default = DEFAULT_RTSKB_POOL_DEF;
+static unsigned int rtskb_pool_min = DEFAULT_MIN_RTSKB_DEF;
+static unsigned int rtskb_pool_max = DEFAULT_MAX_RTSKB_DEF;
 MODULE_PARM(rtskb_pool_default, "i");
 MODULE_PARM(rtskb_pool_min, "i");
 MODULE_PARM(rtskb_pool_max, "i");
@@ -43,8 +43,8 @@ int inc_pool_srq;
 int dec_pool_srq;
 struct rtskb_head rtskb_pool;
 
-static int rtskb_amount=0;
-static int rtskb_amount_max=0;
+static unsigned int rtskb_amount=0;
+static unsigned int rtskb_amount_max=0;
 
 #define RTSKB_CACHE	       	"rtskb"
 kmem_cache_t			*rtskb_cache;
@@ -86,7 +86,7 @@ unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset, u8 *t
 void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
 {
 	unsigned int csum;
-	long csstart;
+	unsigned int csstart;
 
 	if (skb->ip_summed == CHECKSUM_HW)
 		csstart = skb->h.raw - skb->data;
@@ -103,7 +103,7 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
 		csum = rtskb_copy_and_csum_bits(skb, csstart, to+csstart, skb->len-csstart, 0);
 
 	if (skb->ip_summed == CHECKSUM_HW) {
-		long csstuff = csstart + skb->csum;
+		unsigned int csstuff = csstart + skb->csum;
 
 		*((unsigned short *)(to + csstuff)) = csum_fold(csum);
 	}
@@ -487,13 +487,14 @@ void dec_pool_handler(void)
 
 
 /***
- *	rtskb_pool_init 
+ *	rtskb_pool_init
  */
-int rtskb_pool_init(void) 
+int rtskb_pool_init(void)
 {
-	int i, err = 0;
+	unsigned int i;
+	int err = 0;
 	struct rtskb* skb;
-	
+
 	rtskb_queue_head_init(&rtskb_pool);
 
 	rtskb_cache = kmem_cache_create 

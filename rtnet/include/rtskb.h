@@ -116,12 +116,12 @@ struct rtskb_head {
 #define DEFAULT_MIN_RTSKB_DEF	16	/* create new rtskb if less then DEFAULT_MIN_RTSKB in Pool	*/
 #define DEFAULT_MAX_RTSKB_DEF	32	/* delete rtskb if more then DEFAULT_MAX_RTSKB in Pool		*/
 
-extern int rtskb_pool_pool;		/* needed for /proc/... in rtnet_module.c	*/
-extern int rtskb_pool_min;		
-extern int rtskb_pool_max;		
+extern unsigned int rtskb_pool_pool;		/* needed for /proc/... in rtnet_module.c */
+extern unsigned int rtskb_pool_min;		
+extern unsigned int rtskb_pool_max;		
 
-extern int rtskb_amount;			/* current number of allocated rtskbs */
-extern int rtskb_amount_max;			/* maximum number of allocated rtskbs */
+extern unsigned int rtskb_amount;		/* current number of allocated rtskbs */
+extern unsigned int rtskb_amount_max;		/* maximum number of allocated rtskbs */
 
 extern void rtskb_over_panic(struct rtskb *skb, int len, void *here);
 extern void rtskb_under_panic(struct rtskb *skb, int len, void *here);

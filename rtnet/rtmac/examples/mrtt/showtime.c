@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <sched.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <curses.h>

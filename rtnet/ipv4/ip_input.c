@@ -124,7 +124,7 @@ int rt_ip_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_typ
 		
 	{
 		__u32 len = ntohs(iph->tot_len); 
-		if ( (skb->len<len) || (len<(iph->ihl<<2)) )
+		if ( (skb->len<len) || (len<((__u32)iph->ihl<<2)) )
 			goto drop;
 	
 		rtskb_trim(skb, len);

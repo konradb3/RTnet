@@ -182,7 +182,7 @@ struct tdma_rt_add_entry {
 	struct list_head		list;
 	u32				ip_addr;
 	unsigned char			station;
-	int				timeout;
+	unsigned long			timeout;
 };
 
 struct tdma_info {
