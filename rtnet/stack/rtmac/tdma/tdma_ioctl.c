@@ -35,6 +35,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
                              struct tdma_config *cfg)
 {
     struct tdma_priv    *tdma;
+    nanosecs_t          cycle_ms;
     unsigned int        table_size;
     int                 ret;
 
@@ -57,8 +58,12 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     }
 
     tdma->cal_rounds = cfg->args.master.cal_rounds;
-//HACK
-set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
+
+    /* search at least 3 x cycle period for other masters */
+    cycle_ms = cfg->args.master.cycle_period;
+    do_div(cycle_ms, 1000000);
+    set_current_state(TASK_UNINTERRUPTIBLE);
+    schedule_timeout((HZ/1000000) * 3*cycle_ms);
 
     if (rtskb_pool_init(&tdma->cal_rtskb_pool,
                         cfg->args.master.max_cal_requests) !=
@@ -96,9 +101,16 @@ set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
                       &tdma->cycle_period);
     }
 
-    tdma->first_job = tdma->current_job = &tdma->sync_job;
+    /* did we detect another active master? */
+    if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
+        set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
+        rtos_get_time(&tdma->current_cycle_start);
+    } else {
+        /* become a slave if we need to calibrate first */
+        tdma->sync_job.id = WAIT_ON_SYNC;
+    }
 
-    rtos_get_time(&tdma->current_cycle_start);
+    tdma->first_job = tdma->current_job = &tdma->sync_job;
 
     rtos_event_sem_signal(&tdma->worker_wakeup);
 
@@ -156,11 +168,11 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
     tdma->max_slot_id = cfg->args.slave.max_slot_id;
     memset(tdma->slot_table, 0, table_size);
 
-    tdma->wait_sync_job.id        = WAIT_ON_SYNC;
-    tdma->wait_sync_job.ref_count = 0;
-    INIT_LIST_HEAD(&tdma->wait_sync_job.entry);
+    tdma->sync_job.id        = WAIT_ON_SYNC;
+    tdma->sync_job.ref_count = 0;
+    INIT_LIST_HEAD(&tdma->sync_job.entry);
 
-    tdma->first_job = tdma->current_job = &tdma->wait_sync_job;
+    tdma->first_job = tdma->current_job = &tdma->sync_job;
 
     rtos_event_sem_signal(&tdma->worker_wakeup);
 
@@ -297,6 +309,10 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     if (id > tdma->max_slot_id)
         return -EINVAL;
 
+    slot = (struct tdma_slot *)kmalloc(sizeof(struct tdma_slot), GFP_KERNEL);
+    if (!slot)
+        return -ENOMEM;
+
     if (!test_bit(TDMA_FLAG_CALIBRATED, &tdma->flags)) {
         req_cal.head.id        = XMIT_REQ_CAL;
         req_cal.head.ref_count = 0;
@@ -310,8 +326,10 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
         req_cal.result_buffer =
             kmalloc(req_cal.cal_rounds * sizeof(nanosecs_t), GFP_KERNEL);
-        if (!req_cal.result_buffer)
+        if (!req_cal.result_buffer) {
+            kfree(slot);
             return -ENOMEM;
+        }
 
         ret = rtpc_dispatch_call(start_calibration, 0, &req_cal,
                                  sizeof(req_cal), copyback_calibration,
@@ -335,15 +353,39 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
             rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
+            kfree(slot);
             return ret;
         }
 
+#ifdef CONFIG_RTNET_TDMA_MASTER
+        if (test_bit(TDMA_FLAG_MASTER, &tdma->flags)) {
+            u32         cycle_no = tdma->current_cycle;
+            nanosecs_t  cycle_ms;
+
+
+            /* switch back to [backup] master mode */
+            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags))
+                tdma->sync_job.id = BACKUP_SYNC;
+            else
+                tdma->sync_job.id = XMIT_SYNC;
+
+            /* wait one cycle period for the mode switch */
+            cycle_ms = rtos_time_to_nanosecs(&tdma->cycle_period);
+            do_div(cycle_ms, 1000000);
+            set_current_state(TASK_UNINTERRUPTIBLE);
+            schedule_timeout((HZ/1000000)*cycle_ms);
+
+            /* catch the very unlikely case that the current master died
+               while we just switched the mode */
+            if (cycle_no == (volatile u32)tdma->current_cycle) {
+                kfree(slot);
+                return -ETIME;
+            }
+        }
+#endif /* CONFIG_RTNET_TDMA_MASTER */
+
         set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
     }
-
-    slot = (struct tdma_slot *)kmalloc(sizeof(struct tdma_slot), GFP_KERNEL);
-    if (!slot)
-        return -ENOMEM;
 
     slot->head.id        = id;
     slot->head.ref_count = 0;

@@ -64,7 +64,8 @@ int rt_socket_init(struct rtdm_dev_context *context)
     unsigned int    pool_size;
 
 
-    sock->priority      = SOCK_DEF_PRIO;
+    sock->priority =
+        RTSKB_PRIO_VALUE(SOCK_DEF_PRIO, RTSKB_DEF_RT_CHANNEL);
     sock->callback_func = NULL;
 
     rtskb_queue_init(&sock->incoming);

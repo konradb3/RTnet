@@ -38,7 +38,11 @@
 #define NET_HASH_TBL_SIZE   32
 #define NET_HASH_KEY_MASK   (NET_HASH_TBL_SIZE-1)
 #define NET_HASH_KEY_SHIFT  8
-#define ROUTER_FORWARD_PRIO QUEUE_MAX_PRIO+(QUEUE_MIN_PRIO-QUEUE_MAX_PRIO+1)/2
+
+/* FIXME: should also become some tunable parameter */
+#define ROUTER_FORWARD_PRIO \
+    RTSKB_PRIO_VALUE(QUEUE_MAX_PRIO+(QUEUE_MIN_PRIO-QUEUE_MAX_PRIO+1)/2, \
+                     RTSKB_DEF_RT_CHANNEL)
 
 
 /* First-level routing: explicite host routes */

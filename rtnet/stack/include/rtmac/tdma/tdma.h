@@ -131,6 +131,7 @@ struct tdma_priv {
     nanosecs_t                  master_packet_delay_ns;
     rtos_time_t                 clock_offset;
 
+    struct tdma_job             sync_job;
     struct tdma_job             *first_job;
     struct tdma_job             *current_job;
     volatile unsigned int       job_list_revision;
@@ -147,10 +148,6 @@ struct tdma_priv {
     struct rtskb_queue          cal_rtskb_pool;
     rtos_time_t                 cycle_period;
     rtos_time_t                 backup_sync_inc;
-    struct tdma_job             sync_job;
-#endif
-#ifdef CONFIG_RTNET_TDMA_SLAVE
-    struct tdma_job             wait_sync_job;
 #endif
 
 #ifdef CONFIG_PROC_FS

@@ -33,9 +33,10 @@
 #include <ipv4/protocol.h>
 
 
-#define RT_ICMP_PRIO                QUEUE_MIN_PRIO-1
+#define RT_ICMP_PRIO            RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO-1, \
+                                                 RTSKB_DEF_NRT_CHANNEL)
 
-#define ICMP_REPLY_POOL_SIZE        8
+#define ICMP_REPLY_POOL_SIZE    8
 
 
 extern void rt_icmp_queue_echo_request(struct rt_proc_call *call);

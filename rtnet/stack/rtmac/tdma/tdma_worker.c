@@ -47,13 +47,9 @@ void tdma_worker(int arg)
 
     do {
 //rtos_print("job = %d\n", job->id);
-#ifdef CONFIG_RTNET_TDMA_SLAVE
         if (job->id == WAIT_ON_SYNC)
             rtos_event_wait(&tdma->sync_event);
-        else
-#endif /* CONFIG_RTNET_TDMA_SLAVE */
-
-        if (job->id >= 0) {
+        else if (job->id >= 0) {
             if ((SLOT_JOB(job)->period == 1) ||
                 (tdma->current_cycle % SLOT_JOB(job)->period ==
                     SLOT_JOB(job)->phasing)) {
@@ -90,8 +86,15 @@ void tdma_worker(int arg)
                           &tdma->backup_sync_inc);
             rtos_task_sleep_until(&time);
 
-            if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags))
+            if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
+                rtos_spin_lock_irqsave(&tdma->lock, flags);
+                tdma->current_cycle++;
+                rtos_time_sum(&tdma->current_cycle_start,
+                    &tdma->current_cycle_start, &tdma->cycle_period);
+                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+
                 tdma_xmit_sync_frame(tdma);
+            }
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
         } else if (job->id == XMIT_REQ_CAL) {
@@ -165,8 +168,9 @@ void tdma_worker(int arg)
             }
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
-        } else
-            rtos_print("TDMA: Unknown job %d\n", job->id);
+        } else {
+            /*DEBUG*/rtos_print("TDMA: Unknown job %d\n", job->id);
+        }
 
         rtos_spin_lock_irqsave(&tdma->lock, flags);
 

@@ -33,7 +33,8 @@
 #include <ipv4/route.h>
 
 
-#define RT_ARP_SKB_PRIO  QUEUE_MIN_PRIO-1
+#define RT_ARP_SKB_PRIO     RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO-1, \
+                                             RTSKB_DEF_NRT_CHANNEL)
 
 /*#define RT_ARP_ADDR_LEN  6
 #define RT_ARP_TABLE_LEN 20

@@ -160,7 +160,7 @@ struct rtskb {
 
     struct rtskb_queue  *pool;      /* owning pool */
 
-    unsigned int        priority;
+    unsigned int        priority;   /* bit 0..15: prio, 16..31: user-defined */
 
     struct rtsocket     *sk;        /* assigned socket */
     struct rtnet_device *rtdev;     /* source or destination device */
@@ -243,6 +243,15 @@ struct rtskb_prio_queue {
     unsigned long       usage;  /* bit array encoding non-empty sub-queues */
     struct rtskb_queue  queue[QUEUE_MIN_PRIO+1];
 };
+
+#define RTSKB_PRIO_MASK         0x0000FFFF  /* bits  0..15: xmit prio    */
+#define RTSKB_CHANNEL_MASK      0xFFFF0000  /* bits 16..31: xmit channel */
+
+#define RTSKB_DEF_RT_CHANNEL    0           /* default rt xmit channel     */
+#define RTSKB_DEF_NRT_CHANNEL   1           /* default non-rt xmit channel */
+#define RTSKB_USER_CHANNEL      2           /* first user-defined channel  */
+
+#define RTSKB_PRIO_VALUE(priority, channel) ((priority) | ((channel) << 16))
 
 
 /* default values for the module parameter */
@@ -352,10 +361,12 @@ static inline void rtskb_queue_head(struct rtskb_queue *queue, struct rtskb *skb
 static inline void __rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
                                            struct rtskb *skb)
 {
-    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
+    unsigned int prio = skb->priority & RTSKB_PRIO_MASK;
 
-    __rtskb_queue_head(&prioqueue->queue[skb->priority], skb);
-    __set_bit(skb->priority, &prioqueue->usage);
+    RTNET_ASSERT(prio <= 31, prio = 31;);
+
+    __rtskb_queue_head(&prioqueue->queue[prio], skb);
+    __set_bit(prio, &prioqueue->usage);
 }
 
 /***
@@ -417,10 +428,12 @@ static inline void rtskb_queue_tail(struct rtskb_queue *queue,
 static inline void __rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
                                            struct rtskb *skb)
 {
-    RTNET_ASSERT(skb->priority <= 31, skb->priority = 31;);
+    unsigned int prio = skb->priority & RTSKB_PRIO_MASK;
 
-    __rtskb_queue_tail(&prioqueue->queue[skb->priority], skb);
-    __set_bit(skb->priority, &prioqueue->usage);
+    RTNET_ASSERT(prio <= 31, prio = 31;);
+
+    __rtskb_queue_tail(&prioqueue->queue[prio], skb);
+    __set_bit(prio, &prioqueue->usage);
 }
 
 /***

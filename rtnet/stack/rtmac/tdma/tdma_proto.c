@@ -138,8 +138,7 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
     rtos_spin_lock_irqsave(&tdma->lock, flags);
 
-// HACK
-slot = tdma->slot_table[DEFAULT_SLOT];
+    slot = tdma->slot_table[rtskb->priority & RTSKB_CHANNEL_MASK];
     if (!slot) {
         rtos_spin_unlock_irqrestore(&tdma->lock, flags);
         return -EAGAIN;
@@ -165,12 +164,11 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb)
 
     rtcap_mark_rtmac_enqueue(rtskb);
 
-    rtskb->priority = QUEUE_MIN_PRIO;
+    rtskb->priority = RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO, DEFAULT_NRT_SLOT);
 
     rtos_spin_lock_irqsave(&tdma->lock, flags);
 
-// HACK
-slot = tdma->slot_table[DEFAULT_NRT_SLOT];
+    slot = tdma->slot_table[DEFAULT_NRT_SLOT];
     if (!slot) {
         rtos_spin_unlock_irqrestore(&tdma->lock, flags);
         return -EAGAIN;
