@@ -78,7 +78,7 @@ unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset,
         pos = copy;
     }
 
-    BUG();
+    RTNET_ASSERT(len == 0, );
     return csum;
 }
 
