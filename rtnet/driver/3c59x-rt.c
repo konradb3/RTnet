@@ -262,6 +262,7 @@ static int vortex_debug = 1;
 #include <crc32.h>
 #include <rtnet.h>
 #include <rtnet_internal.h>
+#include <rtnet_port.h>
 //#include "../comdbg.h"
 
 static int cards = INT_MAX;
@@ -1468,6 +1469,7 @@ rt_issue_and_wait(struct rtnet_device *rtdev, int cmd)
 static void
 vortex_up(struct net_device *dev)
 {
+	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
 	long ioaddr = dev->base_addr;
 	struct vortex_private *vp = (struct vortex_private *)dev->priv;
 	unsigned int config;
@@ -1657,7 +1659,7 @@ vortex_up(struct net_device *dev)
 	outw(vp->intr_enable, ioaddr + EL3_CMD);
 	if (vp->cb_fn_base)			/* The PCMCIA people are idiots.  */
 		writel(0x8000, vp->cb_fn_base + 4);
-	netif_start_queue (dev);
+	rtnetif_start_queue (rtdev);
 }
 
 #if 0
@@ -1857,7 +1859,7 @@ vortex_rt_up(struct rtnet_device *rtdev)
 	outw(vp->intr_enable, ioaddr + EL3_CMD);
 	if (vp->cb_fn_base)			/* The PCMCIA people are idiots.  */
 		writel(0x8000, vp->cb_fn_base + 4);
-	netif_start_queue (dev);
+	rtnetif_start_queue (dev);
 }
 #endif
 
@@ -2101,13 +2103,13 @@ static void vortex_tx_timeout(struct net_device *dev)
 			outl(vp->tx_ring_dma + (vp->dirty_tx % TX_RING_SIZE) * sizeof(struct boom_tx_desc),
 				 ioaddr + DownListPtr);
 		if (vp->cur_tx - vp->dirty_tx < TX_RING_SIZE)
-			netif_start_queue (dev);
+			rtnetif_wake_queue (dev);
 		if (vp->drv_flags & IS_BOOMERANG)
 			outb(PKT_BUF_SZ>>8, ioaddr + TxFreeThreshold);
 		outw(DownUnstall, ioaddr + EL3_CMD);
 	} else {
 		vp->stats.tx_dropped++;
-		netif_start_queue (dev);
+		rtnetif_wake_queue(dev);
 	}
 	
 	/* Issue Tx Enable */
@@ -2223,7 +2225,7 @@ vortex_error(struct rtnet_device *rtdev, int status)
 		issue_and_wait(dev, TxReset|reset_mask);
 		outw(TxEnable, ioaddr + EL3_CMD);
 		if (!vp->full_bus_master_tx)
-			netif_start_queue (dev);
+			rtnetif_wake_queue(rtdev);
 	}
 }
 
@@ -2247,16 +2249,16 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		outw(len, ioaddr + Wn7_MasterLen);
 		vp->tx_skb = skb;
 		outw(StartDMADown, ioaddr + EL3_CMD);
-		/* netif_wake_queue() will be called at the DMADone interrupt. */
+		/* rtnetif_wake_queue() will be called at the DMADone interrupt. */
 	} else {
 		/* ... and the packet rounded to a doubleword. */
 		outsl(ioaddr + TX_FIFO, skb->data, (skb->len + 3) >> 2);
 		dev_kfree_rtskb (skb);
 		if (inw(ioaddr + TxFree) > 1536) {
-			netif_start_queue (dev);	/* AKPM: redundant? */
+			rtnetif_start_queue (rtdev);	/* AKPM: redundant? */
 		} else {
 			/* Interrupt us when the FIFO has room for max-sized packet. */
-			netif_stop_queue(dev);
+			rtnetif_stop_queue(rtdev);
 			outw(SetTxThreshold + (1536>>2), ioaddr + EL3_CMD);
 		}
 	}
@@ -2311,7 +2313,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		if (vortex_debug > 0)
 			rt_printk(KERN_WARNING "%s: BUG! Tx Ring full, refusing to send buffer.\n",
 				   dev->name);
-		netif_stop_queue(dev);
+		rtnetif_stop_queue(rtdev);
 		return 1;
 	}
 
@@ -2377,7 +2379,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	vp->cur_tx++;
 	if (vp->cur_tx - vp->dirty_tx > TX_RING_SIZE - 1) {
-		netif_stop_queue (dev);
+		rtnetif_stop_queue (rtdev);
 	} else {					/* Clear previous interrupt enable. */
 #if defined(tx_interrupt_mitigation)
 		/* Dubious. If in boomeang_interrupt "faster" cyclone ifdef
@@ -2448,7 +2450,7 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 				rt_printk(KERN_DEBUG "	TX room bit was handled.\n");
 			/* There's room in the FIFO for a full-sized packet. */
 			outw(AckIntr | TxAvailable, ioaddr + EL3_CMD);
-			netif_start_queue(dev);
+			rtnetif_wake_queue (rtdev);
 		}
 
 		if (status & DMADone) {
@@ -2460,12 +2462,12 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 					/*
 					 * AKPM: FIXME: I don't think we need this.  If the queue was stopped due to
 					 * insufficient FIFO room, the TxAvailable test will succeed and call
-					 * netif_wake_queue()
+					 * rtnetif_wake_queue()
 					 */
-					netif_start_queue(dev);
+					rtnetif_wake_queue(rtdev);
 				} else { /* Interrupt when FIFO has room for max-sized packet. */
 					outw(SetTxThreshold + (1536>>2), ioaddr + EL3_CMD);
-					netif_stop_queue(dev);
+					rtnetif_stop_queue(rtdev);
 				}
 			}
 		}
@@ -2603,7 +2605,7 @@ static void boomerang_interrupt(int irq, unsigned long rtdev_id)
 			if (vp->cur_tx - dirty_tx <= TX_RING_SIZE - 1) {
 				if (vortex_debug > 6)
 					rt_printk(KERN_DEBUG "boomerang_interrupt: wake queue\n");
-				netif_start_queue (dev);
+				rtnetif_wake_queue (rtdev);
 			}
 		}
 
@@ -2842,10 +2844,11 @@ rx_oom_timer(unsigned long arg)
 static void
 vortex_down(struct net_device *dev)
 {
+	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
 	struct vortex_private *vp = (struct vortex_private *)dev->priv;
 	long ioaddr = dev->base_addr;
 
-	netif_stop_queue (dev);
+	rtnetif_stop_queue (rtdev);
 
 	del_timer_sync(&vp->rx_oom_timer);
 	del_timer_sync(&vp->timer);
