@@ -24,6 +24,7 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/if_packet.h>
 
 #include <rtai.h>
 #include <rtai_sched.h>

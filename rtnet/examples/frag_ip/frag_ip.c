@@ -24,6 +24,8 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/socket.h>
+#include <linux/in.h>
 
 #include <rtai.h>
 #include <rtai_sched.h>
