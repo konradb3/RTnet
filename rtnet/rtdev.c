@@ -349,9 +349,11 @@ int rtdev_xmit(struct rtskb *skb)
 
 		if (rtdev->hard_start_xmit) {
 			ret=rtdev->hard_start_xmit(skb, rtdev);
-			if (ret) {
+			if (ret != 0) {
 				rt_printk("xmit returned %d not 0\n",ret);
-				if (skb) kfree_rtskb(skb); /* not really nice workaround to avoid memory leaks */
+				/* if an error occured, we must free the skb here! */
+				if (skb)
+					kfree_rtskb(skb);
 			}
 		}
 
@@ -373,9 +375,13 @@ int rtdev_xmit_if(struct rtskb *skb)
 
 	if ( rtdev && rtdev->hard_start_xmit ) {
 		ret=rtdev->hard_start_xmit(skb, rtdev);
+		if (ret != 0) {
+			rt_printk("xmit_if returned %d not 0\n",ret);
+			/* if an error occured, we must free the skb here! */
+			if (skb)
+				kfree_rtskb(skb);
+		}
 	}
-	if ( ret ) 
-		rt_printk("xmit_if returned %d not 0\n",ret);
 
 	return (ret);
 }

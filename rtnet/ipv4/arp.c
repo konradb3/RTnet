@@ -105,11 +105,9 @@ void rt_arp_send(int type,
 	if ((skb->rtdev->rtmac) && /* This code lines are crappy! */
 	    (skb->rtdev->rtmac->disc_type) &&
 	    (skb->rtdev->rtmac->disc_type->rt_packet_tx)) {
-	    skb->rtdev->rtmac->disc_type->rt_packet_tx(skb, skb->rtdev);
+		skb->rtdev->rtmac->disc_type->rt_packet_tx(skb, skb->rtdev);
 	} else {
-	    if (rtdev_xmit_if(skb)) { /* If xmit fails, free rtskb. */
-	        goto out;
-	    }
+		rtdev_xmit_if(skb);
 	}
 
 	return;

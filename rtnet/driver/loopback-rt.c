@@ -74,13 +74,11 @@ static int rt_loopback_close (struct rtnet_device *rtdev)
  */
 static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
-	int err=0;
 	struct rtskb *new_skb;
 
 	if ( (new_skb=dev_alloc_rtskb(skb->len + 2))==NULL ) 
 	{
 		rt_printk("RTnet %s: couldn't allocate a rtskb of size %d.\n", rtdev->name, skb->len);
-		err = -ENOMEM;
 		goto rt_loopback_xmit_end;
 	}
 	else 
@@ -139,7 +137,7 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	
 rt_loopback_xmit_end:
 	kfree_rtskb(skb);
-	return err;
+	return 0;
 }
 
 
