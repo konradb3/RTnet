@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.5 2003/05/21 16:14:18 kiszka Exp $
+ * Version:	$Id: route.c,v 1.6 2003/05/23 12:32:34 hpbock Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -508,6 +508,7 @@ int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
 	struct rt_rtable *rt;
 
 	for (rt=rt_rtables; rt; rt=rt->next) {
+		rt_printk("\n");
 		if ( (rt->rt_dst==daddr) && 
 		     (rt->rt_src==saddr) ) {
 			*rp=rt;
@@ -525,7 +526,7 @@ int rt_ip_route_output(struct rt_rtable **rp, u32 daddr, u32 saddr)
 	}
 	*/
 
-	rt_printk("RTnet: Host %u.%u.%u.%u unreachable\n", NIPQUAD(daddr));
+	rt_printk("RTnet: Host %u.%u.%u.%u unreachable (from %u.%u.%u.%u)\n", NIPQUAD(daddr), NIPQUAD(saddr));
 
 	return -EHOSTUNREACH;
 }
