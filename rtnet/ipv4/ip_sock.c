@@ -18,6 +18,9 @@
  */
 
 // $Log: ip_sock.c,v $
+// Revision 1.8  2004/01/13 13:41:13  kiszka
+// * added getsockname support (now for all protocols)
+//
 // Revision 1.7  2003/10/28 13:27:43  kiszka
 // * index-based rtdev management
 // * added packet sockets
@@ -70,4 +73,26 @@ int rt_ip_setsockopt(struct rtsocket *s, int level, int optname,
     }
 
     return err;
+}
+
+
+
+int rt_ip_getsockname(struct rtsocket *s, struct sockaddr *addr,
+                      socklen_t *addrlen)
+{
+    struct sockaddr_in *usin = (struct sockaddr_in *)addr;
+
+
+    if (*addrlen < sizeof(struct sockaddr_in))
+        return -EINVAL;
+
+    usin->sin_family      = AF_INET;
+    usin->sin_addr.s_addr = s->prot.inet.saddr;
+    usin->sin_port        = s->prot.inet.sport;
+
+    memset(usin->sin_zero, 0, sizeof(usin->sin_zero));
+
+    *addrlen = sizeof(struct sockaddr_in);
+
+    return 0;
 }

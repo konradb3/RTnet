@@ -515,14 +515,15 @@ void rt_udp_rcv_err (struct rtskb *skb)
 
 
 static struct rtsocket_ops rt_udp_socket_ops = {
-    bind:       &rt_udp_bind,
-    connect:    &rt_udp_connect,
-    listen:     &rt_udp_listen,
-    accept:     &rt_udp_accept,
-    recvmsg:    &rt_udp_recvmsg,
-    sendmsg:    &rt_udp_sendmsg,
-    close:      &rt_udp_close,
-    setsockopt: &rt_ip_setsockopt
+    bind:        rt_udp_bind,
+    connect:     rt_udp_connect,
+    listen:      rt_udp_listen,
+    accept:      rt_udp_accept,
+    recvmsg:     rt_udp_recvmsg,
+    sendmsg:     rt_udp_sendmsg,
+    close:       rt_udp_close,
+    setsockopt:  rt_ip_setsockopt,
+    getsockname: rt_ip_getsockname
 };
 
 

@@ -43,6 +43,8 @@ struct rtsocket_ops {
                          socklen_t addrlen);
     int  (*connect)     (struct rtsocket *s, const struct sockaddr *serv_addr,
                          socklen_t addrlen);
+    int  (*getsockname) (struct rtsocket *s, struct sockaddr *addr,
+                         socklen_t *addrlen);
     int  (*listen)      (struct rtsocket *s, int backlog);
     int  (*accept)      (struct rtsocket *s, struct sockaddr *addr,
                          socklen_t *addrlen);

@@ -471,24 +471,20 @@ int rt_socket_recvmsg(int s, struct msghdr *msg, int flags)
 /***
  *  rt_sock_getsockname
  */
-#if 0
-IMPLEMENTATION IS ONLY FOR IP!
-int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen)
+int rt_socket_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
 {
-    struct sockaddr_in *usin = (struct sockaddr_in *)addr;
-    SOCKET *sock;
+    struct rtsocket *sock;
+    int ret;
 
 
     if ((sock = rt_socket_lookup(s)) == NULL)
         return -ENOTSOCK;
 
-    usin->sin_family      = sock->family;
-    usin->sin_addr.s_addr = sock->inet.saddr;
-    usin->sin_port        = sock->inet.sport;
+    ret = sock->ops->getsockname(sock, name, namelen);
 
-    return sizeof(struct sockaddr_in);
+    rt_socket_dereference(sock);
+    return ret;
 }
-#endif
 
 
 

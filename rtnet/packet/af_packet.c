@@ -286,6 +286,43 @@ int rt_packet_setsockopt(struct rtsocket *s, int level, int optname,
 
 
 /***
+ *  rt_packet_getsockname
+ */
+int rt_packet_getsockname(struct rtsocket *s, struct sockaddr *addr,
+                          socklen_t *addrlen)
+{
+    struct sockaddr_ll  *sll = (struct sockaddr_ll*)addr;
+    struct rtnet_device *rtdev;
+
+
+    if (*addrlen < sizeof(struct sockaddr_ll))
+        return -EINVAL;
+
+    sll->sll_family   = AF_PACKET;
+    sll->sll_ifindex  = s->prot.packet.ifindex;
+    sll->sll_protocol = s->protocol;
+
+    rtdev = rtdev_get_by_index(s->prot.packet.ifindex);
+    if (rtdev != NULL) {
+        sll->sll_hatype = rtdev->type;
+        sll->sll_halen  = rtdev->addr_len;
+
+        memcpy(sll->sll_addr, rtdev->dev_addr, rtdev->addr_len);
+
+        rtdev_dereference(rtdev);
+    } else {
+        sll->sll_hatype = 0;
+        sll->sll_halen  = 0;
+    }
+
+    *addrlen = sizeof(struct sockaddr_ll);
+
+    return 0;
+}
+
+
+
+/***
  *  rt_packet_rcv
  */
 int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
@@ -309,14 +346,15 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 
 
 static struct rtsocket_ops rt_packet_socket_ops = {
-    bind:       &rt_packet_bind,
-    connect:    &rt_packet_connect,
-    listen:     &rt_packet_listen,
-    accept:     &rt_packet_accept,
-    recvmsg:    &rt_packet_recvmsg,
-    sendmsg:    &rt_packet_sendmsg,
-    close:      &rt_packet_close,
-    setsockopt: &rt_packet_setsockopt
+    bind:        rt_packet_bind,
+    connect:     rt_packet_connect,
+    listen:      rt_packet_listen,
+    accept:      rt_packet_accept,
+    recvmsg:     rt_packet_recvmsg,
+    sendmsg:     rt_packet_sendmsg,
+    close:       rt_packet_close,
+    setsockopt:  rt_packet_setsockopt,
+    getsockname: rt_packet_getsockname
 };
 
 
