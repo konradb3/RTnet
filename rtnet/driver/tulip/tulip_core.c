@@ -128,6 +128,10 @@ int tulip_debug = TULIP_DEBUG;
 int tulip_debug = 1;
 #endif
 
+static int cards = INT_MAX;
+MODULE_PARM(cards, "i");
+MODULE_PARM_DESC(cards, "number of cards to be supported");
+
 
 
 /*
@@ -1334,6 +1338,9 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 #endif
 
 	board_idx++;
+
+	if (board_idx >= cards)
+		return -ENODEV;
 
 	/*
 	 *	Lan media wire a tulip chip to a wan interface. Needs a very
