@@ -469,7 +469,7 @@ int rt_udp_socket(struct rtsocket *s)
     s->typ      = SOCK_DGRAM;
     s->protocol = IPPROTO_UDP;
     s->ops      = &rt_udp_socket_ops;
-
+    s->saddr    = INADDR_ANY;
 
     /* add to udp-socket-list */
     flags = rt_spin_lock_irqsave(&udp_socket_base_lock);
