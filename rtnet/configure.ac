@@ -729,13 +729,12 @@ AM_CONDITIONAL(CONFIG_RTNET_RTCFG,[test "$CONFIG_RTNET_RTCFG" = "yes"])
 
 AC_MSG_CHECKING([whether to enable RTcfg debug support])
 AC_ARG_ENABLE(rtcfg-dbg,
-	AC_HELP_STRING([--enable-rtcfg-dbg], [enable RTcfg debugging (default=yes)]),
+	AC_HELP_STRING([--enable-rtcfg-dbg], [enable RTcfg debugging]),
 	[case "$enableval" in
-	n | no ) CONFIG_RTNET_RTCFG_DEBUG=no ;;
-	*) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
-	esac],
-	CONFIG_RTNET_RTCFG_DEBUG=yes)
-AC_MSG_RESULT([${CONFIG_RTNET_RTCFG_DEBUG:-yes}])
+	y | yes ) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
+	*) unset CONFIG_RTNET_RTCFG_DEBUG ;;
+	esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTCFG_DEBUG:-no}])
 if test "$CONFIG_RTNET_RTCFG_DEBUG" = "yes"; then
 	AC_DEFINE(CONFIG_RTNET_RTCFG_DEBUG,1,[RTcfg debug])
 fi

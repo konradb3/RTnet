@@ -1052,7 +1052,7 @@ Optional Features:
   --enable-smc91111       build SMSC LAN91C111 driver
   --enable-loopback       build loopback driver (default=yes)
   --enable-rtcfg          build RTcfg (default=yes)
-  --enable-rtcfg-dbg      enable RTcfg debugging (default=yes)
+  --enable-rtcfg-dbg      enable RTcfg debugging
   --enable-rtcap          enable RTcap support and build capturing module
   --enable-proxy          build IP protocol proxy driver (legacy)
   --enable-enclosed-rtdm  built enclosed RTDM module (default=yes)
@@ -20651,14 +20651,12 @@ echo $ECHO_N "checking whether to enable RTcfg debug support... $ECHO_C" >&6
 if test "${enable_rtcfg_dbg+set}" = set; then
   enableval="$enable_rtcfg_dbg"
   case "$enableval" in
-	n | no ) CONFIG_RTNET_RTCFG_DEBUG=no ;;
-	*) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
+	y | yes ) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
+	*) unset CONFIG_RTNET_RTCFG_DEBUG ;;
 	esac
-else
-  CONFIG_RTNET_RTCFG_DEBUG=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCFG_DEBUG:-yes}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTCFG_DEBUG:-yes}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCFG_DEBUG:-no}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTCFG_DEBUG:-no}" >&6
 if test "$CONFIG_RTNET_RTCFG_DEBUG" = "yes"; then
 
 cat >>confdefs.h <<\_ACEOF
