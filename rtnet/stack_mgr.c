@@ -169,44 +169,49 @@ static void do_stacktask(int mgr_id)
     while(1) {
         rtos_event_sem_wait(&mgr->event);
 
-        rtos_spin_lock_irqsave(&rxqueue.lock, flags);
+        while (1) {
+            rtos_spin_lock_irqsave(&rxqueue.lock, flags);
 
-        skb = __rtskb_dequeue(&rxqueue);
+            skb = __rtskb_dequeue(&rxqueue);
+            if (!skb) {
+                rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+                break;
+            }
+            rtdev = skb->rtdev;
+            rtdev->rxqueue_len--;
+            rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
 
-        rtdev = skb->rtdev;
-        rtdev->rxqueue_len--;
-        rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+            rtcap_report_incoming(skb);
 
-        rtcap_report_incoming(skb);
+            skb->nh.raw = skb->data;
 
-        skb->nh.raw = skb->data;
-
-        hash = ntohs(skb->protocol) & (MAX_RT_PROTOCOLS-1);
-
-        rtos_spin_lock_irqsave(&rt_packets_lock, flags);
-
-        pt = rt_packets[hash];
-
-        if ((pt != NULL) && (pt->type == skb->protocol)) {
-            pt->refcount++;
-            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
-
-            pt->handler(skb, pt);
+            hash = ntohs(skb->protocol) & (MAX_RT_PROTOCOLS-1);
 
             rtos_spin_lock_irqsave(&rt_packets_lock, flags);
-            pt->refcount--;
-            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
-        } else {
-            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
 
-            /* don't warn if running in promiscuous mode (RTcap...?) */
-            if ((rtdev->flags & IFF_PROMISC) == 0)
-                rtos_print("RTnet: unknown layer-3 protocol\n");
+            pt = rt_packets[hash];
 
-            kfree_rtskb(skb);
+            if ((pt != NULL) && (pt->type == skb->protocol)) {
+                pt->refcount++;
+                rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+
+                pt->handler(skb, pt);
+
+                rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+                pt->refcount--;
+                rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+            } else {
+                rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+
+                /* don't warn if running in promiscuous mode (RTcap...?) */
+                if ((rtdev->flags & IFF_PROMISC) == 0)
+                    rtos_print("RTnet: unknown layer-3 protocol\n");
+
+                kfree_rtskb(skb);
+            }
+
+            rtdev_dereference(rtdev);
         }
-
-        rtdev_dereference(rtdev);
     }
 }
 
