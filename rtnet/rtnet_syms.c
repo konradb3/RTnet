@@ -117,7 +117,10 @@ EXPORT_SYMBOL(rtdev_get_by_index);
 EXPORT_SYMBOL(rtdev_get_by_hwaddr);
 
 EXPORT_SYMBOL(rtdev_xmit);
+
+#ifdef CONFIG_RTNET_PROXY
 EXPORT_SYMBOL(rtdev_xmit_proxy);
+#endif
 
 
 /****************************************************************************
@@ -146,7 +149,10 @@ EXPORT_SYMBOL(rt_eth_type_trans);
  ****************************************************************************/
 EXPORT_SYMBOL(rt_ip_route_add_if_new);
 EXPORT_SYMBOL(rt_ip_route_output);
+
+#ifdef CONFIG_RTNET_PROXY
 EXPORT_SYMBOL(rt_ip_register_fallback);
+#endif
 
 EXPORT_SYMBOL(rt_inet_aton);
 
@@ -177,6 +183,11 @@ EXPORT_SYMBOL(rtskb_pool_release);
 EXPORT_SYMBOL(global_pool);
 
 EXPORT_SYMBOL(rtskb_acquire);
+
+#ifdef CONFIG_RTNET_RTCAP
+EXPORT_SYMBOL(rtcap_lock);
+EXPORT_SYMBOL(rtcap_handler);
+#endif
 
 
 /****************************************************************************
