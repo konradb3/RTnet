@@ -145,6 +145,7 @@ EXPORT_SYMBOL(rt_arp_send);
  * ipv4/route.c                                                             *
  ****************************************************************************/
 EXPORT_SYMBOL(rt_ip_route_add_host);
+EXPORT_SYMBOL(rt_ip_route_del_host);
 EXPORT_SYMBOL(rt_ip_route_output);
 EXPORT_SYMBOL(rt_ip_route_del_all);
 
