@@ -1,4 +1,4 @@
-			RTnet Version 0.2.8
+                             RTnet Version 0.2.9
 
 What is it?
 -----------
@@ -63,6 +63,10 @@ I assume that rtnet module has been loaded and configured(rtifconfig).
 4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
 
 See README.rtmac for more information.
+
+NOTE FOR RTMAC: ONLY one-shot timer mode is supported by the current RTmac.
+You should completely unload rtmac and rtnet modules after your application
+ended. NEVER run the application twice without unloading the modules.
 
 
 RTnet is free software, and you are welcome to redistribute it under 

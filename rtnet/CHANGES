@@ -1,3 +1,9 @@
+0.2.9
+- Fixed many memory leak bugs - Hans-Peter Bock
+- OpenOffice document 'structure of RTnet 0.2.8' - Hans-Peter Bock
+- Fixed negative module reference count bug in RTmac - Wittawat Yamwong
+- RTmac deletes the master and client task correcly now - Wittawat Yamwong
+
 0.2.8
 - enhanched round_trip_time example - Hans-Peter Bock
   * configurable send intervall

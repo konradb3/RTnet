@@ -145,3 +145,15 @@ Assumption:
 4. To shutdown RTmac
 	# rtifconfig eth0 mac down
 
+
+
+Reference
+---------
+[1] Kleine-Budde, Marc;
+    Entwurf und Implementierung eines echtzeitfähigen Protokolls 
+    zur Steuerung des Medienzugriffs auf das Ethernet,
+    Institut für Systems Engineering,
+    Fachgebiet Echtzeitsysteme,
+    Universität Hannover,
+    Januar 2003
+    
