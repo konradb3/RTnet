@@ -1652,7 +1652,7 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
         //        MeasureTime = rt_get_time();
 
         rt_spin_lock(&tp->lock);
-        
+
         do {
                 status = RTL_R16 (IntrStatus);
 
@@ -1705,6 +1705,7 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
                 RTL_W16 (IntrStatus, 0xffff);
         }
 
+        rt_enable_irq(rtdev->irq);
         rt_spin_unlock(&tp->lock);
 
         if (saved_status & RxAckBits) {
