@@ -1,3 +1,22 @@
+0.6.1
+- improved RTcfg
+  * added stage 1/2 file support
+  * added ready mechanism
+  * native send/receive using rtskbs
+  * fixed several bugs
+- added real-time capturing support RTcap
+- device promisc flag settable on rtifconfig up
+- improved TDMA
+  * set slot offset with rtifconfig mac add
+  * transmit slot offset before first SOF
+  * queue outgoing packets before first SOF (instead of dropping them)
+  * bug fix: send further offset commands synchronously
+- fixed some bugs in the build system
+- bug fix: solved re-enable irq issue on PPC (new abstraction rtos_irq_end)
+- bug fix: UDP receive didn't work with MSG_PEEK flag
+- bug fix: packet sockets didn't set transmission priority
+- further minor bug fixes
+
 0.6.0
 - improved build system
   * RTAI 3.0 support
