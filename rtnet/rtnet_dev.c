@@ -56,31 +56,18 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	switch(cmd){
 	case IOC_RT_IFUP:
 		ret = rtdev_open(rtdev);				// = 0, if dev already up
-		/*
-		 * if device already up and ip changes, delete routing table and add new route
-		 * if the dev changes state from close->open also add new route
-		 *
-		 * pretty ugly, isn't it ;)
-		 *
-		 */
 		if( ret == 0 ) {
 			if( rtdev->local_addr != cfg.ip_addr ) {
-				rt_ip_route_del(rtdev);
+				rt_ip_route_del(rtdev); /* cleanup routing table */
 
 				rtdev->local_addr = cfg.ip_addr;
 				rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
 				rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
 				rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
 			}
-		} else {
-			rtdev->local_addr = cfg.ip_addr;
-			rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
-			rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
-			rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
-
 		}
-		return 0;
-		
+		return ret;
+
 	case IOC_RT_IFDOWN:
 		/*
 		 * if rtmac is active on dev, don't shut it down....
