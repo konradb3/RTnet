@@ -70,6 +70,9 @@ typedef size_t          socklen_t;
 #ifdef CONFIG_RTNET_RTDM_SELECT
 #define _RTDM_POLL              8
 #define _RTDM_SELECT            9
+
+#include <linux/poll.h>
+
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 
 struct rtdm_dev_context;

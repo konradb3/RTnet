@@ -585,6 +585,28 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context, int call_flags,
 
 #ifdef CONFIG_RTNET_RTDM_SELECT
 /***
+ *  rt_udp_poll
+ */
+unsigned int rt_udp_poll(struct rtdm_dev_context *context) /* , poll_table *wait) */
+{
+    struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
+    unsigned int mask = 0;
+
+    /* rtdm_poll_wait(context, sock->wqe_in, wait) */
+    /* rtdm_poll_wait(context, sock->wqe_out, wait) */
+
+    /* if data is available (sock.incoming!=NULL), bit-or mask with POLLIN */
+    if (NULL != sock->incoming.first)	{
+	mask |= POLLIN;
+    }
+
+#warning check that sending really does not block
+    mask |= POLLOUT;
+
+    return mask;
+}
+
+/***
  *  rt_udp_pollwait
  * The right position for this function is in rtdm! (A poll function should be implemented here instead.)
  */
