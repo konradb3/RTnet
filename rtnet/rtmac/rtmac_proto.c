@@ -61,7 +61,7 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
 
 
-static struct rtpacket_type rtmac_packet_type = {
+struct rtpacket_type rtmac_packet_type = {
     name:       "RTmac",
     type:       __constant_htons(ETH_RTMAC),
     handler:    rtmac_proto_rx
@@ -69,19 +69,11 @@ static struct rtpacket_type rtmac_packet_type = {
 
 
 
-void rtmac_proto_init(void)
-{
-    /*
-     * install our layer 3 packet type
-     */
-    rtdev_add_pack(&rtmac_packet_type);
-}
-
-
 void rtmac_proto_release(void)
 {
-    /*
-     * remove packet type from stack manager
-     */
-    rtdev_remove_pack(&rtmac_packet_type);
+    while (rtdev_remove_pack(&rtmac_packet_type) == -EAGAIN) {
+        rtos_print("RTmac: waiting for protocol unregistration\n");
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
 }
