@@ -260,6 +260,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
+EXTRA_DIST = tdma.conf
 all: all-am
 
 .SUFFIXES:

@@ -32,3 +32,5 @@ install-data-local: rtnet.conf tdma.conf
 	for FILE in $^; do					\
 		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\
 	done
+
+EXTRA_DIST = tdma.conf
