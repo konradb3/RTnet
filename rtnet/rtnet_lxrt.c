@@ -1,4 +1,4 @@
-/* lxrtnet.c
+/* rtnet_lxrt.c
  *
  * lxrtnet - real-time networking in usermode
  * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
@@ -34,25 +34,33 @@
 
 MODULE_LICENSE("GPL");
 
+/* Note that we don't use LXRT's copy to/from user mechanism as it will not
+ * work with the socket API (and it is slow!). Instead we demand NewLXRT which
+ * takes care that the real-time kernel task can always access the user mode
+ * buffer passed to it.
+ * TODO: Write our own interface (probably RTDM-based) which will also have to
+ * deal with invalid pointers passed by the user.
+ */
 static struct rt_fun_entry rt_lxrtnet_fun[] = {
-    [RT_SOCKET]             = {0,                   rt_socket            },
-    [RT_SOCKET_CLOSE]       = {0,                   rt_socket_close      },
-    [RT_SOCKET_BIND]        = {UR1(2,3),            rt_socket_bind       },
-    [RT_SOCKET_CONNECT]     = {UR1(2,3),            rt_socket_connect    },
-    [RT_SOCKET_ACCEPT]      = {UR1(2,3),            rt_socket_accept     },
-    [RT_SOCKET_LISTEN]      = {0,                   rt_socket_listen     },
-    [RT_SOCKET_SEND]        = {UR1(2,3),            rt_socket_send       },
-    [RT_SOCKET_RECV]        = {UW1(2,3),            rt_socket_recv       },
-    [RT_SOCKET_SENDTO]      = {UR1(2,3) | UR2(5,6), rt_socket_sendto     },
-    [RT_SOCKET_RECVFROM]    = {UW1(2,3) | UW2(5,6), rt_socket_recvfrom   },
-    [RT_SOCKET_SENDMSG]     = {UW1(2,3),            rt_socket_sendmsg    },
-    [RT_SOCKET_RECVMSG]     = {UR1(2,3),            rt_socket_recvmsg    },
-    [RT_SOCKET_WRITE]       = {UW1(2,3),            rt_socket_send       },
-    [RT_SOCKET_READ]        = {UR1(2,3),            rt_socket_recv       },
-    [RT_SOCKET_WRITEV]      = {UW1(2,3),            rt_socket_sendmsg    },
-    [RT_SOCKET_READV]       = {UR1(2,3),            rt_socket_recvmsg    },
-/*    [RT_SOCKET_GETSOCKNAME] = {UW1(2,3),            rt_socket_getsockname},*/
-    [RT_SOCKET_SETSOCKOPT]  = {UR1(4,5),            rt_socket_setsockopt }
+    [RT_SOCKET]             = {0, rt_socket            },
+    [RT_SOCKET_CLOSE]       = {0, rt_socket_close      },
+    [RT_SOCKET_BIND]        = {0, rt_socket_bind       },
+    [RT_SOCKET_CONNECT]     = {0, rt_socket_connect    },
+    [RT_SOCKET_ACCEPT]      = {0, rt_socket_accept     },
+    [RT_SOCKET_LISTEN]      = {0, rt_socket_listen     },
+    [RT_SOCKET_SEND]        = {0, rt_socket_send       },
+    [RT_SOCKET_RECV]        = {0, rt_socket_recv       },
+    [RT_SOCKET_SENDTO]      = {0, rt_socket_sendto     },
+    [RT_SOCKET_RECVFROM]    = {0, rt_socket_recvfrom   },
+    [RT_SOCKET_SENDMSG]     = {0, rt_socket_sendmsg    },
+    [RT_SOCKET_RECVMSG]     = {0, rt_socket_recvmsg    },
+    [RT_SOCKET_WRITE]       = {0, rt_socket_send       },
+    [RT_SOCKET_READ]        = {0, rt_socket_recv       },
+    [RT_SOCKET_WRITEV]      = {0, rt_socket_sendmsg    },
+    [RT_SOCKET_READV]       = {0, rt_socket_recvmsg    },
+/*    [RT_SOCKET_GETSOCKNAME] = {0, rt_socket_getsockname},*/
+    [RT_SOCKET_SETSOCKOPT]  = {0, rt_socket_setsockopt },
+    [RT_SOCKET_IOCTL]       = {0, rt_socket_ioctl      }
 };
 
 
