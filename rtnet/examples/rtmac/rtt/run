@@ -18,9 +18,14 @@ Usage:
 	run client <server-ip> [options...]
 	run clientp <server-ip> [options...]
 	run stop
-Options:
-	cycle=<us>
-	sof_sync={0|1}
+Options (server):
+	reply_size  size of the reply message (8-65507)
+Options (client):
+	cycle       cycle time in us or cycle counts (if rtmac_dev is specified)
+	rtmac_dev   RTmac device name to synchronise on its bus cycle (e.g. TDMA0)
+Options (clientp):
+	parport     parallel port address (default: 0x378)
+	parirq      parallel port interrupt number (default: 7)
 EOF
 }
 
