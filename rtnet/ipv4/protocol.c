@@ -69,7 +69,7 @@ struct rtinet_protocol *rt_inet_get_protocol(int protocol)
  * @sock: socket structure
  * @protocol: protocol id
  */
-int rt_inet_socket(SOCKET *sock, int protocol)
+int rt_inet_socket(struct rtsocket *sock, int protocol)
 {
     struct rtinet_protocol *prot;
 

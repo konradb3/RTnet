@@ -21,7 +21,7 @@
 #ifndef __RTNET_PROTOCOL_H_
 #define __RTNET_PROTOCOL_H_
 
-#include <rtnet.h>
+#include <rtnet_socket.h>
 #include <rtskb.h>
 
 
@@ -47,7 +47,7 @@ extern struct rtinet_protocol *rt_inet_protocols[];
 extern void rt_inet_add_protocol(struct rtinet_protocol *prot);
 extern void rt_inet_del_protocol(struct rtinet_protocol *prot);
 extern struct rtinet_protocol *rt_inet_get_protocol(int protocol);
-extern int rt_inet_socket(SOCKET *sock, int protocol);
+extern int rt_inet_socket(struct rtsocket *sock, int protocol);
 
 
 #endif  /* __RTNET_PROTOCOL_H_ */

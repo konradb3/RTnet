@@ -44,8 +44,9 @@
 typedef size_t socklen_t;
 
 
+#if 0
 /***
- *  rtsocket
+ *  rtsocket - NO LONGER NEEDED WITHOUT THE STATIC INTERFACE!
  */
 
 struct rtsocket;
@@ -55,6 +56,7 @@ typedef struct rtsocket SOCKET;
 
 /* the external interface */
 extern struct rtsocket *rt_socket_lookup(int s);
+#endif
 
 /* file descriptor interface */
 extern int rt_socket            (int family, int type, int protocol);

@@ -20,7 +20,9 @@
 #ifndef __RTNET_AF_PACKET_H_
 #define __RTNET_AF_PACKET_H_
 
+#include <rtnet_socket.h>
 
-extern int rt_packet_socket(SOCKET *sock, int protocol);
+
+extern int rt_packet_socket(struct rtsocket *sock, int protocol);
 
 #endif  /* __RTNET_AF_PACKET_H_ */

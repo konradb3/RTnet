@@ -323,7 +323,7 @@ static struct rtsocket_ops rt_packet_socket_ops = {
  * @sock: socket structure
  * @protocol: protocol id
  */
-int rt_packet_socket(SOCKET *sock, int protocol)
+int rt_packet_socket(struct rtsocket *sock, int protocol)
 {
     int ret;
 

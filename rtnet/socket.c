@@ -44,24 +44,24 @@ static unsigned int socket_rtskbs = DEFAULT_SOCKET_RTSKBS;
 MODULE_PARM(socket_rtskbs, "i");
 MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in socket pools");
 
-static SOCKET       rt_sockets[RT_SOCKETS];
-static SOCKET       *free_rtsockets;
-static spinlock_t   socket_base_lock;
+static struct rtsocket rt_sockets[RT_SOCKETS];
+static struct rtsocket *free_rtsockets;
+static spinlock_t      socket_base_lock;
 
 
 /************************************************************************
  *  internal socket functions                                           *
  ************************************************************************/
 
-int rt_socket_release(SOCKET *sock);
+int rt_socket_release(struct rtsocket *sock);
 
 /***
  *  rt_socket_alloc
  */
-static inline SOCKET *rt_socket_alloc(void)
+static inline struct rtsocket *rt_socket_alloc(void)
 {
     unsigned long   flags;
-    SOCKET          *sock;
+    struct rtsocket *sock;
 
 
     flags = rt_spin_lock_irqsave(&socket_base_lock);
@@ -110,7 +110,7 @@ static inline SOCKET *rt_socket_alloc(void)
 /***
  *  rt_socket_release
  */
-int rt_socket_release(SOCKET *sock)
+int rt_socket_release(struct rtsocket *sock)
 {
     unsigned long flags;
     unsigned int rtskbs = sock->pool_size;
@@ -161,9 +161,9 @@ int rt_socket_release(SOCKET *sock)
  *  rt_scoket_lookup
  *  @fd - file descriptor
  */
-SOCKET *rt_socket_lookup(int fd)
+struct rtsocket *rt_socket_lookup(int fd)
 {
-    SOCKET *sock = NULL;
+    struct rtsocket *sock = NULL;
     unsigned long flags;
     unsigned int index;
 
@@ -196,7 +196,7 @@ SOCKET *rt_socket_lookup(int fd)
  */
 int rt_socket(int family, int type, int protocol)
 {
-    SOCKET *sock = NULL;
+    struct rtsocket *sock = NULL;
     int ret;
 
 
@@ -237,7 +237,7 @@ int rt_socket(int family, int type, int protocol)
  */
 int rt_socket_bind(int s, struct sockaddr *my_addr, socklen_t addrlen)
 {
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -257,7 +257,7 @@ int rt_socket_bind(int s, struct sockaddr *my_addr, socklen_t addrlen)
  */
 int rt_socket_listen(int s, int backlog)
 {
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -277,7 +277,7 @@ int rt_socket_listen(int s, int backlog)
  */
 int rt_socket_connect(int s, const struct sockaddr *serv_addr, socklen_t addrlen)
 {
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -297,7 +297,7 @@ int rt_socket_connect(int s, const struct sockaddr *serv_addr, socklen_t addrlen
  */
 int rt_socket_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -317,7 +317,7 @@ int rt_socket_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
  */
 int rt_socket_close(int s)
 {
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -362,7 +362,7 @@ int rt_socket_sendto(int s, const void *msg, size_t len, int flags,
 {
     struct msghdr msg_hdr;
     struct iovec iov;
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -402,7 +402,7 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
     struct msghdr msg_hdr;
     struct iovec iov;
     int error=0;
-    SOCKET *sock;
+    struct rtsocket *sock;
 
 
     if ((sock = rt_socket_lookup(s)) == NULL)
@@ -433,7 +433,7 @@ int rt_socket_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr 
 int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
 {
     size_t total_len;
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -455,7 +455,7 @@ int rt_socket_sendmsg(int s, const struct msghdr *msg, int flags)
 int rt_socket_recvmsg(int s, struct msghdr *msg, int flags)
 {
     size_t total_len;
-    SOCKET *sock;
+    struct rtsocket *sock;
     int ret;
 
 
@@ -500,7 +500,7 @@ int rt_socket_getsockname(int s, struct sockaddr *addr, socklen_t addrlen)
  */
 int rt_socket_callback(int s, int (*func)(int,void *), void *arg)
 {
-    SOCKET *sock;
+    struct rtsocket *sock;
 
 
     if ((sock = rt_socket_lookup(s)) == NULL)
@@ -522,7 +522,7 @@ int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
                          socklen_t optlen)
 {
     int ret = 0;
-    SOCKET *sock;
+    struct rtsocket *sock;
 
 
     if ((sock = rt_socket_lookup(s)) == NULL)
@@ -592,7 +592,7 @@ int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
 int rt_socket_ioctl(int s, int request, void *arg)
 {
     int ret = 0;
-    SOCKET *sock;
+    struct rtsocket *sock;
     union {
         struct ifconf ifc;
         struct ifreq ifr;
