@@ -54,15 +54,13 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
      * sending realtime- and the driver-task
      *
      */
-//    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
-    rt_sem_init(&tdma->full, 0);
     rt_sem_init(&tdma->client_tx, 0);
 
     /*
-     * init tx queue
+     * init rt-tx queue
      *
      */
-    rtskb_queue_head_init(&tdma->tx_queue);
+    rtskb_queue_head_init(&tdma->rt_tx_queue);
 
     /*
      * init rt stuff
@@ -93,7 +91,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     /*
      * init nrt stuff
      */
-    //INIT_LIST_HEAD(&tdma->nrt_list);
+    rtskb_queue_head_init(&tdma->nrt_tx_queue);
 
     /*
      * start timer
@@ -134,8 +132,6 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     /*
      * delete tx tasks sema
      */
-//    rt_sem_delete(&tdma->free);
-    rt_sem_delete(&tdma->full);
     rt_sem_delete(&tdma->client_tx);
 
     return 0;
@@ -146,24 +142,28 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 int tdma_rt_packet_tx(struct rtskb *skb, struct rtnet_device *rtdev)
 {
     struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
-    int ret = 0;
 
-    if (tdma->flags.mac_active == 0) {
-	    ret = tdma_xmit(skb);
-    } else {
-//        rt_sem_wait(&tdma->free);
-        rtskb_queue_tail(&tdma->tx_queue, skb);
-        rt_sem_signal(&tdma->full);
-    }
+    if (tdma->flags.mac_active == 0)
+        return tdma_xmit(skb);
 
-    return ret;
+    rtskb_queue_tail(&tdma->rt_tx_queue, skb);
+
+    return 0;
 }
 
 
 
 int tdma_nrt_packet_tx(struct rtskb *skb)
 {
-    return tdma_rt_packet_tx(skb, skb->rtdev);
+    struct rtmac_tdma *tdma =
+        (struct rtmac_tdma *)skb->rtdev->mac_priv->disc_priv;
+
+    if (tdma->flags.mac_active == 0)
+        return -1;
+
+    rtskb_queue_tail(&tdma->nrt_tx_queue, skb);
+
+    return 0;
 }
 
 

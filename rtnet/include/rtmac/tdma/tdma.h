@@ -38,14 +38,14 @@
 
 #define CONFIG_TDMA_DEBUG
 
-#define TDMA_RT_REQ_TIMEOUT             100     // timeout for arp solicit = 100 ms
-#define TDMA_NOTIFY_TASK_CYCLE          100     // notify every 100 ms the presence of a master
-#define TDMA_MASTER_WAIT_TIMEOUT        TDMA_NOTIFY_TASK_CYCLE * 2  // time to wait (in ms) before we become master
-#define TDMA_SENT_CLIENT_CONF_TIMEOUT   100     // time (in ms) that have clients to ack config
-#define TDMA_SENT_CLIENT_ACK_TIMEOUT    200     // time (in ms) the master has to ack the ack
-#define TDMA_MASTER_MAX_TEST_TIME       2000    // time (in ms) the master sends test packets to client
-#define TDMA_MASTER_MAX_TEST            (TDMA_MASTER_MAX_TEST_TIME * 1000 / tdma->cycle)    // number of test packets sent to the client
-#define TDMA_MASTER_WAIT_TEST           100     // time (in ms) to wait after last test packet
+#define TDMA_RT_REQ_TIMEOUT             100     /* timeout for arp solicit = 100 ms */
+#define TDMA_NOTIFY_TASK_CYCLE          100     /* notify every 100 ms the presence of a master */
+#define TDMA_MASTER_WAIT_TIMEOUT        TDMA_NOTIFY_TASK_CYCLE * 2  /* time to wait (in ms) before we become master */
+#define TDMA_SENT_CLIENT_CONF_TIMEOUT   100     /* time (in ms) that have clients to ack config */
+#define TDMA_SENT_CLIENT_ACK_TIMEOUT    200     /* time (in ms) the master has to ack the ack */
+#define TDMA_MASTER_MAX_TEST_TIME       2000    /* time (in ms) the master sends test packets to client */
+#define TDMA_MASTER_MAX_TEST            (TDMA_MASTER_MAX_TEST_TIME * 1000 / tdma->cycle)    /* number of test packets sent to the client */
+#define TDMA_MASTER_WAIT_TEST           100     /* time (in ms) to wait after last test packet */
 
 #define TDMA_MAX_RT                     16
 
@@ -86,37 +86,37 @@ typedef enum {
 
 /* tdma events */
 typedef enum {
-    REQUEST_MASTER, // 0
+    REQUEST_MASTER, /* 0 */
     REQUEST_CLIENT,
 
-    REQUEST_UP, // 2
+    REQUEST_UP, /* 2 */
     REQUEST_DOWN,
 
-    REQUEST_ADD_RT, // 4
+    REQUEST_ADD_RT, /* 4 */
     REQUEST_REMOVE_RT,
 
-    REQUEST_ADD_NRT, // 6
+    REQUEST_ADD_NRT, /* 6 */
     REQUEST_REMOVE_NRT,
 
-    CHANGE_MTU, // 8
+    CHANGE_MTU, /* 8 */
     CHANGE_CYCLE,
     CHANGE_OFFSET,
 
-    EXPIRED_ADD_RT, // 11
+    EXPIRED_ADD_RT, /* 11 */
     EXPIRED_MASTER_WAIT,
     EXPIRED_MASTER_SENT_CONF,
     EXPIRED_MASTER_SENT_TEST,
     EXPIRED_CLIENT_SENT_ACK,
 
-    NOTIFY_MASTER, // 16 (0x10)
+    NOTIFY_MASTER, /* 16 (0x10) */
     REQUEST_TEST,
     ACK_TEST,
 
-    REQUEST_CONF, // 19 (0x13)
+    REQUEST_CONF, /* 19 (0x13) */
     ACK_CONF,
     ACK_ACK_CONF,
 
-    STATION_LIST, // 22 (0x16)
+    STATION_LIST, /* 22 (0x16) */
     REQUEST_CHANGE_OFFSET,
 
     START_OF_FRAME,
@@ -131,9 +131,7 @@ struct tdma_flags {
 
 struct rtmac_tdma {
     RT_TASK                     tx_task;
-//    SEM                         free;
-    SEM                         full;
-    struct rtskb_head           tx_queue;
+    struct rtskb_head           rt_tx_queue;
 
     struct tdma_flags           flags;
 
@@ -159,14 +157,14 @@ struct rtmac_tdma {
     /*** rt client specific ***/
     SEM                         client_tx;
     RTIME                       wakeup;
-    RTIME                       offset; // in internals counts
+    RTIME                       offset; /* in internals counts */
     unsigned char               station;
     struct rt_arp_table_struct  *master;
     struct timer_list           client_sent_ack_timer;
     RTIME                       delta_t; /* offset to master clock in ns. */
 
     /*** non realtime discipline stuff ***/
-    /*struct list_head          nrt_list;*/
+    struct rtskb_head           nrt_tx_queue;
 };
 
 struct tdma_rt_entry {
@@ -296,7 +294,7 @@ out:
 
 static inline struct rtskb *tdma_make_msg(struct rtnet_device *rtdev, void *daddr, TDMA_EVENT event, void **data)
 {
-    return tdma_make_msg_len(rtdev, daddr, event, 60-14, data); //note: dev->hard_header_len == 14
+    return tdma_make_msg_len(rtdev, daddr, event, 60-14, data); /* note: dev->hard_header_len == 14 */
 }
 
 

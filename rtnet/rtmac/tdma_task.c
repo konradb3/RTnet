@@ -44,13 +44,11 @@ void tdma_task_shutdown(struct rtmac_tdma *tdma)
         /*
          * unblock all tasks by deleting semas
          */
-        rt_sem_delete(&tdma->client_tx);    //tdma_task_client()
-//        rt_sem_delete(&tdma->free);         //tdma_packet_tx()
+        rt_sem_delete(&tdma->client_tx);    /* tdma_task_client() */
 
         /*
          * re-init semas
          */
-//        rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
         rt_sem_init(&tdma->client_tx, 0);
     }
 }
@@ -250,13 +248,12 @@ void tdma_task_master(int rtdev_id)
          * get client skb out of queue and send it
          */
 
-        if (rt_sem_wait_if(&tdma->full) >= 1) {
-            skb = rtskb_dequeue(&tdma->tx_queue);
-//            rt_sem_signal(&tdma->free);
+        skb = rtskb_dequeue(&tdma->rt_tx_queue);
+        if (!skb)
+            skb = rtskb_dequeue(&tdma->nrt_tx_queue);
 
+        if (skb)
             tdma_xmit(skb);
-        }
-
     }
     TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
     tdma->flags.task_active = 0;
@@ -280,12 +277,12 @@ void tdma_task_client(int rtdev_id)
 
         rt_sleep_until(tdma->wakeup);
 
-        if (rt_sem_wait_if(&tdma->full) >= 1) {
-            skb = rtskb_dequeue(&tdma->tx_queue);
-//            rt_sem_signal(&tdma->free);
+        skb = rtskb_dequeue(&tdma->rt_tx_queue);
+        if (!skb)
+            skb = rtskb_dequeue(&tdma->nrt_tx_queue);
 
+        if (skb)
             tdma_xmit(skb);
-        }
     }
 
     TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
