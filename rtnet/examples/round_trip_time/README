@@ -1,19 +1,18 @@
 ****** Round Trip Time ******
-The Idea behind this Example is Timemeasurement of a roundig
+The idea behind this example is time measurement of a rounding
 packet. A client send one packet (with a timestamp) to server and the
 server send this packet back to the client. The difference in time is
 the round-trip-time.
 
-To run type:
-make
+To run, set up your RTnet network (e.g. by using "rtnet start") and type
 
-1.) 
-client: run
-server: run
+run client <server-ip>
 
-2.) 
-client and server: run_arp (remeber we have no automatic
-arp-resolution)  
+on the client node and
+
+run server <client-ip>
+
+on the server node.
 
 
 

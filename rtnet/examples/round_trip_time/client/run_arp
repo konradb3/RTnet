@@ -1,5 +1,0 @@
-../../../tools/rtifconfig eth0 route solicit 192.168.0.1
-../../../tools/rtifconfig eth0 route solicit 192.168.0.3
-
-
-cat /proc/rtai/arp

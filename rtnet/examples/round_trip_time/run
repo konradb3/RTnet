@@ -1,14 +1,5 @@
 #!/bin/sh
 
-CFG=/etc/rtnet.conf
-
-if [ ! -r $CFG ]; then
-	echo "Could not read $CFG"
-	exit 1
-fi
-
-. $CFG
-
 dir=`dirname $0`
 
 usage() {
@@ -37,12 +28,12 @@ esac
 case "$action" in
     server)
 	modprobe rtai_fifos
-	insmod $dir/server/rt_server.o local_ip_s=$IPADDR client_ip_s=$ip $options
+	insmod $dir/server/rt_server.o client_ip_s=$ip $options
 	;;
 
     client)
 	modprobe rtai_fifos
-	insmod $dir/client/rt_client.o local_ip_s=$IPADDR server_ip_s=$ip $options
+	insmod $dir/client/rt_client.o server_ip_s=$ip $options
 	$dir/client/showtime
 	rmmod -r rt_client
 	;;

@@ -1,7 +1,0 @@
-../../../tools/rtifconfig rteth0 down
-rmmod 8139too-rt
-rmmod rtnet
-
-rmmod rtai_fifos
-rmmod rtai_sched
-rmmod rtai

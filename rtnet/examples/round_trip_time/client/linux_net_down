@@ -1,2 +1,0 @@
-/etc/rc.d/network stop
-rmmod 8139too mii
