@@ -42,17 +42,21 @@ int nomac_proc_read(char *buf, char **start, off_t offset, int count,
                     int *eof, void *data)
 {
     struct nomac_priv *entry;
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(80);
 
 
-    RTNET_PROC_PRINT("Interface       API Device      State\n");
     down(&nomac_nrt_lock);
 
+    if (!RTNET_PROC_PRINT("Interface       API Device      State\n"))
+        goto done;
+
     list_for_each_entry(entry, &nomac_devices, list_entry) {
-        RTNET_PROC_PRINT("%-15s %-15s Attached\n", entry->rtdev->name,
-                         entry->api_device.device_name);
+        if (!RTNET_PROC_PRINT("%-15s %-15s Attached\n", entry->rtdev->name,
+                              entry->api_device.device_name))
+            break;
     }
 
+  done:
     up(&nomac_nrt_lock);
 
     RTNET_PROC_PRINT_DONE;

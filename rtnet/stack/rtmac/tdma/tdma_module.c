@@ -55,31 +55,39 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
 #ifdef CONFIG_RTNET_TDMA_MASTER
     nanosecs_t          cycle;
 #endif
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(80);
 
 
-    RTNET_PROC_PRINT("Interface       API Device      Operation Mode  "
-                     "Cycle\n");
     down(&tdma_nrt_lock);
 
+    if (!RTNET_PROC_PRINT("Interface       API Device      Operation Mode  "
+                          "Cycle\n"))
+        goto done;
+
     list_for_each_entry(entry, &tdma_devices, list_entry) {
-        RTNET_PROC_PRINT("%-15s %-15s ", entry->rtdev->name,
-                         entry->api_device.device_name);
+        if (!RTNET_PROC_PRINT("%-15s %-15s ", entry->rtdev->name,
+                              entry->api_device.device_name))
+            break;
 #ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_MASTER, &entry->flags)) {
             cycle = rtos_time_to_nanosecs(&entry->cycle_period) + 500;
             do_div(cycle, 1000);
-            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags))
-                RTNET_PROC_PRINT("Backup Master   %ld\n",
-                                 (unsigned long)cycle);
-            else
-                RTNET_PROC_PRINT("Master          %ld\n",
-                                 (unsigned long)cycle);
+            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
+                if (!RTNET_PROC_PRINT("Backup Master   %ld\n",
+                                      (unsigned long)cycle))
+                    break;
+            } else {
+                if (!RTNET_PROC_PRINT("Master          %ld\n",
+                                      (unsigned long)cycle))
+                    break;
+            }
         } else
 #endif /* CONFIG_RTNET_TDMA_MASTER */
-            RTNET_PROC_PRINT("Slave           -\n");
+            if (!RTNET_PROC_PRINT("Slave           -\n"))
+                break;
     }
 
+  done:
     up(&tdma_nrt_lock);
 
     RTNET_PROC_PRINT_DONE;
@@ -97,15 +105,18 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     rtos_time_t         bak_offs;
 #endif
     nanosecs_t          slot_offset;
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(80);
 
 
-    RTNET_PROC_PRINT("Interface       "
-                     "Slots (id:offset:phasing/period:size)\n");
     down(&tdma_nrt_lock);
 
+    if (!RTNET_PROC_PRINT("Interface       "
+                          "Slots (id:offset:phasing/period:size)\n"))
+        goto done;
+
     list_for_each_entry(entry, &tdma_devices, list_entry) {
-        RTNET_PROC_PRINT("%-15s ", entry->rtdev->name);
+        if (!RTNET_PROC_PRINT("%-15s ", entry->rtdev->name))
+            break;
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
@@ -113,7 +124,8 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                            &entry->cycle_period);
             slot_offset = rtos_time_to_nanosecs(&bak_offs) + 500;
             do_div(slot_offset, 1000);
-            RTNET_PROC_PRINT("bak:%ld  ", (unsigned long)slot_offset);
+            if (!RTNET_PROC_PRINT("bak:%ld  ", (unsigned long)slot_offset))
+                break;
         }
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
@@ -130,16 +142,22 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
 
                 slot_offset = rtos_time_to_nanosecs(&slot->offset) + 500;
                 do_div(slot_offset, 1000);
-                RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
-                                 (unsigned long)slot_offset,
-                                 slot->phasing+1, slot->period, slot->size);
+                if (!RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
+                                      (unsigned long)slot_offset,
+                                      slot->phasing+1, slot->period,
+                                      slot->size)) {
+                    up(&entry->rtdev->nrt_sem);
+                    goto done;
+                }
             }
 
             up(&entry->rtdev->nrt_sem);
         }
-        RTNET_PROC_PRINT("\n");
+        if (!RTNET_PROC_PRINT("\n"))
+            break;
     }
 
+  done:
     up(&tdma_nrt_lock);
 
     RTNET_PROC_PRINT_DONE;

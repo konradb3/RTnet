@@ -71,40 +71,58 @@ extern struct rtnet_mgr RTDEV_manager;
 extern struct proc_dir_entry *rtnet_proc_root;
 
 
-/* stolen from Erwin Rol's rtai_proc_fs.h */
+/* Derived from Erwin Rol's rtai_proc_fs.h.
+   Standard version assumes that output fits into the provided buffer,
+   extended version also deals with potential fragmentation. */
 
-#define RTNET_PROC_PRINT_VARS                           \
-    off_t __pos   = 0;                                  \
-    off_t __begin = 0;                                  \
-    int   __len   = 0 /* no ";" */
+#define RTNET_PROC_PRINT_VARS(MAX_BLOCK_LEN)                            \
+    const int max_block_len = MAX_BLOCK_LEN;                            \
+    off_t __limit           = count - MAX_BLOCK_LEN;                    \
+    int   __len             = 0;                                        \
+    *eof = 1
+
+#define RTNET_PROC_PRINT(fmt, args...)                                  \
+    ({                                                                  \
+        __len += snprintf(buf + __len, max_block_len, fmt, ##args);     \
+        if (__len > __limit)                                            \
+            *eof = 0;                                                   \
+        (__len <= __limit);                                             \
+    })
+
+#define RTNET_PROC_PRINT_DONE                                           \
+    return __len
 
 
-#define RTNET_PROC_PRINT(fmt, args...)                  \
-    do {                                                \
-        int len = sprintf(buf + __len , fmt, ##args);   \
-        __len += len;                                   \
-        __pos += len;                                   \
-        if (__pos < offset) {                           \
-            __len = 0;                                  \
-            __begin = __pos;                            \
-        }                                               \
-        if (__pos > offset + count)                     \
-            goto __done;                                \
-    } while (0)
+#define RTNET_PROC_PRINT_VARS_EX(MAX_BLOCK_LEN)                         \
+    const int max_block_len = MAX_BLOCK_LEN;                            \
+    off_t __limit           = offset + count - MAX_BLOCK_LEN;           \
+    off_t __pos             = 0;                                        \
+    off_t __begin           = 0;                                        \
+    int   __len             = 0;                                        \
+    *eof = 1
 
+#define RTNET_PROC_PRINT_EX(fmt, args...)                               \
+    ({                                                                  \
+        int len = snprintf(buf + __len, max_block_len, fmt, ##args);    \
+        __len += len;                                                   \
+        __pos += len;                                                   \
+        if (__pos < offset) {                                           \
+            __len = 0;                                                  \
+            __begin = __pos;                                            \
+        }                                                               \
+        if (__pos > __limit)                                            \
+            *eof = 0;                                                   \
+        (__pos <= __limit);                                             \
+    })
 
-#define RTNET_PROC_PRINT_DONE                           \
-    do {                                                \
-        *eof = 1;                                       \
-      __done:                                           \
-        *start = buf + (offset - __begin);              \
-        __len -= (offset - __begin);                    \
-        if (__len > count)                              \
-            __len = count;                              \
-        if(__len < 0)                                   \
-            __len = 0;                                  \
-        return __len;                                   \
-    } while (0)
+#define RTNET_PROC_PRINT_DONE_EX                                        \
+    *start = buf + (offset - __begin);                                  \
+    __len -= (offset - __begin);                                        \
+    if (__len > count)                                                  \
+        __len = count;                                                  \
+    if (__len < 0)                                                      \
+        __len = 0;                                                      \
+    return __len;
 
 #endif /* CONFIG_PROC_FS */
 

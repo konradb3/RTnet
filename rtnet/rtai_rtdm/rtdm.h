@@ -2,7 +2,7 @@
         rtdm.h - user API header (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.1
+        Version:    0.5.3
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 
@@ -36,6 +36,8 @@ typedef size_t          socklen_t;
 #include <sys/socket.h>
 
 #endif /* __KERNEL__ */
+
+#include <rtnet_config.h>
 
 
 #define MAX_DEV_NAME_LENGTH     31
@@ -231,7 +233,7 @@ static inline int select_rt(int call_flags, int n,
 #else /* !__KERNEL__ */
 
 
-#include <rtnet_config.h>
+#ifdef CONFIG_NEWLXRT
 
 #ifdef CONFIG_RTAI_24
 # include <rtai_lxrt_user.h>
@@ -301,6 +303,8 @@ RTAI_PROTO(ssize_t, sendmsg_rt, (int fd, const struct msghdr *msg, int flags))
         {fd, msg, flags};
     return rtai_lxrt(RTDM_LXRT_IDX, sizeof(_arg), _RTDM_SENDMSG, &_arg).i[LOW];
 }
+
+#endif /* CONFIG_NEWLXRT */
 
 #endif /* __KERNEL__ */
 

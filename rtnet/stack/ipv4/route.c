@@ -88,23 +88,26 @@ MODULE_PARM_DESC(net_hash_key_shift, "destination right shift for "
 static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
                               int *eof, void *data)
 {
-    RTNET_PROC_PRINT_VARS;
 #ifdef CONFIG_RTNET_NETWORK_ROUTING
     u32 mask;
 #endif /* CONFIG_RTNET_NETWORK_ROUTING */
+    RTNET_PROC_PRINT_VARS(256);
 
 
-    RTNET_PROC_PRINT("Host routes allocated/total:\t%d/%d\n"
-                     "Host hash table size:\t\t%d\n",
-                     allocated_host_routes, HOST_ROUTES, HOST_HASH_TBL_SIZE);
+    if (!RTNET_PROC_PRINT("Host routes allocated/total:\t%d/%d\n"
+                          "Host hash table size:\t\t%d\n",
+                          allocated_host_routes, HOST_ROUTES,
+                          HOST_HASH_TBL_SIZE))
+        goto done;
 
 #ifdef CONFIG_RTNET_NETWORK_ROUTING
     mask = NET_HASH_KEY_MASK << net_hash_key_shift;
-    RTNET_PROC_PRINT("Network routes allocated/total:\t%d/%d\n"
-                     "Network hash table size:\t%d\n"
-                     "Network hash key shift/mask:\t%d/%08X\n",
-                     allocated_net_routes, NET_ROUTES, NET_HASH_TBL_SIZE,
-                     net_hash_key_shift, mask);
+    if (!RTNET_PROC_PRINT("Network routes allocated/total:\t%d/%d\n"
+                          "Network hash table size:\t%d\n"
+                          "Network hash key shift/mask:\t%d/%08X\n",
+                          allocated_net_routes, NET_ROUTES, NET_HASH_TBL_SIZE,
+                          net_hash_key_shift, mask))
+        goto done;
 #endif /* CONFIG_RTNET_NETWORK_ROUTING */
 
 #ifdef CONFIG_RTNET_ROUTER
@@ -113,6 +116,7 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
     RTNET_PROC_PRINT("IP Router:\t\t\tno\n");
 #endif
 
+  done:
     RTNET_PROC_PRINT_DONE;
 }
 
@@ -121,16 +125,19 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
 static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
                                    int count, int *eof, void *data)
 {
-    RTNET_PROC_PRINT_VARS;
     struct host_route   *entry_ptr;
     struct dest_route   dest_host;
     unsigned int        key;
     unsigned int        index;
     unsigned int        i;
     unsigned long       flags;
+    int                 res;
+    RTNET_PROC_PRINT_VARS(80);
 
 
-    RTNET_PROC_PRINT("Hash\tDestination\tHW Address\t\tDevice\n");
+    if (!RTNET_PROC_PRINT("Hash\tDestination\tHW Address\t\tDevice\n"))
+        goto done;
+
     for (key = 0; key < HOST_HASH_TBL_SIZE; key++) {
         index = 0;
         while (1) {
@@ -152,19 +159,22 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
 
             rtos_spin_unlock_irqrestore(&host_table_lock, flags);
 
-            RTNET_PROC_PRINT("%02X\t%u.%u.%u.%-3u\t"
-                             "%02X:%02X:%02X:%02X:%02X:%02X\t%s\n",
-                             key, NIPQUAD(dest_host.ip),
-                             dest_host.dev_addr[0], dest_host.dev_addr[1],
-                             dest_host.dev_addr[2], dest_host.dev_addr[3],
-                             dest_host.dev_addr[4], dest_host.dev_addr[5],
-                             dest_host.rtdev->name);
+            res = RTNET_PROC_PRINT("%02X\t%u.%u.%u.%-3u\t"
+                    "%02X:%02X:%02X:%02X:%02X:%02X\t%s\n",
+                    key, NIPQUAD(dest_host.ip),
+                    dest_host.dev_addr[0], dest_host.dev_addr[1],
+                    dest_host.dev_addr[2], dest_host.dev_addr[3],
+                    dest_host.dev_addr[4], dest_host.dev_addr[5],
+                    dest_host.rtdev->name);
             rtdev_dereference(dest_host.rtdev);
+            if (!res)
+                goto done;
 
             index++;
         }
     }
 
+  done:
     RTNET_PROC_PRINT_DONE;
 }
 
@@ -174,7 +184,6 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
 static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
                                   int count, int *eof, void *data)
 {
-    RTNET_PROC_PRINT_VARS;
     struct net_route    *entry_ptr;
     u32                 dest_net_ip;
     u32                 dest_net_mask;
@@ -183,9 +192,12 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
     unsigned int        index;
     unsigned int        i;
     unsigned long       flags;
+    RTNET_PROC_PRINT_VARS(80);
 
 
-    RTNET_PROC_PRINT("Hash\tDestination\tMask\t\t\tGateway\n");
+    if (!RTNET_PROC_PRINT("Hash\tDestination\tMask\t\t\tGateway\n"))
+        goto done;
+
     for (key = 0; key < NET_HASH_TBL_SIZE + 1; key++) {
         index = 0;
         while (1) {
@@ -207,18 +219,24 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
 
             rtos_spin_unlock_irqrestore(&net_table_lock, flags);
 
-            if (key < NET_HASH_TBL_SIZE)
-                RTNET_PROC_PRINT("%02X\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
-                                 "%u.%u.%u.%-3u\n", key, NIPQUAD(dest_net_ip),
-                                 NIPQUAD(dest_net_mask), NIPQUAD(gw_ip));
-            else
-                RTNET_PROC_PRINT("*\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
-                                 "%u.%u.%u.%-3u\n", NIPQUAD(dest_net_ip),
-                                 NIPQUAD(dest_net_mask), NIPQUAD(gw_ip));
+            if (key < NET_HASH_TBL_SIZE) {
+                if (!RTNET_PROC_PRINT("%02X\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
+                                      "%u.%u.%u.%-3u\n",
+                                      key, NIPQUAD(dest_net_ip),
+                                      NIPQUAD(dest_net_mask), NIPQUAD(gw_ip)))
+                    goto done;
+            } else {
+                if (!RTNET_PROC_PRINT("*\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
+                                      "%u.%u.%u.%-3u\n", NIPQUAD(dest_net_ip),
+                                      NIPQUAD(dest_net_mask), NIPQUAD(gw_ip)))
+                    goto done;
+            }
 
             index++;
         }
     }
+
+  done:
     RTNET_PROC_PRINT_DONE;
 }
 #endif /* CONFIG_RTNET_NETWORK_ROUTING */

@@ -2,7 +2,7 @@
         rtdm.c  - core driver layer module (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.2
+        Version:    0.5.3
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 
@@ -34,25 +34,57 @@
 #endif
 
 #include <rtnet_config.h>
+
+
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+/* RTAI 24.1.x and 3.x */
+
 #include <rtai.h>
 #ifdef CONFIG_RTAI_24
 # define INTERFACE_TO_LINUX
 #endif
 #include <rtai_sched.h>
-#include <rtai_proc_fs.h>
 #include <rtai_lxrt.h>
-
-#include <rtdm.h>
-#include <rtdm_driver.h>
-
-
-MODULE_LICENSE("GPL and additional rights");
 
 #ifdef CONFIG_RTAI_24
 # define RT_SCHED_LINUX_PRIORITY    RT_LINUX_PRIORITY
 #else
 # include <rtai_malloc.h>
 #endif
+
+
+static inline int in_nrt_context(void)
+{
+    return (rt_whoami()->priority == RT_SCHED_LINUX_PRIORITY);
+}
+
+
+#elif defined(CONFIG_FUSION_064) || defined(CONFIG_FUSION_065)
+/* fusion 0.64 and 0.65 - intermediate solution */
+
+//#include <rtnet_sys.h>
+#include <rtnet_internal.h>
+
+
+#define rt_printk                   printk
+#define rt_spin_lock_irqsave        rthal_spin_lock_irqsave
+#define rt_spin_unlock_irqrestore   rthal_spin_unlock_irqrestore
+#define rt_malloc                   xnmalloc
+#define rt_free                     xnfree
+
+
+static inline int in_nrt_context(void)
+{
+    return (!rtos_in_rt_context());
+}
+
+#endif
+
+#include <rtdm.h>
+#include <rtdm_driver.h>
+
+
+MODULE_LICENSE("GPL and additional rights");
 
 #define RTDM_DEBUG
 #ifdef RTDM_DEBUG
@@ -88,6 +120,27 @@ MODULE_LICENSE("GPL and additional rights");
 #define DEF_PROTO_HASH_TBL_SZ   256 /* default entries in protocol hash tbl. */
 
 
+/* Derived from Erwin Rol's rtai_proc_fs.h.
+   Assumes that output fits into the provided buffer. */
+
+#define RTDM_PROC_PRINT_VARS(MAX_BLOCK_LEN)                             \
+    const int max_block_len = MAX_BLOCK_LEN;                            \
+    off_t __limit           = count - MAX_BLOCK_LEN;                    \
+    int   __len             = 0;                                        \
+    *eof = 1
+
+#define RTDM_PROC_PRINT(fmt, args...)                                   \
+    ({                                                                  \
+        __len += snprintf(buf + __len, max_block_len, fmt, ##args);     \
+        if (__len > __limit)                                            \
+            *eof = 0;                                                   \
+        (__len <= __limit);                                             \
+    })
+
+#define RTDM_PROC_PRINT_DONE                                            \
+    return __len
+
+
 struct rtdm_fildes {
     struct rtdm_fildes                  *next;
     volatile struct rtdm_dev_context    *context;
@@ -121,18 +174,13 @@ static int                  open_fildes;    /* used file descriptors */
 static int                  name_hash_key_mask;
 static int                  proto_hash_key_mask;
 
+#ifdef CONFIG_NEWLXRT
 static RT_TASK              *rt_base_linux_task; /* for LXRT registering */
+#endif
 
 #ifdef CONFIG_PROC_FS
 static struct proc_dir_entry *rtdm_proc_root; /* /proc/rtai/rtdm */
 #endif
-
-
-
-static inline int in_nrt_context(void)
-{
-    return (rt_whoami()->priority == RT_SCHED_LINUX_PRIORITY);
-}
 
 
 
@@ -668,7 +716,7 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 
     /* wait until something happens */
     wq_wait(&wakeme); /* should be wq_wait_timed() */
-    
+
     /* register wq_element on all sockets marked in rfds */
     for (i=0; i<=n; i++) {
 	if (FD_ISSET(i, &rfds)) {
@@ -708,6 +756,8 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 }
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 
+
+#ifdef CONFIG_NEWLXRT
 
 static int rtdm_open_lxrt(const char *path, int oflag)
 {
@@ -799,6 +849,8 @@ static struct rt_fun_entry lxrt_fun_entry[] = {
     [_RTDM_SENDMSG] = {0, rtdm_sendmsg_lxrt}
 };
 
+#endif /* CONFIG_NEWLXRT */
+
 
 
 /***************************************************************************
@@ -814,67 +866,74 @@ static int rtdm_nosys(void)
 
 
 #ifdef CONFIG_PROC_FS
-static int proc_read_named_devs(char* page, char** start, off_t off, int count,
-                                int* eof, void* data)
+static int proc_read_named_devs(char* buf, char** start, off_t offset,
+                                int count, int* eof, void* data)
 {
     int                 i;
     struct list_head    *entry;
     struct rtdm_device  *device;
-    PROC_PRINT_VARS;
+    RTDM_PROC_PRINT_VARS(80);
 
-
-    PROC_PRINT("Hash\tName\t\t\t\t/proc\n");
 
     if (down_interruptible(&nrt_sem))
         return -ERESTARTSYS;
+
+    if (!RTDM_PROC_PRINT("Hash\tName\t\t\t\t/proc\n"))
+        goto done;
 
     for (i = 0; i < name_hash_table_size; i++)
         list_for_each(entry, &rtdm_named_devices[i]) {
             device = list_entry(entry, struct rtdm_device, reserved.entry);
 
-            PROC_PRINT("%02X\t%-31s\t%s\n", i, device->device_name,
-                       device->proc_name);
+            if (!RTDM_PROC_PRINT("%02X\t%-31s\t%s\n", i, device->device_name,
+                                 device->proc_name))
+                break;
         }
 
+  done:
     up(&nrt_sem);
 
-    PROC_PRINT_DONE;
+    RTDM_PROC_PRINT_DONE;
 }
 
 
 
-static int proc_read_proto_devs(char* page, char** start, off_t off, int count,
-                                int* eof, void* data)
+static int proc_read_proto_devs(char* buf, char** start, off_t offset,
+                                int count, int* eof, void* data)
 {
     int                 i;
     struct list_head    *entry;
     struct rtdm_device  *device;
-    char                buf[32];
-    PROC_PRINT_VARS;
+    char                txt[32];
+    RTDM_PROC_PRINT_VARS(80);
 
-
-    PROC_PRINT("Hash\tProtocolFamily:SocketType\t/proc\n");
 
     if (down_interruptible(&nrt_sem))
         return -ERESTARTSYS;
+
+    if (!RTDM_PROC_PRINT("Hash\tProtocolFamily:SocketType\t/proc\n"))
+        goto done;
 
     for (i = 0; i < protocol_hash_table_size; i++)
         list_for_each(entry, &rtdm_protocol_devices[i]) {
             device = list_entry(entry, struct rtdm_device, reserved.entry);
 
-            snprintf(buf, sizeof(buf), "%u:%u", device->protocol_family,
+            snprintf(txt, sizeof(txt), "%u:%u", device->protocol_family,
                      device->socket_type);
-            PROC_PRINT("%02X\t%-31s\t%s\n", i, buf, device->proc_name);
+            if (!RTDM_PROC_PRINT("%02X\t%-31s\t%s\n", i, txt,
+                                 device->proc_name))
+                break;
         }
 
+  done:
     up(&nrt_sem);
 
-    PROC_PRINT_DONE;
+    RTDM_PROC_PRINT_DONE;
 }
 
 
 
-static int proc_read_open_fildes(char* page, char** start, off_t off,
+static int proc_read_open_fildes(char* buf, char** start, off_t offset,
                                  int count, int* eof, void* data)
 {
     int                     i;
@@ -882,13 +941,14 @@ static int proc_read_open_fildes(char* page, char** start, off_t off,
     int                     close_lock_count;
     struct rtdm_device      *device;
     unsigned long           flags;
-    PROC_PRINT_VARS;
+    RTDM_PROC_PRINT_VARS(80);
 
-
-    PROC_PRINT("Index\tInstance  fd\t\tLocked\tDevice\n");
 
     if (down_interruptible(&nrt_sem))
         return -ERESTARTSYS;
+
+    if (!RTDM_PROC_PRINT("Index\tInstance  fd\t\tLocked\tDevice\n"))
+        goto done;
 
     for (i = 0; i < fildes_count; i++) {
         flags = rt_spin_lock_irqsave(&rt_fildes_lock);
@@ -905,65 +965,73 @@ static int proc_read_open_fildes(char* page, char** start, off_t off,
 
         rt_spin_unlock_irqrestore(flags, &rt_fildes_lock);
 
-        PROC_PRINT("%d\t%-10ld%-14ld%d\t%s\n", i, fildes.instance_id,
-                   i + (fildes.instance_id << FILDES_INDEX_BITS),
-                   close_lock_count,
-                   (device->device_flags & RTDM_NAMED_DEVICE) ?
-                   device->device_name : device->proc_name);
+        if (!RTDM_PROC_PRINT("%d\t%-10ld%-14ld%d\t%s\n", i, fildes.instance_id,
+                             i + (fildes.instance_id << FILDES_INDEX_BITS),
+                             close_lock_count,
+                             (device->device_flags & RTDM_NAMED_DEVICE) ?
+                             device->device_name : device->proc_name))
+            break;
     }
 
+  done:
     up(&nrt_sem);
 
-    PROC_PRINT_DONE;
+    RTDM_PROC_PRINT_DONE;
 }
 
 
 
-static int proc_read_fildes(char* page, char** start, off_t off,
+static int proc_read_fildes(char* buf, char** start, off_t offset,
                             int count, int* eof, void* data)
 {
-    PROC_PRINT_VARS;
+    RTDM_PROC_PRINT_VARS(80);
 
 
     if (down_interruptible(&nrt_sem))
         return -ERESTARTSYS;
 
-    PROC_PRINT("total:\t%d\nopen:\t%d\nfree:\t%d\n", fildes_count, open_fildes,
-               fildes_count - open_fildes);
+    RTDM_PROC_PRINT("total:\t%d\nopen:\t%d\nfree:\t%d\n", fildes_count,
+                    open_fildes, fildes_count - open_fildes);
 
     up(&nrt_sem);
 
-    PROC_PRINT_DONE;
+    RTDM_PROC_PRINT_DONE;
 }
 
 
 
-static int proc_read_dev_info(char* page, char** start, off_t off,
+static int proc_read_dev_info(char* buf, char** start, off_t offset,
                               int count, int* eof, void* data)
 {
     struct rtdm_device  *device = data;
-    PROC_PRINT_VARS;
+    RTDM_PROC_PRINT_VARS(256);
 
 
     if (down_interruptible(&nrt_sem))
         return -ERESTARTSYS;
 
-    PROC_PRINT("driver:\t\t%s\nperipheral:\t%s\nprovider:\t%s\n",
-               device->driver_name, device->peripheral_name,
-               device->provider_name);
-    PROC_PRINT("class:\t\t%d\nsub-class:\t%d\n",
-               device->device_class, device->device_sub_class);
-    PROC_PRINT("flags:\t\t%s%s%s\n",
-               (device->device_flags & RTDM_EXCLUSIVE) ? "EXCLUSIVE  " : "",
-               (device->device_flags & RTDM_NAMED_DEVICE) ?
-               "NAMED_DEVICE  " : "",
-               (device->device_flags & RTDM_PROTOCOL_DEVICE) ?
-               "PROTOCOL_DEVICE  " : "");
-    PROC_PRINT("lock count:\t%d\n", atomic_read(&device->reserved.refcount));
+    if (!RTDM_PROC_PRINT("driver:\t\t%s\nperipheral:\t%s\nprovider:\t%s\n",
+                         device->driver_name, device->peripheral_name,
+                         device->provider_name))
+        goto done;
+    if (!RTDM_PROC_PRINT("class:\t\t%d\nsub-class:\t%d\n",
+                         device->device_class, device->device_sub_class))
+        goto done;
+    if (!RTDM_PROC_PRINT("flags:\t\t%s%s%s\n",
+                         (device->device_flags & RTDM_EXCLUSIVE) ?
+                             "EXCLUSIVE  " : "",
+                         (device->device_flags & RTDM_NAMED_DEVICE) ?
+                             "NAMED_DEVICE  " : "",
+                         (device->device_flags & RTDM_PROTOCOL_DEVICE) ?
+                             "PROTOCOL_DEVICE  " : ""))
+        goto done;
+    RTDM_PROC_PRINT("lock count:\t%d\n",
+                    atomic_read(&device->reserved.refcount));
 
+  done:
     up(&nrt_sem);
 
-    PROC_PRINT_DONE;
+    RTDM_PROC_PRINT_DONE;
 }
 
 
@@ -1184,13 +1252,15 @@ int init_module(void)
 {
     int                     ret = 0;
     int                     i;
+#ifdef CONFIG_NEWLXRT
     RT_TASK                 *rt_linux_task[NR_RT_CPUS];
+#endif
 #ifdef CONFIG_PROC_FS
     struct proc_dir_entry   *proc_entry;
 #endif
 
 
-    printk("RTDM Version 0.5.2\n");
+    printk("RTDM Version 0.5.3\n");
 
     if (fildes_count > MAX_FILDES) {
         printk("RTDM: fildes_count exceeds %d\n", MAX_FILDES);
@@ -1236,7 +1306,7 @@ int init_module(void)
 
 #ifdef CONFIG_PROC_FS
     /* Initialise /proc entries */
-    rtdm_proc_root = create_proc_entry("rtdm", S_IFDIR, rtai_proc_root);
+    rtdm_proc_root = create_proc_entry("rtai/rtdm", S_IFDIR, NULL);
     if (!rtdm_proc_root)
         goto proc_err;
 
@@ -1263,6 +1333,7 @@ int init_module(void)
     proc_entry->read_proc = proc_read_fildes;
 #endif /* CONFIG_PROC_FS */
 
+#ifdef CONFIG_NEWLXRT
     /* Initialise LXRT function table if LXRT is available */
     rt_base_linux_task = rt_get_base_linux_task(rt_linux_task);
     if (rt_base_linux_task->task_trap_handler[0]) {
@@ -1273,6 +1344,7 @@ int init_module(void)
             goto rem_all;
         }
     }
+#endif /* CONFIG_NEWLXRT */
 
     return 0;
 
@@ -1282,13 +1354,15 @@ int init_module(void)
     ret = -EAGAIN;
 #endif /* CONFIG_PROC_FS */
 
+#ifdef CONFIG_NEWLXRT
   rem_all:
+#endif
 #ifdef CONFIG_PROC_FS
     remove_proc_entry("fildes", rtdm_proc_root);
     remove_proc_entry("open_fildes", rtdm_proc_root);
     remove_proc_entry("protocol_devices", rtdm_proc_root);
     remove_proc_entry("named_devices", rtdm_proc_root);
-    remove_proc_entry("rtdm", rtai_proc_root);
+    remove_proc_entry("rtai/rtdm", NULL);
 #endif /* CONFIG_PROC_FS */
 
     kfree(rtdm_protocol_devices);
@@ -1315,7 +1389,7 @@ void cleanup_module(void)
     remove_proc_entry("open_fildes", rtdm_proc_root);
     remove_proc_entry("protocol_devices", rtdm_proc_root);
     remove_proc_entry("named_devices", rtdm_proc_root);
-    remove_proc_entry("rtdm", rtai_proc_root);
+    remove_proc_entry("rtai/rtdm", NULL);
 #endif /* CONFIG_PROC_FS */
 
     /* release file descriptor table */
@@ -1327,10 +1401,12 @@ void cleanup_module(void)
     kfree(rtdm_named_devices);
     kfree(rtdm_protocol_devices);
 
+#ifdef CONFIG_NEWLXRT
     /* unregister LXRT functions */
     if (rt_base_linux_task->task_trap_handler[1])
         ((int (*)(void *, int))rt_base_linux_task->task_trap_handler[1])(
             lxrt_fun_entry, RTDM_LXRT_IDX);
+#endif /* CONFIG_NEWLXRT */
 
     printk("RTDM: unloaded\n");
     return;

@@ -44,17 +44,19 @@ int rtcfg_proc_read_dev_state(char *buf, char **start, off_t offset, int count,
     char *state_name[] = { "OFF", "SERVER_RUNNING", "CLIENT_0", "CLIENT_1",
                            "CLIENT_ANNOUNCED", "CLIENT_ALL_KNOWN",
                            "CLIENT_ALL_FRAMES", "CLIENT_2", "CLIENT_READY" };
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(256);
 
 
-    RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
-                     "flags:\t\t\t%08X\n"
-                     "other stations:\t\t%d\n"
-                     "stations found:\t\t%d\n"
-                     "stations ready:\t\t%d\n",
-                     rtcfg_dev->state, state_name[rtcfg_dev->state],
-                     rtcfg_dev->flags, rtcfg_dev->other_stations,
-                     rtcfg_dev->stations_found, rtcfg_dev->stations_ready);
+    if (!RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
+                          "flags:\t\t\t%08X\n"
+                          "other stations:\t\t%d\n"
+                          "stations found:\t\t%d\n"
+                          "stations ready:\t\t%d\n",
+                          rtcfg_dev->state, state_name[rtcfg_dev->state],
+                          rtcfg_dev->flags, rtcfg_dev->other_stations,
+                          rtcfg_dev->stations_found,
+                          rtcfg_dev->stations_ready))
+        goto done;
 
     if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
         RTNET_PROC_PRINT("configured clients:\t%d\n"
@@ -77,6 +79,7 @@ int rtcfg_proc_read_dev_state(char *buf, char **start, off_t offset, int count,
                          rtcfg_dev->spec.clt.cfg_len);
     }
 
+  done:
     RTNET_PROC_PRINT_DONE;
 }
 
@@ -90,7 +93,7 @@ int rtcfg_proc_read_stations(char *buf, char **start, off_t offset, int count,
     struct rtcfg_connection *conn;
     struct rtcfg_station    *station;
     int                     i;
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS_EX(80);
 
 
     if (down_interruptible(&nrt_proc_lock))
@@ -100,27 +103,29 @@ int rtcfg_proc_read_stations(char *buf, char **start, off_t offset, int count,
         list_for_each(entry, &rtcfg_dev->spec.srv.conn_list) {
             conn = list_entry(entry, struct rtcfg_connection, entry);
 
-            if (conn->state != RTCFG_CONN_SEARCHING)
-                RTNET_PROC_PRINT("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
-                                 conn->mac_addr[0], conn->mac_addr[1],
-                                 conn->mac_addr[2], conn->mac_addr[3],
-                                 conn->mac_addr[4], conn->mac_addr[5],
-                                 conn->flags);
+            if ((conn->state != RTCFG_CONN_SEARCHING) &&
+                !RTNET_PROC_PRINT_EX("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
+                                     conn->mac_addr[0], conn->mac_addr[1],
+                                     conn->mac_addr[2], conn->mac_addr[3],
+                                     conn->mac_addr[4], conn->mac_addr[5],
+                                     conn->flags))
+                break;
         }
     } else if (rtcfg_dev->spec.clt.station_addr_list) {
         for (i = 0; i < rtcfg_dev->stations_found; i++) {
             station = &rtcfg_dev->spec.clt.station_addr_list[i];
 
-            RTNET_PROC_PRINT("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
-                             station->mac_addr[0], station->mac_addr[1],
-                             station->mac_addr[2], station->mac_addr[3],
-                             station->mac_addr[4], station->mac_addr[5],
-                             station->flags);
+            if (!RTNET_PROC_PRINT_EX("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
+                    station->mac_addr[0], station->mac_addr[1],
+                    station->mac_addr[2], station->mac_addr[3],
+                    station->mac_addr[4], station->mac_addr[5],
+                    station->flags))
+                break;
         }
     }
 
     up(&nrt_proc_lock);
-    RTNET_PROC_PRINT_DONE;
+    RTNET_PROC_PRINT_DONE_EX;
 }
 
 
@@ -131,29 +136,32 @@ int rtcfg_proc_read_conn_state(char *buf, char **start, off_t offset,
     struct rtcfg_connection *conn = data;
     char *state_name[] =
         { "SEARCHING", "STAGE_1", "STAGE_2", "READY", "DEAD" };
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(512);
 
 
-    RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
-                     "flags:\t\t\t%02X\n"
-                     "stage 1 size:\t\t%d\n"
-                     "stage 2 filename:\t%s\n"
-                     "stage 2 size:\t\t%d\n"
-                     "stage 2 offset:\t\t%d\n"
-                     "burstrate:\t\t%d\n"
-                     "mac address:\t\t%02X:%02X:%02X:%02X:%02X:%02X\n",
-                     conn->state, state_name[conn->state], conn->flags,
-                     conn->stage1_size,
-                     (conn->stage2_file)? conn->stage2_file->name: "-",
-                     (conn->stage2_file)? conn->stage2_file->size: 0,
-                     conn->cfg_offs, conn->burstrate,
-                     conn->mac_addr[0], conn->mac_addr[1], conn->mac_addr[2],
-                     conn->mac_addr[3], conn->mac_addr[4], conn->mac_addr[5]);
+    if (!RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
+                          "flags:\t\t\t%02X\n"
+                          "stage 1 size:\t\t%d\n"
+                          "stage 2 filename:\t%s\n"
+                          "stage 2 size:\t\t%d\n"
+                          "stage 2 offset:\t\t%d\n"
+                          "burstrate:\t\t%d\n"
+                          "mac address:\t\t%02X:%02X:%02X:%02X:%02X:%02X\n",
+                          conn->state, state_name[conn->state], conn->flags,
+                          conn->stage1_size,
+                          (conn->stage2_file)? conn->stage2_file->name: "-",
+                          (conn->stage2_file)? conn->stage2_file->size: 0,
+                          conn->cfg_offs, conn->burstrate,
+                          conn->mac_addr[0], conn->mac_addr[1],
+                          conn->mac_addr[2], conn->mac_addr[3],
+                          conn->mac_addr[4], conn->mac_addr[5]))
+        goto done;
 
     if ((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP)
         RTNET_PROC_PRINT("ip:\t\t\t%u.%u.%u.%u\n",
                          NIPQUAD(conn->addr.ip_addr));
 
+  done:
     RTNET_PROC_PRINT_DONE;
 }
 

@@ -2,7 +2,7 @@
         rtdm_driver.h - driver API header (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.1
+        Version:    0.5.3
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004 Jan Kiszka <jan.kiszka-at-web.de>
 

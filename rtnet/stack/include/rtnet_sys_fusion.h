@@ -3,7 +3,7 @@
  *  include/rtnet_sys_rai.h
  *
  *  RTnet - real-time networking subsystem
- *          RTOS abstraction layer - RTAI version
+ *          RTOS abstraction layer - RTAI/fusion version
  *
  *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
  *
@@ -23,27 +23,15 @@
  *
  */
 
-#ifndef __RTNET_SYS_RTAI_H_
-#define __RTNET_SYS_RTAI_H_
+#ifndef __RTNET_SYS_FUSION_H_
+#define __RTNET_SYS_FUSION_H_
 
-#include <linux/spinlock.h>
-
-#ifdef CONFIG_RTAI_24
-# define INTERFACE_TO_LINUX	/* makes RT_LINUX_PRIORITY visible */
-#endif
-
-#include <rtai.h>
-#include <rtai_sched.h>
-
-/* RTAI-3.x only headers */
-#ifdef HAVE_RTAI_MALLOC_H
-# include <rtai_malloc.h>
-#endif
-#ifdef HAVE_RTAI_SEM_H
-# include <rtai_sem.h>
-#endif
-#include <rtai_fifos.h>
-
+#include <nucleus/heap.h>
+#include <nucleus/pod.h>
+#include <rtai/task.h>
+#include <rtai/sem.h>
+#include <rtai/mutex.h>
+#include <rtai/pipe.h>
 
 /* basic types */
 typedef struct {
@@ -51,45 +39,44 @@ typedef struct {
 } rtos_time_t;
 typedef spinlock_t rtos_spinlock_t;   /* spin locks with hard IRQ locks */
 typedef RT_TASK    rtos_task_t;       /* hard real-time task */
-typedef SEM        rtos_event_t;      /* to signal events (non-storing) */
-typedef SEM        rtos_event_sem_t;  /* to signal events (storing) */
-typedef SEM        rtos_res_lock_t;   /* resource lock with prio inheritance*/
+typedef RT_SEM     rtos_event_t;      /* to signal events (non-storing) */
+typedef RT_SEM     rtos_event_sem_t;  /* to signal events (storing) */
+typedef RT_MUTEX   rtos_res_lock_t;   /* resource lock with prio inheritance */
 typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
-typedef struct {
-    int minor;
-} rtos_fifo_t;                        /* fifo descriptor */
+typedef RT_PIPE    rtos_fifo_t;       /* fifo descriptor */
 
-#define ALIGN_RTOS_TASK         16  /* RT_TASK requires 16-bytes alignment */
-
+#define ALIGN_RTOS_TASK   16  /* RT_TASK requires 16-bytes alignment */
+//#define NR_RT_CPUS        RTHAL_NR_CPUS
 
 
 /* print output messages */
-#define rtos_print              rt_printk
-
+#define rtos_print              printk
 
 
 /* time handling */
 static inline void rtos_get_time(rtos_time_t *time)
 {
-    time->val = rt_get_time();
+    time->val = rt_timer_read();
 }
 
 
 static inline void rtos_nanosecs_to_time(nanosecs_t nano, rtos_time_t *time)
 {
-    time->val = nano2count(nano);
+    time->val = (RTIME)rt_timer_ns2ticks((SRTIME)nano);
 }
 
 static inline nanosecs_t rtos_time_to_nanosecs(rtos_time_t *time)
 {
-    return (nanosecs_t)count2nano(time->val);
+    return (nanosecs_t)rt_timer_ticks2ns((SRTIME)time->val);
 }
 
 
 static inline void rtos_time_to_timeval(rtos_time_t *time,
                                         struct timeval *tval)
 {
-    count2timeval(time->val, tval);
+    tval->tv_sec = rthal_ulldiv(rt_timer_ticks2ns((SRTIME)time->val),
+                                1000000000, (unsigned long *)&tval->tv_usec);
+    tval->tv_usec /= 1000;
 }
 
 
@@ -116,42 +103,40 @@ static inline void rtos_time_diff(rtos_time_t *result,
 #define RTOS_SPIN_LOCK_UNLOCKED     SPIN_LOCK_UNLOCKED  /* init */
 #define rtos_spin_lock_init(lock)   spin_lock_init(lock)
 
-#define rtos_spin_lock(lock)        rt_spin_lock(lock)
-#define rtos_spin_unlock(lock)      rt_spin_unlock(lock)
+#define rtos_spin_lock(lock)        rthal_spin_lock(lock)
+#define rtos_spin_unlock(lock)      rthal_spin_unlock(lock)
 
 #define rtos_spin_lock_irqsave(lock, flags) \
-    flags = rt_spin_lock_irqsave(lock)
+    (flags) = rthal_spin_lock_irqsave(lock)
 #define rtos_spin_unlock_irqrestore(lock, flags) \
-    rt_spin_unlock_irqrestore(flags, lock)
+    rthal_spin_unlock_irqrestore(flags, lock)
 
-#define rtos_local_irqsave(flags)   hard_save_flags_and_cli(flags)
+#define rtos_local_irqsave(flags)   \
+    rthal_local_irq_save(flags)
 #define rtos_local_irqrestore(flags) \
-    hard_restore_flags(flags)
+    rthal_local_irq_restore(flags)
 
-#define rtos_saveflags(flags)       hard_save_flags(flags)
+#define rtos_saveflags(flags) \
+    rthal_local_irq_flags(flags)
 
 
 
 /* RT-tasks */
-#ifdef CONFIG_RTAI_24
-#define RTOS_LOWEST_RT_PRIORITY     RT_LOWEST_PRIORITY
-#define RTOS_LINUX_PRIORITY         RT_LINUX_PRIORITY
-#else
-#define RTOS_LOWEST_RT_PRIORITY     RT_SCHED_LOWEST_PRIORITY
-#define RTOS_LINUX_PRIORITY         RT_SCHED_LINUX_PRIORITY
-#endif
+#define RTOS_LOWEST_RT_PRIORITY     T_LOPRIO
 
 static inline int rtos_task_init(rtos_task_t *task, void (*task_proc)(int),
                                  int arg, int priority)
 {
     int ret;
 
-    ret = rt_task_init(task, task_proc, arg, 4096, priority, 0, NULL);
-    if (ret < 0)
+    ret = rt_task_create(task, NULL, 4096, priority, 0);
+
+    if (ret)
         return ret;
 
-    ret = rt_task_resume(task);
-    if (ret < 0)
+    ret = rt_task_start(task, (void (*)(void *))task_proc, (void *)arg);
+
+    if (ret)
         rt_task_delete(task);
 
     return ret;
@@ -163,12 +148,17 @@ static inline int rtos_task_init_periodic(rtos_task_t *task,
 {
     int ret;
 
-    ret = rt_task_init(task, task_proc, arg, 4096, priority, 0, NULL);
-    if (ret < 0)
+    ret = rt_task_create(task, NULL, 4096, priority, 0);
+
+    if (ret)
         return ret;
 
-    ret = rt_task_make_periodic(task, rt_get_time(), period->val);
-    if (ret < 0)
+    ret = rt_task_set_periodic(task, RT_TIME_INFINITE, period->val);
+
+    if (!ret)
+        ret = rt_task_start(task, (void (*)(void *))task_proc, (void *)arg);
+
+    if (ret)
         rt_task_delete(task);
 
     return ret;
@@ -178,7 +168,28 @@ static inline int rtos_task_init_suspended(rtos_task_t *task,
                                            void (*task_proc)(int),
                                            int arg, int priority)
 {
-    return rt_task_init(task, task_proc, arg, 4096, priority, 0, NULL);
+    int     ret;
+    spl_t   s;
+
+    ret = rt_task_create(task, NULL, 4096, priority, 0);
+
+    if (ret)
+        return ret;
+
+    xnpod_check_context(XNPOD_THREAD_CONTEXT);
+
+    xnlock_get_irqsave(&nklock, s);
+
+    xnpod_start_thread(&task->thread_base,
+                       XNSUSP,
+                       0,
+                       XNPOD_ALL_CPUS,
+                       (void (*)(void *))task_proc,
+                       (void *)arg);
+
+    xnlock_put_irqrestore(&nklock, s);
+
+    return ret;
 }
 
 static inline int rtos_task_resume(rtos_task_t *task)
@@ -193,55 +204,51 @@ static inline void rtos_task_delete(rtos_task_t *task)
 
 static inline int rtos_task_set_priority(rtos_task_t *task, int priority)
 {
-    return rt_change_prio(task, priority);
+    return rt_task_set_priority(task, priority);
 }
 
 #define CONFIG_RTOS_STARTSTOP_TIMER 1
 
 static inline int rtos_timer_start_oneshot(void)
 {
-    rt_set_oneshot_mode();
-    start_rt_timer(0);
-    return 0;
+    return rt_timer_start(RT_TIMER_ONESHOT);
 }
 
 static inline void rtos_timer_stop(void)
 {
-    stop_rt_timer();
+    rt_timer_stop();
 }
 
 #define rtos_task_wait_period()     rt_task_wait_period()
-#define rtos_busy_sleep(nanosecs)   rt_busy_sleep(nanosecs)
+#define rtos_busy_sleep(nanosecs)   rt_timer_spin(nanosecs)
 
 static inline void rtos_task_sleep_until(rtos_time_t *wakeup_time)
 {
-    rt_sleep_until(wakeup_time->val);
+    rt_task_sleep_until(wakeup_time->val);
 }
 
 
 static inline int rtos_in_rt_context(void)
 {
-    return (rt_whoami()->priority != RTOS_LINUX_PRIORITY);
+    return adp_current != adp_root; /* Ask Adeos. */
 }
 
 
 
 /* event signaling */
-#define RTOS_EVENT_TIMEOUT          SEM_TIMOUT
-#define RTOS_EVENT_ERROR(result)    ((result) == 0xFFFF /* SEM_ERR */)
+#define RTOS_EVENT_TIMEOUT          -ETIMEDOUT
+#define RTOS_EVENT_ERROR(result)    ((result) < 0)
 
 /* note: event is initially set to a non-signaled state */
 static inline int rtos_event_init(rtos_event_t *event)
 {
-    rt_typed_sem_init(event, 0, CNT_SEM);
-    return 0;
+    return rt_sem_create(event, NULL, 0, S_FIFO);
 }
 
 /* note: event is initially set to a non-signaled state */
 static inline int rtos_event_sem_init(rtos_event_sem_t *event)
 {
-    rt_typed_sem_init(event, 0, CNT_SEM);
-    return 0;
+    return rt_sem_create(event, NULL, 0, S_FIFO);
 }
 
 static inline void rtos_event_delete(rtos_event_t *event)
@@ -266,24 +273,24 @@ static inline void rtos_event_broadcast(rtos_event_t *event)
  *       listening */
 static inline void rtos_event_sem_signal(rtos_event_sem_t *event)
 {
-    rt_sem_signal(event);
+    rt_sem_v(event);
 }
 
 
 static inline int rtos_event_wait(rtos_event_sem_t *event)
 {
-    return rt_sem_wait(event);
+    return rt_sem_p(event, RT_TIME_INFINITE);
 }
 
 static inline int rtos_event_sem_wait(rtos_event_sem_t *event)
 {
-    return rt_sem_wait(event);
+    return rt_sem_p(event, RT_TIME_INFINITE);
 }
 
 static inline int rtos_event_sem_wait_timed(rtos_event_sem_t *event,
                                             rtos_time_t *timeout)
 {
-    return rt_sem_wait_timed(event, timeout->val);
+    return rt_sem_p(event, timeout->val);
 }
 
 
@@ -291,25 +298,23 @@ static inline int rtos_event_sem_wait_timed(rtos_event_sem_t *event,
 /* resource locks */
 static inline int rtos_res_lock_init(rtos_res_lock_t *lock)
 {
-    rt_typed_sem_init(lock, 1, RES_SEM);
-    return 0;
+    return rt_mutex_create(lock, NULL);
 }
 
 static inline int rtos_res_lock_delete(rtos_res_lock_t *lock)
 {
-    rt_sem_delete(lock);
-    return 0;
+    return rt_mutex_delete(lock);
 }
 
 
 static inline void rtos_res_lock(rtos_res_lock_t *lock)
 {
-    rt_sem_wait(lock);
+    rt_mutex_lock(lock);
 }
 
 static inline void rtos_res_unlock(rtos_res_lock_t *lock)
 {
-    rt_sem_signal(lock);
+    rt_mutex_unlock(lock);
 }
 
 
@@ -317,41 +322,51 @@ static inline void rtos_res_unlock(rtos_res_lock_t *lock)
 static inline int rtos_nrt_signal_init(rtos_nrt_signal_t *nrt_sig,
                                        void (*handler)(void))
 {
-    *nrt_sig = rt_request_srq(0, handler, 0);
+    *nrt_sig = adeos_alloc_irq();
+
+    if (*nrt_sig > 0)
+        adeos_virtualize_irq_from(adp_root,
+                                  *nrt_sig,
+                                  (void (*)(unsigned))handler,
+                                  NULL,
+                                  IPIPE_HANDLE_MASK);
+    else
+        *nrt_sig = -EBUSY;
+
     return *nrt_sig;
 }
 
 static inline void rtos_nrt_signal_delete(rtos_nrt_signal_t *nrt_sig)
 {
-    rt_free_srq(*nrt_sig);
+    adeos_free_irq(*nrt_sig);
 }
 
 
 static inline void rtos_pend_nrt_signal(rtos_nrt_signal_t *nrt_sig)
 {
-    rt_pend_linux_srq(*nrt_sig);
+    adeos_trigger_irq(*nrt_sig);
 }
+
 
 /* Fifo management */
 static inline int rtos_fifo_create(rtos_fifo_t *fifo, int minor, int size)
 {
-    fifo->minor = minor;
-    return rtf_create(minor, size);
+    return rt_pipe_open(fifo, minor);
 }
 
 static inline void rtos_fifo_destroy(rtos_fifo_t *fifo)
 {
-    rtf_destroy(fifo->minor);
+    rt_pipe_close(fifo);
 }
 
 static inline int rtos_fifo_put(rtos_fifo_t *fifo, void *buf, int size)
 {
-    return rtf_put(fifo->minor, buf, size);
+    return rt_pipe_stream(fifo,buf,size);
 }
 
 /* RT memory management */
-#define rtos_malloc(size)           rt_malloc(size)
-#define rtos_free(buffer)           rt_free(buffer)
+#define rtos_malloc(size)           xnmalloc(size) /* Ask the nucleus. */
+#define rtos_free(buffer)           xnfree(buffer)
 
 
 
@@ -359,46 +374,30 @@ static inline int rtos_fifo_put(rtos_fifo_t *fifo, void *buf, int size)
 static inline int rtos_irq_request(unsigned int irq,
     void (*handler)(unsigned int, void *), void *arg)
 {
-#if defined(CONFIG_ARCH_I386)
-    return rt_request_global_irq_ext(irq,
-        (void (*)(void))handler, (unsigned long)arg);
-#elif defined(CONFIG_ARCH_PPC)
-    return rt_request_global_irq_ext(irq,
-        (int (*)(unsigned int, unsigned long))handler, (unsigned long)arg);
-#else
-    #error Unsupported architecture.
-#endif
+    return rthal_request_irq(irq, handler, arg);
 }
 
 static inline int rtos_irq_free(unsigned int irq)
 {
-    return rt_free_global_irq(irq);
+    return rthal_release_irq(irq);
 }
 
 
-#define rtos_irq_enable(irq)        rt_enable_irq(irq)
-#define rtos_irq_disable(irq)       rt_disable_irq(irq)
-
-#if defined(CONFIG_ARCH_I386)
-# define rtos_irq_end(irq)       rt_enable_irq(irq)
-#elif defined(CONFIG_ARCH_PPC)
-# define rtos_irq_end(irq)       rt_unmask_irq(irq)
-#else
-# error Unsupported architecture.
-#endif
-
+#define rtos_irq_enable(irq)        rthal_enable_irq(irq)
+#define rtos_irq_disable(irq)       rthal_disable_irq(irq)
+#define rtos_irq_end(irq)           rthal_enable_irq(irq)
 
 static inline void rtos_irq_release_lock(void)
 {
-    rt_sched_lock();
-    hard_sti();
+    rt_task_set_mode(0,T_LOCK,NULL);
+    rthal_sti();
 }
 
 static inline void rtos_irq_reacquire_lock(void)
 {
-    hard_cli();
-    rt_sched_unlock();
+    rthal_cli();
+    rt_task_set_mode(T_LOCK,0,NULL);
 }
 
 
-#endif /* __RTNET_SYS_RTAI_H_ */
+#endif /* __RTNET_SYS_FUSION_H_ */

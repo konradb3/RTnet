@@ -75,8 +75,10 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
 
             if ((_IOC_NR(request) & RTNET_IOC_NODEV_PARAM) == 0) {
                 rtdev = rtdev_get_by_name(head.if_name);
-                if (!rtdev)
+                if (!rtdev) {
+                    atomic_dec(&ioctls->ref_count);
                     return -ENODEV;
+                }
             }
 
             ret = ioctls->handler(rtdev, request, arg);

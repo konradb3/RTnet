@@ -348,7 +348,7 @@ static inline int rt_wait_for_cmd_done(long cmd_ioaddr)
 	for (wait = 20; wait > 0; wait--) {
 		if (inb(cmd_ioaddr) == 0)
 			return 0;
-		rt_busy_sleep(1000);
+		rtos_busy_sleep(1000);
 	}
 #ifndef final_version
 	if (wait < 0)

@@ -194,7 +194,8 @@ static void rtpc_dispatch_handler(int arg)
 
 
     while (1) {
-        rtos_event_sem_wait(&dispatch_event);
+        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&dispatch_event)))
+            return;
 
         call = rtpc_dequeue_pending_call();
 
@@ -270,7 +271,7 @@ int __init rtpc_init(void)
 
 void rtpc_cleanup(void)
 {
-    rtos_task_delete(&dispatch_task);
     rtos_event_sem_delete(&dispatch_event);
+    rtos_task_delete(&dispatch_task);
     rtos_nrt_signal_delete(&rtpc_nrt_signal);
 }

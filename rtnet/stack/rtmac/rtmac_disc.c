@@ -248,17 +248,22 @@ int rtmac_proc_read_disc(char *buf, char **start, off_t offset, int count,
                          int *eof, void *data)
 {
     struct list_head    *disc;
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(80);
 
-
-    RTNET_PROC_PRINT("Name\t\tID\n");
 
     read_lock_bh(&disc_list_lock);
 
-    list_for_each(disc, &disc_list)
-        RTNET_PROC_PRINT("%-15s %04X\n", ((struct rtmac_disc *)disc)->name,
-                         ntohs(((struct rtmac_disc *)disc)->disc_type));
+    if (!RTNET_PROC_PRINT("Name\t\tID\n"))
+        goto done;
 
+    list_for_each(disc, &disc_list) {
+        if (!RTNET_PROC_PRINT("%-15s %04X\n",
+                              ((struct rtmac_disc *)disc)->name,
+                              ntohs(((struct rtmac_disc *)disc)->disc_type)))
+            break;
+    }
+
+  done:
     read_unlock_bh(&disc_list_lock);
 
     RTNET_PROC_PRINT_DONE;

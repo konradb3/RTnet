@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.7.1],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.8.0],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -815,9 +815,9 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 esac
 AC_MSG_RESULT([${CONFIG_NEWLXRT}])
 AM_CONDITIONAL(CONFIG_NEWLXRT,[test "$CONFIG_NEWLXRT" = "yes"])
-if test "$CONFIG_RTNET_RTAI_LXRT" = "yes"; then       #\
-   AC_DEFINE(CONFIG_RTNET_RTAI_LXRT, 1, [RTAI LXRT])  # > FIXME
-fi                                                    #/
+if test "$CONFIG_NEWLXRT" = "yes"; then
+   AC_DEFINE(CONFIG_NEWLXRT, 1, [RTAI LXRT])
+fi
 
 
 dnl ======================================================================

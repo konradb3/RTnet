@@ -53,7 +53,7 @@ MODULE_PARM_DESC(tdma_debug, "tdma debug level");
 int tdma_proc_read(char *buf, char **start, off_t offset, int count,
                    int *eof, void *data)
 {
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(80);
 
 
     RTNET_PROC_PRINT("todo\n");

@@ -51,25 +51,31 @@ struct proc_dir_entry *rtnet_proc_root;
 static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
                                    int count, int *eof, void *data)
 {
-    RTNET_PROC_PRINT_VARS;
     int i;
+    int res;
     struct rtnet_device *rtdev;
+    RTNET_PROC_PRINT_VARS(80);
 
 
-    RTNET_PROC_PRINT("Name\t\tFlags\n");
+    if (!RTNET_PROC_PRINT("Name\t\tFlags\n"))
+        goto done;
+
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
         rtdev = rtdev_get_by_index(i);
         if (rtdev != NULL) {
-            RTNET_PROC_PRINT("%-15s %s%s%s%s\n",
-                rtdev->name,
-                (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
-                (rtdev->flags & IFF_BROADCAST) ? " BROADCAST" : "",
-                (rtdev->flags & IFF_LOOPBACK) ? " LOOPBACK" : "",
-                (rtdev->flags & IFF_PROMISC) ? " PROMISC" : "");
+            res = RTNET_PROC_PRINT("%-15s %s%s%s%s\n",
+                            rtdev->name,
+                            (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
+                            (rtdev->flags & IFF_BROADCAST) ? " BROADCAST" : "",
+                            (rtdev->flags & IFF_LOOPBACK) ? " LOOPBACK" : "",
+                            (rtdev->flags & IFF_PROMISC) ? " PROMISC" : "");
             rtdev_dereference(rtdev);
+            if (!res)
+                break;
         }
     }
 
+  done:
     RTNET_PROC_PRINT_DONE;
 }
 
@@ -78,8 +84,8 @@ static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
 static int rtnet_read_proc_rtskb(char *buf, char **start, off_t offset, int count,
                                  int *eof, void *data)
 {
-    RTNET_PROC_PRINT_VARS;
     unsigned int rtskb_len;
+    RTNET_PROC_PRINT_VARS(256);
 
 
     rtskb_len = ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(RTSKB_SIZE);
@@ -119,7 +125,7 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
 #else
             "no\n";
 #endif
-    RTNET_PROC_PRINT_VARS;
+    RTNET_PROC_PRINT_VARS(256);
 
 
     RTNET_PROC_PRINT(verstr);
