@@ -1,4 +1,4 @@
-                             RTnet Version 0.6.2
+                             RTnet Version 0.7.0
                              ===================
 
 What is it?
@@ -30,12 +30,6 @@ How to install it?
    24.1.x version or the installation directory of a 3.x version. Some of the
    available options are:
        --enable-allpci          compiles all PCI NIC drivers
-       --enable-8139            compiles the RealTek driver
-       --enable-eepro100        compiles the EtherExpress driver
-       --enable-pcnet32         compiles the PCnet32 driver
-       --enable-tulip           compiles the DEC driver
-       --enable-via-rhine       compiles the VIA Rhine driver
-       --enable-natsemi         compiles the NatSemi driver
        --enable-fcc-enet        compiles the MPC8260 FCC driver
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
@@ -46,9 +40,9 @@ How to install it?
        --enable-router          enables IP forwarding (see README.routing)
        --disable-checks         does not compile internal bug checks
    <PREFIX> is the installation path prefix (see below). Default <PREFIX> is
-   /usr/local/rtnet. Further parameters are shown by ./configure --help. RTnet
-   can also be build out-of-tree, just run configure from a newly created
-   directory.
+   /usr/local/rtnet. The complete list of parameters is shown when calling
+   ./configure --help. RTnet can also be build out-of-tree, just run configure
+   from a newly created directory.
 6. make
 7. make install
    This will create the directories <PREFIX>/sbin with all configuration tools,
@@ -65,7 +59,7 @@ How to test it?
 2. Load required RTAI modules (24.1.x: rtai, rtai_sched; 3.x: rtai_hal,
    rtai_ksched/rtai_lxrt, rtai_sem)
 3. Copy tools/rtnet.conf to the target's /etc directories and adapt at least
-   the following paramters: RTNET_PATH, RT_DRIVER, IPADDR, TDMA_MODE,
+   the following parameters: RTNET_PATH, RT_DRIVER, IPADDR, TDMA_MODE,
    TDMA_CLIENTS.
 4. Run <RTNET_PATH>/sbin/rtnet start
 5. Run rtping <remote-host> or load an application module
