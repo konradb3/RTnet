@@ -2,9 +2,9 @@
         rtdm.c  - core driver layer module (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.3
+        Version:    0.6.0
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
-                    2004 Jan Kiszka <jan.kiszka-at-web.de>
+                    2004, 2005 Jan Kiszka <jan.kiszka-at-web.de>
 
  ***************************************************************************/
 
@@ -188,7 +188,7 @@ static struct proc_dir_entry *rtdm_proc_root; /* /proc/rtai/rtdm */
 static int get_name_hash(const char* str)
 {
     int key   = 0;
-    int limit = MAX_DEV_NAME_LENGTH;
+    int limit = RTDM_MAX_DEVNAME_LEN;
 
     while (*str != 0) {
         key += *str++;
@@ -763,11 +763,11 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 
 static int rtdm_open_lxrt(const char *path, int oflag)
 {
-    char    krnl_path[MAX_DEV_NAME_LENGTH + 1];
+    char    krnl_path[RTDM_MAX_DEVNAME_LEN + 1];
     int     ret;
 
 
-    ret = strncpy_from_user(krnl_path, path, MAX_DEV_NAME_LENGTH);
+    ret = strncpy_from_user(krnl_path, path, RTDM_MAX_DEVNAME_LEN);
     if (ret >= 0)
         ret = rtdm_open(RTDM_USER_MODE_CALL, krnl_path, oflag);
     return ret;
@@ -1262,7 +1262,7 @@ int init_module(void)
 #endif
 
 
-    printk("RTDM Version 0.5.3\n");
+    printk("RTDM Version 0.6.0\n");
 
     if (fildes_count > MAX_FILDES) {
         printk("RTDM: fildes_count exceeds %d\n", MAX_FILDES);

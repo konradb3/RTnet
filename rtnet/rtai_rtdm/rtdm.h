@@ -2,9 +2,9 @@
         rtdm.h - user API header (RTAI)
 
         Real Time Driver Model
-        Version:    0.5.3
+        Version:    0.6.0
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
-                    2004 Jan Kiszka <jan.kiszka-at-web.de>
+                    2004, 2005 Jan Kiszka <jan.kiszka-at-web.de>
 
  ***************************************************************************/
 
@@ -40,7 +40,7 @@ typedef size_t          socklen_t;
 #include <rtnet_config.h>
 
 
-#define MAX_DEV_NAME_LENGTH     31
+#define RTDM_MAX_DEVNAME_LEN    31
 
 
 #define RTDM_CLASS_PARPORT      1
@@ -58,7 +58,11 @@ typedef size_t          socklen_t;
 #define RTDM_CLASS_EXPERIMENTAL 224 /* up to 255 */
 
 
-/* Sub-classes: RTDM_CLASS_NETWORK */
+/* sub-classes: RTDM_CLASS_SERIAL */
+#define RTDM_SUBCLASS_16550A    0
+
+
+/* sub-classes: RTDM_CLASS_NETWORK */
 #define RTDM_SUBCLASS_RTNET     0
 
 
