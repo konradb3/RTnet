@@ -1550,7 +1550,7 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
 
                 skb = dev_alloc_rtskb (pkt_size + 2, &tp->skb_pool);
                 if (skb) {
-                        memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+                        memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
                         skb->rtdev = rtdev;
                         rtskb_reserve (skb, 2);        /* 16 byte align the IP fields. */
 
@@ -1702,7 +1702,7 @@ static void rtl8139_interrupt (unsigned int irq, void *rtdev_id)
                 RTL_W16 (IntrStatus, 0xffff);
         }
 
-        rtos_irq_enable(rtdev->irq);
+        rtos_irq_end(rtdev->irq);
         rtos_spin_unlock(&tp->lock);
 
         if (saved_status & RxAckBits) {

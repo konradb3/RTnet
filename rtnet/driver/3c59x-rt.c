@@ -2510,7 +2510,7 @@ static void vortex_interrupt(unsigned int irq, void *rtdev_id)
 		rtos_print(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
-	rtos_irq_enable(rtdev->irq);
+	rtos_irq_end(rtdev->irq);
 	rtos_spin_unlock(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
@@ -2650,7 +2650,7 @@ static void boomerang_interrupt(unsigned int irq, void *rtdev_id)
 		rtos_print(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
-	rtos_irq_enable(rtdev->irq);
+	rtos_irq_end(rtdev->irq);
 	rtos_spin_unlock(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
@@ -2708,7 +2708,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time
 				}
 				outw(RxDiscard, ioaddr + EL3_CMD); /* Pop top Rx packet. */
 				skb->protocol = rt_eth_type_trans(skb, rtdev);
-				memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+				memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 				rtnetif_rx(skb);
 				//rtdev->last_rx = jiffies;
 				vp->stats.rx_packets++;
@@ -2791,7 +2791,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
 				vp->rx_nocopy++;
 			}
 			skb->protocol = rt_eth_type_trans(skb, rtdev);
-			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 			{					/* Use hardware checksum info. */
 				int csum_bits = rx_status & 0xee000000;
 				if (csum_bits &&

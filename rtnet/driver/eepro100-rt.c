@@ -1740,7 +1740,7 @@ static void speedo_interrupt(unsigned int irq, void *rtdev_id)
 			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	clear_bit(0, (void*)&sp->in_interrupt);
-	rtos_irq_enable(irq);
+	rtos_irq_end(irq);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 	return;
@@ -1936,7 +1936,7 @@ speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 			}
 			skb->protocol = rt_eth_type_trans(skb, rtdev);
 			//rtmac
-			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 			//rtmac
 			rtnetif_rx(skb);
 			(*packets)++;

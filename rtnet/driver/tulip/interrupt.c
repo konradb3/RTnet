@@ -201,7 +201,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, rtos_time_t *time_stamp
 				tp->rx_buffers[entry].mapping = 0;
 			}
 			skb->protocol = /*RTnet*/rt_eth_type_trans(skb, rtdev);
-			memcpy(&skb->rx, time_stamp, sizeof(rtos_time_t));
+			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
 			/*RTnet*/rtnetif_rx(skb);
 
 			tp->stats.rx_packets++;
@@ -464,7 +464,7 @@ void tulip_interrupt(unsigned int irq, void *__data)
 	if (tulip_debug > 4)
 		/*RTnet*/rtos_print(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
 			   rtdev->name, inl(ioaddr + CSR5));
-	rtos_irq_enable(rtdev->irq);
+	rtos_irq_end(rtdev->irq);
 	if (rx)
 		rt_mark_stack_mgr(rtdev);
 	return;
