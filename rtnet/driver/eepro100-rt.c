@@ -1697,6 +1697,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 //comdbg_str("X\n\r");
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
+	rt_enable_irq(irq);
 	return;
 }
 
