@@ -170,6 +170,9 @@ static inline int new_rtskb(struct rtskb_head *pool)
         return -ENOMEM;
     }
 #else
+    /* exectional case, do not use rt_socket within real-time contexts when
+     * this variant is active!
+     */
     if ( !(skb = kmalloc(ALIGN_RTSKB_LEN + len, GFP_KERNEL)) ) {
         rt_printk("RTnet: rtskb allocation failed.\n");
         return -ENOMEM;
@@ -203,7 +206,11 @@ static inline void dispose_rtskb(struct rtskb *skb)
 {
     ASSERT(skb != NULL, return;);
 
+#ifndef CONFIG_RTNET_RTSKB_USE_KMALLOC
     rt_free(skb);
+#else
+    kfree(skb);
+#endif
     rtskb_amount--;
 }
 
