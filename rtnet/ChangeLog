@@ -1,3 +1,19 @@
+0.6.0
+- improved build system
+  * RTAI 3.0 support
+  * make install covers modules, tools, and API headers
+- Added support for NatSemi DP8381x NICs
+- separated TDMA discipline module
+- upgraded RTcfg setup to new rtcfg tool
+- improved rtifconfig
+- added generic getsockname implementation
+- introduced abstraction layer for the Linux RT extension
+- new internal services
+  * extensible IOCTL interface through a single misc device
+  * unified sychronous real-time procedure calls from Linux context
+- fixed route solicit IOCTL
+- as usual: fixed some minor bugs
+
 0.5.6
 - Added first version of RTcfg
 - improved loopback-rt throughput
