@@ -1,13 +1,12 @@
                      RTnet Configuration Service (RTcfg)
                      ===================================
 
-                                Revision: 1.4
+                                Revision: 1.6
 
 
-RTcfg is a configuration service for setting up an RTnet network and
-distributing additional user-defined configurations. It is an embedded part of
-the RTnet stack. This document describes the protocol and the user interface
-of RTcfg.
+RTcfg is a configuration service for setting up a RTnet network and
+distributing additional user-defined configuration data. This document
+describes the protocol and the user interface of RTcfg.
 
 
 
@@ -25,8 +24,11 @@ Configuration                                                   Existing
       |                                    | |   Set               |
       |                                    | | Config 1            |
       |                                    | |                     |
-      |         Announce (broadcast)       +-+                     |
-      | <---------------------------------- | -------------------> |
+      |                                    +-+                     |
+      .                                     .                      .
+      .                                     .                      .
+      |         Announce (broadcast)        |                      |
+      | <-----------------------------------|--------------------> |
      +-+                                    |                     +-+
      | |                                    |                     | |
      | |                                    |                     | | Update
@@ -44,12 +46,26 @@ Configuration                                                   Existing
       | ----------------------------------> |                      |
       |                                    +-+                     |
       |                                    | |                     |
-      |                                    | |   Set               |
+      |                                    | | Receive             |
       |                                    | | Config 2            |
       |                                    | |                     |
       |     Acknowledge Config (unicast)   +-+                     |
       |<----------------------------------- |                      |
       |                                     |                      |
+      |                                    +-+                     |
+      |                                    | |                     |
+      |                                    | | Process             |
+      |                                    | | Config 2            |
+      |                                    | |                     |
+      |                                    +-+                     |
+      .                                     .                      .
+      .                                     .                      .
+      |          Ready (broadcast)          |                      |
+      |<------------------------------------|--------------------->|
+      .                                     .                      .
+      .                                     .                      .
+      |          Ready (broadcast)          |                      |
+      |------------------------------------>|--------------------->|
       .                                     .                      .
       .                                     .                      .
       |         Heartbeat (unicast)         |                      |
@@ -105,18 +121,20 @@ Valid address types are:
    RTCFG_ADDR_IP   |   1   |                4
    <extensible>    |  ...  |               ...
 
-Stage 1 Configuration frames are sent as unicast when using physical client
-addresses (RTCFG_MAC). Otherwise, they are broadcasted to any station.
-
-The configuration data of the first stage typically consists of parameters (or
-even shell commands) which are required for the new client to become part of
-an RTmac-managed network. If no data is available for this stage (e.g. when
-RTmac is not used), the server sets the Configuration Length field to zero.
+Stage 1 Configuration frames are sent as unicast when either only physical
+client addresses are used (RTCFG_MAC), or when the linkage of physical and
+logical (e.g. RTCFG_ADDR_IP) address is known. In any other case the frames
+are broadcasted to all stations.
 
 The Stage 2 Burst Rate field specifies the number of stage 2 configuration
 frames the server is able to send without receiving an Acknowledge
 Configuration frame. See below for the handshake mechanism to determine the
 actual burst rate.
+
+The configuration data of the first stage typically consists of parameters (or
+even shell commands) which are required for the new client to become part of
+an RTmac-managed network. If no data is available for this stage (e.g. when
+RTmac is not used), the server sets the Configuration Length field to zero.
 
 
 
@@ -124,16 +142,16 @@ Announcement Frames
 -------------------
 
 New Announcement Frame:
- +----------+----------------+----------------+-------------+---------------+
- |  ID: 1   | Client Address | Client Address | Get Config. | Stage 2 Burst |
- | (1 byte) |  Type (1 byte) |   (variable)   |  (1 byte)   | Rate (1 byte) |
- +----------+----------------+----------------+-------------+---------------+
+ +----------+----------------+----------------+----------+---------------+
+ |  ID: 1   | Client Address | Client Address |  Flags   | Stage 2 Burst |
+ | (1 byte) |  Type (1 byte) |   (variable)   | (1 byte) | Rate (1 byte) |
+ +----------+----------------+----------------+----------+---------------+
 
 Reply Announcement Frame:
- +----------+----------------+----------------+
- |  ID: 2   | Client Address | Client Address |
- | (1 byte) |  Type (1 byte) |   (variable)   |
- +----------+----------------+----------------+
+ +----------+----------------+----------------+----------+---------------+
+ |  ID: 2   | Client Address | Client Address |  Flags   | Padding Field |
+ | (1 byte) |  Type (1 byte) |   (variable)   | (1 byte) |   (1 byte)    |
+ +----------+----------------+----------------+----------+---------------+
 
 See "Stage 1 Configuration Frame" for valid address types and lengths.
 
@@ -141,8 +159,13 @@ New Announcement frames are sent as broadcast so that every other client can
 update its ARP and routing table appropriately. In contrast, the Reply
 Announcement frame is sent directly to the new client.
 
-If the "Get Configuration" field is set to a non-zero value, the server starts
-sending the Stage 2 Configuration frames.
+Flags are encoded as follows:
+
+  Bit Number | Interpretation if set
+ ------------+---------------------------------------------------------------
+       0     | requests available stage 2 configuration data from the server
+       1     | client is ready (i.e. will not send an explicit Ready frame)
+      2-7    | <reserved>
 
 Furthermore, the client reports its own Stage 2 Burst Rate back to the server.
 The minimum of the server and the client value is selected as the actual burst
@@ -155,14 +178,14 @@ Stage 2 Configuration Frames
 ----------------------------
 
 Initial Frame:
- +----------+-----------------+------------------+----------------------+ - -
- |  ID: 3   | Active Clients  | Heartbeat Period | Configuration Length |
- | (1 byte) |    (4 bytes)    |    (2 bytes)     |      (4 bytes)       |
- +----------+-----------------+------------------+----------------------+ - -
-  - - +--------------------+
-      | Configuration Data |
-      |     (variable)     |
-  - - +--------------------+
+ +----------+----------+-----------------+------------------+ - -
+ |  ID: 3   |  Flags   | Active Stations | Heartbeat Period |
+ | (1 byte) | (1 byte) |    (4 bytes)    |    (2 bytes)     |
+ +----------+----------+-----------------+------------------+ - -
+  - - +----------------------+--------------------+
+      | Configuration Length | Configuration Data |
+      |      (4 bytes)       |     (variable)     |
+  - - +----------------------+--------------------+
 
 Subsequent Fragments:
  +----------+-----------------+--------------------+
@@ -174,13 +197,22 @@ The maximum length of a fragment is determined by the available MTU.
 
 Stage 2 Configuration frames are always sent as unicast.
 
-The Active Clients field contains the number of currently running stations
-excluding the server and the new client. This number is used be the client
-to detect when all other clients have sent their Reply Announcement frames.
+The Active Stations field contains the number of currently running stations,
+including the server, but excluding the new client. This number is used be the
+client to detect when all other clients have sent their Reply Announcement
+frames, and when all stations have reported to be ready.
 
 If the heartbeat mechanism shall be enabled on the new client, the Heartbeat
 Period field contains the client's period in milliseconds for sending Heartbeat
 frames. Otherwise it is set to zero.
+
+Flags are encoded as follows:
+
+  Bit Number | Interpretation if set
+ ------------+---------------------------------------------------------------
+       0     | <reserved
+       1     | server is ready (i.e. will not send an explicit Ready frame)
+      2-7    | <reserved>
 
 The second configuration stage can be used to distribute user-defined
 configurations, applications, etc. (e.g. by sending a tar archive). If no
@@ -210,11 +242,27 @@ specified offset.
 
 
 
+Ready Frame
+-----------
+
+ +----------+
+ |  ID: 6   |
+ | (1 byte) |
+ +----------+
+
+After a station has finished its setup procedures, it signals this state to all
+other stations by sending a Ready frame as broadcast. This allows the server
+and the clients to synchronise the completion of their configuration phase. The
+frame is not sent if the client has already set the Ready Bit in its New
+Announcement frame.
+
+
+
 Heartbeat Frame
 ---------------
 
  +----------+
- |  ID: 6   |
+ |  ID: 7   |
  | (1 byte) |
  +----------+
 
@@ -223,7 +271,7 @@ Stage 2 Configuration frame as unicast to the server.
 
 
 
-Tool Extensions
+Management Tool
 ===============
 
 The RTcfg server and client functionality is controlled by the new command
@@ -232,7 +280,8 @@ line tool rtcfg.
 Server Commands
 ---------------
 
-rtcfg <dev> server [-p period] [-b burstrate] [-h <heartbeat>] [-t <threshold>]
+rtcfg <dev> server [-p period] [-b burstrate] [-h <heartbeat>]
+      [-t <threshold>] [-r]
 
 Starts a RTcfg server for the specified device <dev>. The server then sends
 every 1000 ms stage 1 configuration frames to new clients. <period> (in
@@ -243,14 +292,21 @@ server should send as far as the client supports it (see also "announce").
 <heartbeat> specifies the Heartbeat period of the clients in milliseconds
 (default: 1000 ms), the value 0 turns the heartbeat mechanism off. <threshold>
 sets the number of missing heartbeats after which a client shall be considered
-dead (default: 2).
+dead (default: 2). If -r is given, the server automatically reports to be
+ready within its stage 1 configuration frame, thus disengading it from issuing
+an explicite "ready" command.
 
-rtcfg <dev> add <address> [-stage1 <stage1_file>] [-stage2 <stage2_file>]
+rtcfg <dev> add <address> [-hw <hw_address>] [-stage1 <stage1_file>]
+      [-stage2 <stage2_file>] [-t <timeout>]
 
 Adds a client to the server's list of potential participants of the network
 connected to the specified device <dev>. <address> can be either an IP address
-(A.B.C.D) or a physical address (AA:BB:CC:DD:EE:FF). Optionally, files can
-specified which will be passed during the different configuration stages.
+(A.B.C.D) or a physical address (AA:BB:CC:DD:EE:FF). If a physical address is
+explicitely assigned using <hw_address>, the <address> parameter must define
+the client's IP address. Optionally, files can specified which will be passed
+during the different configuration stages. <timeout> (in milliseconds) defines
+the internal timeout after which a half-finished client configuration is reset
+to its initial state again. By default this reset is never performed.
 
 rtcfg <dev> del <address>
 
@@ -259,37 +315,54 @@ about the address format.
 
 rtcfg <dev> wait [-t <timeout>]
 
-Waits until both configuration stages are completed for all clients in the
-server's list. If <timeout> (in milliseconds) is given, rtifconfig will return
-an error code when the configuration cannot be completed within the specified
-time. The default timeout is infinite.
+Waits until both configuration stages for all clients in the server's list are
+completed. If <timeout> (in milliseconds) is given, rtcfg will return an error
+code when the configuration cannot be completed within the specified time. The
+default timeout is infinite.
+
+rtcfg <dev> ready [-t <timeout>]
+
+Reports that the server has completed its setup, generally including the RTmac
+startup phase, and waits until all other stations are reporting to be ready as
+well. If <timeout> (in milliseconds) is given, rtcfg will return an error code
+when the synchronisation cannot be completed within the specified time. The
+default timeout is infinite.
 
 
 
 Client Commands
 ---------------
 
-rtcfg <dev> client [-t <timeout>] [-c|-f <stage1_file>] [-m maxclients]
+rtcfg <dev> client [-t <timeout>] [-c|-f <stage1_file>] [-m maxstations]
 
 Waits until the first configuration stage is completed for the device <dev>.
-If <timeout> (in milliseconds) is given, rtifconfig will return an error code
-when the configuration cannot be completed within the specified time. The
-default timeout is infinite. The incoming configuration data is either send to
-the standard output if -c is given or to <stage1_file> if specified. By default
-clients can synchronise with up to 32 other clients (not including the server).
-This limit can be modified using the <maxclients> parameter.
+If <timeout> (in milliseconds) is given, rtcfg will return an error code when
+the configuration cannot be completed within the specified time. The default
+timeout is infinite. The incoming configuration data is either send to the
+standard output if -c is given or to <stage1_file> if specified. By default
+clients can synchronise with up to 32 other stations (including the server).
+This limit can be modified using the <maxstations> parameter.
 
-rtcfg <dev> announce [-t <timeout>] [-c|-f <stage2_file>] [-b burstrate]
+rtcfg <dev> announce [-t <timeout>] [-c|-f <stage2_file>] [-b burstrate] [-r]
 
 Sends an New Announcement frame over the device <dev> and waits until this
 second configuration stage is completed. If <timeout> (in milliseconds) is
-given, rtifconfig will return an error code when the configuration cannot be
+given, rtcfg will return an error code when the configuration cannot be
 completed within the specified time. The default timeout is infinite. If -c or
 -f is given, stage 2 configuration data is requested and either send to the
 standard output or to <stage2_file>. <burstrate> controls the number of stage 2
-configuration fragments the client should accept. The actual amount is
-negotiated according to both the client's and the server's capability (see also
-"server").
+configuration fragments the client should accept (default: 4). The actual
+amount is negotiated according to both the client's and the server's capability
+(see also "server"). If -r is given, the client automatically reports to be
+ready within its announcement frame, thus disengading it from issuing an
+explicite "ready" command.
+
+rtcfg <dev> ready [-t <timeout>]
+
+Reports that the client has completed its setup and waits until all other
+stations are reporting to be ready as well. If <timeout> (in milliseconds) is
+given, rtcfg will return an error code when the synchronisation cannot be
+completed within the specified time. The default timeout is infinite.
 
 
 
@@ -297,7 +370,7 @@ Example
 -------
 
 This examples demonstrates how RTcfg can be used to start a RTnet/RTmac
-network. With the current version 0.5.0, only a common startup is possible.
+network. With the current version 0.6.1, only a common startup is possible.
 Future discipline implementations will also support adding new stations (with
 known addresses!) to the network during runtime. These implementation will
 then benefit from the stage 1 configuration mechanism.
@@ -316,22 +389,23 @@ rtifconfig rteth0 up $MYIP 255.255.255.0
 
 # setup the RTcfg server
 rtcfg rteth0 server
-rtcfg rteth0 add 192.168.0.2 -stage1 client2-1.sh client2-2.sh
-rtcfg rteth0 add 192.168.0.3 -stage1 client3-1.sh client3-2.sh
+rtcfg rteth0 add 192.168.0.2 -stage1 client2-1.sh -stage2 client2-2.sh
+rtcfg rteth0 add 192.168.0.3 -stage1 client3-1.sh -stage2 client3-2.sh
 [...]
 
-# wait for the configuration to complete
+# wait for the configuration to be completed
 rtcfg rteth0 wait
 
-# setup RTmac according to version 0.5.0 and earlier
-# (without the delays which are currently required, will be fixed soon)
+# setup RTmac according to version 0.6.1 and earlier
+# (with precautious delays)
 rtifconfig rteth0 mac master 2000
-rtifconfig rteth0 mac add 192.168.0.2
-rtifconfig rteth0 mac add 192.168.0.3
+rtifconfig rteth0 mac add 192.168.0.2 200
+rtifconfig rteth0 mac add 192.168.0.3 400
+sleep 5
 rtifconfig rteth0 mac up
-rtifconfig rteth0 mac offset 192.168.0.2 200
-rtifconfig rteth0 mac offset 192.168.0.2 300
+sleep 10
 
+rtcfg rteth0 ready
 echo "RTnet is running now."
 EOF
 
@@ -380,15 +454,16 @@ chmod u+x /tmp/my_stage1_config
 # announce myself and wait for the second stage
 rtcfg rteth0 announce -f /tmp/my_stage2_config
 
-# setup RTmac according to version 0.5.0 and earlier
+# setup RTmac according to version 0.6.1 and earlier
 rtifconfig rteth0 mac client
 
 # run the stage 2 script
 chmod u+x /tmp/my_stage2_config
 /tmp/my_stage2_config
 
+rtcfg rteth0 ready
 echo "RTnet is running now."
 EOF
 
 
-January 2004, Jan Kiszka <jan.kiszka-at-web.de>
+2003, 2004, Jan Kiszka <jan.kiszka-at-web.de>
