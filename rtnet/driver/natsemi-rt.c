@@ -1142,6 +1142,8 @@ static int netdev_open(struct rtnet_device *dev)
 	long ioaddr = dev->base_addr;
 	int i;
 
+	MOD_INC_USE_COUNT;
+
 	/* Reset the chip, just in case. */
 	natsemi_reset(dev);
 
@@ -1150,7 +1152,10 @@ static int netdev_open(struct rtnet_device *dev)
 	i = rt_request_global_irq_ext(dev->irq, (void (*)(void))intr_handler, (unsigned long)dev);
 /*** RTnet ***/
 //	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);
-	if (i) return i;
+	if (i) {
+		MOD_DEC_USE_COUNT;
+		return i;
+	}
 
 	if (netif_msg_ifup(np))
 		rt_printk(KERN_DEBUG "%s: netdev_open() irq %d.\n",
@@ -1158,6 +1163,7 @@ static int netdev_open(struct rtnet_device *dev)
 	i = alloc_ring(dev);
 	if (i < 0) {
 		rt_free_global_irq(dev->irq);
+		MOD_DEC_USE_COUNT;
 		return i;
 	}
 	init_ring(dev);
@@ -2647,23 +2653,23 @@ static int netdev_close(struct rtnet_device *dev)
 /*** RTnet ***
 	del_timer_sync(&np->timer);
  *** RTnet ***/
-	disable_irq(dev->irq);
+//	disable_irq(dev->irq);
+	rt_shutdown_irq(dev->irq);
 	rt_spin_lock_irq(&np->lock);
 	/* Disable interrupts, and flush posted writes */
 	writel(0, ioaddr + IntrEnable);
 	readl(ioaddr + IntrEnable);
 	np->hands_off = 1;
 	rt_spin_unlock_irq(&np->lock);
-	
+
 /*** RTnet ***/
-	rt_shutdown_irq(dev->irq);
 	if ( (i=rt_free_global_irq(dev->irq))<0 )
 		return i;
 
 	rt_stack_disconnect(dev);
 /*** RTnet ***/
-	
-	enable_irq(dev->irq);
+
+//	enable_irq(dev->irq);
 
 //	free_irq(dev->irq, dev);
 
@@ -2705,13 +2711,16 @@ static int netdev_close(struct rtnet_device *dev)
 			writel(np->SavedClkRun, ioaddr + ClkRun);
 		}
 	}
+
+	MOD_DEC_USE_COUNT;
+
 	return 0;
 }
 
 
 static void __devexit natsemi_remove1 (struct pci_dev *pdev)
 {
- 
+
  /*** RTnet ***/
 	struct rtnet_device *dev = pci_get_drvdata(pdev);
 	struct netdev_private *np = dev->priv;
@@ -2720,7 +2729,7 @@ static void __devexit natsemi_remove1 (struct pci_dev *pdev)
 	rt_rtdev_disconnect(dev);
 	rtskb_pool_release(&np->skb_pool);
 /*** RTnet ***/
-	
+
 	pci_release_regions (pdev);
 	iounmap ((char *) dev->base_addr);
 	rtdev_free(dev); /*** RTnet ***/
@@ -2764,7 +2773,7 @@ static int natsemi_suspend (struct pci_dev *pdev, u32 state)
 		del_timer_sync(&np->timer);
  *** RTnet ***/
 
-		disable_irq(dev->irq);
+		rt_disable_irq(dev->irq);
 		rt_spin_lock_irq(&np->lock);
 
 		writel(0, ioaddr + IntrEnable);
@@ -2773,7 +2782,7 @@ static int natsemi_suspend (struct pci_dev *pdev, u32 state)
 		rtnetif_stop_queue(dev);
 
 		rt_spin_unlock_irq(&np->lock);
-		enable_irq(dev->irq);
+		rt_enable_irq(dev->irq);
 
 		/* Update the error counts. */
 		__get_stats(dev);
@@ -2816,13 +2825,13 @@ static int natsemi_resume (struct pci_dev *pdev)
 
 		natsemi_reset(dev);
 		init_ring(dev);
-		disable_irq(dev->irq);
+		rt_disable_irq(dev->irq);
 		rt_spin_lock_irq(&np->lock);
 		np->hands_off = 0;
 		init_registers(dev);
 		rtnetif_device_attach(dev);
 		rt_spin_unlock_irq(&np->lock);
-		enable_irq(dev->irq);
+		rt_enable_irq(dev->irq);
 
 /*** RTnet ***
 		mod_timer(&np->timer, jiffies + 1*HZ);
