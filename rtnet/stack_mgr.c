@@ -108,40 +108,30 @@ int rtdev_remove_pack(struct rtpacket_type *pt)
 
 
 /***
- *  rt_mark_stack_mgr
- *
- */
-void rt_mark_stack_mgr(struct rtnet_device *rtdev)
-{
-    rtos_event_signal(rtdev->stack_event);
-}
-
-
-
-/***
- *  rtnetif_rx: will be called from the driver
- *  and send a message to rtdev-owned stack-manager
+ *  rtnetif_rx: will be called from the driver interrupt handler
+ *  (IRQs disabled!) and send a message to rtdev-owned stack-manager
  *
  *  @skb - the packet
  */
 void rtnetif_rx(struct rtskb *skb)
 {
     struct rtnet_device *rtdev;
-    unsigned long flags;
 
 
     RTNET_ASSERT(skb != NULL, return;);
     RTNET_ASSERT(skb->rtdev != NULL, return;);
-    rtdev = skb->rtdev;
 
-    rtos_spin_lock_irqsave(&rxqueue.lock, flags);
+    rtdev = skb->rtdev;
+    rtdev_reference(rtdev);
+
+    rtos_spin_lock(&rxqueue.lock);
     if (rtdev->rxqueue_len < DROPPING_RTSKB) {
         rtdev->rxqueue_len++;
         __rtskb_queue_tail(&rxqueue, skb);
-        rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+        rtos_spin_unlock(&rxqueue.lock);
     }
     else {
-        rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+        rtos_spin_unlock(&rxqueue.lock);
         rtos_print("RTnet: dropping packet in %s()\n", __FUNCTION__);
         kfree_rtskb(skb);
     }
@@ -172,6 +162,7 @@ static void do_stacktask(int mgr_id)
     unsigned short          hash;
     struct rtpacket_type    *pt;
     unsigned long           flags;
+    struct rtnet_device     *rtdev;
 
 
     rtos_print("RTnet: stack-mgr started\n");
@@ -186,8 +177,11 @@ static void do_stacktask(int mgr_id)
                 rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
                 break;
             }
-            skb->rtdev->rxqueue_len--;
+            rtdev = skb->rtdev;
+            rtdev->rxqueue_len--;
             rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+
+            rtcap_report_incoming(skb);
 
             skb->nh.raw = skb->data;
 
@@ -209,9 +203,14 @@ static void do_stacktask(int mgr_id)
             } else {
                 rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
 
-                rtos_print("RTnet: unknown layer-3 protocol\n");
+                /* don't warn if running in promiscuous mode (RTcap...?) */
+                if ((rtdev->flags & IFF_PROMISC) == 0)
+                    rtos_print("RTnet: unknown layer-3 protocol\n");
+
                 kfree_rtskb(skb);
             }
+
+            rtdev_dereference(rtdev);
         }
     }
 }
@@ -241,11 +240,6 @@ void rt_stack_disconnect (struct rtnet_device *rtdev)
  */
 int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 {
-    int i;
-
-
-    for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
-
     rtskb_queue_init(&rxqueue);
 
     rtos_event_init(&mgr->event);
