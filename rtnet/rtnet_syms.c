@@ -3,7 +3,7 @@
  *
  * Copyright (C) 1999      Lineo, Inc
  *               1999,2002 David A. Schleef <ds@schleef.org>
- *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>		 
+ *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@
 EXPORT_SYMBOL(rt_inet_aton);
 
 
-/****************************************************************************************
- * socket.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * socket.c                                                                 *
+ ****************************************************************************/
 EXPORT_SYMBOL(rt_socket_lookup);
 EXPORT_SYMBOL(rt_socket_callback);
 EXPORT_SYMBOL(rt_socket);
@@ -55,7 +55,7 @@ EXPORT_SYMBOL(rt_socket_recvfrom);
 EXPORT_SYMBOL(rt_socket_sendmsg);
 EXPORT_SYMBOL(rt_socket_recvmsg);
 EXPORT_SYMBOL(rt_socket_getsockname);
-EXPORT_SYMBOL(rt_ip_setsockopt);
+EXPORT_SYMBOL(rt_socket_setsockopt);
 
 EXPORT_SYMBOL(rt_ssocket);
 EXPORT_SYMBOL(rt_ssocket_bind);
@@ -74,26 +74,26 @@ EXPORT_SYMBOL(rt_ssocket_recvmsg);
 EXPORT_SYMBOL(rt_ssocket_getsockname);
 EXPORT_SYMBOL(rt_ssocket_callback);
 
-/****************************************************************************************
- * stack_mgr.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * stack_mgr.c                                                              *
+ ****************************************************************************/
 EXPORT_SYMBOL(rtnetif_rx);
 EXPORT_SYMBOL(rt_mark_stack_mgr);
 EXPORT_SYMBOL(rtnetif_tx);
 EXPORT_SYMBOL(rt_stack_connect);
 EXPORT_SYMBOL(rt_stack_disconnect);
 
-/****************************************************************************************
- * rtdev_mgr.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * rtdev_mgr.c                                                              *
+ ****************************************************************************/
 EXPORT_SYMBOL(rtnetif_err_rx);
 EXPORT_SYMBOL(rtnetif_err_tx);
 EXPORT_SYMBOL(rt_rtdev_connect);
 EXPORT_SYMBOL(rt_rtdev_disconnect);
 
-/****************************************************************************************
- * rtdev.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * rtdev.c                                                                  *
+ ****************************************************************************/
 EXPORT_SYMBOL(rtdev_alloc_name);
 EXPORT_SYMBOL(rtdev_alloc);
 EXPORT_SYMBOL(rtdev_free);
@@ -106,9 +106,9 @@ EXPORT_SYMBOL(rtdev_remove_pack);
 EXPORT_SYMBOL(rtdev_xmit);
 EXPORT_SYMBOL(rtdev_xmit_proxy);
 
-/****************************************************************************************
- * rtnet_init.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * rtnet_init.c                                                             *
+ ****************************************************************************/
 EXPORT_SYMBOL(rt_alloc_etherdev);
 EXPORT_SYMBOL(rt_register_rtnetdev);
 EXPORT_SYMBOL(rt_unregister_rtnetdev);
@@ -116,29 +116,29 @@ EXPORT_SYMBOL(STACK_manager);
 EXPORT_SYMBOL(RTDEV_manager);
 
 
-/****************************************************************************************
- * ethernet/eth.c									*
- ****************************************************************************************/
+/****************************************************************************
+ * ethernet/eth.c                                                           *
+ ****************************************************************************/
 EXPORT_SYMBOL(rt_eth_header);
 EXPORT_SYMBOL(rt_eth_type_trans);
 
 
-/****************************************************************************************
- * ipv4         									*
- ****************************************************************************************/
+/****************************************************************************
+ * ipv4                                                                     *
+ ****************************************************************************/
 EXPORT_SYMBOL(rt_ip_route_output);
 EXPORT_SYMBOL(rt_ip_register_fallback);
 
-/****************************************************************************************
- * ipv4/arp.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * ipv4/arp.c                                                               *
+ ****************************************************************************/
 EXPORT_SYMBOL(rt_arp_table_lookup);
 EXPORT_SYMBOL(rt_rarp_table_lookup);
 EXPORT_SYMBOL(rt_arp_solicit);
 
-/****************************************************************************************
- * rtskb.c										*
- ****************************************************************************************/
+/****************************************************************************
+ * rtskb.c                                                                  *
+ ****************************************************************************/
 EXPORT_SYMBOL(rtskb_dequeue);
 EXPORT_SYMBOL(rtskb_queue_tail);
 EXPORT_SYMBOL(rtskb_queue_head_init);
@@ -154,3 +154,6 @@ EXPORT_SYMBOL(rtskb_under_panic);
 EXPORT_SYMBOL(alloc_rtskb);
 EXPORT_SYMBOL(kfree_rtskb);
 
+EXPORT_SYMBOL(rtskb_pool_init);
+EXPORT_SYMBOL(rtskb_pool_release);
+EXPORT_SYMBOL(global_pool);
