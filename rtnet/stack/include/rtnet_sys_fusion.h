@@ -46,7 +46,6 @@ typedef int        rtos_nrt_signal_t; /* async signal to non-RT world */
 typedef RT_PIPE    rtos_fifo_t;       /* fifo descriptor */
 
 #define ALIGN_RTOS_TASK   16  /* RT_TASK requires 16-bytes alignment */
-//#define NR_RT_CPUS        RTHAL_NR_CPUS
 
 
 /* print output messages */
@@ -56,7 +55,7 @@ typedef RT_PIPE    rtos_fifo_t;       /* fifo descriptor */
 /* time handling */
 static inline void rtos_get_time(rtos_time_t *time)
 {
-    time->val = rt_timer_read();
+    time->val = rt_timer_tsc();
 }
 
 
