@@ -1613,7 +1613,7 @@ static void drain_tx(struct rtnet_device *dev)
 	for (i = 0; i < TX_RING_SIZE; i++) {
 		if (np->tx_skbuff[i]) {
 			pci_unmap_single(np->pci_dev,
-				np->rx_dma[i], np->rx_skbuff[i]->len,
+				np->rx_dma[i], np->tx_skbuff[i]->len,
 				PCI_DMA_TODEVICE);
 			dev_kfree_rtskb(np->tx_skbuff[i]);
 			np->stats.tx_dropped++;
