@@ -153,12 +153,15 @@ struct rtskb {
     struct rtskb        *next;      /* used for queuing rtskbs */
     struct rtskb        *chain_end; /* marks the end of a rtskb chain starting
                                        with this very rtskb */
+
     struct rtskb_queue  *pool;      /* owning pool */
 
     unsigned int        priority;
 
     struct rtsocket     *sk;        /* assigned socket */
     struct rtnet_device *rtdev;     /* source or destination device */
+
+    rtos_time_t         time_stamp; /* arrival or transmission (RTcap) time */
 
     /* transport layer */
     union
@@ -191,17 +194,20 @@ struct rtskb {
     unsigned char       ip_summed;
     unsigned int        csum;
 
-    struct rt_rtable    *dst;
-
-    unsigned int        len;
-
-    unsigned char       *buf_start;
-    unsigned char       *buf_end;
+    struct rt_rtable    *dst; /* to-do: remove! */
 
     unsigned char       *data;
     unsigned char       *tail;
     unsigned char       *end;
-    rtos_time_t         time_stamp; /* arrival or transmission (RTcap) time */
+    unsigned int        len;
+
+    unsigned char       *buf_start;
+
+#ifdef CONFIG_RTNET_CHECKED
+    unsigned char       *buf_end;
+
+    int                 chain_len;
+#endif
 
 #ifdef CONFIG_RTNET_RTCAP
     int                 cap_flags;  /* see RTSKB_CAP_xxx                    */
