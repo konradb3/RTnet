@@ -306,15 +306,17 @@ int rtdev_xmit(struct rtskb *skb)
 	int ret =0;
 	struct rtnet_device *rtdev = skb->rtdev;
 
-	rt_sem_wait(&skb->rtdev->txsem);
+	if (rtdev) {
+		rt_sem_wait(&rtdev->txsem);
 
-	if (rtdev && rtdev->hard_start_xmit) {
-		ret=rtdev->hard_start_xmit(skb, rtdev);
+		if (rtdev->hard_start_xmit) {
+			ret=rtdev->hard_start_xmit(skb, rtdev);
+			if (ret) 
+				rt_printk("xmit returned %d not 0\n",ret);
+		}
+
+		rt_sem_signal(&rtdev->txsem);
 	}
-	if (ret) 
-		rt_printk("xmit returned %d not 0\n",ret);
-
-	rt_sem_signal(&skb->rtdev->txsem);
 
 	return (ret);
 }
