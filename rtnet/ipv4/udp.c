@@ -85,7 +85,7 @@ unsigned short rt_udp_good_port(void)
 /***
  *  rt_udp_v4_lookup
  */
-struct rtsocket *rt_udp_v4_lookup(u16 sport, u32 daddr, u16 dport)
+struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
 {
     struct rtsocket *sk;
 
@@ -93,8 +93,8 @@ struct rtsocket *rt_udp_v4_lookup(u16 sport, u32 daddr, u16 dport)
 
     for (sk = udp_sockets; sk != NULL; sk = sk->next)
         if ((sk->prot.inet.sport == dport) &&
-            ((sk->prot.inet.daddr == INADDR_ANY) ||
-             (sk->prot.inet.daddr == daddr))) {
+            ((sk->prot.inet.saddr == INADDR_ANY) ||
+             (sk->prot.inet.saddr == daddr))) {
             rt_socket_reference(sk);
             break;
         }
@@ -478,7 +478,7 @@ struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
         skb->csum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
 
     /* find the destination socket */
-    skb->sk = rt_udp_v4_lookup(uh->source, daddr, uh->dest);
+    skb->sk = rt_udp_v4_lookup(daddr, uh->dest);
 
     return skb->sk;
 }
