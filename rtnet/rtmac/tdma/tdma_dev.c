@@ -58,7 +58,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context, int call_flags,
             if (call_flags & RTDM_NRT_CALL)
                 return -EACCES;
 
-            if ((*(int *)arg != RTMAC_WAIT_ON_DEFAULT) ||
+            if ((*(int *)arg != RTMAC_WAIT_ON_DEFAULT) &&
                 (*(int *)arg != TDMA_WAIT_ON_SOF))
                 return -EINVAL;
 
