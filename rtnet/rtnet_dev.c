@@ -57,14 +57,12 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	case IOC_RT_IFUP:
 		ret = rtdev_open(rtdev);				// = 0, if dev already up
 		if( ret == 0 ) {
-			if( rtdev->local_addr != cfg.ip_addr ) {
-				rt_ip_route_del(rtdev); /* cleanup routing table */
+			rt_ip_route_del(rtdev); /* cleanup routing table */
 
-				rtdev->local_addr = cfg.ip_addr;
-				rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
-				rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
-				rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
-			}
+			rtdev->local_addr = cfg.ip_addr;
+			rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
+			rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
+			rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
 		}
 		return ret;
 
@@ -79,9 +77,10 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 			return -ENOTTY;
 		}
 		rt_ip_route_del(rtdev);
+		rt_arp_table_del(rtdev->local_addr);
 		rtdev_close(rtdev);
 		return 0;
-		
+
 	case IOC_RT_ROUTE_SOLICIT:
 		rt_arp_solicit(rtdev,cfg.ip_addr);
 		return 0;
