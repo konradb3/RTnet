@@ -29,6 +29,9 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 
+#define INTERFACE_TO_LINUX  /* makes RT_LINUX_PRIORITY visible */
+#include <rtai_sched.h>
+
 #include <rtnet.h>
 #include <rtnet_internal.h>
 #include <rtnet_iovec.h>
@@ -76,7 +79,14 @@ SOCKET *rt_socket_alloc(void)
 
     rt_sem_init(&sock->wakeup_sem, 0);
 
-    if (rtskb_pool_init(&sock->skb_pool, socket_rtskbs) < socket_rtskbs) {
+    /* detect if running in Linux context */
+    if (rt_whoami()->priority == RT_LINUX_PRIORITY)
+        sock->pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
+    else {
+        sock->rt_pool = 1;
+        sock->pool_size = rtskb_pool_init_rt(&sock->skb_pool, socket_rtskbs);
+    }
+    if (sock->pool_size < socket_rtskbs) {
         rt_socket_release(sock);
         return NULL;
     }
@@ -89,12 +99,24 @@ SOCKET *rt_socket_alloc(void)
 /***
  *  rt_socket_release
  */
-void rt_socket_release(SOCKET *sock)
+int rt_socket_release(SOCKET *sock)
 {
     unsigned long flags;
+    unsigned int rtskbs = sock->pool_size;
 
-    rtskb_pool_release(&sock->skb_pool);
     rt_sem_delete(&sock->wakeup_sem);
+
+    if (sock->rt_pool) {
+        rtskbs = rtskb_pool_shrink_rt(&sock->skb_pool, rtskbs);
+        if ((sock->pool_size -= rtskbs) > 0)
+            return -EAGAIN;
+        rtskb_pool_release_rt(&sock->skb_pool);
+    } else {
+        rtskbs = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
+        if ((sock->pool_size -= rtskbs) > 0)
+            return -EAGAIN;
+        rtskb_pool_release(&sock->skb_pool);
+    }
 
     memset(sock, 0, sizeof(SOCKET));
 
@@ -104,6 +126,8 @@ void rt_socket_release(SOCKET *sock)
     free_rtsockets = sock;
 
     rt_spin_unlock_irqrestore(flags, &socket_base_lock);
+
+    return 0;
 }
 
 
@@ -169,7 +193,7 @@ int rt_socket(int family, int type, int protocol)
     /* create the socket (call the socket creator) */
     if  (rt_inet_protocols[hash]) {
         int s;
-        s = rt_inet_protocols[hash]->socket(sock);
+        s = rt_inet_protocols[hash]->init_socket(sock);
 
         /* This is the right place to check if sock->ops is not NULL. */
         if (NULL == sock->ops) {
@@ -262,8 +286,7 @@ int rt_socket_close(int s)
         return -ENOTSOCK;
 
     sock->ops->close(sock,0);
-    rt_socket_release(sock);
-    return 0;
+    return rt_socket_release(sock);
 }
 
 
@@ -456,13 +479,23 @@ int rt_socket_setsockopt(int s, int level, int optname, const void *optval,
 
         switch (optname) {
             case RT_SO_EXTPOOL:
-                ret = rtskb_pool_extend(&sock->skb_pool,
-                                        *(unsigned int *)optval);
+                if (sock->rt_pool)
+                    ret = rtskb_pool_extend_rt(&sock->skb_pool,
+                                               *(unsigned int *)optval);
+                else
+                    ret = rtskb_pool_extend(&sock->skb_pool,
+                                            *(unsigned int *)optval);
+                sock->pool_size += ret;
                 break;
 
             case RT_SO_SHRPOOL:
-                ret = rtskb_pool_shrink(&sock->skb_pool,
-                                        *(unsigned int *)optval);
+                if (sock->rt_pool)
+                    ret = rtskb_pool_shrink_rt(&sock->skb_pool,
+                                               *(unsigned int *)optval);
+                else
+                    ret = rtskb_pool_shrink(&sock->skb_pool,
+                                            *(unsigned int *)optval);
+                sock->pool_size -= ret;
                 break;
 
             case RT_SO_PRIORITY:
@@ -530,7 +563,8 @@ int rt_ssocket(SOCKET* socket, int family, int type, int protocol)
             hash = rt_inet_hashkey(protocol);
 
         /* create the socket (call the socket creator) */
-        if  ((rt_inet_protocols[hash]) && (rt_inet_protocols[hash]->socket(socket) > 0))
+        if ((rt_inet_protocols[hash]) &&
+            (rt_inet_protocols[hash]->init_socket(socket) > 0))
             return 0;
         else {
             rt_printk("RTnet: protocol with id %d not found\n", protocol);
@@ -835,19 +869,19 @@ void rtsockets_init(void)
     rt_sockets[0].prev=NULL;
     rt_sockets[0].next=&rt_sockets[1];
     rt_sockets[0].state=TCP_CLOSE;
-    rtskb_queue_head_init(&rt_sockets[0].incoming);
+    rtskb_queue_init(&rt_sockets[0].incoming);
 
     /* initialise the last socket */
     rt_sockets[RT_SOCKETS-1].prev=&rt_sockets[RT_SOCKETS-2];
     rt_sockets[RT_SOCKETS-1].next=NULL;
     rt_sockets[RT_SOCKETS-1].state=TCP_CLOSE;
-    rtskb_queue_head_init(&rt_sockets[RT_SOCKETS-1].incoming);
+    rtskb_queue_init(&rt_sockets[RT_SOCKETS-1].incoming);
 
     for (i=1; i<RT_SOCKETS-1; i++) {
         rt_sockets[i].next=&rt_sockets[i+1];
         rt_sockets[i].prev=&rt_sockets[i-1];
         rt_sockets[i].state=TCP_CLOSE;
-        rtskb_queue_head_init(&rt_sockets[i].incoming);
+        rtskb_queue_init(&rt_sockets[i].incoming);
     }
     free_rtsockets=&rt_sockets[0];
 }

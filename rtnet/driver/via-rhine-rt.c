@@ -540,7 +540,7 @@ struct netdev_private {
 	struct mii_if_info mii_if;
 	unsigned int mii_if_force_media; /*** RTnet, support for older kernels (e.g. 2.4.19) ***/
 
-	struct rtskb_head skb_pool; /*** RTnet ***/
+	struct rtskb_queue skb_pool; /*** RTnet ***/
 };
 
 /*** RTnet ***/
@@ -993,7 +993,7 @@ static void alloc_rbufs(struct rtnet_device *dev) /*** RTnet ***/
 		skb->rtdev = dev; /*** RTnet ***/
 
 		np->rx_skbuff_dma[i] =
-			pci_map_single(np->pdev, RTSKB_KVA(skb, skb->tail), np->rx_buf_sz,
+			pci_map_single(np->pdev, skb->tail, np->rx_buf_sz,
 						   PCI_DMA_FROMDEVICE);
 
 		np->rx_ring[i].addr = cpu_to_le32(np->rx_skbuff_dma[i]);
@@ -1350,7 +1350,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 										  (np->tx_buf[entry] - np->tx_bufs));
 	} else {
 		np->tx_skbuff_dma[entry] =
-			pci_map_single(np->pdev, RTSKB_KVA(skb, skb->data), skb->len, PCI_DMA_TODEVICE);
+			pci_map_single(np->pdev, skb->data, skb->len, PCI_DMA_TODEVICE);
 		np->tx_ring[entry].addr = cpu_to_le32(np->tx_skbuff_dma[entry]);
 	}
 
@@ -1646,7 +1646,7 @@ static void via_rhine_rx(struct rtnet_device *dev) /*** RTnet ***/
 				break;			/* Better luck next round. */
 			skb->rtdev = dev; /*** RTnet ***/
 			np->rx_skbuff_dma[entry] =
-				pci_map_single(np->pdev, RTSKB_KVA(skb, skb->tail), np->rx_buf_sz,
+				pci_map_single(np->pdev, skb->tail, np->rx_buf_sz,
 							   PCI_DMA_FROMDEVICE);
 			np->rx_ring[entry].addr = cpu_to_le32(np->rx_skbuff_dma[entry]);
 		}

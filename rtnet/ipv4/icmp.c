@@ -331,6 +331,16 @@ static struct rt_icmp_control rt_icmp_pointers[NR_ICMP_TYPES+1] =
 
 
 /***
+ *  rt_icmp_get_pool
+ */
+struct rtskb_queue *rt_icmp_get_pool(struct rtskb *skb)
+{
+    return &reply_socket.skb_pool;
+}
+
+
+
+/***
  *  rt_icmp_rcv
  */
 int rt_icmp_rcv(struct rtskb *skb)
@@ -389,9 +399,10 @@ void rt_icmp_rcv_err(struct rtskb *skb)
  */
 static struct rtinet_protocol icmp_protocol = {
     protocol:       IPPROTO_ICMP,
-    handler:        &rt_icmp_rcv,
+    get_pool:       &rt_icmp_get_pool,
+    rcv_handler:    &rt_icmp_rcv,
     err_handler:    &rt_icmp_rcv_err,
-    socket:         &rt_icmp_socket,
+    init_socket:    &rt_icmp_socket
 };
 
 
@@ -406,6 +417,8 @@ void rt_icmp_init(void)
     reply_socket.protocol = IPPROTO_ICMP;
     reply_socket.tos      = 0;
     reply_socket.priority = RT_ICMP_REPLY_PRIO;
+
+    /* create the rtskb pool */
     skbs = rtskb_pool_init(&reply_socket.skb_pool, ICMP_REPLY_POOL_SIZE);
     if (skbs < ICMP_REPLY_POOL_SIZE)
         rt_printk("RTnet: allocated only %d icmp rtskbs\n", skbs);

@@ -69,8 +69,11 @@ struct rtsocket {
 
     struct rtsocket_ops *ops;
 
-    struct rtskb_head   skb_pool;
-    struct rtskb_head   incoming;
+    struct rtskb_queue  skb_pool;
+    int                 rt_pool;
+    unsigned int        pool_size;
+
+    struct rtskb_queue  incoming;
 
     unsigned int        flags;      /* see RT_SOCK_xxx defines  */
     RTIME               timeout;    /* receive timeout, 0 for infinite */
@@ -94,7 +97,7 @@ extern void rtsockets_init(void);
 extern void rtsockets_release(void);
 
 extern SOCKET *rt_socket_alloc(void);
-extern void rt_socket_release(SOCKET *sock);
+extern int rt_socket_release(SOCKET *sock);
 
 
 #endif  /* __KERNEL__ */

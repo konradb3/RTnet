@@ -24,14 +24,15 @@
 #ifdef __KERNEL__
 
 #include <linux/socket.h>
+#include <net/ip.h>
 
 
 /* socket option names */
-#define RT_SO_EXTPOOL   0xFF01
-#define RT_SO_SHRPOOL   0xFF02
-#define RT_SO_PRIORITY  0xFF03
-#define RT_SO_NONBLOCK  0xFF04
-#define RT_SO_TIMEOUT   0xFF05
+#define RT_SO_EXTPOOL       0xFF01
+#define RT_SO_SHRPOOL       0xFF02
+#define RT_SO_PRIORITY      0xFF03
+#define RT_SO_NONBLOCK      0xFF04
+#define RT_SO_TIMEOUT       0xFF05
 
 /* socket priorities */
 #define SOCK_MAX_PRIO   QUEUE_MAX_PRIO
@@ -83,7 +84,9 @@ extern int rt_socket_setsockopt (int s, int level, int optname,
 #define rt_accept               rt_socket_accept
 #define rt_close                rt_socket_close
 #define rt_sendto               rt_socket_sendto
+#define rt_sendmsg              rt_socket_sendmsg
 #define rt_recvfrom             rt_socket_recvfrom
+#define rt_recvmsg              rt_socket_recvmsg
 #define rt_setsockopt           rt_socket_setsockopt
 
 /* static interface (does anyone actually use it???) */

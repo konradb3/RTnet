@@ -1549,8 +1549,8 @@ fi
 
 
 # Define the identity of the package.
- PACKAGE=RTnet
- VERSION=0.2.10
+ PACKAGE=rtnet
+ VERSION=0.5.1
 
 
 # Some tools Automake needs.
@@ -4772,25 +4772,6 @@ KERNEL_CFLAGS=-I$RTAI_LINUX_DIR/include
 
 
 
-if test \! -r ${RTAI_DIR}/.config; then
-	{ { echo "$as_me:$LINENO: error: *** $RTAI_DIR is not configured" >&5
-echo "$as_me: error: *** $RTAI_DIR is not configured" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-echo "$as_me:$LINENO: checking $RTAI_DIR/.config" >&5
-echo $ECHO_N "checking $RTAI_DIR/.config... $ECHO_C" >&6
-. $RTAI_DIR/.config
-echo "$as_me:$LINENO: result: done" >&5
-echo "${ECHO_T}done" >&6
-
-if test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
-	CFLAGS="${CFLAGS} -DCONFIG_RTAI_MM_VMALLOC"
-fi
-
-
-
-
 echo "$as_me:$LINENO: checking whether to build 3Com 59x driver" >&5
 echo $ECHO_N "checking whether to build 3Com 59x driver... $ECHO_C" >&6
 # Check whether --enable-3c59x or --disable-3c59x was given.
@@ -5032,7 +5013,7 @@ fi
 
 
 
-                                                                                                                                                                                              ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/rtt/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/examples/Makefile rtmac/examples/event/Makefile rtmac/examples/mrtt/Makefile rtmac/examples/rtt/Makefile"
+                                                                                                                                                                                                        ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/rtt/Makefile examples/frag_ip/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/examples/Makefile rtmac/examples/event/Makefile rtmac/examples/mrtt/Makefile rtmac/examples/rtt/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5666,6 +5647,7 @@ do
   "examples/rtnet_lxrt/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtnet_lxrt/Makefile" ;;
   "examples/rtskb_alloc/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtskb_alloc/Makefile" ;;
   "examples/rtt/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtt/Makefile" ;;
+  "examples/frag_ip/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/frag_ip/Makefile" ;;
   "driver/Makefile" ) CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
   "driver/tulip/Makefile" ) CONFIG_FILES="$CONFIG_FILES driver/tulip/Makefile" ;;
   "ethernet/Makefile" ) CONFIG_FILES="$CONFIG_FILES ethernet/Makefile" ;;

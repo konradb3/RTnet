@@ -25,20 +25,19 @@
 #include <rtskb.h>
 
 
+#define MAX_RT_INET_PROTOCOLS   32
+
 /***
- * transport-layer-protocol 
+ * transport layer protocol
  */
-#define MAX_RT_INET_PROTOCOLS	32
 struct rtinet_protocol {
-	char			*name;
-	unsigned short		protocol;
+    char                *name;
+    unsigned short      protocol;
 
-	int			(*handler)    (struct rtskb *);
-	void			(*err_handler)(struct rtskb *);
-	int			(*socket)
-				(struct rtsocket *sock);
-
-	void			*private;
+    struct rtskb_queue  *(*get_pool)(struct rtskb *);
+    int                 (*rcv_handler)(struct rtskb *);
+    void                (*err_handler)(struct rtskb *);
+    int                 (*init_socket)(struct rtsocket *sock);
 };
 
 

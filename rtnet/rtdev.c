@@ -271,7 +271,7 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
     /* ensure 32-byte alignment of the private area */
     alloc_size = sizeof (*rtdev) + sizeof_priv + 31;
 
-    rtdev = (struct rtnet_device *) kmalloc (alloc_size, GFP_KERNEL);
+    rtdev = (struct rtnet_device *)kmalloc(alloc_size, GFP_KERNEL);
     if (rtdev == NULL) {
         printk(KERN_ERR "RTnet: cannot allocate rtnet device\n");
         return NULL;
@@ -285,9 +285,9 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
     rtdev->add_rtskbs = rtskb_pool_extend(&global_pool, device_rtskbs);
 
     if (sizeof_priv)
-        rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
+        rtdev->priv = (void *)(((long)(rtdev + 1) + 31) & ~31);
 
-    rt_printk("rtdev: allocated and initialized\n");
+    printk("rtdev: allocated and initialized\n");
 
     return rtdev;
 }

@@ -4,7 +4,7 @@
  * Copyright (C) 1999      Lineo, Inc
  *               1999,2002 David A. Schleef <ds@schleef.org>
  *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -139,21 +139,17 @@ EXPORT_SYMBOL(rt_arp_solicit);
 /****************************************************************************
  * rtskb.c                                                                  *
  ****************************************************************************/
-EXPORT_SYMBOL(rtskb_dequeue);
-EXPORT_SYMBOL(rtskb_queue_tail);
-EXPORT_SYMBOL(rtskb_queue_head_init);
-EXPORT_SYMBOL(rtskb_queue_empty);
-EXPORT_SYMBOL(rtskb_queue_purge);
-EXPORT_SYMBOL(rtskb_queue_len);
-
 EXPORT_SYMBOL(rtskb_copy_and_csum_bits);
 EXPORT_SYMBOL(rtskb_copy_and_csum_dev);
 
 EXPORT_SYMBOL(rtskb_over_panic);
 EXPORT_SYMBOL(rtskb_under_panic);
+
 EXPORT_SYMBOL(alloc_rtskb);
 EXPORT_SYMBOL(kfree_rtskb);
 
 EXPORT_SYMBOL(rtskb_pool_init);
 EXPORT_SYMBOL(rtskb_pool_release);
 EXPORT_SYMBOL(global_pool);
+
+EXPORT_SYMBOL(rtskb_acquire);

@@ -28,40 +28,6 @@
 static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
 
 
-static inline int rt_ip_local_deliver_finish(struct rtskb *skb)
-{
-    int ihl  = skb->nh.iph->ihl*4;
-    int hash = rt_inet_hashkey(skb->nh.iph->protocol);
-    int ret  = 0;
-
-    struct rtinet_protocol *ipprot = rt_inet_protocols[hash];
-
-    __rtskb_pull(skb, ihl);
-
-    /* Point into the IP datagram, just past the header. */
-    skb->h.raw = skb->data;
-
-    if ( ipprot )
-        ret = ipprot->handler(skb);
-    else {
-        /* If a fallback handler for IP protocol has been installed,
-         * call it! */
-        if (ip_fallback_handler) {
-            ret = ip_fallback_handler(skb);
-            if (ret) {
-                rt_printk("RTnet: fallback handler failed\n");
-            }
-        } else {
-            rt_printk("RTnet: no protocol found\n");
-            kfree_rtskb(skb);
-        }
-    }
-
-    return ret;
-}
-
-
-
 /* This function can be used to register a fallback handler for incoming
  * ip frames. Typically this is done to move over to the standard linux
  * ip protocol (e.g. for handling TCP).
@@ -81,15 +47,55 @@ int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
  */
 static inline int rt_ip_local_deliver(struct rtskb *skb)
 {
-    /*
-     *  Reassemble IP fragments.
-     */
-    if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
-        skb = rt_ip_defrag(skb);
-        if (!skb)
-            return 0;
+    struct iphdr *iph       = skb->nh.iph;
+    unsigned short protocol = iph->protocol;
+    struct rtinet_protocol *ipprot;
+    struct rtskb_queue *cmppool;
+    int ret;
+
+
+    ipprot = rt_inet_protocols[rt_inet_hashkey(protocol)];
+
+    /* Check if we are supporting the protocol */
+    if ((ipprot != NULL) && (ipprot->protocol == protocol))
+    {
+        __rtskb_pull(skb, iph->ihl*4);
+
+        /* Point into the IP datagram, just past the header. */
+        skb->h.raw = skb->data;
+
+        /* Reassemble IP fragments */
+        if (iph->frag_off & htons(IP_MF|IP_OFFSET)) {
+            skb = rt_ip_defrag(skb, ipprot);
+            if (!skb)
+                return 0;
+        } else {
+            /* Acquire the rtskb at the expense of the protocol pool */
+            cmppool = ipprot->get_pool(skb);
+            if ((cmppool == NULL) || (rtskb_acquire(skb, cmppool) != 0)) {
+                kfree_rtskb(skb);
+                return 0;
+            }
+        }
+
+        /* deliver the packet to the next layer*/
+        ret = ipprot->rcv_handler(skb);
+    } else {
+        /* If a fallback handler for IP protocol has been installed,
+         * call it! */
+        if (ip_fallback_handler) {
+            ret = ip_fallback_handler(skb);
+            if (ret) {
+                rt_printk("RTnet: fallback handler failed\n");
+            }
+        } else {
+            rt_printk("RTnet: no protocol found\n");
+            kfree_rtskb(skb);
+            ret = 0;
+        }
     }
-    return rt_ip_local_deliver_finish(skb);
+
+    return ret;
 }
 
 
@@ -100,6 +106,7 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
 int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 {
     struct iphdr *iph;
+    __u32 len;
 
     /* When the interface is in promisc. mode, drop all the crap
      * that it receives, do not try to analyse it.
@@ -125,13 +132,11 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     if ( ip_fast_csum((u8 *)iph, iph->ihl)!=0 )
         goto drop;
 
-    {
-        __u32 len = ntohs(iph->tot_len);
-        if ( (skb->len<len) || (len<((__u32)iph->ihl<<2)) )
-            goto drop;
+    len = ntohs(iph->tot_len);
+    if ( (skb->len<len) || (len<((__u32)iph->ihl<<2)) )
+        goto drop;
 
-        rtskb_trim(skb, len);
-    }
+    rtskb_trim(skb, len);
 
     if (skb->dst == NULL)
         if ( rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) )

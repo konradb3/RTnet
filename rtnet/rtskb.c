@@ -29,33 +29,28 @@
 #include <rtnet_internal.h>
 #include <rtskb.h>
 
-static unsigned int global_rtskbs = DEFAULT_GLOBAL_RTSKBS;
-static unsigned int rtskb_max_size = DEFAULT_MAX_RTSKB_SIZE;
+static unsigned int global_rtskbs    = DEFAULT_GLOBAL_RTSKBS;
+static unsigned int rtskb_cache_size = DEFAULT_RTSKB_CACHE_SIZE;
 MODULE_PARM(global_rtskbs, "i");
-MODULE_PARM(rtskb_max_size, "i");
+MODULE_PARM(rtskb_cache_size, "i");
 MODULE_PARM_DESC(global_rtskbs, "Number of realtime socket buffers in global pool");
-MODULE_PARM_DESC(rtskb_max_size, "Maximum size of an rtskb block (relevant for IP fragmentation)");
+MODULE_PARM_DESC(rtskb_cache_size, "Number of cached rtskbs for creating pools in real-time");
 
-/**
- *  global pool
- */
-struct rtskb_head global_pool;
 
-/**
- *  statistics
- */
+/* Linux slab pool for rtskbs */
+kmem_cache_t *rtskb_slab_pool;
+
+/* preallocated rtskbs for real-time pool creation */
+struct rtskb_queue rtskb_cache;
+
+/* pool of rtskbs for global use */
+struct rtskb_queue global_pool;
+
+/* pool statistics */
 static unsigned int rtskb_pools=0;
 static unsigned int rtskb_pools_max=0;
 static unsigned int rtskb_amount=0;
 static unsigned int rtskb_amount_max=0;
-
-
-
-#ifdef CONFIG_RTAI_MM_VMALLOC
-    #define ALIGN_RTSKB_BUF     SKB_DATA_ALIGN(sizeof(struct rtskb))
-#else
-    #define ALIGN_RTSKB_BUF     ALIGN_RTSKB_STRUCT_LEN
-#endif
 
 
 
@@ -158,80 +153,16 @@ void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
 
 
 /***
- *  new_rtskb - get a new rtskb from the memory manager
- *  @pool: pool to assign the rtskb to
- */
-static inline int new_rtskb(struct rtskb_head *pool)
-{
-    struct rtskb *skb;
-    unsigned int len = SKB_DATA_ALIGN(rtskb_max_size);
-
-
-    ASSERT(pool != NULL, return -EINVAL;);
-
-    if ( !(skb = rt_malloc(ALIGN_RTSKB_STRUCT_LEN + len)) ) {
-        rt_printk("RTnet: rtskb allocation failed.\n");
-        return -ENOMEM;
-    }
-
-    /* fill the header with zero */
-    memset(skb, 0, sizeof(struct rtskb));
-
-#ifdef CONFIG_RTAI_MM_VMALLOC
-    /* align buffer start so that it fits into a single page */
-    skb->buf_start = ((char *)skb) + ALIGN_RTSKB_BUF;
-    if (((unsigned long)skb->buf_start & (PAGE_SIZE-1)) +
-        DEFAULT_MAX_RTSKB_SIZE > PAGE_SIZE)
-        skb->buf_start =
-            (unsigned char*)(((unsigned long)skb->buf_start & ~(PAGE_SIZE-1)) +
-            PAGE_SIZE);
-
-    /* calculate logical buffer page address */
-    skb->buf_page_addr = page_address(vmalloc_to_page(skb->buf_start));
-#else
-    skb->buf_start = ((char *)skb) + ALIGN_RTSKB_BUF;
-#endif
-
-    skb->pool = pool;
-    skb->buf_len = len;
-    skb->buf_end = skb->buf_start+len-1;
-
-    rtskb_queue_tail(pool, skb);
-
-    rtskb_amount++;
-    if (rtskb_amount > rtskb_amount_max)
-        rtskb_amount_max = rtskb_amount;
-
-    return 0;
-}
-
-
-
-/***
- *  dispose_rtskb - free the memory of an rtskb
- *  @skb: buffer to dispose
- */
-static inline void dispose_rtskb(struct rtskb *skb)
-{
-    ASSERT(skb != NULL, return;);
-
-    rt_free(skb);
-    rtskb_amount--;
-}
-
-
-
-/***
  *  alloc_rtskb - allocate an rtskb from a pool
  *  @size: required buffer size (to check against maximum boundary)
  *  @pool: pool to take the rtskb from
  */
-struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_head *pool)
+struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
 {
     struct rtskb *skb;
 
 
-    ASSERT(size <= rtskb_max_size, return NULL;);
+    ASSERT(size <= SKB_DATA_ALIGN(RTSKB_SIZE), return NULL;);
 
     skb = rtskb_dequeue(pool);
     if (!skb)
@@ -242,7 +173,8 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_head *pool)
     skb->tail = skb->buf_start;
     skb->end  = skb->buf_start + size;
 
-    /* Set up other state */
+    /* Set up other states */
+    skb->chain_end = skb;
     skb->len = 0;
     skb->data_len = 0;
 
@@ -271,16 +203,38 @@ void kfree_rtskb(struct rtskb *skb)
  *  @initial_size: number of rtskbs to allocate
  *  return: number of actually allocated rtskbs
  */
-unsigned int rtskb_pool_init(struct rtskb_head *pool, unsigned int initial_size)
+unsigned int rtskb_pool_init(struct rtskb_queue *pool,
+                             unsigned int initial_size)
 {
     unsigned int i;
 
-    rtskb_queue_head_init(pool);
+    rtskb_queue_init(pool);
 
-    for (i = 0; i < initial_size; i++) {
-        if (new_rtskb(pool) != 0)
-            break;
-    }
+    i = rtskb_pool_extend(pool, initial_size);
+
+    rtskb_pools++;
+    if (rtskb_pools > rtskb_pools_max)
+        rtskb_pools_max = rtskb_pools;
+
+    return i;
+}
+
+
+
+/***
+ *  rtskb_pool_init_rt
+ *  @pool: pool to be initialized
+ *  @initial_size: number of rtskbs to allocate
+ *  return: number of actually allocated rtskbs
+ */
+unsigned int rtskb_pool_init_rt(struct rtskb_queue *pool,
+                                unsigned int initial_size)
+{
+    unsigned int i;
+
+    rtskb_queue_init(pool);
+
+    i = rtskb_pool_extend_rt(pool, initial_size);
 
     rtskb_pools++;
     if (rtskb_pools > rtskb_pools_max)
@@ -295,26 +249,68 @@ unsigned int rtskb_pool_init(struct rtskb_head *pool, unsigned int initial_size)
  *  rtskb_pool_release
  *  @pool: pool to release
  */
-void rtskb_pool_release(struct rtskb_head *pool)
+void rtskb_pool_release(struct rtskb_queue *pool)
 {
     struct rtskb *skb;
 
-    while ( (skb = rtskb_dequeue(pool)) != NULL )
-        dispose_rtskb(skb);
+    while ((skb = rtskb_dequeue(pool)) != NULL) {
+        kmem_cache_free(rtskb_slab_pool, skb);
+        rtskb_amount--;
+    }
 
     rtskb_pools--;
 }
 
 
 
-unsigned int rtskb_pool_extend(struct rtskb_head *pool,
+/***
+ *  rtskb_pool_release_rt
+ *  @pool: pool to release
+ */
+void rtskb_pool_release_rt(struct rtskb_queue *pool)
+{
+    struct rtskb *skb;
+
+    while ((skb = rtskb_dequeue(pool)) != NULL) {
+        skb->chain_end = skb;
+        rtskb_queue_tail(&rtskb_cache, skb);
+        rtskb_amount--;
+    }
+
+    rtskb_pools--;
+}
+
+
+
+unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
                                unsigned int add_rtskbs)
 {
     unsigned int i;
+    struct rtskb *skb;
+
+    ASSERT(pool != NULL, return -EINVAL;);
 
     for (i = 0; i < add_rtskbs; i++) {
-        if (new_rtskb(pool) != 0)
+        /* get rtskb from slab pool */
+        if (!(skb = kmem_cache_alloc(rtskb_slab_pool, GFP_KERNEL))) {
+            printk(KERN_ERR "RTnet: rtskb allocation from slab pool failed\n");
             break;
+        }
+
+        /* fill the header with zero */
+        memset(skb, 0, sizeof(struct rtskb));
+
+        skb->chain_end = skb;
+        skb->pool = pool;
+        skb->buf_start = ((char *)skb) + ALIGN_RTSKB_STRUCT_LEN;
+        skb->buf_end = skb->buf_start + SKB_DATA_ALIGN(RTSKB_SIZE) - 1;
+        skb->buf_len = SKB_DATA_ALIGN(RTSKB_SIZE);
+
+        rtskb_queue_tail(pool, skb);
+
+        rtskb_amount++;
+        if (rtskb_amount > rtskb_amount_max)
+            rtskb_amount_max = rtskb_amount;
     }
 
     return i;
@@ -322,16 +318,49 @@ unsigned int rtskb_pool_extend(struct rtskb_head *pool,
 
 
 
-unsigned int rtskb_pool_shrink(struct rtskb_head *pool,
+unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
+                                  unsigned int add_rtskbs)
+{
+    unsigned int i;
+    struct rtskb *skb;
+
+    ASSERT(pool != NULL, return -EINVAL;);
+
+    for (i = 0; i < add_rtskbs; i++) {
+        /* get rtskb from rtskb cache */
+        if (!(skb = rtskb_dequeue(&rtskb_cache))) {
+            rt_printk("RTnet: rtskb allocation from real-time cache failed\n");
+            break;
+        }
+
+        /* most of the initialization has been done upon cache creation */
+        skb->chain_end = skb;
+        skb->pool = pool;
+
+        rtskb_queue_tail(pool, skb);
+
+        rtskb_amount++;
+        if (rtskb_amount > rtskb_amount_max)
+            rtskb_amount_max = rtskb_amount;
+    }
+
+    return i;
+}
+
+
+
+unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
                                unsigned int rem_rtskbs)
 {
     unsigned int i;
     struct rtskb *skb;
 
     for (i = 0; i < rem_rtskbs; i++) {
-        if ( (skb = rtskb_dequeue(pool)) == NULL)
+        if ((skb = rtskb_dequeue(pool)) == NULL)
             break;
-        dispose_rtskb(skb);
+
+        kmem_cache_free(rtskb_slab_pool, skb);
+        rtskb_amount--;
     }
 
     return i;
@@ -339,15 +368,88 @@ unsigned int rtskb_pool_shrink(struct rtskb_head *pool,
 
 
 
-int rtskb_global_pool_init(void)
+unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
+                                  unsigned int rem_rtskbs)
 {
-    if (rtskb_max_size < DEFAULT_MAX_RTSKB_SIZE)
-        return -EINVAL;
+    unsigned int i;
+    struct rtskb *skb;
 
-    if (rtskb_pool_init(&global_pool, global_rtskbs) < global_rtskbs) {
-        rtskb_pool_release(&global_pool);
-        return -ENOMEM;
+    for (i = 0; i < rem_rtskbs; i++) {
+        if ((skb = rtskb_dequeue(pool)) == NULL)
+            break;
+        skb->chain_end = skb;
+
+        rtskb_queue_tail(&rtskb_cache, skb);
+        rtskb_amount--;
     }
 
+    return i;
+}
+
+
+
+/* Note: acquires only the first skb of a chain! */
+int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
+{
+    struct rtskb *comp_rtskb;
+
+    comp_rtskb = rtskb_dequeue(comp_pool);
+
+    if (!comp_rtskb)
+        return -ENOMEM;
+
+    comp_rtskb->chain_end = comp_rtskb;
+    comp_rtskb->pool = rtskb->pool;
+    rtskb_queue_tail(comp_rtskb->pool, comp_rtskb);
+    rtskb->pool = comp_pool;
+
     return 0;
+}
+
+
+
+int rtskb_pools_init(void)
+{
+    rtskb_slab_pool = kmem_cache_create("rtskb_slab_pool",
+        ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(RTSKB_SIZE),
+        0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+    if (rtskb_slab_pool == NULL)
+        return -ENOMEM;
+
+    /* create the rtskb cache like a normal pool */
+    if (rtskb_pool_init(&rtskb_cache, rtskb_cache_size) < rtskb_cache_size)
+        goto err_out1;
+
+    /* reset the statistics (cache is accounted separately) */
+    rtskb_pools      = 0;
+    rtskb_pools_max  = 0;
+    rtskb_amount     = 0;
+    rtskb_amount_max = 0;
+
+    /* create the global rtskb pool */
+    if (rtskb_pool_init(&global_pool, global_rtskbs) < global_rtskbs)
+        goto err_out2;
+
+    return 0;
+
+err_out2:
+    rtskb_pool_release(&global_pool);
+    rtskb_pool_release(&rtskb_cache);
+
+err_out1:
+    kmem_cache_destroy(rtskb_slab_pool);
+
+    return -ENOMEM;
+}
+
+
+
+void rtskb_pools_release(void)
+{
+    rtskb_pool_release(&global_pool);
+    rtskb_pool_release(&rtskb_cache);
+
+    if (kmem_cache_destroy(rtskb_slab_pool) != 0)
+        printk(KERN_CRIT "RTnet: rtskb memory leakage detected "
+               "- reboot required!\n");
 }

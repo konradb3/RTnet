@@ -340,7 +340,7 @@ struct ring_info {
 struct tulip_private {
 	const char *product_name;
 	/*RTnet*/struct rtnet_device *next_module;
-	/*RTnet*/struct rtskb_head skb_pool;
+	/*RTnet*/struct rtskb_queue skb_pool;
 	struct tulip_rx_desc *rx_ring;
 	struct tulip_tx_desc *tx_ring;
 	dma_addr_t rx_ring_dma;

@@ -792,7 +792,7 @@ struct vortex_private {
     // *** RTnet ***
 	struct rtskb *tx_skbuff[TX_RING_SIZE];
 	struct rtskb *rx_skbuff[RX_RING_SIZE];
-	struct rtskb_head skb_pool;
+	struct rtskb_queue skb_pool;
 	// *** RTnet ***
 
 	struct rtnet_device *next_module;		/* NULL if PCI device */
@@ -1917,7 +1917,7 @@ vortex_open(struct rtnet_device *rtdev)
 			skb->rtdev = rtdev;		/* Mark as being used by this device. */
 			rtskb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
 			vp->rx_ring[i].addr = cpu_to_le32(pci_map_single(vp->pdev,
-				RTSKB_KVA(skb, skb->tail), PKT_BUF_SZ, PCI_DMA_FROMDEVICE));
+				skb->tail, PKT_BUF_SZ, PCI_DMA_FROMDEVICE));
             // *** RTnet ***
 		}
 		if (i != RX_RING_SIZE) {
@@ -2254,7 +2254,7 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	if (vp->bus_master) {
 		/* Set the bus-master controller to transfer the packet. */
 		int len = (skb->len + 3) & ~3;
-		outl(	vp->tx_skb_dma = pci_map_single(vp->pdev, RTSKB_KVA(skb, skb->data), // *** RTnet ***
+		outl(	vp->tx_skb_dma = pci_map_single(vp->pdev, skb->data,
 				len, PCI_DMA_TODEVICE),
 				ioaddr + Wn7_MasterAddr);
 		outw(len, ioaddr + Wn7_MasterLen);
@@ -2343,15 +2343,13 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
         }
 		vp->tx_ring[entry].frag[0].addr = cpu_to_le32(pci_map_single(vp->pdev,
-										RTSKB_KVA(skb, skb->data), // *** RTnet ***
-										skb->len, PCI_DMA_TODEVICE));
+										skb->data, skb->len, PCI_DMA_TODEVICE));
 		vp->tx_ring[entry].frag[0].length = cpu_to_le32(skb->len | LAST_FRAG);
 	} else {
 		int i;
 
 		vp->tx_ring[entry].frag[0].addr = cpu_to_le32(pci_map_single(vp->pdev,
-										RTSKB_KVA(skb, skb->data), // *** RTnet ***
-										skb->len-skb->data_len, PCI_DMA_TODEVICE));
+										skb->data, skb->len-skb->data_len, PCI_DMA_TODEVICE));
 		vp->tx_ring[entry].frag[0].length = cpu_to_le32(skb->len-skb->data_len);
 
 		for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
@@ -2370,7 +2368,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	}
 #else
 	vp->tx_ring[entry].addr = cpu_to_le32(pci_map_single(vp->pdev,
-		RTSKB_KVA(skb, skb->data), skb->len, PCI_DMA_TODEVICE)); // *** RTnet ***
+		skb->data, skb->len, PCI_DMA_TODEVICE));
 	vp->tx_ring[entry].length = cpu_to_le32(skb->len | LAST_FRAG);
 	vp->tx_ring[entry].status = cpu_to_le32(skb->len | TxIntrUploaded);
 #endif
@@ -2691,7 +2689,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 				if (vp->bus_master &&
 					! (inw(ioaddr + Wn7_MasterStatus) & 0x8000)) {
 					dma_addr_t dma = pci_map_single(vp->pdev,
-									   RTSKB_KVA(skb, rtskb_put(skb, pkt_len)), // *** RTnet ***
+									   rtskb_put(skb, pkt_len),
 									   pkt_len, PCI_DMA_FROMDEVICE);
 					outl(dma, ioaddr + Wn7_MasterAddr);
 					outw((skb->len + 3) & ~3, ioaddr + Wn7_MasterLen);
@@ -2825,7 +2823,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets)
 			skb->rtdev = rtdev;			/* Mark as being used by this device. */
 			rtskb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
 			vp->rx_ring[entry].addr = cpu_to_le32(pci_map_single(vp->pdev,
-				RTSKB_KVA(skb, skb->tail), PKT_BUF_SZ, PCI_DMA_FROMDEVICE)); // *** RTnet ***
+				skb->tail, PKT_BUF_SZ, PCI_DMA_FROMDEVICE));
 			vp->rx_skbuff[entry] = skb;
 		}
 		vp->rx_ring[entry].status = 0;	/* Clear complete bit. */

@@ -29,6 +29,7 @@
 #include <rtnet_internal.h>
 #include <rtnet_iovec.h>
 #include <rtnet_socket.h>
+#include <ipv4/ip_fragment.h>
 #include <ipv4/ip_output.h>
 #include <ipv4/ip_sock.h>
 #include <ipv4/protocol.h>
@@ -174,51 +175,84 @@ int rt_udp_accept(struct rtsocket *s, struct sockaddr *addr, socklen_t *addrlen)
 /***
  *  rt_udp_recvmsg
  */
-int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, socklen_t len, int flags)
+int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, size_t len, int flags)
 {
-    unsigned copied = 0;
-    struct rtskb *skb;
+    size_t copied = 0;
+    struct rtskb *skb, *first_skb;
+    size_t block_size;
+    struct udphdr *uh;
+    size_t data_len;
+    struct sockaddr_in *sin;
 
 
     /* block on receive semaphore */
     if (((s->flags & RT_SOCK_NONBLOCK) == 0) && ((flags & MSG_DONTWAIT) == 0))
-        while ((skb=rtskb_dequeue(&s->incoming)) == NULL) {
+        while ((skb = rtskb_dequeue_chain(&s->incoming)) == NULL) {
             if (s->timeout > 0) {
                 if (rt_sem_wait_timed(&s->wakeup_sem, nano2count(s->timeout)) == SEM_TIMOUT)
                     return -ETIMEDOUT;
             } else
                 rt_sem_wait(&s->wakeup_sem);
         }
-    else
-        skb=rtskb_dequeue(&s->incoming);
+    else {
+        skb = rtskb_dequeue_chain(&s->incoming);
+        if (skb == NULL)
+            return 0;
+    }
 
-    if (skb != NULL) {
-        struct sockaddr_in *sin=msg->msg_name;
-        /* copy the address */
-        msg->msg_namelen=sizeof(*sin);
-        if (sin) {
-            sin->sin_family = AF_INET;
-            sin->sin_port = skb->h.uh->source;
-            sin->sin_addr.s_addr = skb->nh.iph->saddr;
+    uh = skb->h.uh;
+    data_len = ntohs(uh->len) - sizeof(struct udphdr);
+    sin = msg->msg_name;
+
+    /* copy the address */
+    msg->msg_namelen = sizeof(*sin);
+    if (sin) {
+        sin->sin_family      = AF_INET;
+        sin->sin_port        = uh->source;
+        sin->sin_addr.s_addr = skb->nh.iph->saddr;
+    }
+
+    /* remove the UDP header */
+    rtskb_pull(skb, sizeof(struct udphdr));
+
+    first_skb = skb;
+
+    /* iterate over all IP fragments */
+    do {
+        rtskb_trim(skb, data_len);
+
+        block_size = skb->len;
+        copied += block_size;
+        data_len -= block_size;
+
+        /* The data must not be longer than the available buffer size */
+        if (copied > len) {
+            block_size -= copied - len;
+            copied = len;
+            msg->msg_flags |= MSG_TRUNC;
+
+            /* copy the data */
+            rt_memcpy_tokerneliovec(msg->msg_iov, skb->data, block_size);
+
+            break;
         }
 
         /* copy the data */
-        copied = skb->len-sizeof(struct udphdr);
+        rt_memcpy_tokerneliovec(msg->msg_iov, skb->data, block_size);
 
-        /* The data must not be longer than the value of the parameter "len" in
-        * the socket recvmsg call */
-        if (copied > msg->msg_iov->iov_len)
-        {
-            copied = msg->msg_iov->iov_len;
-        }
+        /* next fragment */
+        skb = skb->next;
+    } while (skb != NULL);
 
-        rt_memcpy_tokerneliovec(msg->msg_iov, skb->h.raw+sizeof(struct udphdr), copied);
+    /* did we copied all bytes? */
+    if (data_len > 0)
+        msg->msg_flags |= MSG_TRUNC;
 
-        if ((flags & MSG_PEEK) == 0)
-            kfree_rtskb(skb);
-        else
-            rtskb_queue_head(&s->incoming, skb);
-    }
+    if ((flags & MSG_PEEK) == 0)
+        kfree_rtskb(first_skb);
+    else
+        rtskb_queue_head(&s->incoming, first_skb);
+
     return copied;
 }
 
@@ -233,6 +267,7 @@ struct udpfakehdr
     u32 daddr;
     u32 saddr;
     struct iovec *iov;
+    int iovlen;
     u32 wcheck;
 };
 
@@ -244,18 +279,24 @@ struct udpfakehdr
 static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned int fraglen)
 {
     struct udpfakehdr *ufh = (struct udpfakehdr *)p;
+    int i;
 
     // We should optimize this function a bit (copy+csum...)!
     if (offset==0) {
         /* Checksum of the complete data part of the UDP message: */
-        ufh->wcheck = csum_partial(ufh->iov->iov_base, ufh->iov->iov_len, ufh->wcheck);
+        for (i = 0; i < ufh->iovlen; i++) {
+            ufh->wcheck = csum_partial(ufh->iov[i].iov_base, ufh->iov[i].iov_len,
+                                       ufh->wcheck);
+        }
 
-        rt_memcpy_fromkerneliovec(to+sizeof(struct udphdr), ufh->iov,fraglen-sizeof(struct udphdr));
+        rt_memcpy_fromkerneliovec(to + sizeof(struct udphdr), ufh->iov,
+                                  fraglen - sizeof(struct udphdr));
 
         /* Checksum of the udp header: */
-        ufh->wcheck = csum_partial((char *)ufh, sizeof(struct udphdr),ufh->wcheck);
+        ufh->wcheck = csum_partial((char *)ufh, sizeof(struct udphdr), ufh->wcheck);
 
-        ufh->uh.check = csum_tcpudp_magic(ufh->saddr, ufh->daddr, ntohs(ufh->uh.len), IPPROTO_UDP, ufh->wcheck);
+        ufh->uh.check = csum_tcpudp_magic(ufh->saddr, ufh->daddr, ntohs(ufh->uh.len),
+                                          IPPROTO_UDP, ufh->wcheck);
 
         if (ufh->uh.check == 0)
             ufh->uh.check = -1;
@@ -285,7 +326,7 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
     u16 dport;
     int err;
 
-    if ( (len<0) || (len>0xFFFF) )
+    if ((len < 0) || (len > 0xFFFF-sizeof(struct iphdr)-sizeof(struct udphdr)))
         return -EMSGSIZE;
 
     if (flags & MSG_OOB)   /* Mirror BSD error message compatibility */
@@ -294,15 +335,18 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
     if (flags & ~(MSG_DONTROUTE|MSG_DONTWAIT|MSG_NOSIGNAL) )
         return -EINVAL;
 
-    if ( (msg->msg_name) && (msg->msg_namelen==sizeof(struct sockaddr_in)) ) {
+    if ((msg->msg_name) && (msg->msg_namelen==sizeof(struct sockaddr_in))) {
         struct sockaddr_in *usin = (struct sockaddr_in*) msg->msg_name;
-        if ( (usin->sin_family!=AF_INET) && (usin->sin_family!=AF_UNSPEC) )
+
+        if ((usin->sin_family!=AF_INET) && (usin->sin_family!=AF_UNSPEC))
             return -EINVAL;
+
         daddr = usin->sin_addr.s_addr;
         dport = usin->sin_port;
     } else {
         if (s->state != TCP_ESTABLISHED)
             return -ENOTCONN;
+
         daddr = s->daddr;
         dport = s->dport;
     }
@@ -310,30 +354,31 @@ int rt_udp_sendmsg(struct rtsocket *s, const struct msghdr *msg, size_t len, int
 #ifdef DEBUG
     rt_printk("sendmsg to %x:%d\n", ntohl(daddr), ntohs(dport));
 #endif
-    if ( (daddr==0) || (dport==0) )
+    if ((daddr==0) || (dport==0))
         return -EINVAL;
 
     err=rt_ip_route_output(&rt, daddr, s->saddr);
     if (err)
         goto out;
 
-    /* we found a route, remeber the routing dest-addr could be the netmask */
-    ufh.saddr       = rt->rt_src;
-    ufh.daddr       = daddr;
-    ufh.uh.source   = s->sport;
-    ufh.uh.dest     = dport;
-    ufh.uh.len      = htons(ulen);
-    ufh.uh.check    = 0;
-    ufh.iov         = msg->msg_iov;
-    ufh.wcheck      = 0;
+    /* we found a route, remember the routing dest-addr could be the netmask */
+    ufh.saddr     = rt->rt_src;
+    ufh.daddr     = daddr;
+    ufh.uh.source = s->sport;
+    ufh.uh.dest   = dport;
+    ufh.uh.len    = htons(ulen);
+    ufh.uh.check  = 0;
+    ufh.iov       = msg->msg_iov;
+    ufh.iovlen    = msg->msg_iovlen;
+    ufh.wcheck    = 0;
 
     err = rt_ip_build_xmit(s, rt_udp_getfrag, &ufh, ulen, rt, flags);
 
 out:
-    if (!err) {
+    if (!err)
         return len;
-    }
-    return err;
+    else
+        return err;
 }
 
 
@@ -359,19 +404,21 @@ void rt_udp_close(struct rtsocket *s,long timeout)
     if (next)
         next->prev=prev;
 
-    /* free packets in incoming queue */
-    while (0 != (del=rtskb_dequeue(&s->incoming))) {
-        kfree_rtskb(del);
-    }
-
     if (s==udp_sockets) {
         udp_sockets=udp_sockets->next;
     }
 
+    rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
+
     s->next=NULL;
     s->prev=NULL;
 
-    rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
+    /* free packets in incoming queue */
+    while ((del=rtskb_dequeue(&s->incoming)) != NULL)
+        kfree_rtskb(del);
+
+    /* cleanup already collected fragments */
+    rt_ip_frag_invalidate_pool(&s->skb_pool);
 }
 
 
@@ -379,12 +426,51 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 /***
  *  rt_udp_check
  */
-static unsigned short rt_udp_check(struct udphdr *uh, int len,
-                                   unsigned long saddr,
-                                   unsigned long daddr,
-                                   unsigned long base)
+static inline unsigned short rt_udp_check(struct udphdr *uh, int len,
+                                          unsigned long saddr,
+                                          unsigned long daddr,
+                                          unsigned long base)
 {
     return(csum_tcpudp_magic(saddr, daddr, len, IPPROTO_UDP, base));
+}
+
+
+
+struct rtskb_queue *rt_udp_get_pool(struct rtskb *skb)
+{
+    struct udphdr *uh;
+    unsigned short ulen;
+    struct rtsocket *rtsk;
+
+    u32 saddr = skb->nh.iph->saddr;
+    u32 daddr = skb->nh.iph->daddr;
+
+    uh   = skb->h.uh;
+    ulen = ntohs(uh->len);
+
+    if (uh->check == 0)
+        skb->ip_summed = CHECKSUM_UNNECESSARY;
+/* ip_summed (yet) never equals CHECKSUM_HW
+    else
+        if (skb->ip_summed == CHECKSUM_HW) {
+            skb->ip_summed = CHECKSUM_UNNECESSARY;
+
+            if ( !rt_udp_check(uh, ulen, saddr, daddr, skb->csum) )
+                return NULL;
+
+            skb->ip_summed = CHECKSUM_NONE;
+        }*/
+
+    if (skb->ip_summed != CHECKSUM_UNNECESSARY)
+        skb->csum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
+
+    /* find a socket */
+    if ((rtsk = rt_udp_v4_lookup(saddr, uh->source, daddr, uh->dest)) == NULL)
+        return NULL;
+
+    skb->sk = rtsk;
+
+    return &rtsk->skb_pool;
 }
 
 
@@ -394,47 +480,14 @@ static unsigned short rt_udp_check(struct udphdr *uh, int len,
  */
 int rt_udp_rcv (struct rtskb *skb)
 {
-    struct udphdr *uh;
-    unsigned short ulen;
-    struct rtsocket *rtsk=NULL;
+    struct rtsocket *rtsk = skb->sk;
 
-    u32 saddr = skb->nh.iph->saddr;
-    u32 daddr = skb->nh.iph->daddr;
-
-    uh=skb->h.uh;
-    ulen = ntohs(uh->len);
-    rtskb_trim(skb, ulen);
-
-    if (uh->check == 0)
-        skb->ip_summed = CHECKSUM_UNNECESSARY;
-    else
-        if (skb->ip_summed == CHECKSUM_HW) {
-            skb->ip_summed = CHECKSUM_UNNECESSARY;
-            if ( !rt_udp_check(uh, ulen, saddr, daddr, skb->csum) )
-                goto drop;
-            skb->ip_summed = CHECKSUM_NONE;
-        }
-
-    if (skb->ip_summed != CHECKSUM_UNNECESSARY)
-        skb->csum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
-
-    /* find a socket */
-    if ( (rtsk=rt_udp_v4_lookup(saddr, uh->source, daddr, uh->dest))==NULL )
-        goto drop;
-
-    /* acquire skb */
-    if ( rtskb_acquire(skb, &rtsk->skb_pool) != 0 )
-        goto drop;
 
     rtskb_queue_tail(&rtsk->incoming, skb);
     rt_sem_signal(&rtsk->wakeup_sem);
     if ( rtsk->wakeup != NULL )
         rtsk->wakeup(rtsk->fd, rtsk->private);
 
-    return 0;
-
-drop:
-    kfree_rtskb(skb);
     return 0;
 }
 
@@ -495,9 +548,10 @@ int rt_udp_socket(struct rtsocket *s)
  */
 static struct rtinet_protocol udp_protocol = {
     protocol:       IPPROTO_UDP,
-    handler:        &rt_udp_rcv,
+    get_pool:       &rt_udp_get_pool,
+    rcv_handler:    &rt_udp_rcv,
     err_handler:    &rt_udp_rcv_err,
-    socket:         &rt_udp_socket,
+    init_socket:    &rt_udp_socket
 };
 
 

@@ -668,8 +668,7 @@ static void tulip_init_ring(/*RTnet*/struct rtnet_device *rtdev)
 		tp->rx_buffers[i].skb = skb;
 		if (skb == NULL)
 			break;
-		mapping = pci_map_single(tp->pdev, RTSKB_KVA(skb, skb->tail), /*RTnet*/
-					 PKT_BUF_SZ, PCI_DMA_FROMDEVICE);
+		mapping = pci_map_single(tp->pdev, skb->tail, PKT_BUF_SZ, PCI_DMA_FROMDEVICE);
 		tp->rx_buffers[i].mapping = mapping;
 		skb->rtdev = rtdev;			/* Mark as being used by this device. */
 		tp->rx_ring[i].status = cpu_to_le32(DescOwned);	/* Owned by Tulip chip */
@@ -717,8 +716,7 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	entry = tp->cur_tx % TX_RING_SIZE;
 
 	tp->tx_buffers[entry].skb = skb;
-	mapping = pci_map_single(tp->pdev, RTSKB_KVA(skb, skb->data), /*RTnet*/
-				 skb->len, PCI_DMA_TODEVICE);
+	mapping = pci_map_single(tp->pdev, skb->data, skb->len, PCI_DMA_TODEVICE);
 	tp->tx_buffers[entry].mapping = mapping;
 	tp->tx_ring[entry].buffer1 = cpu_to_le32(mapping);
 

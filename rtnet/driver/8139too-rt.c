@@ -485,7 +485,7 @@ struct rtl8139_private {
         struct rtl_extra_stats xstats;
         int time_to_die;
   //        struct mii_if_info mii;
-        struct rtskb_head skb_pool;
+        struct rtskb_queue skb_pool;
 };
 
 MODULE_AUTHOR ("Jeff Garzik <jgarzik@mandrakesoft.com>");
@@ -856,8 +856,10 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         //        tp->mii.mdio_read = mdio_read;
         //        tp->mii.mdio_write = mdio_write;
 
-        if (rtskb_pool_init(&tp->skb_pool, rx_pool_size) < rx_pool_size)
+        if (rtskb_pool_init(&tp->skb_pool, rx_pool_size) < rx_pool_size) {
+                i = -ENOMEM;
                 goto err_out;
+        }
 
         if ( (i=rt_register_rtnetdev(rtdev)) )
                 goto err_out;

@@ -24,7 +24,7 @@
 #include <rtnet_internal.h>
 
 
-static struct rtskb_head rxqueue;
+static struct rtskb_queue rxqueue;
 
 
 
@@ -172,7 +172,7 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
     int ret;
 
 
-    rtskb_queue_head_init(&rxqueue);
+    rtskb_queue_init(&rxqueue);
 
     rt_sem_init(&mgr->sem, 0);
     if ((ret=rt_task_init(&mgr->task, &do_stacktask, (int)mgr, 4096,

@@ -38,14 +38,14 @@ MODULE_PARM(vnic_rtskbs, "i");
 MODULE_PARM_DESC(vnic_rtskbs, "Number of realtime socket buffers per virtual NIC");
 
 static int                  vnic_srq;
-static struct rtskb_head    rx_queue;
+static struct rtskb_queue   rx_queue;
 
 
 
 int rtmac_vnic_rx(struct rtskb *skb, u16 type)
 {
     struct rtmac_priv *mac_priv = skb->rtdev->mac_priv;
-    struct rtskb_head *pool = &mac_priv->vnic_skb_pool;
+    struct rtskb_queue *pool = &mac_priv->vnic_skb_pool;
 
 
     if (rtskb_acquire(skb, pool) != 0) {
@@ -130,7 +130,7 @@ static int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
 {
     struct rtnet_device     *rtdev = (struct rtnet_device*)dev->priv;
     struct net_device_stats *stats = &rtdev->mac_priv->vnic_stats;
-    struct rtskb_head       *pool = &rtdev->mac_priv->vnic_skb_pool;
+    struct rtskb_queue      *pool = &rtdev->mac_priv->vnic_skb_pool;
     struct ethhdr           *ethernet = (struct ethhdr*)skb->data;
     struct rtskb            *rtskb;
     int                     res;
@@ -223,7 +223,9 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
     mac_priv->vnic_used = 0;
     memset(&mac_priv->vnic_stats, 0, sizeof(mac_priv->vnic_stats));
 
-    if (rtskb_pool_init(&mac_priv->vnic_skb_pool, vnic_rtskbs) < vnic_rtskbs) {
+    /* create the rtskb pool */
+    if (rtskb_pool_init(&mac_priv->vnic_skb_pool,
+                        vnic_rtskbs) < vnic_rtskbs) {
         rtskb_pool_release(&mac_priv->vnic_skb_pool);
         return -ENOMEM;
     }
@@ -261,7 +263,7 @@ void rtmac_vnic_remove(struct rtnet_device *rtdev)
 
 int __init rtmac_vnic_module_init(void)
 {
-    rtskb_queue_head_init(&rx_queue);
+    rtskb_queue_init(&rx_queue);
 
     vnic_srq = rt_request_srq(0, rtmac_vnic_srq, 0);
     if (vnic_srq < 0)

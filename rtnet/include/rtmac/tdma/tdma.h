@@ -131,7 +131,7 @@ struct tdma_flags {
 
 struct rtmac_tdma {
     RT_TASK                     tx_task;
-    struct rtskb_prio_list      tx_queue;
+    struct rtskb_prio_queue     tx_queue;
 
     struct tdma_flags           flags;
 
@@ -152,7 +152,7 @@ struct rtmac_tdma {
     struct timer_list           master_sent_conf_timer;
     struct timer_list           master_sent_test_timer;
 
-    struct rtskb_head           master_queue;
+    struct rtskb_queue          master_queue;
 
     /*** rt client specific ***/
     SEM                         client_tx;
@@ -321,7 +321,7 @@ static inline int tdma_xmit(struct rtskb *skb)
 extern __u32 tdma_debug;
 
 /* use 0 for production, 1 for verification, >2 for debug */
-#define TDMA_DEFAULT_DEBUG_LEVEL    4
+#define TDMA_DEFAULT_DEBUG_LEVEL    2
 
 #define TDMA_DEBUG(n, args...) (tdma_debug >= (n)) ? (rt_printk(KERN_DEBUG args)) : 0
 #else

@@ -81,7 +81,7 @@ int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev)
 			if (skb == NULL)
 				break;
 
-			mapping = pci_map_single(tp->pdev, RTSKB_KVA(skb, skb->tail), PKT_BUF_SZ, /*RTnet*/
+			mapping = pci_map_single(tp->pdev, skb->tail, PKT_BUF_SZ,
 						 PCI_DMA_FROMDEVICE);
 			tp->rx_buffers[entry].mapping = mapping;
 
@@ -188,11 +188,11 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, RTIME time_stamp)
 				if (tp->rx_buffers[entry].mapping !=
 				    le32_to_cpu(tp->rx_ring[entry].buffer1)) {
 					/*RTnet*/rt_printk(KERN_ERR "%s: Internal fault: The skbuff addresses "
-					       "do not match in tulip_rx: %08x vs. %08x %p / %p.\n",
+					       "do not match in tulip_rx: %08x vs. %08x ? / %p.\n",
 					       rtdev->name,
 					       le32_to_cpu(tp->rx_ring[entry].buffer1),
 					       tp->rx_buffers[entry].mapping,
-					       skb->head, temp);
+					       temp);/*RTnet*/
 				}
 #endif
 

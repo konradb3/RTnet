@@ -497,7 +497,7 @@ struct speedo_private {
 	/* The addresses of a Tx/Rx-in-place packets/buffers. */
 	struct rtskb *tx_skbuff[TX_RING_SIZE];
 	struct rtskb *rx_skbuff[RX_RING_SIZE];
-	struct rtskb_head skb_pool;
+	struct rtskb_queue skb_pool;
 	// *** RTnet ***
 
 	/* Mapped addresses of the rings. */
@@ -1275,7 +1275,7 @@ speedo_init_rx_ring(struct rtnet_device *rtdev)
 		rxf = (struct RxFD *)skb->tail;
 		sp->rx_ringp[i] = rxf;
 		sp->rx_ring_dma[i] =
-			pci_map_single(sp->pdev, RTSKB_KVA(skb, rxf), // *** RTnet ***
+			pci_map_single(sp->pdev, rxf,
 					PKT_BUF_SZ + sizeof(struct RxFD), PCI_DMA_BIDIRECTIONAL);
 		rtskb_reserve(skb, sizeof(struct RxFD));
 		if (last_rxf) {
@@ -1471,7 +1471,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* The data region is always in one buffer descriptor. */
 	sp->tx_ring[entry].count = cpu_to_le32(sp->tx_threshold);
 	sp->tx_ring[entry].tx_buf_addr0 =
-		cpu_to_le32(pci_map_single(sp->pdev, RTSKB_KVA(skb, skb->data), // *** RTnet ***
+		cpu_to_le32(pci_map_single(sp->pdev, skb->data,
 					   skb->len, PCI_DMA_TODEVICE));
 	sp->tx_ring[entry].tx_buf_size0 = cpu_to_le32(skb->len);
 
@@ -1761,7 +1761,7 @@ static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry
 	rtskb_reserve(skb, 2);  /* IP header alignment */
 	rxf = sp->rx_ringp[entry] = (struct RxFD *)skb->tail;
 	sp->rx_ring_dma[entry] =
-		pci_map_single(sp->pdev, RTSKB_KVA(skb, rxf), // *** RTnet ***
+		pci_map_single(sp->pdev, rxf,
 					   PKT_BUF_SZ + sizeof(struct RxFD), PCI_DMA_FROMDEVICE);
 	// *** RTnet ***
 	skb->rtdev = rtdev;

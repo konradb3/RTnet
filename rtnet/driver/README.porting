@@ -161,29 +161,25 @@ waiting on hardware events.
         rt_mark_stack_mgr(dev);
 
 
-31. replace pci_map_single(dev, skb_addr, ...) with
-    pci_map_single(dev, RTSKB_KVA(skb, skb_addr), ...)
+31. disable any timer setup and delete calls
 
 
-32. disable any timer setup and delete calls
+32. uncomment un-required(!) MII related assignments and functions
 
 
-33. uncomment un-required(!) MII related assignments and functions
+33. uncomment any other unused functions
 
 
-34. uncomment any other unused functions
+34. replace register_netdev with rt_register_rtnetdev
 
 
-35. replace register_netdev with rt_register_rtnetdev
+35. replace netif_carrier_{on|off} with rtnetif_carrier_{on|off}
 
 
-36. replace netif_carrier_{on|off} with rtnetif_carrier_{on|off}
+36. replace dev_alloc_skb(size) with dev_alloc_rtskb(size, &<priv>->skb_pool)
 
 
-37. replace dev_alloc_skb(size) with dev_alloc_rtskb(size, &<priv>->skb_pool)
-
-
-38. reduce RX_RING_SIZE to 8
+37. reduce RX_RING_SIZE to 8
 
 
 XX. check the critical paths in xmit function and interrupt handler for delays

@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  * Extended 2003 by Mathias Koehrer <mathias_koehrer@yahoo.de>
+ * and Jan Kiszka <jan.kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,22 +20,27 @@
  */
 
 
+#include <linux/module.h>
 #include <net/checksum.h>
+
 #include <rtdev.h>
 #include <rtnet_internal.h>
 
 #include <linux/ip.h>
 #include <linux/in.h>
 
+#include <ipv4/ip_fragment.h>
 
-/* This defined sets the number incoming fragmented IP messages that
- * can be handled parallel.
- * */
-#define COLLECTOR_COUNT 4
+
+/*
+ * This defined sets the number of incoming fragmented IP messages that
+ * can be handled in parallel.
+ */
+#define COLLECTOR_COUNT 10
 
 #define GARBAGE_COLLECT_LIMIT 50
 
-struct collector_str
+struct ip_collector
 {
     int   in_use;
     __u32 saddr;
@@ -42,233 +48,275 @@ struct collector_str
     __u16 id;
     __u8  protocol;
 
-    struct rtskb *skb;
-    unsigned int collected;
-    unsigned int last_access;
+    struct rtskb_queue frags;
+    struct rtskb_queue *comp_pool;
+    unsigned int buf_size;
+    unsigned int last_accessed;
 };
-static struct collector_str collector[COLLECTOR_COUNT];
+
+static struct ip_collector collector[COLLECTOR_COUNT];
 
 static unsigned int counter = 0;
 
-static SEM collector_sem;
 
-
-
-/*
- * Return a pointer to the collector that holds the message that
- * fits to the iphdr (param iph).
- * If no collector can be found, a new one is created.
- * */
-static struct collector_str * get_collector(struct iphdr *iph)
+static void alloc_collector(struct rtskb *skb, struct rtskb_queue *comp_pool)
 {
     int i;
-    struct collector_str *p_coll;
+    unsigned int flags;
+    struct ip_collector *p_coll;
+    struct iphdr *iph = skb->nh.iph;
 
-    rt_sem_wait(&collector_sem);
-
-    /* Search in existing collectors... */
-    for (i=0; i < COLLECTOR_COUNT; i++)
+    /* Find free collector */
+    for (i = 0; i < COLLECTOR_COUNT; i++)
     {
         p_coll = &collector[i];
-        if ( p_coll->in_use  &&    
-             iph->saddr == p_coll->saddr  &&
-             iph->daddr == p_coll->daddr  &&
-             iph->id    == p_coll->id     && 
-             iph->protocol == p_coll->protocol )
+        flags = rt_spin_lock_irqsave(&p_coll->frags.lock);
+
+        /*
+         * This is a very simple version of a garbage collector.
+         * Whenver the last access to any of the collectors is a while ago,
+         * the collector will be freed...
+         * Under normal conditions, it should never be necessary to collect
+         * the garbage.
+         * */
+        if (p_coll->in_use &&
+            (counter - p_coll->last_accessed > GARBAGE_COLLECT_LIMIT))
         {
-            goto success_out;
+            kfree_rtskb(p_coll->frags.first);
+            p_coll->in_use = 0;
+
+            rt_printk("RTnet: IP fragmentation garbage collection "
+                      "(saddr:%x, daddr:%x)\n",
+                      p_coll->saddr, p_coll->daddr);
         }
+
+        /* Collector (now) free? */
+        if (!p_coll->in_use)
+        {
+            p_coll->in_use        = 1;
+            p_coll->last_accessed = counter;
+            p_coll->buf_size      = skb->len;
+            p_coll->frags.first   = skb;
+            p_coll->frags.last    = skb;
+            p_coll->saddr         = iph->saddr;
+            p_coll->daddr         = iph->daddr;
+            p_coll->id            = iph->id;
+            p_coll->protocol      = iph->protocol;
+            p_coll->comp_pool     = comp_pool;
+
+            rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+
+            return;
+        }
+
+        rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
     }
 
-    /* Nothing found. Create a new one... */
-    for (i=0; i < COLLECTOR_COUNT; i++)
-    {
-        if ( ! collector[i].in_use )
-        {
-            collector[i].in_use = 1;
-
-            p_coll = &collector[i];
-            p_coll->last_access = counter;
-            p_coll = &collector[i];
-            p_coll->collected = 0;
-            if (!(p_coll->skb = alloc_rtskb(rtskb_max_size, &global_pool)))
-            {
-                collector[i].in_use = 0;
-                goto error_out;
-            }
-            p_coll->saddr = iph->saddr;
-            p_coll->daddr = iph->daddr;
-            p_coll->id    = iph->id;
-            p_coll->protocol = iph->protocol;
-            goto success_out;
-        }
-    }
-
-error_out:
-    rt_sem_signal(&collector_sem);
     rt_printk("RTnet: IP fragmentation - no collector available\n");
-    return NULL;
-
-success_out:
-    rt_sem_signal(&collector_sem);
-    return p_coll;
+    kfree_rtskb(skb);
 }
 
 
-static void cleanup_collector(void)
-{
-    int i;
-    for (i=0; i < COLLECTOR_COUNT; i++)
-    {
-        if ( collector[i].in_use &&
-             collector[i].skb )
-        {
-            collector[i].in_use = 0;
-            kfree_rtskb(collector[i].skb);
-            collector[i].skb = NULL;
-        }
-    }
-}
 
 /*
- * This is a very simple version of a garbage collector.
- * Whenver the last access to any of the collectors is a while ago,
- * the collector will be freed... 
- * Under normal conditions, it should never be necessary to collect
- * the garbage. 
+ * Return a pointer to the collector that holds the message which
+ * fits to the iphdr of the passed rtskb.
  * */
-static void garbage_collect(void)
+static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, int more_frags)
 {
-    /* Kick off all collectors that are not in use anymore... */
     int i;
-    for (i=0; i < COLLECTOR_COUNT; i++)
+    unsigned int flags;
+    struct ip_collector *p_coll;
+    struct iphdr *iph = skb->nh.iph;
+    struct rtskb *first_skb;
+
+    /* Search in existing collectors */
+    for (i = 0; i < COLLECTOR_COUNT; i++)
     {
-        if ( collector[i].in_use && 
-             (counter - collector[i].last_access > GARBAGE_COLLECT_LIMIT))
+        p_coll = &collector[i];
+        flags = rt_spin_lock_irqsave(&p_coll->frags.lock);
+
+        if (p_coll->in_use  &&
+            (iph->saddr    == p_coll->saddr) &&
+            (iph->daddr    == p_coll->daddr) &&
+            (iph->id       == p_coll->id) &&
+            (iph->protocol == p_coll->protocol))
         {
-            rt_printk("RTnet: IP fragmentation garbage collection (saddr:%x, daddr:%x)\n",
-                        collector[i].saddr, collector[i].daddr);
-            kfree_rtskb(collector[i].skb);
-            collector[i].skb = NULL;
-            collector[i].in_use = 0;
+            first_skb = p_coll->frags.first;
+
+            /* Acquire the rtskb at the expense of the protocol pool */
+            if (rtskb_acquire(skb, p_coll->comp_pool) != 0) {
+                /* We have to drop this fragment => clean up the whole chain */
+                p_coll->in_use = 0;
+
+                rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+
+                rt_printk("RTnet: Compensation pool empty - IP fragments "
+                          "dropped (saddr:%x, daddr:%x)\n",
+                          iph->saddr, iph->daddr);
+
+                kfree_rtskb(first_skb);
+                kfree_rtskb(skb);
+                return NULL;
+            }
+
+            /* Optimized version of __rtskb_queue_tail */
+            skb->next = NULL;
+            p_coll->frags.last->next = skb;
+            p_coll->frags.last = skb;
+
+            /* Extend the chain */
+            first_skb->chain_end = skb;
+
+            /* Sanity check: unordered fragments are not allowed! */
+            if (offset != p_coll->buf_size) {
+                /* We have to drop this fragment => clean up the whole chain */
+                p_coll->in_use = 0;
+                skb = first_skb;
+
+                rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+                break; /* leave the for loop */
+            }
+
+            p_coll->last_accessed = counter;
+
+            p_coll->buf_size += skb->len;
+
+            if (!more_frags) {
+                first_skb->nh.iph->tot_len = htons(p_coll->buf_size + sizeof(struct iphdr));
+                p_coll->in_use = 0;
+
+                rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+                return first_skb;
+            } else {
+                rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+                return NULL;
+            }
         }
+
+        rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+    }
+
+    rt_printk("RTnet: Unordered IP fragment (saddr:%x, daddr:%x)"
+              " - dropped\n", iph->saddr, iph->daddr);
+
+    kfree_rtskb(skb);
+    return NULL;
+}
+
+
+
+/*
+ * Cleans up all collectors referring to the specified rtskb pool
+ */
+void rt_ip_frag_invalidate_pool(struct rtskb_queue *pool)
+{
+    int i;
+    unsigned int flags;
+    struct ip_collector *p_coll;
+
+    for (i = 0; i < COLLECTOR_COUNT; i++)
+    {
+        p_coll = &collector[i];
+        flags = rt_spin_lock_irqsave(&p_coll->frags.lock);
+
+        if ((p_coll->in_use) && (p_coll->comp_pool == pool))
+        {
+            p_coll->in_use = 0;
+            kfree_rtskb(p_coll->frags.first);
+        }
+
+        rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
     }
 }
 
 
-/* 
- * This function returns an rtskb that contains the complete, accumulated IP message.
- * If not all fragments of the IP message have been received yet, it returns NULL 
- * */
-struct rtskb *rt_ip_defrag(struct rtskb *skb)
+
+/*
+ * Cleans up all existing collectors
+ */
+static void cleanup_all_collectors(void)
 {
-    unsigned int offset;
-    unsigned int end;
+    int i;
     unsigned int flags;
-    unsigned int ihl;
+    struct ip_collector *p_coll;
 
+    for (i = 0; i < COLLECTOR_COUNT; i++)
+    {
+        p_coll = &collector[i];
+        flags = rt_spin_lock_irqsave(&p_coll->frags.lock);
+
+        if (p_coll->in_use)
+        {
+            p_coll->in_use = 0;
+            kfree_rtskb(p_coll->frags.first);
+        }
+
+        rt_spin_unlock_irqrestore(flags, &p_coll->frags.lock);
+    }
+}
+
+
+
+/*
+ * This function returns an rtskb that contains the complete, accumulated IP message.
+ * If not all fragments of the IP message have been received yet, it returns NULL
+ * Note: the IP header must have already been pulled from the rtskb!
+ * */
+struct rtskb *rt_ip_defrag(struct rtskb *skb, struct rtinet_protocol *ipprot)
+{
+    unsigned int more_frags;
+    unsigned int offset;
+    struct rtskb_queue *comp_pool;
     struct iphdr *iph = skb->nh.iph;
-    struct collector_str *p_coll = 0;
-
 
     counter++;
 
-    /* Check, if there is already a "collector" for this connection: */
-    p_coll = get_collector(iph);
-    if (! p_coll )
-    {
-        /* Not able to create a collector.
-         * Stop and discard skb */
-        kfree_rtskb(skb);
-        return NULL;
-    }
-    p_coll->last_access = counter;
-
-
-    /* Write the data to the collector */
+    /* Parse the IP header */
     offset = ntohs(iph->frag_off);
-    flags = offset & ~IP_OFFSET;
+    more_frags = offset & IP_MF;
     offset &= IP_OFFSET;
     offset <<= 3;   /* offset is in 8-byte chunks */
-    ihl = iph->ihl * 4;
-    end = offset + skb->len ;
 
-    if (end > rtskb_max_size)
-    {
-        struct rtskb *temp_skb = p_coll->skb;
-
-        rt_printk("RTnet: discarding incoming IP fragment (offset %i, end:%i)\n", 
-                  offset, end);
-        kfree_rtskb(skb);
-        p_coll->skb = NULL;
-        p_coll->in_use = 0;
-        kfree_rtskb(temp_skb);
-        return NULL;
-    }
-  
-    /* Copy data: */
-    memcpy(p_coll->skb->buf_start + ihl + offset, skb->data + ihl, skb->len - ihl);
-    p_coll->collected += skb->len - ihl;
-
-
-    /* Is this the final fragment? */
-    if ((flags & IP_MF) == 0)
-    {
-        /* Determine complete skb length (including header) */
-        p_coll->skb->data_len = offset + skb->len;
-    }
-
-    /* Is this the first fragment? */
+    /* First fragment? */
     if (offset == 0)
     {
-        /* Copy the header to the collector skb */
-        memcpy(p_coll->skb->buf_start, skb->data, ihl);
-        p_coll->collected += ihl;
-
-        /* Set the pointers in the collector skb: */
-        p_coll->skb->data =   p_coll->skb->buf_start;
-
-        p_coll->skb->nh.iph = (struct iphdr*) p_coll->skb->buf_start;
-        p_coll->skb->h.raw  = p_coll->skb->buf_start + ihl;
+        /* Acquire the rtskb at the expense of the protocol pool */
+        comp_pool = ipprot->get_pool(skb);
+        if ((comp_pool == NULL) || (rtskb_acquire(skb, comp_pool) != 0)) {
+            /* Drop the rtskb */
+            kfree_rtskb(skb);
+        } else {
+            /* Allocates a new collector */
+            alloc_collector(skb, comp_pool);
+        }
+        return NULL;
     }
-
-
-    /* skb is no longer needed. Free it. */
-    kfree_rtskb(skb);
-
-
-    /* All data bytes received? */
-    if (p_coll->collected == p_coll->skb->data_len)
+    else
     {
-        /* Return p_coll->skb */
-        struct rtskb *ret_skb = p_coll->skb;
-        ret_skb->nh.iph->tot_len = htons(ret_skb->data_len);
-        p_coll->skb = NULL;
-        p_coll->in_use = 0;
-
-        garbage_collect();
-        return ret_skb;
+        /* Add to an existing collector */
+        return add_to_collector(skb, offset, more_frags);
     }
-
-
-    /* Not all bytes received, return NULL */
-    return NULL;
 }
-  
-void rt_ip_fragment_init(void)
+
+
+
+int rt_ip_fragment_init(void)
 {
     int i;
-    rt_typed_sem_init(&collector_sem, 1, BIN_SEM);
 
-    for (i=0; i < COLLECTOR_COUNT; i++)
-    {
-        collector[i].in_use = 0;
-        collector[i].skb = NULL;
-    }
+    /* Probably not needed (static variable...) */
+    memset(collector, 0, sizeof(collector));
+
+    for (i = 0; i < COLLECTOR_COUNT; i++)
+        spin_lock_init(&collector[i].frags.lock);
+
+    return 0;
 }
+
+
 
 void rt_ip_fragment_cleanup(void)
 {
-    rt_sem_delete(&collector_sem);
-    cleanup_collector();
+    cleanup_all_collectors();
 }

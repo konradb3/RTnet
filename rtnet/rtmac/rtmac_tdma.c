@@ -61,7 +61,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
      * init tx queue
      *
      */
-    rtskb_prio_list_init(&tdma->tx_queue);
+    rtskb_prio_queue_init(&tdma->tx_queue);
 
     /*
      * init rt stuff
@@ -82,7 +82,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     init_timer(&tdma->master_sent_conf_timer);
     init_timer(&tdma->master_sent_test_timer);
 
-    rtskb_queue_head_init(&tdma->master_queue);
+    rtskb_queue_init(&tdma->master_queue);
 
 
     /* client */

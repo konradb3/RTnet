@@ -1,9 +1,8 @@
 To be examined / fixed:
 
- * Check sum generation / check
- * iovec array handling (always correctly?)
- * atomic inc of counters (ip-id / fragment use counter / ...)
- * rtskb chains instead of super-sized rtskbs
+ * Optimize checksum generation / verification
+ * atomic inc of counters (if required),
+    already fixed/checked: ip_fragmentation.c, ip_output.c
 
 To be added / improved:
 

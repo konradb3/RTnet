@@ -55,13 +55,13 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
     /*
      * if we have some packets in tx queues send them
      */
-    TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",
-               __FUNCTION__, tdma->tx_queue.qlen);
+    TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
+               __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
     while ((skb = rtskb_prio_dequeue(&tdma->tx_queue))) {
         tdma_xmit(skb);
 
-        TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",
-                   __FUNCTION__, tdma->tx_queue.qlen);
+        TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
+                __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
     }
 
     /*FIXME: send master queue contens, or clear semas.....warscheinlich 2.*/
@@ -129,7 +129,7 @@ void tdma_cleanup_master_rt_check(struct rtmac_tdma *tdma)
     if (tdma->flags.mac_active != 0)
         rt_printk("RTmac: tdma: BUG! %s() flags.mac_active != 0\n",__FUNCTION__);
 
-    if (tdma->tx_queue.qlen != 0)
+    if (!rtskb_prio_queue_empty(&tdma->tx_queue))
         rt_printk("RTmac: tdma: BUG! %s() tx_queue length != 0\n",__FUNCTION__);
 
     if (list_len(&tdma->rt_add_list) != 0)
@@ -158,13 +158,13 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
     /*
      * if we have some packets in tx queue send them
      */
-    TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",
-               __FUNCTION__, tdma->tx_queue.qlen);
+    TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
+               __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
     while ((skb = rtskb_prio_dequeue(&tdma->tx_queue))) {
         tdma_xmit(skb);
 
-        TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",
-                   __FUNCTION__, tdma->tx_queue.qlen);
+        TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
+                __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
     }
 
     /*

@@ -3,7 +3,7 @@
 
 #AC_PREREQ(2.57)
 AC_INIT(RTnet)
-AM_INIT_AUTOMAKE(RTnet, 0.2.10, jan.kiszka@web.de)
+AM_INIT_AUTOMAKE(rtnet, 0.5.1, jan.kiszka@web.de)
 
 AC_PREFIX_DEFAULT(/usr/local/rtnet)
 
@@ -249,24 +249,6 @@ AC_SUBST(CROSS_COMPILE)
 
 
 dnl ======================================================================
-dnl		global RTnet settings
-dnl ======================================================================
-
-if test \! -r ${RTAI_DIR}/.config; then
-	AC_MSG_ERROR(*** $RTAI_DIR is not configured)
-fi
-
-AC_MSG_CHECKING([$RTAI_DIR/.config])
-. $RTAI_DIR/.config
-AC_MSG_RESULT([done])
-
-if test \! "$CONFIG_RTAI_MM_VMALLOC" = "" ; then
-	CFLAGS="${CFLAGS} -DCONFIG_RTAI_MM_VMALLOC"
-fi
-
-
-
-dnl ======================================================================
 dnl		network interface card driver
 dnl ======================================================================
 
@@ -390,6 +372,7 @@ examples/round_trip_time/server/Makefile \
 examples/rtnet_lxrt/Makefile \
 examples/rtskb_alloc/Makefile \
 examples/rtt/Makefile \
+examples/frag_ip/Makefile \
 driver/Makefile \
 driver/tulip/Makefile \
 ethernet/Makefile \
