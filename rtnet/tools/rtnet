@@ -96,13 +96,13 @@ case "$1" in
     mac)
 	case "$2" in
 	    master)
-		modprobe rtmac dev=$DEV
+		modprobe tdma
 		rtifconfig $DEV mac master $3 $4
 		ifconfig $VNIC up $IPADDR netmask $NETMASK
 		;;
 
 	    client)
-		modprobe rtmac dev=$DEV
+		modprobe tdma
 		rtifconfig $DEV mac client
 		ifconfig $VNIC up $IPADDR netmask $NETMASK
 		;;
@@ -122,6 +122,7 @@ case "$1" in
 	    down|stop)
 		ifconfig $VNIC down
 		rtifconfig $DEV mac down
+		rmmod tdma
 		rmmod rtmac
 		;;
 
