@@ -153,7 +153,7 @@ waiting on hardware events.
 
 30. add to the end of the interrupt handler:
 
-    rtos_irq_enable(irq);
+    rtos_irq_end(irq);
     rtos_spin_unlock(&<priv>->lock); /* if locking is not done in interrupt main function */
     if (old_packet_cnt != <priv>->stats.rx_packets)
         rt_mark_stack_mgr(dev);
