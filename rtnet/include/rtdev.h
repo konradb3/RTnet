@@ -22,15 +22,20 @@
 #ifndef __RTDEV_H_
 #define __RTDEV_H_
 
+#define MAX_RT_DEVICES          8
+
+
 #ifdef __KERNEL__
 
 #include <asm/atomic.h>
+#include <asm/semaphore.h>
 #include <linux/netdevice.h>
 
 #include <rtskb.h>
 
 
-#define MAX_RT_DEVICES      8
+#define PRIV_FLAG_UP             0
+#define PRIV_FLAG_ADDING_ROUTE   1
 
 /***
  *  rtnet_device
@@ -54,6 +59,7 @@ struct rtnet_device {
      */
     unsigned char       if_port;    /* Selectable AUI, TP,..*/
     unsigned char       dma;        /* DMA channel          */
+    __u16               __padding;
 
     unsigned long       state;
     int                 ifindex;
@@ -61,15 +67,11 @@ struct rtnet_device {
 
     struct module       *owner;
 
-    __u32               local_addr; /* in network order */
-
-    struct rtsocket     *protocols;
-
-    unsigned short      flags;      /* interface flags (a la BSD)   */
-    unsigned short      gflags;
-    unsigned int        mtu;        /* eth = 1536, tr = 4...        */
+    unsigned int        flags;      /* interface flags (a la BSD)   */
+    unsigned int        priv_flags; /* internal flags               */
     unsigned short      type;       /* interface hardware type      */
     unsigned short      hard_header_len;    /* hardware hdr length  */
+    unsigned int        mtu;        /* eth = 1536, tr = 4...        */
     void                *priv;      /* pointer to private data      */
     int                 features;   /* NETIF_F_*                    */
 
@@ -83,17 +85,23 @@ struct rtnet_device {
     int                 promiscuity;
     int                 allmulti;
 
+    __u32               local_ip;   /* IP address in network order  */
+    __u32               broadcast_ip; /* broadcast IP in network order */
+
     int                 rxqueue_len;
     rtos_event_sem_t    *stack_event;
 /*    MBX                 *rtdev_mbx;*/
 
-    rtos_res_lock_t     xmit_lock;
+    rtos_res_lock_t     xmit_lock;  /* protects xmit routine        */
+    rtos_spinlock_t     rtdev_lock; /* management lock              */
+    struct semaphore    nrt_sem;    /* non-real-time locking        */
 
     unsigned int        add_rtskbs; /* additionally allocated global rtskbs */
 
     /* RTmac related fields */
     struct rtmac_disc   *mac_disc;
     struct rtmac_priv   *mac_priv;
+    int                 (*mac_detach)(struct rtnet_device *rtdev);
 
     /* Device operations */
     int                 (*open)(struct rtnet_device *rtdev);
@@ -108,8 +116,6 @@ struct rtnet_device {
 };
 
 
-extern struct rtnet_device *rtnet_devices[];
-
 extern struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
 extern void rtdev_free(struct rtnet_device *rtdev);
 
@@ -121,6 +127,7 @@ extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask)
 extern struct rtnet_device *rtdev_get_by_name(const char *if_name);
 extern struct rtnet_device *rtdev_get_by_index(int ifindex);
 extern struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
+extern struct rtnet_device *rtdev_get_loopback(void);
 #define rtdev_reference(rtdev)      atomic_inc(&(rtdev)->refcount)
 #define rtdev_dereference(rtdev)    atomic_dec(&(rtdev)->refcount)
 
