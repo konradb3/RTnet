@@ -179,13 +179,16 @@ void rtdev_alloc_name(struct rtnet_device *rtdev, const char *mask)
 {
     char buf[IFNAMSIZ];
     int i;
+    struct rtnet_device *tmp;
 
     for (i = 0; i < MAX_RT_DEVICES; i++) {
         snprintf(buf, IFNAMSIZ, mask, i);
-        if (rtdev_get_by_name(buf) == NULL) {
+        if ((tmp = rtdev_get_by_name(buf)) == NULL) {
             strncpy(rtdev->name, buf, IFNAMSIZ);
             break;
         }
+        else
+            rtdev_dereference(tmp);
     }
 }
 
@@ -444,7 +447,7 @@ int rtdev_xmit(struct rtskb *skb)
     ret = rtdev->hard_start_xmit(skb, rtdev);
     if (ret != 0)
     {
-        rtos_print("xmit returned %d\n", ret);
+        rtos_print("hard_start_xmit returned %d\n", ret);
         /* if an error occured, we must free the skb here! */
         if (skb)
             kfree_rtskb(skb);
@@ -455,6 +458,7 @@ int rtdev_xmit(struct rtskb *skb)
 
 
 
+#ifdef CONFIG_RTNET_PROXY
 /***
  *      rtdev_xmit_proxy - send rtproxy packet
  */
@@ -471,6 +475,7 @@ int rtdev_xmit_proxy(struct rtskb *skb)
 
     rtdev = skb->rtdev;
 
+    /* TODO: make these lines race-condition-safe */
     if (rtdev->mac_disc) {
         RTNET_ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, return -1;);
 
@@ -481,7 +486,7 @@ int rtdev_xmit_proxy(struct rtskb *skb)
         ret = rtdev->hard_start_xmit(skb, rtdev);
         if (ret != 0)
         {
-            rtos_print("xmit returned %d not 0\n", ret);
+            rtos_print("hard_start_xmit returned %d\n", ret);
             /* if an error occured, we must free the skb here! */
             if (skb)
                 kfree_rtskb(skb);
@@ -490,3 +495,4 @@ int rtdev_xmit_proxy(struct rtskb *skb)
 
     return ret;
 }
+#endif /* CONFIG_RTNET_PROXY */
