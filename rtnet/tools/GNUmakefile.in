@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c
+SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c tdmacfg.c
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -40,7 +40,7 @@ host_triplet = @host@
 @CONFIG_RTNET_RTCFG_TRUE@am__append_1 = rtcfg
 @CONFIG_RTNET_NOMAC_TRUE@am__append_2 = nomaccfg
 sbin_PROGRAMS = rtifconfig$(EXEEXT) rtroute$(EXEEXT) rtping$(EXEEXT) \
-	$(am__EXEEXT_3)
+	tdmacfg$(EXEEXT) $(am__EXEEXT_3)
 subdir = tools
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
 	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
@@ -73,12 +73,15 @@ rtping_LDADD = $(LDADD)
 rtroute_SOURCES = rtroute.c
 rtroute_OBJECTS = rtroute.$(OBJEXT)
 rtroute_LDADD = $(LDADD)
+tdmacfg_SOURCES = tdmacfg.c
+tdmacfg_OBJECTS = tdmacfg.$(OBJEXT)
+tdmacfg_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/nomaccfg.Po ./$(DEPDIR)/rtcfg.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtifconfig.Po ./$(DEPDIR)/rtping.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rtroute.Po
+@AMDEP_TRUE@	./$(DEPDIR)/rtroute.Po ./$(DEPDIR)/tdmacfg.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -87,8 +90,9 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c
-DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c
+SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c tdmacfg.c
+DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c \
+	tdmacfg.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -331,6 +335,9 @@ rtping$(EXEEXT): $(rtping_OBJECTS) $(rtping_DEPENDENCIES)
 rtroute$(EXEEXT): $(rtroute_OBJECTS) $(rtroute_DEPENDENCIES) 
 	@rm -f rtroute$(EXEEXT)
 	$(LINK) $(rtroute_LDFLAGS) $(rtroute_OBJECTS) $(rtroute_LDADD) $(LIBS)
+tdmacfg$(EXEEXT): $(tdmacfg_OBJECTS) $(tdmacfg_DEPENDENCIES) 
+	@rm -f tdmacfg$(EXEEXT)
+	$(LINK) $(tdmacfg_LDFLAGS) $(tdmacfg_OBJECTS) $(tdmacfg_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -343,6 +350,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtifconfig.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtping.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtroute.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdmacfg.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

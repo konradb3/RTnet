@@ -84,7 +84,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = tdma-v1 nomac
+DIST_SUBDIRS = tdma-v1 tdma nomac
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -244,7 +244,7 @@ moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_rtmac.a
 OPTDIRS = $(am__append_1)
-SUBDIRS = tdma-v1 $(OPTDIRS)
+SUBDIRS = tdma-v1 tdma $(OPTDIRS)
 libkernel_rtmac_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
