@@ -68,6 +68,8 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
         return -EBUSY;
     }
 
+    if (rtdev->flags & IFF_LOOPBACK)
+        return -EINVAL;
 
     /* alloc memory */
     priv = kmalloc(sizeof(struct rtmac_priv) + disc->priv_size, GFP_KERNEL);
