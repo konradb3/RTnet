@@ -24,6 +24,8 @@
 
 #ifdef __KERNEL__
 
+#include <stack_mgr.h>
+
 
 #define RTMAC_VERSION   0x1
 #define ETH_RTMAC       0x9021
@@ -58,7 +60,26 @@ static inline int rtmac_add_header(struct rtnet_device *rtdev, void *daddr,
 
 
 
-extern void rtmac_proto_init(void);
+static inline int rtmac_xmit(struct rtskb *skb)
+{
+    struct rtnet_device *rtdev = skb->rtdev;
+    int ret;
+
+
+    RTNET_ASSERT(rtdev->mac_priv->hard_start_xmit != NULL,
+                 kfree_rtskb(skb); return -1;);
+
+    ret = rtdev->mac_priv->hard_start_xmit(skb, rtdev);
+    if (ret != 0)
+        kfree_rtskb(skb);
+
+    return ret;
+}
+
+
+extern struct rtpacket_type rtmac_packet_type;
+
+#define rtmac_proto_init()  rtdev_add_pack(&rtmac_packet_type)
 extern void rtmac_proto_release(void);
 
 
