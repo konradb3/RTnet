@@ -86,6 +86,9 @@ static int rtnetproxy_srq = 0;
 /* Thread for transmission */
 static RT_TASK rtnetproxy_thread;
 
+/* Thread for recycling used rtskbs */
+static RT_TASK rtnetproxy_recycle;
+
 /* ***********************************************************************
  * Returns the next pointer from the ringbuffer or zero if nothing is
  * available 
@@ -149,7 +152,7 @@ static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev);
 /* ************************************************************************
  * This functions runs in rtai context.
  * It is called from rtnetproxy_user_srq whenever there is frame to sent out
- * Copy the standard linkx sk_buff buffer to a rtnet buffer and send it out 
+ * Copy the standard linux sk_buff buffer to a rtnet buffer and send it out 
  * using rtnet functions. 
  * ************************************************************************ */
 static inline void send_data_out(struct sk_buff *skb)
@@ -304,17 +307,25 @@ static int rtnetproxy_recv(struct rtskb *rtskb)
         kfree_rtskb(rtskb);
     }
 
-    /* Delete all "used" rtskb entries from the ringbuffer */
-    {
-        struct rtskb *del;
+    return 0;
+}
+
+/* ************************************************************************
+ * This is a RTAI thread. It will be activated (resumed) by the 
+ * the function "rtnetproxy_kernel_recv" (in linux context)
+ * whenever there are "used" rtskb entries in the ringbuffer
+ * ************************************************************************ */
+static void rtnetproxy_recycle_thread(int arg)
+{
+    struct rtskb *del;
+    while (1) {
         while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet))!=0)
         {
             kfree_rtskb(del);
         }
+        rt_task_suspend(&rtnetproxy_recycle);
     }
-    return 0;
 }
-
 
 /* ************************************************************************
  * This function runs in kernel mode.
@@ -365,10 +376,15 @@ static void rtnetproxy_rtai_srq(void)
     {
         rtnetproxy_kernel_recv(rtskb);
         /* Place "used" rtskb in backqueue... */
-	if (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
-	    printk("%s: memory leakage\n", __FUNCTION__);
+	while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
+	    rt_task_resume(&rtnetproxy_recycle);
 	}
     }
+
+    /* Signal rtnet that there are "used" rtskbs waiting to be processed... 
+     * Resume the recycle thread (function rtnetproxy_recycle_thread)
+     * */
+    rt_task_resume(&rtnetproxy_recycle);
 }
 
 /* ************************************************************************
@@ -452,6 +468,10 @@ static int __init rtnetproxy_init_module(void)
     memset(&ring_skb_kernel_rtnet, 0, sizeof(ring_skb_kernel_rtnet));
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
+    /* Init the task for recycling "used" rtskbs */
+    rt_task_init(&rtnetproxy_recycle, rtnetproxy_recycle_thread, 0, 2000, 
+                  RT_LOWEST_PRIORITY, 0, 0);
+        
     /* Init the task for transmission */
     rt_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0, 2000, 
                   RT_LOWEST_PRIORITY, 0, 0);
@@ -479,6 +499,7 @@ static void __exit rtnetproxy_cleanup_module(void)
 
     rt_task_suspend(&rtnetproxy_thread);
     rt_task_delete(&rtnetproxy_thread);
+    rt_task_delete(&rtnetproxy_recycle);
    
     /* Free the ringbuffers... */
     {
