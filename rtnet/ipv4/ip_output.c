@@ -18,6 +18,9 @@
  */
  
 // $Log: ip_output.c,v $
+// Revision 1.10  2003/06/30 16:18:00  kiszka
+// * fixed RTmac-awareness of rt_ip_build_xmit_slow
+//
 // Revision 1.9  2003/06/24 13:09:46  kiszka
 // * applied fragmentation patch by Mathias Koehrer
 //
@@ -157,7 +160,14 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
                     goto error;
             }
 
-            err = rtdev_xmit(skb);
+            if ((skb->rtdev->rtmac) && /* This code lines are crappy! */
+                (skb->rtdev->rtmac->disc_type) &&
+                (skb->rtdev->rtmac->disc_type->rt_packet_tx)) {
+                err = skb->rtdev->rtmac->disc_type->rt_packet_tx(skb, skb->rtdev);
+            } else {
+                err = rtdev_xmit(skb);
+            }
+
             if (err) {
                     return -EAGAIN;
             } 
