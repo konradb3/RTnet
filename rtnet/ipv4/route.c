@@ -519,13 +519,13 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
     u32                 shifted_mask;
 
 
+    addr &= mask;
+
     if ((new_route = rt_alloc_net_route()) != NULL) {
         new_route->dest_net_ip   = addr;
         new_route->dest_net_mask = mask;
         new_route->gw_ip         = gw_addr;
     }
-
-    addr &= mask;
 
     shifted_mask = NET_HASH_KEY_MASK << net_hash_key_shift;
     if ((mask & shifted_mask) == shifted_mask)
@@ -626,13 +626,19 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
     unsigned long       flags;
     struct host_route   *host_rt;
     unsigned int        key;
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+
+#ifndef CONFIG_RTNET_NETWORK_ROUTING
+    #define DADDR       daddr
+#else
+    #define DADDR       real_daddr
+
     struct net_route    *net_rt;
-    int                 lookup_gw = 1;
+    int                 lookup_gw  = 1;
+    u32                 real_daddr = daddr;
 
 
   restart:
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* !CONFIG_RTNET_NETWORK_ROUTING */
     key = ntohl(daddr) & HOST_HASH_KEY_MASK;
 
     rtos_spin_lock_irqsave(&host_lock, flags);
@@ -640,10 +646,14 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
     host_rt = host_table[key];
     while (host_rt != NULL) {
         if (host_rt->dest_host.ip == daddr) {
-            memcpy(rt_buf, &host_rt->dest_host, sizeof(struct dest_route));
+            memcpy(rt_buf->dev_addr, &host_rt->dest_host.dev_addr,
+                   sizeof(rt_buf->dev_addr));
+            rt_buf->rtdev = host_rt->dest_host.rtdev;
             rtdev_reference(rt_buf->rtdev);
 
             rtos_spin_unlock_irqrestore(&host_lock, flags);
+
+            rt_buf->ip = DADDR;
 
             return 0;
         }
