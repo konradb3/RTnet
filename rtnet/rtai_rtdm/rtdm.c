@@ -636,46 +636,58 @@ int rtdm_sendmsg(int call_flags, int fd, const struct msghdr *msg, int flags)
 #ifdef CONFIG_RTNET_RTDM_SELECT
 int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) /* timeval is missing here */
 {
-    int                     i;
-    fd_set                  fds; /* 128 bytes on i386 */
+    int                     i, ret=0;
+    unsigned int            mask;
+    fd_set                  rfds; /* 128 bytes on i386 */
     wait_queue_primitive_t  wakeme;
     struct rtdm_dev_context *context;
     struct rtdm_operations  *ops;
 
     n = n < MAX_FILDES ? n : MAX_FILDES; /* use the lower number */
-    FD_ZERO(&fds);
+
+    memcpy(&rfds, readfds, sizeof(rfds)); /* copy readfds to local variable rfds */
+    FD_ZERO(readfds);
 
     wq_element_init(&wakeme);
 
     /* register wq_element on all sockets marked in readfds */
     for (i=0; i<=n; i++) {
-	if (FD_ISSET(i, readfds)) {
+	if (FD_ISSET(i, &rfds)) {
 	    context = get_context(i);
 	    if (context) {
 		ops = context->ops;
-		FD_SET(i, &fds);
+#warning what if pollwait_rt is NULL?
 		ops->pollwait_rt(context, &wakeme);
 #warning what if there is data already available (call poll here)
 	    } else {
 		rt_printk("==> Problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
+		FD_CLR(i, &rfds);
 	    }
 	}
     }
 
     /* wait until something happens */
     wq_wait(&wakeme); /* should be wq_wait_timed() */
-
-    /* register wq_element on all sockets marked in fds */
-    for (i=0; i<=n; i++) { /* n vs. RT_SOCKETS */
-	if (FD_ISSET(i, &fds)) {
+    
+    /* register wq_element on all sockets marked in rfds */
+    for (i=0; i<=n; i++) {
+	if (FD_ISSET(i, &rfds)) {
 	    context = get_context(i);
 	    if (context) {
 		ops = context->ops;
-		FD_SET(i, &fds);
+#warning what if poll*_rt is NULL?
 		ops->pollfree_rt(context);
+
+		mask = ops->poll_rt(context);
+		if (mask & POLLIN) {
+		    /* set specific bit in result readfds */
+		    FD_SET(i, &readfds);
+		    ret++;
+		}
+
 #warning It is not nice to unlock the context twice here!
-		RTDM_UNLOCK_CONTEXT(context);				\
-		RTDM_UNLOCK_CONTEXT(context);				\
+		RTDM_UNLOCK_CONTEXT(context);
+		RTDM_UNLOCK_CONTEXT(context);
 	    } else {
 		rt_printk("==> Serious problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
 	    }
@@ -692,7 +704,7 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
      * errno  is  set appropriately; the sets and timeout become undefined, so
      * do not rely on their contents after an error.
      */
-    return 0; /* fix this */
+    return ret;
 }
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 
