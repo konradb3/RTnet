@@ -309,9 +309,8 @@ out:
 void rt_udp_close(struct rtsocket *s,long timeout)
 {
 	unsigned long flags;
-	struct rtsocket *d = s;
-	struct rtsocket *prev=d->prev;
-	struct rtsocket *next=d->next;
+	struct rtsocket *prev=s->prev;
+	struct rtsocket *next=s->next;
 	struct rtskb *del;
 
 	s->state=TCP_CLOSE;
@@ -321,9 +320,6 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 	if (prev) prev->next=next;
 	if (next) next->prev=prev;
 		
-	s->next=NULL;
-	s->prev=NULL;
-		
 	/* free packets in incoming queue */
 	while (0 != (del=rtskb_dequeue(&s->incoming))) {
 		kfree_rtskb(del);
@@ -332,6 +328,10 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 	if (s==udp_sockets) {
 		udp_sockets=udp_sockets->next;
 	}
+
+	s->next=NULL;
+	s->prev=NULL;
+		
 	rt_spin_unlock_irqrestore(flags, &udp_socket_base_lock);
 }
 
