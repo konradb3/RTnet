@@ -193,7 +193,7 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, size_t len, int flags
     /* block on receive event */
     if (((s->flags & RT_SOCK_NONBLOCK) == 0) && ((flags & MSG_DONTWAIT) == 0))
         while ((skb = rtskb_dequeue_chain(&s->incoming)) == NULL) {
-            if (RTOS_TIME_IS_ZERO(&s->timeout)) {
+            if (!RTOS_TIME_IS_ZERO(&s->timeout)) {
                 ret = rtos_event_sem_wait_timed(&s->wakeup_event, &s->timeout);
                 if (ret == RTOS_EVENT_TIMEOUT)
                     return -ETIMEDOUT;

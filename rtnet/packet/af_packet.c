@@ -118,7 +118,7 @@ int rt_packet_recvmsg(struct rtsocket *sock, struct msghdr *msg, size_t len,
     if (((sock->flags & RT_SOCK_NONBLOCK) == 0) &&
         ((flags & MSG_DONTWAIT) == 0))
         while ((skb = rtskb_dequeue_chain(&sock->incoming)) == NULL) {
-            if (RTOS_TIME_IS_ZERO(&sock->timeout)) {
+            if (!RTOS_TIME_IS_ZERO(&sock->timeout)) {
                 ret = rtos_event_sem_wait_timed(&sock->wakeup_event,
                                                 &sock->timeout);
                 if (ret == RTOS_EVENT_TIMEOUT)
