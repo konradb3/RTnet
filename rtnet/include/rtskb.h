@@ -98,10 +98,14 @@ struct rtskb_head {
     spinlock_t          lock;
 };
 
+#define QUEUE_MAX_PRIO          0
+#define QUEUE_MIN_PRIO          31
+
 struct rtskb_prio_list {
     spinlock_t          lock;
     __u32               usage;
-    struct rtskb_head   queue[0];
+    unsigned int        qlen;
+    struct rtskb_head   queue[QUEUE_MIN_PRIO+1];
 };
 
 
@@ -163,14 +167,10 @@ static inline void rtskb_queue_head_init(struct rtskb_head *list)
  *  rtsk_prio_queue_head_init - initialize the prioritized queue
  *  @list
  */
-static inline void rtskb_prio_list_init(struct rtskb_prio_list *list,
-                                        int priorities)
+static inline void rtskb_prio_list_init(struct rtskb_prio_list *list)
 {
-    ASSERT(priorities <= 31, priorities = 31;);
-
+    memset(list, 0, sizeof(struct rtskb_prio_list));
     spin_lock_init(&list->lock);
-    list->usage = 0;
-    memset(list->queue, 0, sizeof(struct rtskb_head) * priorities);
 }
 
 /***
@@ -239,6 +239,7 @@ static inline void rtskb_prio_queue_tail(struct rtskb_prio_list *list,
     flags = rt_spin_lock_irqsave(&list->lock);
     __rtskb_queue_tail(&list->queue[skb->priority], skb);
     __set_bit(skb->priority, &list->usage);
+    list->qlen++;
     rt_spin_unlock_irqrestore(flags, &list->lock);
 }
 
@@ -284,16 +285,17 @@ static inline struct rtskb *rtskb_prio_dequeue(struct rtskb_prio_list *list)
 {
     unsigned long flags;
     int prio;
-    struct rtskb *result;
+    struct rtskb *result = NULL;
     struct rtskb_head *sub_list;
 
     flags = rt_spin_lock_irqsave(&list->lock);
     if (list->usage) {
         prio     = ffz(~list->usage);
         sub_list = &list->queue[prio];
-        result = __rtskb_dequeue(sub_list);
+        result   = __rtskb_dequeue(sub_list);
         if (rtskb_queue_empty(sub_list))
             __change_bit(prio, &list->usage);
+        list->qlen--;
     }
     rt_spin_unlock_irqrestore(flags, &list->lock);
 
