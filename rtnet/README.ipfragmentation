@@ -1,40 +1,43 @@
 README.ipfragmentation
 =======================
-19-May-2003 - Mathias Koehrer (mathias_koehrer@yahoo.de)
 
-This file documents the optional IP fragmentation feature of rtnet.
--------------------------------------------------------------------
+19-May-2003 - Mathias Koehrer (mathias_koehrer@yahoo.de) (original version)
+21-Oct-2003 - Jan Kiszka (jan.kiszka@web.de)
 
-Standard "rtnet" handles only IP (UDP) messages that fit into one IP frame
-(about 1400 byte UDP data).
 
-Using this feature, rtnet is able to handle longer IP (UDP) packets (sending
-and receiving). 
+This file documents the restrictions and pitfalls when using fragmented IP
+packets with RTnet.
 
-The maximum size of a complete IP message (+headers!) has to be specified by
-the module parameter "rtskb_max_size" of the module rtnet. If rtskb_max_size
-is not set, the standard size (one ethernet frame) will be used, IP
-fragmentation makes no sense then.
-Note: IP messages are specified to be up to 64 kByte in size.
 
-Example: 
-If you have IP messages of 8 kByte maximum size, you should load rtnet
-with something like:
-# insmod rtnet  rtskb_max_size=8300
-
-(Note: Please add some bytes to be able to store the headers...)
+Introduction:
+-------------
+Ethernet provides 1500 bytes of payload within each packet. Subtracting the IP
+header (20 bytes without options) and the UDP header (8 bytes), this leaves
+1472 bytes of data for the (UDP) user. When sending larger packets, the RTnet
+implementation of IP fragments the packet and sends it in multiple chunks over
+the network. When a RTnet station receives a sequence of fragmented IP packets,
+it reassembles it and passed the whole packet to the next layer (UDP)
+afterwards.
 
 
 Restrictions:
 -------------
-The drawback of the approach used in this patch is, that ALL buffers in use by
-rtnet are of the specified with the "rtskb_max_size" parameter. I.e., if you do
-not have enough memory on your system, this approach could fail...
+Incoming IP fragments are collected by the IP layer. The collector mechanism is
+a global resource, when all collector slots are used, unassignable fragmented
+packets are dropped! In order to guarantee bounded execution time of the
+collector lookup mechanism, it is not possible to provide an unlimited number
+of collectors (currently 10 are support, see ipv4/ip_fragment.c). Therefore, be
+careful how many fragmented packets all of your stations are producing and if
+one receiver might be overwhelmed with fragments!
+
+Fragmented IP packets are generated AND received at the expense of the socket
+rtskb pool. Adjust the pool size appropriately to provide sufficient rtskbs
+(see also examples/frap_ip).
 
 
-Possible Bugs:
-----------------
-It could be, that sending UDP messages using the rt*socket_writev() function
-fails (maybe even with non-fragmented IP messages...).
-
-IP fragmentation is only tested with IPv4/UDP protocol.
+Known Issues:
+-------------
+When sending fragmented IP packets over a NIC without RTmac being installed,
+the NIC's transmission queue may easily overflow (take a look at the driver
+source for the exact limit - typically TX_RING_SIZE). This is due to the still
+lacking flow control for packet transmission. Will hopefully be fixed soon...
