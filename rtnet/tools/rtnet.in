@@ -52,7 +52,7 @@ submit_cfg() {
             $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
             $TDMACFG rteth0 master $TDMA_CYCLE
-            $TDMA_SLOTS
+            sh -c "$TDMA_SLOTS"
             ;;
         slave)
             if [ ! "$STATION_IP" = "" ]; then
