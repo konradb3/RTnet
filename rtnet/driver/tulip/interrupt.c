@@ -104,7 +104,7 @@ int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev)
 }
 
 
-static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev)
+static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, RTIME time_stamp)
 {
 	struct net_device *dev = rtdev->dev;
 	struct tulip_private *tp = (struct tulip_private *)dev->priv;
@@ -202,8 +202,8 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev)
 				tp->rx_buffers[entry].mapping = 0;
 			}
 			skb->protocol = /*RTnet*/rt_eth_type_trans(skb, rtdev);
+			skb->rx = time_stamp;
 			/*RTnet*/rtnetif_rx(skb);
-			rt_mark_stack_mgr(rtdev);
 
 			dev->last_rx = jiffies;
 			tp->stats.rx_packets++;
@@ -217,7 +217,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev)
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-void tulip_interrupt(int irq, unsigned long __data)
+int tulip_interrupt(int irq, unsigned long __data)
 {
 	/*RTnet*/struct rtnet_device *rtdev = (/*RTnet*/struct rtnet_device *)__data;
 	struct net_device *dev = rtdev->dev;
@@ -233,17 +233,22 @@ void tulip_interrupt(int irq, unsigned long __data)
 	int maxtx = TX_RING_SIZE;
 	int maxoi = TX_RING_SIZE;
 	unsigned int work_count = tulip_max_interrupt_work;
+	RTIME time_stamp;
 
-	rt_disable_irq(dev->irq);
+	/* Read current time ASAP. It's used with RTmac.
+	 * Note: More than one packet may arrive us within one interrupt.
+	 *       These packets will get the same time stamp.
+	 * WY
+	 */
+	time_stamp = rt_get_time();
 
 	/* Let's see whether the interrupt really is for us */
 	csr5 = inl(ioaddr + CSR5);
 
 	if ((csr5 & (NormalIntr|AbnormalIntr)) == 0) {
 		rt_printk("%s: pending linux IRQ\n",dev->name);
-		rt_enable_irq(dev->irq);
 		rt_pend_linux_irq(irq);
-		return;
+		return 0;
 	}
 
 	tp->nir++;
@@ -257,7 +262,7 @@ void tulip_interrupt(int irq, unsigned long __data)
 				   dev->name, csr5, inl(dev->base_addr + CSR5));
 
 		if (csr5 & (RxIntr | RxNoBuf)) {
-				rx += tulip_rx(rtdev);
+			rx += tulip_rx(rtdev, time_stamp);
 			tulip_refill_rx(rtdev);
 		}
 
@@ -460,6 +465,7 @@ void tulip_interrupt(int irq, unsigned long __data)
 	if (tulip_debug > 4)
 		/*RTnet*/rt_printk(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
 			   dev->name, inl(ioaddr + CSR5));
-
-	rt_enable_irq(dev->irq);
+	if (rx)
+		rt_mark_stack_mgr(rtdev);
+	return 0;
 }

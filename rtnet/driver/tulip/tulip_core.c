@@ -703,8 +703,10 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 
 	/* TODO: move to rtdev_xmit, use queue */
 	if (rtnetif_queue_stopped(rtdev)) {
-	    rt_spin_unlock_irqrestore(eflags,&tp->lock);
-	    return -EBUSY;
+		dev_kfree_rtskb(skb);
+		tp->stats.tx_dropped++;
+		rt_spin_unlock_irqrestore(eflags,&tp->lock);
+		return 0;
 	}
 
 	/* Calculate the next Tx descriptor entry. */
@@ -816,7 +818,7 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 	rt_spin_unlock_irqrestore (flags, &tp->lock);
 
 	/*RTnet*/ /*MUST_REMOVE*/init_timer(&tp->timer);
-	tp->timer.data = (unsigned long)dev;
+	tp->timer.data = (unsigned long)rtdev;
 	tp->timer.function = tulip_tbl[tp->chip_id].media_timer;
 
 	dev->if_port = tp->saved_if_port;
@@ -1683,11 +1685,13 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	}
 
 	/* The Tulip-specific entries in the device structure. */
-	dev->tx_timeout = NULL;//tulip_tx_timeout;
+#if 0
+	dev->tx_timeout = tulip_tx_timeout;
 	dev->watchdog_timeo = TX_TIMEOUT;
+	dev->do_ioctl = private_ioctl;
+	dev->set_multicast_list = set_rx_mode;
 	dev->get_stats = tulip_get_stats;
-	dev->do_ioctl = NULL; //private_ioctl;
-	dev->set_multicast_list = NULL;//set_rx_mode;
+#endif
 
 	rtdev->open = tulip_open;
 	rtdev->stop = tulip_close;
