@@ -166,40 +166,30 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 	/* we dont have to worry too much about the socket here coz */
 	/* in the xmit function socket is used only to find the protocol type */
 	sk = rt_socket_alloc();
-
-	if(sk)
-	{
-		sk->family = AF_INET;
-		sk->typ = SOCK_DGRAM;
-		sk->protocol = IPPROTO_ICMP;
-		sk->ops = &rt_icmp_socket_ops;
-		sk->prev = NULL;
-		sk->next = NULL;
-		sk->saddr = skb->nh.iph->daddr;
-	}
-	else
+	if (!sk)
 	{
 		rt_printk("RTnet : could not allocate a socket\n");
-		goto error;
+		return;
 	}
+
+	sk->family = AF_INET;
+	sk->typ = SOCK_DGRAM;
+	sk->protocol = IPPROTO_ICMP;
+	sk->ops = &rt_icmp_socket_ops;
+	sk->prev = NULL;
+	sk->next = NULL;
+	sk->saddr = skb->nh.iph->daddr;
 
 	rt = (struct rt_rtable*)skb->dst;
 
-	if(rt == NULL)
+	if (rt == NULL)
 	{
 		/* NO ROUTE FOR THE REPLY PACKET */
 		/* SHOULD NOT BE THE CASE */
 		/* DEBUGGING NECESSARY SOMEWHERE */
 
 		rt_printk("RTnet : error in route table\n");
-		goto error;
-	}
-
-	if(!sk)
-	{
-		/* WHAT ???? */
-		rt_printk("RTnet : socket is NULL %p\n", icmp_sockets);
-		goto error;
+		goto cleanup;
 	}
 
 	icmp_param->data.icmph.checksum = 0;
@@ -211,30 +201,21 @@ static void rt_icmp_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 
 	err = rt_ip_route_output(&rt, daddr, sk->saddr);
 
-	if(err)
+	if (err)
 	{
 		rt_printk("RTnet : error in route daddr %x saddr %x\n", daddr, sk->saddr);
-		goto error;
+		goto cleanup;
 	}
 
 	err = rt_ip_build_xmit(sk, rt_icmp_glue_bits, icmp_param, 
 			icmp_param->data_len+sizeof(struct icmphdr),
 			rt, MSG_DONTWAIT);
 
-	if(err)
-	{
+	if (err)
 		rt_printk("RTnet : error in xmit\n");
-		goto error;
-	}
 
-	//rt_printk("RTnet : sent a reply successfully\n");
-	//
+cleanup:
 	rt_socket_release(sk);
-
-	return;
-
-error:
-	rt_printk("RTnet : error \n");
 	return;
 }
 
@@ -371,32 +352,32 @@ static struct rt_icmp_control rt_icmp_pointers[NR_ICMP_TYPES+1] =
 int rt_icmp_rcv(struct rtskb *skb)
 {
 	struct icmphdr *icmpHdr = skb->h.icmph;
-	int length = ntohs(skb->nh.iph->tot_len) - (skb->nh.iph->ihl*4);
+	unsigned int length = ntohs(skb->nh.iph->tot_len) - (skb->nh.iph->ihl*4);
 
 	if(length < sizeof(struct icmphdr))
 	{
 		rt_printk("RTnet : improper length in icmp packet\n");
-		goto error;
+		goto cleanup;
 	}
 
 	if(ip_compute_csum((unsigned char *)icmpHdr, length))
 	{
 		rt_printk("RTnet : invalid checksum in icmp packet %d\n", 
 									length);
-		goto error;
+		goto cleanup;
 	}
 
 	if(!rtskb_pull(skb, sizeof(struct icmphdr)))
 	{
 		rt_printk("RTnet : pull failed %p\n", (skb->sk));
-		goto error;
+		goto cleanup;
 	}
 
 
 	if(icmpHdr->type > NR_ICMP_TYPES)
 	{
 		rt_printk("RTnet : invalid icmp type\n");
-		goto error;
+		goto cleanup;
 	}
 	
 	/* SANE PACKET ... PROCESS IT */
@@ -405,7 +386,7 @@ int rt_icmp_rcv(struct rtskb *skb)
 
 	(rt_icmp_pointers[icmpHdr->type].handler)(skb);
 	
-error:
+cleanup:
 	kfree_rtskb(skb);
 	return 0;
 }
