@@ -34,7 +34,7 @@
 static char *dest_ip_s = "127.0.0.1";
 static unsigned int size = 65505;
 static int start_timer = 0;
-static unsigned int add_rtskbs = 30;
+static unsigned int add_rtskbs = 75;
 
 MODULE_PARM(dest_ip_s, "s");
 MODULE_PARM(size, "i");
@@ -43,7 +43,7 @@ MODULE_PARM(add_rtskbs, "i");
 MODULE_PARM_DESC(dest_ip_s, "destination IP address");
 MODULE_PARM_DESC(size, "message size (0-65505)");
 MODULE_PARM_DESC(start_timer, "set to non-zero to start scheduling timer");
-MODULE_PARM_DESC(add_rtskbs, "number of additional rtskbs (default: 30)");
+MODULE_PARM_DESC(add_rtskbs, "number of additional rtskbs (default: 75)");
 
 MODULE_LICENSE("GPL");
 
@@ -224,10 +224,12 @@ void cleanup_module(void)
     if (start_timer)
         stop_rt_timer();
 
-    rt_task_delete(&rt_task);
-
+    /* Important: First close the socket! */
     while (rt_socket_close(sock) == -EAGAIN) {
+        printk("rt_server: Socket busy - waiting...\n");
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
+
+    rt_task_delete(&rt_task);
 }
