@@ -245,7 +245,7 @@ void tdma_task_master(int rtdev_id)
         time_stamp -= rt_get_time_ns();
         flags = rt_spin_lock_irqsave(&tdma->delta_t_lock);
         tdma->delta_t = time_stamp;
-        rt_spin_unlock_irqrestore(&tdma->delta_t_lock, flags);
+        rt_spin_unlock_irqrestore(flags, &tdma->delta_t_lock);
 
         rt_sem_broadcast(&tdma->client_tx);
 
