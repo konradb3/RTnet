@@ -32,7 +32,6 @@
 #include <rtai_fifos.h>
 
 #include <rtnet.h>
-#include <rtnet_socket.h>
 
 
 #define MIN_LENGTH_IPv4 7
@@ -46,7 +45,7 @@ MODULE_PARM_DESC (local_ip_s, "local ip-addr");
 MODULE_PARM_DESC (client_ip_s, "client ip-addr");
 
 #define TICK_PERIOD	100000
-#define PRINT 0   
+#define PRINT 0
 RT_TASK rt_task;
 SEM	tx_sem;
 
@@ -131,7 +130,6 @@ int echo_rcv(int s,void *arg)
 int init_module(void)
 {
 	int ret;
-	struct rtsocket *socket;
 
 	unsigned int local_ip  = rt_inet_aton(local_ip_s);
 	unsigned int client_ip = rt_inet_aton(client_ip_s);
@@ -167,12 +165,6 @@ int init_module(void)
 	if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
 		printk("can't connect rtsocket\n");
 		return ret;
-	}
-
-	/* get socket-structure for printing */
-	if ( (socket=rt_socket_lookup(sock)) ) {
-		printk("src  addr: %08x:%04x\n", socket->saddr, socket->sport);
-		printk("dest addr: %08x:%04x\n", socket->daddr, socket->dport);
 	}
 
 	/* set up receiving */
