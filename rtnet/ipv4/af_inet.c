@@ -18,10 +18,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <linux/spinlock.h>
 
-#include <rtnet.h>
-
+#include <ipv4/arp.h>
+#include <ipv4/icmp.h>
+#include <ipv4/ip_output.h>
+#include <ipv4/protocol.h>
+#include <ipv4/route.h>
+#include <ipv4/udp.h>
 
 
 /***

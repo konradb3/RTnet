@@ -38,6 +38,7 @@
 #include <rtai_fifos.h>
 
 #include <rtnet.h>
+#include <rtnet_socket.h>
 
 #define MIN_LENGTH_IPv4 7
 #define MAX_LENGTH_IPv4 15

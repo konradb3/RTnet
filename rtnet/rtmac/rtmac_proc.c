@@ -29,8 +29,8 @@
 #include <rtai_proc_fs.h>
 #endif
 
-#include <rtnet.h>
-#include <rtmac.h>
+#include <rtmac/rtmac_proc.h>
+
 
 #ifdef CONFIG_PROC_FS
 int rtmac_proc_read(char *page, char **start, off_t off, int count, int *eof, void *data)

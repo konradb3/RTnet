@@ -18,9 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <linux/spinlock.h>
 
-#include <rtnet.h>
+#include <ipv4/protocol.h>
+
 
 struct rtinet_protocol *rt_inet_protocols[MAX_RT_INET_PROTOCOLS];
 
@@ -85,13 +85,3 @@ unsigned long rt_inet_aton(const char *ip)
 	u.c[3] = n;
 	return u.l;
 }
-
-
-
-
-
-
-
-
-
-

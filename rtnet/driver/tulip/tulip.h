@@ -27,7 +27,7 @@
 #include <asm/io.h>
 #include <asm/irq.h>
 
-#include <rtnet.h>
+#include <rtnet_port.h>
 
 
 

@@ -17,16 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include <asm/uaccess.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
-#include <linux/kmod.h>
 #include <linux/miscdevice.h>
 
-#include <rtnet.h>
-#include <rtmac.h>
-
+#include <rtdev.h>
+#include <rtmac/rtmac.h>
+#include <rtmac/rtmac_chrdev.h>
 
 
 static int rtmac_chrdev_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg)

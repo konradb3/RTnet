@@ -24,9 +24,12 @@
 
 #include <rtai.h>
 
-#include <rtnet.h>
-#include <rtmac.h>
-#include <tdma.h>
+#include <rtmac/rtmac_chrdev.h>
+#include <rtmac/rtmac_disc.h>
+#include <rtmac/tdma/tdma_cleanup.h>
+#include <rtmac/tdma/tdma_ioctl.h>
+#include <rtmac/tdma/tdma_rx.h>
+
 
 __u32 tdma_debug = 4; //INT_MAX
 MODULE_PARM(tdma_debug, "i");

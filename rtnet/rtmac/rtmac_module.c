@@ -22,10 +22,10 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 
-#include <rtai.h>
+#include <rtmac/rtmac_chrdev.h>
+#include <rtmac/rtmac_proc.h>
+#include <rtmac/tdma/tdma_module.h>
 
-#include <rtnet.h>
-#include <rtmac.h>
 
 static char *dev = "rteth0";
 MODULE_PARM(dev, "s");

@@ -17,14 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
 
 #include <rtai.h>
 
-#include <rtnet.h>
-#include <rtmac.h>
+#include <rtmac/rtmac_disc.h>
+
 
 struct rtpacket_type rtmac_packet_type;
 

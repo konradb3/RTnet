@@ -25,6 +25,7 @@
 #include <rtai.h>
 #include <rtai_sched.h>
 
+#include <rtskb.h>
 #include <rtnet.h>
 
 #define n 40

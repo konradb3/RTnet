@@ -24,8 +24,10 @@
 #include <linux/miscdevice.h>
 #include <linux/netdevice.h>
 
-#include <rtnet.h>
+#include <rtnet_dev.h>
 #include <rtnet_internal.h>
+#include <ipv4/arp.h>
+#include <ipv4/route.h>
 
 
 /**

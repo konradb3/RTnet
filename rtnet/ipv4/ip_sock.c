@@ -18,6 +18,9 @@
  */
  
 // $Log: ip_sock.c,v $
+// Revision 1.4  2003/05/27 09:50:41  kiszka
+// * applied new header file structure
+//
 // Revision 1.3  2003/05/21 07:00:23  hpbock
 // Corrected my email address.
 //
@@ -25,7 +28,13 @@
 // This file has been created by me (Hans-Peter Bock) - but I copied the Header from another file, so Ulrich Marx's name was still in it.
 //
 
+#include <linux/errno.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+
 #include <rtnet.h>
+#include <rtnet_socket.h>
+
 
 int rt_ip_setsockopt (int fd, int optname, char *optval, int optlen) {
        int err;

@@ -18,13 +18,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <rtmac/tdma/tdma_event.h>
 
-#include <linux/netdevice.h>
-
-#include <rtnet.h>
-#include <rtmac.h>
-#include <tdma.h>
-#include <tdma_event.h>
 
 int tdma_packet_rx(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt)
 {

@@ -18,14 +18,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <linux/spinlock.h>
-#include <linux/ip.h>
-#include <linux/udp.h>
 
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/udp.h>
+#include <linux/tcp.h>
 #include <net/checksum.h>
 
-#include <rtnet.h>
+#include <rtskb.h>
 #include <rtnet_internal.h>
+#include <rtnet_iovec.h>
+#include <rtnet_socket.h>
+#include <ipv4/ip_output.h>
+#include <ipv4/protocol.h>
+#include <ipv4/route.h>
+
 
 /***
  *	udp_sockets

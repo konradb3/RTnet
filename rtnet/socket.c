@@ -29,6 +29,9 @@
 
 #include <rtnet.h>
 #include <rtnet_internal.h>
+#include <rtnet_iovec.h>
+#include <rtnet_socket.h>
+#include <ipv4/protocol.h>
 
 SOCKET rt_sockets[RT_SOCKETS];
 SOCKET *free_rtsockets;

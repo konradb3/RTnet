@@ -23,7 +23,16 @@
 #include <linux/module.h>
 
 #include <rtnet.h>
-#include <rtnet_internal.h>
+#include <rtskb.h>
+#include <rtnet_socket.h>
+#include <rtnet_init.h>
+#include <rtdev_mgr.h>
+#include <stack_mgr.h>
+#include <ethernet/eth.h>
+#include <ipv4/arp.h>
+#include <ipv4/ip_input.h>
+#include <ipv4/route.h>
+#include <ipv4/protocol.h>
 
 EXPORT_SYMBOL(rt_inet_aton);
 

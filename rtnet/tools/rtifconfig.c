@@ -37,8 +37,8 @@
 
 typedef unsigned int u32;
 
-#include <rtnet.h>
-#include <rtmac.h>
+#include <rtnet_dev.h>
+#include <rtmac/rtmac_chrdev.h>
 
 void help(void);
 void do_display(void);

@@ -19,9 +19,8 @@
  */
 #include <linux/if_arp.h> /* ARPHDR_ETHER */
 
-#include <rtai.h>
-#include <rtnet.h>
-#include <rtnet_internal.h>
+#include <rtnet_init.h>
+#include <ethernet/eth.h>
 
 
 

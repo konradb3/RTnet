@@ -40,7 +40,6 @@
 #include <rtnet.h>
 
 /* for sof_sync */
-#include <rtmac.h>
 #include <tdma.h>
 
 #define MIN_LENGTH_IPv4 7

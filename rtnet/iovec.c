@@ -18,7 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <rtnet.h>
+#include <linux/kernel.h>
+
+#include <rtnet_iovec.h>
 
 
 /***
@@ -72,8 +74,3 @@ int rt_memcpy_fromkerneliovec(unsigned char *kdata, struct iovec *iov,int len)
 	}
 	return 0;
 }
-
-
-
-
-

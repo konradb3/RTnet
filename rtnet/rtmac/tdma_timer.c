@@ -18,17 +18,11 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-//#include <linux/timer.h>
-#include <asm/system.h>
-#include <linux/config.h>
-#include <linux/delay.h>
-
 #include <rtai.h>
 
-#include <rtnet.h>
-
-#include <tdma.h>
-#include <tdma_timer.h>
+#include <rtmac/tdma/tdma_event.h>
+#include <rtmac/tdma/tdma_task.h>
+#include <rtmac/tdma/tdma_timer.h>
 
 
 void tdma_timer_start(struct timer_list *ptimer, int timeout, void *data, TIMER_CALLBACK callback)
@@ -53,12 +47,6 @@ void tdma_timer_start(struct timer_list *ptimer, int timeout, void *data, TIMER_
 
 
 
-void tdma_timer_start_rt_add(struct rtmac_tdma *tdma, int timeout)
-{
-	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
-	tdma_timer_start(&tdma->rt_add_timer, timeout, (void *)tdma, tdma_timer_expired_rt_add);
-}
-
 static void tdma_timer_expired_rt_add(void *data)
 {
 	struct rtmac_tdma *tdma = (struct rtmac_tdma *)data;
@@ -67,13 +55,13 @@ static void tdma_timer_expired_rt_add(void *data)
 	tdma_do_event(tdma, EXPIRED_ADD_RT, NULL);
 }
 
-
-
-void tdma_timer_start_master_wait(struct rtmac_tdma *tdma, int timeout)
+void tdma_timer_start_rt_add(struct rtmac_tdma *tdma, int timeout)
 {
 	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
-	tdma_timer_start(&tdma->master_wait_timer, timeout, (void *)tdma, tdma_timer_expired_master_wait);
+	tdma_timer_start(&tdma->rt_add_timer, timeout, (void *)tdma, tdma_timer_expired_rt_add);
 }
+
+
 
 static void tdma_timer_expired_master_wait(void *data)
 {
@@ -83,13 +71,13 @@ static void tdma_timer_expired_master_wait(void *data)
 	tdma_do_event(tdma, EXPIRED_MASTER_WAIT, NULL);
 }
 
-
-
-void tdma_timer_start_sent_conf(struct rtmac_tdma *tdma, int timeout)
+void tdma_timer_start_master_wait(struct rtmac_tdma *tdma, int timeout)
 {
 	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
-	tdma_timer_start(&tdma->master_sent_conf_timer, timeout, (void *)tdma, tdma_timer_expired_sent_conf);
+	tdma_timer_start(&tdma->master_wait_timer, timeout, (void *)tdma, tdma_timer_expired_master_wait);
 }
+
+
 
 static void tdma_timer_expired_sent_conf(void *data)
 {
@@ -99,7 +87,25 @@ static void tdma_timer_expired_sent_conf(void *data)
 	tdma_do_event(tdma, EXPIRED_MASTER_SENT_CONF, NULL);
 }
 
+void tdma_timer_start_sent_conf(struct rtmac_tdma *tdma, int timeout)
+{
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
+	tdma_timer_start(&tdma->master_sent_conf_timer, timeout, (void *)tdma, tdma_timer_expired_sent_conf);
+}
 
+
+
+static void tdma_timer_expired_task_change(void *data)
+{
+	struct timer_task_change_data *task_change_data = (struct timer_task_change_data *)data;
+	struct rtmac_tdma *tdma = task_change_data->tdma;
+	void (*task) (int rtdev_id) = task_change_data->task;
+	unsigned int cycle = task_change_data->cycle;
+
+	tdma_task_change_con(tdma, task, cycle);
+	
+	kfree(data);
+}
 
 int tdma_timer_start_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle, int timeout)
 {
@@ -132,25 +138,7 @@ int tdma_timer_start_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev
 	return ret;
 }
 
-static void tdma_timer_expired_task_change(void *data)
-{
-	struct timer_task_change_data *task_change_data = (struct timer_task_change_data *)data;
-	struct rtmac_tdma *tdma = task_change_data->tdma;
-	void (*task) (int rtdev_id) = task_change_data->task;
-	unsigned int cycle = task_change_data->cycle;
 
-	tdma_task_change_con(tdma, task, cycle);
-	
-	kfree(data);
-}
-
-
-
-void tdma_timer_start_sent_test(struct rtmac_tdma *tdma, int timeout)
-{
-	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
-	tdma_timer_start(&tdma->master_sent_test_timer, timeout, (void *)tdma, tdma_timer_expired_sent_test);
-}
 
 static void tdma_timer_expired_sent_test(void *data)
 {
@@ -160,13 +148,13 @@ static void tdma_timer_expired_sent_test(void *data)
 	tdma_do_event(tdma, EXPIRED_MASTER_SENT_TEST, NULL);
 }
 
-
-
-void tdma_timer_start_sent_ack(struct rtmac_tdma *tdma, int timeout)
+void tdma_timer_start_sent_test(struct rtmac_tdma *tdma, int timeout)
 {
 	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
-	tdma_timer_start(&tdma->client_sent_ack_timer, timeout, (void *)tdma, tdma_timer_expired_sent_ack);
+	tdma_timer_start(&tdma->master_sent_test_timer, timeout, (void *)tdma, tdma_timer_expired_sent_test);
 }
+
+
 
 static void tdma_timer_expired_sent_ack(void *data)
 {
@@ -176,5 +164,8 @@ static void tdma_timer_expired_sent_ack(void *data)
 	tdma_do_event(tdma, EXPIRED_CLIENT_SENT_ACK, NULL);
 }
 
-
-
+void tdma_timer_start_sent_ack(struct rtmac_tdma *tdma, int timeout)
+{
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
+	tdma_timer_start(&tdma->client_sent_ack_timer, timeout, (void *)tdma, tdma_timer_expired_sent_ack);
+}

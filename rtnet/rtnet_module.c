@@ -34,8 +34,13 @@
 #include <rtai_proc_fs.h>
 #endif
 
-#include <rtnet.h>
+#include <rtdev_mgr.h>
+#include <rtnet_crc32.h>
 #include <rtnet_internal.h>
+#include <rtnet_socket.h>
+#include <rtnet_dev.h>
+#include <stack_mgr.h>
+#include <ipv4/af_inet.h>
 
 MODULE_LICENSE("GPL");
 

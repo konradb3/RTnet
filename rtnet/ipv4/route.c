@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.7 2003/05/23 12:34:25 hpbock Exp $
+ * Version:	$Id: route.c,v 1.8 2003/05/27 09:50:41 kiszka Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -82,11 +82,8 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  */
-#include <linux/netdevice.h>
-#include <linux/in.h>
 
 #include <rtai.h>
-#include <rtai_sched.h>
 
 #ifdef CONFIG_PROC_FS
 #include <linux/stat.h>
@@ -95,8 +92,8 @@
 #include <rtai_proc_fs.h>
 #endif /* CONFIG_PROC_FS */
 
-#include <rtnet.h>
-#include <rtnet_internal.h>
+#include <ipv4/arp.h>
+#include <ipv4/route.h>
 
 
 #define RT_ROUT_TABLE_LEN 50

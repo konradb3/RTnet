@@ -19,14 +19,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <linux/spinlock.h>
-#include <linux/ip.h>
-#include <linux/icmp.h>
 
+#include <linux/types.h>
+#include <linux/icmp.h>
 #include <net/checksum.h>
 
-#include <rtnet.h>
-#include <rtnet_internal.h>
+#include <rtskb.h>
+#include <rtnet_socket.h>
+#include <ipv4/ip_output.h>
+#include <ipv4/protocol.h>
+#include <ipv4/route.h>
+
 
 struct rt_icmp_control
 {

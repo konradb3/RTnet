@@ -22,10 +22,7 @@
 #include <linux/list.h>
 #include <linux/module.h>
 
-#include <rtai.h>
-
-#include <rtnet.h>
-#include <tdma.h>
+#include <rtmac/tdma/tdma_task.h>
 
 
 /*

@@ -25,11 +25,12 @@
 
 #include <rtai.h>
 
-#include <rtnet.h>
+#include <ipv4/arp.h>
+#include <rtmac/tdma/tdma_cleanup.h>
+#include <rtmac/tdma/tdma_event.h>
+#include <rtmac/tdma/tdma_task.h>
+#include <rtmac/tdma/tdma_timer.h>
 
-#include <rtmac.h>
-#include <tdma.h>
-#include <tdma_event.h>
 
 #define TIMERTICKS 1000 // 1 us // FIXME: needed?
 

@@ -16,8 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include <net/checksum.h>
-#include <rtnet.h>
+#include <net/ip.h>
+
+#include <rtskb.h>
+#include <ipv4/ip_fragment.h>
+#include <ipv4/protocol.h>
+#include <ipv4/route.h>
 
 static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
 

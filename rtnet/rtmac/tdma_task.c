@@ -18,14 +18,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <linux/netdevice.h>
-
 #include <rtai.h>
 
-#include <rtnet.h>
-#include <rtmac.h>
-#include <tdma.h>
-#include <tdma_event.h>
+#include <ipv4/arp.h>
+#include <rtmac/tdma/tdma.h>
+#include <rtmac/tdma/tdma_cleanup.h>
+#include <rtmac/tdma/tdma_event.h>
+#include <rtmac/tdma/tdma_timer.h>
+
 
 void tdma_task_shutdown(struct rtmac_tdma *tdma)
 {

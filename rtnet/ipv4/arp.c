@@ -30,9 +30,11 @@
 #include <rtai_proc_fs.h>
 #endif /* CONFIG_PROC_FS */
 
-#include <rtnet.h>
-#include <rtnet_internal.h>
-#include <../rtmac/include/rtmac.h>
+#include <rtdev.h>
+#include <rtskb.h>
+#include <ipv4/arp.h>
+#include <ipv4/route.h>
+#include <rtmac/rtmac_disc.h>
 
 /***
  *	arp_send:	Create and send an arp packet. If (dest_hw == NULL),

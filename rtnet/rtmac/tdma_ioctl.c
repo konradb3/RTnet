@@ -23,11 +23,7 @@
 
 #include <rtai.h>
 
-#include <rtnet.h>
-#include <rtmac.h>
-#include <tdma.h>
-#include <tdma_event.h>
-
+#include <rtmac/tdma/tdma_event.h>
 
 
 int tdma_ioctl_client(struct rtnet_device *rtdev)

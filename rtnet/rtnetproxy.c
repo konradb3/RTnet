@@ -51,9 +51,13 @@
 #include <linux/if_arp.h>   /* For ARPHRD_ETHER */
 
 
-#include <rtnet.h>
+#include <rtdev.h>
+#include <rtskb.h>
 #include <rtnet_internal.h>
-#include <rtmac.h>
+#include <ipv4/ip_input.h>
+#include <ipv4/route.h>
+#include <rtmac/rtmac_disc.h>
+
 
 /* **************************************************************************
  *  SKB ringbuffers for exchanging data between rtnet and kernel:
