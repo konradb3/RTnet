@@ -55,7 +55,7 @@ static inline RTIME tdma_get_delta_t(struct rtmac_tdma *tdma)
 
     flags = rt_spin_lock_irqsave(&tdma->delta_t_lock);
     delta_t = tdma->delta_t;
-    rt_spin_unlock_irqrestore(&tdma->delta_t_lock, flags);
+    rt_spin_unlock_irqrestore(flags, &tdma->delta_t_lock);
 
     return delta_t;
 }
