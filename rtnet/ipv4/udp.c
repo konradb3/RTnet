@@ -82,7 +82,7 @@ unsigned short rt_udp_good_port(void)
 /***
  *  rt_udp_v4_lookup
  */
-struct rtsocket *rt_udp_v4_lookup(u32 saddr, u16 sport, u32 daddr, u16 dport)
+struct rtsocket *rt_udp_v4_lookup(u16 sport, u16 dport)
 {
     unsigned long flags;
     struct rtsocket *sk;
@@ -451,15 +451,11 @@ static inline unsigned short rt_udp_check(struct udphdr *uh, int len,
 
 struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
 {
-    struct udphdr *uh;
-    unsigned short ulen;
-    struct rtsocket *rtsk;
+    struct udphdr   *uh   = skb->h.uh;
+    unsigned short  ulen  = ntohs(uh->len);
+    u32             saddr = skb->nh.iph->saddr;
+    u32             daddr = skb->nh.iph->daddr;
 
-    u32 saddr = skb->nh.iph->saddr;
-    u32 daddr = skb->nh.iph->daddr;
-
-    uh   = skb->h.uh;
-    ulen = ntohs(uh->len);
 
     if (uh->check == 0)
         skb->ip_summed = CHECKSUM_UNNECESSARY;
@@ -477,13 +473,10 @@ struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
     if (skb->ip_summed != CHECKSUM_UNNECESSARY)
         skb->csum = csum_tcpudp_nofold(saddr, daddr, ulen, IPPROTO_UDP, 0);
 
-    /* find a socket */
-    if ((rtsk = rt_udp_v4_lookup(saddr, uh->source, daddr, uh->dest)) == NULL)
-        return NULL;
+    /* find the destination socket */
+    skb->sk = rt_udp_v4_lookup(uh->source, uh->dest);
 
-    skb->sk = rtsk;
-
-    return rtsk;
+    return skb->sk;
 }
 
 
