@@ -26,10 +26,18 @@
 #include <linux/socket.h>
 
 
+/* socket option names */
 #define RT_SO_EXTPOOL   0xFF01
 #define RT_SO_SHRPOOL   0xFF02
 #define RT_SO_PRIORITY  0xFF03
 #define RT_SO_NONBLOCK  0xFF04
+#define RT_SO_TIMEOUT   0xFF05
+
+/* socket priorities */
+#define SOCK_MAX_PRIO   QUEUE_MAX_PRIO
+#define SOCK_DEF_PRIO   QUEUE_MAX_PRIO+(QUEUE_MIN_PRIO-QUEUE_MAX_PRIO+1)/2
+#define SOCK_MIN_PRIO   QUEUE_MIN_PRIO-1
+#define SOCK_NRT_PRIO   QUEUE_MIN_PRIO
 
 
 /***
