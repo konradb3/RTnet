@@ -309,9 +309,10 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 	s->state=TCP_CLOSE;
 
 	for (d=udp_sockets; d!=NULL; d=d->next) {
-		if ( (d==s) || (s->sport==d->sport) ) {
+		if ( (d==s) || (s->sport==d->sport) ) { /* Why are ports checked here? */
 			struct rtsocket *prev=d->prev;
 			struct rtsocket *next=d->next;
+			struct rtskb *del;
 
 //			rt_sem_wait(&udp_socket_sem);
 //			write_lock(&udp_socket_base_lock);
@@ -321,6 +322,11 @@ void rt_udp_close(struct rtsocket *s,long timeout)
 
 			s->next=NULL;
 			s->prev=NULL;
+
+			/* free packets in incoming queue */
+			while (del=rtskb_dequeue(&s->incoming)) {
+				kfree_rtskb(del);
+			}
 
 			if (s==udp_sockets) {
 				udp_sockets=udp_sockets->next;
