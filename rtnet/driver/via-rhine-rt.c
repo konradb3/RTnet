@@ -538,6 +538,7 @@ struct netdev_private {
 	unsigned int mii_cnt;			/* number of MIIs found, but only the first one is used */
 	u16 mii_status;						/* last read MII status */
 	struct mii_if_info mii_if;
+	unsigned int mii_if_force_media; /*** RTnet, support for older kernels (e.g. 2.4.19) ***/
 
 	struct rtskb_head skb_pool; /*** RTnet ***/
 };
@@ -836,7 +837,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	if (np->mii_if.full_duplex) {
 		printk(KERN_INFO "%s: Set to forced full duplex, autonegotiation"
 			   " disabled.\n", dev->name);
-		np->mii_if.force_media = 1;
+		np->mii_if_force_media = 1; /*** RTnet ***/
 	}
 
 	printk(KERN_INFO "%s: %s at 0x%lx, ",
@@ -1095,7 +1096,7 @@ static void init_registers(struct rtnet_device *dev) /*** RTnet ***/
 		   ioaddr + IntrEnable);
 
 	np->chip_cmd = CmdStart|CmdTxOn|CmdRxOn|CmdNoTxPoll;
-	if (np->mii_if.force_media)
+	if (np->mii_if_force_media) /*** RTnet ***/
 		np->chip_cmd |= CmdFDuplex;
 	writew(np->chip_cmd, ioaddr + ChipCmd);
 
@@ -1137,7 +1138,7 @@ static void mdio_write(struct rtnet_device *dev, int phy_id, int regnum, int val
 		switch (regnum) {
 		case MII_BMCR:					/* Is user forcing speed/duplex? */
 			if (value & 0x9000)			/* Autonegotiation. */
-				np->mii_if.force_media = 0;
+				np->mii_if_force_media = 0; /*** RTnet ***/
 			else
 				np->mii_if.full_duplex = (value & 0x0100) ? 1 : 0;
 			break;
@@ -1218,7 +1219,7 @@ static void via_rhine_check_duplex(struct rtnet_device *dev) /*** RTnet ***/
 	int negotiated = mii_lpa & np->mii_if.advertising;
 	int duplex;
 
-	if (np->mii_if.force_media  ||  mii_lpa == 0xffff)
+	if (np->mii_if_force_media  ||  mii_lpa == 0xffff) /*** RTnet ***/
 		return;
 	duplex = (negotiated & 0x0100) || (negotiated & 0x01C0) == 0x0040;
 	if (np->mii_if.full_duplex != duplex) {
