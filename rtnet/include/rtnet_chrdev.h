@@ -28,10 +28,10 @@
 #include <linux/netdevice.h>
 #include <linux/types.h>
 
-#include <rtdev.h>
-
 
 #ifdef __KERNEL__
+
+struct rtnet_device;
 
 /* new extensible interface */
 struct rtnet_ioctls {
