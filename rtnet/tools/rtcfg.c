@@ -105,7 +105,7 @@ void cmd_server(int argc, char *argv[])
         else if (strcmp(argv[i], "-b") == 0)
             cmd.args.server.burstrate = getintopt(argc, ++i, argv, 1);
         else if (strcmp(argv[i], "-h") == 0)
-            cmd.args.server.heartbeat = getintopt(argc, ++i, argv, 1);
+            cmd.args.server.heartbeat = getintopt(argc, ++i, argv, 0);
         else if (strcmp(argv[i], "-t") == 0)
             cmd.args.server.threshold = getintopt(argc, ++i, argv, 1);
         else if (strcmp(argv[i], "-r") == 0)
@@ -160,7 +160,7 @@ void cmd_add(int argc, char *argv[])
         if (strcmp(argv[i], "-hw") == 0) {
             if ((++i >= argc) || (ether_aton_r(argv[i], &mac_addr) == NULL))
                 help();
-            cmd.args.add.addr_type = RTCFG_ADDR_IP | ASSIGN_ADDR_BY_MAC;
+            cmd.args.add.addr_type = RTCFG_ADDR_IP | FLAG_ASSIGN_ADDR_BY_MAC;
             memcpy(cmd.args.add.mac_addr, mac_addr.ether_addr_octet,
                    sizeof(mac_addr.ether_addr_octet));
         } else if (strcmp(argv[i], "-stage1") == 0) {
