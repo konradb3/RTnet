@@ -248,10 +248,7 @@ void tdma_task_master(int rtdev_id)
          * get client skb out of queue and send it
          */
 
-        skb = rtskb_dequeue(&tdma->rt_tx_queue);
-        if (!skb)
-            skb = rtskb_dequeue(&tdma->nrt_tx_queue);
-
+        skb = rtskb_prio_dequeue(&tdma->tx_queue);
         if (skb)
             tdma_xmit(skb);
     }
@@ -277,10 +274,7 @@ void tdma_task_client(int rtdev_id)
 
         rt_sleep_until(tdma->wakeup);
 
-        skb = rtskb_dequeue(&tdma->rt_tx_queue);
-        if (!skb)
-            skb = rtskb_dequeue(&tdma->nrt_tx_queue);
-
+        skb = rtskb_prio_dequeue(&tdma->tx_queue);
         if (skb)
             tdma_xmit(skb);
     }

@@ -406,7 +406,8 @@ void rt_icmp_init(void)
     unsigned int skbs;
 
     reply_socket.protocol = IPPROTO_ICMP;
-    reply_socket.tos = 0;
+    reply_socket.tos      = 0;
+    reply_socket.priority = RT_ICMP_REPLY_PRIO;
     skbs = rtskb_pool_init(&reply_socket.skb_pool, ICMP_REPLY_POOL_SIZE);
     if (skbs < ICMP_REPLY_POOL_SIZE)
         rt_printk("RTnet: allocated only %d icmp rtskbs\n", skbs);

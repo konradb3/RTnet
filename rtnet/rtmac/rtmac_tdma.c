@@ -57,10 +57,10 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     rt_sem_init(&tdma->client_tx, 0);
 
     /*
-     * init rt-tx queue
+     * init tx queue
      *
      */
-    rtskb_queue_head_init(&tdma->rt_tx_queue);
+    rtskb_prio_list_init(&tdma->tx_queue);
 
     /*
      * init rt stuff
@@ -87,11 +87,6 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     /* client */
     init_timer(&tdma->client_sent_ack_timer);
 
-
-    /*
-     * init nrt stuff
-     */
-    rtskb_queue_head_init(&tdma->nrt_tx_queue);
 
     /*
      * start timer
@@ -146,7 +141,7 @@ int tdma_rt_packet_tx(struct rtskb *skb, struct rtnet_device *rtdev)
     if (tdma->flags.mac_active == 0)
         return tdma_xmit(skb);
 
-    rtskb_queue_tail(&tdma->rt_tx_queue, skb);
+    rtskb_prio_queue_tail(&tdma->tx_queue, skb);
 
     return 0;
 }
@@ -161,7 +156,8 @@ int tdma_nrt_packet_tx(struct rtskb *skb)
     if (tdma->flags.mac_active == 0)
         return -1;
 
-    rtskb_queue_tail(&tdma->nrt_tx_queue, skb);
+    skb->priority = QUEUE_MIN_PRIO;
+    rtskb_prio_queue_tail(&tdma->tx_queue, skb);
 
     return 0;
 }

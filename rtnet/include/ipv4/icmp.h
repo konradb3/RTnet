@@ -21,8 +21,11 @@
 #ifndef __RTNET_ICMP_H_
 #define __RTNET_ICMP_H_
 
+#include <rtskb.h>
 #include <ipv4/protocol.h>
 
+
+#define RT_ICMP_REPLY_PRIO          QUEUE_MIN_PRIO-1
 
 #define ICMP_REPLY_POOL_SIZE        8
 

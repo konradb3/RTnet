@@ -67,6 +67,7 @@ void rt_arp_send(int type,
 
     skb->rtdev = rtdev;
     skb->protocol = __constant_htons (ETH_P_ARP);
+    skb->priority = RT_ARP_SKB_PRIO;
     if (src_hw == NULL)
         src_hw = rtdev->dev_addr;
     if (dest_hw == NULL)

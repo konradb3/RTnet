@@ -131,7 +131,7 @@ struct tdma_flags {
 
 struct rtmac_tdma {
     RT_TASK                     tx_task;
-    struct rtskb_head           rt_tx_queue;
+    struct rtskb_prio_list      tx_queue;
 
     struct tdma_flags           flags;
 
@@ -162,9 +162,6 @@ struct rtmac_tdma {
     struct rt_arp_table_struct  *master;
     struct timer_list           client_sent_ack_timer;
     RTIME                       delta_t; /* offset to master clock in ns. */
-
-    /*** non realtime discipline stuff ***/
-    struct rtskb_head           nrt_tx_queue;
 };
 
 struct tdma_rt_entry {

@@ -18,6 +18,9 @@
  */
 
 // $Log: ip_output.c,v $
+// Revision 1.13  2003/08/22 12:48:44  kiszka
+// * applied priorities to outgoing skbs
+//
 // Revision 1.12  2003/08/20 16:26:25  kiszka
 // * applied new pool mechanisms
 //
@@ -126,6 +129,7 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
         skb->dst=rt;
         skb->rtdev=rt->rt_dev;
         skb->nh.iph = iph = (struct iphdr *) rtskb_put(skb, fraglen);
+        skb->priority = sk->priority;
 
 
         iph->version=4;
@@ -213,6 +217,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     skb->dst=rt;
     skb->rtdev=rt->rt_dev;
     skb->nh.iph = iph = (struct iphdr *) rtskb_put(skb, length);
+    skb->priority = sk->priority;
 
     iph->version=4;
     iph->ihl=5;

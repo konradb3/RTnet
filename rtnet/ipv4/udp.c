@@ -179,6 +179,15 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
     unsigned copied=0;
     struct rtskb *skb;
 
+    /* block on receive semaphore */
+    if ((s->flags & RT_SOCK_NONBLOCK) == 0) {
+        if (s->timeout > 0) {
+            if (rt_sem_wait_timed(&s->wakeup_sem, nano2count(s->timeout)) == SEM_TIMOUT)
+                return -ETIMEDOUT;
+        } else
+            rt_sem_wait(&s->wakeup_sem);
+    }
+
     /* fetch packet from incomming queue */
     if ( (skb=rtskb_dequeue(&s->incoming))!=NULL ) {
         struct sockaddr_in *sin=msg->msg_name;
@@ -192,12 +201,14 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
 
         /* copy the data */
         copied = skb->len-sizeof(struct udphdr);
-                /* The data must not be longer than the value of the parameter "len" in
-                 * the socket recvmsg call */
-                if (copied > msg->msg_iov->iov_len)
-                {
-                    copied = msg->msg_iov->iov_len;
-                }
+
+        /* The data must not be longer than the value of the parameter "len" in
+        * the socket recvmsg call */
+        if (copied > msg->msg_iov->iov_len)
+        {
+            copied = msg->msg_iov->iov_len;
+        }
+
         rt_memcpy_tokerneliovec(msg->msg_iov, skb->h.raw+sizeof(struct udphdr), copied);
 
         kfree_rtskb(skb);
@@ -210,7 +221,7 @@ int rt_udp_recvmsg(struct rtsocket *s, struct msghdr *msg, int len)
 /***
  *  struct udpfakehdr
  */
-struct udpfakehdr 
+struct udpfakehdr
 {
     struct udphdr uh;
     u32 daddr;
@@ -409,7 +420,9 @@ int rt_udp_rcv (struct rtskb *skb)
         goto drop;
 
     rtskb_queue_tail(&rtsk->incoming, skb);
-    if ( rtsk->wakeup!=NULL )
+    if ( (rtsk->flags & RT_SOCK_NONBLOCK) == 0 )
+        rt_sem_signal(&rtsk->wakeup_sem);
+    if ( rtsk->wakeup != NULL )
         rtsk->wakeup(rtsk->fd, rtsk->private);
 
     return 0;

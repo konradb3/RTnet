@@ -26,6 +26,8 @@
 #include <rtdev.h>
 
 
+#define RT_ARP_SKB_PRIO  QUEUE_MIN_PRIO-1
+
 #define RT_ARP_ADDR_LEN  6
 #define RT_ARP_TABLE_LEN 20
 
