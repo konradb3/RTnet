@@ -28,8 +28,15 @@
 
 #include <rtnet_chrdev.h>
 #include <rtnet_internal.h>
+#include <rtnet_rtpc.h>
 #include <ipv4/arp.h>
 #include <ipv4/route.h>
+
+
+struct route_solicit_params {
+    struct rtnet_device *rtdev;
+    __u32               ip_addr;
+};
 
 
 static spinlock_t ioctl_handler_lock = SPIN_LOCK_UNLOCKED;
@@ -95,11 +102,25 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
 
 
 
+static int route_solicit_handler(struct rt_proc_call *call)
+{
+    struct route_solicit_params *param;
+
+
+    param = rtpc_get_priv(call, struct route_solicit_params);
+    rt_arp_solicit(param->rtdev, param->ip_addr);
+
+    return 0;
+}
+
+
+
 static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                             unsigned long arg)
 {
-    struct rtnet_core_cfg   cfg;
-    int                     ret;
+    struct rtnet_core_cfg       cfg;
+    struct route_solicit_params params;
+    int                         ret;
 
 
     ret = copy_from_user(&cfg, (void *)arg, sizeof(cfg));
@@ -137,8 +158,10 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             break;
 
         case IOC_RT_ROUTE_SOLICIT:
-            rt_arp_solicit(rtdev,cfg.ip_addr);
-            ret = 0;
+            params.rtdev   = rtdev;
+            params.ip_addr = cfg.ip_addr;
+            ret = rtpc_dispatch_call(route_solicit_handler, 0, &params,
+                                     sizeof(params), NULL);
             break;
 
         case IOC_RT_ROUTE_DELETE:
