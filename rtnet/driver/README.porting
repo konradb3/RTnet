@@ -1,3 +1,13 @@
+This list was created when porting the pcnet32 driver to RTnet. It is
+absolutely unsorted. Some points may not apply to every driver, some may have
+to be added for other. It is recommended to take a look at pcnet32-rt.c if a
+step remains unclear.
+
+IMPORTANT: Check if the critical paths of the driver (xmit function, interrupt
+handler) are free of any unbounded or unacceptable long delays, e.g. caused by
+waiting on hardware events.
+
+
 1. Add to beginning of file:
 
     /*** RTnet ***/
@@ -30,10 +40,10 @@
 5. free skb pool in cleanup function
 
 
-6. replace unregister_netdev with rt_unregister_netdev
+6. replace unregister_netdev with rt_unregister_rtnetdev
 
 
-7. call rt_rtdev_disconnect in cleanup function
+7. call rt_rtdev_disconnect in cleanup function (and on error cleanups!)
 
 
 8. cleanup device structure with rtdev_free
@@ -73,7 +83,7 @@
 
     rt_sem_wait(&dev->xmit_sem);
     rt_disable_irq(dev->irq);
-    rt_spin_unlock(&<priv>->lock);
+    rt_spin_lock(&<priv>->lock);
 
     ...
 
@@ -146,6 +156,35 @@
 30. add to the end of the interrupt handler:
 
     rt_enable_irq(irq);
-    rt_spin_unlock(&<priv>->lock);
+    rt_spin_unlock(&<priv>->lock); /* if locking is not done in interrupt main function */
     if (old_packet_cnt != <priv>->stats.rx_packets)
         rt_mark_stack_mgr(dev);
+
+
+31. replace pci_map_single(dev, skb_addr, ...) with
+    pci_map_single(dev, RTSKB_KVA(skb, skb_addr), ...)
+
+
+32. disable any timer setup and delete calls
+
+
+33. uncomment un-required(!) MII related assignments and functions
+
+
+34. uncomment any other unused functions
+
+
+35. replace register_netdev with rt_register_rtnetdev
+
+
+36. replace netif_carrier_{on|off} with rtnetif_carrier_{on|off}
+
+
+37. replace dev_alloc_skb(size) with dev_alloc_rtskb(size, &<priv>->skb_pool)
+
+
+38. reduce RX_RING_SIZE to 8
+
+
+XX. check the critical paths in xmit function and interrupt handler for delays
+    or hardware wait loops, disable or avoid them
