@@ -42,6 +42,8 @@ How to install it?
        --enable-smc91111        compiles the SMSC LAN91C111 driver
        --enable-proxy           compiles the IP protocol proxy driver (legacy)
        --enable-rtcap           enables capturing support (see README.rtcap)
+       --enable-net-routing     enables network routing (see README.routing)
+       --enable-router          enables IP forwarding (see README.routing)
        --disable-checks         does not compile internal bug checks
    <PREFIX> is the installation path prefix (see below). Default <PREFIX> is
    /usr/local/rtnet. Further parameters are shown by ./configure --help. RTnet
@@ -66,7 +68,8 @@ How to test it?
    the following paramters: RTNET_PATH, RT_DRIVER, IPADDR, TDMA_MODE,
    TDMA_CLIENTS.
 4. Run <RTNET_PATH>/sbin/rtnet start
-5. Load application module (e.g. by using examples/round_trip_time/run)
+5. Run rtping <remote-host> or load an application module
+   (like examples/round_trip_time/run)
 
 
 RTnet is free software, and you are welcome to redistribute it under
