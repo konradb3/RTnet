@@ -6,11 +6,11 @@
 /* we are building for powerpc */
 #undef CONFIG_ARCH_PPC
 
-/* We build for fusion 0.6.4 */
-#undef CONFIG_FUSION_064
-
 /* We build for fusion 0.6.5 */
 #undef CONFIG_FUSION_065
+
+/* RTAI LXRT */
+#undef CONFIG_NEWLXRT
 
 /* We build for rtai 24.1.x */
 #undef CONFIG_RTAI_24
@@ -44,9 +44,6 @@
 
 /* Router */
 #undef CONFIG_RTNET_ROUTER
-
-/* RTAI LXRT */
-#undef CONFIG_RTNET_RTAI_LXRT
 
 /* RTcap support */
 #undef CONFIG_RTNET_RTCAP
