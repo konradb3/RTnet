@@ -4,7 +4,7 @@ librt_event_a_SOURCES = rt_event.c
 
 librt_show_events_a_SOURCES = rt_show_events.c
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include
 

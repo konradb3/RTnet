@@ -9,7 +9,7 @@ libtulip_rt_a_SOURCES = tulip_core.c \
 			pnic.c \
 			pnic2.c
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/lib
@@ -20,3 +20,6 @@ tulip-rt.o: libtulip-rt.a
 	$(LD) -r -o $@ .extract/*.o
 
 all-local: tulip-rt.o
+
+clean-local:
+	rm -rf .extract

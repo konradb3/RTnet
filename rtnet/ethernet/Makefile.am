@@ -2,7 +2,7 @@ noinst_LIBRARIES = libeth.a
 
 libeth_a_SOURCES = eth.c
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include
 

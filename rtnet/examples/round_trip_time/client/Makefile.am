@@ -3,7 +3,7 @@ noinst_PROGRAMS = showtime
 
 librt_client_a_SOURCES = rt_client.c
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include
 

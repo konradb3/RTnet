@@ -1,6 +1,6 @@
 sbin_PROGRAMS = rtifconfig
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@KERNEL_CFLAGS@ \
 	-I$(top_srcdir)/include
 

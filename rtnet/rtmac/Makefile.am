@@ -21,7 +21,7 @@ rtmac.o: librtmac.a
 	cd .extract && $(AR) x ../$<
 	$(LD) -r -o $@ .extract/*.o
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include
 

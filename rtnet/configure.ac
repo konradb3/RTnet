@@ -161,6 +161,99 @@ AC_SUBST(KERNEL_CFLAGS)
 AC_SUBST(CROSS_COMPILE)
 
 
+
+dnl ======================================================================
+dnl		network interface card driver
+dnl ======================================================================
+
+AC_MSG_CHECKING(whether to build 3Com 59x driver)
+AC_ARG_ENABLE(3c59x,
+	[  --enable-3c59x         build 3Com 59x driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_3C59X=yes;;
+	*) unset CONFIG_RTNET_3C59X ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_3C59X:-no})
+AM_CONDITIONAL(CONFIG_RTNET_3C59X,[test "$CONFIG_RTNET_3C59X" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build Realtek 8139 driver)
+AC_ARG_ENABLE(8139,
+	[  --enable-8139          build Realtek 8139 driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_8139=yes;;
+	*) unset CONFIG_RTNET_8139 ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_8139:-no})
+AM_CONDITIONAL(CONFIG_RTNET_8139,[test "$CONFIG_RTNET_8139" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build Intel EtherExpressPro/100 driver)
+AC_ARG_ENABLE(eepro100,
+	[  --enable-eepro100      build Intel EtherExpressPro/100 driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_EEPRO100=yes;;
+	*) unset CONFIG_RTNET_EEPRO100 ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_EEPRO100:-no})
+AM_CONDITIONAL(CONFIG_RTNET_EEPRO100,[test "$CONFIG_RTNET_EEPRO100" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build loopback driver)
+AC_ARG_ENABLE(loopback,
+	[  --enable-loopback      build loopback driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_LOOPBACK=yes;;
+	*) unset CONFIG_RTNET_LOOPBACK ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_LOOPBACK:-no})
+AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build tulip driver)
+AC_ARG_ENABLE(tulip,
+	[  --enable-tulip         build tulip driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_TULIP=yes;;
+	*) unset CONFIG_RTNET_TULIP ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_TULIP:-no})
+AM_CONDITIONAL(CONFIG_RTNET_TULIP,[test "$CONFIG_RTNET_TULIP" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build fcc enet driver)
+AC_ARG_ENABLE(fcc-enet,
+	[  --enable-fcc-enet      build fcc enet driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_FCC_ENET=yes;;
+	*) unset CONFIG_RTNET_FCC_ENET ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_FCC_ENET:-no})
+AM_CONDITIONAL(CONFIG_RTNET_FCC_ENET,[test "$CONFIG_RTNET_FCC_ENET" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build scc enet driver)
+AC_ARG_ENABLE(scc-enet,
+	[  --enable-scc-enet      build scc enet driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_SCC_ENET=yes;;
+	*) unset CONFIG_RTNET_SCC_ENET ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_SCC_ENET:-no})
+AM_CONDITIONAL(CONFIG_RTNET_SCC_ENET,[test "$CONFIG_RTNET_SCC_ENET" = "yes"])
+
+
+AC_MSG_CHECKING(whether to build fec enet driver)
+AC_ARG_ENABLE(fec-enet,
+	[  --enable-fec-enet      build fec enet driver],
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_FEC_ENET=yes ;;
+	*) unset CONFIG_RTNET_FEC_ENET ;;
+	esac])
+AC_MSG_RESULT(${CONFIG_RTNET_FEC_ENET:-no})
+AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
+
+
 AC_OUTPUT([
 Makefile \
 examples/Makefile \

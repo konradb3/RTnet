@@ -26,7 +26,7 @@ rtnet.o: librtnet.a
 	cd .extract && $(AR) x ../$<
 	$(LD) -r -o $@ .extract/*.o $(RTNET_BUILTIN_OBJS)
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \
 	-I$(top_srcdir)/include
 
