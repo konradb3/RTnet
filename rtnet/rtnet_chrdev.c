@@ -4,7 +4,7 @@
  *  Copyright (C) 1999    Lineo, Inc
  *                1999,2002 David A. Schleef <ds@schleef.org>
  *                2002 Ulrich Marx <marx@fet.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *                2003,2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of version 2 of the GNU General Public License as
@@ -31,15 +31,7 @@
 
 #include <rtnet_chrdev.h>
 #include <rtnet_internal.h>
-#include <rtnet_rtpc.h>
-#include <ipv4/arp.h>
 #include <ipv4/route.h>
-
-
-struct route_solicit_params {
-    struct rtnet_device *rtdev;
-    __u32               ip_addr;
-};
 
 
 static rwlock_t ioctl_handler_lock = RW_LOCK_UNLOCKED;
@@ -104,45 +96,14 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
 
 
 
-static int route_solicit_handler(struct rt_proc_call *call)
-{
-    struct route_solicit_params *param;
-    struct rtnet_device         *rtdev;
-
-
-    param = rtpc_get_priv(call, struct route_solicit_params);
-    rtdev = param->rtdev;
-
-    if ((rtdev->flags & IFF_UP) == 0)
-        return -ENODEV;
-
-    rt_arp_solicit(rtdev, param->ip_addr);
-
-    return 0;
-}
-
-
-
-static void cleanup_route_solicit(struct rt_proc_call *call)
-{
-    struct route_solicit_params *param;
-
-
-    param = rtpc_get_priv(call, struct route_solicit_params);
-    rtdev_dereference(param->rtdev);
-}
-
-
-
 static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                             unsigned long arg)
 {
-    struct rtnet_core_cmd       cmd;
-    struct route_solicit_params params;
-    struct rtnet_device         *tmp;
-    int                         ret;
-    unsigned long               flags;
-    int                         i;
+    struct rtnet_core_cmd   cmd;
+    struct rtnet_device     *tmp;
+    int                     ret;
+    unsigned long           flags;
+    int                     i;
 
 
     ret = copy_from_user(&cmd, (void *)arg, sizeof(cmd));
@@ -160,27 +121,33 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             rtdev->flags &= ~cmd.args.up.clear_dev_flags;
 
             ret = rtdev_open(rtdev);    /* also = 0 if dev already up */
-            if ((ret == 0) && (cmd.args.up.ip_addr != 0)) {
-                rt_ip_route_del_all(rtdev); /* cleanup routing table */
-                rtdev->local_ip     = cmd.args.up.ip_addr;
-                rtdev->broadcast_ip = cmd.args.up.broadcast_ip;
 
-                if (rtdev->flags & IFF_LOOPBACK) {
-                    for (i = 0; i < MAX_RT_DEVICES; i++)
-                        if ((tmp = rtdev_get_by_index(i)) != NULL) {
-                            rt_ip_route_add_host(tmp->local_ip,
-                                                 rtdev->dev_addr, rtdev);
-                            rtdev_dereference(tmp);
-                        }
-                } else if ((tmp = rtdev_get_loopback()) != NULL) {
-                    rt_ip_route_add_host(cmd.args.up.ip_addr,
-                                         tmp->dev_addr, tmp);
-                    rtdev_dereference(tmp);
+            if (ret == 0) {
+                rt_ip_route_del_all(rtdev); /* cleanup routing table */
+
+                if (cmd.args.up.ip_addr != 0xFFFFFFFF) {
+                    rtdev->local_ip     = cmd.args.up.ip_addr;
+                    rtdev->broadcast_ip = cmd.args.up.broadcast_ip;
                 }
 
-                if (rtdev->flags & IFF_BROADCAST)
-                    rt_ip_route_add_host(cmd.args.up.broadcast_ip,
-                                         rtdev->broadcast, rtdev);
+                if (rtdev->local_ip != 0) {
+                    if (rtdev->flags & IFF_LOOPBACK) {
+                        for (i = 0; i < MAX_RT_DEVICES; i++)
+                            if ((tmp = rtdev_get_by_index(i)) != NULL) {
+                                rt_ip_route_add_host(tmp->local_ip,
+                                                    rtdev->dev_addr, rtdev);
+                                rtdev_dereference(tmp);
+                            }
+                    } else if ((tmp = rtdev_get_loopback()) != NULL) {
+                        rt_ip_route_add_host(rtdev->local_ip,
+                                             tmp->dev_addr, tmp);
+                        rtdev_dereference(tmp);
+                    }
+
+                    if (rtdev->flags & IFF_BROADCAST)
+                        rt_ip_route_add_host(cmd.args.up.broadcast_ip,
+                                             rtdev->broadcast, rtdev);
+                }
             }
 
             up(&rtdev->nrt_sem);
@@ -241,54 +208,9 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
             rtdev_dereference(rtdev);
 
-            ret = copy_to_user((void *)arg, &cmd, sizeof(cmd));
-            if (ret != 0)
+            if (copy_to_user((void *)arg, &cmd, sizeof(cmd)) != 0)
                 return -EFAULT;
             break;
-
-        case IOC_RT_HOST_ROUTE_ADD:
-            if (down_interruptible(&rtdev->nrt_sem))
-                return -ERESTARTSYS;
-
-            ret = rt_ip_route_add_host(cmd.args.addhost.ip_addr,
-                                       cmd.args.addhost.dev_addr, rtdev);
-
-            up(&rtdev->nrt_sem);
-            break;
-
-        case IOC_RT_HOST_ROUTE_SOLICIT:
-            if (down_interruptible(&rtdev->nrt_sem))
-                return -ERESTARTSYS;
-
-            rtdev_reference(rtdev);
-            params.rtdev   = rtdev;
-            params.ip_addr = cmd.args.solicit.ip_addr;
-
-            /* We need the rtpc wrapping because rt_arp_solicit can block on a
-             * real-time semaphore in the NIC's xmit routine. */
-            ret = rtpc_dispatch_call(route_solicit_handler, 0, &params,
-                                     sizeof(params), NULL,
-                                     cleanup_route_solicit);
-
-            up(&rtdev->nrt_sem);
-            break;
-
-        case IOC_RT_HOST_ROUTE_DELETE:
-            ret = rt_ip_route_del_host(cmd.args.delhost.ip_addr);
-            break;
-
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
-        case IOC_RT_NET_ROUTE_ADD:
-            ret = rt_ip_route_add_net(cmd.args.addnet.net_addr,
-                                      cmd.args.addnet.net_mask,
-                                      cmd.args.addnet.gw_addr);
-            break;
-
-        case IOC_RT_NET_ROUTE_DELETE:
-            ret = rt_ip_route_del_net(cmd.args.delnet.net_addr,
-                                      cmd.args.delnet.net_mask);
-            break;
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
 
         default:
             ret = -ENOTTY;
