@@ -1069,7 +1069,6 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
 
         offset_msg->offset = htonl(rt_entry->offset);
 
-        skb->priority = QUEUE_MAX_PRIO;
         rtmac_xmit(skb);
     }
 
