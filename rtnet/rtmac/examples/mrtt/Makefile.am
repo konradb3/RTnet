@@ -1,3 +1,5 @@
+CROSS_COMPILE = @CROSS_COMPILE@
+
 noinst_LIBRARIES = librt_client.a
 noinst_PROGRAMS = showtime
 
@@ -9,8 +11,8 @@ librt_client_a_CFLAGS = \
 
 rt_client.o: librt_client.a
 	rm -rf .extract && mkdir .extract
-	cd .extract && $(AR) x ../$<
-	$(LD) -r -o $@ .extract/*.o
+	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
+	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
 
 showtime_LDADD = $(NCURSES_LIBS)
 

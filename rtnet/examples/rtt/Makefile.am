@@ -1,3 +1,5 @@
+CROSS_COMPILE = @CROSS_COMPILE@
+
 noinst_LIBRARIES = librt_client.a librt_client_parport.a librt_server.a
 noinst_PROGRAMS = linux_server showtime
 
@@ -21,18 +23,18 @@ librt_server_a_CFLAGS = \
 
 rt_client.o: librt_client.a
 	rm -rf .extract && mkdir .extract
-	cd .extract && $(AR) x ../$<
-	$(LD) -r -o $@ .extract/*.o
+	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
+	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
 
 rt_client_parport.o: librt_client_parport.a
 	rm -rf .extract && mkdir .extract
-	cd .extract && $(AR) x ../$<
-	$(LD) -r -o $@ .extract/*.o
+	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
+	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
 
 rt_server.o: librt_server.a
 	rm -rf .extract && mkdir .extract
-	cd .extract && $(AR) x ../$<
-	$(LD) -r -o $@ .extract/*.o
+	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
+	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
 
 
 all-local: rt_client.o rt_client_parport.o rt_server.o linux_server showtime

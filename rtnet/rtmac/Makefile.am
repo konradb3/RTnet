@@ -1,3 +1,5 @@
+CROSS_COMPILE = @CROSS_COMPILE@
+
 SUBDIRS = examples
 
 noinst_LIBRARIES = librtmac.a
@@ -18,8 +20,8 @@ librtmac_a_SOURCES = \
 
 rtmac.o: librtmac.a
 	rm -rf .extract && mkdir .extract
-	cd .extract && $(AR) x ../$<
-	$(LD) -r -o $@ .extract/*.o
+	cd .extract && $(CROSS_COMPILE)$(AR) x ../$<
+	$(CROSS_COMPILE)$(LD) -r -o $@ .extract/*.o
 
 AM_CPPFLAGS = \
 	@RTAI_KMOD_CFLAGS@ \

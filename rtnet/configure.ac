@@ -4,7 +4,48 @@
 #AC_PREREQ(2.57)
 AC_INIT(RTnet)
 AM_INIT_AUTOMAKE(RTnet, 0.2.10, jan.kiszka@web.de)
+
 AC_PREFIX_DEFAULT(/usr/local/rtnet)
+
+AM_MAINTAINER_MODE
+#AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+
+AC_DEFINE_UNQUOTED(CONFIG_RTAI_BUILD_STRING,"$build",[Build system alias])
+RTAI_BUILD_STRING="$build"
+AC_DEFINE_UNQUOTED(CONFIG_RTAI_HOST_STRING,"$host",[Host system alias])
+RTAI_HOST_STRING="$host"
+
+case "$host" in
+ i*86*-*)
+	RTAI_TARGET_ARCH=i386
+	wanted_kernel_arch=CONFIG_X86
+        ;;
+ arm-*)
+	RTAI_TARGET_ARCH=arm
+	wanted_kernel_arch=CONFIG_ARM
+        ;;
+ powerpc-*|ppc-*)
+	RTAI_TARGET_ARCH=ppc
+	wanted_kernel_arch=CONFIG_PPC
+        ;;
+ mips-*)
+	RTAI_TARGET_ARCH=mips
+	wanted_kernel_arch=CONFIG_MIPS
+        ;;
+ cris-*)
+	RTAI_TARGET_ARCH=cris
+	dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
+	dnl so use the root device definition.
+	wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
+        ;;
+ *) echo ""
+   echo "*******************************************"
+   echo "Still unsupported host: $host -- Sorry."
+   echo "*******************************************"
+   echo ""
+   exit 1;;
+esac
 
 AC_CONFIG_SRCDIR([iovec.c])
 AM_CONFIG_HEADER(config/config.h)
@@ -17,6 +58,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
+AC_PROG_LD
 #AC_PROG_SED
 
 AC_DEFUN(AC_CHECK_LIBRARY, [dnl
@@ -92,52 +134,96 @@ dnl ++++++++++++ copied from rtai-unstabel +++ start +++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 if test \! -r ${RTAI_LINUX_DIR}/Makefile; then
+   echo
    AC_MSG_ERROR(*** No Linux kernel tree in ${RTAI_LINUX_DIR})
 fi
 
+eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+
+AC_MSG_CHECKING([for Linux version])
+AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel $linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL)])
+
 dnl
-dnl Identify the base technology used.
+dnl Load Linux kernel configuration.
 dnl
-
-AC_MSG_CHECKING([for RTAI base technology])
-
-eval `grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-eval `grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-eval `grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-
-case "$EXTRAVERSION" in
-  *rthal*)
-    AC_MSG_RESULT([rthal])
-    CONFIG_RTAI_RTHAL=y
-    ;;
-  *adeos*)
-    AC_DEFINE(CONFIG_RTAI_ADEOS,1,[Use Adeos-based HAL])
-    AC_MSG_RESULT([Adeos])
-    ;;
-  *) 
-    AC_MSG_ERROR(*** The RTAI kernel patch has not yet been applied to your kernel)
-esac
-
-case "$VERSION.$PATCHLEVEL" in
-  2.4)
-    AC_DEFINE(CONFIG_RTAI_LINUX24,1,[Kconfig])
-    ;;
-  *) 
-    AC_MSG_ERROR(*** Unsupported kernel version $VERSION.$PATCHLEVEL)
-esac
 
 if test \! -r ${RTAI_LINUX_DIR}/.config; then
    AC_MSG_ERROR(*** $RTAI_LINUX_DIR is not configured)
 fi
 
+AC_MSG_CHECKING([$RTAI_LINUX_DIR/.config])
+. $RTAI_LINUX_DIR/.config
+AC_MSG_RESULT([done])
+
 dnl
-dnl Load Linux kernel configuration and perform a few sanity checks.
+dnl Identify the base technology used.
 dnl
 
-. $RTAI_LINUX_DIR/.config
+unset CONFIG_RTAI_RTHAL
+unset CONFIG_RTAI_ADEOS
+
+AC_MSG_CHECKING([for RTAI base technology])
+
+if test -r $RTAI_LINUX_DIR/include/linux/adeos.h; then
+   AC_DEFINE(CONFIG_RTAI_ADEOS,1,[Use Adeos-based HAL])
+   AC_MSG_RESULT([Adeos])
+   CONFIG_RTAI_ADEOS=y
+elif test x${CONFIG_RTHAL} = xy; then
+    dnl This test has a flaw. Only x86 forcibly defines CONFIG_RTHAL
+    dnl as a result of having applied the RTAI patch. Other platforms
+    dnl like PPC for instance leave it as an option, so the kernel is
+    dnl patched, but the RTAI support has been configured out.
+    dnl This is the reason why the error message remains ambiguous.
+    dnl We should definitely have _one_ common way of identifying the
+    dnl RTHAL signature inside a kernel tree, that does not rely on
+    dnl the Makefile's EXTRAVERSION variable, because it happened that
+    dnl some people change its value manually to suit their needs...
+    AC_DEFINE(CONFIG_RTAI_RTHAL,1,[Use classic RTHAL])
+    AC_MSG_RESULT([rthal])
+    CONFIG_RTAI_RTHAL=y
+    dnl Need Adeos to run Xenomai in native mode.
+    unset CONFIG_RTAI_XENOMAI
+else
+    echo
+    AC_MSG_ERROR([*** RTAI patch not applied/enabled in $RTAI_LINUX_DIR])
+fi
+
+case "$linux_VERSION.$linux_PATCHLEVEL" in
+  2.4)
+    AC_DEFINE(CONFIG_RTAI_LINUX24,1,[Kconfig])
+    ;;
+  *) 
+    AC_MSG_ERROR(*** Unsupported kernel version $linux_VERSION.$linux_PATCHLEVEL)
+esac
+
+dnl
+dnl Perform a few sanity checks.
+dnl
+
+arch_select=`eval echo \\$$wanted_kernel_arch`
+if test \! x$arch_select = xy; then
+   echo
+   echo "************************************************************"
+   echo " The target RTAI architecture ($RTAI_TARGET_ARCH) does not match"
+   echo " the kernel architecture selected in $RTAI_LINUX_DIR"
+   echo " (i.e. $wanted_kernel_arch is undefined)"
+   echo "************************************************************"
+   exit 1
+fi
 
 if test x${CONFIG_MODVERSIONS} = xy ; then
-   AC_MSG_ERROR(*** Please unset CONFIG_MODVERSIONS from $RTAI_LINUX_DIR)
+   AC_MSG_ERROR(*** Please unset CONFIG_MODVERSIONS from $RTAI_LINUX_DIR and rebuild your kernel)
+fi
+
+if test x${CONFIG_RTAI_ADEOS} = xy -a x${CONFIG_ADEOS_CORE} = x; then
+   AC_MSG_ERROR(*** Please activate the Adeos support (General menu) in $RTAI_LINUX_DIR and rebuild your kernel)
+fi
+
+if test x${CONFIG_RTAI_RTHAL} = xy -a x${CONFIG_RTHAL} = x; then
+   AC_MSG_ERROR(*** Please activate the RTAI support in $RTAI_LINUX_DIR and rebuild your kernel)
 fi
 
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -153,7 +239,6 @@ dnl ======================================================================
 RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
 RTAI_CFLAGS=-I$RTAI_DIR/include
 KERNEL_CFLAGS=-I$RTAI_LINUX_DIR/include
-CROSS_COMPILE=`sed -n -e "s/^CROSS_COMPILE=\(.*\)/\1/p" $RTAI_DIR/.buildvars`
 
 AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(RTAI_CFLAGS)
@@ -252,6 +337,7 @@ AC_ARG_ENABLE(fec-enet,
 	esac])
 AC_MSG_RESULT(${CONFIG_RTNET_FEC_ENET:-no})
 AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
+
 
 
 AC_OUTPUT([
