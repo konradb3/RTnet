@@ -35,29 +35,32 @@ int __init rtmac_init(void)
 {
     int ret = 0;
 
-    printk("RTmac: init realtime media access control\n");
 
-    rtmac_proto_init();
+    printk("RTmac: init realtime media access control\n");
 
 #ifdef CONFIG_PROC_FS
     ret = rtmac_proc_register();
     if (ret < 0)
-        goto error1;
+        return ret;
 #endif
 
     ret = rtmac_vnic_module_init();
+    if (ret < 0)
+        goto error1;
+
+    ret = rtmac_proto_init();
     if (ret < 0)
         goto error2;
 
     return 0;
 
 error2:
+    rtmac_vnic_module_cleanup();
+
+error1:
 #ifdef CONFIG_PROC_FS
     rtmac_proc_release();
 #endif
-
-error1:
-    rtmac_proto_release();
     return ret;
 }
 
@@ -65,13 +68,13 @@ error1:
 
 void rtmac_release(void)
 {
-    printk("RTmac: unloaded\n");
-
     rtmac_proto_release();
+    rtmac_vnic_module_cleanup();
 #ifdef CONFIG_PROC_FS
     rtmac_proc_release();
 #endif
-    rtmac_vnic_module_cleanup();
+
+    printk("RTmac: unloaded\n");
 }
 
 
