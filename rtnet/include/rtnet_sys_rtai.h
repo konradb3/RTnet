@@ -110,6 +110,12 @@ static inline void rtos_time_sum(rtos_time_t *result,
 #define rtos_spin_unlock_irqrestore(lock, flags) \
     rt_spin_unlock_irqrestore(flags, lock)
 
+#define rtos_local_irqsave(flags)   hard_save_flags_and_cli(flags)
+#define rtos_local_irqrestore(flags) \
+    hard_restore_flags(flags)
+
+#define rtos_saveflags(flags)       hard_save_flags(flags)
+
 
 
 /* RT-tasks */
