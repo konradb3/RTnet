@@ -1,7 +1,7 @@
 /* loopback.c
  *
  * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- * extended by Jose Carlos Billalabeitia
+ * extended by Jose Carlos Billalabeitia and Jan Kiszka
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,10 @@
 #include <rtnet_internal.h>
 #include <rtnet_port.h>
 
-//#define DEBUG_LOOPBACK_DRIVER
+#define DEBUG_LOOPBACK_DRIVER
 
 static int rt_loopback_in_use;
+static struct rtnet_device* rt_loopback_dev;
 
 /***
  *	rt_loopback_open 
@@ -74,11 +75,10 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	int err=0;
 	struct rtskb *new_skb;
-	struct net_device *dev=dev_get_by_rtdev(rtdev);
-	
+
 	if ( (new_skb=dev_alloc_rtskb(skb->len + 2))==NULL ) 
 	{
-		rt_printk("RTnet %s: couldn't allocate a rtskb of size %d.\n", dev->name, skb->len);
+		rt_printk("RTnet %s: couldn't allocate a rtskb of size %d.\n", rtdev->name, skb->len);
 		err = -ENOMEM;
 		goto rt_loopback_xmit_end;
 	}
@@ -134,7 +134,6 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 		rtnetif_rx(new_skb);
 		rt_mark_stack_mgr(rtdev);
-		dev->last_rx = jiffies;
 	}
 	
 rt_loopback_xmit_end:
@@ -148,14 +147,16 @@ rt_loopback_xmit_end:
  */
 static int __init loopback_init(void) 
 {
-	int err=0;
-	struct net_device *dev=&loopback_dev;
+	int err;
 	struct rtnet_device *rtdev;
 
 	rt_printk("initializing loopback...\n");
 	
-	if ( (rtdev=rtdev_alloc(dev))==NULL )
-		{ return -ENODEV; }
+	if ( (rtdev=rt_alloc_etherdev(0))==NULL )
+        	return -ENODEV;
+
+	rt_rtdev_connect(rtdev, &RTDEV_manager);
+	SET_MODULE_OWNER(rtdev);
 
 	rtdev->open = &rt_loopback_open;
 	rtdev->stop = &rt_loopback_close;
@@ -163,8 +164,16 @@ static int __init loopback_init(void)
 	rtdev->hard_start_xmit = &rt_loopback_xmit;
 
 	rt_loopback_in_use = 0;
-	
-	return err;
+
+	if ( (err = rt_register_rtnetdev(rtdev)) )
+        {
+		rtdev_free(rtdev);
+                return err;
+	}
+
+	rt_loopback_dev = rtdev;
+
+	return 0;
 }
 
 
@@ -173,14 +182,14 @@ static int __init loopback_init(void)
  */
 static void __exit loopback_cleanup(void) 
 {
-	struct net_device *dev = &loopback_dev;
-	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
+	struct rtnet_device *rtdev = rt_loopback_dev;
 
 	rt_printk("removing loopback...\n");
-	if ( !dev || !rtdev ) 
-		{ rt_printk("no loopback device\n"); }
 
-	kfree(rtdev);
+	rt_unregister_rtnetdev(rtdev);
+	rt_rtdev_disconnect(rtdev);
+
+	rtdev_free(rtdev);
 }
 
 module_init(loopback_init);

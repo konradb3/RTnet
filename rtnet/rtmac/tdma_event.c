@@ -1282,7 +1282,7 @@ static void tdma_client_rcvd_change_offset(struct rtmac_tdma *tdma, struct rtskb
 static void tdma_rcvd_sof(struct rtmac_tdma *tdma, struct rtskb *skb)
 {
 	tdma->wakeup = skb->rx + tdma->offset;
-	tdma->delta_t = *(RTIME *)(skb->data) - count2nano(skb->rx);
+	tdma->delta_t = be64_to_cpu(*(RTIME *)(skb->data)) - count2nano(skb->rx);
 	
 	/* rt_sem_broadcast() will wake up all tasks, which are waiting
 	   for SOF, inclusive tdma_task_client. This allows application

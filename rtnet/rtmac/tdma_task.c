@@ -237,7 +237,7 @@ void tdma_task_master(int rtdev_id)
 	
 		/* Store timestamp in SOF. I assume that there is enough space. */
 		time_stamp = rt_get_time_ns();
-		*(RTIME *)data = time_stamp;
+		*(RTIME *)data = cpu_to_be64(time_stamp);
 
 		rtmac->packet_tx(skb, skb->rtdev);
 
