@@ -25,6 +25,7 @@
 #include <rtnet.h>
 #include <rtskb.h>
 #include <rtnet_chrdev.h>
+#include <rtnet_rtpc.h>
 #include <rtnet_socket.h>
 #include <rtdev_mgr.h>
 #include <stack_mgr.h>
@@ -182,3 +183,11 @@ EXPORT_SYMBOL(rtskb_acquire);
  * packet                                                                   *
  ****************************************************************************/
 EXPORT_SYMBOL(rt_eth_aton);
+
+
+/****************************************************************************
+ * rtnet_rtpc.c                                                             *
+ ****************************************************************************/
+EXPORT_SYMBOL(rtpc_dispatch_call);
+EXPORT_SYMBOL(rtpc_complete_call);
+EXPORT_SYMBOL(rtpc_complete_call_nrt);
