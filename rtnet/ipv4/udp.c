@@ -71,7 +71,7 @@ static unsigned int         auto_port_mask  = ~(RT_UDP_SOCKETS-1);
 static int                  free_ports      = RT_UDP_SOCKETS;
 static u32                  port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
 static struct udp_socket    port_registry[RT_UDP_SOCKETS];
-static rtos_spinlock_t  udp_socket_base_lock;
+static rtos_spinlock_t      udp_socket_base_lock;
 
 MODULE_PARM(auto_port_start, "i");
 MODULE_PARM(auto_port_mask, "i");
@@ -243,6 +243,9 @@ int rt_udp_socket(struct rtdm_dev_context *context, int call_flags)
     sock->protocol        = IPPROTO_UDP;
     sock->prot.inet.saddr = INADDR_ANY;
     sock->prot.inet.state = TCP_CLOSE;
+#ifdef CONFIG_RTNET_RTDM_SELECT
+    sock->wakeup_select   = NULL;
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
     rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
 
@@ -580,6 +583,49 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context, int call_flags,
         return err;
 }
 
+#ifdef CONFIG_RTNET_RTDM_SELECT
+/***
+ *  rt_udp_pollwait
+ * The right position for this function is in rtdm! (A poll function should be implemented here instead.)
+ */
+ssize_t rt_udp_pollwait(struct rtdm_dev_context *context, wait_queue_primitive_t *sem)
+{
+    struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
+    unsigned long       flags;
+
+    rtos_spin_lock_irqsave(&sock->param_lock, flags);
+
+    /* check for available data / free buffers */
+    /* call poll_wait() */
+
+#warning there could already be a pointer to a semaphore
+    sock->wakeup_select = sem;
+    /* the linux select() calls poll_freewait with a poll_table, who knows alls registered waitqueues;
+     * so in linux the wait-queue belongs to the socket and not like the semaphore to the select-process */
+    rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
+
+    /* a meaningfull value should be returned */
+    return 0;
+}
+
+/***
+ *  rt_udp_pollfree
+ */
+ssize_t rt_udp_pollfree(struct rtdm_dev_context *context)
+{
+    struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
+    unsigned long       flags;
+
+    rtos_spin_lock_irqsave(&sock->param_lock, flags);
+
+    sock->wakeup_select = NULL;
+
+    rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
+
+    /* a meaningfull value should be returned */
+    return 0;
+}
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 
 /***
@@ -647,6 +693,11 @@ int rt_udp_rcv (struct rtskb *skb)
     rtos_event_sem_signal(&sock->wakeup_event);
 
     rtos_spin_lock_irqsave(&sock->param_lock, flags);
+#ifdef CONFIG_RTNET_RTDM_SELECT
+    if (sock->wakeup_select != NULL) {
+	wq_wakeup(sock->wakeup_select);
+    }
+#endif /* CONFIG_RTNET_RTDM_SELECT */
     callback_func = sock->callback_func;
     callback_arg  = sock->callback_arg;
     rtos_spin_unlock_irqrestore(&sock->param_lock, flags);

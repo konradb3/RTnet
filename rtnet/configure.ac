@@ -925,6 +925,7 @@ examples/round_trip_time/Makefile \
 examples/round_trip_time/client/Makefile \
 examples/round_trip_time/server/Makefile \
 examples/rtnet_lxrt/Makefile \
+examples/select/Makefile \
 examples/frag_ip/Makefile \
 examples/raw_packets/Makefile \
 examples/rtmac/Makefile \

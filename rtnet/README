@@ -80,7 +80,7 @@ Marc Kleine-Budde                       - RTmac, testing, bug fixing, autotools
 <kleine-budde-at-gmx.de>
 Jan Kiszka <jan.kiszka-at-web.de>       - project management, core programming
 Wittawat Yamwong <wittawat-at-web.de>   - testing, documents
-Hans-Peter Bock <rtnet-at-avaapgh.de>   - testing, bug fixing
+Hans-Peter Bock <rtnet-at-avaapgh.de>   - testing, bug fixing, rtdm-select
 Mathias Koehrer                         - 3c59x-rt, rtnetproxy, testing,
 <mathias_koehrer-at-yahoo.de>             bug fixing, ip fragmentation
 Vinay Sridhara                          - ICMP support

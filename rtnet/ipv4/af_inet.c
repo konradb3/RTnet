@@ -215,7 +215,12 @@ static struct rtdm_device ipv4_device = {
         ioctl_rt:       rt_udp_ioctl,
         ioctl_nrt:      rt_udp_ioctl,
         recvmsg_rt:     rt_udp_recvmsg,
-        sendmsg_rt:     rt_udp_sendmsg
+        sendmsg_rt:     rt_udp_sendmsg,
+#ifdef CONFIG_RTNET_RTDM_SELECT
+        /* there should be only a function poll() */
+        pollwait_rt:    rt_udp_pollwait,
+        pollfree_rt:    rt_udp_pollfree,
+#endif /* CONFIG_RTNET_RTDM_SELECT */
     },
 
     device_class:       RTDM_CLASS_NETWORK,

@@ -67,7 +67,10 @@ typedef size_t          socklen_t;
 #define _RTDM_WRITE             5
 #define _RTDM_RECVMSG           6
 #define _RTDM_SENDMSG           7
-
+#ifdef CONFIG_RTNET_RTDM_SELECT
+#define _RTDM_POLL              8
+#define _RTDM_SELECT            9
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 struct rtdm_dev_context;
 
@@ -148,6 +151,13 @@ extern ssize_t rtdm_recvmsg(int call_flags, int fd, struct msghdr *msg,
 extern ssize_t rtdm_sendmsg(int call_flags, int fd,
                             const struct msghdr *msg, int flags);
 
+#ifdef CONFIG_RTNET_RTDM_SELECT
+extern int rtdm_select(int call_flags, int n,
+		       fd_set *readfds,
+		       fd_set *writefds,
+		       fd_set *exceptfds); /* struct timeval timeout */
+
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 
 static inline int open_rt(const char *path, int oflag, ...)
@@ -197,6 +207,15 @@ static inline ssize_t sendmsg_rt(int fd, const struct msghdr *msg, int flags)
     return rtdm_sendmsg(0, fd, msg, flags);
 }
 
+#ifdef CONFIG_RTNET_RTDM_SELECT
+static inline int select_rt(int call_flags, int n,
+			    fd_set *readfds,
+			    fd_set *writefds,
+			    fd_set *exceptfds)
+{
+    return rtdm_select(call_flags, n, readfds, writefds, exceptfds); /* timeval is missing here */
+}
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 #else /* !__KERNEL__ */
 

@@ -629,6 +629,72 @@ int rtdm_sendmsg(int call_flags, int fd, const struct msghdr *msg, int flags)
 }
 
 
+#ifdef CONFIG_RTNET_RTDM_SELECT
+int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds) /* timeval is missing here */
+{
+    int                     i;
+    fd_set                  fds; /* 128 bytes on i386 */
+    wait_queue_primitive_t  wakeme;
+    struct rtdm_dev_context *context;
+    struct rtdm_operations  *ops;
+
+    rt_printk("\n*** select ***\n");
+    rt_printk("readfds: %08x @ %p\n", *((int*)readfds), (void*)readfds);
+    FD_ZERO(&fds);
+    rt_printk("fds: %08x\n", *((int*)&fds));
+    
+    wq_element_init(&wakeme);
+    
+    /* register wq_element on all sockets marked in readfds */
+    for (i=0; i<=n; i++) {
+	if (FD_ISSET(i, readfds)) {
+	    context = get_context(i);
+	    if (context) {
+		ops = context->ops;
+		FD_SET(i, &fds);
+		ops->pollwait_rt(context, &wakeme);
+#warning what if there is data already available (call poll here)
+	    } else {
+		rt_printk("==> Problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
+	    }
+	}
+    }
+    
+    /* wait until something happens */
+    rt_printk("fds: %08x\n", *((int*)&fds));
+    wq_wait(&wakeme); /* should be wq_wait_timed() */
+    
+    /* register wq_element on all sockets marked in fds */
+    for (i=0; i<=n; i++) { /* n vs. RT_SOCKETS */
+	if (FD_ISSET(i, &fds)) {
+	    context = get_context(i);
+	    if (context) {
+		ops = context->ops;
+		FD_SET(i, &fds);
+		ops->pollfree_rt(context);
+#warning It is not nice to unlock the context twice here!
+		RTDM_UNLOCK_CONTEXT(context);				\
+		RTDM_UNLOCK_CONTEXT(context);				\
+	    } else {
+		rt_printk("==> Serious problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
+	    }
+	}
+    }
+    
+    wq_element_delete(&wakeme);
+    
+    /* check for further messages */
+    
+    /* On success, select and pselect return the number  of  descriptors  con-
+     * tained in the descriptor sets, which may be zero if the timeout expires
+     * before anything interesting happens.  On error,  -1  is  returned,  and
+     * errno  is  set appropriately; the sets and timeout become undefined, so
+     * do not rely on their contents after an error.
+     */    
+    return 0; /* fix this */
+}
+#endif /* CONFIG_RTNET_RTDM_SELECT */
+
 
 static int rtdm_open_lxrt(const char *path, int oflag)
 {
@@ -1269,3 +1335,12 @@ EXPORT_SYMBOL(rtdm_read);
 EXPORT_SYMBOL(rtdm_write);
 EXPORT_SYMBOL(rtdm_recvmsg);
 EXPORT_SYMBOL(rtdm_sendmsg);
+#ifdef CONFIG_RTNET_RTDM_SELECT
+EXPORT_SYMBOL(rtdm_select);
+#endif CONFIG_RTNET_RTDM_SELECT
+
+/*
+ * Local variables:
+ * c-basic-offset: 4
+ * End:
+ */

@@ -25,6 +25,32 @@
 
 #include <rtdm.h>
 
+#ifdef CONFIG_RTNET_RTDM_SELECT
+#include <rtai_sem.h>
+typedef SEM             wait_queue_primitive_t;
+
+static inline int wq_element_init(wait_queue_primitive_t *wqe)
+{
+    rt_typed_sem_init(wqe, 0, CNT_SEM);
+    return 0;
+}
+
+static inline void wq_element_delete(wait_queue_primitive_t *wqe)
+{
+    rt_sem_delete(wqe);
+}
+
+static inline void wq_wakeup(wait_queue_primitive_t *wqe)
+{
+    rt_sem_signal(wqe);
+}
+
+static inline int wq_wait(wait_queue_primitive_t *wqe)
+{
+    return rt_sem_wait(wqe);
+    /* return rt_sem_wait_timed(event, *timeout); */
+}
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 /* ----------- Device Flags ---------------------------------------------- */
 #define RTDM_EXCLUSIVE          0x0001
@@ -81,6 +107,16 @@ struct rtdm_operations {
     ssize_t     (*sendmsg_nrt)(struct rtdm_dev_context *context,
                                int call_flags, const struct msghdr *msg,
                                int flags);
+
+#ifdef CONFIG_RTNET_RTDM_SELECT
+    /* event-oriented device operations */
+    ssize_t     (*pollwait_rt)(struct rtdm_dev_context *context,
+			       wait_queue_primitive_t *sem);
+    ssize_t     (*pollfree_rt)(struct rtdm_dev_context *context);
+    /*poll(pollfd *ufds,
+      unsigned int nfds,
+      int timeout);*/
+#endif /* CONFIG_RTNET_RTDM_SELECT */
 };
 
 struct rtdm_dev_context {
