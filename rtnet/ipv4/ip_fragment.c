@@ -20,21 +20,21 @@
 
 
 #include <net/checksum.h>
-#include <rtnet.h>
+#include <rtdev.h>
 #include <rtnet_internal.h>
 
 #include <linux/ip.h>
 #include <linux/in.h>
 
 
-/* This defined sets the number incoming fragmented IP messages that 
+/* This defined sets the number incoming fragmented IP messages that
  * can be handled parallel.
  * */
 #define COLLECTOR_COUNT 4
 
 #define GARBAGE_COLLECT_LIMIT 50
 
-struct collector_str 
+struct collector_str
 {
     int   in_use;
     __u32 saddr;
@@ -51,8 +51,6 @@ static struct collector_str collector[COLLECTOR_COUNT];
 static unsigned int counter = 0;
 
 static SEM collector_sem;
-
-extern int rtskb_max_size;
 
 
 
@@ -93,7 +91,7 @@ static struct collector_str * get_collector(struct iphdr *iph)
             p_coll->last_access = counter;
             p_coll = &collector[i];
             p_coll->collected = 0;
-            if (!(p_coll->skb = alloc_rtskb(rtskb_max_size)))
+            if (!(p_coll->skb = alloc_rtskb(rtskb_max_size, &global_pool)))
             {
                 collector[i].in_use = 0;
                 goto error_out;
@@ -164,10 +162,10 @@ static void garbage_collect(void)
  * */
 struct rtskb *rt_ip_defrag(struct rtskb *skb)
 {
-    int offset;
-    int end;
-    int flags;
-    int ihl;
+    unsigned int offset;
+    unsigned int end;
+    unsigned int flags;
+    unsigned int ihl;
 
     struct iphdr *iph = skb->nh.iph;
     struct collector_str *p_coll = 0;

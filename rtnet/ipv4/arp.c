@@ -31,7 +31,6 @@
 #endif /* CONFIG_PROC_FS */
 
 #include <rtdev.h>
-#include <rtskb.h>
 #include <ipv4/arp.h>
 #include <ipv4/route.h>
 #include <rtmac/rtmac_disc.h>
@@ -57,7 +56,7 @@ void rt_arp_send(int type,
         return;
 
     if (!(skb=alloc_rtskb(sizeof(struct arphdr) + 2*(rtdev->addr_len+4) +
-                           rtdev->hard_header_len+15)))
+                           rtdev->hard_header_len+15, &global_pool)))
         return;
 
     rtskb_reserve(skb, (rtdev->hard_header_len+15)&~15);

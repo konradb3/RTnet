@@ -16,8 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
- 
+
 // $Log: ip_output.c,v $
+// Revision 1.12  2003/08/20 16:26:25  kiszka
+// * applied new pool mechanisms
+//
 // Revision 1.11  2003/07/18 15:22:39  kiszka
 // * restructured rtmac to prepare separated discipline modules and virtual NICs
 // * merged with Marc's autotool branch
@@ -68,14 +71,9 @@
 
 static u16 rt_ip_id_count = 0;
 
-/* The MTU_CORRECTION is at least necessary with my testsetup (eepro100, HUB),
- * as the returned mtu value is too large.
- * */
-#define MTU_CORRECTION 14
-
-/*
+/***
  * Slow path for fragmented packets...
- * */
+ */
 int rt_ip_build_xmit_slow(struct rtsocket *sk,
         int getfrag(const void *, char *, unsigned int, unsigned int),
         const void *frag, unsigned length, struct rt_rtable *rt, int flags)
@@ -94,7 +92,7 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
 
     fragheaderlen = sizeof(struct iphdr); /* 20 byte... */
 
-    fragdatalen  = ((mtu - fragheaderlen - MTU_CORRECTION) & ~7 ); 
+    fragdatalen  = ((mtu - fragheaderlen) & ~7 );
 
     /* Store id in local variable */
     msg_rt_ip_id = ++rt_ip_id_count;
@@ -119,13 +117,13 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
         {
             int hh_len = (rtdev->hard_header_len+15)&~15;
 
-            skb = alloc_rtskb(fraglen + hh_len + 15);
+            skb = alloc_rtskb(fraglen + hh_len + 15, &sk->skb_pool);
             if (skb==NULL)
-                    goto no_rtskb; 
+                    goto no_rtskb;
             rtskb_reserve(skb, hh_len);
         }
 
-        skb->dst=rt; 
+        skb->dst=rt;
         skb->rtdev=rt->rt_dev;
         skb->nh.iph = iph = (struct iphdr *) rtskb_put(skb, fraglen);
 
@@ -170,11 +168,12 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
 error:
     kfree_rtskb(skb);
 no_rtskb:
-    return err; 
+    return err;
 }
 
 
-/*
+
+/***
  *  Fast path for unfragmented packets.
  */
 int rt_ip_build_xmit(struct rtsocket *sk,
@@ -195,9 +194,9 @@ int rt_ip_build_xmit(struct rtsocket *sk,
      */
     length += sizeof(struct iphdr);
 
-    if (length > (rtdev->mtu - MTU_CORRECTION)) 
+    if (length > rtdev->mtu)
     {
-        return rt_ip_build_xmit_slow(sk, getfrag, frag, 
+        return rt_ip_build_xmit_slow(sk, getfrag, frag,
                         length - sizeof(struct iphdr), rt, flags);
     }
 
@@ -205,13 +204,13 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 
     hh_len = (rtdev->hard_header_len+15)&~15;
 
-    skb = alloc_rtskb(length+hh_len+15);
+    skb = alloc_rtskb(length+hh_len+15, &sk->skb_pool);
     if (skb==NULL)
-       goto no_rtskb; 
+       goto no_rtskb;
 
     rtskb_reserve(skb, hh_len);
 
-    skb->dst=rt; 
+    skb->dst=rt;
     skb->rtdev=rt->rt_dev;
     skb->nh.iph = iph = (struct iphdr *) rtskb_put(skb, length);
 
@@ -246,7 +245,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 error:
     kfree_rtskb(skb);
 no_rtskb:
-    return err; 
+    return err;
 }
 
 
