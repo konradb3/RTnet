@@ -164,6 +164,8 @@ int rtnet_register_ioctls(struct rtnet_ioctls *ioctls)
     struct rtnet_ioctls *registered_ioctls;
 
 
+    RTNET_ASSERT(ioctls->handler != NULL, return -EINVAL;);
+
     spin_lock_irqsave(&ioctl_handler_lock, flags);
 
     list_for_each(entry, &ioctl_handlers) {
