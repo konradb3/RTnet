@@ -5,7 +5,7 @@
   * hash-table-based lookups
   * removed redundant ARP table
   * added network routing and forwarding support
-  * loopback routes non-loopback device IPs
+  * loopback routes for non-loopback device IPs
   * lock protection
 - added rtroute
 - revised rtifconfig
