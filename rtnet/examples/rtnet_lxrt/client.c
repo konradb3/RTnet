@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 	}
 	show_ips();
 
+	mlockall(MCL_CURRENT|MCL_FUTURE); /* lock this process into RAM so it will not be paged out onto harddisk */
         if (!(lxrtnettsk = rt_task_init(4800, 1, 0, 0))) {
 		printf("CANNOT INIT MASTER TASK\n");
 		exit(1);
