@@ -18,6 +18,9 @@
  */
  
 // $Log: ip_output.c,v $
+// Revision 1.4  2003/02/12 07:49:15  hpbock
+// rt_ip_build_xmit() returns -EAGAIN if packet could not be sent by rtdev_xmit()
+//
 // Revision 1.3  2003/02/06 14:34:06  hpbock
 // skb was net freed, if rtdev->hard_header was NULL.
 //
@@ -98,8 +101,12 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 		goto error;
 	}
 
-	rtdev_xmit(skb);
-	return 0;
+	err = rtdev_xmit(skb);
+	if (err) {
+		return -EAGAIN;
+	} else {
+		return 0;
+	}
 	
 error:
 	kfree_rtskb(skb);
