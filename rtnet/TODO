@@ -1,4 +1,13 @@
-There are many things we have to do! ;))
+To be examined / fixed:
 
+ * Check sum generation / check
+ * iovec array handling (always correctly?)
+ * atomic inc of counters (ip-id / fragment use counter / ...)
+ * rtskb chains instead of super-sized rtskbs
 
+To be added / improved:
 
+ * packet sockets
+ * separation of the discipine configuration -> stand-alone discipline modules
+ * multicast support
+ * ?
