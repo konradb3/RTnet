@@ -21,24 +21,29 @@
 #include <linux/spinlock.h>
 #include <linux/if.h>
 #include <linux/netdevice.h>
+#include <linux/module.h>
 
 #include <rtai.h>
 #include <rtai_sched.h>
 
-#include <rtnet.h>
 #include <rtnet_internal.h>
+#include <rtskb.h>
 #include <rtmac/rtmac_disc.h>
 
 
-struct rtnet_device *rtnet_devices = NULL;
-rwlock_t rtnet_devices_lock = RW_LOCK_UNLOCKED;
-struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
+static unsigned int device_rtskbs = DEFAULT_DEVICE_RTSKBS;
+MODULE_PARM(device_rtskbs, "i");
+MODULE_PARM_DESC(device_rtskbs, "Number of additional global realtime socket "
+                 "buffers per network adapter");
 
+static struct rtnet_device *rtnet_devices = NULL;
+static rwlock_t rtnet_devices_lock = RW_LOCK_UNLOCKED;
+static struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
 
 
 
 /***
- *  rtdev_add_pack:         add protocol (Layer 3) 
+ *  rtdev_add_pack:         add protocol (Layer 3)
  *  @pt:                    the new protocol
  */
 void rtdev_add_pack(struct rtpacket_type *pt)
@@ -86,10 +91,10 @@ void rtdev_remove_pack(struct rtpacket_type *pt)
 
 
 /***
- *  rtdev_get_by_name   - find a rtnet_device by its name 
+ *  rtdev_get_by_name   - find a rtnet_device by its name
  *  @name: name to find
  *
- *  Find an rt-interface by name. 
+ *  Find an rt-interface by name.
  */
 static inline struct rtnet_device *__rtdev_get_by_name(const char *name)
 {
@@ -146,6 +151,7 @@ struct rtnet_device *rtdev_get_by_index(int ifindex)
 }
 
 
+
 int rtdev_new_index(void)
 {
     static int ifindex;
@@ -156,7 +162,6 @@ int rtdev_new_index(void)
         return ifindex;
     }
 }
-
 
 
 
@@ -190,13 +195,14 @@ struct rtnet_device *rtdev_get_by_dev(struct net_device *dev)
 }
 
 
+
 /***
  *  rtdev_get_by_hwaddr - find a rtnetdevice by its mac-address
  *  @type:          Type of the net_device (may be ARPHRD_ETHER)
  *  @hw_addr:       MAC-Address
  *
  *  Search for an rt-interface by index.
- *  Remeber: We are searching in the rtdev_base-list, because 
+ *  Remeber: We are searching in the rtdev_base-list, because
  *  we want to use linux-network's also.
  */
 static inline struct rtnet_device *__rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
@@ -275,6 +281,9 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 
     rt_typed_sem_init(&rtdev->xmit_sem, 1, RES_SEM);
 
+    /* scale global rtskb pool */
+    rtdev->add_rtskbs = rtskb_pool_extend(&global_pool, device_rtskbs);
+
     if (sizeof_priv)
         rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
 
@@ -290,9 +299,10 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
  */
 void rtdev_free (struct rtnet_device *rtdev)
 {
-    if (rtdev!=NULL) {
-        rtdev->stack_sem=NULL;
-        rtdev->rtdev_mbx=NULL;
+    if (rtdev != NULL) {
+        rtskb_pool_shrink(&global_pool, rtdev->add_rtskbs);
+        rtdev->stack_sem = NULL;
+        rtdev->rtdev_mbx = NULL;
         rt_sem_delete(&rtdev->xmit_sem);
         kfree(rtdev);
     }
@@ -327,6 +337,7 @@ int rtdev_open(struct rtnet_device *rtdev)
 }
 
 
+
 /***
  *  rtdev_close
  */
@@ -351,7 +362,7 @@ int rtdev_close(struct rtnet_device *rtdev)
 /***
  *  rtdev_xmit - send real-time packet
  */
-int rtdev_xmit(struct rtskb *skb) 
+int rtdev_xmit(struct rtskb *skb)
 {
     struct rtnet_device *rtdev;
     int ret = 0;

@@ -90,6 +90,8 @@ struct rtnet_device {
 
     SEM                 xmit_sem;
 
+    unsigned int        add_rtskbs; /* additionally allocated global rtskbs */
+
     /* RTmac related fields */
     struct rtmac_disc   *mac_disc;
     struct rtmac_priv   *mac_priv;
