@@ -319,7 +319,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     AC_MSG_CHECKING([for RTAI 3 installation])
     RTAI_CONFIG="${with_rtai}/bin/rtai-config"
     if test -x ${RTAI_CONFIG}; then
-        RTAI_DIR="${with_rtai}"
+        RTAI_DIR="`echo ${with_rtai} | sed -e s,[/]*$,,`"	# strip trailing slashes
 	AC_MSG_RESULT([${RTAI_DIR}])
     else
 	CONFIG_RTNET_RTAI_3=n
@@ -339,19 +339,19 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 # e.g.: 'make DESTDIR=/foo install'
 #
     AC_MSG_CHECKING([for RTAI 3 DESTDIR])
-    RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix`"
+    RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,[/]*$,,`"		# strip trailing slashes
     if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
 	RTNET_RTAI_DESTDIR="`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,`"
 	export DESTDIR="${RTNET_RTAI_DESTDIR}"
 
-	RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix`"
+	RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,[/]*$,,`"	# strip trailing slashes
 	if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
 	    AC_MSG_RESULT([${DESTDIR}])
 	else
 	    AC_MSG_ERROR([*** Cannot identify DESTDIR])
 	fi
     else
-	AC_MSG_RESULT([/])
+	AC_MSG_RESULT([none])
     fi
 
     AC_MSG_CHECKING([for RTAI 3 version])
