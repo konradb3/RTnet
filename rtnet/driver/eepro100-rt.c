@@ -1402,10 +1402,9 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	int entry;
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
-	unsigned long flags;
-
 	// *** RTnet ***
-	flags = rt_spin_lock_irqsave(&sp->lock);
+	rt_spin_lock(&sp->lock);
+        rt_disable_irq(rtdev->irq);
 	// *** RTnet ***
 
 	/* Check if there are enough space. */
@@ -1415,7 +1414,8 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
-		rt_spin_unlock_irqrestore(flags, &sp->lock);
+		rt_enable_irq(rtdev->irq);
+		rt_spin_unlock(&sp->lock);
 		// *** RTnet ***
 
 		return 1;
@@ -1465,7 +1465,8 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	}
 
 	// *** RTnet ***
-	rt_spin_unlock_irqrestore(flags, &sp->lock);
+	rt_enable_irq(rtdev->irq);
+	rt_spin_unlock(&sp->lock);
 	// *** RTnet ***
 
 	//rtdev->trans_start = jiffies;
