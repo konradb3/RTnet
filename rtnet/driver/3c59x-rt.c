@@ -1859,7 +1859,7 @@ vortex_rt_up(struct rtnet_device *rtdev)
 	outw(vp->intr_enable, ioaddr + EL3_CMD);
 	if (vp->cb_fn_base)			/* The PCMCIA people are idiots.  */
 		writel(0x8000, vp->cb_fn_base + 4);
-	rtnetif_start_queue (dev);
+	rtnetif_start_queue (rtdev);
 }
 #endif
 
@@ -2103,13 +2103,13 @@ static void vortex_tx_timeout(struct net_device *dev)
 			outl(vp->tx_ring_dma + (vp->dirty_tx % TX_RING_SIZE) * sizeof(struct boom_tx_desc),
 				 ioaddr + DownListPtr);
 		if (vp->cur_tx - vp->dirty_tx < TX_RING_SIZE)
-			rtnetif_wake_queue (dev);
+			rtnetif_wake_queue (rtdev);
 		if (vp->drv_flags & IS_BOOMERANG)
 			outb(PKT_BUF_SZ>>8, ioaddr + TxFreeThreshold);
 		outw(DownUnstall, ioaddr + EL3_CMD);
 	} else {
 		vp->stats.tx_dropped++;
-		rtnetif_wake_queue(dev);
+		rtnetif_wake_queue(rtdev);
 	}
 	
 	/* Issue Tx Enable */
