@@ -1,9 +1,9 @@
-                             RTnet Version 0.2.10
+                             RTnet Version 0.3.0
 
 What is it?
 -----------
-RTnet is real-time UDP/IP protocol stack for RTAI (hard real-time Linux 
-extension). It offers a standard socket API to be used with RTAI kernel 
+RTnet is real-time UDP/IP protocol stack for RTAI (hard real-time Linux
+extension). It provides a standard socket API to be used with RTAI kernel
 modules and LXRT processes, see header files for details.
 
 What are the requirements?
@@ -12,19 +12,29 @@ What are the requirements?
 - RTAI 24.1.9 or better
 - x86 platform (at least for LXRT extensions, kernel API _should_ work on
   other platforms, too)
-- RealTek 8139, Intel EtherExpress Pro 100 or 3Com EtherLink III network
-  adapter
+- RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
+  AMD PCnet32/PCnetPCI network adapter
 
 How to install it?
 ------------------
-1. Install and test a suitable RTAI version (see also www.rtai.org)
-2. cd <RTAI-DIR> (e.g. /usr/src/rtai-24.1.9)
-3. rm -r rtnet
-4. rm include/rtnet.h
-5. tar xvzf <PATH-TO-RTNET-ARCHIVE>/rtnet-X.X.X.tar.gz
-6. Enable "Real-Time networking (rtnet)" in your RTAI configuration
-   (only available if "Prompt for experimental code" is enabled)
-7. make && make install
+1. Install and test a suitable RTAI version (see www.rtai.org, 24.1.10 is not
+   working with this release while 24.1.11 is fine again)
+2. cd to a preferred directory (e.g. /usr/src)
+3. tar xvzf <PATH-TO-RTNET-ARCHIVE>/rtnet-X.X.X.tar.gz
+4. cd rtnet
+5. Run ./configure --with-rtai=<PATH-TO-RTAI> <options>
+   Valid options are a combination of the following values:
+       --enable-8139            compiles the RealTek driver
+       --enable-eepro100        compiles the EtherExpress driver
+       --enable-loopback        compiles the loopback driver
+       --enable-pcnet32         compiles the PCnet32 driver
+       --enable-tulip           compiles the DEC driver
+       --enable-rtskb-kmalloc   uses kmalloc instead of rt_malloc for creating
+                                or extending network buffer pools (required
+                                if the RTAI memory manager uses vmalloc)
+6. make
+7. Copy the desired modules (rtnet.o, rtmac.o, drivers, examples, etc.) to your
+   target system
 8. run "mknod /dev/rtnet c 10 240" on your target system
 9. run "mknod /dev/rtmac c 10 241" if you want to use rtmac
 
@@ -38,7 +48,7 @@ How to test it?
 4. Setup RT-ethernet device and solicit required MAC adresses(rtifconfig)
 5. Load application module
 
-For more details see run-scripts in <RTAI-DIR>/rtnet/examples/round_trip_time 
+For more details see run-scripts in <RTAI-DIR>/rtnet/examples/round_trip_time
 
 There is also a simple script for loading and unloading RTnet and RTmac. See
 <RTAI-DIR>/rtnet/tools/rtnet. To use it copy rtnet.conf from that directory
@@ -62,34 +72,33 @@ I assume that rtnet module has been loaded and configured(rtifconfig).
 	# rtifconfig rteth0 mac offset <ip_client2> <offset/us>
 	# ...
 4. Now you can run examples in <RTAI-DIR>/rtnet/rtmac/examples
+5. You can furthermore use the associated VNIC (here "vnic0") now.
 
 See README.rtmac for more information.
 
 NOTE FOR RTMAC: ONLY one-shot timer mode is supported by the current RTmac.
-You should completely unload rtmac and rtnet modules after your application
-ended. NEVER run the application twice without unloading the modules.
 
 
-RTnet is free software, and you are welcome to redistribute it under 
-the terms of the GNU General Public License. This program comes with 
+RTnet is free software, and you are welcome to redistribute it under
+the terms of the GNU General Public License. This program comes with
 ABSOLUTELY NO WARRANTY. See "LICENSE" for details.
 
 Contributors:
 Ulrich Marx
-<marx-at-fet.uni-hannover.de>   	- core programming
-Nathan Gustavson			- testing and bug fixing
-Marc Kleine-Budde			- RTmac, testing, bug fixing
-Jan Kiszka <jan.kiszka-at-web.de>	- eepro100-rt and this poor doc
-Wittawat Yamwong <wittawat-at-web.de>	- testing, documents
-Hans-Peter Bock <hpbock-at-web.de>	- testing, bug fixing
+<marx-at-fet.uni-hannover.de>           - core programming
+Nathan Gustavson                        - testing and bug fixing
+Marc Kleine-Budde                       - RTmac, testing, bug fixing
+Jan Kiszka <jan.kiszka-at-web.de>       - project management, core programming
+Wittawat Yamwong <wittawat-at-web.de>   - testing, documents
+Hans-Peter Bock <hpbock-at-web.de>      - testing, bug fixing
 Mathias Koehrer
-<mathias_koehrer-at-yahoo.de>		- 3c59x-rt, rtnetproxy, testing,
+<mathias_koehrer-at-yahoo.de>           - 3c59x-rt, rtnetproxy, testing,
                                           bug fixing, ip fragmentation
 Vinay Sridhara
 <vinaysridhara-at-yahoo.com>            - ICMP support
 Erwin Rol <erwin-at-muffin.org>         - Ethereal plugin, rtnetproxy
 
 Acknowledgements:
-David Schleef			        - he wrote the original RTnet, some
+David Schleef                           - he wrote the original RTnet, some
                                           parts of this version are based on
                                           his code
