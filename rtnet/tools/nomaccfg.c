@@ -27,9 +27,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-//#include <net/ethernet.h>
-//#include <net/if_arp.h>
-//#include <netinet/in.h>
 
 #include <nomac_chrdev.h>
 
