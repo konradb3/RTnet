@@ -1,1 +1,1 @@
-SUBDIRS = event mrtt rtt
+SUBDIRS = event mrtt rtt netshm

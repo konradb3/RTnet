@@ -887,6 +887,7 @@ examples/rtmac/Makefile \
 examples/rtmac/event/Makefile \
 examples/rtmac/mrtt/Makefile \
 examples/rtmac/rtt/Makefile \
+examples/rtmac/netshm/Makefile \
 driver/Makefile \
 driver/tulip/Makefile \
 ethernet/Makefile \
