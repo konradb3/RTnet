@@ -30,91 +30,77 @@
 #include <netinet/in.h>
 
 #include <rtai_lxrt_user.h>
-
-#include <rtnet_lxrt.h>
+#include <rtnet.h>
 
 static struct sockaddr_in local_addr;
 static struct sockaddr_in server_addr;
 
 int main(int argc, char *argv[]) {
-        int sockfd = 0;
-        int ret    = 0;
+    int sockfd = 0;
+    int ret    = 0;
 
-        RT_TASK *lxrtnettsk;
-        union {
-                unsigned long long l;
-                unsigned char c[8];
-        } time_tx;
+    RT_TASK *lxrtnettsk;
+    char msg[] = "This message was sent using rtnet_lxrt.";
 
-	/* Set address structures to zero.  */
-        memset(&local_addr, 0, sizeof(struct sockaddr_in));
-        memset(&server_addr, 0, sizeof(struct sockaddr_in));
+    /* Set address structures to zero.  */
+    memset(&local_addr, 0, sizeof(struct sockaddr_in));
+    memset(&server_addr, 0, sizeof(struct sockaddr_in));
 
-	/* Check arguments and set addresses. */
-        if (argc==5) {
-                local_addr.sin_family = AF_INET;
-                inet_aton(argv[1], &local_addr.sin_addr);
-                local_addr.sin_port = htons(atoi(argv[2]));
-                server_addr.sin_family = AF_INET;
-                inet_aton(argv[3], &server_addr.sin_addr);
-                server_addr.sin_port = htons(atoi(argv[4]));
-        } else {
-                fprintf(stderr,
-                        "Usage: "
-                        "%s <local-ip> <local-port> "
-                        "<server-ip> <server-port>\n",
-                        argv[0]);
-                exit(1);
-        }
+    printf("RTnet, simpleclient for NEWLXRT\n");
 
-	/* Lock allocated memory into RAM. */
-        mlockall(MCL_CURRENT|MCL_FUTURE);
+    /* Check arguments and set addresses. */
+    if (argc == 4) {
+        local_addr.sin_family      = AF_INET;
+        local_addr.sin_addr.s_addr = INADDR_ANY;
+        local_addr.sin_port        = htons(atoi(argv[1]));
 
-	/* Initialize a real time buddy. */
-        lxrtnettsk = rt_task_init(4800, 1, 0, 0);
-        if (NULL == lxrtnettsk) {
-                printf("CANNOT INIT MASTER TASK\n");
-                exit(1);
-        }
+        server_addr.sin_family = AF_INET;
+        inet_aton(argv[2], &server_addr.sin_addr);
+        server_addr.sin_port = htons(atoi(argv[3]));
+    } else {
+        fprintf(stderr,
+            "Usage: "
+            "%s <local-port> "
+            "<server-ip> <server-port>\n",
+            argv[0]);
+        exit(1);
+    }
 
-	/* Initialize timer; needed for rt_get_time_ns(). */
-        rt_set_oneshot_mode();
-        start_rt_timer(nano2count(1000000));
+    /* Lock allocated memory into RAM. */
+    mlockall(MCL_CURRENT|MCL_FUTURE);
 
-	/* Switch over to hard realtime mode. */
-        rt_make_hard_real_time();
+    /* Initialize a real time buddy. */
+    lxrtnettsk = rt_task_init(4800, 1, 0, 0);
+    if (NULL == lxrtnettsk) {
+        printf("CANNOT INIT MASTER TASK\n");
+        exit(1);
+    }
 
-	/* Create new socket. */
-        sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    /* Switch over to hard realtime mode. */
+    rt_make_hard_real_time();
 
-	/* Bind socket to local address specified as parameter. */
-        ret = rt_socket_bind(sockfd,
-	                     (struct sockaddr *) &local_addr,
-                             sizeof(struct sockaddr_in));
+    /* Create new socket. */
+    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
 
-	/* Specify destination address for socket; needed for rt_socket_send(). */
-        rt_socket_connect(sockfd,
-                          (struct sockaddr *) &server_addr,
-                          sizeof(struct sockaddr_in));
+    /* Bind socket to local address specified as parameter. */
+    ret = rt_socket_bind(sockfd, (struct sockaddr *) &local_addr,
+                         sizeof(struct sockaddr_in));
 
-	/* Create and send timestamp to destination. */
-        time_tx.l = rt_get_time_ns();
-        rt_socket_send(sockfd,
-                       &time_tx.l,
-                       sizeof(unsigned long long),
-                       0);
+    /* Specify destination address for socket; needed for rt_socket_send(). */
+    rt_socket_connect(sockfd, (struct sockaddr *) &server_addr,
+                      sizeof(struct sockaddr_in));
 
-	/* Close socket. */
-        rt_socket_close(sockfd);        
+    /* Send a message. */
+    rt_socket_send(sockfd, msg, sizeof(msg), 0);
 
-	/* Switch over to soft realtime mode. */
-        rt_make_soft_real_time();
+    /* Close socket. */
+    rt_socket_close(sockfd);
 
-	/* Stop the timer. */
-        stop_rt_timer();
+    /* Switch over to soft realtime mode. */
+    rt_make_soft_real_time();
 
-	/* Delete realtime buddy. */
-        rt_task_delete(lxrtnettsk);
+    /* Delete realtime buddy. */
+    rt_task_delete(lxrtnettsk);
 
-        return 0;
+    return 0;
 }

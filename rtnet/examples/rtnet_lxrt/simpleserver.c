@@ -30,81 +30,73 @@
 #include <netinet/in.h>
 
 #include <rtai_lxrt_user.h>
-
-#include <rtnet_lxrt.h>
+#include <rtnet.h>
 
 static struct sockaddr_in local_addr;
 
 int main(int argc, char *argv[]) {
-        int sockfd = 0;
-        int ret    = 0;
+    int sockfd = 0;
+    int ret    = 0;
 
-        char msg[4000];
+    char msg[4000];
 
-        RT_TASK *lxrtnettsk;
+    RT_TASK *lxrtnettsk;
 
-	/* Set variables to zero.  */
-        memset(msg, 0, sizeof(msg));
-        memset(&local_addr, 0, sizeof (struct sockaddr_in));
-        
-	/* Check arguments and set addresses. */
-        if (argc==3) {
-                local_addr.sin_family=AF_INET;
-                inet_aton(argv[1], &local_addr.sin_addr);
-                local_addr.sin_port=htons(atoi(argv[2]));
-        } else {
-                fprintf(stderr,
-                        "Usage: "
-                        "%s <local-ip> <local-port>\n",
-                        argv[0]);
-                exit(1);
-        }
+    /* Set variables to zero.  */
+    memset(msg, 0, sizeof(msg));
+    memset(&local_addr, 0, sizeof (struct sockaddr_in));
 
-	/* Lock allocated memory into RAM. */
-        mlockall(MCL_CURRENT|MCL_FUTURE);
+    printf("RTnet, simpleserver for NEWLXRT\n");
 
-	/* Initialize a real time buddy. */
-        lxrtnettsk = rt_task_init(4800, 1, 0, 0);
-        if (NULL == lxrtnettsk) {
-                printf("CANNOT INIT MASTER TASK\n");
-                exit(1);
-        }
+    /* Check arguments and set addresses. */
+    if (argc==3) {
+        local_addr.sin_family      = AF_INET;
+        local_addr.sin_addr.s_addr = INADDR_ANY;
+        local_addr.sin_port        = htons(atoi(argv[2]));
+    } else {
+        fprintf(stderr,
+                "Usage: "
+                "%s <local-port>\n",
+                argv[0]);
+        exit(1);
+    }
 
-	/* Initialize timer; needed for rt_sleep(). */
-        rt_set_oneshot_mode();
-        start_rt_timer(nano2count(1000000));
+    /* Lock allocated memory into RAM. */
+    mlockall(MCL_CURRENT|MCL_FUTURE);
 
-	/* Switch over to hard realtime mode. */
-        rt_make_hard_real_time();
+    /* Initialize a real time buddy. */
+    lxrtnettsk = rt_task_init(4800, 1, 0, 0);
+    if (NULL == lxrtnettsk) {
+            printf("CANNOT INIT MASTER TASK\n");
+            exit(1);
+    }
 
-	/* Create new socket. */
-        sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    /* Switch over to hard realtime mode. */
+    rt_make_hard_real_time();
 
-	/* Bind socket to local address specified as parameter. */
-        ret = rt_socket_bind(sockfd,
-	                     (struct sockaddr *) &local_addr,
-                             sizeof(struct sockaddr_in));
+    /* Create new socket. */
+    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
 
-	/* Loop until packet is received. */
-        while (0 == ret) {
-                rt_sleep(nano2count(100000000));
-                ret = rt_socket_recv(sockfd,
-                                     msg,
-                                     sizeof(msg),
-                                     0);
-        }
+    /* Bind socket to local address specified as parameter. */
+    ret = rt_socket_bind(sockfd, (struct sockaddr *) &local_addr,
+                         sizeof(struct sockaddr_in));
 
-	/* Close socket. */
-        rt_socket_close(sockfd);        
+    /* Block until packet is received. */
+    ret = rt_socket_recv(sockfd, msg, sizeof(msg), 0);
 
-	/* Switch over to soft realtime mode. */
-        rt_make_soft_real_time();
+    /* Close socket. */
+    rt_socket_close(sockfd);
 
-	/* Stop the timer. */
-        stop_rt_timer();
+    /* Switch over to soft realtime mode. */
+    rt_make_soft_real_time();
 
-	/* Delete realtime buddy. */
-        rt_task_delete(lxrtnettsk);
+    /* Stop the timer. */
+    stop_rt_timer();
 
-        return 0;
+    /* Delete realtime buddy. */
+    rt_task_delete(lxrtnettsk);
+
+    printf("Received message: %s\n");
+
+    return 0;
 }
