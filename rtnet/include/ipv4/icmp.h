@@ -24,6 +24,8 @@
 #include <ipv4/protocol.h>
 
 
+#define ICMP_REPLY_POOL_SIZE        8
+
 extern struct rtinet_protocol icmp_protocol;
 extern void rt_icmp_init(void);
 extern void rt_icmp_release(void);
