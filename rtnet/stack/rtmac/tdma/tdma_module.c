@@ -132,7 +132,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                 do_div(slot_offset, 1000);
                 RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
                                  (unsigned long)slot_offset,
-                                 slot->phasing, slot->period, slot->size);
+                                 slot->phasing+1, slot->period, slot->size);
             }
 
             up(&entry->rtdev->nrt_sem);
