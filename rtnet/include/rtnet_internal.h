@@ -24,11 +24,13 @@
 
 #ifdef __KERNEL__
 
+#include <rtnet_config.h>
+
 #include <rtai.h>
 #include <rtai_sched.h>
 
 
-/* #ifdef CONFIG_RTNET_CHECKED */
+#ifdef CONFIG_RTNET_CHECKED
 #define RTNET_ASSERT(expr, func) \
     if (!(expr)) \
     { \
@@ -36,7 +38,9 @@
         __FILE__, __FUNCTION__, __LINE__, (#expr)); \
         func \
     }
-/* #endif */
+#else
+#define RTNET_ASSERT(expr, func)
+#endif /* CONFIG_RTNET_CHECKED */
 
 /* some configurables */
 
