@@ -1,7 +1,13 @@
+
+#error  This driver has not been updated for a log time, and it will therefore
+#error  not compile with current RTnet versions. If you need to specific
+#error  driver, please try to fix it on your own or let us know that you need
+#error  it. -JK-
+
 /* 8390-rt.c: A general NS8390 ethernet driver core for linux. */
 /*
  	Written 1992-94 by Donald Becker.
-  
+
 	Copyright 1993 United States Government as represented by the
 	Director, National Security Agency.
 
@@ -13,7 +19,7 @@
 	410 Severn Ave., Suite 210
 	Annapolis MD 21403
 
-  
+
   This is the chip-specific code for many 8390-based ethernet adaptors.
   This is not a complete driver, it must be combined with board-specific
   code such as ne.c, wd.c, 3c503.c, etc.
@@ -27,7 +33,7 @@
   Changelog:
 
   Paul Gortmaker	: remove set_bit lock, other cleanups.
-  Paul Gortmaker	: add ei_get_8390_hdr() so we can pass skb's to 
+  Paul Gortmaker	: add ei_get_8390_hdr() so we can pass skb's to
 			  ei_block_input() for eth_io_copy_and_sum().
   Paul Gortmaker	: exchange static int ei_pingpong for a #define,
 			  also add better Tx error handling.
@@ -77,7 +83,7 @@
 
 static const char version[] =
 "8390.c:v1.10cvs 9/23/94 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n"\
-"8390-rt.c: Ulrich Marx (marx@kammer.uni-hannover.de)\n"; 
+"8390-rt.c: Ulrich Marx (marx@kammer.uni-hannover.de)\n";
 
 #define NS8390_CORE
 #include "8390-rt.h"
@@ -98,9 +104,9 @@ static const char version[] =
 		Read the 4 byte, page aligned 8390 header. *If* there is a
 		subsequent read, it will be of the rest of the packet.
 	void block_input(struct net_device *dev, int count, struct sk_buff *skb, int ring_offset)
-		Read COUNT bytes from the packet buffer into the skb data area. Start 
+		Read COUNT bytes from the packet buffer into the skb data area. Start
 		reading from RING_OFFSET, the address as the 8390 sees it.  This will always
-		follow the read of the 8390 header. 
+		follow the read of the 8390 header.
 */
 #define rt_ei_reset_8390 (ei_local->reset_8390)
 #define rt_ei_block_output (ei_local->block_output)
@@ -127,7 +133,7 @@ static void do_set_multicast_list(struct net_device *dev);
  * @dev: network device to initialize
  *
  * This routine goes all-out, setting everything
- * up anew at each open, even though many of these 
+ * up anew at each open, even though many of these
  * registers should only need to be set once at boot.
  */
 int rt_ei_open (struct rtnet_device *rtdev) {
@@ -141,11 +147,11 @@ int rt_ei_open (struct rtnet_device *rtdev) {
 		rt_printk("RTnet: %s ei_open passed a non-existent device!\n",  dev->name);
 		return -ENXIO;
 	}
-	
+
 	/*
 	 *	Grab the page lock so we own the register set, then call
 	 *	the init function.
-	 */      
+	 */
 	flags = rt_spin_lock_irqsave (&ei_local->page_lock);
 	NS8390_init(dev, 1);
       	rt_spin_unlock_irqrestore(flags, &ei_local->page_lock);
@@ -161,7 +167,7 @@ int rt_ei_open (struct rtnet_device *rtdev) {
  * rt_ei_close - shut down network device
  * @dev: network device to close
  */
-int rt_ei_close(struct rtnet_device *rtdev) 
+int rt_ei_close(struct rtnet_device *rtdev)
 {
 	struct net_device *dev = rt_dev_get_by_rtdev(rtdev);
 	struct ei_device *ei_local = (struct ei_device *) dev->priv;
@@ -173,12 +179,12 @@ int rt_ei_close(struct rtnet_device *rtdev)
       	flags=rt_spin_lock_irqsave(&ei_local->page_lock);
 	NS8390_init(dev, 0);
       	rt_spin_unlock_irqrestore(flags, &ei_local->page_lock);
-	
+
 	return 0;
 }
 
 
-  
+
 /**
  * rt_ei_start_xmit - begin packet transmission
  * @skb: packet to be sent
@@ -199,7 +205,7 @@ static int rt_ei_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	length = skb->len;
 
-	/* Mask interrupts from the ethercard. 
+	/* Mask interrupts from the ethercard.
 	   SMP: We have to grab the lock here otherwise the IRQ handler
 	   on another CPU can flip window and race the IRQ mask set. We end
 	   up trashing the mcast filter not disabling irqs if we dont lock */
