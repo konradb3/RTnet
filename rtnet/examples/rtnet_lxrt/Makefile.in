@@ -141,11 +141,6 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 noinst_PROGRAMS = linux_client linux_server
-
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	@RTAI_KMOD_CFLAGS@
-
 subdir = examples/rtnet_lxrt
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config/config.h
