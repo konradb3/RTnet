@@ -336,36 +336,34 @@ static struct rt_icmp_control rt_icmp_pointers[NR_ICMP_TYPES+1] =
 int rt_icmp_rcv(struct rtskb *skb)
 {
     struct icmphdr *icmpHdr = skb->h.icmph;
-    unsigned int length = ntohs(skb->nh.iph->tot_len) - (skb->nh.iph->ihl*4);
+    unsigned int length = skb->len;
 
-    if(length < sizeof(struct icmphdr))
+    if (length < sizeof(struct icmphdr))
     {
         rt_printk("RTnet: improper length in icmp packet\n");
         goto cleanup;
     }
 
-    if(ip_compute_csum((unsigned char *)icmpHdr, length))
+    if (ip_compute_csum((unsigned char *)icmpHdr, length))
     {
         rt_printk("RTnet: invalid checksum in icmp packet %d\n", length);
         goto cleanup;
     }
 
-    if(!rtskb_pull(skb, sizeof(struct icmphdr)))
+    if (!rtskb_pull(skb, sizeof(struct icmphdr)))
     {
         rt_printk("RTnet: pull failed %p\n", (skb->sk));
         goto cleanup;
     }
 
 
-    if(icmpHdr->type > NR_ICMP_TYPES)
+    if (icmpHdr->type > NR_ICMP_TYPES)
     {
         rt_printk("RTnet: invalid icmp type\n");
         goto cleanup;
     }
 
-    /* SANE PACKET ... PROCESS IT */
-
-    length = length - sizeof(struct icmphdr);
+    /* sane packet, process it */
 
     (rt_icmp_pointers[icmpHdr->type].handler)(skb);
 
