@@ -1,7 +1,7 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.59)
 
 AC_INIT([RTnet],[0.7.1],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
@@ -578,6 +578,13 @@ else
 		rm -rf .tmp_versions;									\
 	fi;												\
 	"
+   dnl === Hack to suppress undefined symbol warnings during MODPOST stage ===
+   if test -e $RTAI_LINUX_DIR/Module.symvers; then
+	mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
+   fi
+   if test -e $RTAI_LINUX_DIR/vmlinux; then
+	mv $RTAI_LINUX_DIR/vmlinux $RTAI_LINUX_DIR/vmlinux.let_modpost_be_quiet
+   fi
 fi
 
 AC_MSG_CHECKING([for kernel module extension])

@@ -20950,6 +20950,12 @@ else
 		rm -rf .tmp_versions;									\
 	fi;												\
 	"
+      if test -e $RTAI_LINUX_DIR/Module.symvers; then
+	mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
+   fi
+   if test -e $RTAI_LINUX_DIR/vmlinux; then
+	mv $RTAI_LINUX_DIR/vmlinux $RTAI_LINUX_DIR/vmlinux.let_modpost_be_quiet
+   fi
 fi
 
 echo "$as_me:$LINENO: checking for kernel module extension" >&5
