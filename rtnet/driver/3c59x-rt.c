@@ -1,8 +1,15 @@
+
+#warning  This driver is probably not real-time safe! Under certain conditions,
+#warning  it can cause interrupt locks of up to 1 second (issue_and_wait). We
+#warning  need a rewrite of critical parts, but we are lacking the knowledge
+#warning  about the hardware details (e.g. how long does a normal delay take =>
+#warning  apply this value and throw an error message on timeouts).
+
 /* EtherLinkXL.c: A 3Com EtherLink PCI III/XL ethernet driver for linux / RTnet. */
 /*
     RTnet porting 2002 by Mathias Koehrer (mathias_koehrer@yahoo.de)
     -- Support only for PCI boards, EISA stuff ignored...
-    
+
 	Originally written 1996-1999 by Donald Becker.
 
 	This software may be used and distributed according to the terms
@@ -21,7 +28,7 @@
 	Annapolis MD 21403
 
 	Linux Kernel Additions:
-	
+
  	0.99H+lk0.9 - David S. Miller - softnet, PCI DMA updates
  	0.99H+lk1.0 - Jeff Garzik <jgarzik@mandrakesoft.com>
 		Remove compatibility defines for kernel versions < 2.2.x.
@@ -1042,7 +1049,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	}
 
 	print_name = pdev ? pdev->slot_name : "3c59x";
-    
+
     // *** RTnet ***
 	rtdev = rt_alloc_etherdev(sizeof(*vp));
 	retval = -ENOMEM;
@@ -1055,7 +1062,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
 	// *** RTnet ***
-    
+
 	vp = rtdev->priv;
 
 	/* The lower four bits are the media type. */
@@ -2104,11 +2111,11 @@ static void vortex_tx_timeout(struct rtnet_device *dev)
 		vp->stats.tx_dropped++;
 		rtnetif_wake_queue(rtdev);
 	}
-	
+
 	/* Issue Tx Enable */
 	outw(TxEnable, ioaddr + EL3_CMD);
 	dev->trans_start = jiffies;
-	
+
 	/* Switch to register set 7 for normal use. */
 	EL3WINDOW(7);
 }
