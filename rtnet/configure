@@ -20872,7 +20872,7 @@ fi
 
 
 
-                                                                                                                                                                                                                                                                    ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile examples/rtmac/Makefile examples/rtmac/event/Makefile examples/rtmac/mrtt/Makefile examples/rtmac/rtt/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/tdma/Makefile rtcfg/Makefile include/Makefile rtcap/Makefile rtai_rtdm/Makefile"
+                                                                                                                                                                                                                                                                              ac_config_files="$ac_config_files Makefile examples/Makefile examples/round_trip_time/Makefile examples/round_trip_time/client/Makefile examples/round_trip_time/server/Makefile examples/rtnet_lxrt/Makefile examples/rtskb_alloc/Makefile examples/frag_ip/Makefile examples/raw_packets/Makefile examples/rtmac/Makefile examples/rtmac/event/Makefile examples/rtmac/mrtt/Makefile examples/rtmac/rtt/Makefile examples/rtmac/netshm/Makefile driver/Makefile driver/tulip/Makefile ethernet/Makefile ipv4/Makefile packet/Makefile lib/Makefile tools/Makefile rtmac/Makefile rtmac/tdma/Makefile rtcfg/Makefile include/Makefile rtcap/Makefile rtai_rtdm/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -21583,6 +21583,7 @@ do
   "examples/rtmac/event/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtmac/event/Makefile" ;;
   "examples/rtmac/mrtt/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtmac/mrtt/Makefile" ;;
   "examples/rtmac/rtt/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtmac/rtt/Makefile" ;;
+  "examples/rtmac/netshm/Makefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtmac/netshm/Makefile" ;;
   "driver/Makefile" ) CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
   "driver/tulip/Makefile" ) CONFIG_FILES="$CONFIG_FILES driver/tulip/Makefile" ;;
   "ethernet/Makefile" ) CONFIG_FILES="$CONFIG_FILES ethernet/Makefile" ;;
