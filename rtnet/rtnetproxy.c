@@ -349,14 +349,14 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     struct net_device *dev = &dev_rtnetproxy;
     struct net_device_stats *stats = dev->priv;
 
-#define IP_OVERHEAD 34
-    int len = rtskb->len + IP_OVERHEAD;
+    int header_len = rtskb->rtdev->hard_header_len;
+    int len        = rtskb->len + header_len;
 
     /* Copy the realtime skb (rtskb) to the standard skb: */
     skb = dev_alloc_skb(len+2);
     skb_reserve(skb, 2);
 
-    memcpy(skb_put(skb, len), rtskb->data-IP_OVERHEAD, len);
+    memcpy(skb_put(skb, len), rtskb->data-header_len, len);
 
 
     /* Set some relevant entries in the skb: */
