@@ -51,7 +51,7 @@ int rtskbs_alloc(void)
 
 	for (i=0; i<n; i++) {
 		time=rt_get_time();
-		rtskbs[i]=alloc_rtskb(ETH_FRAME_LEN);
+		rtskbs[i]=alloc_rtskb(ETH_FRAME_LEN, &global_pool);
 		dt0=rt_get_time()-time; 
 		t_max=_max(t_max, dt0);
 		t_min=_min(t_min, dt0);
