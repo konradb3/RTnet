@@ -20,7 +20,7 @@
  */
 
 #define DRV_NAME        "8139too-rt"
-#define DRV_VERSION        "0.9.24-rt0.1"
+#define DRV_VERSION        "0.9.24-rt0.2"
 
 #include <linux/config.h>
 #include <linux/module.h>
@@ -379,12 +379,12 @@ enum Cfg9346Bits {
 #define PARA78_default        0x78fa8388
 #define PARA7c_default        0xcb38de43        /* param[0][3] */
 #define PARA7c_xxx                0xcb38de43
-static const unsigned long param[4][4] = {
+/*static const unsigned long param[4][4] = {
         {0xcb39de43, 0xcb39ce43, 0xfb38de03, 0xcb38de43},
         {0xcb39de43, 0xcb39ce43, 0xcb39ce83, 0xcb39ce83},
         {0xcb39de43, 0xcb39ce43, 0xcb39ce83, 0xcb39ce83},
         {0xbb39de43, 0xbb39ce43, 0xbb39ce83, 0xbb39ce83}
-};
+};*/
 
 typedef enum {
         CH_8139 = 0,
@@ -630,7 +630,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
                 rt_printk (KERN_ERR PFX "%s: Unable to alloc new net device\n", pdev->slot_name);
                 return -ENOMEM;
         }
-        //rtdev_alloc_name(rtdev, "eth%d");//Done by register_rtdev()
+        rtdev_alloc_name(rtdev, "rteth%d");
 
         rt_rtdev_connect(rtdev, &RTDEV_manager);
 
@@ -850,7 +850,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         //        tp->mii.mdio_read = mdio_read;
         //        tp->mii.mdio_write = mdio_write;
 
-        if ( (i=rt_register_rtnetdev(rtdev)) ) 
+        if ( (i=rt_register_rtnetdev(rtdev)) )
                 goto err_out;
 
         pci_set_drvdata (pdev, rtdev);
@@ -905,7 +905,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
                                    ((option & 0x20) ? 0x2000 : 0) |         /* 100Mbps? */
                                    ((option & 0x10) ? 0x0100 : 0)); /* Full duplex? */
         }
-#endif 
+#endif
 
         /* Put the chip into low-power mode. */
         if (rtl_chip_info[tp->chipset].flags & HasHltClk)
@@ -922,7 +922,7 @@ err_out:
         pci_release_regions (pdev);
         rtdev_free(rtdev);
         pci_set_drvdata (pdev, NULL);
- 
+
         return i;
 }
 
@@ -1151,7 +1151,6 @@ static int rtl8139_open (struct rtnet_device *rtdev)
         retval = rt_request_global_irq_ext(rtdev->irq, (void (*)(void))rtl8139_interrupt, (unsigned long)rtdev);
         if (retval)
                 return retval;
-        rt_enable_irq(rtdev->irq);
 
         tp->tx_bufs = pci_alloc_consistent(tp->pci_dev, TX_BUF_TOT_LEN, &tp->tx_bufs_dma);
         tp->rx_ring = pci_alloc_consistent(tp->pci_dev, RX_BUF_TOT_LEN, &tp->rx_ring_dma);
@@ -1173,6 +1172,9 @@ static int rtl8139_open (struct rtnet_device *rtdev)
 
         rtl8139_init_ring (rtdev);
         rtl8139_hw_start (rtdev);
+
+        rt_startup_irq(rtdev->irq);
+        rt_enable_irq(rtdev->irq);
 
         MOD_INC_USE_COUNT;
 
@@ -1300,6 +1302,7 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         unsigned int entry;
         unsigned int len = skb->len;
 
+        rt_sem_wait(&rtdev->xmit_sem);
         rt_disable_irq(rtdev->irq);
 
         /* Calculate the next Tx descriptor entry. */
@@ -1317,19 +1320,20 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
 
 
         /* Note: the chip doesn't have auto-pad! */
-        rt_spin_lock_irq(&tp->lock);
+        rt_spin_lock(&tp->lock);
         RTL_W32_F (TxStatus0 + (entry * sizeof (u32)), tp->tx_flag | max(len, (unsigned int)ETH_ZLEN));
         //rtdev->trans_start = jiffies;
         tp->cur_tx++;
         wmb();
         if ((tp->cur_tx - NUM_TX_DESC) == tp->dirty_tx)
                 rtnetif_stop_queue (rtdev);
-        rt_spin_unlock_irq(&tp->lock);
+        rt_spin_unlock(&tp->lock);
 
 #ifdef DEBUG
         rt_printk ("%s: Queued Tx packet size %u to slot %d.\n", rtdev->name, len, entry);
-#endif 
+#endif
         rt_enable_irq(rtdev->irq);
+        rt_sem_signal(&rtdev->xmit_sem);
         return 0;
 }
 
@@ -1635,7 +1639,8 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
 
         //        MeasureTime = rt_get_time();
 
-        rt_disable_irq(rtdev->irq);
+        rt_spin_lock(&tp->lock);
+        
         do {
                 status = RTL_R16 (IntrStatus);
 
@@ -1665,7 +1670,7 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
 
                 /* Check uncommon events with one test. */
                 if (status & (PCIErr | PCSTimeout | RxUnderrun | RxOverflow | RxFIFOOver | RxErr)) {
-                        rtl8139_weird_interrupt (rtdev, tp, ioaddr, status, link_changed); 
+                        rtl8139_weird_interrupt (rtdev, tp, ioaddr, status, link_changed);
                 }
 
                 if (rtnetif_running (rtdev) && (status & TxOK)) {
@@ -1687,7 +1692,9 @@ static void rtl8139_interrupt (int irq, unsigned long rtdev_id)
                 /* Clear all interrupt sources. */
                 RTL_W16 (IntrStatus, 0xffff);
         }
-        rt_enable_irq(rtdev->irq);
+
+        rt_spin_unlock(&tp->lock);
+
         if (saved_status & RxAckBits) {
                 rt_mark_stack_mgr(rtdev);
         }
@@ -1709,7 +1716,7 @@ static int rtl8139_close (struct rtnet_device *rtdev)
 
         rtnetif_stop_queue (rtdev);
 
-        rt_disable_irq(rtdev->irq);
+        rt_shutdown_irq(rtdev->irq);
         if ( (ret=rt_free_global_irq(rtdev->irq))<0 )
                 return ret;
 
@@ -1803,13 +1810,13 @@ static void rtl8139_set_rx_mode (struct rtnet_device *rtdev)
 }
 
 static struct pci_driver rtl8139_pci_driver = {
-        name:                DRV_NAME,
-        id_table:        rtl8139_pci_tbl,
-        probe:                rtl8139_init_one,
-        remove:                __devexit_p(rtl8139_remove_one),
-        //remove:                rtl8139_remove_one,
-        suspend:        NULL,
-        resume:                NULL,
+        name:                   DRV_NAME,
+        id_table:               rtl8139_pci_tbl,
+        probe:                  rtl8139_init_one,
+        remove:                 __devexit_p(rtl8139_remove_one),
+        //remove:                 rtl8139_remove_one,
+        suspend:                NULL,
+        resume:                 NULL,
 };
 
 

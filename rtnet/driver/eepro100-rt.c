@@ -30,19 +30,23 @@
 */
 
 static const char *version =
-"eepro100-rt.c:1.36-RTnet-0.2 9/06/02 Jan Kiszka <Jan.Kiszka@web.de>\n"
+"eepro100-rt.c:1.36-RTnet-0.3 2002,2003 Jan Kiszka <Jan.Kiszka@web.de>\n"
 "eepro100-rt.c: based on eepro100.c 1.36 by D. Becker, A. V. Savochkin and others\n";
 
 /* A few user-configurable values that apply to all boards.
    First set is undocumented and spelled per Intel recommendations. */
 
+#if 0
 static int congenb /* = 0 */; /* Enable congestion control in the DP83840. */
+#endif
 static int txfifo = 8;		/* Tx FIFO threshold in 4 byte units, 0-15 */
 static int rxfifo = 8;		/* Rx FIFO threshold, default 32 bytes. */
 /* Tx/Rx DMA burst length, 0-127, 0 == no preemption, tx==128 -> disabled. */
 static int txdmacount = 128;
 static int rxdmacount /* = 0 */;
 
+// *** RTnet ***
+#if 0
 /* Set the copy breakpoint for the copy-only-tiny-buffer Rx method.
    Lower values use more memory, but are faster. */
 #if defined(__alpha__) || defined(__sparc__) || defined(__mips__) || \
@@ -51,6 +55,8 @@ static int rx_copybreak = 1518;
 #else
 static int rx_copybreak = 200;
 #endif
+#endif
+// *** RTnet ***
 
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 20;
@@ -83,7 +89,7 @@ static int debug = -1;			/* The debug level */
 /* Time in jiffies before concluding the transmitter is hung. */
 #define TX_TIMEOUT		(2*HZ)
 /* Size of an pre-allocated Rx buffer: <Ethernet MTU> + slack.*/
-#define PKT_BUF_SZ		1536
+#define PKT_BUF_SZ		VLAN_ETH_FRAME_LEN
 
 #if !defined(__OPTIMIZE__)  ||  !defined(__KERNEL__)
 #warning  You must compile this file with the correct options!
@@ -119,11 +125,11 @@ static int debug = -1;			/* The debug level */
 #include <linux/delay.h>
 
 // *** RTnet ***
+#include <linux/if_vlan.h>
 #include <crc32.h>
 #include <rtnet.h>
 #include <rtnet_internal.h>
 #include <rtnet_port.h>
-//#include "../comdbg.h"
 
 static int cards = INT_MAX;
 MODULE_PARM(cards, "i");
@@ -136,23 +142,23 @@ MODULE_LICENSE("GPL");
 MODULE_PARM(debug, "i");
 MODULE_PARM(options, "1-" __MODULE_STRING(8) "i");
 MODULE_PARM(full_duplex, "1-" __MODULE_STRING(8) "i");
-MODULE_PARM(congenb, "i");
+/*MODULE_PARM(congenb, "i");*/
 MODULE_PARM(txfifo, "i");
 MODULE_PARM(rxfifo, "i");
 MODULE_PARM(txdmacount, "i");
 MODULE_PARM(rxdmacount, "i");
-MODULE_PARM(rx_copybreak, "i");
+// *** RTnet MODULE_PARM(rx_copybreak, "i");
 MODULE_PARM(max_interrupt_work, "i");
 MODULE_PARM(multicast_filter_limit, "i");
 MODULE_PARM_DESC(debug, "eepro100 debug level (0-6)");
 MODULE_PARM_DESC(options, "eepro100: Bits 0-3: tranceiver type, bit 4: full duplex, bit 5: 100Mbps");
 MODULE_PARM_DESC(full_duplex, "eepro100 full duplex setting(s) (1)");
-MODULE_PARM_DESC(congenb, "eepro100  Enable congestion control (1)");
+/*MODULE_PARM_DESC(congenb, "eepro100  Enable congestion control (1)");*/
 MODULE_PARM_DESC(txfifo, "eepro100 Tx FIFO threshold in 4 byte units, (0-15)");
 MODULE_PARM_DESC(rxfifo, "eepro100 Rx FIFO threshold in 4 byte units, (0-15)");
 MODULE_PARM_DESC(txdmaccount, "eepro100 Tx DMA burst length; 128 - disable (0-128)");
 MODULE_PARM_DESC(rxdmaccount, "eepro100 Rx DMA burst length; 128 - disable (0-128)");
-MODULE_PARM_DESC(rx_copybreak, "eepro100 copy breakpoint for copy-only-tiny-frames");
+// *** RTnet MODULE_PARM_DESC(rx_copybreak, "eepro100 copy breakpoint for copy-only-tiny-frames");
 MODULE_PARM_DESC(max_interrupt_work, "eepro100 maximum events handled per interrupt");
 MODULE_PARM_DESC(multicast_filter_limit, "eepro100 maximum number of filtered multicast addresses");
 
@@ -338,15 +344,20 @@ static inline void wait_for_cmd_done(long cmd_ioaddr)
 #endif
 }
 
-static inline void rt_wait_for_cmd_done(long cmd_ioaddr)
+/* Worst case execution time (called by speedo_start_xmit only): 20 us */
+static inline int rt_wait_for_cmd_done(long cmd_ioaddr)
 {
-	int wait = 1000;
-	do  rt_busy_sleep(1000);
-	while(inb(cmd_ioaddr) && --wait >= 0);
+	int wait;
+	for (wait = 20; wait > 0; wait--) {
+		if (inb(cmd_ioaddr) == 0)
+			return 0;
+		rt_busy_sleep(1000);
+	}
 #ifndef final_version
 	if (wait < 0)
 		rt_printk(KERN_ALERT "eepro100: wait_for_cmd_done timeout!\n");
 #endif
+	return 1;
 }
 
 /* Offsets to the various registers.
@@ -525,11 +536,13 @@ struct speedo_private {
 /* The parameters for a CmdConfigure operation.
    There are so many options that it would be difficult to document each bit.
    We mostly use the default or recommended settings. */
+#if 0
 static const char i82557_config_cmd[CONFIG_DATA_SIZE] = {
 	22, 0x08, 0, 0,  0, 0, 0x32, 0x03,  1, /* 1=Use MII  0=Use AUI */
 	0, 0x2E, 0,  0x60, 0,
 	0xf2, 0x48,   0, 0x40, 0xf2, 0x80, 		/* 0x40=Force full-duplex */
 	0x3f, 0x05, };
+#endif
 static const char i82558_config_cmd[CONFIG_DATA_SIZE] = {
 	22, 0x08, 0, 1,  0, 0, 0x22, 0x03,  1, /* 1=Use MII  0=Use AUI */
 	0, 0x2E, 0,  0x60, 0x08, 0x88,
@@ -537,14 +550,14 @@ static const char i82558_config_cmd[CONFIG_DATA_SIZE] = {
 	0x31, 0x05, };
 
 /* PHY media interface chips. */
-static const char *phys[] = {
+/*static const char *phys[] = {
 	"None", "i82553-A/B", "i82553-C", "i82503",
 	"DP83840", "80c240", "80c24", "i82555",
 	"unknown-8", "unknown-9", "DP83840A", "unknown-11",
-	"unknown-12", "unknown-13", "unknown-14", "unknown-15", };
+	"unknown-12", "unknown-13", "unknown-14", "unknown-15", };*/
 enum phy_chips { NonSuchPhy=0, I82553AB, I82553C, I82503, DP83840, S80C240,
 					 S80C24, I82555, DP83840A=10, };
-static const char is_mii[] = { 0, 1, 1, 0, 1, 1, 0, 1 };
+/*static const char is_mii[] = { 0, 1, 1, 0, 1, 1, 0, 1 };*/
 #define EE_READ_CMD		(6)
 
 static int eepro100_init_one(struct pci_dev *pdev,
@@ -553,7 +566,7 @@ static void eepro100_remove_one (struct pci_dev *pdev);
 
 static int do_eeprom_cmd(long ioaddr, int cmd, int cmd_len);
 static int mdio_read(long ioaddr, int phy_id, int location);
-static int mdio_write(long ioaddr, int phy_id, int location, int value);
+/*static int mdio_write(long ioaddr, int phy_id, int location, int value);*/
 static int speedo_open(struct rtnet_device *rtdev);
 static void speedo_resume(struct rtnet_device *rtdev);
 //static void speedo_timer(unsigned long data);
@@ -685,7 +698,7 @@ static int speedo_found1(struct pci_dev *pdev,
 		pci_free_consistent(pdev, size, tx_ring_space, tx_ring_dma);
 		return -1;
 	}
-	//rtdev_alloc_name(rtdev, "eth%d"); //Done by register_rtdev()
+	rtdev_alloc_name(rtdev, "rteth%d");
 	memset(rtdev->priv, 0, sizeof(struct speedo_private));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
@@ -761,7 +774,8 @@ static int speedo_found1(struct pci_dev *pdev,
 #endif
 	printk("IRQ %d.\n", pdev->irq);
 
-#if 1 || defined(kernel_bloat)
+// *** RTnet #if 1 || defined(kernel_bloat)
+#if 0
 	/* OK, this is pure kernel bloat.  I don't like it when other drivers
 	   waste non-pageable kernel space to emit similar messages, but I need
 	   them for bug reports. */
@@ -859,7 +873,7 @@ static int speedo_found1(struct pci_dev *pdev,
 	sp->phy[0] = eeprom[6];
 	sp->phy[1] = eeprom[7];
 	sp->rx_bug = (eeprom[3] & 0x03) == 3 ? 0 : 1;
-	if (((pdev->device > 0x1030 && (pdev->device < 0x1039))) 
+	if (((pdev->device > 0x1030 && (pdev->device < 0x1039)))
 	    || (pdev->device == 0x2449)) {
 	    	sp->chip_id = 1;
 	}
@@ -942,6 +956,7 @@ static int mdio_read(long ioaddr, int phy_id, int location)
 	return val & 0xffff;
 }
 
+#if 0
 static int mdio_write(long ioaddr, int phy_id, int location, int value)
 {
 	int val, boguscnt = 64*10;		/* <64 usec. to complete, typ 27 ticks */
@@ -956,6 +971,7 @@ static int mdio_write(long ioaddr, int phy_id, int location, int value)
 	} while (! (val & 0x10000000));
 	return val & 0xffff;
 }
+#endif
 
 
 static int
@@ -988,7 +1004,6 @@ speedo_open(struct rtnet_device *rtdev)
 		MOD_DEC_USE_COUNT;
 		return retval;
 	}
-	rt_startup_irq(rtdev->irq);
 	// *** RTnet ***
 
 	rtdev->if_port = sp->default_port;
@@ -1052,6 +1067,13 @@ speedo_open(struct rtnet_device *rtdev)
 	/* No need to wait for the command unit to accept here. */
 	if ((sp->phy[0] & 0x8000) == 0)
 		mdio_read(ioaddr, sp->phy[0] & 0x1f, 0);
+
+// *** RTnet ***
+	/* Enable the device IRQ here, so that no race situation between the setup
+	 * code and the IRQ handler can occure. */
+	rt_startup_irq(rtdev->irq);
+	rt_enable_irq(rtdev->irq);
+// *** RTnet ***
 
 	return 0;
 }
@@ -1180,11 +1202,10 @@ static void speedo_timer(unsigned long data)
 static void speedo_show_state(struct rtnet_device *rtdev)
 {
 	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
-	int i;
+	unsigned int i;
 
 	/* Print a few items for debugging. */
 	if (speedo_debug > 0) {
-		int i;
 		printk(KERN_DEBUG "%s: Tx ring dump,  Tx queue %u / %u:\n", rtdev->name,
 			   sp->cur_tx, sp->dirty_tx);
 		for (i = 0; i < TX_RING_SIZE; i++)
@@ -1233,11 +1254,12 @@ speedo_init_rx_ring(struct rtnet_device *rtdev)
 
 	for (i = 0; i < RX_RING_SIZE; i++) {
 		struct rtskb *skb;
-		skb = dev_alloc_rtskb(PKT_BUF_SZ + sizeof(struct RxFD));
+		skb = dev_alloc_rtskb(PKT_BUF_SZ + 2 + sizeof(struct RxFD));
 		sp->rx_skbuff[i] = skb;
 		if (skb == NULL)
 			break;			/* OK.  Just initially short of Rx bufs. */
 		// *** RTnet ***
+		rtskb_reserve(skb, 2);  /* IP header alignment */
 		skb->rtdev = rtdev;		/* Mark as being used by this device. */
 		// *** RTnet ***
 		rxf = (struct RxFD *)skb->tail;
@@ -1403,8 +1425,10 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
 	// *** RTnet ***
+
+	rt_sem_wait(&rtdev->xmit_sem);
+	rt_disable_irq(rtdev->irq);
 	rt_spin_lock(&sp->lock);
-        rt_disable_irq(rtdev->irq);
 	// *** RTnet ***
 
 	/* Check if there are enough space. */
@@ -1414,8 +1438,9 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
-		rt_enable_irq(rtdev->irq);
 		rt_spin_unlock(&sp->lock);
+		rt_enable_irq(rtdev->irq);
+		rt_sem_signal(&rtdev->xmit_sem);
 		// *** RTnet ***
 
 		return 1;
@@ -1425,7 +1450,6 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	entry = sp->cur_tx++ % TX_RING_SIZE;
 
 	sp->tx_skbuff[entry] = skb;
-//comdbg_str("start_xmit: tx_skbuff["); comdbg_val(entry); comdbg_str("] = "); comdbg_val(skb); comdbg_str("\r\n");
 	sp->tx_ring[entry].status =
 		cpu_to_le32(CmdSuspend | CmdTx | CmdTxFlex);
 	if (!(entry & ((TX_RING_SIZE>>2)-1)))
@@ -1441,15 +1465,30 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 					   skb->len, PCI_DMA_TODEVICE));
 	sp->tx_ring[entry].tx_buf_size0 = cpu_to_le32(skb->len);
 
+// *** RTnet ***
+// Disabled to gain shorter worst-case execution times.
+// Hope this bug is not relevant for us
+#if 0
 	/* workaround for hardware bug on 10 mbit half duplex */
 
 	if ((sp->partner == 0) || (sp->chip_id == 1)) {
 		rt_wait_for_cmd_done(ioaddr + SCBCmd);
 		outb(0 , ioaddr + SCBCmd);
 	}
+#endif
+// *** RTnet ***
 
 	/* Trigger the command unit resume. */
-	rt_wait_for_cmd_done(ioaddr + SCBCmd);
+// *** RTnet ***
+	if (rt_wait_for_cmd_done(ioaddr + SCBCmd) != 0) {
+		rt_spin_unlock(&sp->lock);
+		rt_enable_irq(rtdev->irq);
+		rt_sem_signal(&rtdev->xmit_sem);
+
+		return 1;
+	}
+// *** RTnet ***
+
 	clear_suspend(sp->last_cmd);
 	/* We want the time window between clearing suspend flag on the previous
 	   command and resuming CU to be as small as possible.
@@ -1465,8 +1504,9 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	}
 
 	// *** RTnet ***
-	rt_enable_irq(rtdev->irq);
 	rt_spin_unlock(&sp->lock);
+	rt_enable_irq(rtdev->irq);
+	rt_sem_signal(&rtdev->xmit_sem);
 	// *** RTnet ***
 
 	//rtdev->trans_start = jiffies;
@@ -1513,6 +1553,8 @@ static void speedo_tx_buffer_gc(struct rtnet_device *rtdev)
 		dirty_tx++;
 	}
 
+// *** RTnet ***
+#if 0
 	if (speedo_debug && (int)(sp->cur_tx - dirty_tx) > TX_RING_SIZE) {
 		printk(KERN_ERR "out-of-sync dirty pointer, %d vs. %d,"
 			   " full=%d.\n",
@@ -1533,6 +1575,8 @@ static void speedo_tx_buffer_gc(struct rtnet_device *rtdev)
 	}
 	if (sp->mc_setup_head == NULL)
 		sp->mc_setup_tail = NULL;
+#endif
+// *** RTnet ***
 
 	sp->dirty_tx = dirty_tx;
 }
@@ -1550,7 +1594,6 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 	long ioaddr, boguscnt = max_interrupt_work;
 	unsigned short status;
 
-//comdbg_str("1\n\r");
 #ifndef final_version
 	if (rtdev == NULL) {
 		rt_printk(KERN_ERR "speedo_interrupt(): irq %d for unknown device.\n", irq);
@@ -1558,7 +1601,6 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 	}
 #endif
 
-//comdbg_str("2\n\r");
 	ioaddr = rtdev->base_addr;
 	sp = (struct speedo_private *)rtdev->priv;
 
@@ -1568,12 +1610,10 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		rt_printk(KERN_ERR"%s: SMP simultaneous entry of an interrupt handler.\n",
 			   rtdev->name);
 		sp->in_interrupt = 0;	/* Avoid halting machine. */
-//comdbg_str("ALARM 1\n\r");
 		return;
 	}
 #endif
 
-//comdbg_str("3\n\r");
 	do {
 		status = inw(ioaddr + SCBStatus);
 		/* Acknowledge all of the current interrupt sources ASAP. */
@@ -1581,7 +1621,6 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		   FCP and ER interrupts --Dragan */
 		outw(status & 0xfc00, ioaddr + SCBStatus);
 
-//comdbg_str("4\n\r");
 		if (speedo_debug > 4)
 			rt_printk(KERN_DEBUG "%s: interrupt  status=%#4.4x.\n",
 				   rtdev->name, status);
@@ -1592,13 +1631,11 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		/* Always check if all rx buffers are allocated.  --SAW */
 		speedo_refill_rx_buffers(rtdev, 0);
 
-//comdbg_str("5\n\r");
 		if ((status & 0x5000) ||	/* Packet received, or Rx error. */
 			(sp->rx_ring_state&(RrNoMem|RrPostponed)) == RrPostponed)
 									/* Need to gather the postponed packet. */
 			speedo_rx(rtdev, &packets);
 
-//comdbg_str("6\n\r");
 		if (status & 0x1000) {
 			rt_spin_lock(&sp->lock);
 			if ((status & 0x003c) == 0x0028) {		/* No more Rx buffers. */
@@ -1686,7 +1723,6 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 			outw(0xfc00, ioaddr + SCBStatus);
 			break;
 		}
-//comdbg_str("7\n\r");
 	} while (1);
 
 	if (speedo_debug > 3)
@@ -1694,7 +1730,6 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	clear_bit(0, (void*)&sp->in_interrupt);
-//comdbg_str("X\n\r");
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 	rt_enable_irq(irq);
@@ -1707,12 +1742,13 @@ static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry
 	struct RxFD *rxf;
 	struct rtskb *skb;
 	/* Get a fresh skbuff to replace the consumed one. */
-	skb = dev_alloc_rtskb(PKT_BUF_SZ + sizeof(struct RxFD));
+	skb = dev_alloc_rtskb(PKT_BUF_SZ + 2 + sizeof(struct RxFD));
 	sp->rx_skbuff[entry] = skb;
 	if (skb == NULL) {
 		sp->rx_ringp[entry] = NULL;
 		return NULL;
 	}
+	rtskb_reserve(skb, 2);  /* IP header alignment */
 	rxf = sp->rx_ringp[entry] = (struct RxFD *)skb->tail;
 	sp->rx_ring_dma[entry] =
 		pci_map_single(sp->pdev, rxf,
@@ -1858,13 +1894,13 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 		} else {
 			struct rtskb *skb;
 
+// *** RTnet ***
+#if 0
 			/* Check if the packet is long enough to just accept without
 			   copying to a properly sized skbuff. */
-//comdbg_str("rx1\n\r");
 			if (pkt_len < rx_copybreak
 				&& (skb = dev_alloc_rtskb(pkt_len + 2)) != 0) {
 				skb->rtdev = rtdev;
-//comdbg_str("rx2\n\r");
 				rtskb_reserve(skb, 2);	/* Align IP on 16 byte boundaries */
 				/* 'skb_put()' points to the start of sk_buff data area. */
 				pci_dma_sync_single(sp->pdev, sp->rx_ring_dma[entry],
@@ -1880,7 +1916,9 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 					   pkt_len);
 #endif
 			} else {
-//comdbg_str("rx3!?\n\r");
+#endif
+			{
+// *** RTnet ***
 				/* Pass up the already-filled skbuff. */
 				skb = sp->rx_skbuff[entry];
 				if (skb == NULL) {
@@ -1894,35 +1932,28 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 				pci_unmap_single(sp->pdev, sp->rx_ring_dma[entry],
 						PKT_BUF_SZ + sizeof(struct RxFD), PCI_DMA_FROMDEVICE);
 			}
-//comdbg_str("rx4\n\r");
 			skb->protocol = rt_eth_type_trans(skb, rtdev);
 			//rtmac
 			skb->rx = rx;
 			//rtmac
-//comdbg_str("rx4a\n\r");
 			rtnetif_rx(skb);
-//comdbg_str("rx4b\n\r");
 			(*packets)++;
 			sp->stats.rx_packets++;
 			sp->stats.rx_bytes += pkt_len;
 		}
-//comdbg_str("rx5\n\r");
 		entry = (++sp->cur_rx) % RX_RING_SIZE;
 		sp->rx_ring_state &= ~RrPostponed;
 		/* Refill the recently taken buffers.
 		   Do it one-by-one to handle traffic bursts better. */
 		if (alloc_ok && speedo_refill_rx_buf(rtdev, 0) == -1)
 			alloc_ok = 0;
-//comdbg_str("rx6\n\r");
 	}
 
-//comdbg_str("rx7\n\r");
 	/* Try hard to refill the recently taken buffers. */
 	speedo_refill_rx_buffers(rtdev, 1);
 
 	sp->last_rx_time = jiffies;
 
-//comdbg_str("rx8\n\r");
 	return 0;
 }
 
@@ -1987,6 +2018,8 @@ speedo_close(struct rtnet_device *rtdev)
 		}
 	}
 
+// *** RTnet ***
+#if 0
 	/* Free multicast setting blocks. */
 	for (i = 0; sp->mc_setup_head != NULL; i++) {
 		struct speedo_mc_block *t;
@@ -1997,6 +2030,8 @@ speedo_close(struct rtnet_device *rtdev)
 	sp->mc_setup_tail = NULL;
 	if (speedo_debug > 0)
 		printk(KERN_DEBUG "%s: %d multicast blocks dropped.\n", rtdev->name, i);
+#endif
+// *** RTnet ***
 
 	pci_set_power_state(sp->pdev, 2);
 
@@ -2070,7 +2105,7 @@ static int netdev_ethtool_ioctl(struct rtnet_device *rtdev, void *useraddr)
 	}
 	
         }
-	
+
 	return -EOPNOTSUPP;
 }
 #endif
@@ -2142,7 +2177,11 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 	struct descriptor *last_cmd;
 	char new_rx_mode;
 	unsigned long flags;
-	int entry, i;
+	int entry/*, i*/;
+
+// *** RTnet ***
+    rtdev->mc_count = 0;
+// *** RTnet ***
 
 	if (rtdev->flags & IFF_PROMISC) {			/* Set promiscuous. */
 		new_rx_mode = 3;
@@ -2206,8 +2245,8 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 	if (new_rx_mode == 0  &&  rtdev->mc_count < 4) {
 		/* The simple case of 0-3 multicast list entries occurs often, and
 		   fits within one tx_ring[] entry. */
-		struct dev_mc_list *mclist;
-		u16 *setup_params, *eaddrs;
+		/*struct dev_mc_list *mclist;*/
+		u16 *setup_params/*, *eaddrs*/;
 
 		spin_lock_irqsave(&sp->lock, flags);
 		entry = sp->cur_tx++ % TX_RING_SIZE;
@@ -2221,6 +2260,8 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 		sp->tx_ring[entry].tx_desc_addr = 0; /* Really MC list count. */
 		setup_params = (u16 *)&sp->tx_ring[entry].tx_desc_addr;
 		*setup_params++ = cpu_to_le16(rtdev->mc_count*6);
+// *** RTnet ***
+#if 0
 		/* Fill in the multicast addresses. */
 		for (i = 0, mclist = rtdev->mc_list; i < rtdev->mc_count;
 			 i++, mclist = mclist->next) {
@@ -2229,6 +2270,8 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 			*setup_params++ = *eaddrs++;
 			*setup_params++ = *eaddrs++;
 		}
+#endif
+// *** RTnet ***
 
 		wait_for_cmd_done(ioaddr + SCBCmd);
 		clear_suspend(last_cmd);
@@ -2240,6 +2283,8 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 			sp->tx_full = 1;
 		}
 		spin_unlock_irqrestore(&sp->lock, flags);
+// *** RTnet ***
+#if 0
 	} else if (new_rx_mode == 0) {
 		struct dev_mc_list *mclist;
 		u16 *setup_params, *eaddrs;
@@ -2320,6 +2365,8 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 		if (speedo_debug > 5)
 			printk(" CmdMCSetup frame length %d in entry %d.\n",
 				   rtdev->mc_count, entry);
+#endif
+// *** RTnet ***
 	}
 
 	sp->rx_mode = new_rx_mode;
@@ -2332,7 +2379,7 @@ static void __devexit eepro100_remove_one (struct pci_dev *pdev)
 	struct rtnet_device *rtdev = pci_get_drvdata (pdev);
 
 	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
-	
+
 	rt_unregister_rtnetdev(rtdev);
 	rt_rtdev_disconnect(rtdev);
 	// *** RTnet ***
@@ -2371,14 +2418,23 @@ static struct pci_device_id eepro100_pci_tbl[] __devinitdata = {
 	{ PCI_VENDOR_ID_INTEL, 0x1036, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x1037, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x1038, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x1039, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x103A, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x103B, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x103C, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x103D, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x103E, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x1227, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x1228, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x2449, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x2459, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VENDOR_ID_INTEL, 0x245D, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x5200, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x5201, PCI_ANY_ID, PCI_ANY_ID, },
 	{ 0,}
 };
 MODULE_DEVICE_TABLE(pci, eepro100_pci_tbl);
-	
+
 static struct pci_driver eepro100_driver = {
 	name:		"eepro100_rt",
 	id_table:	eepro100_pci_tbl,
