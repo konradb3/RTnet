@@ -110,11 +110,10 @@ void receive_callback(struct rtdm_dev_context *context, void *arg)
 
     rtos_res_lock(&priv->mem_lock);
 
-    if (priv->receiver_mode == MODE_DISABLED)
-        rtos_res_unlock(&priv->mem_lock);
-    else
+    if (priv->receiver_mode != MODE_DISABLED)
         rtos_event_sem_signal(&priv->recv_sem);
-        /* receiver task will release mem_lock */
+
+    rtos_res_unlock(&priv->mem_lock);
 }
 
 
@@ -139,44 +138,48 @@ void receiver(int arg)
         if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&priv->recv_sem)))
             goto done; /* we are shutting down */
 
-        while (1) {
-            msg.msg_iovlen  = 1;
+        rtos_res_lock(&priv->mem_lock);
 
-            iov[0].iov_base = &hdr;
-            iov[0].iov_len  = sizeof(struct netshm_hdr);
+        /* double-check receiver_mode to avoid races */
+        if (priv->receiver_mode != MODE_DISABLED)
+            while (1) {
+                msg.msg_iovlen  = 1;
 
-            ret = priv->sock_recvmsg(priv->sock_ctx, 0, &msg, MSG_PEEK);
-            if (ret < 0) {
-                if (ret != -EAGAIN)
-                    goto done; /* error */
-                break;  /* no more messages - leave inner loop */
-            }
-
-            hdr.offset = ntohs(hdr.offset);
-            hdr.length = ntohs(hdr.length);
-
-            if ((hdr.offset + hdr.length > priv->mem_size) ||
-                (priv->receiver_mode == MODE_DROPPING)) {
-                iov[0].iov_len = 0;
-                if (priv->sock_recvmsg(priv->sock_ctx, priv->call_flags,
-                                       &msg, 0) < 0)
-                    goto done; /* error */
-            } else {
-                msg.msg_iovlen  = 2;
-
-                /* write the header to the user buffer as well, will be
-                 * overwritten with data afterwards. */
-                iov[0].iov_base = priv->mem_start + hdr.offset;
+                iov[0].iov_base = &hdr;
                 iov[0].iov_len  = sizeof(struct netshm_hdr);
-                iov[1].iov_base = iov[0].iov_base;
-                iov[1].iov_len  = hdr.length;
 
-                ret = priv->sock_recvmsg(priv->sock_ctx, priv->call_flags,
-                                         &msg, 0);
-                if (ret < 0)
-                    goto done; /* error */
+                ret = priv->sock_recvmsg(priv->sock_ctx, 0, &msg, MSG_PEEK);
+                if (ret < 0) {
+                    if (ret != -EAGAIN)
+                        goto done; /* error */
+                    break;  /* no more messages - leave inner loop */
+                }
+
+                hdr.offset = ntohs(hdr.offset);
+                hdr.length = ntohs(hdr.length);
+
+                if ((hdr.offset + hdr.length > priv->mem_size) ||
+                    (priv->receiver_mode == MODE_DROPPING)) {
+                    iov[0].iov_len = 0;
+                    if (priv->sock_recvmsg(priv->sock_ctx, priv->call_flags,
+                                        &msg, 0) < 0)
+                        goto done; /* error */
+                } else {
+                    msg.msg_iovlen  = 2;
+
+                    /* write the header to the user buffer as well, will be
+                    * overwritten with data afterwards. */
+                    iov[0].iov_base = priv->mem_start + hdr.offset;
+                    iov[0].iov_len  = sizeof(struct netshm_hdr);
+                    iov[1].iov_base = iov[0].iov_base;
+                    iov[1].iov_len  = hdr.length;
+
+                    ret = priv->sock_recvmsg(priv->sock_ctx, priv->call_flags,
+                                            &msg, 0);
+                    if (ret < 0)
+                        goto done; /* error */
+                }
             }
-        }
 
         rtos_res_unlock(&priv->mem_lock);
     }
