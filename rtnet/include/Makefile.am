@@ -6,4 +6,4 @@ install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(includedir)
 	$(INSTALL_HEADER) rtnet_config.h $(DESTDIR)$(includedir)/rtnet_config.h
 
-DISTCLEANFILES = rtnet_config.h
+DISTCLEANFILES = rtnet_config.h rtdm.h rtdm_driver.h

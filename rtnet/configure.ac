@@ -787,7 +787,7 @@ fi
 
 
 dnl ======================================================================
-dnl		Built-in RTDM (RTAI)
+dnl		Enclosed RTDM (RTAI)
 dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build enclosed RTDM])
@@ -803,8 +803,8 @@ AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTA
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
 #	RTAI_KMOD_CFLAGS="$RTAI_KMOD_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
 #	LXRT_CFLAGS="$LXRT_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
-	if test ! -f include/rtdm.h; then ln -s ../rtai_rtdm/rtdm.h include/rtdm.h; fi
-	if test ! -f include/rtdm_driver.h; then ln -s ../rtai_rtdm/rtdm_driver.h include/rtdm_driver.h; fi
+	if test \! -f include/rtdm.h; then ln -s ../$srcdir/rtai_rtdm/rtdm.h include/rtdm.h; fi
+	if test \! -f include/rtdm_driver.h; then ln -s ../$srcdir/rtai_rtdm/rtdm_driver.h include/rtdm_driver.h; fi
 else
 	rm -f include/rtdm.h include/rtdm_driver.h
 fi

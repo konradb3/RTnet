@@ -183,7 +183,7 @@ nobase_include_HEADERS = \
 		rtmac.h
 
 
-DISTCLEANFILES = rtnet_config.h
+DISTCLEANFILES = rtnet_config.h rtdm.h rtdm_driver.h
 subdir = include
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
