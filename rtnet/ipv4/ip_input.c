@@ -154,9 +154,8 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 
     rtskb_trim(skb, len);
 
-    if (skb->dst == NULL)
-        if ( rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) )
-            goto drop;
+    if (rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) != 0)
+        goto drop;
 
     return rt_ip_local_deliver(skb);
 
