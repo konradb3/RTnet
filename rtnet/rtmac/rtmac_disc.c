@@ -22,6 +22,7 @@
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
+#include <linux/spinlock.h>
 
 #include <rtnet_internal.h>
 #include <rtmac/rtmac_disc.h>
@@ -29,7 +30,9 @@
 
 
 
-struct list_head    disc_list = LIST_HEAD_INIT(disc_list);
+static spinlock_t disc_list_lock = SPIN_LOCK_UNLOCKED;
+
+LIST_HEAD(disc_list);
 
 
 /***
@@ -141,15 +144,22 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
 
 
 
-struct rtmac_disc *rtmac_get_disc_by_name(char *name)
+struct rtmac_disc *rtmac_get_disc_by_name(const char *name)
 {
-    struct list_head *disc;
+    struct list_head    *disc;
+    unsigned long       flags;
 
+
+    spin_lock_irqsave(&disc_list_lock, flags);
 
     list_for_each(disc, &disc_list) {
-        if (strcmp(((struct rtmac_disc *)disc)->name, name) == 0)
+        if (strcmp(((struct rtmac_disc *)disc)->name, name) == 0) {
+            spin_unlock_irqrestore(&disc_list_lock, flags);
             return (struct rtmac_disc *)disc;
+        }
     }
+
+    spin_unlock_irqrestore(&disc_list_lock, flags);
 
     return NULL;
 }
@@ -158,21 +168,32 @@ struct rtmac_disc *rtmac_get_disc_by_name(char *name)
 
 int rtmac_disc_register(struct rtmac_disc *disc)
 {
+    int             ret;
+    unsigned long   flags;
+
+
     RTNET_ASSERT(disc != NULL, return -EINVAL;);
     RTNET_ASSERT(disc->name != NULL, return -EINVAL;);
     RTNET_ASSERT(disc->rt_packet_tx != NULL, return -EINVAL;);
     RTNET_ASSERT(disc->nrt_packet_tx != NULL, return -EINVAL;);
     RTNET_ASSERT(disc->attach != NULL, return -EINVAL;);
     RTNET_ASSERT(disc->detach != NULL, return -EINVAL;);
-    /*RTNET_ASSERT(disc->ioctl != NULL, return -EINVAL;);*/ /* not supported yet */
-    RTNET_ASSERT(disc->ioctl_ops != NULL, return -EINVAL;);
 
     if (rtmac_get_disc_by_name(disc->name) != NULL)
     {
         printk("RTmac: discipline '%s' already registered!\n", disc->name);
+        return -EBUSY;
     }
 
+    ret = rtnet_register_ioctls(&disc->ioctls);
+    if (ret < 0)
+        return ret;
+
+    spin_lock_irqsave(&disc_list_lock, flags);
+
     list_add(&disc->list, &disc_list);
+
+    spin_unlock_irqrestore(&disc_list_lock, flags);
 
     return 0;
 }
@@ -181,7 +202,16 @@ int rtmac_disc_register(struct rtmac_disc *disc)
 
 void rtmac_disc_deregister(struct rtmac_disc *disc)
 {
+    unsigned long   flags;
+
+
     RTNET_ASSERT(disc != NULL, return;);
 
+    spin_lock_irqsave(&disc_list_lock, flags);
+
     list_del(&disc->list);
+
+    spin_unlock_irqrestore(&disc_list_lock, flags);
+
+    rtnet_unregister_ioctls(&disc->ioctls);
 }

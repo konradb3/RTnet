@@ -38,7 +38,7 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
     if (disc == NULL) {
         rt_printk("RTmac: received RTmac packet on unattached device %s\n",
                   skb->rtdev->name);
-        return -1;
+        goto error;
     }
 
     hdr = (struct rtmac_hdr *)skb->data;
@@ -47,15 +47,17 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
     if (hdr->ver != RTMAC_VERSION) {
         rt_printk("RTmac: received unsupported RTmac protocol version on "
                   "device %s\n", skb->rtdev->name);
-        return -1;
+        goto error;
     }
 
     if (disc->disc_type == hdr->type)
         return disc->packet_rx(skb);
     else if (skb->rtdev->mac_priv->vnic_used)
         return rtmac_vnic_rx(skb, hdr->type);
-    else
-        return -1;
+
+  error:
+    kfree_rtskb(skb);
+    return -1;
 }
 
 

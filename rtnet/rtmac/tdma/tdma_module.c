@@ -1,4 +1,4 @@
-/* rtmac_tdma.c
+/* tdma_module.c
  *
  * rtmac - real-time networking media access control subsystem
  * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
@@ -25,7 +25,6 @@
 
 #include <rtai.h>
 
-#include <rtmac/rtmac_chrdev.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/tdma/tdma_cleanup.h>
 #include <rtmac/tdma/tdma_ioctl.h>
@@ -43,9 +42,10 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
 {
     struct rtmac_tdma *tdma = (struct rtmac_tdma *)priv;
 
-    rt_printk("RTmac: tdma1: init time devision multiple access (tdma) for realtime stations\n");
 
     memset(tdma, 0, sizeof(struct rtmac_tdma));
+    tdma->magic = TDMA_MAGIC;
+
     spin_lock_init(&tdma->delta_t_lock);
 
     tdma->rtdev = rtdev;
@@ -104,7 +104,6 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
     struct rtmac_tdma *tdma = (struct rtmac_tdma *)priv;
 
-    rt_printk("RTmac: tdma: release\n");
 
     /*
      * delete rt specific stuff
@@ -129,6 +128,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
      * delete tx tasks sema
      */
     rt_sem_delete(&tdma->client_tx);
+    tdma->magic = ~TDMA_MAGIC;
 
     return 0;
 }
@@ -165,22 +165,8 @@ int tdma_nrt_packet_tx(struct rtskb *skb)
 
 
 
-/* legacy */
-static struct rtmac_ioctl_ops tdma_ioctl_ops = {
-    client: &tdma_ioctl_client,
-    master: &tdma_ioctl_master,
-    up:     &tdma_ioctl_up,
-    down:   &tdma_ioctl_down,
-    add:    &tdma_ioctl_add,
-    remove: &tdma_ioctl_remove,
-    cycle:  &tdma_ioctl_cycle,
-    mtu:    &tdma_ioctl_mtu,
-    offset: &tdma_ioctl_offset,
-};
-/* end of legacy */
-
-static struct rtmac_disc tdma_disc = {
-    name:           "TDMA1",
+struct rtmac_disc tdma_disc = {
+    name:           "TDMA",
     priv_size:      sizeof(struct rtmac_tdma),
     disc_type:      __constant_htons(ETH_TDMA),
 
@@ -191,13 +177,19 @@ static struct rtmac_disc tdma_disc = {
     attach:         &tdma_attach,
     detach:         &tdma_detach,
 
-    ioctl_ops:      &tdma_ioctl_ops /* legacy */
+    ioctls:         {
+        service_name:   "RTmac/TDMA",
+        ioctl_type:     RTNET_IOC_TYPE_RTMAC_TDMA,
+        handler:        tdma_ioctl
+    }
 };
 
 
 
 int tdma_init(void)
 {
+    printk("RTmac/TDMA: init time devision multiple access for realtime stations\n");
+
     return rtmac_disc_register(&tdma_disc);
 }
 
@@ -206,4 +198,14 @@ int tdma_init(void)
 void tdma_release(void)
 {
     rtmac_disc_deregister(&tdma_disc);
+
+    printk("RTmac/TDMA: unloaded\n");
 }
+
+
+
+module_init(tdma_init);
+module_exit(tdma_release);
+
+MODULE_AUTHOR("Marc Kleine-Budde, Jan Kiszka");
+MODULE_LICENSE("GPL");

@@ -27,3 +27,6 @@
 
 EXPORT_SYMBOL(rtmac_disc_register);
 EXPORT_SYMBOL(rtmac_disc_deregister);
+
+EXPORT_SYMBOL(rtmac_disc_attach);
+EXPORT_SYMBOL(rtmac_disc_detach);
