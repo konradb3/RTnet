@@ -45,7 +45,7 @@ case "$action" in
 
     *)
 	modprobe rtai_fifos
-	insmod $dir/rt_client.o local_ip_s=$IPADDR broadcast_ip_s=$ip $options
+	insmod $dir/rt_client.o broadcast_ip_s=$ip $options
 	$dir/showtime
 	rmmod -r rt_client rtai_fifos
 esac

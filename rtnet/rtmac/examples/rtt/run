@@ -38,19 +38,19 @@ esac
 case "$action" in
     server)
 	modprobe rtai_fifos
-	insmod $dir/rt_server.o local_ip_s=$IPADDR client_ip_s=$ip $options
+	insmod $dir/rt_server.o client_ip_s=$ip $options
 	;;
 
     client)
 	modprobe rtai_fifos
-	insmod $dir/rt_client.o local_ip_s=$IPADDR server_ip_s=$ip $options
+	insmod $dir/rt_client.o server_ip_s=$ip $options
 	$dir/showtime
 	rmmod -r rt_client
 	;;
 
     clientp)
 	modprobe rtai_fifos
-	insmod $dir/rt_client_parport.o local_ip_s=$IPADDR server_ip_s=$ip $options
+	insmod $dir/rt_client_parport.o server_ip_s=$ip $options
 	$dir/showtime
 	rmmod -r rt_client
 	;;

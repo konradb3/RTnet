@@ -1,6 +1,6 @@
 /***
  *
- *  examples/rtt/rt_server.c
+ *  rtmac/examples/rtt/rt_server.c
  *
  *  server part - listens and sends back a packet
  *
@@ -42,9 +42,7 @@
 
 //#define USE_CALLBACKS
 
-#define MIN_LENGTH_IPv4 7
-#define MAX_LENGTH_IPv4 15
-static char *local_ip_s  = "127.0.0.1";
+static char *local_ip_s  = "";
 static char *client_ip_s = "127.0.0.1";
 
 MODULE_PARM (local_ip_s ,"s");
@@ -52,13 +50,15 @@ MODULE_PARM (client_ip_s,"s");
 MODULE_PARM_DESC (local_ip_s, "local ip-addr");
 MODULE_PARM_DESC (client_ip_s, "client ip-addr");
 
-#define TICK_PERIOD	100000
-#define PRINT 0   
+#define PRINT_FIFO  0
 RT_TASK rt_task;
-SEM	tx_sem;
 
-#define RCV_PORT	36000
-#define SRV_PORT	35999
+#ifdef USE_CALLBACKS
+SEM     tx_sem;
+#endif
+
+#define RCV_PORT    36000
+#define SRV_PORT    35999
 
 static struct sockaddr_in client_addr;
 static struct sockaddr_in local_addr;
@@ -74,70 +74,73 @@ char tx_msg[BUFSIZE];
 
 #ifdef USE_CALLBACKS
 
-void *process(void * arg)
+void *process(void* arg)
 {
-	while(1) {
-	        rt_sem_wait(&tx_sem);
-	     	rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr, sizeof (struct sockaddr_in));
-	}
+    while(1) {
+        rt_sem_wait(&tx_sem);
+        rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr,
+                         sizeof (struct sockaddr_in));
+    }
 }
 
 
 
 int echo_rcv(int s,void *arg)
 {
-	int			ret=0;
-	struct msghdr		msg;
-	struct iovec		iov;
-	struct sockaddr_in	addr;
+    int                 ret=0;
+    struct msghdr       msg;
+    struct iovec        iov;
+    struct sockaddr_in  addr;
 
-	memset(&msg, 0, sizeof(msg));
-	iov.iov_base=&buffer;
-	iov.iov_len=BUFSIZE;
-	msg.msg_name=&addr;
-	msg.msg_namelen=sizeof(addr);
-	msg.msg_iov=&iov;
-	msg.msg_iovlen=1;
-	msg.msg_control=NULL;
-	msg.msg_controllen=0;
 
-	ret=rt_socket_recvmsg(sock, &msg, 0);
-	if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {		
-		memcpy(&tx_msg, &buffer, 8);
-		rt_sem_signal(&tx_sem);
-	}
+    memset(&msg, 0, sizeof(msg));
+    iov.iov_base=&buffer;
+    iov.iov_len=BUFSIZE;
+    msg.msg_name=&addr;
+    msg.msg_namelen=sizeof(addr);
+    msg.msg_iov=&iov;
+    msg.msg_iovlen=1;
+    msg.msg_control=NULL;
+    msg.msg_controllen=0;
 
-	return 0;
+    ret=rt_socket_recvmsg(sock, &msg, 0);
+    if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {
+        memcpy(&tx_msg, &buffer, 8);
+        rt_sem_signal(&tx_sem);
+    }
+
+    return 0;
 }
 
 #else
 
-void process(void * arg)
+void process(void* arg)
 {
-	struct msghdr		msg;
-	struct iovec		iov;
-	struct sockaddr_in	addr;
-	int			ret;
+    struct msghdr       msg;
+    struct iovec        iov;
+    struct sockaddr_in  addr;
+    int                 ret;
 
-	while(1) {
-		memset(&msg, 0, sizeof(msg));
-		iov.iov_base=&buffer;
-		iov.iov_len=BUFSIZE;
-		msg.msg_name=&addr;
-		msg.msg_namelen=sizeof(addr);
-		msg.msg_iov=&iov;
-		msg.msg_iovlen=1;
-		msg.msg_control=NULL;
-		msg.msg_controllen=0;
+    while(1) {
+        memset(&msg, 0, sizeof(msg));
+        iov.iov_base=&buffer;
+        iov.iov_len=BUFSIZE;
+        msg.msg_name=&addr;
+        msg.msg_namelen=sizeof(addr);
+        msg.msg_iov=&iov;
+        msg.msg_iovlen=1;
+        msg.msg_control=NULL;
+        msg.msg_controllen=0;
 
-		ret=rt_socket_recvmsg(sock, &msg, 0);
-		if ( (ret <= 0) || (msg.msg_namelen != sizeof(struct sockaddr_in)) )
-			return;
+        ret=rt_socket_recvmsg(sock, &msg, 0);
+        if ( (ret <= 0) || (msg.msg_namelen != sizeof(struct sockaddr_in)) )
+            return;
 
-		memcpy(&tx_msg, &buffer, 8);
+        memcpy(&tx_msg, &buffer, 8);
 
-	     	rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr, sizeof (struct sockaddr_in));
-	}
+        rt_socket_sendto(sock, &tx_msg, 8, 0, (struct sockaddr *) &client_addr,
+                         sizeof (struct sockaddr_in));
+    }
 }
 
 #endif
@@ -146,66 +149,79 @@ void process(void * arg)
 
 int init_module(void)
 {
-	int ret;
-	struct rtsocket *socket;
+#ifdef USE_CALLBACKS
+    unsigned int nonblock = 1;
+#endif
+    int ret;
+    struct rtsocket *socket;
 
-	unsigned long local_ip  = rt_inet_aton(local_ip_s);
-	unsigned long client_ip = rt_inet_aton(client_ip_s);
+    unsigned long local_ip;
+    unsigned long client_ip;
 
 
-	rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
-	rt_printk ("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
+    if (strlen(local_ip_s) != 0)
+        local_ip = rt_inet_aton(local_ip_s);
+    else
+        local_ip = INADDR_ANY;
+    client_ip = rt_inet_aton(client_ip_s);
 
-	/* create rt-socket */
-	rt_printk("create rtsocket\n");	
-	if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
-		rt_printk("socket not created\n");
-		return -ENOMEM;
-	}
-	
-	/* bind the rt-socket to local_addr */	
-	rt_printk("bind rtsocket to local address:port\n");
-	memset(&local_addr, 0, sizeof(struct sockaddr_in));
-	local_addr.sin_family = AF_INET;
-	local_addr.sin_port = htons(RCV_PORT);
-	local_addr.sin_addr.s_addr = local_ip;
-	if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
-		rt_printk("can't bind rtsocket\n");
-		return ret;
-	}
-	
-	/* set client-addr */
-	rt_printk("connect rtsocket to client address:port\n");
-	memset(&client_addr, 0, sizeof(struct sockaddr_in));
-	client_addr.sin_family = AF_INET;
-	client_addr.sin_port = htons(SRV_PORT);
-	client_addr.sin_addr.s_addr = client_ip;
-	if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
-		rt_printk("can't connect rtsocket\n");
-		return ret;
-	}
+    rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+    rt_printk ("client ip address %s=%8x\n", client_ip_s, (unsigned int) client_ip);
 
-	/* get socket-structure for printing */
-	if ( (socket=rt_socket_lookup(sock)) ) {
-		rt_printk("src  addr: %x:%x\n", socket->saddr, socket->sport);
-		rt_printk("dest addr: %x:%x\n", socket->daddr, socket->dport);
-	}
+    /* create rt-socket */
+    rt_printk("create rtsocket\n");
+    if ( !(sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) ) {
+        rt_printk("socket not created\n");
+        return -ENOMEM;
+    }
+
+    /* bind the rt-socket to local_addr */
+    rt_printk("bind rtsocket to local address:port\n");
+    memset(&local_addr, 0, sizeof(struct sockaddr_in));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_port = htons(RCV_PORT);
+    local_addr.sin_addr.s_addr = local_ip;
+    if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
+        rt_printk("can't bind rtsocket\n");
+        return ret;
+    }
+
+    /* set client-addr */
+    rt_printk("connect rtsocket to client address:port\n");
+    memset(&client_addr, 0, sizeof(struct sockaddr_in));
+    client_addr.sin_family = AF_INET;
+    client_addr.sin_port = htons(SRV_PORT);
+    client_addr.sin_addr.s_addr = client_ip;
+    if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
+        rt_printk("can't connect rtsocket\n");
+        return ret;
+    }
+
+    /* get socket-structure for printing */
+    if ( (socket=rt_socket_lookup(sock)) ) {
+        rt_printk("src  addr: %x:%x\n", socket->saddr, socket->sport);
+        rt_printk("dest addr: %x:%x\n", socket->daddr, socket->dport);
+    }
 
 #ifdef USE_CALLBACKS
-	/* set up receiving */
-	rt_socket_callback(sock, echo_rcv, NULL);
+    /* switch to non-blocking */
+    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
+    rt_printk("rt_setsockopt() = %d\n", ret);
 
-	/* initialize semaphore */
-	rt_sem_init(&tx_sem, 0);
+    /* set up receiving */
+    rt_socket_callback(sock, echo_rcv, NULL);
+
+    /* initialize semaphore */
+    rt_sem_init(&tx_sem, 0);
 #endif
 
-	/* create print-fifo */
-	rtf_create (PRINT, 3000);
+    /* create print-fifo */
+    rtf_create(PRINT_FIFO, 3000);
 
-	ret = rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
-	ret = rt_task_resume(&rt_task);
+    ret = rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
+    ret = rt_task_resume(&rt_task);
 
-	return ret;
+    return ret;
 }
 
 
@@ -213,13 +229,11 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-	stop_rt_timer();
-
-	rt_task_delete(&rt_task);
-	rtf_destroy(PRINT);
+    rt_task_delete(&rt_task);
+    rtf_destroy(PRINT_FIFO);
 #ifdef USE_CALLBACKS
-	rt_sem_delete(&tx_sem);
+    rt_sem_delete(&tx_sem);
 #endif
 
-  	rt_socket_close(sock);
+    rt_socket_close(sock);
 }

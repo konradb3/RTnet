@@ -1,8 +1,9 @@
 /***
  *
- *  examples/rtt/rt_client.c
+ *  rtmac/examples/rtt/rt_client_parport.c
  *
- *  client part - sends packet, receives echo, passes them by fifo to userspace app
+ *  client part - sends packet triggered by external IRQ, receives echo,
+ *                and passes them by fifo to userspace app
  *
  *  based on Ulrich Marx's module, adopted to rtmac
  *
@@ -39,9 +40,7 @@
 
 #include <rtnet.h>
 
-#define MIN_LENGTH_IPv4 7
-#define MAX_LENGTH_IPv4 15
-static char *local_ip_s  = "127.0.0.1";
+static char *local_ip_s  = "";
 static char *server_ip_s = "127.0.0.1";
 
 MODULE_PARM (local_ip_s ,"s");
@@ -52,11 +51,10 @@ MODULE_PARM_DESC (server_ip_s, "rt_echo_client: server ip-address");
 MODULE_PARM(parport, "i");
 MODULE_PARM(parirq, "i");
 
-#define TIMERTICKS	1000	// 1 us
 RT_TASK rt_task;
 
-#define RCV_PORT	35999
-#define SRV_PORT	36000
+#define RCV_PORT    35999
+#define SRV_PORT    36000
 
 static struct sockaddr_in server_addr;
 static struct sockaddr_in local_addr;
@@ -84,149 +82,147 @@ static int parirq  = 7;
 #define KHZ10       0x03
 #define KHZ100      0x01
 
-#define PRINT 0
+#define PRINT_FIFO 0
 
 unsigned long tsc1,tsc2;
 unsigned long cnt = 0;
 
+
 static void parport_irq_handler(void)
 {
-        outb(0xF7, PAR_DATA);
-        rt_sem_signal (&tx_sem);
+    outb(0xF7, PAR_DATA);
+    rt_sem_signal(&tx_sem);
 }
 
-void *process(void * arg)
+
+
+void *process(void* arg)
 {
-	int ret = 0;
+    int ret = 0;
 
-	while(1) {
-		rt_sem_wait(&tx_sem);
+    while(1) {
+        rt_sem_wait(&tx_sem);
 
-                /* get time        */
-                tx_time = rt_get_time_ns();
+        tx_time = rt_get_time_ns();
 
-                /* send the time   */    
-		ret=rt_socket_sendto(sock, &tx_time, sizeof(RTIME), 0, (struct sockaddr *) &server_addr, sizeof(struct sockaddr_in));
-	}
+        /* send the time   */
+        ret=rt_socket_sendto(sock, &tx_time, sizeof(RTIME), 0,
+                             (struct sockaddr *) &server_addr,
+                             sizeof(struct sockaddr_in));
+    }
 }
 
 
 
 int echo_rcv(int s,void *arg)
 {
-	int			ret=0;
-	struct msghdr		msg;
-	struct iovec		iov;
-	struct sockaddr_in	addr;
-	
+    int                 ret=0;
+    struct msghdr       msg;
+    struct iovec        iov;
+    struct sockaddr_in  addr;
 
-	memset(&msg,0,sizeof(msg));
-	iov.iov_base=&buffer;
-	iov.iov_len=BUFSIZE;
 
-	msg.msg_name=&addr;
-	msg.msg_namelen=sizeof(addr);
-	msg.msg_iov=&iov;
-	msg.msg_iovlen=1;
-	msg.msg_control=NULL;
-	msg.msg_controllen=0;
+    memset(&msg,0,sizeof(msg));
+    iov.iov_base=&buffer;
+    iov.iov_len=BUFSIZE;
 
-	ret=rt_socket_recvmsg(sock, &msg, 0);
+    msg.msg_name=&addr;
+    msg.msg_namelen=sizeof(addr);
+    msg.msg_iov=&iov;
+    msg.msg_iovlen=1;
+    msg.msg_control=NULL;
+    msg.msg_controllen=0;
 
-	if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {
-		
-		union { unsigned long l; unsigned char c[4]; } rcv;
-		struct sockaddr_in *sin = msg.msg_name;
+    ret=rt_socket_recvmsg(sock, &msg, 0);
+
+    if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {
+
+        union { unsigned long l; unsigned char c[4]; } rcv;
+        struct sockaddr_in *sin = msg.msg_name;
 
                 outb(0xEF, PAR_DATA);
                 outb(0xFF, PAR_DATA);
-		
-		/* get the time    */
-		rx_time = rt_get_time_ns();
-		memcpy (&tx_time, buffer, sizeof(RTIME));
 
-		rtf_put(PRINT, &rx_time, sizeof(RTIME));
-		rtf_put(PRINT, &tx_time, sizeof(RTIME));
+        /* get the time    */
+        rx_time = rt_get_time_ns();
+        memcpy (&tx_time, buffer, sizeof(RTIME));
 
-		/* copy the address */
-		rcv.l = sin->sin_addr.s_addr;
-		
-		//rt_sem_signal(&tx_sem);
-	}
+        rtf_put(PRINT_FIFO, &rx_time, sizeof(RTIME));
+        rtf_put(PRINT_FIFO, &tx_time, sizeof(RTIME));
 
-	return 0;
+        /* copy the address */
+        rcv.l = sin->sin_addr.s_addr;
+    }
+
+    return 0;
 }
+
 
 
 int init_module(void)
 {
-	int ret;
+    unsigned int nonblock = 1;
+    int ret;
 
-	unsigned long local_ip  = rt_inet_aton(local_ip_s);
-	unsigned long server_ip = rt_inet_aton(server_ip_s);
+    unsigned long local_ip  = rt_inet_aton(local_ip_s);
+    unsigned long server_ip = rt_inet_aton(server_ip_s);
 
-	rtf_create(PRINT, 40000);
-	rt_sem_init(&tx_sem, 0);
+    rtf_create(PRINT_FIFO, 40000);
+    rt_sem_init(&tx_sem, 0);
 
-	rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
-	rt_printk ("server ip address %s=%8x\n", server_ip_s, (unsigned int) server_ip);
+    rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+    rt_printk ("server ip address %s=%8x\n", server_ip_s, (unsigned int) server_ip);
 
-	/* create rt-socket */
-	sock=rt_socket(AF_INET,SOCK_DGRAM,0);
-	
-	/* bind the rt-socket to local_addr */	
-	memset(&local_addr, 0, sizeof(struct sockaddr_in));
-	local_addr.sin_family = AF_INET;
-	local_addr.sin_port = htons(RCV_PORT);
-	local_addr.sin_addr.s_addr = local_ip;
-	ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in));
+    /* create rt-socket */
+    sock=rt_socket(AF_INET,SOCK_DGRAM,0);
 
-	/* set server-addr */
-	memset(&server_addr, 0, sizeof(struct sockaddr_in));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(SRV_PORT);
-	server_addr.sin_addr.s_addr = server_ip;
+    /* switch to non-blocking */
+    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
+    rt_printk("rt_setsockopt() = %d\n", ret);
 
-	// set up receiving
-	rt_socket_callback(sock, echo_rcv, NULL);
-	
-	rt_set_oneshot_mode();
-	start_rt_timer(TIMERTICKS);
+    /* bind the rt-socket to local_addr */
+    memset(&local_addr, 0, sizeof(struct sockaddr_in));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_port = htons(RCV_PORT);
+    local_addr.sin_addr.s_addr = local_ip;
+    ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in));
 
-        ret=rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
+    /* set server-addr */
+    memset(&server_addr, 0, sizeof(struct sockaddr_in));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SRV_PORT);
+    server_addr.sin_addr.s_addr = server_ip;
 
-        rt_task_resume(&rt_task);
+    /* set up receiving */
+    rt_socket_callback(sock, echo_rcv, NULL);
 
-        rt_request_global_irq(parirq, parport_irq_handler);
-        rt_startup_irq(parirq);
+    ret=rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
 
-        outb(0xFF, PAR_DATA);
-        outb(0x14 + KHZ0_1, PAR_CONTROL);
+    rt_task_resume(&rt_task);
 
-	return ret;
+    rt_request_global_irq(parirq, parport_irq_handler);
+    rt_startup_irq(parirq);
+
+    outb(0xFF, PAR_DATA);
+    outb(0x14 + KHZ0_1, PAR_CONTROL);
+
+    return ret;
 }
-
 
 
 
 void cleanup_module(void)
 {
-        rt_shutdown_irq(parirq);
-        rt_free_global_irq(parirq);
+    rt_shutdown_irq(parirq);
+    rt_free_global_irq(parirq);
 
-        outb(0, PAR_CONTROL);
+    outb(0, PAR_CONTROL);
 
-        /* stop timer         */ 
-  	stop_rt_timer();
+    rt_task_delete(&rt_task);
 
-        /* rt_task_delete     */ 
-  	rt_task_delete(&rt_task);
+    rt_socket_close(sock);
 
-        /* close th rt-socket */
-  	rt_socket_close(sock);
+    rt_sem_delete(&tx_sem);
 
-	rt_sem_delete(&tx_sem);
-
-	/* destroy the fifo   */
-	rtf_destroy(PRINT);
+    rtf_destroy(PRINT_FIFO);
 }
