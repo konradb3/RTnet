@@ -1,0 +1,23 @@
+****** Round Trip Time ******
+The Idea behind this Example is Timemeasurement of a roundig
+packet. A client send one packet (with a timestamp) to server and the
+server send this packet back to the client. The difference in time is
+the round-trip-time.
+
+To run type:
+make
+
+1.) 
+client: run
+server: run
+
+2.) 
+client and server: run_arp (remeber we have no automatic
+arp-resolution)  
+
+
+
+
+
+
+ 

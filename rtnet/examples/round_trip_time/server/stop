@@ -1,0 +1,7 @@
+../../../tools/rtifconfig eth1 down
+rmmod rtnet8139too
+rmmod rtnet
+
+rmmod rtai_fifos
+rmmod rtai_sched
+rmmod rtai

@@ -1,0 +1,25 @@
+0.2.7
+- added new example (rtt), another round trip time example, without
+  the bug of the old one, causing equal time.
+- added support for 'Latency Measurement Gadget' in rtt example
+- added sending broadcasts funtionality
+
+0.2.6:
+- added ICMP protocoll (now your rtai-box replies to pings)
+- fixed bug in rt_ip_route_output (outgoing packets to unknown hosts)
+- beautified ARP: answering an ARP request now makes a local ARP entry
+- improved performance of 3c59x-rt by removing forgotten debug outputs
+- improved performance of udp layer by removing forgotten debug outputs
+- added start/stop script (tools/rtnet)
+
+0.2.5:
+- added real-time driver 3c59x-rt (3Com EtherLink PCI III/XL)
+- fixed synchronization in socket.c und ipv4/udp.c (it is now save to
+  create rt-sockets both in RTAI task and Linux context)
+- fixed cleanup-bug in routing tables
+
+0.2.4:
+- added "cards" parameter to drivers to limit the number of supported
+  identical NICs (allows both RT and non-RT driver of equal type to be
+  loaded at the same time)
+- renaming: eepro100_rt -> eepro100-rt

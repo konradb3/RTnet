@@ -1,0 +1,10 @@
+insmod rtai
+insmod rtai_sched
+insmod rtai_fifos
+
+insmod rtnet
+insmod rtnet8139too
+
+../../../tools/rtifconfig eth0 up 192.168.0.2 255.0.0.0
+
+

@@ -1,0 +1,55 @@
+			RTnet Version 0.2.7
+
+What is it?
+-----------
+RTnet is real-time UDP/IP protocol stack for RTAI (hard real-time Linux 
+extension). It offers a standard socket API to be used with RTAI kernel 
+modules and LXRT processes, see header files for details.
+
+What are the requirements?
+--------------------------
+- Linux kernel 2.4.x
+- RTAI 24.1.9 or better
+- x86 platform (at least for LXRT extensions, kernel API _should_ work on
+  other platforms, too)
+- RealTek 8139, Intel EtherExpress Pro 100 or 3Com EtherLink III network
+  adapter
+
+How to install it?
+------------------
+1. Install and test a suitable RTAI version (see also www.rtai.org)
+2. cd <RTAI-DIR> (e.g. /usr/src/rtai-24.1.9)
+3. rm -r rtnet
+4. rm include/rtnet.h
+5. tar xvzf <PATH-TO-RTNET-ARCHIVE>/rtnet-X.X.X.tar.gz
+6. Enable "Real-Time networking (rtnet)" in your RTAI configuration
+7. make && make install
+8. run "mknod /dev/rtnet c 10 240" on your target system
+
+How to test it?
+---------------
+1. Shutdown the network device which shall become part of the RT-network and
+   remove its driver module (this also means that it must not be compiled
+   into the kernel!)
+2. Load required RTAI modules
+3. Load RTnet and NIC RT-driver module
+4. Setup RT-ethernet device and solicit required MAC adresses(rtifconfig)
+5. Load application module
+
+For more details see run-scripts in <RTAI-DIR>/rtnet/examples/round_trip_time
+
+RTnet is free software, and you are welcome to redistribute it under 
+the terms of the GNU General Public License. This program comes with 
+ABSOLUTELY NO WARRANTY. See "LICENSE" for details.
+
+Contributors:
+Ulrich Marx (marx@fet.uni-hannover.de)	- core programming
+Nathan Gustavson			- testing and bug fixing
+Marc Kleine-Budde			- testing, bug fixing and upcoming
+					  extensions
+Mathias Köhrer				- 3c59x-rt
+Jan Kiszka (jan.kiszka@web.de)		- eepro100-rt and this poor doc
+
+Acknowledgements:
+David Schleef			- he wrote the original RTnet, some parts
+				  of this version are based on his code

@@ -1,0 +1,48 @@
+#! /bin/bash
+RTAI=/home/local/rtai-24.1.10
+
+IP=2
+SUBNET=192.168.0
+NETMASK=255.255.255.0
+DEV=eth1
+ARP_START=1
+ARP_END=3
+ADD_MODULES="rtai_fifos"
+RT_DRIVER=8139too-rt
+
+case "$1" in
+    start)
+	modprobe $RT_DRIVER
+	for MODULE in $ADD_MODULES; do
+	    modprobe $MODULE
+	done
+
+	$RTAI/rtnet/tools/rtifconfig $DEV up $SUBNET.$IP $NETMASK
+	
+	echo start all other stacks to perform ARP
+	read
+
+	for ARP_IP in $(seq $ARP_START $ARP_END); do
+	    $RTAI/rtnet/tools/rtifconfig $DEV route solicit $SUBNET.$ARP_IP
+	done
+
+	echo "*** ARP table"
+	cat /proc/rtai/arp
+	echo
+	echo "*** routing table"
+	cat /proc/rtai/route
+	;;
+    stop)
+	$RTAI/rtnet/tools/rtifconfig $DEV down
+
+	modprobe -r $RT_DRIVER
+	for MODULE in $ADD_MODULES; do
+	    modprobe -r $MODULE
+	done
+	;;
+    *)
+	echo "Usage $0 {start|stop}"
+	exit 1
+esac
+
+exit 0
