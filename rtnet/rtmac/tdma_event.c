@@ -955,7 +955,7 @@ static void tdma_expired_sent_conf(struct rtmac_tdma *tdma)
 	if (list_empty(&tdma->rt_list)) {
 		rt_printk("RTmac: tdma: no realtime stations in list...please add some first\n");
 		tdma_cleanup_master_rt(tdma);
-		tdma_next_state(tdma, TDMA_MASTER_DOWN);
+		tdma_next_state(tdma, TDMA_DOWN);
 
 		return;
 	}
