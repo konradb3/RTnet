@@ -141,10 +141,6 @@ struct rtcfg_cmd {
                                      struct rtcfg_cmd)
 #define RTCFG_IOC_ADD_MAC       _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_ADD_MAC, \
                                      struct rtcfg_cmd)
-#define RTCFG_IOC_ADD_IP_UPLD   _IOW(RTNET_IOC_TYPE_RTCFG,                    \
-                                     RTCFG_CMD_ADD_IP_UPLD, struct rtcfg_cmd)
-#define RTCFG_IOC_ADD_MAC_UPLD  _IOW(RTNET_IOC_TYPE_RTCFG,                    \
-                                     RTCFG_CMD_ADD_MAC_UPLD, struct rtcfg_cmd)
 #define RTCFG_IOC_DEL_IP        _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DEL_IP,  \
                                      struct rtcfg_cmd)
 #define RTCFG_IOC_DEL_MAC       _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DEL_MAC, \
