@@ -799,6 +799,31 @@ fi
 
 
 dnl ======================================================================
+dnl		RTDM select
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to include RTDM select])
+AC_ARG_ENABLE(rtdm-select,
+	AC_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental) @<:@default: disabled@:>@]),
+	[case "$enableval" in
+	y | yes ) CONFIG_RTNET_RTDM_SELECT=yes ;;
+	*) CONFIG_RTNET_RTDM_SELECT=no ;;
+	esac],
+	CONFIG_RTNET_RTDM_SELECT=no)
+if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
+    AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT}])
+else
+    if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
+	AC_MSG_ERROR([*** Enclosed RTDM (--enable-enclosed-rtdm) must be activated for RTDM select])
+    fi
+fi
+AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "yes"])
+if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
+	AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM with select support])
+fi
+
+
+dnl ======================================================================
 dnl		Examples
 dnl ======================================================================
 
