@@ -54,11 +54,11 @@ void rtnetif_rx(struct rtskb *skb)
 		if (rtskb_queue_len(&rtdev->rxqueue) < DROPPING_RTSKB) {
 			rtskb_queue_tail(&rtdev->rxqueue, skb);
 		} else {
-			rt_printk("RTnet: dropping packet in "__FUNCTION__"()\n");
+			rt_printk("RTnet: dropping packet in %s()\n",__FUNCTION__);
 			kfree_rtskb(skb);
 		}
 	} else {
-		rt_printk("RTnet: called "__FUNCTION__"() with skb=<NULL>\n");
+		rt_printk("RTnet: called %s() with skb=<NULL>\n",__FUNCTION__);
 	}
 }
 

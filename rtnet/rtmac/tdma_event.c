@@ -155,7 +155,7 @@ static int (*state[]) (struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdma_in
 
 int tdma_do_event(struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdma_info *info)
 {
-	TDMA_DEBUG(3, "RTmac: tdma: "__FUNCTION__"() event=%s, state=%s\n", tdma_event[event], tdma_state[tdma->state]);
+	TDMA_DEBUG(3, "RTmac: tdma: %s() event=%s, state=%s\n",__FUNCTION__, tdma_event[event], tdma_state[tdma->state]);
 
 	return (*state[tdma->state]) (tdma, event, info);
 }
@@ -226,7 +226,7 @@ static int tdma_state_down(struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdm
 
 	case EXPIRED_ADD_RT:		/* fallthrough */
 	case EXPIRED_MASTER_WAIT:
-		rt_printk("RTmac: tdma: BUG in "__FUNCTION__"()! Unknown event %s\n", tdma_event[event]);
+		rt_printk("RTmac: tdma: BUG in %s()! Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		return -1;
 		break;
 
@@ -236,7 +236,7 @@ static int tdma_state_down(struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdm
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: " __FUNCTION__ "(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 
@@ -301,7 +301,7 @@ static int tdma_state_master_wait(struct rtmac_tdma *tdma, TDMA_EVENT event, str
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 
@@ -354,7 +354,7 @@ static int tdma_state_master_down(struct rtmac_tdma *tdma, TDMA_EVENT event, str
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 
@@ -383,7 +383,7 @@ static int tdma_state_master_sent_conf(struct rtmac_tdma *tdma, TDMA_EVENT event
 		tdma_master_rcvd_ack_conf(tdma, (struct rtskb *)info);
 		break;
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 
@@ -428,7 +428,7 @@ static int tdma_state_master_sent_test(struct rtmac_tdma *tdma, TDMA_EVENT event
 		// FIXME: too late, inform user
 		break;
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 
@@ -471,7 +471,7 @@ static int tdma_state_other_master(struct rtmac_tdma *tdma, TDMA_EVENT event, st
 
 	case EXPIRED_ADD_RT:		/* fallthrough */
 	case EXPIRED_MASTER_WAIT:
-		rt_printk("RTmac: tdma: BUG in "__FUNCTION__"()! Unknown event %s\n", tdma_event[event]);
+		rt_printk("RTmac: tdma: BUG in %s()! Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		return -1;
 		break;
 
@@ -484,7 +484,7 @@ static int tdma_state_other_master(struct rtmac_tdma *tdma, TDMA_EVENT event, st
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 
@@ -524,7 +524,7 @@ static int tdma_state_client_down(struct rtmac_tdma *tdma, TDMA_EVENT event, str
 
 	case EXPIRED_ADD_RT:		/* fallthrough */
 	case EXPIRED_MASTER_WAIT:
-		rt_printk("RTmac: tdma: BUG in "__FUNCTION__"()! Unknown event %s\n", tdma_event[event]);
+		rt_printk("RTmac: tdma: BUG in %s()! Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		return -1;
 		break;
 
@@ -541,7 +541,7 @@ static int tdma_state_client_down(struct rtmac_tdma *tdma, TDMA_EVENT event, str
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 	return ret;
@@ -578,7 +578,7 @@ static int tdma_state_client_ack_conf(struct rtmac_tdma *tdma, TDMA_EVENT event,
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 	
@@ -632,7 +632,7 @@ static int tdma_state_client_rcvd_ack(struct rtmac_tdma *tdma, TDMA_EVENT event,
 		break;
 
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 	
@@ -705,7 +705,7 @@ static int tdma_client_add_rt_rate(struct rtmac_tdma *tdma, u32 ip_addr, unsigne
 	 * ...if IP is found add to realtime list
 	 */
 	if (arp_entry) {
-		TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n", NIPQUAD(ip_addr));
+		TDMA_DEBUG(4, "RTmac: tdma: %s() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n",__FUNCTION__, NIPQUAD(ip_addr));
 		rt_entry = rt_malloc(sizeof(struct tdma_rt_entry));
 		if (!rt_entry) {
 			rt_printk("RTmac: tdma: out of mem!\n");
@@ -745,7 +745,7 @@ static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
 	 * ...if IP is found add to realtime list
 	 */
 	if (arp_entry) {
-		TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n", NIPQUAD(ip_addr));
+		TDMA_DEBUG(4, "RTmac: tdma: %s() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n",__FUNCTION__, NIPQUAD(ip_addr));
 		rt_entry = rt_malloc(sizeof(struct tdma_rt_entry));
 		memset(rt_entry, 0, sizeof(struct tdma_rt_entry));
 		INIT_LIST_HEAD(&rt_entry->list);
@@ -760,7 +760,7 @@ static int tdma_add_rt(struct rtmac_tdma *tdma, u32 ip_addr)
 	/*
 	 * ...if IP is _not_ found send ARP, make ARP request
 	 */
-	TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() IP %d.%d.%d.%d not in ARP table, sending ARP request\n", NIPQUAD(ip_addr)),
+	TDMA_DEBUG(4, "RTmac: tdma: %s() IP %d.%d.%d.%d not in ARP table, sending ARP request\n",__FUNCTION__, NIPQUAD(ip_addr)),
 	rt_arp_solicit(rtdev, ip_addr);
 
 	/*
@@ -832,8 +832,8 @@ static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
 			/*
 			 * remove to-add-entry from list
 			 */
-			TDMA_DEBUG(4, "RTmac: tdma: timeout "__FUNCTION__"() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n",
-				   NIPQUAD(rt_add_entry->ip_addr));
+			TDMA_DEBUG(4, "RTmac: tdma: timeout %s() found IP %u.%u.%u.%u in ARP table, adding to rt-list\n",
+				   __FUNCTION__,NIPQUAD(rt_add_entry->ip_addr));
 			list_del(&rt_add_entry->list);
 			rt_free(rt_add_entry);
 					
@@ -853,8 +853,8 @@ static void tdma_expired_add_rt(struct rtmac_tdma *tdma)
 			/*
 			 * after timeout, if no arp entry is found, remove from list
 			 */
-			TDMA_DEBUG(4, "RTmac: tdma: timeout "__FUNCTION__"() IP %u.%u.%u.%u not in ARP table, timeout ocurred\n",
-				   NIPQUAD(rt_add_entry->ip_addr));
+			TDMA_DEBUG(4, "RTmac: tdma: timeout %s() IP %u.%u.%u.%u not in ARP table, timeout ocurred\n",
+				   __FUNCTION__,NIPQUAD(rt_add_entry->ip_addr));
 			list_del(&rt_add_entry->list);
 			rt_free(rt_add_entry);
 		}
@@ -895,7 +895,7 @@ static int tdma_master_request_up(struct rtmac_tdma *tdma)
 		rt_entry->state = RT_SENT_CONF;
 		rt_entry->station = station;
 
-		TDMA_DEBUG(5, "RTmac: tdma: "__FUNCTION__"() sending conf request to client %u.%u.%u.%u\n", NIPQUAD(arp_entry->ip_addr));
+		TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf request to client %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(arp_entry->ip_addr));
 
 		tdma_send_conf(tdma, arp_entry->hw_addr, station);
 
@@ -934,8 +934,8 @@ static void tdma_expired_sent_conf(struct rtmac_tdma *tdma)
 			/*
 			 * if station has sent ACK....
 			 */
-			TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() station: %d, IP: %u.%u.%u.%u successful acknowledged\n",
-				   rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+			TDMA_DEBUG(4, "RTmac: tdma: %s() station: %d, IP: %u.%u.%u.%u successful acknowledged\n",
+				   __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
 
 			skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, ACK_ACK_CONF, data);
 			conf_ack_ack->station = rt_entry->station;
@@ -976,7 +976,7 @@ static void tdma_master_rcvd_test_ack(struct rtmac_tdma *tdma, struct rtskb *skb
 
 	max = TDMA_MASTER_MAX_TEST;
 	
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() received test ack packet\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() received test ack packet\n",__FUNCTION__);
 
 	/*
 	 * iterate through all rt stations...
@@ -1003,8 +1003,8 @@ static void tdma_master_rcvd_test_ack(struct rtmac_tdma *tdma, struct rtskb *skb
 			rtt = (int)count2nano(skb->rx - rt_entry->tx);
 			rt_entry->rtt = MAX(rt_entry->rtt, rtt);
 
-			TDMA_DEBUG(6, "RTMAC: tdma: "__FUNCTION__"() received test ack from %u.%u.%u.%u rtt %u ns\n",
-				   NIPQUAD(rt_entry->arp->ip_addr), rtt);
+			TDMA_DEBUG(6, "RTMAC: tdma: %s() received test ack from %u.%u.%u.%u rtt %u ns\n",
+				   __FUNCTION__,NIPQUAD(rt_entry->arp->ip_addr), rtt);
 			return;
 		}
 	}
@@ -1066,8 +1066,8 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
 
 			
 		} else {	/* (rt_entry->state == RT_RCVD_TEST && rt_entry->counter == max) */
-			rt_printk("RTmac: tdma: *** WARNING *** "__FUNCTION__"() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
-				  rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+			rt_printk("RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
+				  __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
 			tdma_cleanup_master_rt(tdma);
 			tdma_next_state(tdma, TDMA_DOWN);
 		}
@@ -1127,8 +1127,8 @@ static void tdma_client_rcvd_conf(struct rtmac_tdma *tdma, struct rtskb *skb)
 	tdma->cycle = ntohl(conf_req->cycle);
 	tdma->mtu = ntohs(conf_req->mtu);
 
-	TDMA_DEBUG(5, "RTmac: tmda: "__FUNCTION__"() received conf request station %d, cycle %d, mtu %d\n",
-		   tdma->station, tdma->cycle, tdma->mtu);
+	TDMA_DEBUG(5, "RTmac: tmda: %s() received conf request station %d, cycle %d, mtu %d\n",
+		   __FUNCTION__,tdma->station, tdma->cycle, tdma->mtu);
 
 	/*
 	 * make rarp lookup with masters mac address and save it 
@@ -1147,7 +1147,7 @@ static void tdma_client_rcvd_conf(struct rtmac_tdma *tdma, struct rtskb *skb)
 	/*
 	 * acknowledge conf request
 	 */
-	TDMA_DEBUG(5, "RTmac: tdma: "__FUNCTION__"() sending conf acknowledge to master %u.%u.%u.%u\n", NIPQUAD(arp_entry->ip_addr));
+	TDMA_DEBUG(5, "RTmac: tdma: %s() sending conf acknowledge to master %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(arp_entry->ip_addr));
 	new_skb = tdma_make_msg(skb->rtdev, tdma->master->hw_addr, ACK_CONF, data);
 	memcpy(conf_ack, conf_req, sizeof(struct tdma_conf_msg));
 	//FIXME: crc32
@@ -1181,8 +1181,8 @@ static void tdma_master_rcvd_ack_conf(struct rtmac_tdma *tdma, struct rtskb *skb
 		    memcmp(rt_entry->arp->hw_addr, skb->mac.ethernet->h_source, RT_ARP_ADDR_LEN) == 0 &&
 		    rt_entry->state == RT_SENT_CONF) {
 
-			TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() received config acknowledge from IP %u.%u.%u.%u\n",
-				   NIPQUAD(rt_entry->arp->ip_addr));
+			TDMA_DEBUG(4, "RTmac: tdma: %s() received config acknowledge from IP %u.%u.%u.%u\n",
+				   __FUNCTION__,NIPQUAD(rt_entry->arp->ip_addr));
 			rt_entry->state = RT_RCVD_CONF;
 			return;
 		}
@@ -1197,10 +1197,10 @@ static void tdma_master_rcvd_ack_conf(struct rtmac_tdma *tdma, struct rtskb *skb
 
 		arp_entry = rt_rarp_table_lookup(skb->mac.ethernet->h_source);
 		if (arp_entry)
-			rt_printk("RTmac: tdma *** WARNING *** "__FUNCTION__"() received client ack from unknown client IP %u.%u.%u.%u\n",
-				  NIPQUAD(rt_entry->arp->ip_addr));
+			rt_printk("RTmac: tdma *** WARNING *** %s() received client ack from unknown client IP %u.%u.%u.%u\n",
+				  __FUNCTION__,NIPQUAD(rt_entry->arp->ip_addr));
 		else
-			rt_printk("RTmac: tdma *** WARNING *** "__FUNCTION__"() received client ack from unknown client\n");
+			rt_printk("RTmac: tdma *** WARNING *** %s() received client ack from unknown client\n",__FUNCTION__);
 			
 	}
 }
@@ -1219,11 +1219,11 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
 	 * Check if we receives packer from real master....
 	 */
 	if (memcmp(skb->mac.ethernet->h_source, tdma->master->hw_addr, RT_ARP_ADDR_LEN) != 0) {
-		rt_printk("RTmac: tdma: "__FUNCTION__"() received test packet from wrong master\n");
+		rt_printk("RTmac: tdma: %s() received test packet from wrong master\n",__FUNCTION__);
 		return;
 	}
 	
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() received test packet from master\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() received test packet from master\n",__FUNCTION__);
 	rt_printk("RTmac: tdma: received test packet from master...\n");
 
 	/*
@@ -1238,7 +1238,7 @@ static void tdma_client_rcvd_test(struct rtmac_tdma *tdma, struct rtskb *skb)
 	 */
 	rtdev_xmit(new_skb);
 
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() sending test packet back to master %u.%u.%u.%u\n", NIPQUAD(tdma->master->ip_addr));
+	TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet back to master %u.%u.%u.%u\n",__FUNCTION__, NIPQUAD(tdma->master->ip_addr));
 }
 
 
@@ -1349,8 +1349,8 @@ static void tdma_make_station_list(struct rtmac_tdma *tdma, void *data)
 		/*
 		 * print sorted list for debugging purpose
 		 */
-		TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() sorted: station %d, IP %u.%u.%u.%u, rtt %d us\n",
-			   rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr), rt_entry->rtt);
+		TDMA_DEBUG(4, "RTmac: tdma: %s() sorted: station %d, IP %u.%u.%u.%u, rtt %d us\n",
+			   __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr), rt_entry->rtt);
 
 		station_list_ptr->ip_addr = rt_entry->arp->ip_addr;
 		station_list_ptr->station = rt_entry->station;
@@ -1409,7 +1409,7 @@ static int tdma_state_down(struct rtmac_tdma *tdma, TDMA_EVENT event, struct tdm
 		
 		break;
 	default:
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"(), Unknown event %s\n", tdma_event[event]);
+		TDMA_DEBUG(2, "RTmac: tdma: %s(), Unknown event %s\n",__FUNCTION__, tdma_event[event]);
 		break;
 	}
 

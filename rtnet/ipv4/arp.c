@@ -317,7 +317,7 @@ void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr)
 	if (arp_entry == NULL) {
 		arp_entry=free_arp_list;
 		if (!arp_entry) {
-			rt_printk("RTnet: "__FUNCTION__"(): no free arp entries\n");
+			rt_printk("RTnet: %s(): no free arp entries\n",__FUNCTION__);
 			return;
 		}
 

@@ -79,7 +79,7 @@ int tdma_task_change_con(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), un
 	int ret = 0;
 
 	if (tdma->flags.task_active) {
-		rt_printk("RTmac: tdma: "__FUNCTION__"() task was not shutted down.\n");
+		rt_printk("RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
 		rt_task_delete(&tdma->tx_task);
 	}
 
@@ -91,9 +91,9 @@ int tdma_task_change_con(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), un
 		ret = rt_task_resume(&tdma->tx_task);
 
 	if (ret != 0)
-		rt_printk("RTmac: tdma: "__FUNCTION__"() not successful\n");
+		rt_printk("RTmac: tdma: %s() not successful\n",__FUNCTION__);
 	else
-		TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() succsessfull\n");
+		TDMA_DEBUG(2, "RTmac: tdma: %s() succsessfull\n",__FUNCTION__);
 
 
 	tdma->flags.task_active = 1;
@@ -128,7 +128,7 @@ void tdma_task_notify(int rtdev_id)
 		rtdev_xmit(skb);
 	}
 
-	TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() shutdown complete\n");
+	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
 	tdma->flags.task_active = 0;
 	tdma->flags.shutdown_task = 0;
 }
@@ -157,15 +157,15 @@ void tdma_task_config(int rtdev_id)
 		if (rt_entry->state != RT_RCVD_CONF )
 			goto out;
 
-		TDMA_DEBUG(4, "RTmac: tdma: "__FUNCTION__"() sending %d test packets to %u.%u.%u.%u\n",
-			   max, NIPQUAD(rt_entry->arp->ip_addr));
+		TDMA_DEBUG(4, "RTmac: tdma: %s() sending %d test packets to %u.%u.%u.%u\n",
+			   __FUNCTION__,max, NIPQUAD(rt_entry->arp->ip_addr));
 
 		for (i = 0; i < max; i++) {
 			if (!(rt_entry->state == RT_RCVD_CONF || rt_entry->state == RT_RCVD_TEST))
 				goto out;
 
-			TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() sending test packet #%d to %u.%u.%u.%u\n",
-				   i, NIPQUAD(rt_entry->arp->ip_addr));
+			TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet #%d to %u.%u.%u.%u\n",
+				   __FUNCTION__,i, NIPQUAD(rt_entry->arp->ip_addr));
 
 			/*
 			 * alloc skb, and put counter and time into it....
@@ -187,7 +187,7 @@ void tdma_task_config(int rtdev_id)
 		}
 	}
 	
-	TDMA_DEBUG(3, "RTmac: tdma: "__FUNCTION__"() shutdown complete\n");
+	TDMA_DEBUG(3, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
 	tdma->flags.task_active = 0;
 	tdma->flags.shutdown_task = 0;
 
@@ -197,14 +197,14 @@ void tdma_task_config(int rtdev_id)
 	return;
 
  out:
-	rt_printk("RTmac: tdma: *** WARNING *** "__FUNCTION__"() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
-		  rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+	rt_printk("RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
+		  __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
 	tdma_cleanup_master_rt(tdma);
 	tdma_next_state(tdma, TDMA_DOWN);
 
 	tdma->flags.task_active = 0;
 	tdma->flags.shutdown_task = 0;
-	TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() shutdown complete\n");
+	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
 }
 
 
@@ -261,7 +261,7 @@ void tdma_task_master(int rtdev_id)
 		}
 
 	}
-	TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() shutdown complete\n");
+	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
 	tdma->flags.task_active = 0;
 	tdma->flags.shutdown_task = 0;
 }
@@ -278,7 +278,7 @@ void tdma_task_client(int rtdev_id)
        
 	while(tdma->flags.shutdown_task == 0) {
 		if (rt_sem_wait(&tdma->client_tx) == 0xFFFF) {
-			rt_printk("RTmac: tdma: "__FUNCTION__"() rt_sem_wait(client_tx) failed\n");
+			rt_printk("RTmac: tdma: %s() rt_sem_wait(client_tx) failed\n",__FUNCTION__);
 			break;
 		}
 
@@ -292,7 +292,7 @@ void tdma_task_client(int rtdev_id)
 		}
 	}
 
-	TDMA_DEBUG(2, "RTmac: tdma: "__FUNCTION__"() shutdown complete\n");
+	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
 	tdma->flags.task_active = 0;
 	tdma->flags.shutdown_task = 0;
 }

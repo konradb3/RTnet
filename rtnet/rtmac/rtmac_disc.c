@@ -54,7 +54,7 @@ int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc)
 	rtmac_packet_type.private = (void *)1;
 
 	if (!rtdev) {
-		rt_printk("RTmac: "__FUNCTION__" called with rtdev=NULL\n");
+		rt_printk("RTmac: %s called with rtdev=NULL\n",__FUNCTION__);
 		return -EINVAL;
 	}
 
@@ -113,7 +113,7 @@ int rtmac_disc_release(struct rtnet_device *rtdev)
 	int ret;
 
 	if( !rtdev ) {
-		rt_printk("RTmac: "__FUNCTION__"() called with rtdev=NULL\n");
+		rt_printk("RTmac: %s() called with rtdev=NULL\n",__FUNCTION__);
 		return -EINVAL;
 	}
 

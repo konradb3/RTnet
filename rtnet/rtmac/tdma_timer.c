@@ -55,7 +55,7 @@ void tdma_timer_start(struct timer_list *ptimer, int timeout, void *data, TIMER_
 
 void tdma_timer_start_rt_add(struct rtmac_tdma *tdma, int timeout)
 {
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer set\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
 	tdma_timer_start(&tdma->rt_add_timer, timeout, (void *)tdma, tdma_timer_expired_rt_add);
 }
 
@@ -63,7 +63,7 @@ static void tdma_timer_expired_rt_add(void *data)
 {
 	struct rtmac_tdma *tdma = (struct rtmac_tdma *)data;
 
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer expired\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer expired\n",__FUNCTION__);
 	tdma_do_event(tdma, EXPIRED_ADD_RT, NULL);
 }
 
@@ -71,7 +71,7 @@ static void tdma_timer_expired_rt_add(void *data)
 
 void tdma_timer_start_master_wait(struct rtmac_tdma *tdma, int timeout)
 {
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer set\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
 	tdma_timer_start(&tdma->master_wait_timer, timeout, (void *)tdma, tdma_timer_expired_master_wait);
 }
 
@@ -79,7 +79,7 @@ static void tdma_timer_expired_master_wait(void *data)
 {
 	struct rtmac_tdma *tdma = (struct rtmac_tdma *)data;
 
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer expired\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer expired\n",__FUNCTION__);
 	tdma_do_event(tdma, EXPIRED_MASTER_WAIT, NULL);
 }
 
@@ -87,7 +87,7 @@ static void tdma_timer_expired_master_wait(void *data)
 
 void tdma_timer_start_sent_conf(struct rtmac_tdma *tdma, int timeout)
 {
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer set\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
 	tdma_timer_start(&tdma->master_sent_conf_timer, timeout, (void *)tdma, tdma_timer_expired_sent_conf);
 }
 
@@ -95,7 +95,7 @@ static void tdma_timer_expired_sent_conf(void *data)
 {
 	struct rtmac_tdma *tdma = (struct rtmac_tdma *)data;
 
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer expired\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer expired\n",__FUNCTION__);
 	tdma_do_event(tdma, EXPIRED_MASTER_SENT_CONF, NULL);
 }
 
@@ -111,7 +111,7 @@ int tdma_timer_start_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev
 	 */
 	task_change_data = kmalloc(sizeof(struct timer_task_change_data), GFP_KERNEL);
 	if (task_change_data == NULL) {
-		rt_printk("RTmac: tdma: "__FUNCTION__"() out of memory\n");
+		rt_printk("RTmac: tdma: %s() out of memory\n",__FUNCTION__);
 		return -1;
 	}
 	memset(task_change_data, 0, sizeof(struct timer_task_change_data));
@@ -126,7 +126,7 @@ int tdma_timer_start_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev
 	/*
 	 * start the timer
 	 */
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer set\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
 	tdma_timer_start(&tdma->task_change_timer, timeout, (void *)task_change_data, tdma_timer_expired_task_change);
 
 	return ret;
@@ -148,7 +148,7 @@ static void tdma_timer_expired_task_change(void *data)
 
 void tdma_timer_start_sent_test(struct rtmac_tdma *tdma, int timeout)
 {
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer set\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
 	tdma_timer_start(&tdma->master_sent_test_timer, timeout, (void *)tdma, tdma_timer_expired_sent_test);
 }
 
@@ -156,7 +156,7 @@ static void tdma_timer_expired_sent_test(void *data)
 {
 	struct rtmac_tdma *tdma = (struct rtmac_tdma *)data;
 
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer expired\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer expired\n",__FUNCTION__);
 	tdma_do_event(tdma, EXPIRED_MASTER_SENT_TEST, NULL);
 }
 
@@ -164,7 +164,7 @@ static void tdma_timer_expired_sent_test(void *data)
 
 void tdma_timer_start_sent_ack(struct rtmac_tdma *tdma, int timeout)
 {
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer set\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer set\n",__FUNCTION__);
 	tdma_timer_start(&tdma->client_sent_ack_timer, timeout, (void *)tdma, tdma_timer_expired_sent_ack);
 }
 
@@ -172,7 +172,7 @@ static void tdma_timer_expired_sent_ack(void *data)
 {
 	struct rtmac_tdma *tdma = (struct rtmac_tdma *)data;
 
-	TDMA_DEBUG(6, "RTmac: tdma: "__FUNCTION__"() timer expired\n");
+	TDMA_DEBUG(6, "RTmac: tdma: %s() timer expired\n",__FUNCTION__);
 	tdma_do_event(tdma, EXPIRED_CLIENT_SENT_ACK, NULL);
 }
 
