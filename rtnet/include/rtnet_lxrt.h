@@ -144,7 +144,9 @@ DECLARE int rt_socket_sendto(int fd, void *buf, int len, unsigned int flags, str
 
 DECLARE int rt_socket_recvfrom(int fd, void *buf, int len, unsigned int flags, struct sockaddr *from, int *fromlen)
 {
-	return 0;	
+	fd = fd; buf=buf; len=len; flags=flags; from=from, fromlen=fromlen;
+#warning function not yet implemented!
+	return 0;
 }
 
 DECLARE int rt_socket_sendmsg(int fd, struct msghdr *msg, unsigned int flags)
@@ -155,7 +157,9 @@ DECLARE int rt_socket_sendmsg(int fd, struct msghdr *msg, unsigned int flags)
 
 DECLARE int rt_socket_recvmsg(int fd, struct msghdr *msg, unsigned int flags) 
 {
-	return 0;	
+	fd=fd; msg=msg; flags=flags;
+#warning function not yet implemented!
+	return 0;
 }
 
 DECLARE int rt_socket_getsockname(int fd, struct sockaddr *addr, int addr_len)
@@ -166,11 +170,3 @@ DECLARE int rt_socket_getsockname(int fd, struct sockaddr *addr, int addr_len)
 
 #endif	/* __KERNEL__ */
 #endif	/* __LX_RTNET_H_ */
-
-
-
-
-
-
-
-
