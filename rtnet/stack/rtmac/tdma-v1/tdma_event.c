@@ -782,7 +782,7 @@ void tdma_remove_rt(struct rtmac_tdma *tdma, u32 ip_addr)
 
         if (rt_add_entry->ip_addr == ip_addr) {
             list_del(&rt_add_entry->list);
-            rt_free(rt_add_entry);
+            rtos_free(rt_add_entry);
         }
     }
 
@@ -791,7 +791,7 @@ void tdma_remove_rt(struct rtmac_tdma *tdma, u32 ip_addr)
 
         if (rt_entry->arp.ip == ip_addr) {
             list_del(&rt_entry->list);
-            rt_free(rt_entry);
+            rtos_free(rt_entry);
         }
     }
 }

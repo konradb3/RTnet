@@ -25,7 +25,7 @@
 #ifndef __TDMA_WORKER_H_
 #define __TDMA_WORKER_H_
 
-#include <rtnet_sys_rtai.h>
+#include <rtnet_sys.h>
 
 
 #define DEF_WORKER_PRIO         0

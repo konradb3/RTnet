@@ -26,10 +26,6 @@
 
 #include <rtnet_sys.h>
 
-#ifdef HAVE_RTAI_SEM_H
-#include <rtai_sem.h>
-#endif
-
 #ifdef CONFIG_RTNET_CHECKED
 #define RTNET_ASSERT(expr, func) \
     if (!(expr)) \
