@@ -102,7 +102,7 @@ static void do_stacktask(int mgr_id)
         while (1) {
             flags = rt_spin_lock_irqsave(&rxqueue.lock);
 
-            skb = rtskb_dequeue(&rxqueue);
+            skb = __rtskb_dequeue(&rxqueue);
             if (!skb) {
                 rt_spin_unlock_irqrestore(flags, &rxqueue.lock);
                 break;
