@@ -46,9 +46,11 @@ int main(int argc, char *argv[]) {
                 unsigned char c[8];
         } time_tx;
 
+	/* Set address structures to zero.  */
         memset(&local_addr, 0, sizeof(struct sockaddr_in));
         memset(&server_addr, 0, sizeof(struct sockaddr_in));
-        
+
+	/* Check arguments and set addresses. */
         if (argc==5) {
                 local_addr.sin_family = AF_INET;
                 inet_aton(argv[1], &local_addr.sin_addr);
@@ -65,33 +67,53 @@ int main(int argc, char *argv[]) {
                 exit(1);
         }
 
+	/* Lock allocated memory into RAM. */
         mlockall(MCL_CURRENT|MCL_FUTURE);
+
+	/* Initialize a real time buddy. */
         lxrtnettsk = rt_task_init(4800, 1, 0, 0);
         if (NULL == lxrtnettsk) {
                 printf("CANNOT INIT MASTER TASK\n");
                 exit(1);
         }
+
+	/* Initialize timer; needed for rt_get_time_ns(). */
         rt_set_oneshot_mode();
         start_rt_timer(nano2count(1000000));
+
+	/* Switch over to hard realtime mode. */
         rt_make_hard_real_time();
 
+	/* Create new socket. */
         sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+
+	/* Bind socket to local address specified as parameter. */
         ret = rt_socket_bind(sockfd,
 	                     (struct sockaddr *) &local_addr,
                              sizeof(struct sockaddr_in));
+
+	/* Specify destination address for socket; needed for rt_socket_send(). */
         rt_socket_connect(sockfd,
                           (struct sockaddr *) &server_addr,
                           sizeof(struct sockaddr_in));
+
+	/* Create and send timestamp to destination. */
         time_tx.l = rt_get_time_ns();
         rt_socket_send(sockfd,
                        &time_tx.l,
                        sizeof(unsigned long long),
                        0);
+
+	/* Close socket. */
         rt_socket_close(sockfd);        
 
+	/* Switch over to soft realtime mode. */
         rt_make_soft_real_time();
 
+	/* Stop the timer. */
         stop_rt_timer();
+
+	/* Delete realtime buddy. */
         rt_task_delete(lxrtnettsk);
 
         return 0;
