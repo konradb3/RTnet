@@ -46,28 +46,27 @@ void rt_arp_send(int type,
 		 unsigned char *src_hw,
 		 unsigned char *target_hw)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	struct rtskb *skb;
 	struct arphdr *arp;
 	unsigned char *arp_ptr;
 	
-	if ( dev->flags & IFF_NOARP )
+	if ( rtdev->flags & IFF_NOARP )
 		return;
 
-	if ( !(skb=alloc_rtskb(sizeof(struct arphdr)+ 2*(dev->addr_len+4)+dev->hard_header_len+15)) )
+	if ( !(skb=alloc_rtskb(sizeof(struct arphdr)+ 2*(rtdev->addr_len+4)+rtdev->hard_header_len+15)) )
 		return;
 
-	rtskb_reserve(skb, (dev->hard_header_len+15)&~15);
+	rtskb_reserve(skb, (rtdev->hard_header_len+15)&~15);
 
 	skb->nh.raw = skb->data;
-	arp = (struct arphdr *) rtskb_put(skb,sizeof(struct arphdr) + 2*(dev->addr_len+4));
+	arp = (struct arphdr *) rtskb_put(skb,sizeof(struct arphdr) + 2*(rtdev->addr_len+4));
 
 	skb->rtdev = rtdev;
 	skb->protocol = __constant_htons (ETH_P_ARP);
 	if (src_hw == NULL)
-		src_hw = dev->dev_addr;
+		src_hw = rtdev->dev_addr;
 	if (dest_hw == NULL)
-		dest_hw = dev->broadcast;
+		dest_hw = rtdev->broadcast;
 
 	/*
 	 *	Fill the device header for the ARP frame
@@ -76,25 +75,25 @@ void rt_arp_send(int type,
 	    rtdev->hard_header(skb,rtdev,ptype,dest_hw,src_hw,skb->len) < 0)
 		goto out;
 
-	arp->ar_hrd = htons(dev->type);
+	arp->ar_hrd = htons(rtdev->type);
 	arp->ar_pro = __constant_htons(ETH_P_IP);
-	arp->ar_hln = dev->addr_len;
+	arp->ar_hln = rtdev->addr_len;
 	arp->ar_pln = 4;
 	arp->ar_op = htons(type);
 
 	arp_ptr=(unsigned char *)(arp+1);
 
-	memcpy(arp_ptr, src_hw, dev->addr_len);
-	arp_ptr+=dev->addr_len;
+	memcpy(arp_ptr, src_hw, rtdev->addr_len);
+	arp_ptr+=rtdev->addr_len;
 
 	memcpy(arp_ptr, &src_ip,4);
 	arp_ptr+=4;
 
 	if (target_hw != NULL)
-		memcpy(arp_ptr, target_hw, dev->addr_len);
+		memcpy(arp_ptr, target_hw, rtdev->addr_len);
 	else
-		memset(arp_ptr, 0, dev->addr_len);
-	arp_ptr+=dev->addr_len;
+		memset(arp_ptr, 0, rtdev->addr_len);
+	arp_ptr+=rtdev->addr_len;
 
 	memcpy(arp_ptr, &dest_ip, 4);
 
@@ -114,12 +113,11 @@ out:
  */
 int rt_arp_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	struct arphdr *arp = skb->nh.arph;
 	unsigned char *arp_ptr= (unsigned char *)(arp+1);
 	unsigned char *sha, *tha;
 	u32 sip, tip;
-	u16 dev_type = dev->type;
+	u16 dev_type = rtdev->type;
 
 /*
  *	The hardware length of the packet should match the hardware length
@@ -128,8 +126,8 @@ int rt_arp_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_ty
  *	is not from an IP number.  We can't currently handle this, so toss
  *	it. 
  */  
-	if (arp->ar_hln != dev->addr_len    || 
-	    dev->flags & IFF_NOARP ||
+	if (arp->ar_hln != rtdev->addr_len    || 
+	    rtdev->flags & IFF_NOARP ||
 	    skb->pkt_type == PACKET_OTHERHOST ||
 	    skb->pkt_type == PACKET_LOOPBACK ||
 	    arp->ar_pln != 4)
@@ -165,12 +163,12 @@ int rt_arp_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_ty
  *	Extract fields
  */
 	sha=arp_ptr;
-	arp_ptr += dev->addr_len;
+	arp_ptr += rtdev->addr_len;
 	memcpy(&sip, arp_ptr, 4);
 
 	arp_ptr += 4;
 	tha=arp_ptr;
-	arp_ptr += dev->addr_len;
+	arp_ptr += rtdev->addr_len;
 	memcpy(&tip, arp_ptr, 4);
 
 /* 
@@ -182,7 +180,7 @@ int rt_arp_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_ty
 
 
 	if (dev_type == ARPHRD_DLCI)
-		sha = dev->broadcast;
+		sha = rtdev->broadcast;
 
 /*
  *  Process entry.  The idea here is we want to send a reply if it is a
@@ -204,7 +202,7 @@ int rt_arp_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_ty
 	if ( rt_ip_route_input(skb, tip, sip, rtdev)==0 ) {
 		rt_arp_table_add(sip, sha);
 		if ( arp->ar_op==__constant_htons(ARPOP_REQUEST) )
-			rt_arp_send(ARPOP_REPLY,ETH_P_ARP,sip,rtdev,tip,sha,dev->dev_addr,sha);
+			rt_arp_send(ARPOP_REPLY,ETH_P_ARP,sip,rtdev,tip,sha,rtdev->dev_addr,sha);
 	}
 
 out:

@@ -31,9 +31,12 @@ static void endme (int dummy) { end = 1; }
 int main(int argc,char *argv[])
 {
         int cmd0;
-        union {long long l; unsigned char c[8];} rx_time, tx_time;
+        union {long long l; unsigned char c[8];} t[2];
+	int min,max;
 
 	signal (SIGINT, endme);
+	min = 1000000;
+	max = 0;
           
         if ((cmd0 = open("/dev/rtf0", O_RDONLY)) < 0) {
 		if ((cmd0 = open("/dev/rtf/0", O_RDONLY)) < 0) {
@@ -43,13 +46,18 @@ int main(int argc,char *argv[])
         }
 
         while(!end) {
-                read (cmd0, rx_time.c, sizeof (long long));
-                read (cmd0, tx_time.c, sizeof (long long));
-		
-                fprintf (stdout, "Roundtrip = %lld us\n", (rx_time.l-tx_time.l)/1000);
+		int delta;
 
-		rx_time.l=0;
-		tx_time.l=0;
+                if (read (cmd0, t, 2 * sizeof (unsigned long long))
+                    != 2*sizeof(unsigned long long))
+                    break;
+
+		delta = (t[0].l - t[1].l)/1000;
+		if (delta < min)
+			min = delta;
+		if (delta > max)
+			max = delta;
+                fprintf (stdout, "Roundtrip = %d us, min=%dus, max=%dus\n", delta,min,max);
         }
 
 	close(cmd0);

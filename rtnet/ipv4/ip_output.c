@@ -18,6 +18,17 @@
  */
  
 // $Log: ip_output.c,v $
+// Revision 1.5  2003/05/16 19:31:52  hpbock
+// big fat merge with pre-0-3-0
+// compiles and hopefully also runs =8)
+//
+// Revision 1.4.2.1  2003/03/10 18:18:01  yamwong
+// * Fixed bug: 680211 Using ifconfig on RTnet device crashes the system.
+// * New device manager: decouple rtnet_device from net_device.
+//   NOTE: Only 8139too-rt, eepro100-rt and tulip-rt were tested and known
+//   to work.
+// * Added new scripts for round trip examples.
+//
 // Revision 1.4  2003/02/12 07:49:15  hpbock
 // rt_ip_build_xmit() returns -EAGAIN if packet could not be sent by rtdev_xmit()
 //
@@ -58,7 +69,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 	df = htons(IP_DF);
 
 	{
-		int hh_len = (dev_get_by_rtdev(rtdev)->hard_header_len+15)&~15;
+		int hh_len = (rtdev->hard_header_len+15)&~15;
 
 		skb = alloc_rtskb(length+hh_len+15);
 		if (skb==NULL)
@@ -91,13 +102,13 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 		unsigned char *d, *s;
 		
 		d=rt->rt_dst_mac_addr;
-		s=dev_get_by_rtdev(rtdev)->dev_addr;
+		s=rtdev->dev_addr;
 
 	}
 
 	if ( !(rtdev->hard_header) ) {
 	     goto error;
-	} else if (rtdev->hard_header(skb, rtdev, ETH_P_IP, rt->rt_dst_mac_addr, dev_get_by_rtdev(rtdev)->dev_addr, skb->len)<0) {
+	} else if (rtdev->hard_header(skb, rtdev, ETH_P_IP, rt->rt_dst_mac_addr, rtdev->dev_addr, skb->len)<0) {
 		goto error;
 	}
 

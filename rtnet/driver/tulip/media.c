@@ -53,13 +53,13 @@ static const unsigned char comet_miireg2offset[32] = {
    MDIO protocol.  See the MII specifications or DP83840A data sheet
    for details. */
 
-int tulip_mdio_read(struct net_device *dev, int phy_id, int location)
+int tulip_mdio_read(struct rtnet_device *rtdev, int phy_id, int location)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	int i;
 	int read_cmd = (0xf6 << 10) | ((phy_id & 0x1f) << 5) | location;
 	int retval = 0;
-	long ioaddr = dev->base_addr;
+	long ioaddr = rtdev->base_addr;
 	long mdio_addr = ioaddr + CSR9;
 	unsigned long flags;
 
@@ -116,12 +116,12 @@ int tulip_mdio_read(struct net_device *dev, int phy_id, int location)
 	return (retval>>1) & 0xffff;
 }
 
-void tulip_mdio_write(struct net_device *dev, int phy_id, int location, int val)
+void tulip_mdio_write(struct rtnet_device *rtdev, int phy_id, int location, int val)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	int i;
 	int cmd = (0x5002 << 16) | ((phy_id & 0x1f) << 23) | (location<<18) | (val & 0xffff);
-	long ioaddr = dev->base_addr;
+	long ioaddr = rtdev->base_addr;
 	long mdio_addr = ioaddr + CSR9;
 	unsigned long flags;
 
@@ -175,10 +175,10 @@ void tulip_mdio_write(struct net_device *dev, int phy_id, int location, int val)
 
 
 /* Set up the transceiver control registers for the selected media type. */
-void tulip_select_media(struct net_device *dev, int startup)
+void tulip_select_media(struct rtnet_device *rtdev, int startup)
 {
-	long ioaddr = dev->base_addr;
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	long ioaddr = rtdev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	struct mediatable *mtable = tp->mtable;
 	u32 new_csr6;
 	int i;
@@ -191,8 +191,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 			if (tulip_debug > 1)
 				/*RTnet*/rt_printk(KERN_DEBUG "%s: Using a 21140 non-MII transceiver"
 					   " with control setting %2.2x.\n",
-					   dev->name, p[1]);
-			dev->if_port = p[0];
+					   rtdev->name, p[1]);
+			rtdev->if_port = p[0];
 			if (startup)
 				outl(mtable->csr12dir | 0x100, ioaddr + CSR12);
 			outl(p[1], ioaddr + CSR12);
@@ -204,8 +204,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 			for (i = 0; i < 5; i++)
 				setup[i] = get_u16(&p[i*2 + 1]);
 
-			dev->if_port = p[0] & MEDIA_MASK;
-			if (tulip_media_cap[dev->if_port] & MediaAlwaysFD)
+			rtdev->if_port = p[0] & MEDIA_MASK;
+			if (tulip_media_cap[rtdev->if_port] & MediaAlwaysFD)
 				tp->full_duplex = 1;
 
 			if (startup && mtable->has_reset) {
@@ -213,14 +213,14 @@ void tulip_select_media(struct net_device *dev, int startup)
 				unsigned char *rst = rleaf->leafdata;
 				if (tulip_debug > 1)
 					/*RTnet*/rt_printk(KERN_DEBUG "%s: Resetting the transceiver.\n",
-						   dev->name);
+						   rtdev->name);
 				for (i = 0; i < rst[0]; i++)
 					outl(get_u16(rst + 1 + (i<<1)) << 16, ioaddr + CSR15);
 			}
 			if (tulip_debug > 1)
 				/*RTnet*/rt_printk(KERN_DEBUG "%s: 21143 non-MII %s transceiver control "
 					   "%4.4x/%4.4x.\n",
-					   dev->name, medianame[dev->if_port], setup[0], setup[1]);
+					   rtdev->name, medianame[rtdev->if_port], setup[0], setup[1]);
 			if (p[0] & 0x40) {	/* SIA (CSR13-15) setup values are provided. */
 				csr13val = setup[0];
 				csr14val = setup[1];
@@ -236,8 +236,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 				csr14val = 0;
 				csr15dir = (setup[0]<<16) | 0x0008;
 				csr15val = (setup[1]<<16) | 0x0008;
-				if (dev->if_port <= 4)
-					csr14val = t21142_csr14[dev->if_port];
+				if (rtdev->if_port <= 4)
+					csr14val = t21142_csr14[rtdev->if_port];
 				if (startup) {
 					outl(0, ioaddr + CSR13);
 					outl(csr14val, ioaddr + CSR14);
@@ -248,7 +248,7 @@ void tulip_select_media(struct net_device *dev, int startup)
 			}
 			if (tulip_debug > 1)
 				/*RTnet*/rt_printk(KERN_DEBUG "%s:  Setting CSR15 to %8.8x/%8.8x.\n",
-					   dev->name, csr15dir, csr15val);
+					   rtdev->name, csr15dir, csr15val);
 			if (mleaf->type == 4)
 				new_csr6 = 0x82020000 | ((setup[2] & 0x71) << 18);
 			else
@@ -260,7 +260,7 @@ void tulip_select_media(struct net_device *dev, int startup)
 			int init_length = p[1];
 			u16 *misc_info, tmp_info;
 
-			dev->if_port = 11;
+			rtdev->if_port = 11;
 			new_csr6 = 0x020E0000;
 			if (mleaf->type == 3) {	/* 21142 */
 				u16 *init_sequence = (u16*)(p+2);
@@ -293,8 +293,8 @@ void tulip_select_media(struct net_device *dev, int startup)
 					tp->mii_advertise = tp->advertising[phy_num];
 				if (tulip_debug > 1)
 					/*RTnet*/rt_printk(KERN_DEBUG "%s:  Advertising %4.4x on MII %d.\n",
-					       dev->name, tp->mii_advertise, tp->phys[phy_num]);
-				tulip_mdio_write(dev, tp->phys[phy_num], 4, tp->mii_advertise);
+					       rtdev->name, tp->mii_advertise, tp->phys[phy_num]);
+				tulip_mdio_write(rtdev, tp->phys[phy_num], 4, tp->mii_advertise);
 			}
 			break;
 		}
@@ -311,7 +311,7 @@ void tulip_select_media(struct net_device *dev, int startup)
 				unsigned char *rst = rleaf->leafdata;
 				if (tulip_debug > 1)
 					/*RTnet*/rt_printk(KERN_DEBUG "%s: Resetting the transceiver.\n",
-						   dev->name);
+						   rtdev->name);
 				for (i = 0; i < rst[0]; i++)
 					outl(get_u16(rst + 1 + (i<<1)) << 16, ioaddr + CSR15);
 			}
@@ -320,18 +320,18 @@ void tulip_select_media(struct net_device *dev, int startup)
 		}
 		default:
 			/*RTnet*/rt_printk(KERN_DEBUG "%s:  Invalid media table selection %d.\n",
-					   dev->name, mleaf->type);
+					   rtdev->name, mleaf->type);
 			new_csr6 = 0x020E0000;
 		}
 		if (tulip_debug > 1)
 			/*RTnet*/rt_printk(KERN_DEBUG "%s: Using media type %s, CSR12 is %2.2x.\n",
-				   dev->name, medianame[dev->if_port],
+				   rtdev->name, medianame[rtdev->if_port],
 				   inl(ioaddr + CSR12) & 0xff);
 	} else if (tp->chip_id == DC21041) {
-		int port = dev->if_port <= 4 ? dev->if_port : 0;
+		int port = rtdev->if_port <= 4 ? rtdev->if_port : 0;
 		if (tulip_debug > 1)
 			/*RTnet*/rt_printk(KERN_DEBUG "%s: 21041 using media %s, CSR12 is %4.4x.\n",
-				   dev->name, medianame[port == 3 ? 12: port],
+				   rtdev->name, medianame[port == 3 ? 12: port],
 				   inl(ioaddr + CSR12));
 		outl(0x00000000, ioaddr + CSR13); /* Reset the serial interface */
 		outl(t21041_csr14[port], ioaddr + CSR14);
@@ -340,10 +340,10 @@ void tulip_select_media(struct net_device *dev, int startup)
 		new_csr6 = 0x80020000;
 	} else if (tp->chip_id == LC82C168) {
 		if (startup && ! tp->medialock)
-			dev->if_port = tp->mii_cnt ? 11 : 0;
+			rtdev->if_port = tp->mii_cnt ? 11 : 0;
 		if (tulip_debug > 1)
 			/*RTnet*/rt_printk(KERN_DEBUG "%s: PNIC PHY status is %3.3x, media %s.\n",
-				   dev->name, inl(ioaddr + 0xB8), medianame[dev->if_port]);
+				   rtdev->name, inl(ioaddr + 0xB8), medianame[rtdev->if_port]);
 		if (tp->mii_cnt) {
 			new_csr6 = 0x810C0000;
 			outl(0x0001, ioaddr + CSR15);
@@ -354,7 +354,7 @@ void tulip_select_media(struct net_device *dev, int startup)
 			new_csr6 = 0x00420000;
 			outl(0x0001B078, ioaddr + 0xB8);
 			outl(0x0201B078, ioaddr + 0xB8);
-		} else if (dev->if_port == 3  ||  dev->if_port == 5) {
+		} else if (rtdev->if_port == 3  ||  rtdev->if_port == 5) {
 			outl(0x33, ioaddr + CSR12);
 			new_csr6 = 0x01860000;
 			/* Trigger autonegotiation. */
@@ -369,34 +369,34 @@ void tulip_select_media(struct net_device *dev, int startup)
 		int csr12 = inl(ioaddr + CSR12);
 		if (tulip_debug > 1)
 			/*RTnet*/rt_printk(KERN_DEBUG "%s: 21040 media type is %s, CSR12 is %2.2x.\n",
-				   dev->name, medianame[dev->if_port], csr12);
-		if (tulip_media_cap[dev->if_port] & MediaAlwaysFD)
+				   rtdev->name, medianame[rtdev->if_port], csr12);
+		if (tulip_media_cap[rtdev->if_port] & MediaAlwaysFD)
 			tp->full_duplex = 1;
 		new_csr6 = 0x20000;
 		/* Set the full duplux match frame. */
 		outl(FULL_DUPLEX_MAGIC, ioaddr + CSR11);
 		outl(0x00000000, ioaddr + CSR13); /* Reset the serial interface */
-		if (t21040_csr13[dev->if_port] & 8) {
+		if (t21040_csr13[rtdev->if_port] & 8) {
 			outl(0x0705, ioaddr + CSR14);
 			outl(0x0006, ioaddr + CSR15);
 		} else {
 			outl(0xffff, ioaddr + CSR14);
 			outl(0x0000, ioaddr + CSR15);
 		}
-		outl(0x8f01 | t21040_csr13[dev->if_port], ioaddr + CSR13);
+		outl(0x8f01 | t21040_csr13[rtdev->if_port], ioaddr + CSR13);
 	} else {					/* Unknown chip type with no media table. */
 		if (tp->default_port == 0)
-			dev->if_port = tp->mii_cnt ? 11 : 3;
-		if (tulip_media_cap[dev->if_port] & MediaIsMII) {
+			rtdev->if_port = tp->mii_cnt ? 11 : 3;
+		if (tulip_media_cap[rtdev->if_port] & MediaIsMII) {
 			new_csr6 = 0x020E0000;
-		} else if (tulip_media_cap[dev->if_port] & MediaIsFx) {
+		} else if (tulip_media_cap[rtdev->if_port] & MediaIsFx) {
 			new_csr6 = 0x02860000;
 		} else
 			new_csr6 = 0x03860000;
 		if (tulip_debug > 1)
 			/*RTnet*/rt_printk(KERN_DEBUG "%s: No media description table, assuming "
 				   "%s transceiver, CSR12 %2.2x.\n",
-				   dev->name, medianame[dev->if_port],
+				   rtdev->name, medianame[rtdev->if_port],
 				   inl(ioaddr + CSR12));
 	}
 
@@ -410,24 +410,24 @@ void tulip_select_media(struct net_device *dev, int startup)
   Return 0 if everything is OK.
   Return < 0 if the transceiver is missing or has no link beat.
   */
-int tulip_check_duplex(struct net_device *dev)
+int tulip_check_duplex(struct rtnet_device *rtdev)
 {
-	struct tulip_private *tp = dev->priv;
+	struct tulip_private *tp = rtdev->priv;
 	unsigned int bmsr, lpa, negotiated, new_csr6;
 
-	bmsr = tulip_mdio_read(dev, tp->phys[0], MII_BMSR);
-	lpa = tulip_mdio_read(dev, tp->phys[0], MII_LPA);
+	bmsr = tulip_mdio_read(rtdev, tp->phys[0], MII_BMSR);
+	lpa = tulip_mdio_read(rtdev, tp->phys[0], MII_LPA);
 	if (tulip_debug > 1)
 		/*RTnet*/rt_printk(KERN_INFO "%s: MII status %4.4x, Link partner report "
-			   "%4.4x.\n", dev->name, bmsr, lpa);
+			   "%4.4x.\n", rtdev->name, bmsr, lpa);
 	if (bmsr == 0xffff)
 		return -2;
 	if ((bmsr & BMSR_LSTATUS) == 0) {
-		int new_bmsr = tulip_mdio_read(dev, tp->phys[0], MII_BMSR);
+		int new_bmsr = tulip_mdio_read(rtdev, tp->phys[0], MII_BMSR);
 		if ((new_bmsr & BMSR_LSTATUS) == 0) {
 			if (tulip_debug  > 1)
 				/*RTnet*/rt_printk(KERN_INFO "%s: No link beat on the MII interface,"
-					   " status %4.4x.\n", dev->name, new_bmsr);
+					   " status %4.4x.\n", rtdev->name, new_bmsr);
 			return -1;
 		}
 	}
@@ -448,7 +448,7 @@ int tulip_check_duplex(struct net_device *dev)
 		if (tulip_debug > 0)
 			/*RTnet*/rt_printk(KERN_INFO "%s: Setting %s-duplex based on MII"
 				   "#%d link partner capability of %4.4x.\n",
-				   dev->name, tp->full_duplex ? "full" : "half",
+				   rtdev->name, tp->full_duplex ? "full" : "half",
 				   tp->phys[0], lpa);
 		return 1;
 	}
@@ -456,9 +456,9 @@ int tulip_check_duplex(struct net_device *dev)
 	return 0;
 }
 
-void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
+void __devinit tulip_find_mii (struct rtnet_device *rtdev, int board_idx)
 {
-	struct tulip_private *tp = dev->priv;
+	struct tulip_private *tp = rtdev->priv;
 	int phyn, phy_idx = 0;
 	int mii_reg0;
 	int mii_advert;
@@ -469,7 +469,7 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 	   but takes much time. */
 	for (phyn = 1; phyn <= 32 && phy_idx < sizeof (tp->phys); phyn++) {
 		int phy = phyn & 0x1f;
-		int mii_status = tulip_mdio_read (dev, phy, MII_BMSR);
+		int mii_status = tulip_mdio_read (rtdev, phy, MII_BMSR);
 		if ((mii_status & 0x8301) == 0x8001 ||
 		    ((mii_status & BMSR_100BASE4) == 0
 		     && (mii_status & 0x7800) != 0)) {
@@ -478,8 +478,8 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 			continue;
 		}
 
-		mii_reg0 = tulip_mdio_read (dev, phy, MII_BMCR);
-		mii_advert = tulip_mdio_read (dev, phy, MII_ADVERTISE);
+		mii_reg0 = tulip_mdio_read (rtdev, phy, MII_BMCR);
+		mii_advert = tulip_mdio_read (rtdev, phy, MII_ADVERTISE);
 		ane_switch = 0;
 
 		/* if not advertising at all, gen an
@@ -487,7 +487,7 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 		 * bits in BMSR
 		 */
 		if ((mii_advert & ADVERTISE_ALL) == 0) {
-			unsigned int tmpadv = tulip_mdio_read (dev, phy, MII_BMSR);
+			unsigned int tmpadv = tulip_mdio_read (rtdev, phy, MII_BMSR);
 			mii_advert = ((tmpadv >> 6) & 0x3e0) | 1;
 		}
 
@@ -513,7 +513,7 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 			/*RTnet*/rt_printk (KERN_DEBUG "tulip%d:  Advertising %4.4x on PHY %d,"
 				" previously advertising %4.4x.\n",
 				board_idx, to_advert, phy, mii_advert);
-			tulip_mdio_write (dev, phy, 4, to_advert);
+			tulip_mdio_write (rtdev, phy, 4, to_advert);
 		}
 
 		/* Enable autonegotiation: some boards default to off. */
@@ -549,10 +549,10 @@ void __devinit tulip_find_mii (struct net_device *dev, int board_idx)
 			 * confuse the sane phys.
 			 */
 			if (ane_switch) {
-				tulip_mdio_write (dev, phy, MII_BMCR, new_bmcr);
+				tulip_mdio_write (rtdev, phy, MII_BMCR, new_bmcr);
 				udelay (10);
 			}
-			tulip_mdio_write (dev, phy, MII_BMCR, new_bmcr);
+			tulip_mdio_write (rtdev, phy, MII_BMCR, new_bmcr);
 		}
 	}
 	tp->mii_cnt = phy_idx;

@@ -17,12 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
+#include <linux/if_arp.h> /* ARPHDR_ETHER */
 
 #include <rtai.h>
 #include <rtnet.h>
 #include <rtnet_internal.h>
+
+
 
 /**
  * rtalloc_etherdev - Allocates and sets up an ethernet device
@@ -38,26 +39,30 @@
  */
 struct rtnet_device *rt_alloc_etherdev(int sizeof_priv)
 {
-	struct net_device *dev;
 	struct rtnet_device *rtdev;
-	if ( !(dev=alloc_etherdev(0)) ){
-		rt_printk("RTnet: cannot allocate ethernet device\n");
-	        return NULL;
-	}
-	if (sizeof_priv) {
-		if ( !(dev->priv=kmalloc (sizeof_priv, GFP_KERNEL)) ) {
-			rt_printk("RTnet: cannot allocate ethernet device\n");
-			kfree(dev);
-			return NULL;
-		}
-		memset(dev->priv, 0, sizeof_priv);
-	}
-	rtdev=rtdev_alloc(dev);		// alloc mem for rtdev, link rtdev and dev, inset rtdev into rtdev-list
-	rtdev->mtu=ETH_FRAME_LEN;
+
+	rtdev = rtdev_alloc(sizeof_priv);
+	if (!rtdev)
+		return NULL;
+
+	rtdev->hard_header	= rt_eth_header;
+
+	rtdev->mtu 		= ETH_FRAME_LEN;
+	rtdev->type		= ARPHRD_ETHER;
+	rtdev->hard_header_len 	= ETH_HLEN;
+	rtdev->mtu		= 1500; /* eth_mtu */
+	rtdev->addr_len		= ETH_ALEN;
+	rtdev->flags		= IFF_BROADCAST; /* TODO: IFF_MULTICAST; */
+	
+	memset(rtdev->broadcast, 0xFF, ETH_ALEN);
+	strcpy(rtdev->name, "rteth%d");
+
 	return rtdev;
 }
 
 
+#if 0
+/* FIXME: port this function */
 /**
  * rtalloc_etherdev - Allocates and sets up an tokenring device
  * @sizeof_priv: size of additional driver-private structure to 
@@ -90,7 +95,7 @@ struct rtnet_device *rt_alloc_trdev(int sizeof_priv)
 	rtdev->mtu=2000;
 	return (rtdev);
 }
-
+#endif
 
 
 /***
@@ -99,22 +104,23 @@ struct rtnet_device *rt_alloc_trdev(int sizeof_priv)
  */
 int rt_register_rtnetdev(struct rtnet_device *rtdev)
 {
-	struct net_device *d, **dp, *dev = dev_get_by_rtdev(rtdev);
+	struct rtnet_device *d, **dp;
+	unsigned long flags;
 
-	rt_printk("RTnet: rt_register_netdevice(%s)\n", dev->name);
+	hard_save_flags_and_cli(flags);
+	write_lock(&rtnet_devices_lock);
+	
+	/* FIXME: do we need rtdev->ifindex? */
+	rtdev->ifindex = rtdev_new_index();
 
-	dev->iflink = -1;
-	/* Init, if this function is available */
-	if ( (dev->init) && (dev->init(dev)) ) {
-		return -EIO;
-	}
-	dev->ifindex = dev_new_index();
-	if (dev->iflink == -1)
-		dev->iflink = dev->ifindex;
+	if (strchr(rtdev->name,'%') != NULL)
+		rtdev_alloc_name(rtdev, rtdev->name);
 
 	/* Check for existence, and append to tail of chain */
-	for (dp=&dev_base; (d=*dp) != NULL; dp=&d->next) {
-		if ( (d==dev) || (!strcmp(d->name, dev->name)) ) {
+	for (dp = &rtnet_devices; (d=*dp) != NULL; dp = &d->next) {
+		if (d == rtdev || strcmp(d->name, rtdev->name) == 0) {
+			write_unlock(&rtnet_devices_lock);
+			hard_restore_flags(flags);
 			return -EEXIST;
 		}
 	}
@@ -123,14 +129,15 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
 	 *	Default initial state at registry is that the
 	 *	device is present.
 	 */
-	set_bit(__LINK_STATE_PRESENT, &dev->state);
-	dev->next = NULL;
+	set_bit(__LINK_STATE_PRESENT, &rtdev->state);
 
 	/* insert to list */
-	write_lock(&dev_base_lock);
-	*dp = dev;
-	dev->deadbeaf = 0;
-	write_unlock(&dev_base_lock);
+	*dp = rtdev;
+	rtdev->next = NULL;
+
+	write_unlock(&rtnet_devices_lock);
+	hard_restore_flags(flags);
+	rt_printk("RTnet: rt_register_netdevice(%s)\n", rtdev->name);
 
 	return 0;
 }
@@ -144,42 +151,32 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
  */
 int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 {
-	struct net_device *d, **dp, *dev = dev_get_by_rtdev(rtdev);
+	struct rtnet_device *d, **dp;
+	unsigned long flags;
 
-	rt_printk("RTnet: rt_unregister_netdevice(%s)\n", dev->name);
+	rt_printk("RTnet: rt_unregister_netdevice(%s)\n", rtdev->name);
 
 	/* If device is running, close it first. */
-	if (dev->flags & IFF_UP)
+	if (rtdev->flags & IFF_UP)
 		rtdev_close(rtdev);
 
-	dev->deadbeaf = 1;
-
-	/* And unlink it from device chain. */
-	for (dp = &dev_base; (d=*dp)!=NULL; dp=&d->next) {
-		if (d==dev) {
-			write_lock(&dev_base_lock);
+	hard_save_flags_and_cli(flags);
+	write_lock(&rtnet_devices_lock);
+	/* Unlink it from device chain. */
+	for (dp = &rtnet_devices; (d=*dp)!=NULL; dp=&d->next) {
+		if (d==rtdev) {
 			*dp = d->next;
-			write_unlock(&dev_base_lock);
 			break;
 		}
 	}
+	write_unlock(&rtnet_devices_lock);
+	hard_restore_flags(flags);
 
 	if ( !d ) {
-		rt_printk("RTnet: device %s/%p never was registered\n", dev->name, dev);
+		rt_printk("RTnet: device %s/%p never was registered\n", rtdev->name, rtdev);
 		return -ENODEV;
 	}
-
-	clear_bit(__LINK_STATE_PRESENT, &dev->state);
-
-
-	if ( dev->uninit ) 
-		dev->uninit(dev);
+	clear_bit(__LINK_STATE_PRESENT, &rtdev->state);
 
 	return 0;
 }
-
-
-
-
-
-

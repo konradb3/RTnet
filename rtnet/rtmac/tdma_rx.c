@@ -58,7 +58,7 @@ int tdma_packet_rx(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacke
 	 */
 	if (rtmac_ptr->disc != TDMA || rtmac_ptr->ver != TDMA_VERSION) {
 		rt_printk("RTmac: tdma: received packet on interface %s is not tdma version 0x01 ;(\n",
-			  dev_get_by_rtdev(rtdev)->name);
+			  rtdev->name);
 		kfree_rtskb(skb);
 		return -1;
 	}

@@ -68,6 +68,7 @@ static struct sockaddr_in broadcast_addr;
 static struct sockaddr_in local_addr;
 
 static int sock;
+static int closing=0;
 
 #define BUFSIZE 1500
 static char buffer[BUFSIZE];
@@ -104,6 +105,8 @@ int echo_rcv(int s,void *arg)
 	struct sockaddr_in	addr;
 	struct mrtt_rx_packet	rx_packet;
 
+	if (closing)
+		rt_printk("In echo_rcv\n");
 	memset(&msg, 0, sizeof(msg));
 	iov.iov_base = &buffer;
 	iov.iov_len = BUFSIZE;
@@ -131,6 +134,8 @@ int echo_rcv(int s,void *arg)
 		rtf_put(PRINT, &rx_packet, sizeof(struct mrtt_rx_packet));
 	}
 
+	if (closing)
+		rt_printk("Exit echo_rcv\n");
 	return 0;
 }
 
@@ -167,8 +172,9 @@ int init_module(void)
 	// set up receiving
 	rt_socket_callback(sock, echo_rcv, NULL);
 	
-	rt_set_oneshot_mode();
-	start_rt_timer(TIMERTICKS);
+	/* Timer already started by RTmac in oneshot mode. */
+	//rt_set_oneshot_mode();
+	//start_rt_timer(TIMERTICKS); 
 
         ret=rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
         ret=rt_task_make_periodic_relative_ns( &rt_task, 10 * 1000*1000, cycle * 1000);
@@ -181,14 +187,17 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-        /* stop timer         */ 
-  	stop_rt_timer();
+        /* DO NOT stop timer. RTmac needs the timer! */
+	//stop_rt_timer(); 
 
         /* rt_task_delete     */ 
-  	rt_task_delete(&rt_task);
+        rt_printk("rt_task_delete() = %d\n",rt_task_delete(&rt_task));
 
         /* close th rt-socket */
-  	rt_socket_close(sock);
+        closing = 1;
+        rt_printk("begin close\n");
+  	rt_printk("  rt_socket_close() = %d\n",rt_socket_close(sock));
+  	rt_printk("end close\n");
 
 	rt_sem_delete(&tx_sem);
 

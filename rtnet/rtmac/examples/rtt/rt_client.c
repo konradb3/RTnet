@@ -39,18 +39,25 @@
 
 #include <rtnet.h>
 
+/* for sof_sync */
+#include <rtmac.h>
+#include <tdma.h>
+
 #define MIN_LENGTH_IPv4 7
 #define MAX_LENGTH_IPv4 15
 static char *local_ip_s  = "127.0.0.1";
 static char *server_ip_s = "127.0.0.1";
 static int cycle = 1*1000*1000; // = 1 s
+static char *sof_sync = "";
 
 MODULE_PARM (local_ip_s ,"s");
 MODULE_PARM (server_ip_s,"s");
 MODULE_PARM (cycle, "i");
+MODULE_PARM (sof_sync, "s");
 MODULE_PARM_DESC (local_ip_s, "rt_echo_client: lokal ip-address");
 MODULE_PARM_DESC (server_ip_s, "rt_echo_client: server ip-address");
-MODULE_PARM_DESC (cycle, "cycletime in us");
+MODULE_PARM_DESC (cycle, "cycletime in us or sof counts");
+MODULE_PARM_DESC (sof_sync, "device name, synchronize with its SOF. WORKS WITH RTMAC CLIENT ONLY!");
 
 #define TIMERTICKS	1000	// 1 us
 RT_TASK rt_task;
@@ -75,11 +82,28 @@ SEM tx_sem;
 unsigned long tsc1,tsc2;
 unsigned long cnt = 0;
 
-void *process(void * arg)
+static struct rtmac_tdma  *tdma=NULL;
+
+void process(void * arg)
 {
 	int ret = 0;
+	int count;
 
 	while(1) {
+		if (sof_sync[0]) {
+			count = cycle;
+			while (count != 0) {
+				if (!tdma || tdma_wait_sof(tdma) != 0) {
+					rt_printk("tdma_wait_sof() failed!");
+					return;
+				}
+				count--;
+			}
+		} else {
+			/* wait one period */
+			rt_task_wait_period();
+		}
+
                 /* get time        */
                 tx_time = rt_get_time_ns();
 
@@ -87,8 +111,6 @@ void *process(void * arg)
 		ret=rt_socket_sendto(sock, &tx_time, sizeof(RTIME), 0, (struct sockaddr *) &server_addr, sizeof(struct sockaddr_in));
 		//rt_sem_wait(&tx_sem);
 
-	        /* wait one period */ 
-	        rt_task_wait_period();
 	}
 }
 
@@ -144,6 +166,15 @@ int init_module(void)
 	unsigned long local_ip  = rt_inet_aton(local_ip_s);
 	unsigned long server_ip = rt_inet_aton(server_ip_s);
 
+	if (sof_sync[0] != '\0') {
+		tdma = tdma_get_by_name(sof_sync);
+		if (!tdma) {
+			rt_printk("You enable sof_sync but device '%s' not found"
+				  " or no tdma attached.",sof_sync);
+			return -ENODEV;
+		}
+	}
+
 	rtf_create(PRINT, 40000);
 	rt_sem_init(&tx_sem, 0);
 
@@ -172,13 +203,15 @@ int init_module(void)
 	rt_set_oneshot_mode();
 	start_rt_timer(TIMERTICKS);
 
-        ret=rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
-        ret=rt_task_make_periodic_relative_ns( &rt_task, 10 * 1000*1000, cycle * 1000);
+        ret = rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
+	if (sof_sync[0] != '\0') {
+		ret = rt_task_resume(&rt_task);
+	} else {
+		ret = rt_task_make_periodic_relative_ns( &rt_task, 10 * 1000*1000, cycle * 1000);
+	}
 
 	return ret;
 }
-
-
 
 
 void cleanup_module(void)

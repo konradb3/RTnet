@@ -5,6 +5,7 @@ MOD_SUB_DIRS	:=
 SUB_DIRS	:= 
 
 EXTRA_CFLAGS	:= -I../../include -I../../../include
+EXTRA_USER_LDFLAGS	:= -lncurses
 
 MOD_LIST_NAME	:= MISC_MODULES
 MI_OBJS		+= rt_client.o

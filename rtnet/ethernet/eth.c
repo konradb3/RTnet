@@ -34,7 +34,6 @@
 int rt_eth_header(struct rtskb *skb, struct rtnet_device *rtdev, unsigned short type,
 		  void *daddr, void *saddr, unsigned len)
 {
-	struct net_device *dev =dev_get_by_rtdev(rtdev);
 	struct ethhdr *eth = (struct ethhdr *)rtskb_push(skb,ETH_HLEN);
 	
 	/* 
@@ -52,27 +51,27 @@ int rt_eth_header(struct rtskb *skb, struct rtnet_device *rtdev, unsigned short 
 	 */
 	 
 	if(saddr)
-		memcpy(eth->h_source,saddr,dev->addr_len);
+		memcpy(eth->h_source,saddr,rtdev->addr_len);
 	else
-		memcpy(eth->h_source,dev->dev_addr,dev->addr_len);
+		memcpy(eth->h_source,rtdev->dev_addr,rtdev->addr_len);
 
 	/*
 	 *	Anyway, the loopback-device should never use this function... 
 	 */
 
-	if (dev->flags & (IFF_LOOPBACK|IFF_NOARP)) 
+	if (rtdev->flags & (IFF_LOOPBACK|IFF_NOARP)) 
 	{
-		memset(eth->h_dest, 0, dev->addr_len);
-		return(dev->hard_header_len);
+		memset(eth->h_dest, 0, rtdev->addr_len);
+		return(rtdev->hard_header_len);
 	}
 	
 	if(daddr)
 	{
-		memcpy(eth->h_dest,daddr,dev->addr_len);
-		return dev->hard_header_len;
+		memcpy(eth->h_dest,daddr,rtdev->addr_len);
+		return rtdev->hard_header_len;
 	}
 	
-	return -dev->hard_header_len;
+	return -rtdev->hard_header_len;
 }
 
 
@@ -82,15 +81,14 @@ unsigned short rt_eth_type_trans(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	struct ethhdr *eth;
 	unsigned char *rawp;
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	
 	skb->mac.raw=skb->data;
-	rtskb_pull(skb,dev->hard_header_len);
+	rtskb_pull(skb,rtdev->hard_header_len);
 	eth= skb->mac.ethernet;
 	
 	if(*eth->h_dest&1)
 	{
-		if(memcmp(eth->h_dest,dev->broadcast, ETH_ALEN)==0)
+		if(memcmp(eth->h_dest,rtdev->broadcast, ETH_ALEN)==0)
 			skb->pkt_type=PACKET_BROADCAST;
 		else
 			skb->pkt_type=PACKET_MULTICAST;
@@ -104,9 +102,9 @@ unsigned short rt_eth_type_trans(struct rtskb *skb, struct rtnet_device *rtdev)
 	 *	seems to set IFF_PROMISC.
 	 */
 	 
-	else if(1 /*dev->flags&IFF_PROMISC*/)
+	else if(1 /*rtdev->flags&IFF_PROMISC*/)
 	{
-		if(memcmp(eth->h_dest,dev->dev_addr, ETH_ALEN))
+		if(memcmp(eth->h_dest,rtdev->dev_addr, ETH_ALEN))
 			skb->pkt_type=PACKET_OTHERHOST;
 	}
 	

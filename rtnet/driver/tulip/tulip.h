@@ -427,11 +427,11 @@ int tulip_interrupt(int irq, unsigned long);
 int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev);
 
 /* media.c */
-int tulip_mdio_read(struct net_device *dev, int phy_id, int location);
-void tulip_mdio_write(struct net_device *dev, int phy_id, int location, int value);
-void tulip_select_media(struct net_device *dev, int startup);
-int tulip_check_duplex(struct net_device *dev);
-void tulip_find_mii (struct net_device *dev, int board_idx);
+int tulip_mdio_read(struct rtnet_device *dev, int phy_id, int location);
+void tulip_mdio_write(struct rtnet_device *dev, int phy_id, int location, int value);
+void tulip_select_media(struct rtnet_device *dev, int startup);
+int tulip_check_duplex(struct rtnet_device *dev);
+void tulip_find_mii (struct rtnet_device *dev, int board_idx);
 
 /* pnic.c */
 void pnic_do_nway(/*RTnet*/struct rtnet_device *rtdev);

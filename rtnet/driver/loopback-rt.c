@@ -21,6 +21,7 @@
 #include <linux/kernel.h>
 
 #include <linux/netdevice.h>
+#include <linux/if_arp.h>
 
 #include <crc32.h>
 #include <rtnet.h>
@@ -60,10 +61,9 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	int err=0;
 	struct rtskb *new_skb;
-	struct net_device *dev=dev_get_by_rtdev(rtdev);
 	
 	if ( (new_skb=dev_alloc_rtskb(skb->len))==NULL ) {
-		rt_printk("RTnet %s: couldn't allocate a rtskb of size %d.\n", dev->name, skb->len);
+		rt_printk("RTnet %s: couldn't allocate a rtskb of size %d.\n", rtdev->name, skb->len);
 		return -ENOMEM;
 	}
 	else {
@@ -72,7 +72,7 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		memcpy(new_skb->buf_start, skb->buf_start, SKB_DATA_ALIGN(ETH_FRAME_LEN));
 		rtskb_put(skb, skb->len);
 		rtnetif_rx(skb);
-		dev->last_rx = jiffies;
+		//dev->last_rx = jiffies;
 	}
 	
 	return err;
@@ -84,13 +84,22 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
  */
 static int __init loopback_init(void) {
 	int err=0;
-	struct net_device *dev=&loopback_dev;
 	struct rtnet_device *rtdev;
 
 	rt_printk("initializing loopback...\n");
 	
-	if ( (rtdev=rtdev_alloc(dev))==NULL )
+	if ( (rtdev = rtdev_alloc(0))==NULL )
 		return -ENODEV;
+
+	/* We can make mtu larger, but it can cause a problem in dev_alloc_rtskb()
+	   called by rt_loopback_xmit(). rtskb's have been preallocated at module
+	   load time and the maximum size is 1500. */
+	rtdev->mtu 		= ETH_FRAME_LEN;
+	rtdev->type		= ARPHRD_LOOPBACK;
+	rtdev->hard_header_len 	= 0;
+	rtdev->addr_len		= 0;
+	
+	strcpy(rtdev->name, "lo");
 
 	rtdev->open = &rt_loopback_open;
 	rtdev->stop = &rt_loopback_close;

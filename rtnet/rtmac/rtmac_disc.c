@@ -59,7 +59,7 @@ int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc)
 
 
 	if (rtdev->rtmac) {
-		rt_printk("RTmac: another discipline for rtdev '%s' active.\n", (dev_get_by_rtdev(rtdev))->name);
+		rt_printk("RTmac: another discipline for rtdev '%s' active.\n", rtdev->name);
 		return -EBUSY;
 	}
 
@@ -114,7 +114,7 @@ int rtmac_disc_release(struct rtnet_device *rtdev)
 	}
 
 	if( !(rtdev->rtmac) ) {
-		rt_printk("RTmac: no discipline active on rtdev '%s'\n", (dev_get_by_rtdev(rtdev))->name);
+		rt_printk("RTmac: no discipline active on rtdev '%s'\n", rtdev->name);
 		return -ENODEV;
 	}
 

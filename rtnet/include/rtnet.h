@@ -25,6 +25,7 @@
 #include <rtai.h>
 #include <rtai_sched.h>
 #include <linux/in.h>
+#include <linux/netdevice.h>
 #endif /* __KERNEL__ */
 
 /* some configurables */
@@ -205,8 +206,28 @@ struct rtinet_protocol {
  *	rtnet_device 
  */
 struct rtnet_device {
+	/* Many field are borrowed from struct net_device in <linux/netdevice.h> - WY */
+	char			name[IFNAMSIZ];
+
+	unsigned long		rmem_end;	/* shmem "recv" end	*/
+	unsigned long		rmem_start;	/* shmem "recv" start	*/
+	unsigned long		mem_end;	/* shared mem end	*/
+	unsigned long		mem_start;	/* shared mem start	*/
+	unsigned long		base_addr;	/* device I/O address	*/
+	unsigned int		irq;		/* device IRQ number	*/
+
+	/*
+	 *	Some hardware also needs these fields, but they are not
+	 *	part of the usual set specified in Space.c.
+	 */
+	unsigned char		if_port;	/* Selectable AUI, TP,..*/
+	unsigned char		dma;		/* DMA channel		*/
+
+	unsigned long		state;
+	int			ifindex;
+
 	struct rtnet_device	*next;
-	struct net_device	*dev;
+	struct net_device	*ldev;		/* can be used by rtnetproxy */
 
 	struct module		*owner;
 
@@ -216,7 +237,24 @@ struct rtnet_device {
 
 	SEM			txsem;		/* tx-Semaphore		*/
 	struct rtskb_head	rxqueue;	/* rx-queue		*/
+
+	unsigned short		flags;	/* interface flags (a la BSD)	*/
+	unsigned short		gflags;
 	unsigned int		mtu;		/* eth = 1536, tr = 4... */
+	unsigned short		type;		/* interface hardware type	*/
+	unsigned short		hard_header_len;	/* hardware hdr length	*/
+	void			*priv;		/* pointer to private data	*/
+	int			features;	/* NETIF_F_* */
+
+	/* Interface address info. */
+	unsigned char		broadcast[MAX_ADDR_LEN];	/* hw bcast add	*/
+	unsigned char		dev_addr[MAX_ADDR_LEN];	/* hw address	*/
+	unsigned char		addr_len;	/* hardware address length	*/
+
+	struct dev_mc_list	*mc_list;	/* Multicast mac addresses	*/
+	int			mc_count;	/* Number of installed mcasts	*/
+	int			promiscuity;
+	int			allmulti;
 
 	MBX			*stack_mbx;
 	MBX			*rtdev_mbx;
@@ -490,15 +528,17 @@ extern void rtnetif_err_tx(struct rtnet_device *rtdev);
 /****************************************************************************************
  * dev.c										*
  ****************************************************************************************/
-extern rwlock_t rtdev_base_lock;
-extern struct rtnet_device *rtdev_base;
+extern struct rtnet_device *rtnet_devices;
+extern rwlock_t rtnet_devices_lock;
+
 extern struct rtpacket_type *rt_packets[];
 
 extern void rtdev_add_pack(struct rtpacket_type *pt);
 extern void rtdev_remove_pack(struct rtpacket_type *pt);
 
-extern void rtdev_alloc_name (struct rtnet_device *rtdev, char *name_mask);
-extern struct rtnet_device *rtdev_alloc(struct net_device *dev);
+extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
+extern int rtdev_new_index(void);
+extern struct rtnet_device *rtdev_alloc(int sizeof_priv);
 extern void rtdev_free(struct rtnet_device *rtdev);
 
 #define dev_get_by_rtdev(rtdev)	(rtdev->dev)

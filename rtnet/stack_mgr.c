@@ -91,7 +91,8 @@ static void do_stacktask(int mgr_id)
 
         rt_printk("RTnet: stack-mgr started\n");
         while(1) {
-                rt_mbx_receive(&(mgr->mbx), &msg, sizeof(struct rtnet_msg));
+		rt_mbx_receive(&(mgr->mbx), &msg, sizeof(struct rtnet_msg));
+		
                 if ( (msg.rtdev) && (msg.msg_type==Rx_PACKET) ) {
 			while ( !rtskb_queue_empty(&msg.rtdev->rxqueue) ) {
 	                        struct rtskb *skb = rtskb_dequeue(&msg.rtdev->rxqueue);
@@ -165,7 +166,7 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 		return ret;
 	if ( (ret=rt_task_resume(&(mgr->task))) )
 		return ret;
-
+		
 	return (ret);
 }
 
@@ -179,7 +180,6 @@ void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
 	rt_task_suspend(&(mgr->task));
 	rt_task_delete(&(mgr->task));
 	rt_mbx_delete(&(mgr->mbx));
-
 }
 
 

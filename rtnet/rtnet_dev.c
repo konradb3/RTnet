@@ -67,14 +67,14 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 
 				rtdev->local_addr = cfg.ip_addr;
 				rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
-				rt_arp_table_add(cfg.ip_addr, dev_get_by_rtdev(rtdev)->dev_addr);
-				rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, dev_get_by_rtdev(rtdev)->broadcast);
+				rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
+				rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
 			}
 		} else {
 			rtdev->local_addr = cfg.ip_addr;
 			rt_ip_route_add(rtdev, cfg.ip_netaddr, cfg.ip_mask);
-			rt_arp_table_add(cfg.ip_addr, rtdev->dev->dev_addr);
-			rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, dev_get_by_rtdev(rtdev)->broadcast);
+			rt_arp_table_add(cfg.ip_addr, rtdev->dev_addr);
+			rt_ip_route_add_specific(rtdev, cfg.ip_broadcast, rtdev->broadcast);
 
 		}
 		return 0;
@@ -86,7 +86,7 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		 * FIXME: if mac exists shut mac down, then device...
 		 */
 		if( rtdev->rtmac ) {
-			rt_printk("rtnet: rtmac is active on dev %s, cannot shut down\n", dev_get_by_rtdev(rtdev)->name);
+			rt_printk("rtnet: rtmac is active on dev %s, cannot shut down\n", rtdev->name);
 			return -ENOTTY;
 		}
 		rt_ip_route_del(rtdev);

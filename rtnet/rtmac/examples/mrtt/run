@@ -1,0 +1,51 @@
+#!/bin/sh
+
+CFG=/etc/rtnet.conf
+
+if [ ! -r $CFG ]; then
+	echo "Could not read $CFG"
+	exit 1
+fi
+
+. $CFG
+
+dir=`dirname $0`
+
+usage() {
+	cat << EOF
+Usage:
+	run <broadcast-ip> [options...]
+	run stop
+options:
+	cycle=<us>
+EOF
+}
+
+action=help
+test "$1" && action=$1
+
+if [ "$action" != "help" ]; then
+	test $# -ge 1 || { usage; exit 1; }
+	ip=$1
+	shift 1
+	options="$*"
+fi
+
+case "$action" in
+    help)
+	usage
+	exit 1
+	;;
+
+    stop)
+	killall showtime > /dev/null 2>&1
+	rmmod -r rt_client > /dev/null 2>&1
+	rmmod -r rt_server rtai_fifos > /dev/null 2>&1
+	;;
+
+    *)
+	modprobe rtai_fifos
+	insmod $dir/rt_client.o local_ip_s=$IPADDR broadcast_ip_s=$ip $options
+	$dir/showtime
+	rmmod -r rt_client rtai_fifos
+esac

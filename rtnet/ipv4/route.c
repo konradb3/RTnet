@@ -26,7 +26,7 @@
  *
  *		ROUTE - implementation of the IP router.
  *
- * Version:	$Id: route.c,v 1.3 2003/05/09 12:27:33 hpbock Exp $
+ * Version:	$Id: route.c,v 1.4 2003/05/16 19:31:52 hpbock Exp $
  *
  * Authors:	Ross Biro, <bir7@leland.Stanford.Edu>
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
@@ -121,7 +121,7 @@ static int rt_route_read_proc(char *page, char **start, off_t off, int count, in
 		union { unsigned long l; unsigned char c[4]; } src, dst, dst_mask;
 		unsigned char *hw_dst;
 		char dev_name[IFNAMSIZ+1];
-		strncpy(dev_name, rt_entry->rt_dev->dev->name, IFNAMSIZ);
+		strncpy(dev_name, rt_entry->rt_dev->name, IFNAMSIZ);
 		dev_name[IFNAMSIZ] = '\0';
 		
 		src.l=rt_entry->rt_src;
@@ -251,7 +251,7 @@ struct rt_rtable *rt_ip_route_add_specific(struct rtnet_device *rtdev, u32 addr,
 	rt->rt_dst_mask=0xffffffff;	/* it's specific, safer */
 	rt->rt_src=rtdev->local_addr;
 	rt->rt_dev=rtdev;
-	rt->rt_ifindex=dev_get_by_rtdev(rtdev)->ifindex;
+	rt->rt_ifindex=rtdev->ifindex;
 	
 	memcpy(rt->rt_dst_mac_addr, hw_addr, RT_ARP_ADDR_LEN);
 
@@ -413,7 +413,7 @@ route:
 	rt->rt_dst_mask=0xffffffff;	/* it's specific, safer */
 	rt->rt_src=daddr;
 	rt->rt_dev=rtdev;
-	rt->rt_ifindex=dev_get_by_rtdev(rtdev)->ifindex;
+	rt->rt_ifindex=rtdev->ifindex;
 	
 	memcpy(rt->rt_dst_mac_addr,skb->mac.ethernet->h_source,RT_ARP_ADDR_LEN);
 
@@ -438,14 +438,19 @@ route:
 static struct rtnet_device *rt_ip_dev_find(u32 saddr)
 {
 	if (!saddr)
-		return rtdev_base;
+		return rtnet_devices;
 	else {
 		struct rtnet_device *rtdev;
+		unsigned long flags;
 	
-		for (rtdev=rtdev_base; rtdev!=NULL; rtdev=rtdev->next) {
-			if (saddr==rtdev->local_addr)
+		flags = rt_spin_lock_irqsave(&rtnet_devices_lock);
+		for (rtdev=rtnet_devices; rtdev!=NULL; rtdev=rtdev->next) {
+		    if (saddr==rtdev->local_addr) {
+			    rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
 				return rtdev;
+		    }
 		}
+		rt_spin_unlock_irqrestore(flags, &rtnet_devices_lock);
 		rt_printk("RTnet: rt_ip_dev_find() returning NULL\n");
 		return NULL;
 	}

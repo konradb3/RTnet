@@ -30,7 +30,7 @@ static void endme (int dummy) { end = 1; }
 int main(int argc,char *argv[])
 {
         int cmd0;
-        union {unsigned long long l; unsigned char c[8];} rx_time, tx_time;
+        union {unsigned long long l; unsigned char c[8];} t[2];
 	unsigned int rtmin = -1, rtmax = 0, rtrip; /* -1 is the maximum value of an unsigned variable */
 
         signal (SIGINT, endme);
@@ -43,16 +43,14 @@ int main(int argc,char *argv[])
 
 
         while(!end) {
-                read (cmd0, rx_time.c, sizeof (unsigned long long));
-                read (cmd0, tx_time.c, sizeof (unsigned long long));
+                if (read (cmd0, t, 2 * sizeof (unsigned long long))
+                    != 2*sizeof(unsigned long long))
+                    break;
 		
-		rtrip = (unsigned int) ((rx_time.l-tx_time.l) / 1000);
+		rtrip = (unsigned int) ((t[0].l-t[1].l) / 1000);
 		if (rtmin > rtrip) rtmin = rtrip;
 		if (rtmax < rtrip) rtmax = rtrip;
 		fprintf (stdout, "Roundtrip = %3uus (min: %3uus, max: %3uus)\n", rtrip, rtmin, rtmax);
-
-		rx_time.l=0;
-		tx_time.l=0;
         }
 
         return 0;

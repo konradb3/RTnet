@@ -108,6 +108,7 @@ struct rtmac_tdma {
 	unsigned char			station;
 	struct rt_arp_table_struct	*master;
 	struct timer_list		client_sent_ack_timer;
+	RTIME				delta_t; /* different between master and client clock in ns. */
 
 	/*** non realtime discipline stuff ***/
 	//struct list_head		nrt_list;
@@ -274,15 +275,14 @@ static inline int list_len(struct list_head *list)
 
 static inline struct rtskb *tdma_make_msg_len(struct rtnet_device *rtdev, void *daddr, TDMA_EVENT event, unsigned int data_len, void **data)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	struct rtskb *skb;
-	unsigned int packet_len = 60 + 2 + dev->hard_header_len;
+	unsigned int packet_len = 60 + 2 + rtdev->hard_header_len;
 
 	struct rtmac_hdr *rtmac_ptr;
 	struct tdma_hdr *tdma_ptr;
 
 	if (daddr == NULL) 
-		daddr = dev->broadcast;
+		daddr = rtdev->broadcast;
 	
 	/*
 	 * allocate packet
@@ -291,7 +291,7 @@ static inline struct rtskb *tdma_make_msg_len(struct rtnet_device *rtdev, void *
 	if (!skb) 
 		return NULL;
 
-	rtskb_reserve(skb, (dev->hard_header_len+15) & ~15);
+	rtskb_reserve(skb, (rtdev->hard_header_len+15) & ~15);
 
 	/*
 	 * give values to the skb and setup header...
@@ -299,7 +299,7 @@ static inline struct rtskb *tdma_make_msg_len(struct rtnet_device *rtdev, void *
 	skb->rtdev = rtdev;
 	skb->protocol = __constant_htons(ETH_RTMAC); // FIXME: needed?
 
-	if(rtdev->hard_header && rtdev->hard_header(skb, rtdev, ETH_RTMAC, daddr, dev->dev_addr, skb->len) < 0)
+	if(rtdev->hard_header && rtdev->hard_header(skb, rtdev, ETH_RTMAC, daddr, rtdev->dev_addr, skb->len) < 0)
 		goto out;
 
 	/*
@@ -330,10 +330,23 @@ static inline struct rtskb *tdma_make_msg(struct rtnet_device *rtdev, void *dadd
 	return tdma_make_msg_len(rtdev, daddr, event, 60-14, data);	//note: dev->hard_header_len == 14
 }
 
+static inline int tdma_wait_sof(struct rtmac_tdma *tdma)
+{
+	return (rt_sem_wait(&tdma->client_tx) != 0xFFFF) ? 0 : -1;
+}
 
+static inline RTIME tdma_get_delta_t(struct rtmac_tdma *tdma)
+{
+	return tdma->delta_t;
+}
 
-
-
+static inline struct rtmac_tdma *tdma_get_by_name(const char *name)
+{
+	struct rtnet_device *rtdev = rtdev = rtdev_get_by_name(name);
+	if (rtdev && rtdev->rtmac && rtdev->rtmac->priv)
+		return (struct rtmac_tdma *) rtdev->rtmac->priv;
+	return NULL;
+}
 
 
 

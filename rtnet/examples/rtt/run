@@ -1,0 +1,65 @@
+#!/bin/sh
+
+CFG=/etc/rtnet.conf
+
+if [ ! -r $CFG ]; then
+	echo "Could not read $CFG"
+	exit 1
+fi
+
+. $CFG
+
+dir=`dirname $0`
+
+usage() {
+	cat << EOF
+Usage:
+	run server <client-ip> [options...]
+	run client <server-ip> [options...]
+	run clientp <server-ip> [options...]
+	run stop
+EOF
+}
+
+action=help
+test "$1" && action=$1
+
+case "$action" in
+    server|client|clientp)
+	test $# -ge 2 || { usage; exit 1; }
+	ip=$2
+	shift 2
+	options="$*"
+esac
+
+case "$action" in
+    server)
+	modprobe rtai_fifos
+	insmod $dir/rt_server.o local_ip_s=$IPADDR client_ip_s=$ip $options
+	;;
+
+    client)
+	modprobe rtai_fifos
+	insmod $dir/rt_client.o local_ip_s=$IPADDR server_ip_s=$ip $options
+	$dir/showtime
+	rmmod -r rt_client
+	;;
+
+    clientp)
+	modprobe rtai_fifos
+	insmod $dir/rt_client_parport.o local_ip_s=$IPADDR server_ip_s=$ip $options
+	$dir/showtime
+	rmmod -r rt_client
+	;;
+
+    stop)
+	killall showtime > /dev/null 2>&1
+	rmmod -r rt_client > /dev/null 2>&1
+	rmmod -r rt_client_parport > /dev/null 2>&1
+	rmmod -r rt_server > /dev/null 2>&1
+	;;
+
+    *)
+	usage
+	exit 1
+esac

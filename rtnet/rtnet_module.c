@@ -24,6 +24,7 @@
 #ifdef CONFIG_PROC_FS
 #include <linux/stat.h>
 #include <linux/proc_fs.h>
+#include <linux/netdevice.h>
 #endif
 
 #include <rtai.h>
@@ -46,15 +47,26 @@ struct rtnet_mgr RTDEV_manager;
  */
 #ifdef CONFIG_PROC_FS
 static int rtnet_mgr_read_proc (char *page, char **start,
-                                 off_t off, int count, int *eof, void *data)
+				off_t off, int count, int *eof, void *data)
 {
-        PROC_PRINT_VARS;
-        PROC_PRINT("\nRTnet\n\n"
-		   "rtskbpool low/high water mark: %d / %d \n"
+	PROC_PRINT_VARS;
+	struct rtnet_device *rtdev;
+	
+	PROC_PRINT("\nRTnet\n\n");
+	PROC_PRINT("Devices:\n");
+	for (rtdev = rtnet_devices; rtdev; rtdev = rtdev->next) {
+		PROC_PRINT("  %s: %s rxq=%d\n",
+			   rtdev->name,
+			   (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
+			   rtskb_queue_len(&rtdev->rxqueue));
+	}
+
+        PROC_PRINT("rtskbpool low/high water mark: %d / %d \n"
 		   "rtskbs in pool/allocated/max: %d / %d / %d\n\n",
 		   rtskb_pool_min, rtskb_pool_max,
 		   rtskb_pool.qlen, rtskb_amount, rtskb_amount_max);
-        PROC_PRINT_DONE;
+	
+	PROC_PRINT_DONE;
 }
 
 static int rtnet_mgr_proc_register(void)

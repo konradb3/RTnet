@@ -882,6 +882,8 @@ static int tdma_master_request_up(struct rtmac_tdma *tdma)
 		return -1;
 	}
 
+	tdma_next_state(tdma, TDMA_MASTER_SENT_CONF);
+
 	/*
 	 * send config request to every station
 	 */
@@ -905,8 +907,6 @@ static int tdma_master_request_up(struct rtmac_tdma *tdma)
 	 * after timeout we will look if all station acknoleged our request
 	 */
 	tdma_timer_start_sent_conf(tdma, TDMA_SENT_CLIENT_CONF_TIMEOUT);
-
-	tdma_next_state(tdma, TDMA_MASTER_SENT_CONF);
 
 	return ret;
 }
@@ -1031,7 +1031,7 @@ static void tdma_expired_master_sent_test(struct rtmac_tdma *tdma)
 		/*
 		 * have we received _all_ acks for our test packes? 
 		 */
-		if (rt_entry->state == RT_RCVD_TEST && rt_entry->counter == max) {
+		if (rt_entry->state == RT_RCVD_TEST && rt_entry->counter >= max-1) {
 			rt_printk("RTmac: tdma: station %d, IP %u.%u.%u.%u, max rtt %d us\n",
 				  rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr), (rt_entry->rtt+500)/1000);
 
@@ -1282,8 +1282,17 @@ static void tdma_client_rcvd_change_offset(struct rtmac_tdma *tdma, struct rtskb
 static void tdma_rcvd_sof(struct rtmac_tdma *tdma, struct rtskb *skb)
 {
 	tdma->wakeup = skb->rx + tdma->offset;
+	tdma->delta_t = *(RTIME *)(skb->data) - count2nano(skb->rx);
 	
-	rt_sem_signal(&tdma->client_tx);
+	/* rt_sem_broadcast() will wake up all tasks, which are waiting
+	   for SOF, inclusive tdma_task_client. This allows application
+	   softwares to do some tasks when SOF arrives.
+
+	   NOTE: rt_sem_broadcast() does not unlock the semaphore. It just
+	   wakes up all tasks that are, at the moment, waiting on the sempahore.
+	   -WY-
+	 */
+	rt_sem_broadcast(&tdma->client_tx);
 }
 
 

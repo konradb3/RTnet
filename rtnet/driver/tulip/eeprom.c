@@ -78,12 +78,11 @@ static const char *block_name[] __devinitdata = {
 
 void __devinit tulip_parse_eeprom(/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = rtdev->dev;
 	/* The last media info list parsed, for multiport boards.  */
 	static struct mediatable *last_mediatable;
 	static unsigned char *last_ee_data;
 	static int controller_index;
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	unsigned char *ee_data = tp->eeprom;
 	int i;
 
@@ -98,35 +97,35 @@ void __devinit tulip_parse_eeprom(/*RTnet*/struct rtnet_device *rtdev)
 			if (last_mediatable) {
 				controller_index++;
 				/*RTnet*/rt_printk(KERN_INFO "%s:  Controller %d of multiport board.\n",
-					   dev->name, controller_index);
+					   rtdev->name, controller_index);
 				tp->mtable = last_mediatable;
 				ee_data = last_ee_data;
 				goto subsequent_board;
 			} else
 				/*RTnet*/rt_printk(KERN_INFO "%s:  Missing EEPROM, this interface may "
 					   "not work correctly!\n",
-			   dev->name);
+			   rtdev->name);
 			return;
 		}
 	  /* Do a fix-up based on the vendor half of the station address prefix. */
 	  for (i = 0; eeprom_fixups[i].name; i++) {
-		if (dev->dev_addr[0] == eeprom_fixups[i].addr0
-			&&  dev->dev_addr[1] == eeprom_fixups[i].addr1
-			&&  dev->dev_addr[2] == eeprom_fixups[i].addr2) {
-		  if (dev->dev_addr[2] == 0xE8  &&  ee_data[0x1a] == 0x55)
+		if (rtdev->dev_addr[0] == eeprom_fixups[i].addr0
+			&&  rtdev->dev_addr[1] == eeprom_fixups[i].addr1
+			&&  rtdev->dev_addr[2] == eeprom_fixups[i].addr2) {
+		  if (rtdev->dev_addr[2] == 0xE8  &&  ee_data[0x1a] == 0x55)
 			  i++;			/* An Accton EN1207, not an outlaw Maxtech. */
 		  memcpy(ee_data + 26, eeprom_fixups[i].newtable,
 				 sizeof(eeprom_fixups[i].newtable));
 		  /*RTnet*/rt_printk(KERN_INFO "%s: Old format EEPROM on '%s' board.  Using"
 				 " substitute media control info.\n",
-				 dev->name, eeprom_fixups[i].name);
+				 rtdev->name, eeprom_fixups[i].name);
 		  break;
 		}
 	  }
 	  if (eeprom_fixups[i].name == NULL) { /* No fixup found. */
 		  /*RTnet*/rt_printk(KERN_INFO "%s: Old style EEPROM with no media selection "
 				 "information.\n",
-			   dev->name);
+			   rtdev->name);
 		return;
 	  }
 	}
@@ -145,7 +144,7 @@ subsequent_board:
 		p += 3;
 
 		/*RTnet*/rt_printk(KERN_INFO "%s: 21041 Media table, default media %4.4x (%s).\n",
-			   dev->name, media,
+			   rtdev->name, media,
 			   media & 0x0800 ? "Autosense" : medianame[media & MEDIA_MASK]);
 		for (i = 0; i < count; i++) {
 			unsigned char media_block = *p++;
@@ -153,7 +152,7 @@ subsequent_board:
 			if (media_block & 0x40)
 				p += 6;
 			/*RTnet*/rt_printk(KERN_INFO "%s:  21041 media #%d, %s.\n",
-				   dev->name, media_code, medianame[media_code]);
+				   rtdev->name, media_code, medianame[media_code]);
 		}
 	} else {
 		unsigned char *p = (void *)ee_data + ee_data[27];
@@ -170,7 +169,7 @@ subsequent_board:
 	        /* there is no phy information, don't even try to build mtable */
 	        if (count == 0) {
 			if (tulip_debug > 0)
-				/*RTnet*/rt_printk(KERN_WARNING "%s: no phy info, aborting mtable build\n", dev->name);
+				/*RTnet*/rt_printk(KERN_WARNING "%s: no phy info, aborting mtable build\n", rtdev->name);
 		        return;
 		}
 
@@ -185,7 +184,7 @@ subsequent_board:
 		mtable->has_nonmii = mtable->has_mii = mtable->has_reset = 0;
 		mtable->csr15dir = mtable->csr15val = 0;
 
-		/*RTnet*/rt_printk(KERN_INFO "%s:  EEPROM default media type %s.\n", dev->name,
+		/*RTnet*/rt_printk(KERN_INFO "%s:  EEPROM default media type %s.\n", rtdev->name,
 			   media & 0x0800 ? "Autosense" : medianame[media & MEDIA_MASK]);
 		for (i = 0; i < count; i++) {
 			struct medialeaf *leaf = &mtable->mleaf[i];
@@ -251,12 +250,12 @@ subsequent_board:
 				unsigned char *bp = leaf->leafdata;
 				/*RTnet*/rt_printk(KERN_INFO "%s:  MII interface PHY %d, setup/reset "
 					   "sequences %d/%d long, capabilities %2.2x %2.2x.\n",
-					   dev->name, bp[0], bp[1], bp[2 + bp[1]*2],
+					   rtdev->name, bp[0], bp[1], bp[2 + bp[1]*2],
 					   bp[5 + bp[2 + bp[1]*2]*2], bp[4 + bp[2 + bp[1]*2]*2]);
 			}
 			/*RTnet*/rt_printk(KERN_INFO "%s:  Index #%d - Media %s (#%d) described "
 				   "by a %s (%d) block.\n",
-				   dev->name, i, medianame[leaf->media & 15], leaf->media,
+				   rtdev->name, i, medianame[leaf->media & 15], leaf->media,
 				   leaf->type < ARRAY_SIZE(block_name) ? block_name[leaf->type] : "<unknown>",
 				   leaf->type);
 		}

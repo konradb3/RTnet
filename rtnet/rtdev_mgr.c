@@ -57,7 +57,7 @@ static void do_rtdev_task(int mgr_id)
 	while (1) {
 		rt_mbx_receive(&(mgr->mbx), &msg, sizeof(struct rtnet_msg));
 		if (msg.rtdev) {
-			rt_printk("RTnet: error on rtdev %s\n", (dev_get_by_rtdev(msg.rtdev))->name);
+			rt_printk("RTnet: error on rtdev %s\n", msg.rtdev->name);
 		}	
 	}
 }

@@ -22,12 +22,16 @@
 #include <linux/if.h>
 #include <linux/netdevice.h>
 
+#include <rtai.h>
+#include <rtai_sched.h>
+
 #include <rtnet.h>
 #include <rtnet_internal.h>
 
-rwlock_t rtdev_base_lock = RW_LOCK_UNLOCKED;
-struct rtnet_device *rtdev_base;
+struct rtnet_device *rtnet_devices = NULL;
+rwlock_t rtnet_devices_lock = RW_LOCK_UNLOCKED;
 struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
+
 
 
 
@@ -77,22 +81,27 @@ void rtdev_remove_pack(struct rtpacket_type *pt)
  *	@name: name to find
  *
  *	Find an rt-interface by name. 
- *	Remeber: We are searching in the rtdev_base-list, because 
- *	we want to use linux-network's also.
  */
+static inline struct rtnet_device *__rtdev_get_by_name(const char *name)
+{	
+	struct rtnet_device *rtdev;
+
+	for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
+		if ( strncmp(rtdev->name, name, IFNAMSIZ) == 0 ) {
+			return rtdev;
+		}
+	}
+	return NULL;
+}
+
 struct rtnet_device *rtdev_get_by_name(const char *name)
 {	
 	struct rtnet_device *rtdev;
 
-	read_lock(&rtdev_base_lock);
-	for (rtdev=rtdev_base; rtdev; rtdev=rtdev->next) {
-		if ( !(strncmp(dev_get_by_rtdev(rtdev)->name, name, IFNAMSIZ)) ) {
-			read_unlock(&rtdev_base_lock);
-			return rtdev;
-		}
-	}
-	read_unlock(&rtdev_base_lock);
-	return NULL;
+	read_lock(&rtnet_devices_lock);
+	rtdev = __rtdev_get_by_name(name);
+	read_unlock(&rtnet_devices_lock);
+	return rtdev;
 }
 
 
@@ -102,23 +111,40 @@ struct rtnet_device *rtdev_get_by_name(const char *name)
  *	@ifindex: index of device
  *
  *	Search for an rt-interface by index.
- *	Remeber: We are searching in the rtdev_base-list, because 
- *	we want to use linux-network's also.
  */
+static inline struct rtnet_device *__rtdev_get_by_index(int ifindex)
+{
+	struct rtnet_device *rtdev;
+
+	for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
+		if ( rtdev->ifindex == ifindex ) {
+			return rtdev;
+		}
+	}
+	return NULL;
+}
+
 struct rtnet_device *rtdev_get_by_index(int ifindex)
 {
 	struct rtnet_device *rtdev;
 
-	read_lock(&rtdev_base_lock);
-	for (rtdev=rtdev_base; rtdev; rtdev=rtdev->next) {
-		if ( dev_get_by_rtdev(rtdev)->ifindex==ifindex ) {
-			read_unlock(&rtdev_base_lock);
-			return rtdev;
-		}
-	}
-	read_unlock(&rtdev_base_lock);
-	return NULL;
+	read_lock(&rtnet_devices_lock);
+	rtdev = __rtdev_get_by_index(ifindex);
+	read_unlock(&rtnet_devices_lock);
+	return rtdev;
 }
+
+int rtdev_new_index(void)
+{
+    static int ifindex;
+    for (;;) {
+	if (++ifindex <= 0)
+	    ifindex = 1;
+	if (__rtdev_get_by_index(ifindex) == NULL)
+	    return ifindex;
+    }
+}
+
 
 
 
@@ -127,22 +153,27 @@ struct rtnet_device *rtdev_get_by_index(int ifindex)
  *	@dev: linked linux-device of rtnet_device
  *
  *	Search for an rt-interface by index.
- *	Remeber: We are searching in the rtdev_base-list, because 
- *	we want to use linux-network's also.
  */
+static inline struct rtnet_device *__rtdev_get_by_dev(struct net_device *dev)
+{
+	struct rtnet_device * rtdev;
+
+	for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
+		if ( rtdev->ldev==dev ) {
+			return rtdev;
+		}
+	}
+	return NULL;
+}
+
 struct rtnet_device *rtdev_get_by_dev(struct net_device *dev)
 {
 	struct rtnet_device * rtdev;
 
-	read_lock(&rtdev_base_lock);
-	for (rtdev=rtdev_base; rtdev; rtdev=rtdev->next) {
-		if ( dev_get_by_rtdev(rtdev)==dev ) {
-			read_unlock(&rtdev_base_lock);
-			return rtdev;
-		}
-	}
-	read_unlock(&rtdev_base_lock);
-	return NULL;
+	read_lock(&rtnet_devices_lock);
+	rtdev = __rtdev_get_by_dev(dev);
+	read_unlock(&rtnet_devices_lock);
+	return rtdev;
 }
 
 
@@ -155,20 +186,27 @@ struct rtnet_device *rtdev_get_by_dev(struct net_device *dev)
  *	Remeber: We are searching in the rtdev_base-list, because 
  *	we want to use linux-network's also.
  */
+static inline struct rtnet_device *__rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
+{
+	struct rtnet_device * rtdev;
+
+	for(rtdev=rtnet_devices;rtdev;rtdev=rtdev->next){
+		if ( rtdev->type == type && 
+		     !memcmp(rtdev->dev_addr, hw_addr, rtdev->addr_len) ) {
+			return rtdev;
+		}
+	}
+	return NULL;
+}
+
 struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
 {
 	struct rtnet_device * rtdev;
 
-	read_lock(&rtdev_base_lock);
-	for(rtdev=rtdev_base;rtdev;rtdev=rtdev->next){
-		if ( (dev_get_by_rtdev(rtdev)->type==type) && 
-		     (!memcmp(dev_get_by_rtdev(rtdev)->dev_addr, hw_addr, dev_get_by_rtdev(rtdev)->addr_len)) ) {
-			read_unlock(&rtdev_base_lock);
-			return rtdev;
-		}
-	}
-	read_unlock(&rtdev_base_lock);
-	return NULL;
+	read_lock(&rtnet_devices_lock);
+	rtdev = __rtdev_get_by_hwaddr(type, hw_addr);
+	read_unlock(&rtnet_devices_lock);
+	return rtdev;
 }
 
 
@@ -184,10 +222,18 @@ struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
  *	Because we don't know the type of the rtnet_device 
  *      (may be tokenring or ethernet). 
  */
-void rtdev_alloc_name (struct rtnet_device *rtdev, char *name_mask)
+void rtdev_alloc_name(struct rtnet_device *rtdev, const char *mask)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	dev_alloc_name(dev, name_mask);
+    char buf[IFNAMSIZ];
+    int i;
+
+    for (i=0; i < 100; i++) {
+	snprintf(buf, IFNAMSIZ, mask, i);
+	if (__rtdev_get_by_name(buf) == NULL) {
+	    strncpy(rtdev->name, buf, IFNAMSIZ);
+	    break;
+	}
+    }
 }
 
 
@@ -199,27 +245,29 @@ void rtdev_alloc_name (struct rtnet_device *rtdev, char *name_mask)
  *
  *	allocate memory for a new rt-network-adapter
  */
-struct rtnet_device *rtdev_alloc(struct net_device *dev)
+struct rtnet_device *rtdev_alloc(int sizeof_priv)
 {
 	struct rtnet_device *rtdev;
+	int alloc_size;
 
-	if ( !(rtdev=kmalloc(sizeof(struct rtnet_device), GFP_KERNEL)) ) {
-		rt_printk("RTnet: cannot allocate rt-ethernet device\n");
-		kfree(dev);
+	/* ensure 32-byte alignment of the private area */
+	alloc_size = sizeof (*rtdev) + sizeof_priv + 31;
+
+	rtdev = (struct rtnet_device *) kmalloc (alloc_size, GFP_KERNEL);
+	if (rtdev == NULL) {
+		printk(KERN_ERR "RTnet: cannot allocate rtnet device\n");
 		return NULL;
 	}
-	memset(rtdev, 0, sizeof(struct rtnet_device));
-
-	/* set dev-link */
-	rtdev->dev=dev;
-
-	/* insert in rtdev-list */
-	rtdev->next=rtdev_base;
-	rtdev_base=rtdev;
 	
+	memset(rtdev, 0, alloc_size);
+
+	if (sizeof_priv)
+		rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
+
 	rt_sem_init(&(rtdev->txsem), 1);
 	rtskb_queue_head_init(&(rtdev->rxqueue));
 	rt_printk("rtdev: allocated and initialized\n");
+
 	return rtdev;
 }
 
@@ -231,16 +279,9 @@ struct rtnet_device *rtdev_alloc(struct net_device *dev)
 void rtdev_free (struct rtnet_device *rtdev) 
 {
 	if (rtdev!=NULL) {
-		struct net_device *dev = dev_get_by_rtdev(rtdev);
 		rt_sem_delete(&(rtdev->txsem));
 		rtdev->stack_mbx=NULL;
 		rtdev->rtdev_mbx=NULL;
-
-		if (dev!=NULL) {
-			if (dev->priv!=NULL)
-				kfree(dev->priv);
-			kfree(dev);
-		}
 		kfree(rtdev);
 	}
 }
@@ -254,18 +295,17 @@ void rtdev_free (struct rtnet_device *rtdev)
  */
 int rtdev_open(struct rtnet_device *rtdev)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	int ret = 0;
 	
-	if (dev->flags & IFF_UP)		/* Is it already up?			*/ 
+	if (rtdev->flags & IFF_UP)		/* Is it already up?			*/ 
 		return 0;	
 
 	if (rtdev->open) 			/* Call device private open method	*/
   		ret = rtdev->open(rtdev);
 
 	if ( !ret )  {
-		dev->flags |= (IFF_UP | IFF_RUNNING);
-		set_bit(__LINK_STATE_START, &dev->state);
+		rtdev->flags |= (IFF_UP | IFF_RUNNING);
+		set_bit(__LINK_STATE_START, &rtdev->state);
 #if 0
 		dev_mc_upload(dev);		/* Initialize multicasting status	*/
 #endif
@@ -280,17 +320,16 @@ int rtdev_open(struct rtnet_device *rtdev)
  */
 int rtdev_close(struct rtnet_device *rtdev)
 {
-	struct net_device *dev=dev_get_by_rtdev(rtdev);
 	int ret = 0;
+
+	if ( !(rtdev->flags & IFF_UP) )
+		return 0;
 
 	if (rtdev->stop)
 		ret = rtdev->stop(rtdev);
 
-	if ( !(dev->flags & IFF_UP) )
-		return 0;
-
-	dev->flags&=~(IFF_UP|IFF_RUNNING);
-	clear_bit(__LINK_STATE_START, &dev->state);
+	rtdev->flags &= ~(IFF_UP|IFF_RUNNING);
+	clear_bit(__LINK_STATE_START, &rtdev->state);
 
 	return ret;
 }

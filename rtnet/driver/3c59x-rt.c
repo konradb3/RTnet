@@ -777,7 +777,7 @@ struct vortex_private {
 	struct rtskb *rx_skbuff[RX_RING_SIZE];
 	// *** RTnet ***
     
-	struct net_device *next_module;		/* NULL if PCI device */
+	struct rtnet_device *next_module;		/* NULL if PCI device */
 	unsigned int cur_rx, cur_tx;		/* The next free ring entry */
 	unsigned int dirty_rx, dirty_tx;	/* The ring entries to be free()ed. */
 	struct net_device_stats stats;
@@ -854,12 +854,12 @@ static struct media_table {
 
 static int vortex_probe1(struct pci_dev *pdev, long ioaddr, int irq,
 				   int chip_idx, int card_idx);
-static void vortex_up(struct net_device *dev);
-static void vortex_down(struct net_device *dev);
+static void vortex_up(struct rtnet_device *rtdev);
+static void vortex_down(struct rtnet_device *rtdev);
 static int vortex_open(struct rtnet_device *rtdev);
 static void mdio_sync(long ioaddr, int bits);
-static int mdio_read(struct net_device *dev, int phy_id, int location);
-static void mdio_write(struct net_device *vp, int phy_id, int location, int value);
+static int mdio_read(struct rtnet_device *rtdev, int phy_id, int location);
+static void mdio_write(struct rtnet_device *vp, int phy_id, int location, int value);
 
 // *** RTnet ***
 //static void vortex_timer(unsigned long arg);
@@ -880,14 +880,14 @@ static void dump_tx_ring(struct rtnet_device *rtdev);
 //static struct net_device_stats *vortex_get_stats(struct net_device *dev);
 // *** RTnet ***
 
-static void set_rx_mode(struct net_device *dev);
+static void set_rx_mode(struct rtnet_device *rtdev);
 
 // *** RTnet ***
 //static int vortex_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 //static void vortex_tx_timeout(struct net_device *dev);
 // *** RTnet ***
 
-static void acpi_set_WOL(struct net_device *dev);
+static void acpi_set_WOL(struct rtnet_device *rtdev);
 
 /* This driver uses 'options' to pass the media type, full-duplex flag, etc. */
 /* Option count limit only -- unlimited interfaces are supported. */
@@ -901,7 +901,7 @@ static int enable_wol[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 /* #define dev_alloc_skb dev_alloc_skb_debug */
 
 /* A list of all installed Vortex EISA devices, for removing the driver module. */
-static struct net_device *root_vortex_eisa_dev;
+static struct rtnet_device *root_vortex_eisa_dev;
 
 /* Variables to work-around the Compaq PCI BIOS32 problem. */
 // *** RTnet ***
@@ -1029,7 +1029,6 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	int option;
 	unsigned int eeprom[0x40], checksum = 0;		/* EEPROM contents */
 	int i, step;
-	struct net_device *dev;
 	static int printed_version;
 	int retval, print_info;
 	struct vortex_chip_info * const vci = &vortex_info_tbl[chip_idx];
@@ -1051,22 +1050,21 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 		printk (KERN_ERR PFX "unable to allocate etherdev, aborting\n");
 		goto out;
 	}
-	rtdev_alloc_name(rtdev, "eth%d");
-	dev = dev_get_by_rtdev(rtdev);
-	memset(dev->priv, 0, sizeof(*vp));
+	//rtdev_alloc_name(rtdev, "eth%d"); //Done by register_rtdev()
+	memset(rtdev->priv, 0, sizeof(*vp));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
 	// *** RTnet ***
     
-	vp = dev->priv;
+	vp = rtdev->priv;
 
 	/* The lower four bits are the media type. */
-	if (dev->mem_start) {
+	if (rtdev->mem_start) {
 		/*
 		 * The 'options' param is passed in as the third arg to the
 		 * LILO 'ether=' argument for non-modular use
 		 */
-		option = dev->mem_start;
+		option = rtdev->mem_start;
 	}
 	else if (card_idx < MAX_UNITS)
 		option = options[card_idx];
@@ -1092,9 +1090,9 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	       vci->name,
 	       ioaddr);
 
-	dev->base_addr = ioaddr;
-	dev->irq = irq;
-	dev->mtu = mtu;
+	rtdev->base_addr = ioaddr;
+	rtdev->irq = irq;
+	rtdev->mtu = mtu;
 	vp->drv_flags = vci->drv_flags;
 	vp->has_nway = (vci->drv_flags & HAS_NWAY) ? 1 : 0;
 	vp->io_size = vci->io_size;
@@ -1103,7 +1101,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	/* module list only for EISA devices */
 	if (pdev == NULL) {
 		vp->next_module = root_vortex_eisa_dev;
-		root_vortex_eisa_dev = dev;
+		root_vortex_eisa_dev = rtdev;
 	}
 
 	/* PCI-only startup logic */
@@ -1210,25 +1208,25 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	if ((checksum != 0x00) && !(vci->drv_flags & IS_TORNADO))
 		printk(" ***INVALID CHECKSUM %4.4x*** ", checksum);
 	for (i = 0; i < 3; i++)
-		((u16 *)dev->dev_addr)[i] = htons(eeprom[i + 10]);
+		((u16 *)rtdev->dev_addr)[i] = htons(eeprom[i + 10]);
 	if (print_info) {
 		for (i = 0; i < 6; i++)
-			printk("%c%2.2x", i ? ':' : ' ', dev->dev_addr[i]);
+			printk("%c%2.2x", i ? ':' : ' ', rtdev->dev_addr[i]);
 	}
 	EL3WINDOW(2);
 	for (i = 0; i < 6; i++)
-		outb(dev->dev_addr[i], ioaddr + i);
+		outb(rtdev->dev_addr[i], ioaddr + i);
 
 #ifdef __sparc__
 	if (print_info)
-		printk(", IRQ %s\n", __irq_itoa(dev->irq));
+		printk(", IRQ %s\n", __irq_itoa(rtdev->irq));
 #else
 	if (print_info)
-		printk(", IRQ %d\n", dev->irq);
+		printk(", IRQ %d\n", rtdev->irq);
 	/* Tell them about an invalid IRQ. */
-	if (dev->irq <= 0 || dev->irq >= NR_IRQS)
+	if (rtdev->irq <= 0 || rtdev->irq >= NR_IRQS)
 		printk(KERN_WARNING " *** Warning: IRQ %d is unlikely to work! ***\n",
-			   dev->irq);
+			   rtdev->irq);
 #endif
 
 	EL3WINDOW(4);
@@ -1305,16 +1303,16 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 		printk(KERN_INFO "%s:  Media override to transceiver type %d (%s).\n",
 				print_name, vp->media_override,
 				media_tbl[vp->media_override].name);
-		dev->if_port = vp->media_override;
+		rtdev->if_port = vp->media_override;
 	} else
-		dev->if_port = vp->default_media;
+		rtdev->if_port = vp->default_media;
 
-	if (dev->if_port == XCVR_MII || dev->if_port == XCVR_NWAY) {
+	if (rtdev->if_port == XCVR_MII || rtdev->if_port == XCVR_NWAY) {
 		int phy, phy_idx = 0;
 		EL3WINDOW(4);
 		mii_preamble_required++;
 		mii_preamble_required++;
-		mdio_read(dev, 24, 1);
+		mdio_read(rtdev, 24, 1);
 		for (phy = 0; phy < 32 && phy_idx < 1; phy++) {
 			int mii_status, phyx;
 
@@ -1328,7 +1326,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 				phyx = phy - 1;
 			else
 				phyx = phy;
-			mii_status = mdio_read(dev, phyx, 1);
+			mii_status = mdio_read(rtdev, phyx, 1);
 			if (mii_status  &&  mii_status != 0xffff) {
 				vp->phys[phy_idx++] = phyx;
 				if (print_info) {
@@ -1344,11 +1342,11 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 			printk(KERN_WARNING"  ***WARNING*** No MII transceivers found!\n");
 			vp->phys[0] = 24;
 		} else {
-			vp->advertising = mdio_read(dev, vp->phys[0], 4);
+			vp->advertising = mdio_read(rtdev, vp->phys[0], 4);
 			if (vp->full_duplex) {
 				/* Only advertise the FD media types. */
 				vp->advertising &= ~0x02A0;
-				mdio_write(dev, vp->phys[0], 4, vp->advertising);
+				mdio_write(rtdev, vp->phys[0], 4, vp->advertising);
 			}
 		}
 	}
@@ -1369,10 +1367,10 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	if (vp->full_bus_master_tx) {
 		rtdev->hard_start_xmit = boomerang_start_xmit;
 		/* Actually, it still should work with iommu. */
-		dev->features |= NETIF_F_SG;
+		rtdev->features |= NETIF_F_SG;
 		if (((hw_checksums[card_idx] == -1) && (vp->drv_flags & HAS_HWCKSM)) ||
 					(hw_checksums[card_idx] == 1)) {
-				dev->features |= NETIF_F_IP_CSUM;
+				rtdev->features |= NETIF_F_IP_CSUM;
 		}
 	} else {
 		rtdev->hard_start_xmit = vortex_start_xmit;
@@ -1381,13 +1379,12 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	if (print_info) {
 		printk(KERN_INFO "%s: scatter/gather %sabled. h/w checksums %sabled\n",
 				print_name,
-				(dev->features & NETIF_F_SG) ? "en":"dis",
-				(dev->features & NETIF_F_IP_CSUM) ? "en":"dis");
+				(rtdev->features & NETIF_F_SG) ? "en":"dis",
+				(rtdev->features & NETIF_F_IP_CSUM) ? "en":"dis");
 	}
 
 	rtdev->stop = vortex_close;
     rtdev->hard_header = &rt_eth_header;
-	dev->do_ioctl = NULL;
 	retval = rt_register_rtnetdev(rtdev);
     if (retval)
     {
@@ -1407,35 +1404,35 @@ free_ring:
 free_region:
 	if (vp->must_free_region)
 		release_region(ioaddr, vci->io_size);
-	kfree (dev);
+	rtdev_free (rtdev);
 	printk(KERN_ERR PFX "vortex_probe1 fails.  Returns %d\n", retval);
 out:
 	return retval;
 }
 
 static void
-issue_and_wait(struct net_device *dev, int cmd)
+issue_and_wait(struct rtnet_device *rtdev, int cmd)
 {
 	int i;
 
-	outw(cmd, dev->base_addr + EL3_CMD);
+	outw(cmd, rtdev->base_addr + EL3_CMD);
 	for (i = 0; i < 2000; i++) {
-		if (!(inw(dev->base_addr + EL3_STATUS) & CmdInProgress))
+		if (!(inw(rtdev->base_addr + EL3_STATUS) & CmdInProgress))
 			return;
 	}
 
 	/* OK, that didn't work.  Do it the slow way.  One second */
 	for (i = 0; i < 100000; i++) {
-		if (!(inw(dev->base_addr + EL3_STATUS) & CmdInProgress)) {
+		if (!(inw(rtdev->base_addr + EL3_STATUS) & CmdInProgress)) {
 			if (vortex_debug > 1)
 				rt_printk(KERN_INFO "%s: command 0x%04x took %d usecs\n",
-					   dev->name, cmd, i * 10);
+					   rtdev->name, cmd, i * 10);
 			return;
 		}
 		udelay(10);
 	}
 	rt_printk(KERN_ERR "%s: command 0x%04x did not complete! Status=0x%x\n",
-			   dev->name, cmd, inw(dev->base_addr + EL3_STATUS));
+			   rtdev->name, cmd, inw(rtdev->base_addr + EL3_STATUS));
 }
 
 #if 0
@@ -1467,11 +1464,10 @@ rt_issue_and_wait(struct rtnet_device *rtdev, int cmd)
 #endif
 
 static void
-vortex_up(struct net_device *dev)
+vortex_up(struct rtnet_device *rtdev)
 {
-	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
-	long ioaddr = dev->base_addr;
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	long ioaddr = rtdev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	unsigned int config;
 	int i;
 
@@ -1486,57 +1482,57 @@ vortex_up(struct net_device *dev)
 
 	if (vp->media_override != 7) {
 		printk(KERN_INFO "%s: Media override to transceiver %d (%s).\n",
-			   dev->name, vp->media_override,
+			   rtdev->name, vp->media_override,
 			   media_tbl[vp->media_override].name);
-		dev->if_port = vp->media_override;
+		rtdev->if_port = vp->media_override;
 	} else if (vp->autoselect) {
 		if (vp->has_nway) {
 			if (vortex_debug > 1)
 				printk(KERN_INFO "%s: using NWAY device table, not %d\n",
-								dev->name, dev->if_port);
-			dev->if_port = XCVR_NWAY;
+								rtdev->name, rtdev->if_port);
+			rtdev->if_port = XCVR_NWAY;
 		} else {
 			/* Find first available media type, starting with 100baseTx. */
-			dev->if_port = XCVR_100baseTx;
-			while (! (vp->available_media & media_tbl[dev->if_port].mask))
-				dev->if_port = media_tbl[dev->if_port].next;
+			rtdev->if_port = XCVR_100baseTx;
+			while (! (vp->available_media & media_tbl[rtdev->if_port].mask))
+				rtdev->if_port = media_tbl[rtdev->if_port].next;
 			if (vortex_debug > 1)
 				printk(KERN_INFO "%s: first available media type: %s\n",
-					dev->name, media_tbl[dev->if_port].name);
+					rtdev->name, media_tbl[rtdev->if_port].name);
 		}
 	} else {
-		dev->if_port = vp->default_media;
+		rtdev->if_port = vp->default_media;
 		if (vortex_debug > 1)
 			printk(KERN_INFO "%s: using default media %s\n",
-				dev->name, media_tbl[dev->if_port].name);
+				rtdev->name, media_tbl[rtdev->if_port].name);
 	}
 
 	init_timer(&vp->timer);
-	vp->timer.expires = RUN_AT(media_tbl[dev->if_port].wait);
-	vp->timer.data = (unsigned long)dev;
+	vp->timer.expires = RUN_AT(media_tbl[rtdev->if_port].wait);
+	vp->timer.data = (unsigned long)rtdev;
 	// *** RTnet  vp->timer.function = vortex_timer;		/* timer handler */
 	// *** RTnet  add_timer(&vp->timer);
 
 	init_timer(&vp->rx_oom_timer);
-	vp->rx_oom_timer.data = (unsigned long)dev;
+	vp->rx_oom_timer.data = (unsigned long)rtdev;
 	// **** RTnet *** vp->rx_oom_timer.function = rx_oom_timer;
 
 	if (vortex_debug > 1)
 		printk(KERN_DEBUG "%s: Initial media type %s.\n",
-			   dev->name, media_tbl[dev->if_port].name);
+			   rtdev->name, media_tbl[rtdev->if_port].name);
 
 	vp->full_duplex = vp->force_fd;
-	config = BFINS(config, dev->if_port, 20, 4);
+	config = BFINS(config, rtdev->if_port, 20, 4);
 	if (vortex_debug > 6)
 		printk(KERN_DEBUG "vortex_up(): writing 0x%x to InternalConfig\n", config);
 	outl(config, ioaddr + Wn3_Config);
 
-	if (dev->if_port == XCVR_MII || dev->if_port == XCVR_NWAY) {
+	if (rtdev->if_port == XCVR_MII || rtdev->if_port == XCVR_NWAY) {
 		int mii_reg1, mii_reg5;
 		EL3WINDOW(4);
 		/* Read BMSR (reg1) only to clear old status. */
-		mii_reg1 = mdio_read(dev, vp->phys[0], 1);
-		mii_reg5 = mdio_read(dev, vp->phys[0], 5);
+		mii_reg1 = mdio_read(rtdev, vp->phys[0], 1);
+		mii_reg5 = mdio_read(rtdev, vp->phys[0], 5);
 		if (mii_reg5 == 0xffff  ||  mii_reg5 == 0x0000)
 			;					/* No MII device or no link partner report */
 		else if ((mii_reg5 & 0x0100) != 0	/* 100baseTx-FD */
@@ -1546,7 +1542,7 @@ vortex_up(struct net_device *dev)
 		if (vortex_debug > 1)
 			printk(KERN_INFO "%s: MII #%d status %4.4x, link partner capability %4.4x,"
 				   " info1 %04x, setting %s-duplex.\n",
-					dev->name, vp->phys[0],
+					rtdev->name, vp->phys[0],
 					mii_reg1, mii_reg5,
 					vp->info1, ((vp->info1 & 0x8000) || vp->full_duplex) ? "full" : "half");
 		EL3WINDOW(3);
@@ -1554,33 +1550,33 @@ vortex_up(struct net_device *dev)
 
 	/* Set the full-duplex bit. */
 	outw(	((vp->info1 & 0x8000) || vp->full_duplex ? 0x20 : 0) |
-		 	(dev->mtu > 1500 ? 0x40 : 0) |
+		 	(rtdev->mtu > 1500 ? 0x40 : 0) |
 			((vp->full_duplex && vp->flow_ctrl && vp->partner_flow_ctrl) ? 0x100 : 0),
 			ioaddr + Wn3_MAC_Ctrl);
 
 	if (vortex_debug > 1) {
 		printk(KERN_DEBUG "%s: vortex_up() InternalConfig %8.8x.\n",
-			dev->name, config);
+			rtdev->name, config);
 	}
 
-	issue_and_wait(dev, TxReset);
+	issue_and_wait(rtdev, TxReset);
 	/*
 	 * Don't reset the PHY - that upsets autonegotiation during DHCP operations.
 	 */
-	issue_and_wait(dev, RxReset|0x04);
+	issue_and_wait(rtdev, RxReset|0x04);
 
 	outw(SetStatusEnb | 0x00, ioaddr + EL3_CMD);
 
 	if (vortex_debug > 1) {
 		EL3WINDOW(4);
 		printk(KERN_DEBUG "%s: vortex_up() irq %d media status %4.4x.\n",
-			   dev->name, dev->irq, inw(ioaddr + Wn4_Media));
+			   rtdev->name, rtdev->irq, inw(ioaddr + Wn4_Media));
 	}
 
 	/* Set the station address and mask in window 2 each time opened. */
 	EL3WINDOW(2);
 	for (i = 0; i < 6; i++)
-		outb(dev->dev_addr[i], ioaddr + i);
+		outb(rtdev->dev_addr[i], ioaddr + i);
 	for (; i < 12; i+=2)
 		outw(0, ioaddr + i);
 
@@ -1593,13 +1589,13 @@ vortex_up(struct net_device *dev)
 		outw(n, ioaddr + Wn2_ResetOptions);
 	}
 
-	if (dev->if_port == XCVR_10base2)
+	if (rtdev->if_port == XCVR_10base2)
 		/* Start the thinnet transceiver. We should really wait 50ms...*/
 		outw(StartCoax, ioaddr + EL3_CMD);
-	if (dev->if_port != XCVR_NWAY) {
+	if (rtdev->if_port != XCVR_NWAY) {
 		EL3WINDOW(4);
 		outw((inw(ioaddr + Wn4_Media) & ~(Media_10TP|Media_SQE)) |
-			 media_tbl[dev->if_port].media_bits, ioaddr + Wn4_Media);
+			 media_tbl[rtdev->if_port].media_bits, ioaddr + Wn4_Media);
 	}
 
 	/* Switch to the stats window, and clear all stats by reading. */
@@ -1637,7 +1633,7 @@ vortex_up(struct net_device *dev)
 		outl(0, ioaddr + DownListPtr);
 	}
 	/* Set receiver mode: presumably accept b-case and phys addr only. */
-	set_rx_mode(dev);
+	set_rx_mode(rtdev);
 	outw(StatsEnable, ioaddr + EL3_CMD); /* Turn on statistics. */
 
 //	issue_and_wait(dev, SetTxStart|0x07ff);
@@ -1754,7 +1750,7 @@ vortex_rt_up(struct rtnet_device *rtdev)
 
 	/* Set the full-duplex bit. */
 	outw(	((vp->info1 & 0x8000) || vp->full_duplex ? 0x20 : 0) |
-		 	(dev->mtu > 1500 ? 0x40 : 0) |
+		 	(rtdev->mtu > 1500 ? 0x40 : 0) |
 			((vp->full_duplex && vp->flow_ctrl && vp->partner_flow_ctrl) ? 0x100 : 0),
 			ioaddr + Wn3_MAC_Ctrl);
 
@@ -1866,29 +1862,26 @@ vortex_rt_up(struct rtnet_device *rtdev)
 static int
 vortex_open(struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	int i;
 	int retval;
 
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	if ((retval = rt_request_global_irq_ext(dev->irq, 
+	if ((retval = rt_request_global_irq_ext(rtdev->irq, 
                                 (void (*)(void))(vp->full_bus_master_rx ?
 				                   boomerang_interrupt : vortex_interrupt), 
                                 (unsigned long)rtdev))) {
-		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", dev->name, dev->irq);
+		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", rtdev->name, rtdev->irq);
 		goto out;
 	}
-	rt_startup_irq(dev->irq);
+	rt_startup_irq(rtdev->irq);
 	// *** RTnet ***
 
 	if (vp->full_bus_master_rx) { /* Boomerang bus master. */
 		if (vortex_debug > 2)
-			printk(KERN_DEBUG "%s:  Filling in the Rx ring.\n", dev->name);
+			printk(KERN_DEBUG "%s:  Filling in the Rx ring.\n", rtdev->name);
 		for (i = 0; i < RX_RING_SIZE; i++) {
 			struct rtskb *skb; // *** RTnet
 			vp->rx_ring[i].next = cpu_to_le32(vp->rx_ring_dma + sizeof(struct boom_rx_desc) * (i+1));
@@ -1906,7 +1899,7 @@ vortex_open(struct rtnet_device *rtdev)
 		}
 		if (i != RX_RING_SIZE) {
 			int j;
-			printk(KERN_EMERG "%s: no memory for rx ring\n", dev->name);
+			printk(KERN_EMERG "%s: no memory for rx ring\n", rtdev->name);
 			for (j = 0; j < i; j++) {
 				if (vp->rx_skbuff[j]) {
 					dev_kfree_rtskb(vp->rx_skbuff[j]);
@@ -1920,20 +1913,20 @@ vortex_open(struct rtnet_device *rtdev)
 		vp->rx_ring[i-1].next = cpu_to_le32(vp->rx_ring_dma);
 	}
 
-	vortex_up(dev);
+	vortex_up(rtdev);
 	return 0;
 
 out_free_irq:
     
 	// *** RTnet ***
-	rt_shutdown_irq(dev->irq);
-    if ( (i=rt_free_global_irq(dev->irq))<0 )
+	rt_shutdown_irq(rtdev->irq);
+    if ( (i=rt_free_global_irq(rtdev->irq))<0 )
         return i;
 	rt_stack_disconnect(rtdev);
 	// *** RTnet ***
 out:
 	if (vortex_debug > 1)
-		printk(KERN_ERR "%s: vortex_open() fails: returning %d\n", dev->name, retval);
+		printk(KERN_ERR "%s: vortex_open() fails: returning %d\n", rtdev->name, retval);
 	return retval;
 }
 
@@ -2057,7 +2050,7 @@ leave_media_alone:
 }
 #endif
 #if 0
-static void vortex_tx_timeout(struct net_device *dev)
+static void vortex_tx_timeout(struct rtnet_device *dev)
 {
 	struct vortex_private *vp = (struct vortex_private *)dev->priv;
 	long ioaddr = dev->base_addr;
@@ -2127,16 +2120,14 @@ static void vortex_tx_timeout(struct net_device *dev)
 static void
 vortex_error(struct rtnet_device *rtdev, int status)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-    
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int do_tx_reset = 0, reset_mask = 0;
 	unsigned char tx_status = 0;
     int packets=0;
 
 	if (vortex_debug > 2) {
-		rt_printk(KERN_ERR "%s: vortex_error(), status=0x%x\n", dev->name, status);
+		rt_printk(KERN_ERR "%s: vortex_error(), status=0x%x\n", rtdev->name, status);
 	}
 
 	if (status & TxComplete) {			/* Really "TxError" for us. */
@@ -2145,7 +2136,7 @@ vortex_error(struct rtnet_device *rtdev, int status)
 		if (vortex_debug > 2
 			|| (tx_status != 0x88 && vortex_debug > 0)) {
 			rt_printk(KERN_ERR "%s: Transmit error, Tx status register %2.2x.\n",
-				   dev->name, tx_status);
+				   rtdev->name, tx_status);
 			if (tx_status == 0x82) {
 				rt_printk(KERN_ERR "Probably a duplex mismatch.  See "
 						"Documentation/networking/vortex.txt\n");
@@ -2172,14 +2163,14 @@ vortex_error(struct rtnet_device *rtdev, int status)
 	if (status & StatsFull) {			/* Empty statistics. */
 		static int DoneDidThat;
 		if (vortex_debug > 4)
-			rt_printk(KERN_DEBUG "%s: Updating stats.\n", dev->name);
+			rt_printk(KERN_DEBUG "%s: Updating stats.\n", rtdev->name);
 		// *** RTnet *** update_stats(ioaddr, dev);
 		/* HACK: Disable statistics as an interrupt source. */
 		/* This occurs when we have the wrong media type! */
 		if (DoneDidThat == 0  &&
 			inw(ioaddr + EL3_STATUS) & StatsFull) {
 			rt_printk(KERN_WARNING "%s: Updating statistics failed, disabling "
-				   "stats as an interrupt source.\n", dev->name);
+				   "stats as an interrupt source.\n", rtdev->name);
 			EL3WINDOW(5);
 			outw(SetIntrEnb | (inw(ioaddr + 10) & ~StatsFull), ioaddr + EL3_CMD);
 			vp->intr_enable &= ~StatsFull;
@@ -2196,33 +2187,33 @@ vortex_error(struct rtnet_device *rtdev, int status)
 		EL3WINDOW(4);
 		fifo_diag = inw(ioaddr + Wn4_FIFODiag);
 		rt_printk(KERN_ERR "%s: Host error, FIFO diagnostic register %4.4x.\n",
-			   dev->name, fifo_diag);
+			   rtdev->name, fifo_diag);
 		/* Adapter failure requires Tx/Rx reset and reinit. */
 		if (vp->full_bus_master_tx) {
 			int bus_status = inl(ioaddr + PktStatus);
 			/* 0x80000000 PCI master abort. */
 			/* 0x40000000 PCI target abort. */
 			if (vortex_debug)
-				rt_printk(KERN_ERR "%s: PCI bus error, bus status %8.8x\n", dev->name, bus_status);
+				rt_printk(KERN_ERR "%s: PCI bus error, bus status %8.8x\n", rtdev->name, bus_status);
 
 			/* In this case, blow the card away */
-			vortex_down(dev);
-			issue_and_wait(dev, TotalReset | 0xff);
-			vortex_up(dev);		/* AKPM: bug.  vortex_up() assumes that the rx ring is full. It may not be. */
+			vortex_down(rtdev);
+			issue_and_wait(rtdev, TotalReset | 0xff);
+			vortex_up(rtdev);		/* AKPM: bug.  vortex_up() assumes that the rx ring is full. It may not be. */
 		} else if (fifo_diag & 0x0400)
 			do_tx_reset = 1;
 		if (fifo_diag & 0x3000) {
 			/* Reset Rx fifo and upload logic */
-			issue_and_wait(dev, RxReset|0x07);
+			issue_and_wait(rtdev, RxReset|0x07);
 			/* Set the Rx filter to the current state. */
-			set_rx_mode(dev);
+			set_rx_mode(rtdev);
 			outw(RxEnable, ioaddr + EL3_CMD); /* Re-enable the receiver. */
 			outw(AckIntr | HostError, ioaddr + EL3_CMD);
 		}
 	}
 
 	if (do_tx_reset) {
-		issue_and_wait(dev, TxReset|reset_mask);
+		issue_and_wait(rtdev, TxReset|reset_mask);
 		outw(TxEnable, ioaddr + EL3_CMD);
 		if (!vp->full_bus_master_tx)
 			rtnetif_wake_queue(rtdev);
@@ -2232,12 +2223,8 @@ vortex_error(struct rtnet_device *rtdev, int status)
 static int
 vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 
 	/* Put out the doubleword header... */
 	outl(skb->len, ioaddr + TX_FIFO);
@@ -2263,7 +2250,7 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		}
 	}
 
-	dev->trans_start = jiffies;
+	//rtdev->trans_start = jiffies;
 
 	/* Clear the Tx status stack. */
 	{
@@ -2274,11 +2261,11 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 			if (tx_status & 0x3C) {		/* A Tx-disabling error occurred.  */
 				if (vortex_debug > 2)
 				  printk(KERN_DEBUG "%s: Tx error, status %2.2x.\n",
-						 dev->name, tx_status);
+						 rtdev->name, tx_status);
 				if (tx_status & 0x04) vp->stats.tx_fifo_errors++;
 				if (tx_status & 0x38) vp->stats.tx_aborted_errors++;
 				if (tx_status & 0x30) {
-					issue_and_wait(dev, TxReset);
+					issue_and_wait(rtdev, TxReset);
 				}
 				outw(TxEnable, ioaddr + EL3_CMD);
 			}
@@ -2291,12 +2278,8 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 static int
 boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	/* Calculate the next Tx descriptor entry. */
 	int entry = vp->cur_tx % TX_RING_SIZE;
 	struct boom_tx_desc *prev_entry = &vp->tx_ring[(vp->cur_tx-1) % TX_RING_SIZE];
@@ -2306,13 +2289,13 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		rt_printk(KERN_DEBUG "boomerang_start_xmit()\n");
 		if (vortex_debug > 3)
 			rt_printk(KERN_DEBUG "%s: Trying to send a packet, Tx index %d.\n",
-				   dev->name, vp->cur_tx);
+				   rtdev->name, vp->cur_tx);
 	}
 
 	if (vp->cur_tx - vp->dirty_tx >= TX_RING_SIZE) {
 		if (vortex_debug > 0)
 			rt_printk(KERN_WARNING "%s: BUG! Tx Ring full, refusing to send buffer.\n",
-				   dev->name);
+				   rtdev->name);
 		rtnetif_stop_queue(rtdev);
 		return 1;
 	}
@@ -2370,7 +2353,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	// *** RTnet ***
 
 	/* Wait for the stall to complete. */
-	issue_and_wait(dev, DownStall);
+	issue_and_wait(rtdev, DownStall);
 	prev_entry->next = cpu_to_le32(vp->tx_ring_dma + entry * sizeof(struct boom_tx_desc));
 	if (inl(ioaddr + DownListPtr) == 0) {
 		outl(vp->tx_ring_dma + entry * sizeof(struct boom_tx_desc), ioaddr + DownListPtr);
@@ -2390,7 +2373,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	}
 	outw(DownUnstall, ioaddr + EL3_CMD);
 	rt_spin_unlock_irqrestore(flags, &vp->lock);
-	dev->trans_start = jiffies;
+	//rtdev->trans_start = jiffies;
 	return 0;
 }
 
@@ -2406,16 +2389,15 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	int packets = 0;
 	// *** RTnet ***
 
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr;
 	int status;
 	int work_done = max_interrupt_work;
 	
-	ioaddr = dev->base_addr;
+	ioaddr = rtdev->base_addr;
 	rt_spin_lock(&vp->lock);
 
 	status = inw(ioaddr + EL3_STATUS);
@@ -2436,12 +2418,12 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 
 	if (vortex_debug > 4)
 		rt_printk(KERN_DEBUG "%s: interrupt, status %4.4x, latency %d ticks.\n",
-			   dev->name, status, inb(ioaddr + Timer));
+			   rtdev->name, status, inb(ioaddr + Timer));
 
 	do {
 		if (vortex_debug > 5)
 				rt_printk(KERN_DEBUG "%s: In interrupt loop, status %4.4x.\n",
-					   dev->name, status);
+					   rtdev->name, status);
 		if (status & RxComplete)
 			vortex_rx(rtdev, &packets);
 
@@ -2480,7 +2462,7 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 
 		if (--work_done < 0) {
 			rt_printk(KERN_WARNING "%s: Too much work in interrupt, status "
-				   "%4.4x.\n", dev->name, status);
+				   "%4.4x.\n", rtdev->name, status);
 			/* Disable all pending interrupts. */
 			do {
 				vp->deferred |= status;
@@ -2498,7 +2480,7 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 
 	if (vortex_debug > 4)
 		rt_printk(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
-			   dev->name, status);
+			   rtdev->name, status);
 handler_exit:
 	rt_spin_unlock(&vp->lock);
 	if (packets > 0)
@@ -2515,16 +2497,15 @@ static void boomerang_interrupt(int irq, unsigned long rtdev_id)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	int packets = 0;
 	// *** RTnet ***
 
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr;
 	int status;
 	int work_done = max_interrupt_work;
 
-	ioaddr = dev->base_addr;
+	ioaddr = rtdev->base_addr;
 
 	/*
 	 * It seems dopey to put the spinlock this early, but we could race against vortex_tx_timeout
@@ -2553,11 +2534,11 @@ static void boomerang_interrupt(int irq, unsigned long rtdev_id)
 
 	if (vortex_debug > 4)
 		rt_printk(KERN_DEBUG "%s: interrupt, status %4.4x, latency %d ticks.\n",
-			   dev->name, status, inb(ioaddr + Timer));
+			   rtdev->name, status, inb(ioaddr + Timer));
 	do {
 		if (vortex_debug > 5)
 				rt_printk(KERN_DEBUG "%s: In interrupt loop, status %4.4x.\n",
-					   dev->name, status);
+					   rtdev->name, status);
 		if (status & UpComplete) {
 			outw(AckIntr | UpComplete, ioaddr + EL3_CMD);
 			if (vortex_debug > 5)
@@ -2615,7 +2596,7 @@ static void boomerang_interrupt(int irq, unsigned long rtdev_id)
 
 		if (--work_done < 0) {
 			rt_printk(KERN_WARNING "%s: Too much work in interrupt, status "
-				   "%4.4x.\n", dev->name, status);
+				   "%4.4x.\n", rtdev->name, status);
 			/* Disable all pending interrupts. */
 			do {
 				vp->deferred |= status;
@@ -2636,7 +2617,7 @@ static void boomerang_interrupt(int irq, unsigned long rtdev_id)
 
 	if (vortex_debug > 4)
 		rt_printk(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
-			   dev->name, status);
+			   rtdev->name, status);
 handler_exit:
 	rt_spin_unlock(&vp->lock);
 	if (packets > 0)
@@ -2646,9 +2627,8 @@ handler_exit:
 
 static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int i;
 	short rx_status;
 
@@ -2696,7 +2676,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 				outw(RxDiscard, ioaddr + EL3_CMD); /* Pop top Rx packet. */
 				skb->protocol = rt_eth_type_trans(skb, rtdev);
 				rtnetif_rx(skb);
-				dev->last_rx = jiffies;
+				//rtdev->last_rx = jiffies;
 				vp->stats.rx_packets++;
                 (*packets)++;
                 
@@ -2707,10 +2687,10 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 				continue;
 			} else if (vortex_debug > 0)
 				printk(KERN_NOTICE "%s: No memory to allocate a sk_buff of "
-					   "size %d.\n", dev->name, pkt_len);
+					   "size %d.\n", rtdev->name, pkt_len);
 		}
 		vp->stats.rx_dropped++;
-		issue_and_wait(dev, RxDiscard);
+		issue_and_wait(rtdev, RxDiscard);
 	}
 
 	return 0;
@@ -2719,11 +2699,9 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets)
 static int
 boomerang_rx(struct rtnet_device *rtdev, int *packets)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev); // RTnet
-    
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	int entry = vp->cur_rx % RX_RING_SIZE;
-	long ioaddr = dev->base_addr;
+	long ioaddr = rtdev->base_addr;
 	int rx_status;
 	int rx_work_limit = vp->dirty_rx + RX_RING_SIZE - vp->cur_rx;
 
@@ -2784,7 +2762,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets)
 				}
 			}
 			rtnetif_rx(skb);
-			dev->last_rx = jiffies;
+			//rtdev->last_rx = jiffies;
 			vp->stats.rx_packets++;
             (*packets)++;
 		}
@@ -2799,7 +2777,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets)
 			if (skb == NULL) {
 				static unsigned long last_jif;
 				if ((jiffies - last_jif) > 10 * HZ) {
-					rt_printk(KERN_WARNING "%s: memory shortage\n", dev->name);
+					rt_printk(KERN_WARNING "%s: memory shortage\n", rtdev->name);
 					last_jif = jiffies;
 				}
 				if ((vp->cur_rx - vp->dirty_rx) == RX_RING_SIZE)
@@ -2842,11 +2820,10 @@ rx_oom_timer(unsigned long arg)
 }
 #endif
 static void
-vortex_down(struct net_device *dev)
+vortex_down(struct rtnet_device *rtdev)
 {
-	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 
 	rtnetif_stop_queue (rtdev);
 
@@ -2860,7 +2837,7 @@ vortex_down(struct net_device *dev)
 	outw(RxDisable, ioaddr + EL3_CMD);
 	outw(TxDisable, ioaddr + EL3_CMD);
 
-	if (dev->if_port == XCVR_10base2)
+	if (rtdev->if_port == XCVR_10base2)
 		/* Turn off thinnet power.  Green! */
 		outw(StopCoax, ioaddr + EL3_CMD);
 
@@ -2874,43 +2851,42 @@ vortex_down(struct net_device *dev)
 
 	if (vp->pdev && vp->enable_wol) {
 		pci_save_state(vp->pdev, vp->power_state);
-		acpi_set_WOL(dev);
+		acpi_set_WOL(rtdev);
 	}
 }
 
 static int
 vortex_close(struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int i;
 
-	if (netif_device_present(dev))
-		vortex_down(dev);
+	// rtnet_device is always present after vortex_open was called.
+	//if (netif_device_present(dev))
+	//	vortex_down(dev);
+	vortex_down(rtdev);
 
 	if (vortex_debug > 1) {
 		printk(KERN_DEBUG"%s: vortex_close() status %4.4x, Tx status %2.2x.\n",
-			   dev->name, inw(ioaddr + EL3_STATUS), inb(ioaddr + TxStatus));
+			   rtdev->name, inw(ioaddr + EL3_STATUS), inb(ioaddr + TxStatus));
 		printk(KERN_DEBUG "%s: vortex close stats: rx_nocopy %d rx_copy %d"
 			   " tx_queued %d Rx pre-checksummed %d.\n",
-			   dev->name, vp->rx_nocopy, vp->rx_copy, vp->queued_packet, vp->rx_csumhits);
+			   rtdev->name, vp->rx_nocopy, vp->rx_copy, vp->queued_packet, vp->rx_csumhits);
 	}
 
 #if DO_ZEROCOPY
 	if (	vp->rx_csumhits &&
 			((vp->drv_flags & HAS_HWCKSM) == 0) &&
 			(hw_checksums[vp->card_idx] == -1)) {
-		printk(KERN_WARNING "%s supports hardware checksums, and we're not using them!\n", dev->name);
+		printk(KERN_WARNING "%s supports hardware checksums, and we're not using them!\n", rtdev->name);
 		printk(KERN_WARNING "Please see http://www.uow.edu.au/~andrewm/zerocopy.html\n");
 	}
 #endif
 		
 	// *** RTnet ***
-	rt_shutdown_irq(dev->irq);
-	if ( (i=rt_free_global_irq(dev->irq))<0 )
+	rt_shutdown_irq(rtdev->irq);
+	if ( (i=rt_free_global_irq(rtdev->irq))<0 )
 		return i;
 
 	rt_stack_disconnect(rtdev);
@@ -2953,10 +2929,9 @@ vortex_close(struct rtnet_device *rtdev)
 static void
 dump_tx_ring(struct rtnet_device *rtdev)   
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	if (vortex_debug > 0) {
-		struct vortex_private *vp = (struct vortex_private *)dev->priv;
-		long ioaddr = dev->base_addr;
+		struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+		long ioaddr = rtdev->base_addr;
 		
 		if (vp->full_bus_master_tx) {
 			int i;
@@ -2969,7 +2944,7 @@ dump_tx_ring(struct rtnet_device *rtdev)
 			rt_printk(KERN_ERR "  Transmit list %8.8x vs. %p.\n",
 				   inl(ioaddr + DownListPtr),
 				   &vp->tx_ring[vp->dirty_tx % TX_RING_SIZE]);
-			issue_and_wait(dev, DownStall);
+			issue_and_wait(rtdev, DownStall);
 			for (i = 0; i < TX_RING_SIZE; i++) {
 				rt_printk(KERN_ERR "  %d: @%p  length %8.8x status %8.8x\n", i,
 					   &vp->tx_ring[i],
@@ -3009,9 +2984,9 @@ static struct net_device_stats *vortex_get_stats(struct net_device *dev)
 	atomic updates with '+='.
 	*/
 #if 0
-static void update_stats(long ioaddr, struct net_device *dev)
+static void update_stats(long ioaddr, struct rtnet_device *rtdev)
 {
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	int old_window = inw(ioaddr + EL3_CMD);
 
 	if (old_window == 0xffff)	/* Chip suspended or ejected. */
@@ -3049,7 +3024,7 @@ static void update_stats(long ioaddr, struct net_device *dev)
 }
 #endif
 #if 0
-static int netdev_ethtool_ioctl(struct net_device *dev, void *useraddr)
+static int netdev_ethtool_ioctl(struct rtnet_device *rtdev, void *useraddr)
 {
 	struct vortex_private *vp = dev->priv;
 	u32 ethcmd;
@@ -3124,16 +3099,16 @@ static int vortex_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 /* Pre-Cyclone chips have no documented multicast filter, so the only
    multicast setting is to receive all multicast frames.  At least
    the chip has a very clean way to set the mode, unlike many others. */
-static void set_rx_mode(struct net_device *dev)
+static void set_rx_mode(struct rtnet_device *rtdev)
 {
-	long ioaddr = dev->base_addr;
+	long ioaddr = rtdev->base_addr;
 	int new_mode;
 
-	if (dev->flags & IFF_PROMISC) {
+	if (rtdev->flags & IFF_PROMISC) {
 		if (vortex_debug > 0)
-			printk(KERN_NOTICE "%s: Setting promiscuous mode.\n", dev->name);
+			printk(KERN_NOTICE "%s: Setting promiscuous mode.\n", rtdev->name);
 		new_mode = SetRxFilter|RxStation|RxMulticast|RxBroadcast|RxProm;
-	} else	if ((dev->mc_list)  ||  (dev->flags & IFF_ALLMULTI)) {
+	} else	if ((rtdev->mc_list)  ||  (rtdev->flags & IFF_ALLMULTI)) {
 		new_mode = SetRxFilter|RxStation|RxMulticast|RxBroadcast;
 	} else
 		new_mode = SetRxFilter | RxStation | RxBroadcast;
@@ -3173,11 +3148,11 @@ static void mdio_sync(long ioaddr, int bits)
 	}
 }
 
-static int mdio_read(struct net_device *dev, int phy_id, int location)
+static int mdio_read(struct rtnet_device *rtdev, int phy_id, int location)
 {
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	int i;
-	long ioaddr = dev->base_addr;
+	long ioaddr = rtdev->base_addr;
 	int read_cmd = (0xf6 << 10) | (phy_id << 5) | location;
 	unsigned int retval = 0;
 	long mdio_addr = ioaddr + Wn4_PhysicalMgmt;
@@ -3207,10 +3182,10 @@ static int mdio_read(struct net_device *dev, int phy_id, int location)
 	return retval & 0x20000 ? 0xffff : retval>>1 & 0xffff;
 }
 
-static void mdio_write(struct net_device *dev, int phy_id, int location, int value)
+static void mdio_write(struct rtnet_device *rtdev, int phy_id, int location, int value)
 {
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int write_cmd = 0x50020000 | (phy_id << 23) | (location << 18) | value;
 	long mdio_addr = ioaddr + Wn4_PhysicalMgmt;
 	int i;
@@ -3241,10 +3216,10 @@ static void mdio_write(struct net_device *dev, int phy_id, int location, int val
 
 /* ACPI: Advanced Configuration and Power Interface. */
 /* Set Wake-On-LAN mode and put the board into D3 (power-down) state. */
-static void acpi_set_WOL(struct net_device *dev)
+static void acpi_set_WOL(struct rtnet_device *rtdev)
 {
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 
 	/* Power up on: 1==Downloaded Filter, 2==Magic Packets, 4==Link Status. */
 	EL3WINDOW(7);
@@ -3264,16 +3239,15 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	struct vortex_private *vp;
 	// *** RTnet ***
 	struct rtnet_device *rtdev = pci_get_drvdata (pdev);
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 
 	
 
-	if (!dev) {
+	if (!rtdev) {
 		printk("vortex_remove_one called for EISA device!\n");
 		BUG();
 	}
 
-	vp = dev->priv;
+	vp = rtdev->priv;
 
 	/* AKPM: FIXME: we should have
 	 *	if (vp->cb_fn_base) iounmap(vp->cb_fn_base);
@@ -3281,7 +3255,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	 */
 	rt_unregister_rtnetdev(rtdev);
 	/* Should really use issue_and_wait() here */
-	outw(TotalReset|0x14, dev->base_addr + EL3_CMD);
+	outw(TotalReset|0x14, rtdev->base_addr + EL3_CMD);
 
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
@@ -3295,7 +3269,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 						vp->rx_ring,
 						vp->rx_ring_dma);
 	if (vp->must_free_region)
-		release_region(dev->base_addr, vp->io_size);
+		release_region(rtdev->base_addr, vp->io_size);
 	// *** RTnet ***
 	rtdev_free(rtdev);
 	// *** RTnet ***

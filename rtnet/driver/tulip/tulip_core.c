@@ -281,9 +281,8 @@ static void tulip_set_power_state (struct tulip_private *tp,
 
 static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = rtdev->dev;
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int next_tick = 3*HZ;
 	int i;
 
@@ -305,7 +304,7 @@ static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 	udelay(100);
 
 	if (tulip_debug > 1)
-		/*RTnet*/rt_printk(KERN_DEBUG "%s: tulip_up(), irq==%d.\n", dev->name, dev->irq);
+		/*RTnet*/rt_printk(KERN_DEBUG "%s: tulip_up(), irq==%d.\n", rtdev->name, rtdev->irq);
 
 	outl(tp->rx_ring_dma, ioaddr + CSR3);
 	outl(tp->tx_ring_dma, ioaddr + CSR4);
@@ -313,8 +312,8 @@ static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 	tp->dirty_rx = tp->dirty_tx = 0;
 
 	if (tp->flags & MC_HASH_ONLY) {
-		u32 addr_low = cpu_to_le32(get_unaligned((u32 *)dev->dev_addr));
-		u32 addr_high = cpu_to_le32(get_unaligned((u16 *)(dev->dev_addr+4)));
+		u32 addr_low = cpu_to_le32(get_unaligned((u32 *)rtdev->dev_addr));
+		u32 addr_high = cpu_to_le32(get_unaligned((u16 *)(rtdev->dev_addr+4)));
 		if (tp->chip_id == AX88140) {
 			outl(0, ioaddr + CSR13);
 			outl(addr_low,  ioaddr + CSR14);
@@ -328,7 +327,7 @@ static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 		}
 	} else {
 		/* This is set_rx_mode(), but without starting the transmitter. */
-		u16 *eaddrs = (u16 *)dev->dev_addr;
+		u16 *eaddrs = (u16 *)rtdev->dev_addr;
 		u16 *setup_frm = &tp->setup_frame[15*6];
 		dma_addr_t mapping;
 
@@ -353,21 +352,21 @@ static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 		tp->cur_tx++;
 	}
 
-	tp->saved_if_port = dev->if_port;
-	if (dev->if_port == 0)
-		dev->if_port = tp->default_port;
+	tp->saved_if_port = rtdev->if_port;
+	if (rtdev->if_port == 0)
+		rtdev->if_port = tp->default_port;
 
 	/* Allow selecting a default media. */
 	i = 0;
 	if (tp->mtable == NULL)
 		goto media_picked;
-	if (dev->if_port) {
-		int looking_for = tulip_media_cap[dev->if_port] & MediaIsMII ? 11 :
-			(dev->if_port == 12 ? 0 : dev->if_port);
+	if (rtdev->if_port) {
+		int looking_for = tulip_media_cap[rtdev->if_port] & MediaIsMII ? 11 :
+			(rtdev->if_port == 12 ? 0 : rtdev->if_port);
 		for (i = 0; i < tp->mtable->leafcount; i++)
 			if (tp->mtable->mleaf[i].media == looking_for) {
 				/*RTnet*/rt_printk(KERN_INFO "%s: Using user-specified media %s.\n",
-					   dev->name, medianame[dev->if_port]);
+					   rtdev->name, medianame[rtdev->if_port]);
 				goto media_picked;
 			}
 	}
@@ -376,7 +375,7 @@ static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 		for (i = 0; i < tp->mtable->leafcount; i++)
 			if (tp->mtable->mleaf[i].media == looking_for) {
 				/*RTnet*/rt_printk(KERN_INFO "%s: Using EEPROM-set media %s.\n",
-					   dev->name, medianame[looking_for]);
+					   rtdev->name, medianame[looking_for]);
 				goto media_picked;
 			}
 	}
@@ -390,17 +389,17 @@ media_picked:
 	tp->cur_index = i;
 	tp->nwayset = 0;
 
-	if (dev->if_port) {
+	if (rtdev->if_port) {
 		if (tp->chip_id == DC21143  &&
-		    (tulip_media_cap[dev->if_port] & MediaIsMII)) {
+		    (tulip_media_cap[rtdev->if_port] & MediaIsMII)) {
 			/* We must reset the media CSRs when we force-select MII mode. */
 			outl(0x0000, ioaddr + CSR13);
 			outl(0x0000, ioaddr + CSR14);
 			outl(0x0008, ioaddr + CSR15);
 		}
-		tulip_select_media(dev, 1);
+		tulip_select_media(rtdev, 1);
 	} else if (tp->chip_id == DC21041) {
-		dev->if_port = 0;
+		rtdev->if_port = 0;
 		tp->nway = tp->mediasense = 1;
 		tp->nwayset = tp->lpar = 0;
 		outl(0x00000000, ioaddr + CSR13);
@@ -414,14 +413,14 @@ media_picked:
 
 	} else if (tp->chip_id == DC21142) {
 		if (tp->mii_cnt) {
-			tulip_select_media(dev, 1);
+			tulip_select_media(rtdev, 1);
 			if (tulip_debug > 1)
 				/*RTnet*/rt_printk(KERN_INFO "%s: Using MII transceiver %d, status "
 					   "%4.4x.\n",
-					   dev->name, tp->phys[0], tulip_mdio_read(dev, tp->phys[0], 1));
+					   rtdev->name, tp->phys[0], tulip_mdio_read(rtdev, tp->phys[0], 1));
 			outl(csr6_mask_defstate, ioaddr + CSR6);
 			tp->csr6 = csr6_mask_hdcap;
-			dev->if_port = 11;
+			rtdev->if_port = 11;
 			outl(0x0000, ioaddr + CSR13);
 			outl(0x0000, ioaddr + CSR14);
 		} else
@@ -435,7 +434,7 @@ media_picked:
 		pnic2_start_nway(rtdev);
 	} else if (tp->chip_id == LC82C168  &&  ! tp->medialock) {
 		if (tp->mii_cnt) {
-			dev->if_port = 11;
+			rtdev->if_port = 11;
 			tp->csr6 = 0x814C0000 | (tp->full_duplex ? 0x0200 : 0);
 			outl(0x0001, ioaddr + CSR15);
 		} else if (inl(ioaddr + CSR5) & TPLnkPass)
@@ -450,24 +449,24 @@ media_picked:
 		}
 	} else if ((tp->chip_id == MX98713 || tp->chip_id == COMPEX9881)
 			   && ! tp->medialock) {
-		dev->if_port = 0;
+		rtdev->if_port = 0;
 		tp->csr6 = 0x01880000 | (tp->full_duplex ? 0x0200 : 0);
 		outl(0x0f370000 | inw(ioaddr + 0x80), ioaddr + 0x80);
 	} else if (tp->chip_id == MX98715 || tp->chip_id == MX98725) {
 		/* Provided by BOLO, Macronix - 12/10/1998. */
-		dev->if_port = 0;
+		rtdev->if_port = 0;
 		tp->csr6 = 0x01a80200;
 		outl(0x0f370000 | inw(ioaddr + 0x80), ioaddr + 0x80);
 		outl(0x11000 | inw(ioaddr + 0xa0), ioaddr + 0xa0);
 	} else if (tp->chip_id == COMET) {
 		/* Enable automatic Tx underrun recovery. */
 		outl(inl(ioaddr + 0x88) | 1, ioaddr + 0x88);
-		dev->if_port = tp->mii_cnt ? 11 : 0;
+		rtdev->if_port = tp->mii_cnt ? 11 : 0;
 		tp->csr6 = 0x00040000;
 	} else if (tp->chip_id == AX88140) {
 		tp->csr6 = tp->mii_cnt ? 0x00040100 : 0x00000100;
 	} else
-		tulip_select_media(dev, 1);
+		tulip_select_media(rtdev, 1);
 
 	/* Start the chip's Tx to process setup frame. */
 	tulip_stop_rxtx(tp);
@@ -483,7 +482,7 @@ media_picked:
 
 	if (tulip_debug > 2) {
 		/*RTnet*/rt_printk(KERN_DEBUG "%s: Done tulip_up(), CSR0 %8.8x, CSR5 %8.8x CSR6 %8.8x.\n",
-			   dev->name, inl(ioaddr + CSR0), inl(ioaddr + CSR5),
+			   rtdev->name, inl(ioaddr + CSR0), inl(ioaddr + CSR5),
 			   inl(ioaddr + CSR6));
 	}
 
@@ -497,20 +496,20 @@ media_picked:
 static int
 tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	int retval;
+
 	MOD_INC_USE_COUNT;
 
 	if ((retval = /*RTnet*/
-	     rt_request_global_irq_ext(dev->irq,
+	     rt_request_global_irq_ext(rtdev->irq,
 				       (void (*)(void))&tulip_interrupt,
 					(unsigned long)rtdev))) {
 		rt_printk("%s: Unable to install ISR for IRQ %d\n",
-			  dev->name,dev->irq);
+			  rtdev->name,rtdev->irq);
 		MOD_DEC_USE_COUNT;
 		return retval;
 	}
-	rt_enable_irq(dev->irq);
+	rt_enable_irq(rtdev->irq);
 
 	rt_stack_connect(rtdev, &STACK_manager);
 
@@ -527,23 +526,23 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 #if 0
 static void tulip_tx_timeout(struct net_device *dev)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	unsigned long flags;
 
 	spin_lock_irqsave (&tp->lock, flags);
 
-	if (tulip_media_cap[dev->if_port] & MediaIsMII) {
+	if (tulip_media_cap[rtdev->if_port] & MediaIsMII) {
 		/* Do nothing -- the media monitor should handle this. */
 		if (tulip_debug > 1)
 			/*RTnet*/rt_printk(KERN_WARNING "%s: Transmit timeout using MII device.\n",
-				   dev->name);
+				   rtdev->name);
 	} else if (tp->chip_id == DC21040) {
 		if ( !tp->medialock  &&  inl(ioaddr + CSR12) & 0x0002) {
-			dev->if_port = (dev->if_port == 2 ? 0 : 2);
+			rtdev->if_port = (rtdev->if_port == 2 ? 0 : 2);
 			/*RTnet*/rt_printk(KERN_INFO "%s: 21040 transmit timed out, switching to "
 				   "%s.\n",
-				   dev->name, medianame[dev->if_port]);
+				   rtdev->name, medianame[rtdev->if_port]);
 			tulip_select_media(dev, 0);
 		}
 		goto out;
@@ -552,17 +551,17 @@ static void tulip_tx_timeout(struct net_device *dev)
 
 		/*RTnet*/rt_printk(KERN_WARNING "%s: 21041 transmit timed out, status %8.8x, "
 			   "CSR12 %8.8x, CSR13 %8.8x, CSR14 %8.8x, resetting...\n",
-			   dev->name, inl(ioaddr + CSR5), csr12,
+			   rtdev->name, inl(ioaddr + CSR5), csr12,
 			   inl(ioaddr + CSR13), inl(ioaddr + CSR14));
 		tp->mediasense = 1;
 		if ( ! tp->medialock) {
-			if (dev->if_port == 1 || dev->if_port == 2)
+			if (rtdev->if_port == 1 || rtdev->if_port == 2)
 				if (csr12 & 0x0004) {
-					dev->if_port = 2 - dev->if_port;
+					rtdev->if_port = 2 - rtdev->if_port;
 				} else
-					dev->if_port = 0;
+					rtdev->if_port = 0;
 			else
-				dev->if_port = 1;
+				rtdev->if_port = 1;
 			tulip_select_media(dev, 0);
 		}
 	} else if (tp->chip_id == DC21140 || tp->chip_id == DC21142
@@ -570,7 +569,7 @@ static void tulip_tx_timeout(struct net_device *dev)
 			   || tp->chip_id == DM910X) {
 		/*RTnet*/rt_printk(KERN_WARNING "%s: 21140 transmit timed out, status %8.8x, "
 			   "SIA %8.8x %8.8x %8.8x %8.8x, resetting...\n",
-			   dev->name, inl(ioaddr + CSR5), inl(ioaddr + CSR12),
+			   rtdev->name, inl(ioaddr + CSR5), inl(ioaddr + CSR12),
 			   inl(ioaddr + CSR13), inl(ioaddr + CSR14), inl(ioaddr + CSR15));
 		if ( ! tp->medialock  &&  tp->mtable) {
 			do
@@ -584,18 +583,18 @@ static void tulip_tx_timeout(struct net_device *dev)
 			}
 			tulip_select_media(dev, 0);
 			/*RTnet*/rt_printk(KERN_WARNING "%s: transmit timed out, switching to %s "
-				   "media.\n", dev->name, medianame[dev->if_port]);
+				   "media.\n", rtdev->name, medianame[rtdev->if_port]);
 		}
 	} else if (tp->chip_id == PNIC2) {
 		/*RTnet*/rt_printk(KERN_WARNING "%s: PNIC2 transmit timed out, status %8.8x, "
 		       "CSR6/7 %8.8x / %8.8x CSR12 %8.8x, resetting...\n",
-		       dev->name, (int)inl(ioaddr + CSR5), (int)inl(ioaddr + CSR6),
+		       rtdev->name, (int)inl(ioaddr + CSR5), (int)inl(ioaddr + CSR6),
 		       (int)inl(ioaddr + CSR7), (int)inl(ioaddr + CSR12));
 	} else {
 		/*RTnet*/rt_printk(KERN_WARNING "%s: Transmit timed out, status %8.8x, CSR12 "
 			   "%8.8x, resetting...\n",
-			   dev->name, inl(ioaddr + CSR5), inl(ioaddr + CSR12));
-		dev->if_port = 0;
+			   rtdev->name, inl(ioaddr + CSR5), inl(ioaddr + CSR12));
+		rtdev->if_port = 0;
 	}
 
 #if defined(way_too_many_messages)
@@ -634,7 +633,6 @@ static void tulip_tx_timeout(struct net_device *dev)
 
 out:
 	spin_unlock_irqrestore (&tp->lock, flags);
-	dev->trans_start = jiffies;
 	/*RTnet*/rtnetif_wake_queue (dev);
 }
 #endif /* tulip_tx_timeout */
@@ -642,8 +640,7 @@ out:
 /* Initialize the Rx and Tx rings, along with various 'dev' bits. */
 static void tulip_init_ring(/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = rtdev->dev;
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	int i;
 
 	tp->susp_rx = 0;
@@ -694,8 +691,7 @@ static void tulip_init_ring(/*RTnet*/struct rtnet_device *rtdev)
 static int
 tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	int entry;
 	u32 flag;
 	dma_addr_t mapping;
@@ -742,11 +738,9 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	tp->cur_tx++;
 
 	/* Trigger an immediate transmit demand. */
-	outl(0, dev->base_addr + CSR1);
+	outl(0, rtdev->base_addr + CSR1);
 
 	rt_spin_unlock_irqrestore(eflags, &tp->lock);
-
-	dev->trans_start = jiffies;
 
 	return 0;
 }
@@ -789,9 +783,8 @@ static void tulip_clean_tx_ring(struct tulip_private *tp)
 
 static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = rtdev->dev;
-	long ioaddr = dev->base_addr;
-	struct tulip_private *tp = (struct tulip_private *) dev->priv;
+	long ioaddr = rtdev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *) rtdev->priv;
 	unsigned long flags;
 
 	/*RTnet*/ /*MUST_REMOVE*/del_timer_sync (&tp->timer);
@@ -823,7 +816,7 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 	tp->timer.data = (unsigned long)rtdev;
 	tp->timer.function = tulip_tbl[tp->chip_id].media_timer;
 
-	dev->if_port = tp->saved_if_port;
+	rtdev->if_port = tp->saved_if_port;
 
 	/* Leave the driver in snooze, not sleep, mode. */
 	tulip_set_power_state (tp, 0, 1);
@@ -832,9 +825,8 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 
 static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct net_device *dev = rtdev->dev;
-	long ioaddr = dev->base_addr;
-	struct tulip_private *tp = (struct tulip_private *) dev->priv;
+	long ioaddr = rtdev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *) rtdev->priv;
 	int i;
 
 	rtnetif_stop_queue (rtdev);
@@ -843,10 +835,10 @@ static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 
 	if (tulip_debug > 1)
 		/*RTnet*/rt_printk (KERN_DEBUG "%s: Shutting down ethercard, status was %2.2x.\n",
-			dev->name, inl (ioaddr + CSR5));
+			rtdev->name, inl (ioaddr + CSR5));
 
-	rt_disable_irq(dev->irq);
-	rt_free_global_irq (dev->irq);
+	rt_disable_irq(rtdev->irq);
+	rt_free_global_irq (rtdev->irq);
 
 	/* Free all the skbuffs in the Rx queue. */
 	for (i = 0; i < RX_RING_SIZE; i++) {
@@ -887,8 +879,8 @@ static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 #if 0 // commented so there is no compiler warning 'defined but not used'
 static struct net_device_stats *tulip_get_stats(struct net_device *dev)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 
 	if (netif_running(dev)) {
 		unsigned long flags;
@@ -907,7 +899,7 @@ static struct net_device_stats *tulip_get_stats(struct net_device *dev)
 #if 0
 static int netdev_ethtool_ioctl(/*RTnet*/struct rtnet_device *rtdev, void *useraddr)
 {
-	struct tulip_private *np = dev->priv;
+	struct tulip_private *np = rtdev->priv;
 	u32 ethcmd;
 
 	if (copy_from_user(&ethcmd, useraddr, sizeof(ethcmd)))
@@ -932,8 +924,8 @@ static int netdev_ethtool_ioctl(/*RTnet*/struct rtnet_device *rtdev, void *usera
 /* Provide ioctl() calls to examine the MII xcvr state. */
 static int private_ioctl (/*RTnet*/struct rtnet_device *rtdev, struct ifreq *rq, int cmd)
 {
-	struct tulip_private *tp = dev->priv;
-	long ioaddr = dev->base_addr;
+	struct tulip_private *tp = rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	struct mii_ioctl_data *data = (struct mii_ioctl_data *) & rq->ifr_data;
 	const unsigned int phy_idx = 0;
 	int phy = tp->phys[phy_idx] & 0x1f;
@@ -962,11 +954,11 @@ static int private_ioctl (/*RTnet*/struct rtnet_device *rtdev, struct ifreq *rq,
 			switch (regnum) {
 			case 0:
                                 if (((csr14<<5) & 0x1000) ||
-                                        (dev->if_port == 5 && tp->nwayset))
+                                        (rtdev->if_port == 5 && tp->nwayset))
                                         data->val_out = 0x1000;
                                 else
-                                        data->val_out = (tulip_media_cap[dev->if_port]&MediaIs100 ? 0x2000 : 0)
-                                                | (tulip_media_cap[dev->if_port]&MediaIsFD ? 0x0100 : 0);
+                                        data->val_out = (tulip_media_cap[rtdev->if_port]&MediaIs100 ? 0x2000 : 0)
+                                                | (tulip_media_cap[rtdev->if_port]&MediaIsFD ? 0x0100 : 0);
 				break;
 			case 1:
                                 data->val_out =
@@ -1047,7 +1039,7 @@ static int private_ioctl (/*RTnet*/struct rtnet_device *rtdev, struct ifreq *rq,
 
 static void build_setup_frame_hash(u16 *setup_frm, /*RTnet*/struct rtnet_device *rtdev)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	u16 hash_table[32];
 	struct dev_mc_list *mclist;
 	int i;
@@ -1056,7 +1048,7 @@ static void build_setup_frame_hash(u16 *setup_frm, /*RTnet*/struct rtnet_device 
 	memset(hash_table, 0, sizeof(hash_table));
 	set_bit_le(255, hash_table); 			/* Broadcast entry */
 	/* This should work on big-endian machines as well. */
-	for (i = 0, mclist = dev->mc_list; mclist && i < dev->mc_count;
+	for (i = 0, mclist = rtdev->mc_list; mclist && i < rtdev->mc_count;
 	     i++, mclist = mclist->next) {
 		int index = ether_crc_le(ETH_ALEN, mclist->dmi_addr) & 0x1ff;
 
@@ -1070,7 +1062,7 @@ static void build_setup_frame_hash(u16 *setup_frm, /*RTnet*/struct rtnet_device 
 	}
 
 	/* Fill the final entry with our physical address. */
-	eaddrs = (u16 *)dev->dev_addr;
+	eaddrs = (u16 *)rtdev->dev_addr;
 	*setup_frm++ = eaddrs[0]; *setup_frm++ = eaddrs[0];
 	*setup_frm++ = eaddrs[1]; *setup_frm++ = eaddrs[1];
 	*setup_frm++ = eaddrs[2]; *setup_frm++ = eaddrs[2];
@@ -1078,14 +1070,14 @@ static void build_setup_frame_hash(u16 *setup_frm, /*RTnet*/struct rtnet_device 
 
 static void build_setup_frame_perfect(u16 *setup_frm, /*RTnet*/struct rtnet_device *rtdev)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	struct dev_mc_list *mclist;
 	int i;
 	u16 *eaddrs;
 
 	/* We have <= 14 addresses so we can use the wonderful
 	   16 address perfect filtering of the Tulip. */
-	for (i = 0, mclist = dev->mc_list; i < dev->mc_count;
+	for (i = 0, mclist = rtdev->mc_list; i < rtdev->mc_count;
 	     i++, mclist = mclist->next) {
 		eaddrs = (u16 *)mclist->dmi_addr;
 		*setup_frm++ = *eaddrs; *setup_frm++ = *eaddrs++;
@@ -1097,7 +1089,7 @@ static void build_setup_frame_perfect(u16 *setup_frm, /*RTnet*/struct rtnet_devi
 	setup_frm = &tp->setup_frame[15*6];
 
 	/* Fill the final entry with our physical address. */
-	eaddrs = (u16 *)dev->dev_addr;
+	eaddrs = (u16 *)rtdev->dev_addr;
 	*setup_frm++ = eaddrs[0]; *setup_frm++ = eaddrs[0];
 	*setup_frm++ = eaddrs[1]; *setup_frm++ = eaddrs[1];
 	*setup_frm++ = eaddrs[2]; *setup_frm++ = eaddrs[2];
@@ -1106,19 +1098,19 @@ static void build_setup_frame_perfect(u16 *setup_frm, /*RTnet*/struct rtnet_devi
 
 static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 {
-	struct tulip_private *tp = (struct tulip_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int csr6;
 
 	csr6 = inl(ioaddr + CSR6) & ~0x00D5;
 
 	tp->csr6 &= ~0x00D5;
-	if (dev->flags & IFF_PROMISC) {			/* Set promiscuous. */
+	if (rtdev->flags & IFF_PROMISC) {			/* Set promiscuous. */
 		tp->csr6 |= AcceptAllMulticast | AcceptAllPhys;
 		csr6 |= AcceptAllMulticast | AcceptAllPhys;
 		/* Unconditionally log net taps. */
-		/*RTnet*/rt_printk(KERN_INFO "%s: Promiscuous mode enabled.\n", dev->name);
-	} else if ((dev->mc_count > 1000)  ||  (dev->flags & IFF_ALLMULTI)) {
+		/*RTnet*/rt_printk(KERN_INFO "%s: Promiscuous mode enabled.\n", rtdev->name);
+	} else if ((rtdev->mc_count > 1000)  ||  (rtdev->flags & IFF_ALLMULTI)) {
 		/* Too many to filter well -- accept all multicasts. */
 		tp->csr6 |= AcceptAllMulticast;
 		csr6 |= AcceptAllMulticast;
@@ -1127,13 +1119,13 @@ static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 		/* Should verify correctness on big-endian/__powerpc__ */
 		struct dev_mc_list *mclist;
 		int i;
-		if (dev->mc_count > 64) {		/* Arbitrary non-effective limit. */
+		if (rtdev->mc_count > 64) {		/* Arbitrary non-effective limit. */
 			tp->csr6 |= AcceptAllMulticast;
 			csr6 |= AcceptAllMulticast;
 		} else {
 			u32 mc_filter[2] = {0, 0};		 /* Multicast hash filter */
 			int filterbit;
-			for (i = 0, mclist = dev->mc_list; mclist && i < dev->mc_count;
+			for (i = 0, mclist = rtdev->mc_list; mclist && i < rtdev->mc_count;
 				 i++, mclist = mclist->next) {
 				if (tp->flags & COMET_MAC_ADDR)
 					filterbit = ether_crc_le(ETH_ALEN, mclist->dmi_addr);
@@ -1143,7 +1135,7 @@ static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 				mc_filter[filterbit >> 5] |= cpu_to_le32(1 << (filterbit & 31));
 				if (tulip_debug > 2) {
 					/*RTnet*/rt_printk(KERN_INFO "%s: Added filter for %2.2x:%2.2x:%2.2x:"
-						   "%2.2x:%2.2x:%2.2x  %8.8x bit %d.\n", dev->name,
+						   "%2.2x:%2.2x:%2.2x  %8.8x bit %d.\n", rtdev->name,
 						   mclist->dmi_addr[0], mclist->dmi_addr[1],
 						   mclist->dmi_addr[2], mclist->dmi_addr[3],
 						   mclist->dmi_addr[4], mclist->dmi_addr[5],
@@ -1170,7 +1162,7 @@ static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 
 		/* Note that only the low-address shortword of setup_frame is valid!
 		   The values are doubled for big-endian architectures. */
-		if (dev->mc_count > 14) { /* Must use a multicast hash table. */
+		if (rtdev->mc_count > 14) { /* Must use a multicast hash table. */
 			build_setup_frame_hash(tp->setup_frame, dev);
 		} else {
 			build_setup_frame_perfect(tp->setup_frame, dev);
@@ -1233,7 +1225,7 @@ static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 static void __devinit tulip_mwi_config (struct pci_dev *pdev,
 					struct net_device *dev)
 {
-	struct tulip_private *tp = dev->priv;
+	struct tulip_private *tp = rtdev->priv;
 	u8 cache;
 	u16 pci_command;
 	u32 csr0;
@@ -1325,7 +1317,6 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	unsigned short sum;
 	u8 ee_data[EEPROM_SIZE];
 	/*RTnet*/struct rtnet_device *rtdev;
-	struct net_device *dev;
 	long ioaddr;
 	static int board_idx = -1;
 	int chip_idx = ent->driver_data;
@@ -1428,8 +1419,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 		/*RTnet*/rt_printk (KERN_ERR PFX "ether device alloc failed, aborting\n");
 		return -ENOMEM;
 	}
-	rtdev_alloc_name(rtdev, "eth%d");
-	dev=dev_get_by_rtdev(rtdev);
+	//rtdev_alloc_name(rtdev, "eth%d");//Done by register_rtdev()
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
 
@@ -1459,7 +1449,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	 * initialize private data structure 'tp'
 	 * it is zeroed and aligned in alloc_etherdev
 	 */
-	tp = dev->priv;
+	tp = rtdev->priv;
 
 	tp->rx_ring = pci_alloc_consistent(pdev,
 					   sizeof(struct tulip_rx_desc) * RX_RING_SIZE +
@@ -1482,8 +1472,8 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	tp->timer.data = (unsigned long)rtdev;
 	tp->timer.function = tulip_tbl[tp->chip_id].media_timer;
 
-	dev->base_addr = ioaddr;
-	dev->irq = irq;
+	rtdev->base_addr = ioaddr;
+	rtdev->irq = irq;
 
 #ifdef CONFIG_TULIP_MWI
 	if (!force_csr0 && (tp->flags & HAS_PCI_MWI))
@@ -1523,7 +1513,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 			do
 				value = inl(ioaddr + CSR9);
 			while (value < 0  && --boguscnt > 0);
-			dev->dev_addr[i] = value;
+			rtdev->dev_addr[i] = value;
 			sum += value & 0xff;
 		}
 	} else if (chip_idx == LC82C168) {
@@ -1533,15 +1523,15 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 			do
 				value = inl(ioaddr + CSR9);
 			while (value < 0  && --boguscnt > 0);
-			put_unaligned(le16_to_cpu(value), ((u16*)dev->dev_addr) + i);
+			put_unaligned(le16_to_cpu(value), ((u16*)rtdev->dev_addr) + i);
 			sum += value & 0xffff;
 		}
 	} else if (chip_idx == COMET) {
 		/* No need to read the EEPROM. */
-		put_unaligned(inl(ioaddr + 0xA4), (u32 *)dev->dev_addr);
-		put_unaligned(inl(ioaddr + 0xA8), (u16 *)(dev->dev_addr + 4));
+		put_unaligned(inl(ioaddr + 0xA4), (u32 *)rtdev->dev_addr);
+		put_unaligned(inl(ioaddr + 0xA8), (u16 *)(rtdev->dev_addr + 4));
 		for (i = 0; i < 6; i ++)
-			sum += dev->dev_addr[i];
+			sum += rtdev->dev_addr[i];
 	} else {
 		/* A serial EEPROM interface, we read now and sort it out later. */
 		int sa_offset = 0;
@@ -1588,17 +1578,17 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
                }
 #endif
 		for (i = 0; i < 6; i ++) {
-			dev->dev_addr[i] = ee_data[i + sa_offset];
+			rtdev->dev_addr[i] = ee_data[i + sa_offset];
 			sum += ee_data[i + sa_offset];
 		}
 	}
 	/* Lite-On boards have the address byte-swapped. */
-	if ((dev->dev_addr[0] == 0xA0  ||  dev->dev_addr[0] == 0xC0)
-		&&  dev->dev_addr[1] == 0x00)
+	if ((rtdev->dev_addr[0] == 0xA0  ||  rtdev->dev_addr[0] == 0xC0)
+		&&  rtdev->dev_addr[1] == 0x00)
 		for (i = 0; i < 6; i+=2) {
-			char tmp = dev->dev_addr[i];
-			dev->dev_addr[i] = dev->dev_addr[i+1];
-			dev->dev_addr[i+1] = tmp;
+			char tmp = rtdev->dev_addr[i];
+			rtdev->dev_addr[i] = rtdev->dev_addr[i+1];
+			rtdev->dev_addr[i+1] = tmp;
 		}
 	/* On the Zynx 315 Etherarray and other multiport boards only the
 	   first Tulip has an EEPROM.
@@ -1613,13 +1603,13 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 #endif
 		eeprom_missing = 1;
 		for (i = 0; i < 5; i++)
-			dev->dev_addr[i] = last_phys_addr[i];
-		dev->dev_addr[i] = last_phys_addr[i] + 1;
+			rtdev->dev_addr[i] = last_phys_addr[i];
+		rtdev->dev_addr[i] = last_phys_addr[i] + 1;
 #if defined(__sparc__)
 		if ((pcp != NULL) && prom_getproplen(pcp->prom_node,
 			"local-mac-address") == 6) {
 			prom_getproperty(pcp->prom_node, "local-mac-address",
-			    dev->dev_addr, 6);
+			    rtdev->dev_addr, 6);
 		}
 #endif
 #if defined(__i386__)		/* Patch up x86 BIOS bug. */
@@ -1629,7 +1619,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	}
 
 	for (i = 0; i < 6; i++)
-		last_phys_addr[i] = dev->dev_addr[i];
+		last_phys_addr[i] = rtdev->dev_addr[i];
 	last_irq = irq;
 
 	/* The lower four bits are the media type. */
@@ -1639,10 +1629,10 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 		if ((options[board_idx] & FullDuplex) || full_duplex[board_idx] > 0)
 			tp->full_duplex = 1;
 		if (mtu[board_idx] > 0)
-			dev->mtu = mtu[board_idx];
+			rtdev->mtu = mtu[board_idx];
 	}
-	if (dev->mem_start & MEDIA_MASK)
-		tp->default_port = dev->mem_start & MEDIA_MASK;
+	if (rtdev->mem_start & MEDIA_MASK)
+		tp->default_port = rtdev->mem_start & MEDIA_MASK;
 	if (tp->default_port) {
 		/*RTnet*/rt_printk(KERN_INFO "tulip%d: Transceiver selection forced to %s.\n",
 		       board_idx, medianame[tp->default_port & MEDIA_MASK]);
@@ -1662,9 +1652,9 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	if (tp->flags & HAS_MEDIA_TABLE) {
 		memcpy(tp->eeprom, ee_data, sizeof(tp->eeprom));
 
-		sprintf(dev->name, "tulip%d", board_idx);	/* hack */
+		sprintf(rtdev->name, "tulip%d", board_idx);	/* hack */
 		tulip_parse_eeprom(rtdev);
-		strcpy(dev->name, "eth%d");			/* un-hack */
+		strcpy(rtdev->name, "rteth%d");			/* un-hack */
 	}
 
 	if ((tp->flags & ALWAYS_CHECK_MII) ||
@@ -1674,9 +1664,9 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 			for (i = 0; i < tp->mtable->leafcount; i++)
 				if (tp->mtable->mleaf[i].media == 11) {
 					tp->cur_index = i;
-					tp->saved_if_port = dev->if_port;
-					tulip_select_media(dev, 2);
-					dev->if_port = tp->saved_if_port;
+					tp->saved_if_port = rtdev->if_port;
+					tulip_select_media(rtdev, 2);
+					rtdev->if_port = tp->saved_if_port;
 					break;
 				}
 		}
@@ -1684,16 +1674,16 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 		/* Find the connected MII xcvrs.
 		   Doing this in open() would allow detecting external xcvrs
 		   later, but takes much time. */
-		tulip_find_mii (dev, board_idx);
+		tulip_find_mii (rtdev, board_idx);
 	}
 
 	/* The Tulip-specific entries in the device structure. */
 #if 0
-	dev->tx_timeout = tulip_tx_timeout;
-	dev->watchdog_timeo = TX_TIMEOUT;
-	dev->do_ioctl = private_ioctl;
-	dev->set_multicast_list = set_rx_mode;
-	dev->get_stats = tulip_get_stats;
+	rtdev->tx_timeout = tulip_tx_timeout;
+	rtdev->watchdog_timeo = TX_TIMEOUT;
+	rtdev->do_ioctl = private_ioctl;
+	rtdev->set_multicast_list = set_rx_mode;
+	rtdev->get_stats = tulip_get_stats;
 #endif
 
 	rtdev->open = tulip_open;
@@ -1702,12 +1692,11 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	rtdev->hard_start_xmit = tulip_start_xmit;
 
 
-	rtdev_alloc_name(rtdev, "eth%d");
 	if (/*RTnet*/rt_register_rtnetdev(rtdev))
 		goto err_out_free_ring;
 
 	/*RTnet*/rt_printk(KERN_INFO "%s: %s rev %d at %#3lx,",
-	       dev->name, tulip_tbl[chip_idx].chip_name, chip_rev, ioaddr);
+	       rtdev->name, tulip_tbl[chip_idx].chip_name, chip_rev, ioaddr);
 	pci_set_drvdata(pdev, rtdev);
 
 	if (t2104x_mode == 1)
@@ -1717,7 +1706,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	if (eeprom_missing)
 		/*RTnet*/rt_printk(" EEPROM not present,");
 	for (i = 0; i < 6; i++)
-		/*RTnet*/rt_printk("%c%2.2X", i ? ':' : ' ', dev->dev_addr[i]);
+		/*RTnet*/rt_printk("%c%2.2X", i ? ':' : ' ', rtdev->dev_addr[i]);
 	/*RTnet*/rt_printk(", IRQ %d.\n", irq);
 
         if (tp->chip_id == PNIC2)
@@ -1749,7 +1738,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 			outl(tp->mtable->csr12dir | 0x100, ioaddr + CSR12);
 		break;
 	case DC21142:
-		if (tp->mii_cnt  ||  tulip_media_cap[dev->if_port] & MediaIsMII) {
+		if (tp->mii_cnt  ||  tulip_media_cap[rtdev->if_port] & MediaIsMII) {
 			outl(csr6_mask_defstate, ioaddr + CSR6);
 			outl(0x0000, ioaddr + CSR13);
 			outl(0x0000, ioaddr + CSR14);
@@ -1819,13 +1808,12 @@ err_out_free_netdev:
 static void __devexit tulip_remove_one (struct pci_dev *pdev)
 {
 	struct rtnet_device *rtdev = (struct rtnet_device *) pci_get_drvdata (pdev);
-	struct net_device *dev;
 	struct tulip_private *tp;
 
-	if (!rtdev || (dev = dev_get_by_rtdev(rtdev)) == NULL)
+	if (!rtdev || !rtdev->priv)
 		return;
 
-	tp = dev->priv;
+	tp = rtdev->priv;
 	pci_free_consistent (pdev,
 			     sizeof (struct tulip_rx_desc) * RX_RING_SIZE +
 			     sizeof (struct tulip_tx_desc) * TX_RING_SIZE,
@@ -1834,7 +1822,7 @@ static void __devexit tulip_remove_one (struct pci_dev *pdev)
 	if (tp->mtable)
 		rt_free (tp->mtable);
 #ifndef USE_IO_OPS
-	iounmap((void *)dev->base_addr);
+	iounmap((void *)rtdev->base_addr);
 #endif
 	rt_rtdev_disconnect(rtdev);
 	rtdev_free (rtdev);

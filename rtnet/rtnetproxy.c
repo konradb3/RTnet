@@ -189,14 +189,13 @@ static inline void send_data_out(struct sk_buff *skb)
     if (rc == 0)
     {
         struct rtnet_device *rtdev = rt->rt_dev;
-        struct net_device *dev = dev_get_by_rtdev(rtdev);
         rtskb->dst = rt;
         rtskb->rtdev = rt->rt_dev;
 
         /* Fill in the ethernet headers: There is already space for the header
          * but they contain zeros only => Fill it */
-        memcpy(pData->ethhdr.h_source, dev->dev_addr, dev->addr_len);
-        memcpy(pData->ethhdr.h_dest, rt->rt_dst_mac_addr, dev->addr_len);
+        memcpy(pData->ethhdr.h_source, rtdev->dev_addr, rtdev->addr_len);
+        memcpy(pData->ethhdr.h_dest, rt->rt_dst_mac_addr, rtdev->addr_len);
 
         /* Call the actual transmit function (this function is semaphore 
          * protected): */

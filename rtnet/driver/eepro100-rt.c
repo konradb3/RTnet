@@ -508,14 +508,14 @@ struct speedo_private {
 	struct timer_list timer;			/* Media selection timer. */
 	struct speedo_mc_block *mc_setup_head;/* Multicast setup frame list head. */
 	struct speedo_mc_block *mc_setup_tail;/* Multicast setup frame list tail. */
-	long in_interrupt;					/* Word-aligned dev->interrupt */
+	long in_interrupt;					/* Word-aligned rtdev->interrupt */
 	unsigned char acpi_pwr;
 	signed char rx_mode;					/* Current PROMISC/ALLMULTI setting. */
 	unsigned int tx_full:1;				/* The Tx queue is full. */
 	unsigned int full_duplex:1;			/* Full-duplex operation requested. */
 	unsigned int flow_ctrl:1;			/* Use 802.3x flow control. */
 	unsigned int rx_bug:1;				/* Work around receiver hang errata. */
-	unsigned char default_port:8;		/* Last dev->if_port value. */
+	unsigned char default_port:8;		/* Last rtdev->if_port value. */
 	unsigned char rx_ring_state;		/* RX ring status flags. */
 	unsigned short phy[2];				/* PHY media interfaces available. */
 	unsigned short advertising;			/* Current PHY advertised caps. */
@@ -555,20 +555,20 @@ static int do_eeprom_cmd(long ioaddr, int cmd, int cmd_len);
 static int mdio_read(long ioaddr, int phy_id, int location);
 static int mdio_write(long ioaddr, int phy_id, int location, int value);
 static int speedo_open(struct rtnet_device *rtdev);
-static void speedo_resume(struct net_device *dev);
+static void speedo_resume(struct rtnet_device *rtdev);
 //static void speedo_timer(unsigned long data);
 static void speedo_init_rx_ring(struct rtnet_device *rtdev);
-//static void speedo_tx_timeout(struct net_device *dev);
+//static void speedo_tx_timeout(struct rtnet_device *rtdev);
 static int speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force);
 static int speedo_rx(struct rtnet_device *rtdev, int* packets);
-static void speedo_tx_buffer_gc(struct net_device *dev);
+static void speedo_tx_buffer_gc(struct rtnet_device *rtdev);
 static void speedo_interrupt(int irq, unsigned long rtdev_id);
 static int speedo_close(struct rtnet_device *rtdev);
-//static struct net_device_stats *speedo_get_stats(struct net_device *dev);
-//static int speedo_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
-static void set_rx_mode(struct net_device *dev);
-static void speedo_show_state(struct net_device *dev);
+//static struct net_device_stats *speedo_get_stats(struct rtnet_device *rtdev);
+//static int speedo_ioctl(struct rtnet_device *rtdev, struct ifreq *rq, int cmd);
+static void set_rx_mode(struct rtnet_device *rtdev);
+static void speedo_show_state(struct rtnet_device *rtdev);
 
 
 
@@ -665,7 +665,6 @@ static int speedo_found1(struct pci_dev *pdev,
 	struct rtnet_device *rtdev = NULL;
 	// *** RTnet ***
 
-	struct net_device *dev;
 	struct speedo_private *sp;
 	const char *product;
 	int i, option;
@@ -686,15 +685,14 @@ static int speedo_found1(struct pci_dev *pdev,
 		pci_free_consistent(pdev, size, tx_ring_space, tx_ring_dma);
 		return -1;
 	}
-	rtdev_alloc_name(rtdev, "eth%d");
-	dev = dev_get_by_rtdev(rtdev);
-	memset(dev->priv, 0, sizeof(struct speedo_private));
+	//rtdev_alloc_name(rtdev, "eth%d"); //Done by register_rtdev()
+	memset(rtdev->priv, 0, sizeof(struct speedo_private));
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
 	SET_MODULE_OWNER(rtdev);
 	// *** RTnet ***
 
-	if (dev->mem_start > 0)
-		option = dev->mem_start;
+	if (rtdev->mem_start > 0)
+		option = rtdev->mem_start;
 	else if (card_idx >= 0  &&  options[card_idx] >= 0)
 		option = options[card_idx];
 	else
@@ -728,14 +726,14 @@ static int speedo_found1(struct pci_dev *pdev,
 			eeprom[i] = value;
 			sum += value;
 			if (i < 3) {
-				dev->dev_addr[j++] = value;
-				dev->dev_addr[j++] = value >> 8;
+				rtdev->dev_addr[j++] = value;
+				rtdev->dev_addr[j++] = value >> 8;
 			}
 		}
 		if (sum != 0xBABA)
 			printk(KERN_WARNING "%s: Invalid EEPROM checksum %#4.4x, "
 				   "check settings before activating this device!\n",
-				   dev->name, sum);
+				   rtdev->name, sum);
 		/* Don't  unregister_netdev(dev);  as the EEPro may actually be
 		   usable, especially if the MAC address is set later.
 		   On the other hand, it may be unusable if MDI data is corrupted. */
@@ -753,11 +751,11 @@ static int speedo_found1(struct pci_dev *pdev,
 	else
 		product = pdev->name;
 
-	printk(KERN_INFO "%s: %s, ", dev->name, product);
+	printk(KERN_INFO "%s: %s, ", rtdev->name, product);
 
 	for (i = 0; i < 5; i++)
-		printk("%2.2X:", dev->dev_addr[i]);
-	printk("%2.2X, ", dev->dev_addr[i]);
+		printk("%2.2X:", rtdev->dev_addr[i]);
+	printk("%2.2X, ", rtdev->dev_addr[i]);
 #ifdef USE_IO
 	printk("I/O at %#3lx, ", ioaddr);
 #endif
@@ -839,10 +837,10 @@ static int speedo_found1(struct pci_dev *pdev,
 	/* Return the chip to its original power state. */
 	pci_set_power_state(pdev, acpi_idle_state);
 
-	dev->base_addr = ioaddr;
-	dev->irq = pdev->irq;
+	rtdev->base_addr = ioaddr;
+	rtdev->irq = pdev->irq;
 
-	sp = dev->priv;
+	sp = rtdev->priv;
 	sp->pdev = pdev;
 	sp->acpi_pwr = acpi_idle_state;
 	sp->tx_ring = tx_ring_space;
@@ -875,7 +873,7 @@ static int speedo_found1(struct pci_dev *pdev,
 	rtdev->hard_start_xmit = &speedo_start_xmit;
 	rtdev->stop = &speedo_close;
 	rtdev->hard_header = &rt_eth_header;
-	dev->do_ioctl = NULL;
+	//rtdev->do_ioctl = NULL;
 
 	if ( (i=rt_register_rtnetdev(rtdev)) )
 	{
@@ -963,16 +961,12 @@ static int mdio_write(long ioaddr, int phy_id, int location, int value)
 static int
 speedo_open(struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int retval;
 
 	if (speedo_debug > 1)
-		printk(KERN_DEBUG "%s: speedo_open() irq %d.\n", dev->name, dev->irq);
+		printk(KERN_DEBUG "%s: speedo_open() irq %d.\n", rtdev->name, rtdev->irq);
 
 	MOD_INC_USE_COUNT;
 
@@ -989,15 +983,15 @@ speedo_open(struct rtnet_device *rtdev)
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	retval = rt_request_global_irq_ext(dev->irq, (void (*)(void))speedo_interrupt, (unsigned long)rtdev);
+	retval = rt_request_global_irq_ext(rtdev->irq, (void (*)(void))speedo_interrupt, (unsigned long)rtdev);
 	if (retval) {
 		MOD_DEC_USE_COUNT;
 		return retval;
 	}
-	rt_startup_irq(dev->irq);
+	rt_startup_irq(rtdev->irq);
 	// *** RTnet ***
 
-	dev->if_port = sp->default_port;
+	rtdev->if_port = sp->default_port;
 
 #ifdef oh_no_you_dont_unless_you_honour_the_options_passed_in_to_us
 	/* Retrigger negotiation to reset previous errors. */
@@ -1010,7 +1004,7 @@ speedo_open(struct rtnet_device *rtdev)
 		   0x2100 100-FD
 		*/
 #ifdef honor_default_port
-		mdio_write(ioaddr, phy_addr, 0, mii_ctrl[dev->default_port & 7]);
+		mdio_write(ioaddr, phy_addr, 0, mii_ctrl[rtdev->default_port & 7]);
 #else
 		mdio_write(ioaddr, phy_addr, 0, 0x3300);
 #endif
@@ -1021,9 +1015,9 @@ speedo_open(struct rtnet_device *rtdev)
 
 	/* Fire up the hardware. */
 	outw(SCBMaskAll, ioaddr + SCBCmd);
-	speedo_resume(dev);
+	speedo_resume(rtdev);
 
-	netdevice_start(dev);
+	netdevice_start(rtdev);
 	rtnetif_start_queue(rtdev);
 
 	/* Setup the chip and configure the multicast list. */
@@ -1031,18 +1025,18 @@ speedo_open(struct rtnet_device *rtdev)
 	sp->mc_setup_tail = NULL;
 	sp->flow_ctrl = sp->partner = 0;
 	sp->rx_mode = -1;			/* Invalid -> always reset the mode. */
-	set_rx_mode(dev);
+	set_rx_mode(rtdev);
 	if ((sp->phy[0] & 0x8000) == 0)
 		sp->advertising = mdio_read(ioaddr, sp->phy[0] & 0x1f, 4);
 
 	if (mdio_read(ioaddr, sp->phy[0] & 0x1f, MII_BMSR) & BMSR_LSTATUS)
-		netif_carrier_on(dev);
+		rtnetif_carrier_on(rtdev);
 	else
-		netif_carrier_off(dev);
+		rtnetif_carrier_off(rtdev);
 
 	if (speedo_debug > 2) {
 		printk(KERN_DEBUG "%s: Done speedo_open(), status %8.8x.\n",
-			   dev->name, inw(ioaddr + SCBStatus));
+			   rtdev->name, inw(ioaddr + SCBStatus));
 	}
 
 	/* Set the timer.  The timer serves a dual purpose:
@@ -1051,7 +1045,7 @@ speedo_open(struct rtnet_device *rtdev)
 	   2) to monitor Rx activity, and restart the Rx process if the receiver
 	   hangs. */
 	sp->timer.expires = RUN_AT((24*HZ)/10); 			/* 2.4 sec. */
-	sp->timer.data = (unsigned long)dev;
+	sp->timer.data = (unsigned long)rtdev;
 // *** RTnet	sp->timer.function = &speedo_timer; ***			/* timer handler */
 // *** RTnet	add_timer(&sp->timer); ***
 
@@ -1063,10 +1057,10 @@ speedo_open(struct rtnet_device *rtdev)
 }
 
 /* Start the chip hardware after a full reset. */
-static void speedo_resume(struct net_device *dev)
+static void speedo_resume(struct rtnet_device *rtdev)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 
 	/* Start with a Tx threshold of 256 (0x..20.... 8 byte units). */
 	sp->tx_threshold = 0x01208000;
@@ -1090,7 +1084,7 @@ static void speedo_resume(struct net_device *dev)
 	if (sp->rx_ringp[sp->cur_rx % RX_RING_SIZE] == NULL) {
 		if (speedo_debug > 2)
 			printk(KERN_DEBUG "%s: NULL cur_rx in speedo_resume().\n",
-					dev->name);
+					rtdev->name);
 	} else {
 		wait_for_cmd_done(ioaddr + SCBCmd);
 		outl(sp->rx_ring_dma[sp->cur_rx % RX_RING_SIZE],
@@ -1112,7 +1106,7 @@ static void speedo_resume(struct net_device *dev)
 		ias_cmd->cmd_status = cpu_to_le32((CmdSuspend | CmdIASetup) | 0xa000);
 		ias_cmd->link =
 			cpu_to_le32(TX_RING_ELEM_DMA(sp, sp->cur_tx % TX_RING_SIZE));
-		memcpy(ias_cmd->params, dev->dev_addr, 6);
+		memcpy(ias_cmd->params, rtdev->dev_addr, 6);
 		sp->last_cmd = ias_cmd;
 	}
 
@@ -1129,9 +1123,9 @@ static void speedo_resume(struct net_device *dev)
 /* Media monitoring and control. */
 static void speedo_timer(unsigned long data)
 {
-	struct net_device *dev = (struct net_device *)data;
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct rtnet_device *rtdev = (struct rtnet_device *)data;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int phy_num = sp->phy[0] & 0x1f;
 
 	/* We have MII and lost link beat. */
@@ -1140,9 +1134,9 @@ static void speedo_timer(unsigned long data)
 		if (partner != sp->partner) {
 			int flow_ctrl = sp->advertising & partner & 0x0400 ? 1 : 0;
 			if (speedo_debug > 2) {
-				printk(KERN_DEBUG "%s: Link status change.\n", dev->name);
+				printk(KERN_DEBUG "%s: Link status change.\n", rtdev->name);
 				printk(KERN_DEBUG "%s: Old partner %x, new %x, adv %x.\n",
-					   dev->name, sp->partner, partner, sp->advertising);
+					   rtdev->name, sp->partner, partner, sp->advertising);
 			}
 			sp->partner = partner;
 			if (flow_ctrl != sp->flow_ctrl) {
@@ -1153,14 +1147,14 @@ static void speedo_timer(unsigned long data)
 			mdio_read(ioaddr, phy_num, 1);
 			/* If link beat has returned... */
 			if (mdio_read(ioaddr, phy_num, 1) & 0x0004)
-				netif_carrier_on(dev);
+				rtnetif_carrier_on(rtdev);
 			else
-				netif_carrier_off(dev);
+				rtnetif_carrier_off(rtdev);
 		}
 	}
 	if (speedo_debug > 3) {
 		printk(KERN_DEBUG "%s: Media control tick, status %4.4x.\n",
-			   dev->name, inw(ioaddr + SCBStatus));
+			   rtdev->name, inw(ioaddr + SCBStatus));
 	}
 	if (sp->rx_mode < 0  ||
 		(sp->rx_bug  && jiffies - sp->last_rx_time > 2*HZ)) {
@@ -1171,8 +1165,8 @@ static void speedo_timer(unsigned long data)
 			printk(KERN_DEBUG "%s: Sending a multicast list set command"
 				   " from a timer routine,"
 				   " m=%d, j=%ld, l=%ld.\n",
-				   dev->name, sp->rx_mode, jiffies, sp->last_rx_time);
-		set_rx_mode(dev);
+				   rtdev->name, sp->rx_mode, jiffies, sp->last_rx_time);
+		set_rx_mode(rtdev);
 	}
 	/* We must continue to monitor the media. */
 	sp->timer.expires = RUN_AT(2*HZ); 			/* 2.0 sec. */
@@ -1183,28 +1177,28 @@ static void speedo_timer(unsigned long data)
 }
 #endif
 
-static void speedo_show_state(struct net_device *dev)
+static void speedo_show_state(struct rtnet_device *rtdev)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int i;
 
 	/* Print a few items for debugging. */
 	if (speedo_debug > 0) {
 		int i;
-		printk(KERN_DEBUG "%s: Tx ring dump,  Tx queue %u / %u:\n", dev->name,
+		printk(KERN_DEBUG "%s: Tx ring dump,  Tx queue %u / %u:\n", rtdev->name,
 			   sp->cur_tx, sp->dirty_tx);
 		for (i = 0; i < TX_RING_SIZE; i++)
-			printk(KERN_DEBUG "%s:  %c%c%2d %8.8x.\n", dev->name,
+			printk(KERN_DEBUG "%s:  %c%c%2d %8.8x.\n", rtdev->name,
 				   i == sp->dirty_tx % TX_RING_SIZE ? '*' : ' ',
 				   i == sp->cur_tx % TX_RING_SIZE ? '=' : ' ',
 				   i, sp->tx_ring[i].status);
 	}
 	printk(KERN_DEBUG "%s: Printing Rx ring"
 		   " (next to receive into %u, dirty index %u).\n",
-		   dev->name, sp->cur_rx, sp->dirty_rx);
+		   rtdev->name, sp->cur_rx, sp->dirty_rx);
 
 	for (i = 0; i < RX_RING_SIZE; i++)
-		printk(KERN_DEBUG "%s: %c%c%c%2d %8.8x.\n", dev->name,
+		printk(KERN_DEBUG "%s: %c%c%c%2d %8.8x.\n", rtdev->name,
 			   sp->rx_ringp[i] == sp->last_rxf ? 'l' : ' ',
 			   i == sp->dirty_rx % RX_RING_SIZE ? '*' : ' ',
 			   i == sp->cur_rx % RX_RING_SIZE ? '=' : ' ',
@@ -1213,13 +1207,13 @@ static void speedo_show_state(struct net_device *dev)
 
 #if 0
 	{
-		long ioaddr = dev->base_addr;
+		long ioaddr = rtdev->base_addr;
 		int phy_num = sp->phy[0] & 0x1f;
 		for (i = 0; i < 16; i++) {
 			/* FIXME: what does it mean?  --SAW */
 			if (i == 6) i = 21;
 			printk(KERN_DEBUG "%s:  PHY index %d register %d is %4.4x.\n",
-				   dev->name, phy_num, i, mdio_read(ioaddr, phy_num, i));
+				   rtdev->name, phy_num, i, mdio_read(ioaddr, phy_num, i));
 		}
 	}
 #endif
@@ -1230,10 +1224,7 @@ static void speedo_show_state(struct net_device *dev)
 static void
 speedo_init_rx_ring(struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	struct RxFD *rxf, *last_rxf = NULL;
 	dma_addr_t last_rxf_dma = 0 /* to shut up the compiler */;
 	int i;
@@ -1280,9 +1271,9 @@ speedo_init_rx_ring(struct rtnet_device *rtdev)
 }
 
 #if 0
-static void speedo_purge_tx(struct net_device *dev)
+static void speedo_purge_tx(struct rtnet_device *rtdev)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int entry;
 
 	while ((int)(sp->cur_tx - sp->dirty_tx) > 0) {
@@ -1304,7 +1295,7 @@ static void speedo_purge_tx(struct net_device *dev)
 	while (sp->mc_setup_head != NULL) {
 		struct speedo_mc_block *t;
 		if (speedo_debug > 1)
-			printk(KERN_DEBUG "%s: freeing mc frame.\n", dev->name);
+			printk(KERN_DEBUG "%s: freeing mc frame.\n", rtdev->name);
 		pci_unmap_single(sp->pdev, sp->mc_setup_head->frame_dma,
 				sp->mc_setup_head->len, PCI_DMA_TODEVICE);
 		t = sp->mc_setup_head->next;
@@ -1313,15 +1304,15 @@ static void speedo_purge_tx(struct net_device *dev)
 	}
 	sp->mc_setup_tail = NULL;
 	sp->tx_full = 0;
-	rtnetif_wake_queue(dev);
+	rtnetif_wake_queue(rtdev);
 }
 #endif
 
 #if 0
-static void reset_mii(struct net_device *dev)
+static void reset_mii(struct rtnet_device *rtdev)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	/* Reset the MII transceiver, suggested by Fred Young @ scalable.com. */
 	if ((sp->phy[0] & 0x8000) == 0) {
 		int phy_addr = sp->phy[0] & 0x1f;
@@ -1332,7 +1323,7 @@ static void reset_mii(struct net_device *dev)
 		mdio_write(ioaddr, phy_addr, 4, 0x0000);
 		mdio_write(ioaddr, phy_addr, 0, 0x8000);
 #ifdef honor_default_port
-		mdio_write(ioaddr, phy_addr, 0, mii_ctrl[dev->default_port & 7]);
+		mdio_write(ioaddr, phy_addr, 0, mii_ctrl[rtdev->default_port & 7]);
 #else
 		mdio_read(ioaddr, phy_addr, 0);
 		mdio_write(ioaddr, phy_addr, 0, mii_bmcr);
@@ -1343,30 +1334,30 @@ static void reset_mii(struct net_device *dev)
 #endif
 
 #if 0
-static void speedo_tx_timeout(struct net_device *dev)
+static void speedo_tx_timeout(struct rtnet_device *rtdev)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int status = inw(ioaddr + SCBStatus);
 	unsigned long flags;
 
 	printk(KERN_WARNING "%s: Transmit timed out: status %4.4x "
 		   " %4.4x at %d/%d command %8.8x.\n",
-		   dev->name, status, inw(ioaddr + SCBCmd),
+		   rtdev->name, status, inw(ioaddr + SCBCmd),
 		   sp->dirty_tx, sp->cur_tx,
 		   sp->tx_ring[sp->dirty_tx % TX_RING_SIZE].status);
 
-	speedo_show_state(dev);
+	speedo_show_state(rtdev);
 #if 0
 	if ((status & 0x00C0) != 0x0080
 		&&  (status & 0x003C) == 0x0010) {
 		/* Only the command unit has stopped. */
 		printk(KERN_WARNING "%s: Trying to restart the transmitter...\n",
-			   dev->name);
+			   rtdev->name);
 		outl(TX_RING_ELEM_DMA(sp, dirty_tx % TX_RING_SIZE]),
 			 ioaddr + SCBPointer);
 		outw(CUStart, ioaddr + SCBCmd);
-		reset_mii(dev);
+		reset_mii(rtdev);
 	} else {
 #else
 	{
@@ -1380,22 +1371,22 @@ static void speedo_tx_timeout(struct net_device *dev)
 		/* Disable interrupts. */
 		outw(SCBMaskAll, ioaddr + SCBCmd);
 		synchronize_irq();
-		speedo_tx_buffer_gc(dev);
+		speedo_tx_buffer_gc(rtdev);
 		/* Free as much as possible.
 		   It helps to recover from a hang because of out-of-memory.
 		   It also simplifies speedo_resume() in case TX ring is full or
 		   close-to-be full. */
-		speedo_purge_tx(dev);
-		speedo_refill_rx_buffers(dev, 1);
+		speedo_purge_tx(rtdev);
+		speedo_refill_rx_buffers(rtdev, 1);
 		spin_lock_irqsave(&sp->lock, flags);
-		speedo_resume(dev);
+		speedo_resume(rtdev);
 		sp->rx_mode = -1;
-		dev->trans_start = jiffies;
+		//rtdev->trans_start = jiffies;
 		spin_unlock_irqrestore(&sp->lock, flags);
-		set_rx_mode(dev); /* it takes the spinlock itself --SAW */
+		set_rx_mode(rtdev); /* it takes the spinlock itself --SAW */
 		/* Reset MII transceiver.  Do it before starting the timer to serialize
 		   mdio_xxx operations.  Yes, it's a paranoya :-)  2000/05/09 SAW */
-		reset_mii(dev);
+		reset_mii(rtdev);
 		sp->timer.expires = RUN_AT(2*HZ);
 		add_timer(&sp->timer);
 	}
@@ -1406,12 +1397,8 @@ static void speedo_tx_timeout(struct net_device *dev)
 static int
 speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	int entry;
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
@@ -1424,7 +1411,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Check if there are enough space. */
 	if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
 		// *** RTnet ***
-		rt_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", dev->name);
+		rt_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", rtdev->name);
 		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
@@ -1481,15 +1468,15 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	rt_spin_unlock_irqrestore(flags, &sp->lock);
 	// *** RTnet ***
 
-	dev->trans_start = jiffies;
+	//rtdev->trans_start = jiffies;
 
 	return 0;
 }
 
-static void speedo_tx_buffer_gc(struct net_device *dev)
+static void speedo_tx_buffer_gc(struct rtnet_device *rtdev)
 {
 	unsigned int dirty_tx;
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 
 	dirty_tx = sp->dirty_tx;
 	while ((int)(sp->cur_tx - dirty_tx) > 0) {
@@ -1505,7 +1492,7 @@ static void speedo_tx_buffer_gc(struct net_device *dev)
 			if (sp->tx_threshold < 0x01e08000) {
 				if (speedo_debug > 2)
 					printk(KERN_DEBUG "%s: TX underrun, threshold adjusted.\n",
-						   dev->name);
+						   rtdev->name);
 				sp->tx_threshold += 0x00040000;
 			}
 		/* Free the original skb. */
@@ -1536,7 +1523,7 @@ static void speedo_tx_buffer_gc(struct net_device *dev)
 		   && (int)(dirty_tx - sp->mc_setup_head->tx - 1) > 0) {
 		struct speedo_mc_block *t;
 		if (speedo_debug > 1)
-			printk(KERN_DEBUG "%s: freeing mc frame.\n", dev->name);
+			printk(KERN_DEBUG "%s: freeing mc frame.\n", rtdev->name);
 		pci_unmap_single(sp->pdev, sp->mc_setup_head->frame_dma,
 				sp->mc_setup_head->len, PCI_DMA_TODEVICE);
 		t = sp->mc_setup_head->next;
@@ -1555,7 +1542,6 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 	int packets = 0;
 	// *** RTnet ***
 
@@ -1565,21 +1551,21 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 
 //comdbg_str("1\n\r");
 #ifndef final_version
-	if (dev == NULL) {
+	if (rtdev == NULL) {
 		rt_printk(KERN_ERR "speedo_interrupt(): irq %d for unknown device.\n", irq);
 		return;
 	}
 #endif
 
 //comdbg_str("2\n\r");
-	ioaddr = dev->base_addr;
-	sp = (struct speedo_private *)dev->priv;
+	ioaddr = rtdev->base_addr;
+	sp = (struct speedo_private *)rtdev->priv;
 
 #ifndef final_version
 	/* A lock to prevent simultaneous entry on SMP machines. */
 	if (test_and_set_bit(0, (void*)&sp->in_interrupt)) {
 		rt_printk(KERN_ERR"%s: SMP simultaneous entry of an interrupt handler.\n",
-			   dev->name);
+			   rtdev->name);
 		sp->in_interrupt = 0;	/* Avoid halting machine. */
 //comdbg_str("ALARM 1\n\r");
 		return;
@@ -1597,7 +1583,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 //comdbg_str("4\n\r");
 		if (speedo_debug > 4)
 			rt_printk(KERN_DEBUG "%s: interrupt  status=%#4.4x.\n",
-				   dev->name, status);
+				   rtdev->name, status);
 
 		if ((status & 0xfc00) == 0)
 			break;
@@ -1617,38 +1603,38 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 			if ((status & 0x003c) == 0x0028) {		/* No more Rx buffers. */
 				struct RxFD *rxf;
 				rt_printk(KERN_WARNING "%s: card reports no RX buffers.\n",
-						dev->name);
+						rtdev->name);
 				rxf = sp->rx_ringp[sp->cur_rx % RX_RING_SIZE];
 				if (rxf == NULL) {
 					if (speedo_debug > 2)
 						rt_printk(KERN_DEBUG
 								"%s: NULL cur_rx in speedo_interrupt().\n",
-								dev->name);
+								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
 				} else if (rxf == sp->last_rxf) {
 					if (speedo_debug > 2)
 						rt_printk(KERN_DEBUG
 								"%s: cur_rx is last in speedo_interrupt().\n",
-								dev->name);
+								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
 				} else
 					outb(RxResumeNoResources, ioaddr + SCBCmd);
 			} else if ((status & 0x003c) == 0x0008) { /* No resources. */
 				struct RxFD *rxf;
 				rt_printk(KERN_WARNING "%s: card reports no resources.\n",
-						dev->name);
+						rtdev->name);
 				rxf = sp->rx_ringp[sp->cur_rx % RX_RING_SIZE];
 				if (rxf == NULL) {
 					if (speedo_debug > 2)
 						rt_printk(KERN_DEBUG
 								"%s: NULL cur_rx in speedo_interrupt().\n",
-								dev->name);
+								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
 				} else if (rxf == sp->last_rxf) {
 					if (speedo_debug > 2)
 						rt_printk(KERN_DEBUG
 								"%s: cur_rx is last in speedo_interrupt().\n",
-								dev->name);
+								rtdev->name);
 					sp->rx_ring_state |= RrNoMem|RrNoResources;
 				} else {
 					/* Restart the receiver. */
@@ -1664,7 +1650,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		if ((sp->rx_ring_state&(RrNoMem|RrNoResources)) == RrNoResources) {
 			rt_printk(KERN_WARNING
 					"%s: restart the receiver after a possible hang.\n",
-					dev->name);
+					rtdev->name);
 			rt_spin_lock(&sp->lock);
 			/* Restart the receiver.
 			   I'm not sure if it's always right to restart the receiver
@@ -1680,7 +1666,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 		/* User interrupt, Command/Tx unit interrupt or CU not active. */
 		if (status & 0xA400) {
 			rt_spin_lock(&sp->lock);
-			speedo_tx_buffer_gc(dev);
+			speedo_tx_buffer_gc(rtdev);
 			if (sp->tx_full
 				&& (int)(sp->cur_tx - sp->dirty_tx) < TX_QUEUE_UNFULL) {
 				/* The ring is no longer full. */
@@ -1692,7 +1678,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 
 		if (--boguscnt < 0) {
 			rt_printk(KERN_ERR "%s: Too much work at interrupt, status=0x%4.4x.\n",
-				   dev->name, status);
+				   rtdev->name, status);
 			/* Clear all interrupt sources. */
 			/* Will change from 0xfc00 to 0xff00 when we start handling
 			   FCP and ER interrupts --Dragan */
@@ -1704,7 +1690,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 
 	if (speedo_debug > 3)
 		rt_printk(KERN_DEBUG "%s: exiting interrupt, status=%#4.4x.\n",
-			   dev->name, inw(ioaddr + SCBStatus));
+			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	clear_bit(0, (void*)&sp->in_interrupt);
 //comdbg_str("X\n\r");
@@ -1715,10 +1701,7 @@ static void speedo_interrupt(int irq, unsigned long rtdev_id)
 
 static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	struct RxFD *rxf;
 	struct rtskb *skb;
 	/* Get a fresh skbuff to replace the consumed one. */
@@ -1742,10 +1725,10 @@ static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry
 	return rxf;
 }
 
-static inline void speedo_rx_link(struct net_device *dev, int entry,
+static inline void speedo_rx_link(struct rtnet_device *rtdev, int entry,
 								  struct RxFD *rxf, dma_addr_t rxf_dma)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	rxf->status = cpu_to_le32(0xC0000001); 	/* '1' for driver use only. */
 	rxf->link = 0;			/* None yet. */
 	rxf->count = cpu_to_le32(PKT_BUF_SZ << 16);
@@ -1759,10 +1742,7 @@ static inline void speedo_rx_link(struct net_device *dev, int entry,
 
 static int speedo_refill_rx_buf(struct rtnet_device *rtdev, int force)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int entry;
 	struct RxFD *rxf;
 
@@ -1775,8 +1755,8 @@ static int speedo_refill_rx_buf(struct rtnet_device *rtdev, int force)
 			if (speedo_debug > 2 || !(sp->rx_ring_state & RrOOMReported)) {
 				// *** RTnet ***
 				rt_printk(KERN_WARNING "%s: can't fill rx buffer (force %d)!\n",
-						dev->name, force);
-				//speedo_show_state(dev);
+						rtdev->name, force);
+				//speedo_show_state(rtdev);
 				// *** RTnet ***
 				sp->rx_ring_state |= RrOOMReported;
 			}
@@ -1798,7 +1778,7 @@ static int speedo_refill_rx_buf(struct rtnet_device *rtdev, int force)
 	} else {
 		rxf = sp->rx_ringp[entry];
 	}
-	speedo_rx_link(dev, entry, rxf, sp->rx_ring_dma[entry]);
+	speedo_rx_link(rtdev, entry, rxf, sp->rx_ring_dma[entry]);
 	sp->dirty_rx++;
 	sp->rx_ring_state &= ~(RrNoMem|RrOOMReported); /* Mark the progress. */
 	return 0;
@@ -1806,10 +1786,7 @@ static int speedo_refill_rx_buf(struct rtnet_device *rtdev, int force)
 
 static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 
 	/* Refill the RX ring. */
 	while ((int)(sp->cur_rx - sp->dirty_rx) > 0 &&
@@ -1819,8 +1796,7 @@ static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force)
 static int
 speedo_rx(struct rtnet_device *rtdev, int* packets)
 {
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int entry = sp->cur_rx % RX_RING_SIZE;
 	int rx_work_limit = sp->dirty_rx + RX_RING_SIZE - sp->cur_rx;
 	int alloc_ok = 1;
@@ -1858,7 +1834,7 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 			   packet is no longer the last packet in the ring. */
 			if (speedo_debug > 2)
 				rt_printk(KERN_DEBUG "%s: RX packet postponed!\n",
-					   dev->name);
+					   rtdev->name);
 			sp->rx_ring_state |= RrPostponed;
 			break;
 		}
@@ -1869,13 +1845,13 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 		if ((status & (RxErrTooBig|RxOK|0x0f90)) != RxOK) {
 			if (status & RxErrTooBig)
 				rt_printk(KERN_ERR "%s: Ethernet frame overran the Rx buffer, "
-					   "status %8.8x!\n", dev->name, status);
+					   "status %8.8x!\n", rtdev->name, status);
 			else if (! (status & RxOK)) {
 				/* There was a fatal error.  This *should* be impossible. */
 				sp->stats.rx_errors++;
 				rt_printk(KERN_ERR "%s: Anomalous event in speedo_rx(), "
 					   "status %8.8x.\n",
-					   dev->name, status);
+					   rtdev->name, status);
 			}
 		} else {
 			struct rtskb *skb;
@@ -1907,7 +1883,7 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 				skb = sp->rx_skbuff[entry];
 				if (skb == NULL) {
 					rt_printk(KERN_ERR "%s: Inconsistent Rx descriptor chain.\n",
-						   dev->name);
+						   rtdev->name);
 					break;
 				}
 				sp->rx_skbuff[entry] = NULL;
@@ -1951,20 +1927,16 @@ speedo_rx(struct rtnet_device *rtdev, int* packets)
 static int
 speedo_close(struct rtnet_device *rtdev)
 {
-	// *** RTnet ***
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
-	// *** RTnet ***
-
-	long ioaddr = dev->base_addr;
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	long ioaddr = rtdev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int i;
 
-	netdevice_stop(dev);
+	netdevice_stop(rtdev);
 	rtnetif_stop_queue(rtdev);
 
 	if (speedo_debug > 1)
 		printk(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n",
-			   dev->name, inw(ioaddr + SCBStatus));
+			   rtdev->name, inw(ioaddr + SCBStatus));
 
 	/* Shut off the media monitoring timer. */
 	del_timer_sync(&sp->timer);
@@ -1973,8 +1945,8 @@ speedo_close(struct rtnet_device *rtdev)
 	outl(PortPartialReset, ioaddr + SCBPort);
 
 	// *** RTnet ***
-	rt_shutdown_irq(dev->irq);
-	if ( (i=rt_free_global_irq(dev->irq))<0 )
+	rt_shutdown_irq(rtdev->irq);
+	if ( (i=rt_free_global_irq(rtdev->irq))<0 )
 		return i;
 
 	rt_stack_disconnect(rtdev);
@@ -1983,7 +1955,7 @@ speedo_close(struct rtnet_device *rtdev)
 
 	/* Print a few items for debugging. */
 	if (speedo_debug > 3)
-		speedo_show_state(dev);
+		speedo_show_state(rtdev);
 
     /* Free all the skbuffs in the Rx and Tx queues. */
 	for (i = 0; i < RX_RING_SIZE; i++) {
@@ -2022,7 +1994,7 @@ speedo_close(struct rtnet_device *rtdev)
 	}
 	sp->mc_setup_tail = NULL;
 	if (speedo_debug > 0)
-		printk(KERN_DEBUG "%s: %d multicast blocks dropped.\n", dev->name, i);
+		printk(KERN_DEBUG "%s: %d multicast blocks dropped.\n", rtdev->name, i);
 
 	pci_set_power_state(sp->pdev, 2);
 
@@ -2041,10 +2013,10 @@ speedo_close(struct rtnet_device *rtdev)
    Oh, and incoming frames are dropped while executing dump-stats!
    */
 static struct net_device_stats *
-speedo_get_stats(struct net_device *dev)
+speedo_get_stats(struct rtnet_device *rtdev)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 
 	/* Update only if the previous dump finished. */
 	if (sp->lstats->done_marker == le32_to_cpu(0xA007)) {
@@ -2060,7 +2032,7 @@ speedo_get_stats(struct net_device *dev)
 		sp->stats.rx_fifo_errors += le32_to_cpu(sp->lstats->rx_overrun_errs);
 		sp->stats.rx_length_errors += le32_to_cpu(sp->lstats->rx_runt_errs);
 		sp->lstats->done_marker = 0x0000;
-		if (netif_running(dev)) {
+		if (rtnetif_running(rtdev)) {
 			unsigned long flags;
 			/* Take a spinlock to make wait_for_cmd_done and sending the
 			   command atomic.  --SAW */
@@ -2075,10 +2047,10 @@ speedo_get_stats(struct net_device *dev)
 #endif
 
 #if 0
-static int netdev_ethtool_ioctl(struct net_device *dev, void *useraddr)
+static int netdev_ethtool_ioctl(struct rtnet_device *rtdev, void *useraddr)
 {
 	u32 ethcmd;
-	struct speedo_private *sp = dev->priv;
+	struct speedo_private *sp = rtdev->priv;
 		
 	if (copy_from_user(&ethcmd, useraddr, sizeof(ethcmd)))
 		return -EFAULT;
@@ -2105,10 +2077,10 @@ static int netdev_ethtool_ioctl(struct net_device *dev, void *useraddr)
 
 
 #if 0
-static int speedo_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+static int speedo_ioctl(struct rtnet_device *rtdev, struct ifreq *rq, int cmd)
 {
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	struct mii_ioctl_data *data = (struct mii_ioctl_data *)&rq->ifr_data;
 	int phy = sp->phy[0] & 0x1f;
 	int saved_acpi;
@@ -2145,7 +2117,7 @@ static int speedo_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		pci_set_power_state(sp->pdev, saved_acpi);
 		return 0;
 	case SIOCETHTOOL:
-		return netdev_ethtool_ioctl(dev, (void *) rq->ifr_data);
+		return netdev_ethtool_ioctl(rtdev, (void *) rq->ifr_data);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -2161,26 +2133,25 @@ static int speedo_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
    loaded the link -- we convert the current command block, normally a Tx
    command, into a no-op and link it to the new command.
 */
-static void set_rx_mode(struct net_device *dev)
+static void set_rx_mode(struct rtnet_device *rtdev)
 {
-	struct rtnet_device *rtdev = rtdev_get_by_dev(dev);
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
-	long ioaddr = dev->base_addr;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	long ioaddr = rtdev->base_addr;
 	struct descriptor *last_cmd;
 	char new_rx_mode;
 	unsigned long flags;
 	int entry, i;
 
-	if (dev->flags & IFF_PROMISC) {			/* Set promiscuous. */
+	if (rtdev->flags & IFF_PROMISC) {			/* Set promiscuous. */
 		new_rx_mode = 3;
-	} else if ((dev->flags & IFF_ALLMULTI)  ||
-			   dev->mc_count > multicast_filter_limit) {
+	} else if ((rtdev->flags & IFF_ALLMULTI)  ||
+			   rtdev->mc_count > multicast_filter_limit) {
 		new_rx_mode = 1;
 	} else
 		new_rx_mode = 0;
 
 	if (speedo_debug > 3)
-		printk(KERN_DEBUG "%s: set_rx_mode %d -> %d\n", dev->name,
+		printk(KERN_DEBUG "%s: set_rx_mode %d -> %d\n", rtdev->name,
 				sp->rx_mode, new_rx_mode);
 
 	if ((int)(sp->cur_tx - sp->dirty_tx) > TX_RING_SIZE - TX_MULTICAST_SIZE) {
@@ -2230,7 +2201,7 @@ static void set_rx_mode(struct net_device *dev)
 		spin_unlock_irqrestore(&sp->lock, flags);
 	}
 
-	if (new_rx_mode == 0  &&  dev->mc_count < 4) {
+	if (new_rx_mode == 0  &&  rtdev->mc_count < 4) {
 		/* The simple case of 0-3 multicast list entries occurs often, and
 		   fits within one tx_ring[] entry. */
 		struct dev_mc_list *mclist;
@@ -2247,9 +2218,9 @@ static void set_rx_mode(struct net_device *dev)
 			cpu_to_le32(TX_RING_ELEM_DMA(sp, (entry + 1) % TX_RING_SIZE));
 		sp->tx_ring[entry].tx_desc_addr = 0; /* Really MC list count. */
 		setup_params = (u16 *)&sp->tx_ring[entry].tx_desc_addr;
-		*setup_params++ = cpu_to_le16(dev->mc_count*6);
+		*setup_params++ = cpu_to_le16(rtdev->mc_count*6);
 		/* Fill in the multicast addresses. */
-		for (i = 0, mclist = dev->mc_list; i < dev->mc_count;
+		for (i = 0, mclist = rtdev->mc_list; i < rtdev->mc_count;
 			 i++, mclist = mclist->next) {
 			eaddrs = (u16 *)mclist->dmi_addr;
 			*setup_params++ = *eaddrs++;
@@ -2278,7 +2249,7 @@ static void set_rx_mode(struct net_device *dev)
 						 GFP_ATOMIC);
 		if (mc_blk == NULL) {
 			printk(KERN_ERR "%s: Failed to allocate a setup frame.\n",
-				   dev->name);
+				   rtdev->name);
 			sp->rx_mode = -1; /* We failed, try again. */
 			return;
 		}
@@ -2292,14 +2263,14 @@ static void set_rx_mode(struct net_device *dev)
 		/* Fill the setup frame. */
 		if (speedo_debug > 1)
 			printk(KERN_DEBUG "%s: Constructing a setup frame at %p.\n",
-				   dev->name, mc_setup_frm);
+				   rtdev->name, mc_setup_frm);
 		mc_setup_frm->cmd_status =
 			cpu_to_le32(CmdSuspend | CmdIntr | CmdMulticastList);
 		/* Link set below. */
 		setup_params = (u16 *)&mc_setup_frm->params;
-		*setup_params++ = cpu_to_le16(dev->mc_count*6);
+		*setup_params++ = cpu_to_le16(rtdev->mc_count*6);
 		/* Fill in the multicast addresses. */
-		for (i = 0, mclist = dev->mc_list; i < dev->mc_count;
+		for (i = 0, mclist = rtdev->mc_list; i < rtdev->mc_count;
 			 i++, mclist = mclist->next) {
 			eaddrs = (u16 *)mclist->dmi_addr;
 			*setup_params++ = *eaddrs++;
@@ -2346,7 +2317,7 @@ static void set_rx_mode(struct net_device *dev)
 
 		if (speedo_debug > 5)
 			printk(" CmdMCSetup frame length %d in entry %d.\n",
-				   dev->mc_count, entry);
+				   rtdev->mc_count, entry);
 	}
 
 	sp->rx_mode = new_rx_mode;
@@ -2357,9 +2328,8 @@ static void __devexit eepro100_remove_one (struct pci_dev *pdev)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = pci_get_drvdata (pdev);
-	struct net_device *dev = dev_get_by_rtdev(rtdev);
 
-	struct speedo_private *sp = (struct speedo_private *)dev->priv;
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	
 	rt_unregister_rtnetdev(rtdev);
 	rt_rtdev_disconnect(rtdev);
@@ -2369,7 +2339,7 @@ static void __devexit eepro100_remove_one (struct pci_dev *pdev)
 	release_mem_region(pci_resource_start(pdev, 0), pci_resource_len(pdev, 0));
 
 #ifndef USE_IO
-	iounmap((char *)dev->base_addr);
+	iounmap((char *)rtdev->base_addr);
 #endif
 
 	pci_free_consistent(pdev, TX_RING_SIZE * sizeof(struct TxFD)
