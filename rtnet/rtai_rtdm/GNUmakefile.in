@@ -545,7 +545,7 @@ rtai_rtdm.o: libkernel_rtai_rtdm.a
 	$(LD) --whole-archive $< -r -o $@
 
 rtai_rtdm.ko: @RTNET_KBUILD_ENV@
-rtai_rtdm.ko: $(libkernel_rtai_rtdm_a_SOURCES)
+rtai_rtdm.ko: $(libkernel_rtai_rtdm_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -556,6 +556,8 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtai_rtdm_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

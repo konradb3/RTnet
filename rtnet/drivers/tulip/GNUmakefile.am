@@ -24,7 +24,7 @@ rt_tulip.o: libkernel_tulip.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_tulip.ko: @RTNET_KBUILD_ENV@
-rt_tulip.ko: $(libkernel_tulip_a_SOURCES)
+rt_tulip.ko: $(libkernel_tulip_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -35,3 +35,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_tulip_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

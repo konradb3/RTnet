@@ -17,7 +17,7 @@ rt_loopback.o: libkernel_loopback.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_loopback.ko: @RTNET_KBUILD_ENV@
-rt_loopback.ko: $(libkernel_loopback_a_SOURCES)
+rt_loopback.ko: $(libkernel_loopback_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_loopback_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

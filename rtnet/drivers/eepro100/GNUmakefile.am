@@ -17,7 +17,7 @@ rt_eepro100.o: libkernel_eepro100.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_eepro100.ko: @RTNET_KBUILD_ENV@
-rt_eepro100.ko: $(libkernel_eepro100_a_SOURCES)
+rt_eepro100.ko: $(libkernel_eepro100_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_eepro100_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

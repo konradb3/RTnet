@@ -17,7 +17,7 @@ rt_natsemi.o: libkernel_natsemi.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_natsemi.ko: @RTNET_KBUILD_ENV@
-rt_natsemi.ko: $(libkernel_natsemi_a_SOURCES)
+rt_natsemi.ko: $(libkernel_natsemi_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_natsemi_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

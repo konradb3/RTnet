@@ -25,7 +25,7 @@ rtcfg.o: libkernel_rtcfg.a
 	$(LD) --whole-archive $< -r -o $@
 
 rtcfg.ko: @RTNET_KBUILD_ENV@
-rtcfg.ko: $(libkernel_rtcfg_a_SOURCES)
+rtcfg.ko: $(libkernel_rtcfg_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -36,3 +36,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtcfg_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

@@ -19,7 +19,7 @@ rt_client.o: libkernel_client.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_client.ko: @RTNET_KBUILD_ENV@
-rt_client.ko: $(libkernel_client_a_SOURCES)
+rt_client.ko: $(libkernel_client_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS) showtime
@@ -30,3 +30,5 @@ all-local: $(OBJS) showtime
 
 clean-local: $(libkernel_client_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

@@ -510,7 +510,7 @@ rt_mpc8xx_enet.o: libkernel_mpc8xx_enet.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_mpc8xx_enet.ko: @RTNET_KBUILD_ENV@
-rt_mpc8xx_enet.ko: $(libkernel_mpc8xx_enet_a_SOURCES)
+rt_mpc8xx_enet.ko: $(libkernel_mpc8xx_enet_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -521,6 +521,8 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_mpc8xx_enet_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

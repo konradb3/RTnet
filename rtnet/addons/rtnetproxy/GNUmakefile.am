@@ -17,7 +17,7 @@ rtnetproxy.o: libkernel_rtnetproxy.a
 	$(LD) --whole-archive $< -r -o $@
 
 rtnetproxy.ko: @RTNET_KBUILD_ENV@
-rtnetproxy.ko: $(libkernel_rtnetproxy_a_SOURCES)
+rtnetproxy.ko: $(libkernel_rtnetproxy_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtnetproxy_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

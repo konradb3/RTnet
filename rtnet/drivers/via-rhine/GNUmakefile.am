@@ -17,7 +17,7 @@ rt_via-rhine.o: libkernel_via-rhine.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_via-rhine.ko: @RTNET_KBUILD_ENV@
-rt_via-rhine.ko: $(libkernel_via_rhine_a_SOURCES)
+rt_via-rhine.ko: $(libkernel_via_rhine_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_via_rhine_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

@@ -17,7 +17,7 @@ rt_8139too.o: libkernel_8139too.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_8139too.ko: @RTNET_KBUILD_ENV@
-rt_8139too.ko: $(libkernel_8139too_a_SOURCES)
+rt_8139too.ko: $(libkernel_8139too_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_8139too_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

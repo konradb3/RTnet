@@ -17,7 +17,7 @@ rt_3c59x.o: libkernel_3c59x.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_3c59x.ko: @RTNET_KBUILD_ENV@
-rt_3c59x.ko: $(libkernel_3c59x_a_SOURCES)
+rt_3c59x.ko: $(libkernel_3c59x_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_3c59x_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

@@ -509,7 +509,7 @@ rt_handler.o: libkernel_handler.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_handler.ko: @RTNET_KBUILD_ENV@
-rt_handler.ko: $(libkernel_handler_a_SOURCES)
+rt_handler.ko: $(libkernel_handler_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -520,6 +520,8 @@ all-local: $(OBJS)
 
 clean-local: $(libkernel_handler_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

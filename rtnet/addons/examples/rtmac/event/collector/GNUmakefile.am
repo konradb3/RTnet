@@ -17,7 +17,7 @@ rt_collector.o: libkernel_collector.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_collector.ko: @RTNET_KBUILD_ENV@
-rt_collector.ko: $(libkernel_collector_a_SOURCES)
+rt_collector.ko: $(libkernel_collector_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ all-local: $(OBJS)
 
 clean-local: $(libkernel_collector_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

@@ -525,7 +525,7 @@ rt_multi-client.o: libkernel_multi-client.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_multi-client.ko: @RTNET_KBUILD_ENV@
-rt_multi-client.ko: $(libkernel_multi_client_a_SOURCES)
+rt_multi-client.ko: $(libkernel_multi_client_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS) $(PROGS)
@@ -536,6 +536,8 @@ all-local: $(OBJS) $(PROGS)
 
 clean-local: $(libkernel_multi_client_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

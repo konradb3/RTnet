@@ -29,7 +29,7 @@ rt_multi-client.o: libkernel_multi-client.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_multi-client.ko: @RTNET_KBUILD_ENV@
-rt_multi-client.ko: $(libkernel_multi_client_a_SOURCES)
+rt_multi-client.ko: $(libkernel_multi_client_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS) $(PROGS)
@@ -40,3 +40,5 @@ all-local: $(OBJS) $(PROGS)
 
 clean-local: $(libkernel_multi_client_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

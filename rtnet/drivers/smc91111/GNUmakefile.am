@@ -17,7 +17,7 @@ rt_smc91111.o: libkernel_smc91111.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_smc91111.ko: @RTNET_KBUILD_ENV@
-rt_smc91111.ko: $(libkernel_smc91111_a_SOURCES)
+rt_smc91111.ko: $(libkernel_smc91111_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_smc91111_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

@@ -706,7 +706,7 @@ tdma-v1.o: libkernel_tdma-v1.a
 	$(LD) --whole-archive $< -r -o $@
 
 tdma-v1.ko: @RTNET_KBUILD_ENV@
-tdma-v1.ko: $(libkernel_tdma_v1_a_SOURCES)
+tdma-v1.ko: $(libkernel_tdma_v1_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -717,6 +717,8 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_tdma_v1_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

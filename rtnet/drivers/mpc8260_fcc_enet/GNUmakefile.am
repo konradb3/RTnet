@@ -17,7 +17,7 @@ rt_mpc8260_fcc_enet.o: libkernel_mpc8260_fcc_enet.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_mpc8260_fcc_enet.ko: @RTNET_KBUILD_ENV@
-rt_mpc8260_fcc_enet.ko: $(libkernel_mpc8260_fcc_enet_a_SOURCES)
+rt_mpc8260_fcc_enet.ko: $(libkernel_mpc8260_fcc_enet_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_mpc8260_fcc_enet_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

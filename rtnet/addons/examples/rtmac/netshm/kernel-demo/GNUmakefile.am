@@ -17,7 +17,7 @@ netshm-kerndemo.o: libkernel_netshm-kerndemo.a
 	$(LD) --whole-archive $< -r -o $@
 
 netshm-kerndemo.ko: @RTNET_KBUILD_ENV@
-netshm-kerndemo.ko: $(libkernel_netshm_kerndemo_a_SOURCES)
+netshm-kerndemo.ko: $(libkernel_netshm_kerndemo_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ all-local: $(OBJS)
 
 clean-local: $(libkernel_netshm_kerndemo_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

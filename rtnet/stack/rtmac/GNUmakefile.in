@@ -749,7 +749,7 @@ rtmac.o: libkernel_rtmac.a
 	$(LD) --whole-archive $< -r -o $@
 
 rtmac.ko: @RTNET_KBUILD_ENV@
-rtmac.ko: $(libkernel_rtmac_a_SOURCES)
+rtmac.ko: $(libkernel_rtmac_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -760,6 +760,8 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtmac_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

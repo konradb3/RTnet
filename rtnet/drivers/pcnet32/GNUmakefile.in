@@ -509,7 +509,7 @@ rt_pcnet32.o: libkernel_pcnet32.a
 	$(LD) --whole-archive $< -r -o $@
 
 rt_pcnet32.ko: @RTNET_KBUILD_ENV@
-rt_pcnet32.ko: $(libkernel_pcnet32_a_SOURCES)
+rt_pcnet32.ko: $(libkernel_pcnet32_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -520,6 +520,8 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_pcnet32_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

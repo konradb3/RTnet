@@ -20921,7 +20921,7 @@ else
    RTNET_MODULE_EXT=.ko
    RTNET_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
    RTNET_KBUILD_CMD="											\
-	@for src in \$^; do										\
+	@for src in \$(filter-out FORCE, \$^); do							\
 		if test \\! -r \`basename \$\$src\`; then						\
 			\$(LN_S) \$\$src;								\
 		fi;											\

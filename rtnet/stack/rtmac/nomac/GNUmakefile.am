@@ -20,7 +20,7 @@ nomac.o: libkernel_nomac.a
 	$(LD) --whole-archive $< -r -o $@
 
 nomac.ko: @RTNET_KBUILD_ENV@
-nomac.ko: $(libkernel_nomac_a_SOURCES)
+nomac.ko: $(libkernel_nomac_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -31,3 +31,5 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_nomac_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE

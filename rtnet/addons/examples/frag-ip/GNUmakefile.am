@@ -17,7 +17,7 @@ frag-ip.o: libkernel_frag-ip.a
 	$(LD) --whole-archive $< -r -o $@
 
 frag-ip.ko: @RTNET_KBUILD_ENV@
-frag-ip.ko: $(libkernel_frag_ip_a_SOURCES)
+frag-ip.ko: $(libkernel_frag_ip_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
@@ -28,3 +28,5 @@ all-local: $(OBJS)
 
 clean-local: $(libkernel_frag_ip_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
