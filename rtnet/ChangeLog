@@ -6,7 +6,7 @@
   * lists IPs of available interfaces
   * reports the interface flags
 - Updated PPC drivers
-- Added support VIA Rhine NICs
+- Added support for VIA Rhine NICs
 - Fixed LXRT interface and examples
 - Fixed cross-compilation issues
 - Improved socket file descriptor lookup
