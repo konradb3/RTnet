@@ -7,7 +7,7 @@ AC_INIT([RTnet],[0.7.1],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 #AC_CONFIG_MACRO_DIR([config/m4])
-AC_CONFIG_SRCDIR([rtskb.c])
+AC_CONFIG_SRCDIR([core/rtskb.c])
 AC_PREFIX_DEFAULT([/usr/local/rtnet])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -809,10 +809,10 @@ AC_ARG_ENABLE(enclosed-rtdm,
 AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-no}])
 AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"])
 if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
-	AC_CONFIG_LINKS(include/rtdm.h:rtai_rtdm/rtdm.h)
-	AC_CONFIG_LINKS(include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
+	AC_CONFIG_LINKS(core/include/rtdm.h:rtai_rtdm/rtdm.h)
+	AC_CONFIG_LINKS(core/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
 else
-	rm -f include/rtdm.h include/rtdm_driver.h
+	rm -f core/include/rtdm.h core/include/rtdm_driver.h
 fi
 
 
@@ -953,20 +953,43 @@ AC_SUBST(KERNEL_CFLAGS)
 
 AC_CONFIG_FILES([ \
 GNUmakefile \
-examples/GNUmakefile \
-examples/round_trip_time/GNUmakefile \
-examples/round_trip_time/client/GNUmakefile \
-examples/round_trip_time/server/GNUmakefile \
-examples/rtnet_lxrt/GNUmakefile \
-examples/select/GNUmakefile \
-examples/frag_ip/GNUmakefile \
-examples/raw_packets/GNUmakefile \
-examples/rtmac/GNUmakefile \
-examples/rtmac/event/GNUmakefile \
-examples/rtmac/mrtt/GNUmakefile \
-examples/rtmac/rtt/GNUmakefile \
-examples/rtmac/netshm/GNUmakefile \
-drivers/GNUmakefile \
+\
+addons/examples/frag-ip/GNUmakefile \
+addons/examples/raw-packets/GNUmakefile \
+addons/examples/round-trip-time/client/GNUmakefile \
+addons/examples/round-trip-time/server/GNUmakefile \
+addons/examples/round-trip-time/linux-client/GNUmakefile \
+addons/examples/round-trip-time/GNUmakefile \
+addons/examples/rtmac/event/handler/GNUmakefile \
+addons/examples/rtmac/event/collector/GNUmakefile \
+addons/examples/rtmac/event/GNUmakefile \
+addons/examples/rtmac/netshm/kernel-demo/GNUmakefile \
+addons/examples/rtmac/netshm/GNUmakefile \
+addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile \
+addons/examples/rtmac/round-trip-time/client/GNUmakefile \
+addons/examples/rtmac/round-trip-time/server/GNUmakefile \
+addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile \
+addons/examples/rtmac/round-trip-time/GNUmakefile \
+addons/examples/rtmac/GNUmakefile \
+addons/examples/lxrt/GNUmakefile \
+addons/examples/select/GNUmakefile \
+addons/examples/GNUmakefile \
+\
+addons/rtcap/GNUmakefile \
+addons/rtnetproxy/GNUmakefile \
+addons/GNUmakefile \
+\
+core/include/GNUmakefile \
+core/ipv4/GNUmakefile \
+core/packet/GNUmakefile \
+core/rtcfg/GNUmakefile \
+core/rtmac/tdma-v1/GNUmakefile \
+core/rtmac/nomac/GNUmakefile \
+core/rtmac/GNUmakefile \
+core/ethernet/GNUmakefile \
+core/lib/GNUmakefile \
+core/GNUmakefile \
+\
 drivers/tulip/GNUmakefile \
 drivers/8139too/GNUmakefile \
 drivers/eepro100/GNUmakefile \
@@ -978,20 +1001,13 @@ drivers/natsemi/GNUmakefile \
 drivers/pcnet32/GNUmakefile \
 drivers/smc91111/GNUmakefile \
 drivers/via-rhine/GNUmakefile \
-drivers/experimental/GNUmakefile \
 drivers/experimental/3c59x/GNUmakefile \
-ethernet/GNUmakefile \
-ipv4/GNUmakefile \
-packet/GNUmakefile \
-lib/GNUmakefile \
-tools/GNUmakefile \
-rtmac/GNUmakefile \
-rtmac/tdma/GNUmakefile \
-rtmac/nomac/GNUmakefile \
-rtcfg/GNUmakefile \
-include/GNUmakefile \
-rtcap/GNUmakefile \
+drivers/experimental/GNUmakefile \
+drivers/GNUmakefile \
+\
 rtai_rtdm/GNUmakefile \
+\
+tools/GNUmakefile \
 ])
 
 AC_OUTPUT
@@ -1000,12 +1016,12 @@ dnl ======================================================================
 dnl             generate include/rtnet_config.h
 dnl ======================================================================
 
-AC_MSG_NOTICE([creating include/rtnet_config.h])
+AC_MSG_NOTICE([creating core/include/rtnet_config.h])
 sed -e "s/ PACKAGE/ RTNET_PACKAGE/" -e "s/ VERSION/ RTNET_VERSION/" \
-    config/rtnet_config_pre.h >include/rtnet_config.h.new
-if cmp -s include/rtnet_config.h.new include/rtnet_config.h; then
-        rm include/rtnet_config.h.new
-        AC_MSG_NOTICE([include/rtnet_config.h is unchanged])
+    config/rtnet_config_pre.h > core/include/rtnet_config.h.new
+if cmp -s core/include/rtnet_config.h.new core/include/rtnet_config.h; then
+    rm core/include/rtnet_config.h.new
+    AC_MSG_NOTICE([core/include/rtnet_config.h is unchanged])
 else
-        mv include/rtnet_config.h.new include/rtnet_config.h
+    mv core/include/rtnet_config.h.new core/include/rtnet_config.h
 fi

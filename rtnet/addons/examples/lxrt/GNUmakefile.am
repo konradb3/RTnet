@@ -1,0 +1,18 @@
+noinst_PROGRAMS = \
+	linux_client \
+	linux_server \
+	rtnet_ifs \
+	simpleclient \
+	simpleserver
+
+AM_CFLAGS = \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
+        @LXRT_CFLAGS@
+
+all-local: \
+	linux_client \
+	linux_server \
+	rtnet_ifs \
+	simpleclient \
+	simpleserver

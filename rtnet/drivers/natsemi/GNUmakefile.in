@@ -49,12 +49,12 @@ ARFLAGS = cru
 libkernel_natsemi_a_AR = $(AR) $(ARFLAGS)
 libkernel_natsemi_a_LIBADD =
 am_libkernel_natsemi_a_OBJECTS =  \
-	libkernel_natsemi_a-natsemi-rt.$(OBJEXT)
+	libkernel_natsemi_a-rt_natsemi.$(OBJEXT)
 libkernel_natsemi_a_OBJECTS = $(am_libkernel_natsemi_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -223,14 +223,14 @@ moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_natsemi.a
 libkernel_natsemi_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_natsemi_a_SOURCES = \
-	natsemi-rt.c
+	rt_natsemi.c
 
-OBJS = natsemi-rt$(modext)
+OBJS = rt_natsemi$(modext)
 all: all-am
 
 .SUFFIXES:
@@ -275,7 +275,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -301,29 +301,29 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libkernel_natsemi_a-natsemi-rt.o: natsemi-rt.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_natsemi_a-natsemi-rt.o -MD -MP -MF "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo" -c -o libkernel_natsemi_a-natsemi-rt.o `test -f 'natsemi-rt.c' || echo '$(srcdir)/'`natsemi-rt.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo" "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Po"; else rm -f "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='natsemi-rt.c' object='libkernel_natsemi_a-natsemi-rt.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Po' tmpdepfile='$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.TPo' @AMDEPBACKSLASH@
+libkernel_natsemi_a-rt_natsemi.o: rt_natsemi.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_natsemi_a-rt_natsemi.o -MD -MP -MF "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo" -c -o libkernel_natsemi_a-rt_natsemi.o `test -f 'rt_natsemi.c' || echo '$(srcdir)/'`rt_natsemi.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo" "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po"; else rm -f "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_natsemi.c' object='libkernel_natsemi_a-rt_natsemi.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po' tmpdepfile='$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_natsemi_a-natsemi-rt.o `test -f 'natsemi-rt.c' || echo '$(srcdir)/'`natsemi-rt.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_natsemi_a-rt_natsemi.o `test -f 'rt_natsemi.c' || echo '$(srcdir)/'`rt_natsemi.c
 
-libkernel_natsemi_a-natsemi-rt.obj: natsemi-rt.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_natsemi_a-natsemi-rt.obj -MD -MP -MF "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo" -c -o libkernel_natsemi_a-natsemi-rt.obj `if test -f 'natsemi-rt.c'; then $(CYGPATH_W) 'natsemi-rt.c'; else $(CYGPATH_W) '$(srcdir)/natsemi-rt.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo" "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Po"; else rm -f "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='natsemi-rt.c' object='libkernel_natsemi_a-natsemi-rt.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Po' tmpdepfile='$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.TPo' @AMDEPBACKSLASH@
+libkernel_natsemi_a-rt_natsemi.obj: rt_natsemi.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_natsemi_a-rt_natsemi.obj -MD -MP -MF "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo" -c -o libkernel_natsemi_a-rt_natsemi.obj `if test -f 'rt_natsemi.c'; then $(CYGPATH_W) 'rt_natsemi.c'; else $(CYGPATH_W) '$(srcdir)/rt_natsemi.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo" "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po"; else rm -f "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_natsemi.c' object='libkernel_natsemi_a-rt_natsemi.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po' tmpdepfile='$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_natsemi_a-natsemi-rt.obj `if test -f 'natsemi-rt.c'; then $(CYGPATH_W) 'natsemi-rt.c'; else $(CYGPATH_W) '$(srcdir)/natsemi-rt.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_natsemi_a-rt_natsemi.obj `if test -f 'rt_natsemi.c'; then $(CYGPATH_W) 'rt_natsemi.c'; else $(CYGPATH_W) '$(srcdir)/rt_natsemi.c'; fi`
 
-libkernel_natsemi_a-natsemi-rt.lo: natsemi-rt.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_natsemi_a-natsemi-rt.lo -MD -MP -MF "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo" -c -o libkernel_natsemi_a-natsemi-rt.lo `test -f 'natsemi-rt.c' || echo '$(srcdir)/'`natsemi-rt.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo" "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Plo"; else rm -f "$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='natsemi-rt.c' object='libkernel_natsemi_a-natsemi-rt.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.Plo' tmpdepfile='$(DEPDIR)/libkernel_natsemi_a-natsemi-rt.TPlo' @AMDEPBACKSLASH@
+libkernel_natsemi_a-rt_natsemi.lo: rt_natsemi.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_natsemi_a-rt_natsemi.lo -MD -MP -MF "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo" -c -o libkernel_natsemi_a-rt_natsemi.lo `test -f 'rt_natsemi.c' || echo '$(srcdir)/'`rt_natsemi.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo" "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Plo"; else rm -f "$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_natsemi.c' object='libkernel_natsemi_a-rt_natsemi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Plo' tmpdepfile='$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_natsemi_a-natsemi-rt.lo `test -f 'natsemi-rt.c' || echo '$(srcdir)/'`natsemi-rt.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_natsemi_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_natsemi_a-rt_natsemi.lo `test -f 'rt_natsemi.c' || echo '$(srcdir)/'`rt_natsemi.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -501,11 +501,11 @@ uninstall-am: uninstall-info-am
 	tags uninstall uninstall-am uninstall-info-am
 
 
-natsemi-rt.o: libkernel_natsemi.a
+rt_natsemi.o: libkernel_natsemi.a
 	$(LD) --whole-archive $< -r -o $@
 
-natsemi-rt.ko: @RTNET_KBUILD_ENV@
-natsemi-rt.ko: $(libkernel_natsemi_a_SOURCES)
+rt_natsemi.ko: @RTNET_KBUILD_ENV@
+rt_natsemi.ko: $(libkernel_natsemi_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

@@ -49,13 +49,13 @@ ARFLAGS = cru
 libkernel_via_rhine_a_AR = $(AR) $(ARFLAGS)
 libkernel_via_rhine_a_LIBADD =
 am_libkernel_via_rhine_a_OBJECTS =  \
-	libkernel_via_rhine_a-via-rhine-rt.$(OBJEXT)
+	libkernel_via_rhine_a-rt_via-rhine.$(OBJEXT)
 libkernel_via_rhine_a_OBJECTS = $(am_libkernel_via_rhine_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES =  \
-@AMDEP_TRUE@	./$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Po
+@AMDEP_TRUE@	./$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -224,14 +224,14 @@ moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_via-rhine.a
 libkernel_via_rhine_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_via_rhine_a_SOURCES = \
-	via-rhine-rt.c
+	rt_via-rhine.c
 
-OBJS = via-rhine-rt$(modext)
+OBJS = rt_via-rhine$(modext)
 all: all-am
 
 .SUFFIXES:
@@ -276,7 +276,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -302,29 +302,29 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libkernel_via_rhine_a-via-rhine-rt.o: via-rhine-rt.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_via_rhine_a-via-rhine-rt.o -MD -MP -MF "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo" -c -o libkernel_via_rhine_a-via-rhine-rt.o `test -f 'via-rhine-rt.c' || echo '$(srcdir)/'`via-rhine-rt.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo" "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Po"; else rm -f "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='via-rhine-rt.c' object='libkernel_via_rhine_a-via-rhine-rt.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Po' tmpdepfile='$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.TPo' @AMDEPBACKSLASH@
+libkernel_via_rhine_a-rt_via-rhine.o: rt_via-rhine.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_via_rhine_a-rt_via-rhine.o -MD -MP -MF "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo" -c -o libkernel_via_rhine_a-rt_via-rhine.o `test -f 'rt_via-rhine.c' || echo '$(srcdir)/'`rt_via-rhine.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo" "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po"; else rm -f "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_via-rhine.c' object='libkernel_via_rhine_a-rt_via-rhine.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po' tmpdepfile='$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_via_rhine_a-via-rhine-rt.o `test -f 'via-rhine-rt.c' || echo '$(srcdir)/'`via-rhine-rt.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_via_rhine_a-rt_via-rhine.o `test -f 'rt_via-rhine.c' || echo '$(srcdir)/'`rt_via-rhine.c
 
-libkernel_via_rhine_a-via-rhine-rt.obj: via-rhine-rt.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_via_rhine_a-via-rhine-rt.obj -MD -MP -MF "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo" -c -o libkernel_via_rhine_a-via-rhine-rt.obj `if test -f 'via-rhine-rt.c'; then $(CYGPATH_W) 'via-rhine-rt.c'; else $(CYGPATH_W) '$(srcdir)/via-rhine-rt.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo" "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Po"; else rm -f "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='via-rhine-rt.c' object='libkernel_via_rhine_a-via-rhine-rt.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Po' tmpdepfile='$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.TPo' @AMDEPBACKSLASH@
+libkernel_via_rhine_a-rt_via-rhine.obj: rt_via-rhine.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_via_rhine_a-rt_via-rhine.obj -MD -MP -MF "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo" -c -o libkernel_via_rhine_a-rt_via-rhine.obj `if test -f 'rt_via-rhine.c'; then $(CYGPATH_W) 'rt_via-rhine.c'; else $(CYGPATH_W) '$(srcdir)/rt_via-rhine.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo" "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po"; else rm -f "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_via-rhine.c' object='libkernel_via_rhine_a-rt_via-rhine.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po' tmpdepfile='$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_via_rhine_a-via-rhine-rt.obj `if test -f 'via-rhine-rt.c'; then $(CYGPATH_W) 'via-rhine-rt.c'; else $(CYGPATH_W) '$(srcdir)/via-rhine-rt.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_via_rhine_a-rt_via-rhine.obj `if test -f 'rt_via-rhine.c'; then $(CYGPATH_W) 'rt_via-rhine.c'; else $(CYGPATH_W) '$(srcdir)/rt_via-rhine.c'; fi`
 
-libkernel_via_rhine_a-via-rhine-rt.lo: via-rhine-rt.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_via_rhine_a-via-rhine-rt.lo -MD -MP -MF "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo" -c -o libkernel_via_rhine_a-via-rhine-rt.lo `test -f 'via-rhine-rt.c' || echo '$(srcdir)/'`via-rhine-rt.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo" "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Plo"; else rm -f "$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='via-rhine-rt.c' object='libkernel_via_rhine_a-via-rhine-rt.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.Plo' tmpdepfile='$(DEPDIR)/libkernel_via_rhine_a-via-rhine-rt.TPlo' @AMDEPBACKSLASH@
+libkernel_via_rhine_a-rt_via-rhine.lo: rt_via-rhine.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_via_rhine_a-rt_via-rhine.lo -MD -MP -MF "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo" -c -o libkernel_via_rhine_a-rt_via-rhine.lo `test -f 'rt_via-rhine.c' || echo '$(srcdir)/'`rt_via-rhine.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo" "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Plo"; else rm -f "$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_via-rhine.c' object='libkernel_via_rhine_a-rt_via-rhine.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Plo' tmpdepfile='$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_via_rhine_a-via-rhine-rt.lo `test -f 'via-rhine-rt.c' || echo '$(srcdir)/'`via-rhine-rt.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_via_rhine_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_via_rhine_a-rt_via-rhine.lo `test -f 'rt_via-rhine.c' || echo '$(srcdir)/'`rt_via-rhine.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -502,11 +502,11 @@ uninstall-am: uninstall-info-am
 	tags uninstall uninstall-am uninstall-info-am
 
 
-via-rhine-rt.o: libkernel_via-rhine.a
+rt_via-rhine.o: libkernel_via-rhine.a
 	$(LD) --whole-archive $< -r -o $@
 
-via-rhine-rt.ko: @RTNET_KBUILD_ENV@
-via-rhine-rt.ko: $(libkernel_via_rhine_a_SOURCES)
+rt_via-rhine.ko: @RTNET_KBUILD_ENV@
+rt_via-rhine.ko: $(libkernel_via_rhine_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

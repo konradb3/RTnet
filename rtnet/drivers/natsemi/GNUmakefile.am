@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_natsemi.a
 
 libkernel_natsemi_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_natsemi_a_SOURCES = \
-	natsemi-rt.c
+	rt_natsemi.c
 
-OBJS = natsemi-rt$(modext)
+OBJS = rt_natsemi$(modext)
 
-natsemi-rt.o: libkernel_natsemi.a
+rt_natsemi.o: libkernel_natsemi.a
 	$(LD) --whole-archive $< -r -o $@
 
-natsemi-rt.ko: @RTNET_KBUILD_ENV@
-natsemi-rt.ko: $(libkernel_natsemi_a_SOURCES)
+rt_natsemi.ko: @RTNET_KBUILD_ENV@
+rt_natsemi.ko: $(libkernel_natsemi_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

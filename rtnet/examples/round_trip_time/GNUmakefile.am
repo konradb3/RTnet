@@ -1,5 +1,0 @@
-SUBDIRS	= client server
-
-noinst_PROGRAMS = linux_client
-
-all-local: linux_client

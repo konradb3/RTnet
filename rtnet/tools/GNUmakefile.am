@@ -11,8 +11,8 @@ endif
 sbin_PROGRAMS = rtifconfig rtroute rtping $(OPTPROGS)
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include
 
 all-local: rtifconfig rtroute rtping $(OPTPROGS)
 

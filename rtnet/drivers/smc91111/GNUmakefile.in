@@ -49,13 +49,13 @@ ARFLAGS = cru
 libkernel_smc91111_a_AR = $(AR) $(ARFLAGS)
 libkernel_smc91111_a_LIBADD =
 am_libkernel_smc91111_a_OBJECTS =  \
-	libkernel_smc91111_a-smc91111-rt.$(OBJEXT)
+	libkernel_smc91111_a-rt_smc91111.$(OBJEXT)
 libkernel_smc91111_a_OBJECTS = $(am_libkernel_smc91111_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES =  \
-@AMDEP_TRUE@	./$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Po
+@AMDEP_TRUE@	./$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -224,14 +224,14 @@ moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_smc91111.a
 libkernel_smc91111_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_smc91111_a_SOURCES = \
-	smc91111-rt.c
+	rt_smc91111.c
 
-OBJS = smc91111-rt$(modext)
+OBJS = rt_smc91111$(modext)
 all: all-am
 
 .SUFFIXES:
@@ -276,7 +276,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -302,29 +302,29 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libkernel_smc91111_a-smc91111-rt.o: smc91111-rt.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_smc91111_a-smc91111-rt.o -MD -MP -MF "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo" -c -o libkernel_smc91111_a-smc91111-rt.o `test -f 'smc91111-rt.c' || echo '$(srcdir)/'`smc91111-rt.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo" "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Po"; else rm -f "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='smc91111-rt.c' object='libkernel_smc91111_a-smc91111-rt.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Po' tmpdepfile='$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.TPo' @AMDEPBACKSLASH@
+libkernel_smc91111_a-rt_smc91111.o: rt_smc91111.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_smc91111_a-rt_smc91111.o -MD -MP -MF "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo" -c -o libkernel_smc91111_a-rt_smc91111.o `test -f 'rt_smc91111.c' || echo '$(srcdir)/'`rt_smc91111.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo" "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po"; else rm -f "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_smc91111.c' object='libkernel_smc91111_a-rt_smc91111.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po' tmpdepfile='$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_smc91111_a-smc91111-rt.o `test -f 'smc91111-rt.c' || echo '$(srcdir)/'`smc91111-rt.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_smc91111_a-rt_smc91111.o `test -f 'rt_smc91111.c' || echo '$(srcdir)/'`rt_smc91111.c
 
-libkernel_smc91111_a-smc91111-rt.obj: smc91111-rt.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_smc91111_a-smc91111-rt.obj -MD -MP -MF "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo" -c -o libkernel_smc91111_a-smc91111-rt.obj `if test -f 'smc91111-rt.c'; then $(CYGPATH_W) 'smc91111-rt.c'; else $(CYGPATH_W) '$(srcdir)/smc91111-rt.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo" "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Po"; else rm -f "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='smc91111-rt.c' object='libkernel_smc91111_a-smc91111-rt.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Po' tmpdepfile='$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.TPo' @AMDEPBACKSLASH@
+libkernel_smc91111_a-rt_smc91111.obj: rt_smc91111.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_smc91111_a-rt_smc91111.obj -MD -MP -MF "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo" -c -o libkernel_smc91111_a-rt_smc91111.obj `if test -f 'rt_smc91111.c'; then $(CYGPATH_W) 'rt_smc91111.c'; else $(CYGPATH_W) '$(srcdir)/rt_smc91111.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo" "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po"; else rm -f "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_smc91111.c' object='libkernel_smc91111_a-rt_smc91111.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po' tmpdepfile='$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_smc91111_a-smc91111-rt.obj `if test -f 'smc91111-rt.c'; then $(CYGPATH_W) 'smc91111-rt.c'; else $(CYGPATH_W) '$(srcdir)/smc91111-rt.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_smc91111_a-rt_smc91111.obj `if test -f 'rt_smc91111.c'; then $(CYGPATH_W) 'rt_smc91111.c'; else $(CYGPATH_W) '$(srcdir)/rt_smc91111.c'; fi`
 
-libkernel_smc91111_a-smc91111-rt.lo: smc91111-rt.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_smc91111_a-smc91111-rt.lo -MD -MP -MF "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo" -c -o libkernel_smc91111_a-smc91111-rt.lo `test -f 'smc91111-rt.c' || echo '$(srcdir)/'`smc91111-rt.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo" "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Plo"; else rm -f "$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='smc91111-rt.c' object='libkernel_smc91111_a-smc91111-rt.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.Plo' tmpdepfile='$(DEPDIR)/libkernel_smc91111_a-smc91111-rt.TPlo' @AMDEPBACKSLASH@
+libkernel_smc91111_a-rt_smc91111.lo: rt_smc91111.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_smc91111_a-rt_smc91111.lo -MD -MP -MF "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo" -c -o libkernel_smc91111_a-rt_smc91111.lo `test -f 'rt_smc91111.c' || echo '$(srcdir)/'`rt_smc91111.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo" "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Plo"; else rm -f "$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_smc91111.c' object='libkernel_smc91111_a-rt_smc91111.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Plo' tmpdepfile='$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.TPlo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_smc91111_a-smc91111-rt.lo `test -f 'smc91111-rt.c' || echo '$(srcdir)/'`smc91111-rt.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_smc91111_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_smc91111_a-rt_smc91111.lo `test -f 'rt_smc91111.c' || echo '$(srcdir)/'`rt_smc91111.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -502,11 +502,11 @@ uninstall-am: uninstall-info-am
 	tags uninstall uninstall-am uninstall-info-am
 
 
-smc91111-rt.o: libkernel_smc91111.a
+rt_smc91111.o: libkernel_smc91111.a
 	$(LD) --whole-archive $< -r -o $@
 
-smc91111-rt.ko: @RTNET_KBUILD_ENV@
-smc91111-rt.ko: $(libkernel_smc91111_a_SOURCES)
+rt_smc91111.ko: @RTNET_KBUILD_ENV@
+rt_smc91111.ko: $(libkernel_smc91111_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

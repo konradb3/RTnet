@@ -233,8 +233,8 @@ librtdm_a_SOURCES = \
 	rtdm.c
 
 AM_CFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 all: all-am

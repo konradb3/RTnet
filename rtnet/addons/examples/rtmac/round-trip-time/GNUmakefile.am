@@ -1,0 +1,5 @@
+SUBDIRS = \
+	client \
+	multi-client \
+	parport-client \
+	server

@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_mpc8xx_enet.a
 
 libkernel_mpc8xx_enet_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_mpc8xx_enet_a_SOURCES = \
-	mpc8xx_enet-rt.c
+	rt_mpc8xx_enet.c
 
-OBJS = mpc8xx_enet-rt$(modext)
+OBJS = rt_mpc8xx_enet$(modext)
 
-mpc8xx_enet-rt.o: libkernel_mpc8xx_enet.a
+rt_mpc8xx_enet.o: libkernel_mpc8xx_enet.a
 	$(LD) --whole-archive $< -r -o $@
 
-mpc8xx_enet-rt.ko: @RTNET_KBUILD_ENV@
-mpc8xx_enet-rt.ko: $(libkernel_mpc8xx_enet_a_SOURCES)
+rt_mpc8xx_enet.ko: @RTNET_KBUILD_ENV@
+rt_mpc8xx_enet.ko: $(libkernel_mpc8xx_enet_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

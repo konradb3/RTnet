@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_pcnet32.a
 
 libkernel_pcnet32_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_pcnet32_a_SOURCES = \
-	pcnet32-rt.c
+	rt_pcnet32.c
 
-OBJS = pcnet32-rt$(modext)
+OBJS = rt_pcnet32$(modext)
 
-pcnet32-rt.o: libkernel_pcnet32.a
+rt_pcnet32.o: libkernel_pcnet32.a
 	$(LD) --whole-archive $< -r -o $@
 
-pcnet32-rt.ko: @RTNET_KBUILD_ENV@
-pcnet32-rt.ko: $(libkernel_pcnet32_a_SOURCES)
+rt_pcnet32.ko: @RTNET_KBUILD_ENV@
+rt_pcnet32.ko: $(libkernel_pcnet32_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

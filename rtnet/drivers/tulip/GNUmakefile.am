@@ -4,8 +4,8 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_tulip.a
 
 libkernel_tulip_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_tulip_a_SOURCES = \
@@ -18,13 +18,13 @@ libkernel_tulip_a_SOURCES = \
 	pnic.c \
 	pnic2.c
 
-OBJS = tulip-rt$(modext)
+OBJS = rt_tulip$(modext)
 
-tulip-rt.o: libkernel_tulip.a
+rt_tulip.o: libkernel_tulip.a
 	$(LD) --whole-archive $< -r -o $@
 
-tulip-rt.ko: @RTNET_KBUILD_ENV@
-tulip-rt.ko: $(libkernel_tulip_a_SOURCES)
+rt_tulip.ko: @RTNET_KBUILD_ENV@
+rt_tulip.ko: $(libkernel_tulip_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

@@ -1,0 +1,11 @@
+OPTDIRS =
+
+if CONFIG_NEWLXRT
+OPTDIRS += lxrt
+endif
+
+if CONFIG_RTNET_RTDM_SELECT
+OPTDIRS += select
+endif
+
+SUBDIRS = frag-ip raw-packets round-trip-time rtmac $(OPTDIRS)

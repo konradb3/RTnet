@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_8139too.a
 
 libkernel_8139too_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_8139too_a_SOURCES = \
-	8139too-rt.c
+	rt_8139too.c
 
-OBJS = 8139too-rt$(modext)
+OBJS = rt_8139too$(modext)
 
-8139too-rt.o: libkernel_8139too.a
+rt_8139too.o: libkernel_8139too.a
 	$(LD) --whole-archive $< -r -o $@
 
-8139too-rt.ko: @RTNET_KBUILD_ENV@
-8139too-rt.ko: $(libkernel_8139too_a_SOURCES)
+rt_8139too.ko: @RTNET_KBUILD_ENV@
+rt_8139too.ko: $(libkernel_8139too_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

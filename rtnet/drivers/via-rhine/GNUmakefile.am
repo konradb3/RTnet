@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_via-rhine.a
 
 libkernel_via_rhine_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_via_rhine_a_SOURCES = \
-	via-rhine-rt.c
+	rt_via-rhine.c
 
-OBJS = via-rhine-rt$(modext)
+OBJS = rt_via-rhine$(modext)
 
-via-rhine-rt.o: libkernel_via-rhine.a
+rt_via-rhine.o: libkernel_via-rhine.a
 	$(LD) --whole-archive $< -r -o $@
 
-via-rhine-rt.ko: @RTNET_KBUILD_ENV@
-via-rhine-rt.ko: $(libkernel_via_rhine_a_SOURCES)
+rt_via-rhine.ko: @RTNET_KBUILD_ENV@
+rt_via-rhine.ko: $(libkernel_via_rhine_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_smc91111.a
 
 libkernel_smc91111_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_smc91111_a_SOURCES = \
-	smc91111-rt.c
+	rt_smc91111.c
 
-OBJS = smc91111-rt$(modext)
+OBJS = rt_smc91111$(modext)
 
-smc91111-rt.o: libkernel_smc91111.a
+rt_smc91111.o: libkernel_smc91111.a
 	$(LD) --whole-archive $< -r -o $@
 
-smc91111-rt.ko: @RTNET_KBUILD_ENV@
-smc91111-rt.ko: $(libkernel_smc91111_a_SOURCES)
+rt_smc91111.ko: @RTNET_KBUILD_ENV@
+rt_smc91111.ko: $(libkernel_smc91111_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)

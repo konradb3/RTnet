@@ -1,0 +1,29 @@
+moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
+
+SUBDIRS =
+
+noinst_LIBRARIES = libtdma.a
+
+libtdma_a_SOURCES = \
+	tdma_module.c \
+	tdma_cleanup.c \
+	tdma_dev.c \
+	tdma_event.c \
+	tdma_ioctl.c \
+	tdma_rx.c \
+	tdma_task.c \
+	tdma_timer.c
+
+tdma-v1.o: libtdma.a
+	$(LD) --whole-archive $< -r -o $@
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
+	@RTAI_KMOD_CFLAGS@
+
+all-local: tdma-v1.o
+
+install-exec-local: tdma-v1.o
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)

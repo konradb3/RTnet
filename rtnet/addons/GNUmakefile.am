@@ -1,0 +1,15 @@
+OPTDIRS =
+
+if CONFIG_RTNET_EXAMPLES
+OPTDIRS += examples
+endif
+
+if CONFIG_RTNET_RTCAP
+OPTDIRS += rtcap
+endif
+
+if CONFIG_RTNET_PROXY
+OPTDIRS += rtnetproxy
+endif
+
+SUBDIRS = $(OPTDIRS)

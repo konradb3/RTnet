@@ -4,20 +4,20 @@ modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_3c59x.a
 
 libkernel_3c59x_a_CPPFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
+	-I$(top_srcdir)/core/include \
+	-I$(top_builddir)/core/include \
 	@RTAI_KMOD_CFLAGS@
 
 libkernel_3c59x_a_SOURCES = \
-	3c59x-rt.c
+	rt_3c59x.c
 
-OBJS = 3c59x-rt$(modext)
+OBJS = rt_3c59x$(modext)
 
-3c59x-rt.o: libkernel_3c59x.a
+rt_3c59x.o: libkernel_3c59x.a
 	$(LD) --whole-archive $< -r -o $@
 
-3c59x-rt.ko: @RTNET_KBUILD_ENV@
-3c59x-rt.ko: $(libkernel_3c59x_a_SOURCES)
+rt_3c59x.ko: @RTNET_KBUILD_ENV@
+rt_3c59x.ko: $(libkernel_3c59x_a_SOURCES)
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
