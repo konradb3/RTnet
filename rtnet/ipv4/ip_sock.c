@@ -25,7 +25,6 @@
 #include <linux/socket.h>
 #include <linux/in.h>
 
-#include <rtnet.h>
 #include <rtnet_socket.h>
 
 
