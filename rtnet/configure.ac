@@ -51,7 +51,7 @@ arch_supports_rtailab=
 
 case "$host" in
     i*86*-*)
-	RTAI_TARGET_ARCH=i386
+	RTNET_TARGET_ARCH=i386
 	arch_supports_lxrt=y
 	arch_supports_leds=y
 	arch_supports_sim=y
@@ -59,19 +59,19 @@ case "$host" in
 	wanted_kernel_arch=CONFIG_X86
         ;;
 #    arm-*)
-#	RTAI_TARGET_ARCH=arm
+#	RTNET_TARGET_ARCH=arm
 #	wanted_kernel_arch=CONFIG_ARM
 #        ;;
     powerpc-*|ppc-*)
-	RTAI_TARGET_ARCH=ppc
+	RTNET_TARGET_ARCH=ppc
 	wanted_kernel_arch=CONFIG_PPC
         ;;
 #    mips-*|mipsel-*)
-#	RTAI_TARGET_ARCH=mips
+#	RTNET_TARGET_ARCH=mips
 #	wanted_kernel_arch=CONFIG_MIPS
 #        ;;
 #    cris-*)
-#	RTAI_TARGET_ARCH=cris
+#	RTNET_TARGET_ARCH=cris
 #	dnl There is no non-ambiguous CONFIG_ETRAX|CRIS symbol
 #	dnl so use the root device definition.
 #	wanted_kernel_arch=CONFIG_ETRAX_ROOT_DEVICE
@@ -124,8 +124,6 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([inet_ntoa memset socket strchr strerror])
-
-
 
 
 dnl ======================================================================
@@ -277,7 +275,7 @@ arch_select=`eval echo \\$$wanted_kernel_arch`
 if test x$arch_select = x; then
    echo
    echo "************************************************************"
-   echo " The target RTAI architecture ($RTAI_TARGET_ARCH) does not match"
+   echo " The target RTAI architecture ($RTNET_TARGET_ARCH) does not match"
    echo " the kernel architecture selected in $RTAI_LINUX_DIR"
    echo " (i.e. $wanted_kernel_arch is undefined)"
    echo "************************************************************"
@@ -394,7 +392,6 @@ fi
 dnl ===========	end of rtai 3 detection ==================================
 
 
-
 #
 # now let's see wich version of rtai we've found
 # exit with error if there isn't any version
@@ -408,6 +405,65 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
 	;;
     *)
 	AC_MSG_ERROR([*** No RTAI found in $with_rtai])
+	;;
+esac
+
+
+dnl ======================================================================
+dnl		import settings from RTAI
+dnl ======================================================================
+
+case "${CONFIG_RTNET_RTAI_VERSION}" in
+    24 )
+	RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
+	LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
+	KERNEL_CFLAGS="-I$RTAI_LINUX_DIR/include"
+	CONFIG_RTNET_RTAI_ARCH="`sed -n -e "s/^ARCH=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
+	;;
+    30 )
+	RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
+	LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
+	KERNEL_CFLAGS="-I`${RTAI_CONFIG} --linux-dir`/include"
+	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
+	;;
+    * )
+	AC_MSG_ERROR([*** internal error])
+esac
+
+AC_SUBST(RTAI_KMOD_CFLAGS)
+AC_SUBST(LXRT_CFLAGS)
+AC_SUBST(KERNEL_CFLAGS)
+
+
+dnl ======================================================================
+dnl		architecture tests....
+dnl ======================================================================
+
+AC_MSG_CHECKING([for RTAI target arch])
+AC_MSG_RESULT([${CONFIG_RTNET_RTAI_ARCH}])
+
+AC_MSG_CHECKING([for RTnet target arch])
+AC_MSG_RESULT([${RTNET_TARGET_ARCH}])
+
+if test x"${RTNET_TARGET_ARCH}" != x"${CONFIG_RTNET_RTAI_ARCH}"; then
+	AC_MSG_ERROR([*** RTAI and RTnet target architectures are not the same])
+fi
+
+case "${CONFIG_RTNET_RTAI_ARCH}" in
+    i386)
+	AC_DEFINE(CONFIG_ARCH_I386,1,[we are building for x86])
+	;;
+    ppc)
+	AC_DEFINE(CONFIG_ARCH_PPC,1,[we are building for powerpc])
+	;;
+#    arm)
+#	AC_DEFINE(CONFIG_ARCH_ARM,1,[we are trying to build for arm])
+#	;;
+#    cris)
+#	AC_DEFINE(CONFIG_ARCH_CRIS,1,[we are trying to build for cris])
+#	;;
+    *)
+	AC_MSG_ERROR([*** unsupported architecture])
 	;;
 esac
 
@@ -463,51 +519,6 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 esac
 AC_MSG_RESULT([${CONFIG_NEWLXRT:-no}])
 AM_CONDITIONAL(CONFIG_NEWLXRT,[test "$CONFIG_NEWLXRT" = "yes"])
-
-
-dnl ======================================================================
-dnl		import settings from RTAI
-dnl ======================================================================
-
-case "${CONFIG_RTNET_RTAI_VERSION}" in
-    24 )
-	RTAI_KMOD_CFLAGS="`sed -n -e "s/^CFLAGS=\(.*\)/\1/p" $RTAI_DIR/.buildvars` -I$RTAI_DIR/include -DEXPORT_SYMTAB -Wall"
-	LXRT_CFLAGS="-I$RTAI_DIR/include -I$RTAI_DIR/lxrt/include"
-	KERNEL_CFLAGS="-I$RTAI_LINUX_DIR/include"
-	CONFIG_RTNET_RTAI_ARCH="`sed -n -e "s/^ARCH=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
-	;;
-    30 )
-	RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
-	LXRT_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
-	KERNEL_CFLAGS="-I`${RTAI_CONFIG} --linux-dir`/include"
-	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
-	;;
-    * )
-	AC_MSG_ERROR([*** internal error])
-esac
-
-AC_SUBST(RTAI_KMOD_CFLAGS)
-AC_SUBST(LXRT_CFLAGS)
-AC_SUBST(KERNEL_CFLAGS)
-
-
-case "${CONFIG_RTNET_RTAI_ARCH}" in
-    i386)
-	AC_DEFINE(CONFIG_ARCH_I386,1,[we are building for x86])
-	;;
-    ppc)
-	AC_DEFINE(CONFIG_ARCH_PPC,1,[we are building for powerpc])
-	;;
-#    arm)
-#	AC_DEFINE(CONFIG_ARCH_ARM,1,[we are trying to build for arm])
-#	;;
-#    cris)
-#	AC_DEFINE(CONFIG_ARCH_CRIS,1,[we are trying to build for cris])
-#	;;
-    *)
-	AC_MSG_ERROR([*** unsupported architecture])
-	;;
-esac
 
 
 dnl ======================================================================
