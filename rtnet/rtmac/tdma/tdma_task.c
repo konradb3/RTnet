@@ -119,7 +119,7 @@ void tdma_task_notify(int rtdev_id)
         /*
          * transmit packet
          */
-        tdma_xmit(skb);
+        rtmac_xmit(skb);
     }
 
     TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
@@ -162,8 +162,8 @@ void tdma_task_config(int rtdev_id)
                 __FUNCTION__,i, NIPQUAD(rt_entry->arp->ip_addr));
 
             /*
-            * alloc skb, and put counter and time into it....
-            */
+             * alloc skb, and put counter and time into it....
+             */
             skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_TEST, data);
             rt_entry->counter = test_msg->counter = i;
             rt_entry->state = RT_SENT_TEST;
@@ -171,13 +171,13 @@ void tdma_task_config(int rtdev_id)
             rt_entry->tx = test_msg->tx = rtos_time_to_nanosecs(&time_stamp);
 
             /*
-            * transmit packet
-            */
-            tdma_xmit(skb);
+             * transmit packet
+             */
+            rtmac_xmit(skb);
 
             /*
-            * wait
-            */
+             * wait
+             */
             rtos_task_wait_period();
         }
     }
@@ -234,7 +234,7 @@ void tdma_task_master(int rtdev_id)
         time_ns = rtos_time_to_nanosecs(&time_stamp);
         *(nanosecs_t *)data = cpu_to_be64(time_ns);
 
-        tdma_xmit(skb);
+        rtmac_xmit(skb);
 
         /* Calculate delta_t for the master by assuming the current
          * to be the virtual receiption time. Then inform all listings
@@ -255,7 +255,7 @@ void tdma_task_master(int rtdev_id)
 
         skb = rtskb_prio_dequeue(&tdma->tx_queue);
         if (skb)
-            tdma_xmit(skb);
+            rtmac_xmit(skb);
     }
     TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
     tdma->flags.task_active = 0;
@@ -285,7 +285,7 @@ void tdma_task_client(int rtdev_id)
 
         skb = rtskb_prio_dequeue(&tdma->tx_queue);
         if (skb)
-            tdma_xmit(skb);
+            rtmac_xmit(skb);
     }
 
     TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);

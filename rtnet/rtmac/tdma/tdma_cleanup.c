@@ -59,7 +59,7 @@ void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
     TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
                __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
     while ((skb = rtskb_prio_dequeue(&tdma->tx_queue))) {
-        tdma_xmit(skb);
+        rtmac_xmit(skb);
 
         TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
                 __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
@@ -166,7 +166,7 @@ void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
     TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
                __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
     while ((skb = rtskb_prio_dequeue(&tdma->tx_queue))) {
-        tdma_xmit(skb);
+        rtmac_xmit(skb);
 
         TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue empty = %d\n",
                 __FUNCTION__, rtskb_prio_queue_empty(&tdma->tx_queue));
