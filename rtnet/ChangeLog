@@ -1,3 +1,10 @@
+- extended RTcfg
+  * heartbeat support for clients
+  * client failure detection and notification
+  * server restart after failures
+  * IP assignment to clients based on HW addresses
+  * verbose /proc interface
+
 0.7.0
 - ported user API to RTDM (real-time driver model)
 - revised TDMA API based on RTDM
