@@ -219,7 +219,7 @@ LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 DIST_SOURCES = $(librtdm_a_SOURCES)
 HEADERS = $(nobase_include_HEADERS)
 
-DIST_COMMON = $(nobase_include_HEADERS) Makefile.am Makefile.in
+DIST_COMMON = $(nobase_include_HEADERS) COPYING Makefile.am Makefile.in
 SOURCES = $(librtdm_a_SOURCES)
 
 all: all-am
