@@ -1,6 +1,6 @@
 /***
  *
- *  examples/event/rt_event.c
+ *  rtmac/examples/event/rt_event.c
  *
  *  Example for tdma-based RTmac, global time and cycle based
  *  packet transmission.
@@ -91,7 +91,7 @@ void event_handler(int arg)
         rt_disable_irq(irq);
 
         packet.time_stamp = time_stamp;
-        packet.count      = irq_count;        
+        packet.count      = irq_count;
 
         rt_enable_irq(irq);
 
@@ -130,6 +130,7 @@ int sync_callback(int socket, void* arg)
 
 int init_module(void)
 {
+    unsigned int nonblock = 1;
     struct sockaddr_in local_addr;
 
 
@@ -150,16 +151,15 @@ int init_module(void)
 
     sock = rt_socket(AF_INET,SOCK_DGRAM,0);
 
-    if (my_ip[0] == '\0')
-    {
-        printk("ERROR: my_ip must be specified!\n");
-        return 1;
-    }
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family      = AF_INET;
     local_addr.sin_port        = htons(SYNC_PORT);
-    local_addr.sin_addr.s_addr = rt_inet_aton(my_ip);
+    local_addr.sin_addr.s_addr =
+        (strlen(my_ip) != 0) ? rt_inet_aton(my_ip) : INADDR_ANY;
     rt_socket_bind(sock, (struct sockaddr*)&local_addr, sizeof(struct sockaddr_in));
+
+    /* switch to non-blocking */
+    rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
 
     memset(&dest_addr, 0, sizeof(struct sockaddr_in));
     dest_addr.sin_family      = AF_INET;
