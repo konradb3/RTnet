@@ -14,4 +14,4 @@ all-local: rtifconfig $(OPTPROGS)
 
 install-exec-local:
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	$(INSTALL_SCRIPT) rtnet $(DESTDIR)$(sbindir)
+	$(INSTALL_SCRIPT) $(top_srcdir)/tools/rtnet $(DESTDIR)$(sbindir)
