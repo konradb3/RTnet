@@ -461,6 +461,7 @@ int tulip_interrupt(int irq, unsigned long __data)
 	if (tulip_debug > 4)
 		/*RTnet*/rt_printk(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
 			   rtdev->name, inl(ioaddr + CSR5));
+        rt_enable_irq(rtdev->irq);
 	if (rx)
 		rt_mark_stack_mgr(rtdev);
 	return 0;

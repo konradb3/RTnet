@@ -2482,6 +2482,7 @@ static void vortex_interrupt(int irq, unsigned long rtdev_id)
 		rt_printk(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
+	rt_enable_irq(rtdev->irq);
 	rt_spin_unlock(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
@@ -2619,6 +2620,7 @@ static void boomerang_interrupt(int irq, unsigned long rtdev_id)
 		rt_printk(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
+	rt_enable_irq(rtdev->irq);
 	rt_spin_unlock(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
