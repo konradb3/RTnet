@@ -127,13 +127,14 @@ MODULE_LICENSE("GPL and additional rights");
     const int max_block_len = MAX_BLOCK_LEN;                            \
     off_t __limit           = count - MAX_BLOCK_LEN;                    \
     int   __len             = 0;                                        \
-    *eof = 1
+                                                                        \
+    *eof = 1;                                                           \
+    if (count < MAX_BLOCK_LEN)                                          \
+        return 0
 
 #define RTDM_PROC_PRINT(fmt, args...)                                   \
     ({                                                                  \
         __len += snprintf(buf + __len, max_block_len, fmt, ##args);     \
-        if (__len > __limit)                                            \
-            *eof = 0;                                                   \
         (__len <= __limit);                                             \
     })
 
