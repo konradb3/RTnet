@@ -116,10 +116,9 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
         ret = wait_event_interruptible(call->call_wq, call->processed);
 
     if (ret == 0) {
-        ret = call->result;
-
         if (copy_back_handler != NULL)
             copy_back_handler(call, priv_data);
+        ret = call->result;
     }
 
     if (atomic_dec_and_test(&call->ref_count)) {
