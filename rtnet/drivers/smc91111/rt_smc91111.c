@@ -3925,3 +3925,5 @@ static void smc_phy_interrupt(struct net_device* dev)
 	} // end while
 }
 #endif
+
+MODULE_LICENSE("GPL");
