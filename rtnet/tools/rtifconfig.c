@@ -443,6 +443,9 @@ void do_mac(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+    if ((argc > 1) && (strcmp(argv[1], "--help") == 0))
+        help();
+
     f = open("/dev/rtnet", O_RDWR);
 
     if (f < 0) {
@@ -452,9 +455,6 @@ int main(int argc, char *argv[])
 
     if (argc == 1)
         do_display(PRINT_FLAG_ALL);
-
-    if (strcmp(argv[1], "--help") == 0)
-        help();
 
     if (strcmp(argv[1], "-a") == 0) {
         if (argc == 3) {
