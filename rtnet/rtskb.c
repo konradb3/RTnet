@@ -188,9 +188,6 @@ static inline int new_rtskb(struct rtskb_head *pool)
 
     /* calculate logical buffer page address */
     skb->buf_page_addr = page_address(vmalloc_to_page(skb->buf_start));
-#undef page_address
-#define page_address(page) __va(((page) - mem_map) << PAGE_SHIFT)
-printk("skb: %X %X %X %X %X %X %X %X\n", skb, skb->buf_start, skb->buf_page_addr, vmalloc_to_page(skb->buf_start), page_address(vmalloc_to_page(skb->buf_start)), mem_map, PAGE_SHIFT, PAGE_OFFSET);
 #else
     skb->buf_start = ((char *)skb) + ALIGN_RTSKB_BUF;
 #endif
