@@ -1,3 +1,49 @@
+0.5.5
+- Revised IP fragmenation/defragmentation engine
+- Added packet sockets (incl. example)
+- Memory allocation for rtskbs based on a Linux slab cache (again...)
+- Introduced rt_socket_ioctl
+  * lists IPs of available interfaces
+  * reports the interface flags
+- Updated PPC drivers
+- Added support VIA Rhine NICs
+- Fixed LXRT interface and examples
+- Fixed cross-compilation issues
+- Improved socket file descriptor lookup
+- Discontinued static socket interfaces
+- Revised device driver layer (index-based management)
+- Fixed race conditions on socket close
+- Added/updated the documentation
+- Added/updated examples
+
+0.5.0
+- Introduced Virtual NIC support for RTmac (allows e.g. TCP/IP tunnelling
+  without any influence on real-time traffic)
+- New config and make system (stand-alone compilation outside the RTAI tree
+  possible)
+- Improved buffer pool management (avoids memory shortages if, e.g., an
+  application fails to retrieve all its incoming data on time)
+- Prioritised send queues in RTmac (31 real-time priorities, 1 for non
+  real-time packets)
+- Bindless send (sending packets without the need to bind to a specific
+  interface)
+- Receive calls are now blocking by default (non-blocking selectable with
+  sockopts)
+- Added support for AMD PCnet32/PCnetPCI network adapters
+- Added early version of a driver porting guide
+- As usual: various minor bug fixes
+
+0.2.10
+- New device naming sheme, internal modification of the driver layer (fixes bug
+  680211)
+- Fixed loopback-rt
+- New RTmac frame format
+- Internal improvements of RTmac
+- Added UDP fragmentation, see included README.ipfragmentation - Mathias
+  Koehrer
+- New header file ordering, see include/INCLUDE.policy
+- Various minor bug fixes...
+
 0.2.9
 - Fixed many memory leak bugs - Hans-Peter Bock
 - OpenOffice document 'structure of RTnet 0.2.8' - Hans-Peter Bock
