@@ -25,6 +25,7 @@ How to install it?
 6. Enable "Real-Time networking (rtnet)" in your RTAI configuration
 7. make && make install
 8. run "mknod /dev/rtnet c 10 240" on your target system
+9. run "mknod /dev/rtmac c 10 241" if you want to use rtmac
 
 How to test it?
 ---------------
