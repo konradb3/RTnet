@@ -1,7 +1,8 @@
 /* tdma_ioctl.c
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,139 +29,139 @@
 
 int tdma_ioctl_client(struct rtnet_device *rtdev)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
-       
-	memset(&info, 0, sizeof(struct tdma_info));
-	
-	info.rtdev = rtdev;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	return tdma_do_event(tdma, REQUEST_CLIENT, &info);
+    memset(&info, 0, sizeof(struct tdma_info));
+
+    info.rtdev = rtdev;
+
+    return tdma_do_event(tdma, REQUEST_CLIENT, &info);
 }
 
 
 int tdma_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle, unsigned int mtu)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
-       
-	memset(&info, 0, sizeof(struct tdma_info));
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	if ((cycle < 100) || (cycle > 4*1000*1000)) {
-		rt_printk("RTmac: tdma: cycle must be between 100 us and 4 s\n"); 
-		return -1;
-	}
-	if ((mtu < ETH_ZLEN - ETH_HLEN ) || (mtu > ETH_DATA_LEN)) {		// (mtu< 46 )||(mtu> 1500 )
-		rt_printk("RTmac: tdma: mtu %d is out of bounds, must be between 46 and 1500 octets\n", mtu);
-		return -1;
-	}
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.rtdev = rtdev;
-	info.cycle = cycle;
-	info.mtu = mtu;
+    if ((cycle < 100) || (cycle > 4*1000*1000)) {
+        rt_printk("RTmac: tdma: cycle must be between 100 us and 4 s\n");
+        return -1;
+    }
+    if ((mtu < ETH_ZLEN - ETH_HLEN ) || (mtu > ETH_DATA_LEN)) {		// (mtu< 46 )||(mtu> 1500 )
+        rt_printk("RTmac: tdma: mtu %d is out of bounds, must be between 46 and 1500 octets\n", mtu);
+        return -1;
+    }
 
-	return tdma_do_event(tdma, REQUEST_MASTER, &info);
+    info.rtdev = rtdev;
+    info.cycle = cycle;
+    info.mtu = mtu;
+
+    return tdma_do_event(tdma, REQUEST_MASTER, &info);
 }
 
 
 int tdma_ioctl_up(struct rtnet_device *rtdev)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.rtdev = rtdev;
+    info.rtdev = rtdev;
 
-	return tdma_do_event(tdma, REQUEST_UP, &info);
+    return tdma_do_event(tdma, REQUEST_UP, &info);
 }
 
 
 int tdma_ioctl_down(struct rtnet_device *rtdev)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.rtdev = rtdev;
+    info.rtdev = rtdev;
 
-	return tdma_do_event(tdma, REQUEST_DOWN, &info);
+    return tdma_do_event(tdma, REQUEST_DOWN, &info);
 }
 
 
 int tdma_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.rtdev = rtdev;
-	info.ip_addr = ip_addr;
-	
-	return tdma_do_event(tdma, REQUEST_ADD_RT, &info);
+    info.rtdev = rtdev;
+    info.ip_addr = ip_addr;
+
+    return tdma_do_event(tdma, REQUEST_ADD_RT, &info);
 }
 
 int tdma_ioctl_remove(struct rtnet_device *rtdev, u32 ip_addr)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.rtdev = rtdev;
-	info.ip_addr = ip_addr;
-	
-	return tdma_do_event(tdma, REQUEST_REMOVE_RT, &info);
+    info.rtdev = rtdev;
+    info.ip_addr = ip_addr;
+
+    return tdma_do_event(tdma, REQUEST_REMOVE_RT, &info);
 }
 
 
 int tdma_ioctl_mtu(struct rtnet_device *rtdev, unsigned int mtu)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.mtu = mtu;
+    info.mtu = mtu;
 
-	if ((mtu < ETH_ZLEN - ETH_HLEN ) || (mtu > ETH_DATA_LEN)) {		// (mtu< 46 )||(mtu> 1500 )
-		rt_printk("RTmac: tdma: mtu %d is out of bounds, must be between 46 and 1500 octets\n", mtu);
-		return -1;
-	}
+    if ((mtu < ETH_ZLEN - ETH_HLEN ) || (mtu > ETH_DATA_LEN)) {		// (mtu< 46 )||(mtu> 1500 )
+        rt_printk("RTmac: tdma: mtu %d is out of bounds, must be between 46 and 1500 octets\n", mtu);
+        return -1;
+    }
 
-	return tdma_do_event(tdma, CHANGE_MTU, &info);
+    return tdma_do_event(tdma, CHANGE_MTU, &info);
 }
 
 
 int tdma_ioctl_cycle(struct rtnet_device *rtdev, unsigned int cycle)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	if ((cycle < 1000) || (cycle > 4*1000*1000)) {
-		rt_printk("RTmac: tdma: cycle must be between 1000 us and 4 s\n"); 
-		return -1;
-	}
+    if ((cycle < 1000) || (cycle > 4*1000*1000)) {
+        rt_printk("RTmac: tdma: cycle must be between 1000 us and 4 s\n");
+        return -1;
+    }
 
-	info.cycle = cycle;
+    info.cycle = cycle;
 
-	return tdma_do_event(tdma, CHANGE_CYCLE, &info);
+    return tdma_do_event(tdma, CHANGE_CYCLE, &info);
 }
 
 
 int tdma_ioctl_offset(struct rtnet_device *rtdev, u32 ip_addr, unsigned int offset)
 {
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->rtmac->priv;
-	struct tdma_info info;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct tdma_info info;
 
-	memset(&info, 0, sizeof(struct tdma_info));
+    memset(&info, 0, sizeof(struct tdma_info));
 
-	info.offset = offset;
-	info.ip_addr = ip_addr;
+    info.offset = offset;
+    info.ip_addr = ip_addr;
 
-	return tdma_do_event(tdma, CHANGE_OFFSET, &info);
+    return tdma_do_event(tdma, CHANGE_OFFSET, &info);
 }

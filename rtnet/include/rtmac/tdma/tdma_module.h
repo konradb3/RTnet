@@ -1,7 +1,8 @@
 /* include/rtmac/tdma/tdma_module.h
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,11 +27,8 @@
 #include <rtdev.h>
 
 
-extern int tdma_init(struct rtnet_device *rtdev);
-extern int tdma_release(struct rtnet_device *rtdev);
-
-extern int tdma_start(struct rtnet_device *rtdev);
-extern void tdma_stop(struct rtnet_device *rtdev);
+extern int tdma_init(void);
+extern void tdma_release(void);
 
 
 #endif //__KERNEL__

@@ -87,7 +87,7 @@ static int rtnet_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 		 *
 		 * FIXME: if mac exists shut mac down, then device...
 		 */
-		if( rtdev->rtmac ) {
+		if( rtdev->mac_disc ) {
 			rt_printk("rtnet: rtmac is active on dev %s, cannot shut down\n", rtdev->name);
 			return -ENOTTY;
 		}

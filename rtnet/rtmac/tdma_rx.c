@@ -1,7 +1,8 @@
-/* rtmac_rx.c
+/* tdma_rx.c
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,51 +22,27 @@
 #include <rtmac/tdma/tdma_event.h>
 
 
-int tdma_packet_rx(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt)
+int tdma_packet_rx(struct rtskb *skb)
 {
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
-	
-	struct rtmac_hdr *rtmac_ptr;
-	struct tdma_hdr *tdma_ptr;
-	TDMA_EVENT event;
+    struct rtnet_device *rtdev = skb->rtdev;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
 
-	int ret = 0;
+    struct tdma_hdr *tdma_ptr;
+    TDMA_EVENT event;
 
-	/*
-	 * set pointers in skb
-	 *
-	 * network layer pointer (->nh) to rtmac header
-	 * transport layer pointer (->h) to tdma header
-	 * data pointer (->data) to beginning of data
-	 */	
-	skb->nh.raw = skb->data;
-	rtmac_ptr = (struct rtmac_hdr *)skb->nh.raw;
-	skb->data += sizeof(struct rtmac_hdr);
+    int ret = 0;
 
-	skb->h.raw = skb->data;
-	tdma_ptr = (struct tdma_hdr *)skb->h.raw;
-	skb->data += sizeof(struct tdma_hdr);
+    tdma_ptr = (struct tdma_hdr *)skb->data;
+    rtskb_pull(skb, sizeof(struct tdma_hdr));
 
+    event = ntohl(tdma_ptr->msg);
 
-	/*
-	 * test if the received packet is a valid tdma packet...
-	 */
-	if (rtmac_ptr->type != __constant_htons(ETH_TDMA) || rtmac_ptr->ver != RTMAC_VERSION) {
-		rt_printk("RTmac: tdma: received packet on interface %s is not tdma ;(\n",
-			  rtdev->name);
-		kfree_rtskb(skb);
-		return -1;
-	}
+    ret = tdma_do_event(tdma, event, (void *)skb);
 
-	event = ntohl(tdma_ptr->msg);
+    /*
+     * dispose socket buffer
+     */
+    kfree_rtskb(skb);
 
-	ret = tdma_do_event(tdma, event, (void *)skb);
-
-	/*
-	 * dispose socket buffer
-	 */
-	kfree_rtskb(skb);
-
-	return ret;
+    return ret;
 }

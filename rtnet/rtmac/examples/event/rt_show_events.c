@@ -26,6 +26,8 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+#include <net/ip.h>
+
 #include <rtai.h>
 #include <rtai_sched.h>
 

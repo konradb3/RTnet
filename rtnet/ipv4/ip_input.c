@@ -29,34 +29,34 @@ static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
 
 int rt_ip_local_deliver_finish(struct rtskb *skb)
 {
-	int ihl  = skb->nh.iph->ihl*4;
-	int hash = rt_inet_hashkey(skb->nh.iph->protocol);
-	int ret  = 0;
+    int ihl  = skb->nh.iph->ihl*4;
+    int hash = rt_inet_hashkey(skb->nh.iph->protocol);
+    int ret  = 0;
 
-	struct rtinet_protocol *ipprot = rt_inet_protocols[hash];
-	
-	__rtskb_pull(skb, ihl);
+    struct rtinet_protocol *ipprot = rt_inet_protocols[hash];
 
-        /* Point into the IP datagram, just past the header. */
-        skb->h.raw = skb->data;
+    __rtskb_pull(skb, ihl);
 
-	if ( ipprot )
-		ret = ipprot->handler(skb);
-	else {
-		/* If a fallback handler for IP protocol has been installed,
-		 * call it! */
-		if (ip_fallback_handler) {
-			ret = ip_fallback_handler(skb);
-			if (ret) {
-				rt_printk("RTnet: fallback handler failed\n");
-			}
-		} else {
-			rt_printk("RTnet: no protocol found\n");
-			kfree_rtskb(skb);
-		}
-	}
+    /* Point into the IP datagram, just past the header. */
+    skb->h.raw = skb->data;
 
-	return ret;
+    if ( ipprot )
+        ret = ipprot->handler(skb);
+    else {
+        /* If a fallback handler for IP protocol has been installed,
+         * call it! */
+        if (ip_fallback_handler) {
+            ret = ip_fallback_handler(skb);
+            if (ret) {
+                rt_printk("RTnet: fallback handler failed\n");
+            }
+        } else {
+            rt_printk("RTnet: no protocol found\n");
+            kfree_rtskb(skb);
+        }
+    }
+
+    return ret;
 }
 
 /* This function can be used to register a fallback handler for incoming
@@ -75,74 +75,74 @@ int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
 
 
 /***
- *	rt_ip_local_deliver
+ *  rt_ip_local_deliver
  */
 int rt_ip_local_deliver(struct rtskb *skb)
 {
-	/*
-	 *	Reassemble IP fragments.
-	 */
-	if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
-		skb = rt_ip_defrag(skb);
-		if (!skb)
-			return 0;
-	}
-	return rt_ip_local_deliver_finish(skb);
+    /*
+     *  Reassemble IP fragments.
+     */
+    if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
+        skb = rt_ip_defrag(skb);
+        if (!skb)
+            return 0;
+    }
+    return rt_ip_local_deliver_finish(skb);
 }
 
 
 /***
- *	rt_ip_rcv
+ *  rt_ip_rcv
  */
-int rt_ip_rcv(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt)
+int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 {
-	struct iphdr *iph;
-	
-	/* When the interface is in promisc. mode, drop all the crap
-	 * that it receives, do not try to analyse it.
-	 */
-	if (skb->pkt_type == PACKET_OTHERHOST)
-		goto drop;
+    struct iphdr *iph;
 
-	iph = skb->nh.iph;
+    /* When the interface is in promisc. mode, drop all the crap
+     * that it receives, do not try to analyse it.
+     */
+    if (skb->pkt_type == PACKET_OTHERHOST)
+        goto drop;
 
-	/*
-	 *	RFC1122: 3.1.2.2 MUST silently discard any IP frame that fails the checksum.
-	 *
-	 *	Is the datagram acceptable?
-	 *
-	 *	1.	Length at least the size of an ip header
-	 *	2.	Version of 4
-	 *	3.	Checksums correctly. [Speed optimisation for later, skip loopback checksums]
-	 *	4.	Doesn't have a bogus length
-	 */
-	if (iph->ihl < 5 || iph->version != 4)
-		goto drop; 
+    iph = skb->nh.iph;
 
-	if ( ip_fast_csum((u8 *)iph, iph->ihl)!=0 ) 
-		goto drop; 
-		
-	{
-		__u32 len = ntohs(iph->tot_len); 
-		if ( (skb->len<len) || (len<((__u32)iph->ihl<<2)) )
-			goto drop;
-	
-		rtskb_trim(skb, len);
-	}
-	
-	if (skb->dst == NULL)
-		if ( rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) )
-			goto drop; 
+    /*
+     *  RFC1122: 3.1.2.2 MUST silently discard any IP frame that fails the checksum.
+     *
+     *  Is the datagram acceptable?
+     *
+     *  1.  Length at least the size of an ip header
+     *  2.  Version of 4
+     *  3.  Checksums correctly. [Speed optimisation for later, skip loopback checksums]
+     *  4.  Doesn't have a bogus length
+     */
+    if (iph->ihl < 5 || iph->version != 4)
+        goto drop; 
 
-	/* ip_local_deliver */	
-	if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
-		skb = rt_ip_defrag(skb);
-		if (!skb)
-			return 0;
-	}
-	return rt_ip_local_deliver_finish(skb);
+    if ( ip_fast_csum((u8 *)iph, iph->ihl)!=0 ) 
+        goto drop; 
+
+    {
+        __u32 len = ntohs(iph->tot_len); 
+        if ( (skb->len<len) || (len<((__u32)iph->ihl<<2)) )
+            goto drop;
+
+        rtskb_trim(skb, len);
+    }
+
+    if (skb->dst == NULL)
+        if ( rt_ip_route_input(skb, iph->daddr, iph->saddr, skb->rtdev) )
+            goto drop; 
+
+    /* ip_local_deliver */
+    if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
+        skb = rt_ip_defrag(skb);
+        if (!skb)
+            return 0;
+    }
+    return rt_ip_local_deliver_finish(skb);
 
 drop:
-	kfree_rtskb(skb);
-	return NET_RX_DROP;
+    kfree_rtskb(skb);
+    return NET_RX_DROP;
 }

@@ -32,86 +32,93 @@
 
 
 /***
- *	rtnet_device 
+ *  rtnet_device 
  */
 struct rtnet_device {
-	/* Many field are borrowed from struct net_device in <linux/netdevice.h> - WY */
-	char			name[IFNAMSIZ];
+    /* Many field are borrowed from struct net_device in
+     * <linux/netdevice.h> - WY
+     */
+    char                name[IFNAMSIZ];
 
-	unsigned long		rmem_end;	/* shmem "recv" end	*/
-	unsigned long		rmem_start;	/* shmem "recv" start	*/
-	unsigned long		mem_end;	/* shared mem end	*/
-	unsigned long		mem_start;	/* shared mem start	*/
-	unsigned long		base_addr;	/* device I/O address	*/
-	unsigned int		irq;		/* device IRQ number	*/
+    unsigned long       rmem_end;   /* shmem "recv" end     */
+    unsigned long       rmem_start; /* shmem "recv" start   */
+    unsigned long       mem_end;    /* shared mem end       */
+    unsigned long       mem_start;  /* shared mem start     */
+    unsigned long       base_addr;  /* device I/O address   */
+    unsigned int        irq;        /* device IRQ number    */
 
-	/*
-	 *	Some hardware also needs these fields, but they are not
-	 *	part of the usual set specified in Space.c.
-	 */
-	unsigned char		if_port;	/* Selectable AUI, TP,..*/
-	unsigned char		dma;		/* DMA channel		*/
+    /*
+     *  Some hardware also needs these fields, but they are not
+     *  part of the usual set specified in Space.c.
+     */
+    unsigned char       if_port;    /* Selectable AUI, TP,..*/
+    unsigned char       dma;        /* DMA channel          */
 
-	unsigned long		state;
-	int			ifindex;
+    unsigned long       state;
+    int                 ifindex;
 
-	struct rtnet_device	*next;
-	struct net_device	*ldev;		/* can be used by rtnetproxy */
+    struct rtnet_device *next;
+    struct net_device   *ldev;      /* used by rtnetproxy and rtmac_vnic*/
 
-	struct module		*owner;
+    struct module       *owner;
 
-	__u32			local_addr;	/* in network order	*/
+    __u32               local_addr; /* in network order */
 
-	struct rtsocket		*protocols;
+    struct rtsocket     *protocols;
 
-	struct rtskb_head	rxqueue;	/* rx-queue		*/
+    struct rtskb_head   rxqueue;    /* rx-queue */
 
-	unsigned short		flags;	/* interface flags (a la BSD)	*/
-	unsigned short		gflags;
-	unsigned int		mtu;		/* eth = 1536, tr = 4... */
-	unsigned short		type;		/* interface hardware type	*/
-	unsigned short		hard_header_len;	/* hardware hdr length	*/
-	void			*priv;		/* pointer to private data	*/
-	int			features;	/* NETIF_F_* */
+    unsigned short      flags;      /* interface flags (a la BSD)   */
+    unsigned short      gflags;
+    unsigned int        mtu;        /* eth = 1536, tr = 4...        */
+    unsigned short      type;       /* interface hardware type      */
+    unsigned short      hard_header_len;    /* hardware hdr length  */
+    void                *priv;      /* pointer to private data      */
+    int                 features;   /* NETIF_F_*                    */
 
-	/* Interface address info. */
-	unsigned char		broadcast[MAX_ADDR_LEN];	/* hw bcast add	*/
-	unsigned char		dev_addr[MAX_ADDR_LEN];	/* hw address	*/
-	unsigned char		addr_len;	/* hardware address length	*/
+    /* Interface address info. */
+    unsigned char       broadcast[MAX_ADDR_LEN];    /* hw bcast add */
+    unsigned char       dev_addr[MAX_ADDR_LEN];     /* hw address   */
+    unsigned char       addr_len;   /* hardware address length      */
 
-	struct dev_mc_list	*mc_list;	/* Multicast mac addresses	*/
-	int			mc_count;	/* Number of installed mcasts	*/
-	int			promiscuity;
-	int			allmulti;
+    struct dev_mc_list  *mc_list;   /* Multicast mac addresses      */
+    int                 mc_count;   /* Number of installed mcasts   */
+    int                 promiscuity;
+    int                 allmulti;
 
-	MBX			*stack_mbx;
-	MBX			*rtdev_mbx;
-	struct rtmac_device	*rtmac;
+    MBX                 *stack_mbx;
+    MBX                 *rtdev_mbx;
 
-	int			(*open)(struct rtnet_device *rtdev);
-	int			(*stop)(struct rtnet_device *rtdev);
-	int			(*hard_header) (struct rtskb *,struct rtnet_device *,unsigned short type,void *daddr,void *saddr,unsigned int len);
-	int			(*rebuild_header)(struct rtskb *);
-	int			(*hard_start_xmit)(struct rtskb *skb,struct rtnet_device *dev);
-	int			(*hw_reset)(struct rtnet_device *rtdev);
+    /* RTmac related fields */
+    struct rtmac_disc   *mac_disc;
+    struct rtmac_priv   *mac_priv;
+
+    /* Device operations */
+    int                 (*open)(struct rtnet_device *rtdev);
+    int                 (*stop)(struct rtnet_device *rtdev);
+    int                 (*hard_header)(struct rtskb *, struct rtnet_device *,
+                                       unsigned short type, void *daddr,
+                                       void *saddr, unsigned int len);
+    int                 (*rebuild_header)(struct rtskb *);
+    int                 (*hard_start_xmit)(struct rtskb *skb,
+                                           struct rtnet_device *dev);
+    int                 (*hw_reset)(struct rtnet_device *rtdev);
 };
 
 
 /*** 
  * network-layer-protocol (Layer-3-Protokoll) 
  */
-#define MAX_RT_PROTOCOLS 	16
+#define MAX_RT_PROTOCOLS        16
 struct rtpacket_type {
-	char			*name;
-	unsigned short		type;
-	struct net_device 	*dev;
+    char            *name;
+    unsigned short  type;
 
-	int			(*handler) 
-				(struct rtskb *, struct rtnet_device *, struct rtpacket_type *);
-	int			(*err_handler)
-				(struct rtskb *, struct rtnet_device *, struct rtpacket_type *);
+    int             (*handler)(struct rtskb *, struct rtpacket_type *);
+    int             (*err_handler)(struct rtskb *, struct rtnet_device *,
+                                   struct rtpacket_type *);
 
-	void			*private;
+    void            *private;
 };
 
 

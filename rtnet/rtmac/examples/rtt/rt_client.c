@@ -166,7 +166,7 @@ int init_module(void)
 	unsigned long server_ip = rt_inet_aton(server_ip_s);
 
 	if (sof_sync[0] != '\0') {
-		tdma = tdma_get_by_name(sof_sync);
+		tdma = tdma_get_by_device(sof_sync);
 		if (!tdma) {
 			rt_printk("You enable sof_sync but device '%s' not found"
 				  " or no tdma attached.",sof_sync);

@@ -1,7 +1,8 @@
 /* rtmac_task.c
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,108 +30,106 @@
 
 void tdma_task_shutdown(struct rtmac_tdma *tdma)
 {
-	if (tdma->flags.task_active == 1) {
-		tdma->flags.shutdown_task = 1;
-		
-		/* In case the application has stopped the timer, it's
-		 * likely that the tx_task will be waiting forever in
-		 * rt_task_wait_period().  So we wakeup the task here for
-		 * sure.
-		 * -WY-
-		 */
-		rt_task_wakeup_sleeping(&tdma->tx_task);
+    if (tdma->flags.task_active == 1) {
+        tdma->flags.shutdown_task = 1;
 
-		/*
-		 * unblock all tasks by deleting semas
-		 */
-		rt_sem_delete(&tdma->client_tx);	//tdma_task_client()
-		rt_sem_delete(&tdma->free);		//tdma_packet_tx()
+        /* In case the application has stopped the timer, it's
+         * likely that the tx_task will be waiting forever in
+         * rt_task_wait_period().  So we wakeup the task here for
+         * sure.
+         * -WY-
+         */
+        rt_task_wakeup_sleeping(&tdma->tx_task);
 
-		/*
-		 * re-init semas
-		 */
-		rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
-		rt_sem_init(&tdma->client_tx, 0);
-	}
+        /*
+         * unblock all tasks by deleting semas
+         */
+        rt_sem_delete(&tdma->client_tx);    //tdma_task_client()
+        rt_sem_delete(&tdma->free);         //tdma_packet_tx()
+
+        /*
+         * re-init semas
+         */
+        rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+        rt_sem_init(&tdma->client_tx, 0);
+    }
 }
 
 
 
 int tdma_task_change(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle)
 {
-	int ret = 0;
+    int ret = 0;
 
-	/*
-	 * shutdown the task
-	 */
-	tdma_task_shutdown(tdma);
-	
-	ret = tdma_timer_start_task_change(tdma, task, cycle, TDMA_NOTIFY_TASK_CYCLE);
+    /*
+     * shutdown the task
+     */
+    tdma_task_shutdown(tdma);
 
-	return ret;
+    ret = tdma_timer_start_task_change(tdma, task, cycle, TDMA_NOTIFY_TASK_CYCLE);
+
+    return ret;
 }
 
 
 
 int tdma_task_change_con(struct rtmac_tdma *tdma, void (*task)(int rtdev_id), unsigned int cycle)
 {
-	struct rtmac_device *rtmac = tdma->rtmac;
-	struct rtnet_device *rtdev = rtmac->rtdev;
-	int ret = 0;
+    struct rtnet_device *rtdev = tdma->rtdev;
+    int ret = 0;
 
-	if (tdma->flags.task_active) {
-		rt_printk("RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
-		rt_task_delete(&tdma->tx_task);
-	}
+    if (tdma->flags.task_active) {
+        rt_printk("RTmac: tdma: %s() task was not shutted down.\n",__FUNCTION__);
+        rt_task_delete(&tdma->tx_task);
+    }
 
-	ret = rt_task_init(&tdma->tx_task, task, (int)rtdev, 4096, TDMA_PRIO_TX_TASK, 0, 0);
-	
-	if (cycle != 0)
-		ret = rt_task_make_periodic_relative_ns(&tdma->tx_task, 1000*1000, cycle);
-	else
-		ret = rt_task_resume(&tdma->tx_task);
+    ret = rt_task_init(&tdma->tx_task, task, (int)rtdev, 4096, TDMA_PRIO_TX_TASK, 0, 0);
 
-	if (ret != 0)
-		rt_printk("RTmac: tdma: %s() not successful\n",__FUNCTION__);
-	else
-		TDMA_DEBUG(2, "RTmac: tdma: %s() succsessfull\n",__FUNCTION__);
+    if (cycle != 0)
+        ret = rt_task_make_periodic_relative_ns(&tdma->tx_task, 1000*1000, cycle);
+    else
+        ret = rt_task_resume(&tdma->tx_task);
+
+    if (ret != 0)
+        rt_printk("RTmac: tdma: %s() not successful\n",__FUNCTION__);
+    else
+        TDMA_DEBUG(2, "RTmac: tdma: %s() succsessful\n",__FUNCTION__);
 
 
-	tdma->flags.task_active = 1;
-	return ret;
+    tdma->flags.task_active = 1;
+    return ret;
 }
 
 
 
 void tdma_task_notify(int rtdev_id)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
+    struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
 
-	struct rtskb *skb;
-	void *data;
+    struct rtskb *skb;
+    void *data;
 
-	while (tdma->flags.shutdown_task == 0) {
-		/*
-		 * alloc message
-		 */
-		skb = tdma_make_msg(rtdev, NULL, NOTIFY_MASTER, &data);
+    while (tdma->flags.shutdown_task == 0) {
+        /*
+         * alloc message
+         */
+        skb = tdma_make_msg(rtdev, NULL, NOTIFY_MASTER, &data);
 
-		/*
-		 * wait 'till begin of next period
-		 */
-		rt_task_wait_period();
+        /*
+         * wait 'till begin of next period
+         */
+        rt_task_wait_period();
 
-		/*
-		 * transmit packet
-		 */
-		rtdev_xmit(skb);
-	}
+        /*
+         * transmit packet
+         */
+        tdma_xmit(skb);
+    }
 
-	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
-	tdma->flags.task_active = 0;
-	tdma->flags.shutdown_task = 0;
+    TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
+    tdma->flags.task_active = 0;
+    tdma->flags.shutdown_task = 0;
 }
 
 
@@ -139,72 +138,71 @@ void tdma_task_notify(int rtdev_id)
 
 void tdma_task_config(int rtdev_id)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
-	struct rtskb *skb;
-	struct tdma_test_msg *test_msg;
-	void *data = &test_msg;
-	struct tdma_rt_entry *rt_entry;
-	struct list_head *lh;
-	int i, max;
+    struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct rtskb *skb;
+    struct tdma_test_msg *test_msg;
+    void *data = &test_msg;
+    struct tdma_rt_entry *rt_entry;
+    struct list_head *lh;
+    int i, max;
 
-	max = TDMA_MASTER_MAX_TEST;
+    max = TDMA_MASTER_MAX_TEST;
 
-	list_for_each(lh, &tdma->rt_list) {
-		rt_entry = list_entry(lh, struct tdma_rt_entry, list);
+    list_for_each(lh, &tdma->rt_list) {
+        rt_entry = list_entry(lh, struct tdma_rt_entry, list);
 
-		if (rt_entry->state != RT_RCVD_CONF )
-			goto out;
+        if (rt_entry->state != RT_RCVD_CONF )
+            goto out;
 
-		TDMA_DEBUG(4, "RTmac: tdma: %s() sending %d test packets to %u.%u.%u.%u\n",
-			   __FUNCTION__,max, NIPQUAD(rt_entry->arp->ip_addr));
+        TDMA_DEBUG(4, "RTmac: tdma: %s() sending %d test packets to %u.%u.%u.%u\n",
+            __FUNCTION__,max, NIPQUAD(rt_entry->arp->ip_addr));
 
-		for (i = 0; i < max; i++) {
-			if (!(rt_entry->state == RT_RCVD_CONF || rt_entry->state == RT_RCVD_TEST))
-				goto out;
+        for (i = 0; i < max; i++) {
+            if (!(rt_entry->state == RT_RCVD_CONF || rt_entry->state == RT_RCVD_TEST))
+                goto out;
 
-			TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet #%d to %u.%u.%u.%u\n",
-				   __FUNCTION__,i, NIPQUAD(rt_entry->arp->ip_addr));
+            TDMA_DEBUG(6, "RTmac: tdma: %s() sending test packet #%d to %u.%u.%u.%u\n",
+                __FUNCTION__,i, NIPQUAD(rt_entry->arp->ip_addr));
 
-			/*
-			 * alloc skb, and put counter and time into it....
-			 */
-			skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_TEST, data);
-			rt_entry->counter = test_msg->counter = i;
-			rt_entry->state = RT_SENT_TEST;
-			rt_entry->tx = test_msg->tx = rt_get_time();
+            /*
+            * alloc skb, and put counter and time into it....
+            */
+            skb = tdma_make_msg(rtdev, rt_entry->arp->hw_addr, REQUEST_TEST, data);
+            rt_entry->counter = test_msg->counter = i;
+            rt_entry->state = RT_SENT_TEST;
+            rt_entry->tx = test_msg->tx = rt_get_time();
 
-			/*
-			 * transmit packet
-			 */
-			rtdev_xmit(skb);
+            /*
+            * transmit packet
+            */
+            tdma_xmit(skb);
 
-			/*
-			 * wait
-			 */
-			rt_task_wait_period();
-		}
-	}
-	
-	TDMA_DEBUG(3, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
-	tdma->flags.task_active = 0;
-	tdma->flags.shutdown_task = 0;
+            /*
+            * wait
+            */
+            rt_task_wait_period();
+        }
+    }
 
-	tdma_timer_start_sent_test(tdma, TDMA_MASTER_WAIT_TEST);
-	tdma_next_state(tdma, TDMA_MASTER_SENT_TEST);
+    TDMA_DEBUG(3, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
+    tdma->flags.task_active = 0;
+    tdma->flags.shutdown_task = 0;
 
-	return;
+    tdma_timer_start_sent_test(tdma, TDMA_MASTER_WAIT_TEST);
+    tdma_next_state(tdma, TDMA_MASTER_SENT_TEST);
 
- out:
-	rt_printk("RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
-		  __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
-	tdma_cleanup_master_rt(tdma);
-	tdma_next_state(tdma, TDMA_DOWN);
+    return;
 
-	tdma->flags.task_active = 0;
-	tdma->flags.shutdown_task = 0;
-	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
+out:
+    rt_printk("RTmac: tdma: *** WARNING *** %s() received not ACK from station %d, IP %u.%u.%u.%u, going into DOWN state\n",
+        __FUNCTION__,rt_entry->station, NIPQUAD(rt_entry->arp->ip_addr));
+    tdma_cleanup_master_rt(tdma);
+    tdma_next_state(tdma, TDMA_DOWN);
+
+    tdma->flags.task_active = 0;
+    tdma->flags.shutdown_task = 0;
+    TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
 }
 
 
@@ -213,57 +211,56 @@ void tdma_task_config(int rtdev_id)
 
 void tdma_task_master(int rtdev_id)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
-	struct rtskb *skb;
-	void *data;
-	RTIME time_stamp;
+    struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct rtskb *skb;
+    void *data;
+    RTIME time_stamp;
 
-	while (tdma->flags.shutdown_task == 0) {
-		/*
-		 * make, resp. get master skb
-		 */
-		//FIXME: rtskb_queue_empty(tdma->master_queue) enable to send real msgs...
+    while (tdma->flags.shutdown_task == 0) {
+        /*
+         * make, resp. get master skb
+         */
+        /*FIXME: rtskb_queue_empty(tdma->master_queue) enable to send real msgs...*/
 
-		skb = tdma_make_msg(rtdev, NULL, START_OF_FRAME, &data);
+        skb = tdma_make_msg(rtdev, NULL, START_OF_FRAME, &data);
 
-		if (!skb) {
-			rt_task_wait_period();
-			continue;
-		}
+        if (!skb) {
+            rt_task_wait_period();
+            continue;
+        }
 
-		rt_task_wait_period();
-	
-		/* Store timestamp in SOF. I assume that there is enough space. */
-		time_stamp = rt_get_time_ns();
-		*(RTIME *)data = cpu_to_be64(time_stamp);
+        rt_task_wait_period();
 
-		rtdev_xmit(skb);
+        /* Store timestamp in SOF. I assume that there is enough space. */
+        time_stamp = rt_get_time_ns();
+        *(RTIME *)data = cpu_to_be64(time_stamp);
 
-		/* Calculate delta_t for the master by assuming the current
-		 * to be the virtual receiption time. Then inform all listings 
-		 * tasks that the SOF has been sent.
-		 * -JK-
-		 */
-		tdma->delta_t = time_stamp-rt_get_time_ns();
-		rt_sem_broadcast(&tdma->client_tx);
-	
-		/*
-		 * get client skb out of queue and send it
-		 */
+        tdma_xmit(skb);
 
-		if (rt_sem_wait_if(&tdma->full) >= 1) {
-			skb = rtskb_dequeue(&tdma->tx_queue);
-			rt_sem_signal(&tdma->free);
+        /* Calculate delta_t for the master by assuming the current
+         * to be the virtual receiption time. Then inform all listings
+         * tasks that the SOF has been sent.
+         * -JK-
+         */
+        tdma->delta_t = time_stamp-rt_get_time_ns();
+        rt_sem_broadcast(&tdma->client_tx);
 
-			rtdev_xmit(skb);
-		}
+        /*
+         * get client skb out of queue and send it
+         */
 
-	}
-	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
-	tdma->flags.task_active = 0;
-	tdma->flags.shutdown_task = 0;
+        if (rt_sem_wait_if(&tdma->full) >= 1) {
+            skb = rtskb_dequeue(&tdma->tx_queue);
+            rt_sem_signal(&tdma->free);
+
+            tdma_xmit(skb);
+        }
+
+    }
+    TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
+    tdma->flags.task_active = 0;
+    tdma->flags.shutdown_task = 0;
 }
 
 
@@ -271,28 +268,27 @@ void tdma_task_master(int rtdev_id)
 
 void tdma_task_client(int rtdev_id)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
-	struct rtskb *skb;
-       
-	while(tdma->flags.shutdown_task == 0) {
-		if (rt_sem_wait(&tdma->client_tx) == 0xFFFF) {
-			rt_printk("RTmac: tdma: %s() rt_sem_wait(client_tx) failed\n",__FUNCTION__);
-			break;
-		}
+    struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    struct rtskb *skb;
 
-		rt_sleep_until(tdma->wakeup);
+    while(tdma->flags.shutdown_task == 0) {
+        if (rt_sem_wait(&tdma->client_tx) == 0xFFFF) {
+            rt_printk("RTmac: tdma: %s() rt_sem_wait(client_tx) failed\n",__FUNCTION__);
+            break;
+        }
 
-		if (rt_sem_wait_if(&tdma->full) >= 1) {
-			skb = rtskb_dequeue(&tdma->tx_queue);
-			rt_sem_signal(&tdma->free);
-			
-			rtdev_xmit(skb);
-		}
-	}
+        rt_sleep_until(tdma->wakeup);
 
-	TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
-	tdma->flags.task_active = 0;
-	tdma->flags.shutdown_task = 0;
+        if (rt_sem_wait_if(&tdma->full) >= 1) {
+            skb = rtskb_dequeue(&tdma->tx_queue);
+            rt_sem_signal(&tdma->free);
+
+            tdma_xmit(skb);
+        }
+    }
+
+    TDMA_DEBUG(2, "RTmac: tdma: %s() shutdown complete\n",__FUNCTION__);
+    tdma->flags.task_active = 0;
+    tdma->flags.shutdown_task = 0;
 }

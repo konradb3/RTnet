@@ -1,4 +1,4 @@
-/* include/rtmac_tdma.h
+/* include/rtmac/rtmac_proto.h
  *
  * rtmac - real-time networking media access control subsystem
  * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
@@ -19,41 +19,49 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __TDMA_H_
-#define __TDMA_H_
+#ifndef __RTMAC_PROTO_H_
+#define __RTMAC_PROTO_H_
 
 #ifdef __KERNEL__
 
-#include <rtai.h>
-#include <rtai_sched.h>
 
-#include <rtdev.h>
-#include <rtmac/tdma/tdma.h>
+#define RTMAC_VERSION   0x1
+#define ETH_RTMAC       0x9021
+
+struct rtmac_hdr {
+    u16 type;
+    u8  ver;
+    u8  res;    /* reserved for future use :) */
+} __attribute__ ((packed));
 
 
-static inline struct rtmac_tdma *tdma_get_by_device(const char *devname)
+
+static inline int rtmac_add_header(struct rtnet_device *rtdev, void *daddr,
+                                   struct rtskb *skb, u16 type)
 {
-    struct rtnet_device *rtdev = rtdev_get_by_name(devname);
+    struct rtmac_hdr *hdr =
+        (struct rtmac_hdr *)rtskb_push(skb, sizeof(struct rtmac_hdr));
 
-    if (rtdev && rtdev->mac_disc &&
-        (rtdev->mac_disc->disc_type == __constant_htons(ETH_TDMA)) &&
-        (rtdev->mac_priv))
-        return (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
-    else
-        return NULL;
+
+    hdr->type = __constant_htons(type);
+    hdr->ver  = RTMAC_VERSION;
+
+    skb->rtdev = rtdev;
+
+    if (rtdev->hard_header &&
+        (rtdev->hard_header(skb, rtdev, ETH_RTMAC, daddr,
+                            rtdev->dev_addr, skb->len) < 0))
+        return -1;
+
+    return 0;
 }
 
-static inline int tdma_wait_sof(struct rtmac_tdma *tdma)
-{
-    return (rt_sem_wait(&tdma->client_tx) != 0xFFFF) ? 0 : -1;
-}
 
-static inline RTIME tdma_get_delta_t(struct rtmac_tdma *tdma)
-{
-    return tdma->delta_t;
-}
+
+extern void rtmac_proto_init(void);
+extern void rtmac_proto_release(void);
 
 
 #endif /* __KERNEL__ */
 
-#endif /* __TDMA_H_ */
+#endif /* __RTMAC_PROTO_H_ */

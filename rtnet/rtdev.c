@@ -38,112 +38,122 @@ struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
 
 
 /***
- *	rtdev_add_pack:		add protocol (Layer 3) 
- *	@pt:			the new protocol
+ *  rtdev_add_pack:         add protocol (Layer 3) 
+ *  @pt:                    the new protocol
  */
 void rtdev_add_pack(struct rtpacket_type *pt)
 {
-	if ( pt->type!=htons(ETH_P_ALL) ) {
-		int hash=ntohs(pt->type) & (MAX_RT_PROTOCOLS-1);
-		if ( !rt_packets[hash] ) {
-			rt_packets[hash] = pt;
-		}
-		else {
-			rt_printk("RTnet: protocol place %d is used by %s\n", 
-				  hash, (rt_packets[hash]->name)?(rt_packets[hash]->name):"<noname>");
-		}
-	}
-	
+    int hash;
+
+
+    if ( pt->type!=htons(ETH_P_ALL) ) {
+        hash=ntohs(pt->type) & (MAX_RT_PROTOCOLS-1);
+
+        if ( !rt_packets[hash] ) {
+            rt_packets[hash] = pt;
+        }
+        else {
+            rt_printk("RTnet: protocol place %d is used by %s\n", hash,
+                (rt_packets[hash]->name) ? (rt_packets[hash]->name) :
+                    "<noname>");
+        }
+    }
 }
 
 
 
 /***
- *	rtdev_remove_pack:	remove protocol (Layer 3)
- *	@pt:			protocol
+ *  rtdev_remove_pack:  remove protocol (Layer 3)
+ *  @pt:                protocol
  */
 void rtdev_remove_pack(struct rtpacket_type *pt)
 {
-	if ( (pt) && (pt->type!=htons(ETH_P_ALL)) ) {
-		int hash=ntohs(pt->type) & (MAX_RT_PROTOCOLS-1);
-		if ( (rt_packets[hash]) && (rt_packets[hash]->type==pt->type) ) {
-			rt_packets[hash]=NULL;
-		}
-		else {
-			rt_printk("RTnet: protocol %s not found\n",
-			(rt_packets[hash]->name)?(rt_packets[hash]->name):"<noname>");
-		}
-	}
+    int hash;
+
+
+    if ( (pt) && (pt->type!=htons(ETH_P_ALL)) ) {
+        hash=ntohs(pt->type) & (MAX_RT_PROTOCOLS-1);
+        if ( (rt_packets[hash]) && (rt_packets[hash]->type==pt->type) ) {
+            rt_packets[hash]=NULL;
+        }
+        else {
+            rt_printk("RTnet: protocol %s not found\n",
+            (rt_packets[hash]->name)?(rt_packets[hash]->name):"<noname>");
+        }
+    }
 }
 
 
 
 /***
- *	rtdev_get_by_name	- find a rtnet_device by its name 
- *	@name: name to find
+ *  rtdev_get_by_name   - find a rtnet_device by its name 
+ *  @name: name to find
  *
- *	Find an rt-interface by name. 
+ *  Find an rt-interface by name. 
  */
 static inline struct rtnet_device *__rtdev_get_by_name(const char *name)
-{	
-	struct rtnet_device *rtdev;
+{
+    struct rtnet_device *rtdev;
 
-	for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
-		if ( strncmp(rtdev->name, name, IFNAMSIZ) == 0 ) {
-			return rtdev;
-		}
-	}
-	return NULL;
+    for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
+        if ( strncmp(rtdev->name, name, IFNAMSIZ) == 0 ) {
+            return rtdev;
+        }
+    }
+    return NULL;
 }
 
-struct rtnet_device *rtdev_get_by_name(const char *name)
-{	
-	struct rtnet_device *rtdev;
 
-	read_lock(&rtnet_devices_lock);
-	rtdev = __rtdev_get_by_name(name);
-	read_unlock(&rtnet_devices_lock);
-	return rtdev;
+struct rtnet_device *rtdev_get_by_name(const char *name)
+{
+    struct rtnet_device *rtdev;
+
+    read_lock(&rtnet_devices_lock);
+    rtdev = __rtdev_get_by_name(name);
+    read_unlock(&rtnet_devices_lock);
+    return rtdev;
 }
 
 
 
 /***
- *	rtdev_get_by_index - find a rtnet_device by its ifindex
- *	@ifindex: index of device
+ *  rtdev_get_by_index - find a rtnet_device by its ifindex
+ *  @ifindex: index of device
  *
- *	Search for an rt-interface by index.
+ *  Search for an rt-interface by index.
  */
 static inline struct rtnet_device *__rtdev_get_by_index(int ifindex)
 {
-	struct rtnet_device *rtdev;
+    struct rtnet_device *rtdev;
 
-	for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
-		if ( rtdev->ifindex == ifindex ) {
-			return rtdev;
-		}
-	}
-	return NULL;
+    for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
+        if ( rtdev->ifindex == ifindex ) {
+            return rtdev;
+        }
+    }
+    return NULL;
 }
+
 
 struct rtnet_device *rtdev_get_by_index(int ifindex)
 {
-	struct rtnet_device *rtdev;
+    struct rtnet_device *rtdev;
 
-	read_lock(&rtnet_devices_lock);
-	rtdev = __rtdev_get_by_index(ifindex);
-	read_unlock(&rtnet_devices_lock);
-	return rtdev;
+    read_lock(&rtnet_devices_lock);
+    rtdev = __rtdev_get_by_index(ifindex);
+    read_unlock(&rtnet_devices_lock);
+    return rtdev;
 }
+
 
 int rtdev_new_index(void)
 {
     static int ifindex;
     for (;;) {
-	if (++ifindex <= 0)
-	    ifindex = 1;
-	if (__rtdev_get_by_index(ifindex) == NULL)
-	    return ifindex;
+        if (++ifindex <= 0)
+            ifindex = 1;
+        if (__rtdev_get_by_index(ifindex) == NULL)
+        return ifindex;
     }
 }
 
@@ -151,78 +161,79 @@ int rtdev_new_index(void)
 
 
 /***
- *	rtdev_get_by_dev - find a rtnetdevice by its linux-netdevice
- *	@dev: linked linux-device of rtnet_device
+ *  rtdev_get_by_dev - find a rtnetdevice by its linux-netdevice
+ *  @dev: linked linux-device of rtnet_device
  *
- *	Search for an rt-interface by index.
+ *  Search for an rt-interface by index.
  */
 static inline struct rtnet_device *__rtdev_get_by_dev(struct net_device *dev)
 {
-	struct rtnet_device * rtdev;
+    struct rtnet_device * rtdev;
 
-	for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
-		if ( rtdev->ldev==dev ) {
-			return rtdev;
-		}
-	}
-	return NULL;
+    for (rtdev=rtnet_devices; rtdev; rtdev=rtdev->next) {
+        if ( rtdev->ldev==dev ) {
+            return rtdev;
+        }
+    }
+    return NULL;
 }
+
 
 struct rtnet_device *rtdev_get_by_dev(struct net_device *dev)
 {
-	struct rtnet_device * rtdev;
+    struct rtnet_device * rtdev;
 
-	read_lock(&rtnet_devices_lock);
-	rtdev = __rtdev_get_by_dev(dev);
-	read_unlock(&rtnet_devices_lock);
-	return rtdev;
+    read_lock(&rtnet_devices_lock);
+    rtdev = __rtdev_get_by_dev(dev);
+    read_unlock(&rtnet_devices_lock);
+    return rtdev;
 }
 
 
 /***
- *	rtdev_get_by_hwaddr - find a rtnetdevice by its mac-address
- *	@type:		Type of the net_device (may be ARPHRD_ETHER)
- *	@hw_addr:	MAC-Address
+ *  rtdev_get_by_hwaddr - find a rtnetdevice by its mac-address
+ *  @type:          Type of the net_device (may be ARPHRD_ETHER)
+ *  @hw_addr:       MAC-Address
  *
- *	Search for an rt-interface by index.
- *	Remeber: We are searching in the rtdev_base-list, because 
- *	we want to use linux-network's also.
+ *  Search for an rt-interface by index.
+ *  Remeber: We are searching in the rtdev_base-list, because 
+ *  we want to use linux-network's also.
  */
 static inline struct rtnet_device *__rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
 {
-	struct rtnet_device * rtdev;
+    struct rtnet_device * rtdev;
 
-	for(rtdev=rtnet_devices;rtdev;rtdev=rtdev->next){
-		if ( rtdev->type == type && 
-		     !memcmp(rtdev->dev_addr, hw_addr, rtdev->addr_len) ) {
-			return rtdev;
-		}
-	}
-	return NULL;
+    for(rtdev=rtnet_devices;rtdev;rtdev=rtdev->next){
+        if ((rtdev->type == type) && 
+            (!memcmp(rtdev->dev_addr, hw_addr, rtdev->addr_len))) {
+            return rtdev;
+        }
+    }
+    return NULL;
 }
+
 
 struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type, char *hw_addr)
 {
-	struct rtnet_device * rtdev;
+    struct rtnet_device * rtdev;
 
-	read_lock(&rtnet_devices_lock);
-	rtdev = __rtdev_get_by_hwaddr(type, hw_addr);
-	read_unlock(&rtnet_devices_lock);
-	return rtdev;
+    read_lock(&rtnet_devices_lock);
+    rtdev = __rtdev_get_by_hwaddr(type, hw_addr);
+    read_unlock(&rtnet_devices_lock);
+    return rtdev;
 }
-
 
 
 
 /***
- *	rtdev_alloc_name - allocate a name for the rtnet_device
- *	@rtdev:		the rtnet_device
- *	@name_mask:	a name mask 
- *			("eth%d" for ethernet or "tr%d" for tokenring) 
+ *  rtdev_alloc_name - allocate a name for the rtnet_device
+ *  @rtdev:         the rtnet_device
+ *  @name_mask:     a name mask 
+ *                  ("eth%d" for ethernet or "tr%d" for tokenring)
  *
- *	This function have to called from the driver-probe-funtion.
- *	Because we don't know the type of the rtnet_device 
- *      (may be tokenring or ethernet). 
+ *  This function have to called from the driver-probe-funtion.
+ *  Because we don't know the type of the rtnet_device 
+ *  (may be tokenring or ethernet). 
  */
 void rtdev_alloc_name(struct rtnet_device *rtdev, const char *mask)
 {
@@ -230,113 +241,113 @@ void rtdev_alloc_name(struct rtnet_device *rtdev, const char *mask)
     int i;
 
     for (i=0; i < 100; i++) {
-	snprintf(buf, IFNAMSIZ, mask, i);
-	if (__rtdev_get_by_name(buf) == NULL) {
-	    strncpy(rtdev->name, buf, IFNAMSIZ);
-	    break;
-	}
+        snprintf(buf, IFNAMSIZ, mask, i);
+        if (__rtdev_get_by_name(buf) == NULL) {
+        strncpy(rtdev->name, buf, IFNAMSIZ);
+            break;
+        }
     }
 }
 
 
 
 /***
- *	rtdev_alloc
- *	@int sizeof_priv:
+ *  rtdev_alloc
+ *  @int sizeof_priv:
  *
- *	allocate memory for a new rt-network-adapter
+ *  allocate memory for a new rt-network-adapter
  */
 struct rtnet_device *rtdev_alloc(int sizeof_priv)
 {
-	struct rtnet_device *rtdev;
-	int alloc_size;
+    struct rtnet_device *rtdev;
+    int alloc_size;
 
-	/* ensure 32-byte alignment of the private area */
-	alloc_size = sizeof (*rtdev) + sizeof_priv + 31;
+    /* ensure 32-byte alignment of the private area */
+    alloc_size = sizeof (*rtdev) + sizeof_priv + 31;
 
-	rtdev = (struct rtnet_device *) kmalloc (alloc_size, GFP_KERNEL);
-	if (rtdev == NULL) {
-		printk(KERN_ERR "RTnet: cannot allocate rtnet device\n");
-		return NULL;
-	}
-	
-	memset(rtdev, 0, alloc_size);
+    rtdev = (struct rtnet_device *) kmalloc (alloc_size, GFP_KERNEL);
+    if (rtdev == NULL) {
+        printk(KERN_ERR "RTnet: cannot allocate rtnet device\n");
+        return NULL;
+    }
 
-	if (sizeof_priv)
-		rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
+    memset(rtdev, 0, alloc_size);
 
-	rtskb_queue_head_init(&(rtdev->rxqueue));
-	rt_printk("rtdev: allocated and initialized\n");
+    if (sizeof_priv)
+        rtdev->priv = (void *) (((long)(rtdev + 1) + 31) & ~31);
 
-	return rtdev;
+    rtskb_queue_head_init(&(rtdev->rxqueue));
+    rt_printk("rtdev: allocated and initialized\n");
+
+    return rtdev;
 }
 
 
 
 /***
- *	rtdev_free
+ *  rtdev_free
  */
 void rtdev_free (struct rtnet_device *rtdev) 
 {
-	if (rtdev!=NULL) {
-		rtdev->stack_mbx=NULL;
-		rtdev->rtdev_mbx=NULL;
-		kfree(rtdev);
-	}
+    if (rtdev!=NULL) {
+        rtdev->stack_mbx=NULL;
+        rtdev->rtdev_mbx=NULL;
+        kfree(rtdev);
+    }
 }
 
 
 
 /***
- *	rtdev_open
+ *  rtdev_open
  *
- *	Prepare an interface for use. 
+ *  Prepare an interface for use. 
  */
 int rtdev_open(struct rtnet_device *rtdev)
 {
-	int ret = 0;
-	
-	if (rtdev->flags & IFF_UP)		/* Is it already up?			*/ 
-		return 0;	
+    int ret = 0;
 
-	if (rtdev->open) 			/* Call device private open method	*/
-  		ret = rtdev->open(rtdev);
+    if (rtdev->flags & IFF_UP)              /* Is it already up?                */ 
+        return 0;
 
-	if ( !ret )  {
-		rtdev->flags |= (IFF_UP | IFF_RUNNING);
-		set_bit(__LINK_STATE_START, &rtdev->state);
+    if (rtdev->open)                        /* Call device private open method  */
+        ret = rtdev->open(rtdev);
+
+    if ( !ret )  {
+        rtdev->flags |= (IFF_UP | IFF_RUNNING);
+        set_bit(__LINK_STATE_START, &rtdev->state);
 #if 0
-		dev_mc_upload(dev);		/* Initialize multicasting status	*/
+        dev_mc_upload(dev);                 /* Initialize multicasting status   */
 #endif
-	}
+    }
 
-	return ret;
+    return ret;
 }
 
 
 /***
- *	rtdev_close
+ *  rtdev_close
  */
 int rtdev_close(struct rtnet_device *rtdev)
 {
-	int ret = 0;
+    int ret = 0;
 
-	if ( !(rtdev->flags & IFF_UP) )
-		return 0;
+    if ( !(rtdev->flags & IFF_UP) )
+        return 0;
 
-	if (rtdev->stop)
-		ret = rtdev->stop(rtdev);
+    if (rtdev->stop)
+        ret = rtdev->stop(rtdev);
 
-	rtdev->flags &= ~(IFF_UP|IFF_RUNNING);
-	clear_bit(__LINK_STATE_START, &rtdev->state);
+    rtdev->flags &= ~(IFF_UP|IFF_RUNNING);
+    clear_bit(__LINK_STATE_START, &rtdev->state);
 
-	return ret;
+    return ret;
 }
 
 
 
 /***
- *	rtdev_xmit - send real-time packet
+ *  rtdev_xmit - send real-time packet
  */
 int rtdev_xmit(struct rtskb *skb) 
 {
@@ -380,13 +391,11 @@ int rtdev_xmit_proxy(struct rtskb *skb)
 
     rtdev = skb->rtdev;
 
-    /* <temporary solution> */
-    if ((rtdev->rtmac) && /* This code lines are crappy! */
-	(rtdev->rtmac->disc_type) &&
-	(rtdev->rtmac->disc_type->proxy_packet_tx)) {
-	ret = rtdev->rtmac->disc_type->proxy_packet_tx(skb, rtdev);
+    if (rtdev->mac_disc) {
+        ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, return -1;);
+
+        ret = rtdev->mac_disc->nrt_packet_tx(skb);
     }
-    /* </temporary solution> */
     else
     {
         ret = rtdev->hard_start_xmit(skb, rtdev);
@@ -405,22 +414,22 @@ int rtdev_xmit_proxy(struct rtskb *skb)
 
 
 /***
- *	rt_net_dev_init
+ *  rt_net_dev_init
  */
 int rtnet_dev_init(void)
 {
-	int i;
-	for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
-	return 0;
+    int i;
+    for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
+    return 0;
 }
 
 
 /***
- *	rtnet_dev_release
+ *  rtnet_dev_release
  */
 int rtnet_dev_release(void)
 {
-	int i;
-	for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
-	return 0;
+    int i;
+    for (i=0; i<MAX_RT_PROTOCOLS; i++) rt_packets[i]=NULL;
+    return 0;
 }

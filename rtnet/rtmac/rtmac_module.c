@@ -1,7 +1,8 @@
 /* rtmac_module.c
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +25,10 @@
 
 #include <rtmac/rtmac_chrdev.h>
 #include <rtmac/rtmac_proc.h>
-#include <rtmac/tdma/tdma_module.h>
+#include <rtmac/rtmac_proto.h>
+
+#include <rtmac/rtmac_disc.h>       /* legacy */
+#include <rtmac/tdma/tdma_module.h> /* legacy */
 
 
 static char *dev = "rteth0";
@@ -33,39 +37,71 @@ MODULE_PARM_DESC(dev, "RTmac: device to be rtnet started on");
 
 int rtmac_init(void)
 {
-	int ret = 0;
+    int ret = 0;
 
-	rt_printk("RTmac: init realtime medium access control\n");
+    rt_printk("RTmac: init realtime media access control\n");
 
-	ret = tdma_start(rtdev_get_by_name(dev));
-	if (ret)
-		return ret;
+    rtmac_proto_init();
 
 #ifdef CONFIG_PROC_FS
-	ret = rtmac_proc_register();
-	if (ret)
-		return ret;
+    ret = rtmac_proc_register();
+    if (ret)
+        goto error1;
 #endif
-	ret = rtmac_chrdev_init();
-	if (ret)
-		return ret;
 
-	return ret;
+    ret = rtmac_chrdev_init();
+    if (ret)
+        goto error2;
+
+    /* legacy */
+    {
+        struct rtmac_disc *tdma;
+
+
+        ret = tdma_init();
+        if (ret)
+        {
+            rtmac_chrdev_release();
+            goto error2;
+        }
+
+        tdma = rtmac_get_disc_by_name("TDMA1");
+
+        ret = rtmac_disc_attach(rtdev_get_by_name(dev), tdma);
+        if (ret)
+        {
+            tdma_release();
+            rtmac_chrdev_release();
+            goto error2;
+        }
+    } /* end of legacy */
+
+    return 0;
+
+error2:
+#ifdef CONFIG_PROC_FS
+    rtmac_proc_release();
+#endif
+
+error1:
+    rtmac_proto_release();
+    return ret;
 }
 
 
 
 void rtmac_release(void)
 {
-	rt_printk("RTmac: end realtime medium access control\n");
+    rt_printk("RTmac: end realtime media access control\n");
 
-	tdma_stop(rtdev_get_by_name(dev));
+    rtmac_disc_detach(rtdev_get_by_name(dev));  /* legacy */
+    tdma_release();                             /* legacy */
 
+    rtmac_proto_release();
 #ifdef CONFIG_PROC_FS
-	rtmac_proc_release();
+    rtmac_proc_release();
 #endif
-
-	rtmac_chrdev_release();
+    rtmac_chrdev_release();
 }
 
 
@@ -73,5 +109,5 @@ void rtmac_release(void)
 module_init(rtmac_init);
 module_exit(rtmac_release);
 
-MODULE_AUTHOR("Marc Kleine-Budde");
+MODULE_AUTHOR("Marc Kleine-Budde, Jan Kiszka");
 MODULE_LICENSE("GPL");

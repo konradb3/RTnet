@@ -28,6 +28,8 @@
 #include <linux/module.h>
 #include <asm/io.h>
 
+#include <net/ip.h>
+
 #include <rtai.h>
 #include <rtai_sched.h>
 

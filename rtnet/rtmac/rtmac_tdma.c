@@ -1,7 +1,8 @@
 /* rtmac_tdma.c
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,198 +32,181 @@
 #include <rtmac/tdma/tdma_rx.h>
 
 
-__u32 tdma_debug = 4; //INT_MAX
+__u32 tdma_debug = TDMA_DEFAULT_DEBUG_LEVEL;
 MODULE_PARM(tdma_debug, "i");
 MODULE_PARM_DESC(cards, "tdma debug level");
 
 
 
 
-int tdma_init(struct rtnet_device *rtdev)
+int tdma_attach(struct rtnet_device *rtdev, void *priv)
 {
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)priv;
 
-	rt_printk("RTmac: tdma: init time devision multiple access (tdma) for realtime stations\n");
+    rt_printk("RTmac: tdma1: init time devision multiple access (tdma) for realtime stations\n");
 
-	tdma = kmalloc(sizeof(struct rtmac_tdma), GFP_KERNEL);
-	if (tdma == NULL) {
-		rt_printk("RTmac: tdma: out of memory, cannot kmalloc rtmac->priv\n");
-		return -1;	//FIXME: find better errno
-	}
-	memset(tdma, 0, sizeof(struct rtmac_tdma));
+    memset(tdma, 0, sizeof(struct rtmac_tdma));
 
-	rtmac->priv = tdma;
-	tdma->rtmac = rtmac;
+    tdma->rtdev = rtdev;
 
-	/*
-	 * init semas, they implement a producer consumer between the 
-	 * sending realtime- and the driver-task
-	 *
-	 */
-	rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
-	rt_sem_init(&tdma->full, 0);
-	rt_sem_init(&tdma->client_tx, 0);
- 
-	/*
-	 * init tx queue
-	 *
-	 */
-	rtskb_queue_head_init(&tdma->tx_queue);
+    /*
+     * init semas, they implement a producer consumer between the
+     * sending realtime- and the driver-task
+     *
+     */
+    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+    rt_sem_init(&tdma->full, 0);
+    rt_sem_init(&tdma->client_tx, 0);
 
-	/*
-	 * init rt stuff
-	 * - timer
-	 * - list heads
-	 *
-	 */
-	/* generic */
+    /*
+     * init tx queue
+     *
+     */
+    rtskb_queue_head_init(&tdma->tx_queue);
 
-	/* master */
-	init_timer(&tdma->rt_add_timer);
-	INIT_LIST_HEAD(&tdma->rt_add_list);
-	INIT_LIST_HEAD(&tdma->rt_list);
-	INIT_LIST_HEAD(&tdma->rt_list_rate);
+    /*
+     * init rt stuff
+     * - timer
+     * - list heads
+     *
+     */
+    /* generic */
 
-	init_timer(&tdma->task_change_timer);
-	init_timer(&tdma->master_wait_timer);
-	init_timer(&tdma->master_sent_conf_timer);
-	init_timer(&tdma->master_sent_test_timer);
+    /* master */
+    init_timer(&tdma->rt_add_timer);
+    INIT_LIST_HEAD(&tdma->rt_add_list);
+    INIT_LIST_HEAD(&tdma->rt_list);
+    INIT_LIST_HEAD(&tdma->rt_list_rate);
 
-	rtskb_queue_head_init(&tdma->master_queue);
+    init_timer(&tdma->task_change_timer);
+    init_timer(&tdma->master_wait_timer);
+    init_timer(&tdma->master_sent_conf_timer);
+    init_timer(&tdma->master_sent_test_timer);
+
+    rtskb_queue_head_init(&tdma->master_queue);
 
 
-	/* client */
-	init_timer(&tdma->client_sent_ack_timer);
+    /* client */
+    init_timer(&tdma->client_sent_ack_timer);
 
 
-	/*
-	 * init nrt stuff
-	 */
-	//INIT_LIST_HEAD(&tdma->nrt_list);
+    /*
+     * init nrt stuff
+     */
+    //INIT_LIST_HEAD(&tdma->nrt_list);
 
-	/*
-	 * start timer
-	 */
-	rt_set_oneshot_mode();
-	start_rt_timer(0);
+    /*
+     * start timer
+     */
+    rt_set_oneshot_mode();
+    start_rt_timer(0);
 
-	return 0;
+    return 0;
 }
 
 
 
-int tdma_release(struct rtnet_device *rtdev)
+int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)priv;
 
-	rt_printk("RTmac: tdma: release\n");
-	
-	/*
-	 * delete rt specific stuff
-	 * - lists
-	 *   * rt_add_list
-	 *   * rt_list
-	 *
-	 * FIXME: all these thingies _should_ be clean...test them
-	 */
-	tdma_cleanup_master_rt_check(tdma);
+    rt_printk("RTmac: tdma: release\n");
 
-	/*
-	 * delete timers
-	 */
-	del_timer(&tdma->task_change_timer);
-	del_timer(&tdma->rt_add_timer);
-	del_timer(&tdma->master_wait_timer);
-	del_timer(&tdma->master_sent_conf_timer);
-	del_timer(&tdma->master_sent_test_timer);
+    /*
+     * delete rt specific stuff
+     * - lists
+     *   * rt_add_list
+     *   * rt_list
+     *
+     * FIXME: all these thingies _should_ be clean...test them
+     */
+    tdma_cleanup_master_rt_check(tdma);
 
-	/*
-	 * delete tx tasks sema
-	 */
-	rt_sem_delete(&tdma->free);
-	rt_sem_delete(&tdma->full);
-	rt_sem_delete(&tdma->client_tx);
+    /*
+     * delete timers
+     */
+    del_timer(&tdma->task_change_timer);
+    del_timer(&tdma->rt_add_timer);
+    del_timer(&tdma->master_wait_timer);
+    del_timer(&tdma->master_sent_conf_timer);
+    del_timer(&tdma->master_sent_test_timer);
 
-	/*
-	 * purge allocated space for tdma
-	 */
-	kfree(tdma);
-	tdma = NULL;
+    /*
+     * delete tx tasks sema
+     */
+    rt_sem_delete(&tdma->free);
+    rt_sem_delete(&tdma->full);
+    rt_sem_delete(&tdma->client_tx);
 
-	return 0;
+    return 0;
 }
 
 
 
-
-
-
-
-
-int tdma_packet_tx(struct rtskb *skb, struct rtnet_device *rtdev)
+int tdma_rt_packet_tx(struct rtskb *skb, struct rtnet_device *rtdev)
 {
-	struct rtmac_device *rtmac = rtdev->rtmac;
-	struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtmac->priv;
+    struct rtmac_tdma *tdma = (struct rtmac_tdma *)rtdev->mac_priv->disc_priv;
+    int ret = 0;
 
-	int ret = 0;
+    if (tdma->flags.mac_active == 0) {
+	    ret = tdma_xmit(skb);
+    } else {
+        rt_sem_wait(&tdma->free);
+        rtskb_queue_tail(&tdma->tx_queue, skb);
+        rt_sem_signal(&tdma->full);
+    }
 
-	if (tdma->flags.mac_active == 0) {
-		ret = rtdev_xmit(skb);
-	} else {
-		rt_sem_wait(&tdma->free);
-		rtskb_queue_tail(&tdma->tx_queue, skb);
-		rt_sem_signal(&tdma->full);
-	}
-
-	return ret;
+    return ret;
 }
 
 
 
-int tdma_start(struct rtnet_device *rtdev)
+int tdma_nrt_packet_tx(struct rtskb *skb)
 {
-	int ret;
-    
-	static struct rtmac_disc_ops tdma_disc_ops = {
-		init:			&tdma_init,
-		release:		&tdma_release,
-	};
-
-	static struct rtmac_ioctl_ops tdma_ioctl_ops = {
-		client:			&tdma_ioctl_client,
-		master:			&tdma_ioctl_master,
-		up:			&tdma_ioctl_up,
-		down:			&tdma_ioctl_down,
-		add:			&tdma_ioctl_add,
-		remove:			&tdma_ioctl_remove,
-		cycle:			&tdma_ioctl_cycle,
-		mtu:			&tdma_ioctl_mtu,
-		offset:			&tdma_ioctl_offset,
-	};
-
-	static struct rtmac_disc_type disc_type = {
-		packet_rx:		&tdma_packet_rx,
-		rt_packet_tx:		&tdma_packet_tx,
-		proxy_packet_tx:	&tdma_packet_tx,
-		disc_ops:		&tdma_disc_ops,
-		ioctl_ops:		&tdma_ioctl_ops,
-	};
-
-	if( !rtdev ) {
-		rt_printk("RTmac: rtmac_tdma_start(struct rtnet_device *rtdev) called with rtdev=NULL\n");
-		return -1; //FIXME: better code
-	}
-
-	ret = rtmac_disc_init(rtdev, &disc_type);
-
-	return ret;
+    return tdma_rt_packet_tx(skb, skb->rtdev);
 }
 
 
 
-void tdma_stop(struct rtnet_device *rtdev)
+/* legacy */
+static struct rtmac_ioctl_ops tdma_ioctl_ops = {
+    client: &tdma_ioctl_client,
+    master: &tdma_ioctl_master,
+    up:     &tdma_ioctl_up,
+    down:   &tdma_ioctl_down,
+    add:    &tdma_ioctl_add,
+    remove: &tdma_ioctl_remove,
+    cycle:  &tdma_ioctl_cycle,
+    mtu:    &tdma_ioctl_mtu,
+    offset: &tdma_ioctl_offset,
+};
+/* end of legacy */
+
+static struct rtmac_disc tdma_disc = {
+    name:           "TDMA1",
+    priv_size:      sizeof(struct rtmac_tdma),
+    disc_type:      __constant_htons(ETH_TDMA),
+
+    packet_rx:      &tdma_packet_rx,
+    rt_packet_tx:   &tdma_rt_packet_tx,
+    nrt_packet_tx:  &tdma_nrt_packet_tx,
+
+    attach:         &tdma_attach,
+    detach:         &tdma_detach,
+
+    ioctl_ops:      &tdma_ioctl_ops /* legacy */
+};
+
+
+
+int tdma_init(void)
 {
-	rtmac_disc_release(rtdev);
+    return rtmac_disc_register(&tdma_disc);
+}
+
+
+
+void tdma_release(void)
+{
+    rtmac_disc_deregister(&tdma_disc);
 }

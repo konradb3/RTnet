@@ -25,7 +25,7 @@
 #include <linux/miscdevice.h>
 
 #include <rtdev.h>
-#include <rtmac/rtmac.h>
+#include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_chrdev.h>
 
 
@@ -47,7 +47,7 @@ static int rtmac_chrdev_ioctl(struct inode *inode, struct file *file, unsigned i
 		return -ENODEV;
 	}
 
-	if( !(rtdev->rtmac && rtdev->rtmac->ioctl_ops) ) {
+	if( !rtdev->mac_disc || !rtdev->mac_disc->ioctl_ops ) {
 		return -ENOTTY;
 	}
 
@@ -92,40 +92,41 @@ static int rtmac_chrdev_ioctl(struct inode *inode, struct file *file, unsigned i
 
 
 static struct file_operations rtmac_chrdev_fops = {
-	owner:	THIS_MODULE,
-	ioctl:	rtmac_chrdev_ioctl,
-
+    owner:  THIS_MODULE,
+    ioctl:  rtmac_chrdev_ioctl
 };
 
 static struct miscdevice rtmac_chrdev_misc = {
-	minor:	RTMAC_MINOR,
-	name:	"rtmac",
-	fops:	&rtmac_chrdev_fops,
+    minor:  RTMAC_MINOR,
+    name:   "rtmac",
+    fops:   &rtmac_chrdev_fops
 };
 
 
 
 int rtmac_chrdev_init(void)
 {
-	int ret;
+    int ret;
 
-	ret = misc_register(&rtmac_chrdev_misc);
-	if ( ret < 0 ) {
-		rt_printk("RTmac: unable to register rtmac char misc device\n");	// FIXME: print major & minor number?
-	}
+    ret = misc_register(&rtmac_chrdev_misc);
+    if ( ret < 0 ) {
+        rt_printk("RTmac: unable to register rtmac char misc device (%d:%d)\n",
+                  MISC_MAJOR, RTMAC_MINOR);
+    }
 
-	return ret;
+    return ret;
 }
 
 void rtmac_chrdev_release(void)
 {
-	int ret;
+    int ret;
 
-	ret = misc_deregister(&rtmac_chrdev_misc);
+    ret = misc_deregister(&rtmac_chrdev_misc);
 
-	if (ret < 0) {
-		rt_printk("RTmac: unregisterung rtmac char misc device causes an error!\n");
-	}
+    if (ret < 0) {
+        rt_printk("RTmac: unregisterung rtmac char misc device (%d:%d) causes "
+                  "an error!\n", MISC_MAJOR, RTMAC_MINOR);
+    }
 }
 
 
@@ -134,107 +135,108 @@ void rtmac_chrdev_release(void)
 
 int rtmac_ioctl_client(struct rtnet_device *rtdev)
 {
-	if( !(rtdev->rtmac->ioctl_ops->client) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->client) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->client(rtdev);
+    return rtdev->mac_disc->ioctl_ops->client(rtdev);
 }
 
 
 
-int rtmac_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle, unsigned int mtu)
+int rtmac_ioctl_master(struct rtnet_device *rtdev, unsigned int cycle,
+                       unsigned int mtu)
 {
-	if( !(rtdev->rtmac->ioctl_ops->master) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->master) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->master(rtdev, cycle, mtu);
+    return rtdev->mac_disc->ioctl_ops->master(rtdev, cycle, mtu);
 }
 
 
 
 int rtmac_ioctl_up(struct rtnet_device *rtdev)
 {
-	if( !(rtdev->rtmac->ioctl_ops->up) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->up) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->up(rtdev);
+    return rtdev->mac_disc->ioctl_ops->up(rtdev);
 }
 
 
 
 int rtmac_ioctl_down(struct rtnet_device *rtdev)
 {
-	if( !(rtdev->rtmac->ioctl_ops->down) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->down) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->down(rtdev);
+    return rtdev->mac_disc->ioctl_ops->down(rtdev);
 }
 
 
 
 int rtmac_ioctl_add(struct rtnet_device *rtdev, u32 ip_addr)
 {
-	if( !(rtdev->rtmac->ioctl_ops->add) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->add) )
+        return -ENOTTY;
 	
-	return rtdev->rtmac->ioctl_ops->add(rtdev, ip_addr);
+    return rtdev->mac_disc->ioctl_ops->add(rtdev, ip_addr);
 }
 
 
 
 int rtmac_ioctl_remove(struct rtnet_device *rtdev, u32 ip_addr)
 {
-	if( !(rtdev->rtmac->ioctl_ops->remove) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->remove) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->remove(rtdev, ip_addr);
+    return rtdev->mac_disc->ioctl_ops->remove(rtdev, ip_addr);
 }
 
 
 
 int rtmac_ioctl_add_nrt(struct rtnet_device *rtdev, u32 ip_addr)
 {
-	if( !(rtdev->rtmac->ioctl_ops->add_nrt) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->add_nrt) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->add_nrt(rtdev, ip_addr);
+    return rtdev->mac_disc->ioctl_ops->add_nrt(rtdev, ip_addr);
 }
 
 
 
 int rtmac_ioctl_remove_nrt(struct rtnet_device *rtdev, u32 ip_addr)
 {
-	if( !(rtdev->rtmac->ioctl_ops->remove_nrt) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->remove_nrt) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->remove_nrt(rtdev, ip_addr);
+    return rtdev->mac_disc->ioctl_ops->remove_nrt(rtdev, ip_addr);
 }
 
 
 
 int rtmac_ioctl_cycle(struct rtnet_device *rtdev, unsigned int cycle)
 {
-	if( !(rtdev->rtmac->ioctl_ops->cycle) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->cycle) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->cycle(rtdev, cycle);
+    return rtdev->mac_disc->ioctl_ops->cycle(rtdev, cycle);
 }
 
 
 int rtmac_ioctl_mtu(struct rtnet_device *rtdev, unsigned int mtu)
 {
-	if( !(rtdev->rtmac->ioctl_ops->mtu) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->mtu) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->mtu(rtdev, mtu);
+    return rtdev->mac_disc->ioctl_ops->mtu(rtdev, mtu);
 }
 
 int rtmac_ioctl_offset(struct rtnet_device *rtdev, u32 ip_addr, unsigned int offset)
 {
-	if( !(rtdev->rtmac->ioctl_ops->offset) )
-		return -ENOTTY;
+    if( !(rtdev->mac_disc->ioctl_ops->offset) )
+        return -ENOTTY;
 
-	return rtdev->rtmac->ioctl_ops->offset(rtdev, ip_addr, offset);
+    return rtdev->mac_disc->ioctl_ops->offset(rtdev, ip_addr, offset);
 }
 
 //EOF

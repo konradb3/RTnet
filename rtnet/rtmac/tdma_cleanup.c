@@ -1,7 +1,8 @@
 /* rtmac_cleanup.c
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,189 +39,188 @@
  */
 void tdma_cleanup_master_rt(struct rtmac_tdma *tdma)
 {
-	struct rtskb *skb;
+    struct rtskb *skb;
 
-	/*
-	 * packets are not queued into rtmac any longer
-	 */
-	tdma->flags.mac_active = 0;
+    /*
+     * packets are not queued into rtmac any longer
+     */
+    tdma->flags.mac_active = 0;
 
-	/*
-	 * shutdown realtime task
-	 */
-	tdma_task_shutdown(tdma);
+    /*
+     * shutdown realtime task
+     */
+    tdma_task_shutdown(tdma);
 
-	/*
-	 * delete sema
-	 * if a sending task is waiting due to maximum length of tx queue,
-	 * it will become runable and send skb into queue
-	 */
-	rt_sem_delete(&tdma->free);
-	rt_sem_delete(&tdma->full);
-
-	
-	/*
-	 * if we have some packets in tx queue send them
-	 */
-	TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
-	while (tdma->tx_queue.qlen >= 1) {
-		skb = rtskb_dequeue(&tdma->tx_queue);
-
-		rtdev_xmit(skb);
-
-		TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
-	}
-
-	//FIXME: send master queue contens, or clear semas.....warscheinlich 2.
-	//rtskb_queue_purge(&tdma->master_queue);
-
-	/*
-	 * delete timers, and init timers
-	 */
-	del_timer(&tdma->task_change_timer);
-	del_timer(&tdma->rt_add_timer);
-	del_timer(&tdma->master_wait_timer);
-	del_timer(&tdma->master_sent_conf_timer);
-	del_timer(&tdma->master_sent_test_timer);
-
-	init_timer(&tdma->task_change_timer);
-	init_timer(&tdma->rt_add_timer);
-	init_timer(&tdma->master_wait_timer);
-	init_timer(&tdma->master_sent_conf_timer);
-	init_timer(&tdma->master_sent_test_timer);
+    /*
+     * delete sema
+     * if a sending task is waiting due to maximum length of tx queue,
+     * it will become runable and send skb into queue
+     */
+    rt_sem_delete(&tdma->free);
+    rt_sem_delete(&tdma->full);
 
 
-	/*
-	 * delete (if there are) entries in rt- and rt-add-list
-	 */
-	{
-		struct list_head *lh, *next;
-		struct tdma_rt_add_entry *rt_add_entry;
-		struct tdma_rt_entry *rt_entry;
+    /*
+     * if we have some packets in tx queue send them
+     */
+    TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
+    while (tdma->tx_queue.qlen >= 1) {
+        skb = rtskb_dequeue(&tdma->tx_queue);
 
-		list_for_each_safe(lh, next, &tdma->rt_add_list) {
-			rt_add_entry = list_entry(lh, struct tdma_rt_add_entry, list);
+        tdma_xmit(skb);
 
-			list_del(&rt_add_entry->list);
-			rt_free(rt_add_entry);
-		}
+        TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
+    }
 
-		list_for_each_safe(lh, next, &tdma->rt_list) {
-			rt_entry = list_entry(lh, struct tdma_rt_entry, list);
+    /*FIXME: send master queue contens, or clear semas.....warscheinlich 2.*/
+    /*rtskb_queue_purge(&tdma->master_queue);*/
 
-			list_del(&rt_entry->list);
-			rt_free(rt_entry);
-		}
-	}
+    /*
+     * delete timers, and init timers
+     */
+    del_timer(&tdma->task_change_timer);
+    del_timer(&tdma->rt_add_timer);
+    del_timer(&tdma->master_wait_timer);
+    del_timer(&tdma->master_sent_conf_timer);
+    del_timer(&tdma->master_sent_test_timer);
 
-	/*
-	 * re-init lists
-	 *
-	 */
-	INIT_LIST_HEAD(&tdma->rt_add_list);
-	INIT_LIST_HEAD(&tdma->rt_list);
-	INIT_LIST_HEAD(&tdma->rt_list_rate);
+    init_timer(&tdma->task_change_timer);
+    init_timer(&tdma->rt_add_timer);
+    init_timer(&tdma->master_wait_timer);
+    init_timer(&tdma->master_sent_conf_timer);
+    init_timer(&tdma->master_sent_test_timer);
 
 
-	/*
-	 * re-init semas
-	 */
-	rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
-	rt_sem_init(&tdma->full, 0);
+    /*
+     * delete (if there are) entries in rt- and rt-add-list
+     */
+    {
+        struct list_head *lh, *next;
+        struct tdma_rt_add_entry *rt_add_entry;
+        struct tdma_rt_entry *rt_entry;
 
-	/*
-	 * not it should be save to remove module
-	 */
-	MOD_DEC_USE_COUNT;
+        list_for_each_safe(lh, next, &tdma->rt_add_list) {
+            rt_add_entry = list_entry(lh, struct tdma_rt_add_entry, list);
 
-	return;
+            list_del(&rt_add_entry->list);
+            rt_free(rt_add_entry);
+        }
+
+        list_for_each_safe(lh, next, &tdma->rt_list) {
+            rt_entry = list_entry(lh, struct tdma_rt_entry, list);
+
+            list_del(&rt_entry->list);
+            rt_free(rt_entry);
+        }
+    }
+
+    /*
+     * re-init lists
+     */
+    INIT_LIST_HEAD(&tdma->rt_add_list);
+    INIT_LIST_HEAD(&tdma->rt_list);
+    INIT_LIST_HEAD(&tdma->rt_list_rate);
+
+
+    /*
+     * re-init semas
+     */
+    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+    rt_sem_init(&tdma->full, 0);
+
+    /*
+     * not it should be save to remove module
+     */
+    MOD_DEC_USE_COUNT;
+
+    return;
 }
 
 
 
 void tdma_cleanup_master_rt_check(struct rtmac_tdma *tdma)
 {
-	if (tdma->flags.mac_active != 0)
-		rt_printk("RTmac: tdma: BUG! %s() flags.mac_active != 0\n",__FUNCTION__);
+    if (tdma->flags.mac_active != 0)
+        rt_printk("RTmac: tdma: BUG! %s() flags.mac_active != 0\n",__FUNCTION__);
 
-	if (tdma->tx_queue.qlen != 0)
-		rt_printk("RTmac: tdma: BUG! %s() tx_queue length != 0\n",__FUNCTION__);
+    if (tdma->tx_queue.qlen != 0)
+        rt_printk("RTmac: tdma: BUG! %s() tx_queue length != 0\n",__FUNCTION__);
 
-	if (list_len(&tdma->rt_add_list) != 0)
-		rt_printk("RTmac: tdma: BUG! %s() rt_add_list length != 0\n",__FUNCTION__);
+    if (list_len(&tdma->rt_add_list) != 0)
+        rt_printk("RTmac: tdma: BUG! %s() rt_add_list length != 0\n",__FUNCTION__);
 
-	if (list_len(&tdma->rt_list) != 0)
-		rt_printk("RTmac: tdma: BUG! %s() rt_list length != 0\n",__FUNCTION__);
+    if (list_len(&tdma->rt_list) != 0)
+        rt_printk("RTmac: tdma: BUG! %s() rt_list length != 0\n",__FUNCTION__);
 }
 
 
 
 void tdma_cleanup_client_rt(struct rtmac_tdma *tdma)
 {
-	struct rtskb *skb;
+    struct rtskb *skb;
 
-	/*
-	 * packets are not queued into rtmac any longer
-	 */
-	tdma->flags.mac_active = 0;
+    /*
+     * packets are not queued into rtmac any longer
+     */
+    tdma->flags.mac_active = 0;
 
-	/*
-	 * shutdown realtime task
-	 */
-	tdma_task_shutdown(tdma);
+    /*
+     * shutdown realtime task
+     */
+    tdma_task_shutdown(tdma);
 
-	/*
-	 * delete sema
-	 * if a sending task is waiting due to maximum length of tx queue,
-	 * it will become runable and send skb into queue
-	 */
-	rt_sem_delete(&tdma->free);
-	rt_sem_delete(&tdma->full);
+    /*
+     * delete sema
+     * if a sending task is waiting due to maximum length of tx queue,
+     * it will become runable and send skb into queue
+     */
+    rt_sem_delete(&tdma->free);
+    rt_sem_delete(&tdma->full);
 
-	/*
-	 * if we have some packets in tx queue send them
-	 */
-	TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
-	while (tdma->tx_queue.qlen >= 1) {
-		skb = rtskb_dequeue(&tdma->tx_queue);
+    /*
+     * if we have some packets in tx queue send them
+     */
+    TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
+    while (tdma->tx_queue.qlen >= 1) {
+        skb = rtskb_dequeue(&tdma->tx_queue);
 
-		rtdev_xmit(skb);
+        tdma_xmit(skb);
 
-		TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
-	}
+        TDMA_DEBUG(2, "RTmac: tdma: %s() tx_queue length=%d\n",__FUNCTION__, tdma->tx_queue.qlen);
+    }
 
-	/*
-	 * delete timers, and init timers
-	 */
-	del_timer(&tdma->client_sent_ack_timer);
+    /*
+     * delete timers, and init timers
+     */
+    del_timer(&tdma->client_sent_ack_timer);
 
-	init_timer(&tdma->client_sent_ack_timer);
+    init_timer(&tdma->client_sent_ack_timer);
 
-	/*
-	 * delete (if there are) entries in rt_list_rate
-	 */
-	{
-		struct list_head *lh, *next;
-		struct tdma_rt_entry *rt_entry;
+    /*
+     * delete (if there are) entries in rt_list_rate
+     */
+    {
+        struct list_head *lh, *next;
+        struct tdma_rt_entry *rt_entry;
 
-		list_for_each_safe(lh, next, &tdma->rt_list_rate) {
-			rt_entry = list_entry(lh, struct tdma_rt_entry, list_rate);
+        list_for_each_safe(lh, next, &tdma->rt_list_rate) {
+            rt_entry = list_entry(lh, struct tdma_rt_entry, list_rate);
 
-			list_del(&rt_entry->list_rate);
-			rt_free(rt_entry);
-		}
-	}
+            list_del(&rt_entry->list_rate);
+            rt_free(rt_entry);
+        }
+    }
 
-	/*
-	 * re-init semas
-	 */
-	rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
-	rt_sem_init(&tdma->full, 0);
+    /*
+     * re-init semas
+     */
+    rt_sem_init(&tdma->free, TDMA_MAX_TX_QUEUE);
+    rt_sem_init(&tdma->full, 0);
 
-	/*
-	 * not it should be save to remove module
-	 */
-	MOD_DEC_USE_COUNT;
+    /*
+     * not it should be save to remove module
+     */
+    MOD_DEC_USE_COUNT;
 
-	return;
+    return;
 }

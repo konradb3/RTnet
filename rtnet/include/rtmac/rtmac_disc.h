@@ -1,7 +1,8 @@
 /* include/rtmac/rtmac_disc.h
  *
- * rtmac - real-time networking medium access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ * rtmac - real-time networking media access control subsystem
+ * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,27 +24,51 @@
 
 #ifdef __KERNEL__
 
+#include <linux/list.h>
+
 #include <rtdev.h>
 #include <rtskb.h>
-#include <rtmac/rtmac.h>
+
+#include <rtmac/rtmac_chrdev.h> /* legacy! */
 
 
-struct rtmac_disc_ops {
-	int (*init)			(struct rtnet_device *rtdev);
-	int (*release)			(struct rtnet_device *rtdev);
-	// FIXME: get_mtu + get_cycle
+struct rtmac_priv {
+    int (*hard_start_xmit)(struct rtskb *skb, struct rtnet_device *dev);
+
+    u8  disc_priv[0] __attribute__ ((aligned(16)));
 };
 
-struct rtmac_disc_type {
-	int (*packet_rx)		(struct rtskb *skb, struct rtnet_device *rtdev, struct rtpacket_type *pt);
-	int (*rt_packet_tx)		(struct rtskb *skb, struct rtnet_device *rtdev);
-	int (*proxy_packet_tx)		(struct rtskb *skb, struct rtnet_device *rtdev);
-	struct rtmac_disc_ops		*disc_ops;
-	struct rtmac_ioctl_ops		*ioctl_ops;
+struct rtmac_disc {
+    struct list_head        list;
+
+    char                    *name;
+    unsigned int            priv_size;      /* size of rtmac_priv.disc_priv */
+    u16                     disc_type;
+
+    int                     (*packet_rx)(struct rtskb *skb);
+    /* rt_packet_tx prototype must be compatible with hard_start_xmit */
+    int                     (*rt_packet_tx)(struct rtskb *skb,
+                                            struct rtnet_device *dev);
+    int                     (*nrt_packet_tx)(struct rtskb *skb);
+
+    int                     (*attach)(struct rtnet_device *rtdev, void *disc_priv);
+    int                     (*detach)(struct rtnet_device *rtdev, void *disc_priv);
+    int                     (*ioctl)(struct rtnet_device *rtdev, unsigned int cmd,
+                                     unsigned long arg);
+    /* todo: interface function(s) to retrieve text-based information about the discipline */
+
+    struct rtmac_ioctl_ops  *ioctl_ops; /* legacy! */
 };
 
-extern int rtmac_disc_init(struct rtnet_device *rtdev, struct rtmac_disc_type *disc);
-extern int rtmac_disc_release(struct rtnet_device *rtdev);
+
+extern int rtmac_disc_attach(struct rtnet_device *rtdev,
+                             struct rtmac_disc *disc);
+extern int rtmac_disc_detach(struct rtnet_device *rtdev);
+
+extern struct rtmac_disc *rtmac_get_disc_by_name(char *name);
+
+extern int rtmac_disc_register(struct rtmac_disc *disc);
+extern void rtmac_disc_deregister(struct rtmac_disc *disc);
 
 
 #endif /* __KERNEL__ */
