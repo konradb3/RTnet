@@ -54,6 +54,9 @@
 /* RTDM select support */
 #undef CONFIG_RTNET_RTDM_SELECT
 
+/* TDMA V1 */
+#undef CONFIG_RTNET_TDMAV1
+
 #ifdef __IN_RTNET__
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */

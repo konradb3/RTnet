@@ -22008,6 +22008,13 @@ else
   CONFIG_RTNET_TDMAV1_FALSE=
 fi
 
+if test "$CONFIG_RTNET_TDMAV1" = "yes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTNET_TDMAV1 1
+_ACEOF
+
+fi
 
 
 
