@@ -1,3 +1,9 @@
+0.6.2
+- removed runtime garbage collection of fragmented IP packets
+- added "cards" parameter to tulip-rt
+- revised automatic UDP port number assigment
+- added ip address evaluation to UDP port lookup
+- added SMC91111 driver
 - fixed routing bug in IP input path
 - fixed bug in timeout handling of recvmsg functions
 - fixed application unload problems when running RTcap
