@@ -106,7 +106,7 @@ int rtcfg_send_frame(struct rtskb *rtskb, struct rtnet_device *rtdev,
 
 
     rtskb->rtdev    = rtdev;
-    rtskb->priority = QUEUE_MIN_PRIO;
+    rtskb->priority = QUEUE_MIN_PRIO-1;
 
     if (rtdev->hard_header) {
         ret = rtdev->hard_header(rtskb, rtdev, ETH_RTCFG, dest_addr,
