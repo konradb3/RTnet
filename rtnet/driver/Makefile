@@ -1,5 +1,7 @@
-ALL_SUB_DIRS	:= 
-MOD_SUB_DIRS	:= 
+subdirs		= tulip
+
+ALL_SUB_DIRS	:= $(subdirs)
+MOD_SUB_DIRS	:= $(subdirs)
 SUB_DIRS	:= 
 
 M_OBJS		+= 8139too-rt.o eepro100-rt.o 3c59x-rt.o loopback-rt.o
