@@ -64,6 +64,14 @@ int main(int argc, char *argv[]) {
     /* Lock allocated memory into RAM. */
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
+    /* Create new socket. */
+    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+
+        printf("Error opening socket: %d\n", sockfd);
+        exit(1);
+    }
+
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4800, 1, 0, 0);
     if (NULL == lxrtnettsk) {
@@ -73,9 +81,6 @@ int main(int argc, char *argv[]) {
 
     /* Switch over to hard realtime mode. */
     rt_make_hard_real_time();
-
-    /* Create new socket. */
-    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
 
     /* Bind socket to local address specified as parameter. */
     ret = rt_socket_bind(sockfd, (struct sockaddr *) &local_addr,
