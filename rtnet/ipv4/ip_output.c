@@ -18,6 +18,10 @@
  */
 
 // $Log: ip_output.c,v $
+// Revision 1.17  2004/02/14 18:50:51  kiszka
+// * fixed duplicate ip id inc
+// * code cleanup
+//
 // Revision 1.16  2004/01/13 12:26:06  bet-frogger
 // 	* added rtos abstraction layer
 // 	* added rtai3 detection
@@ -223,18 +227,12 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 {
     int                     err=0;
     struct rtskb            *skb;
-    int                     df;
     struct iphdr            *iph;
     int                     hh_len;
     u16                     msg_rt_ip_id;
     unsigned long           flags;
     struct  rtnet_device    *rtdev=rt->rt_dev;
 
-
-    /* Store id in local variable */
-    rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);
-    msg_rt_ip_id = rt_ip_id_count++;
-    rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
 
     /*
      *  Try the simple case first. This leaves fragmented frames, and by choice
@@ -243,12 +241,13 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     length += sizeof(struct iphdr);
 
     if (length > rtdev->mtu)
-    {
         return rt_ip_build_xmit_slow(sk, getfrag, frag,
-                        length - sizeof(struct iphdr), rt, msg_flags);
-    }
+                                length - sizeof(struct iphdr), rt, msg_flags);
 
-    df = htons(IP_DF);
+    /* Store id in local variable */
+    rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);
+    msg_rt_ip_id = rt_ip_id_count++;
+    rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
 
     hh_len = (rtdev->hard_header_len+15)&~15;
 
@@ -268,7 +267,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     iph->tos      = sk->prot.inet.tos;
     iph->tot_len  = htons(length);
     iph->id       = htons(msg_rt_ip_id);
-    iph->frag_off = df;
+    iph->frag_off = htons(IP_DF);
     iph->ttl      = 255;
     iph->protocol = sk->protocol;
     iph->saddr    = rt->rt_src;
