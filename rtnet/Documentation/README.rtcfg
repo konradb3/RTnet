@@ -1,0 +1,61 @@
+                                    RTcfg
+                                    =====
+                            (Preliminary Version)
+
+The Real-Time Configuration Service (RTcfg) provides a mechanism to start up
+RTnet nodes synchronously. It implements a rendezvous during the RTnet start
+up process, exchanges MAC addresses and optionally IP routes, and will
+distribute configuration data to all stations (not implemented yet).
+
+RTcfg consists of a kernel module which can either be configured to run as a
+server or a client. The server takes a list of all expected stations in the
+network and waits for them to come up while broadcasting invitation messages to
+the clients. The clients wait for the invitation, then exchange the configuration
+with the server, and wait for all other clients to start up.
+
+
+Module Parameters
+-----------------
+
+    dev=<device>            - name of the device to use (default: rteth0)
+    ips=<ip1>[,<ip2>,...]   - list of client IPs (max. 8), if empty, run as
+                              RTcfg client
+    start_timer=0|1         - set to zero if scheduler already runs
+                              (default: 1 = start scheduling timer)
+    timeout=<ms>            - timeout in ms for waiting on other stations
+                              (default: 120000 ms)
+
+
+Example
+-------
+
+Server:
+    insmod rtnet
+    insmod eepro100-rt
+    rtifconfig rteth0 up 192.168.0.1 255.255.255.0
+
+    insmod rtcfg ips=192.168.0.2,192.168.0.3
+    rmmod rtcfg
+
+    insmod rtmac
+    rtifconfig rteth0 mac ...
+
+Client:
+    insmod rtnet
+    insmod eepro100-rt
+    rtifconfig rteth0 up 192.168.0.2 255.255.255.0
+
+    insmod rtcfg
+    rmmod rtcfg
+
+    insmod rtmac
+    rtifconfig rteth0 mac ...
+
+
+NOTE: This description only applies to the preliminary version released with
+      RTnet 0.5.6. As soon as the user mode tool "rtcfg" has been completed and
+      the configuration file distribution has been included, the start-up
+      procedure described above will change.
+
+
+December 2003, Jan Kiszka <jan.kiszka-at-web.de>
