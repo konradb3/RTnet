@@ -143,8 +143,8 @@ int init_module(void)
 	int ret;
 	RTIME tick_period;
 
-	unsigned long local_ip  = rt_inet_aton(local_ip_s);
-	unsigned long server_ip = rt_inet_aton(server_ip_s);
+	unsigned int local_ip  = rt_inet_aton(local_ip_s);
+	unsigned int server_ip = rt_inet_aton(server_ip_s);
 
 	if (interval < 1) interval = 1;
 	if (interval > 1000) interval = 1000;
@@ -202,5 +202,5 @@ void cleanup_module(void)
 	/* destroy the fifo   */
 	rtf_destroy(PRINT);
 
-	printk ("packets sent:\t\t%10d\npackets received:\t%10d\npacketloss:\t\t%10d\%\n", sent, rcvd, 100-((100*rcvd)/sent));
+	printk ("packets sent:\t\t%10lu\npackets received:\t%10lu\npacketloss:\t\t%10lu%%\n", sent, rcvd, 100-((100*rcvd)/sent));
 }

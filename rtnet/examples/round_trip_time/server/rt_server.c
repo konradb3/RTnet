@@ -132,8 +132,8 @@ int init_module(void)
 	int ret;
 	struct rtsocket *socket;
 
-	unsigned long local_ip  = rt_inet_aton(local_ip_s);
-	unsigned long client_ip = rt_inet_aton(client_ip_s);
+	unsigned int local_ip  = rt_inet_aton(local_ip_s);
+	unsigned int client_ip = rt_inet_aton(client_ip_s);
 
 
 	printk ("local  ip address %s=%08x\n", local_ip_s, local_ip);
