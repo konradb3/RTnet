@@ -146,7 +146,7 @@ int rtcfg_proc_read_conn_state(char *buf, char **start, off_t offset,
                      conn->mac_addr[0], conn->mac_addr[1], conn->mac_addr[2],
                      conn->mac_addr[3], conn->mac_addr[4], conn->mac_addr[5]);
 
-    if (conn->addr_type == RTCFG_ADDR_IP)
+    if ((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP)
         RTNET_PROC_PRINT("ip:\t\t\t%u.%u.%u.%u\n",
                          NIPQUAD(conn->addr.ip_addr));
 
@@ -165,7 +165,7 @@ void rtcfg_update_proc_entries(int ifindex)
     list_for_each(entry, &device[ifindex].conn_list) {
         conn = list_entry(entry, struct rtcfg_connection, entry);
 
-        switch (conn->addr_type) {
+        switch (conn->addr_type & RTCFG_ADDR_MASK) {
             case RTCFG_ADDR_IP:
                 snprintf(name_buf, 64, "CLIENT_%u.%u.%u.%u",
                          NIPQUAD(conn->addr.ip_addr));

@@ -149,7 +149,8 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
 
     rtskb_size = rtdev->hard_header_len +
         sizeof(struct rtcfg_frm_stage_1_cfg) + conn->stage1_size +
-        ((conn->addr_type == RTCFG_ADDR_IP) ? 2*RTCFG_ADDRSIZE_IP : 0);
+        (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
+        2*RTCFG_ADDRSIZE_IP : 0);
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -164,9 +165,9 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
 
     stage_1_frm->head.id      = RTCFG_ID_STAGE_1_CFG;
     stage_1_frm->head.version = 0;
-    stage_1_frm->addr_type    = conn->addr_type;
+    stage_1_frm->addr_type    = conn->addr_type & RTCFG_ADDR_MASK;
 
-    if (conn->addr_type == RTCFG_ADDR_IP) {
+    if (stage_1_frm->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, 2*RTCFG_ADDRSIZE_IP);
 
         *(u32*)stage_1_frm->client_addr = conn->addr.ip_addr;
@@ -303,7 +304,8 @@ int rtcfg_send_announce_new(int ifindex)
         return -ENODEV;
 
     rtskb_size = rtdev->hard_header_len + sizeof(struct rtcfg_frm_announce) +
-        ((rtcfg_dev->addr_type == RTCFG_ADDR_IP) ? RTCFG_ADDRSIZE_IP : 0);
+        (((rtcfg_dev->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
+        RTCFG_ADDRSIZE_IP : 0);
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
