@@ -118,6 +118,7 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
 
             ret = rtcfg_send_announce_new(ifindex);
             if (ret < 0) {
+                rtcfg_dequeue_blocking_call(ifindex);
                 rtos_res_unlock(&rtcfg_dev->dev_lock);
                 return ret;
             }
