@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
         RT_TASK *lxrtnettsk;
 
-        memset (msg, 0, 2000);
+        memset(msg, 0, sizeof(msg));
 
         memset(&local_addr, 0, sizeof (struct sockaddr_in));
         
