@@ -3,8 +3,6 @@
 
                                 Revision: 2.0
 
-                                   [DRAFT]
-
 
 This document describes the protocol header of the real-time media access
 control framework for RTnet. The actual control protocol is implemented by
@@ -44,5 +42,3 @@ Flags are encoded as follows:
 
 
 2004, Jan Kiszka <jan.kiszka-at-web.de>
-
-

@@ -43,6 +43,7 @@ int             count    = 0;
 int             delay    = 1000;
 unsigned int    sent     = 0;
 unsigned int    received = 0;
+float           wc_rtt   = 0;
 
 
 void help(void)
@@ -76,9 +77,10 @@ int getintopt(int argc, int pos, char *argv[], int min)
 void print_statistics()
 {
     printf("\n--- %s rtping statistics ---\n"
-           "%d packets transmitted, %d received, %d%% packet loss\n",
-           inet_ntoa(addr), sent, received,
-           100 - ((received * 100) / sent));
+           "%d packets transmitted, %d received, %d%% packet loss\n"
+           "worst case rtt = %.1f us\n",
+           inet_ntoa(addr), sent, received, 100 - ((received * 100) / sent),
+           wc_rtt);
     exit(0);
 }
 
@@ -95,6 +97,7 @@ void ping(int signal)
 {
     int             ret;
     struct in_addr  from;
+    float           rtt;
 
 
     cmd.args.ping.ip_addr = addr.s_addr;
@@ -110,9 +113,11 @@ void ping(int signal)
 
     received++;
     from.s_addr = cmd.args.ping.ip_addr;
+    rtt = (float)cmd.args.ping.rtt / (float)1000;
+    if (rtt > wc_rtt)
+        wc_rtt = rtt;
     printf("%d bytes from %s: icmp_seq=%d time=%.1f us\n",
-           ret, inet_ntoa(from), cmd.args.ping.sequence,
-           (float)cmd.args.ping.rtt / (float)1000);
+           ret, inet_ntoa(from), cmd.args.ping.sequence, rtt);
 
   done:
     if (cmd.args.ping.sequence++ == count)
