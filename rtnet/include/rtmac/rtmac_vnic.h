@@ -25,6 +25,9 @@
 #ifdef __KERNEL__
 
 
+#define DEFAULT_VNIC_RTSKBS     32
+
+
 extern int rtmac_vnic_rx(struct rtskb *skb, u16 type);
 
 extern int rtmac_vnic_add(struct rtnet_device *rtdev);

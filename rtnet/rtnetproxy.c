@@ -1,11 +1,11 @@
 /* rtnetproxy.c: a network driver that uses the RTAI rtnet driver to
  * transport IP data from/to Linux kernel mode.
- * This allows the usage of TCP/IP from linux space using via the RTNET 
+ * This allows the usage of TCP/IP from linux space using via the RTNET
  * network adapter.
  *
  *
  * Usage:
- * 
+ *
  * insmod rtnetproxy.o    (only after having rtnet up and running)
  *
  * ifconfig rtproxy up IP_ADDRESS netmask NETMASK
@@ -15,9 +15,9 @@
  * Restrictions:
  * Only IPV4 based protocols are supported, UDP and ICMP can be send out
  * but not received - as these are handled directly by rtnet!
- * 
  *
- * 
+ *
+ *
  * Based on the linux net driver dummy.c by Nick Holloway
  *
  *
@@ -27,12 +27,12 @@
  *                                standard linux driver context.
  *                                Data exchange via ringbuffers.
  *                                A RTAI thread is used for rtnet transmission.
- * 
- * 05-Nov-2002  Mathias Koehrer - Initial version! 
- *                                Development based on rtnet 0.2.6, 
+ *
+ * 05-Nov-2002  Mathias Koehrer - Initial version!
+ *                                Development based on rtnet 0.2.6,
  *                                rtai-24.1.10, kernel 2.4.19
- *                               
- * 
+ *
+ *
  * Mathias Koehrer - mathias_koehrer@yahoo.de
 */
 
@@ -59,10 +59,22 @@
 
 
 /* **************************************************************************
+ *  SKB pool management (JK):
+ * ************************************************************************ */
+#define DEFAULT_PROXY_RTSKBS        32
+
+static unsigned int proxy_rtskbs = DEFAULT_PROXY_RTSKBS;
+MODULE_PARM(proxy_rtskbs, "i");
+MODULE_PARM_DESC(proxy_rtskbs, "Number of realtime socket buffers in proxy pool");
+
+static struct rtskb_head rtskb_pool;
+
+
+/* **************************************************************************
  *  SKB ringbuffers for exchanging data between rtnet and kernel:
  * ************************************************************************ */
 #define SKB_RINGBUFFER_SIZE 16
-typedef struct 
+typedef struct
 {
     int wr;        // Offset to wr: Increment before write!
     int rd;        // Offset to rd: Increment before read!
@@ -70,13 +82,13 @@ typedef struct
 } skb_exch_ringbuffer_t;
 
 /* Stores "new" skbs to be used by rtnet: */
-static skb_exch_ringbuffer_t  ring_skb_kernel_rtnet; 
+static skb_exch_ringbuffer_t  ring_skb_kernel_rtnet;
 
 /* Stores "used" skbs to be freed by the kernel: */
 static skb_exch_ringbuffer_t  ring_skb_rtnet_kernel;
 
 /* Stores "new" rtskbs to be used by the kernel: */
-static skb_exch_ringbuffer_t  ring_rtskb_rtnet_kernel; 
+static skb_exch_ringbuffer_t  ring_rtskb_rtnet_kernel;
 
 /* Stores "used" rtskbs to be freed by rtnet: */
 static skb_exch_ringbuffer_t  ring_rtskb_kernel_rtnet;
@@ -92,7 +104,7 @@ static RT_TASK rtnetproxy_thread;
 
 /* ***********************************************************************
  * Returns the next pointer from the ringbuffer or zero if nothing is
- * available 
+ * available
  * ********************************************************************* */
 static void *read_from_ringbuffer(skb_exch_ringbuffer_t *pRing)
 {
@@ -110,7 +122,7 @@ static void *read_from_ringbuffer(skb_exch_ringbuffer_t *pRing)
 /* ************************************************************************
  * Puts p at the end of the ringbuffer.
  * Returns p on success. If there is no space in the ringbuffer,
- * zwei is returned and p is not queued! 
+ * zwei is returned and p is not queued!
  * *********************************************************************** */
 static void *write_to_ringbuffer(skb_exch_ringbuffer_t *pRing, void *p)
 {
@@ -146,23 +158,23 @@ static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev);
 
 /* ************************************************************************
  * ************************************************************************
- *   T R A N S M I T 
+ *   T R A N S M I T
  * ************************************************************************
  * ************************************************************************ */
 
 /* ************************************************************************
  * This functions runs in rtai context.
  * It is called from rtnetproxy_user_srq whenever there is frame to sent out
- * Copy the standard linux sk_buff buffer to a rtnet buffer and send it out 
- * using rtnet functions. 
+ * Copy the standard linux sk_buff buffer to a rtnet buffer and send it out
+ * using rtnet functions.
  * ************************************************************************ */
 static inline void send_data_out(struct sk_buff *skb)
 {
 
-    struct rtskb *rtskb;  
+    struct rtskb *rtskb;
     struct rt_rtable *rt;
-    
-    struct skb_data_format 
+
+    struct skb_data_format
     {
         struct ethhdr ethhdr;
         char   reserved[12]; /* Ugly but it works... All the not-interesting header bytes */
@@ -171,13 +183,13 @@ static inline void send_data_out(struct sk_buff *skb)
     } __attribute__ ((packed));  /* Important to have this structure packed!
                                   * It represents the ethernet frame on the line and
                                   * thus no spaces are allowed! */
-    
+
     struct skb_data_format *pData;
     int rc;
-    
+
     /* Copy the data from the standard sk_buff to the realtime sk_buff:
      * Both have the same length. */
-    rtskb = alloc_rtskb(skb->len);
+    rtskb = alloc_rtskb(skb->len, &rtskb_pool);
     if (NULL == rtskb) {
         return;
     }
@@ -204,7 +216,7 @@ static inline void send_data_out(struct sk_buff *skb)
         /* Call the actual transmit function */
         rtdev_xmit_proxy(rtskb);
 
-        /* The rtskb is freed somewhere deep in the driver... 
+        /* The rtskb is freed somewhere deep in the driver...
          * No need to do it here. */
     }
     else
@@ -216,7 +228,7 @@ static inline void send_data_out(struct sk_buff *skb)
 }
 
 /* ************************************************************************
- * This is a RTAI thread. It will be activated (resumed) by the 
+ * This is a RTAI thread. It will be activated (resumed) by the
  * functions "rtnetproxy_xmit" or "rtnetproxy_kernel_recv" (in linux context)
  * whenever new frames have to be sent out or if the
  * "used" rtskb ringbuffer is full.
@@ -266,8 +278,8 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
         printk("rtnetproxy_xmit - no space in queue\n");
         dev_kfree_skb(skb);  /* Free the standard skb. */
     }
-    
-    /* Signal rtnet that there are packets waiting to be processed... 
+
+    /* Signal rtnet that there are packets waiting to be processed...
      * Resume the transmission thread (function rtnetproxy_transmit_thread)
      * */
     rt_task_resume(&rtnetproxy_thread);
@@ -299,9 +311,13 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
  * ************************************************************************ */
 static int rtnetproxy_recv(struct rtskb *rtskb)
 {
-
+    /* Acquire rtskb (JK) */
+    if (rtskb_acquire(rtskb, &rtskb_pool) != 0) {
+        rt_printk("rtnetproxy_recv: No free rtskb in pool\n");
+        kfree_rtskb(rtskb);
+    }
     /* Place the rtskb in the ringbuffer: */
-    if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb))
+    else if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb))
     {
         /* Switch over to kernel context: */
         rt_pend_linux_srq(rtnetproxy_srq);
@@ -319,7 +335,7 @@ static int rtnetproxy_recv(struct rtskb *rtskb)
 
 /* ************************************************************************
  * This function runs in kernel mode.
- * It is activated from rtnetproxy_rtai_srq whenever rtnet received a 
+ * It is activated from rtnetproxy_rtai_srq whenever rtnet received a
  * frame to be processed by rtnetproxy.
  * ************************************************************************ */
 static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
@@ -328,7 +344,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     struct net_device *dev = &dev_rtnetproxy;
     struct net_device_stats *stats = dev->priv;
     RTIME rt;
-    
+
 #define IP_OVERHEAD 34
     int len = rtskb->len + IP_OVERHEAD;
 
@@ -338,7 +354,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
 
     memcpy(skb_put(skb, len), rtskb->data-IP_OVERHEAD, len);
 
-    
+
     /* Set some relevant entries in the skb: */
     skb->protocol=eth_type_trans(skb,dev);
     skb->dev=dev;
@@ -347,14 +363,14 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
 
     rt = count2nano( rtskb->rx );
     count2timeval(rt, &skb->stamp);
-     
+
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;
     stats->rx_packets++;
-          
-    
+
+
     netif_rx(skb);  /* pass it to the received stuff */
-        
+
 }
 
 /* ************************************************************************
@@ -375,7 +391,7 @@ static void rtnetproxy_rtai_srq(void)
 	}
     }
 
-    /* Signal rtnet that there are "used" rtskbs waiting to be processed... 
+    /* Signal rtnet that there are "used" rtskbs waiting to be processed...
      * Resume the rtnetproxy_thread to recycle "used" rtskbs
      * */
     rt_task_resume(&rtnetproxy_thread);
@@ -444,17 +460,27 @@ static int __init rtnetproxy_init_module(void)
 {
     int err;
 
+    /* Initialize the proxy's rtskb pool (JK) */
+    if (rtskb_pool_init(&rtskb_pool, proxy_rtskbs) < proxy_rtskbs) {
+        rtskb_pool_release(&rtskb_pool);
+        return -ENOMEM;
+    }
+
     dev_rtnetproxy.init = rtnetproxy_init;
     SET_MODULE_OWNER(&dev_rtnetproxy);
 
     /* Define the name for this unit */
     err=dev_alloc_name(&dev_rtnetproxy,"rtproxy");
 
-    if(err<0)
+    if(err<0) {
+        rtskb_pool_release(&rtskb_pool);
         return err;
+    }
     err = register_netdev(&dev_rtnetproxy);
-    if (err<0)
+    if (err<0) {
+        rtskb_pool_release(&rtskb_pool);
         return err;
+    }
 
     /* Initialize the ringbuffers: */
     memset(&ring_rtskb_kernel_rtnet, 0, sizeof(ring_rtskb_kernel_rtnet));
@@ -463,12 +489,12 @@ static int __init rtnetproxy_init_module(void)
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
     /* Init the task for transmission */
-    rt_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0, 2000, 
+    rt_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0, 2000,
                   RT_LOWEST_PRIORITY, 0, 0);
-        
+
     /* Register srq */
     rtnetproxy_srq = rt_request_srq(0, rtnetproxy_rtai_srq, 0);
-    
+
     /* rtNet stuff: */
     rt_ip_register_fallback(rtnetproxy_recv);
 
@@ -489,7 +515,7 @@ static void __exit rtnetproxy_cleanup_module(void)
 
     rt_task_suspend(&rtnetproxy_thread);
     rt_task_delete(&rtnetproxy_thread);
-   
+
     /* Free the ringbuffers... */
     {
         struct sk_buff *del_skb;  /* standard skb */
@@ -499,7 +525,7 @@ static void __exit rtnetproxy_cleanup_module(void)
         }
         while ((del_skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
         {
-            dev_kfree_skb(del_skb); 
+            dev_kfree_skb(del_skb);
         }
     }
     {
@@ -520,6 +546,8 @@ static void __exit rtnetproxy_cleanup_module(void)
 
     memset(&dev_rtnetproxy, 0, sizeof(dev_rtnetproxy));
     dev_rtnetproxy.init = rtnetproxy_init;
+
+    rtskb_pool_release(&rtskb_pool);
 }
 
 module_init(rtnetproxy_init_module);

@@ -37,9 +37,10 @@ struct rtmac_priv {
     int (*hard_start_xmit)(struct rtskb *skb, struct rtnet_device *dev);
     struct net_device       vnic;
     struct net_device_stats vnic_stats;
+    struct rtskb_head       vnic_skb_pool;
     int                     vnic_used;
 
-    u8                  disc_priv[0] __attribute__ ((aligned(16)));
+    u8                      disc_priv[0] __attribute__ ((aligned(16)));
 };
 
 struct rtmac_disc {

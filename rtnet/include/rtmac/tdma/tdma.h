@@ -259,7 +259,7 @@ static inline struct rtskb *tdma_make_msg_len(struct rtnet_device *rtdev,
      * allocate packet
      */
     skb = alloc_rtskb(rtdev->hard_header_len + sizeof(struct rtmac_hdr) +
-                      sizeof(struct tdma_hdr) + data_len + 15);
+                      sizeof(struct tdma_hdr) + data_len + 15, &global_pool);
     if (!skb)
         return NULL;
 

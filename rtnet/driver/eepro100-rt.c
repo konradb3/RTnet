@@ -73,7 +73,7 @@ static int debug = -1;			/* The debug level */
 /* A few values that may be tweaked. */
 /* The ring sizes should be a power of two for efficiency. */
 #define TX_RING_SIZE	32
-#define RX_RING_SIZE	32
+#define RX_RING_SIZE	8 /* RX_RING_SIZE*2 rtskbs will be preallocated */
 /* How much slots multicast filter setup may take.
    Do not descrease without changing set_rx_mode() implementaion. */
 #define TX_MULTICAST_SIZE   2
@@ -497,6 +497,7 @@ struct speedo_private {
 	/* The addresses of a Tx/Rx-in-place packets/buffers. */
 	struct rtskb *tx_skbuff[TX_RING_SIZE];
 	struct rtskb *rx_skbuff[RX_RING_SIZE];
+	struct rtskb_head skb_pool;
 	// *** RTnet ***
 
 	/* Mapped addresses of the rings. */
@@ -889,8 +890,17 @@ static int speedo_found1(struct pci_dev *pdev,
 	rtdev->hard_header = &rt_eth_header;
 	//rtdev->do_ioctl = NULL;
 
+	if (rtskb_pool_init(&sp->skb_pool, RX_RING_SIZE*2) < RX_RING_SIZE*2) {
+		rtskb_pool_release(&sp->skb_pool);
+		pci_free_consistent(pdev, size, tx_ring_space, tx_ring_dma);
+		rtdev_free(rtdev);
+		return -ENOMEM;
+	}
+
 	if ( (i=rt_register_rtnetdev(rtdev)) )
 	{
+		rtskb_pool_release(&sp->skb_pool);
+		pci_free_consistent(pdev, size, tx_ring_space, tx_ring_dma);
 		rtdev_free(rtdev);
 		return i;
 	}
@@ -1254,7 +1264,7 @@ speedo_init_rx_ring(struct rtnet_device *rtdev)
 
 	for (i = 0; i < RX_RING_SIZE; i++) {
 		struct rtskb *skb;
-		skb = dev_alloc_rtskb(PKT_BUF_SZ + 2 + sizeof(struct RxFD));
+		skb = dev_alloc_rtskb(PKT_BUF_SZ + 2 + sizeof(struct RxFD), &sp->skb_pool);
 		sp->rx_skbuff[i] = skb;
 		if (skb == NULL)
 			break;			/* OK.  Just initially short of Rx bufs. */
@@ -1742,7 +1752,7 @@ static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry
 	struct RxFD *rxf;
 	struct rtskb *skb;
 	/* Get a fresh skbuff to replace the consumed one. */
-	skb = dev_alloc_rtskb(PKT_BUF_SZ + 2 + sizeof(struct RxFD));
+	skb = dev_alloc_rtskb(PKT_BUF_SZ + 2 + sizeof(struct RxFD), &sp->skb_pool);
 	sp->rx_skbuff[entry] = skb;
 	if (skb == NULL) {
 		sp->rx_ringp[entry] = NULL;
@@ -2397,6 +2407,7 @@ static void __devexit eepro100_remove_one (struct pci_dev *pdev)
 	pci_disable_device(pdev);
 
 	// *** RTnet ***
+	rtskb_pool_release(&sp->skb_pool);
 	rtdev_free(rtdev);
 	// *** RTnet ***
 }

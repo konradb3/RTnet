@@ -1,7 +1,7 @@
 /***
- * 8139too-rt.c - Realtime driver for 
+ * 8139too-rt.c - Realtime driver for
  * for more information, look to end of file or '8139too.c'
- * 
+ *
  * Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,9 +48,14 @@
 #include <rtnet.h>
 #include <rtnet_port.h>
 
+#define DEFAULT_RX_POOL_SIZE    16
+
 static int cards = INT_MAX;
+static unsigned int rx_pool_size = DEFAULT_RX_POOL_SIZE;
 MODULE_PARM(cards, "i");
+MODULE_PARM(rx_pool_size, "i");
 MODULE_PARM_DESC(cards, "rtl8139 number of cards to be supported");
+MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 // *** RTnet ***
 
 
@@ -480,6 +485,7 @@ struct rtl8139_private {
         struct rtl_extra_stats xstats;
         int time_to_die;
   //        struct mii_if_info mii;
+        struct rtskb_head skb_pool;
 };
 
 MODULE_AUTHOR ("Jeff Garzik <jgarzik@mandrakesoft.com>");
@@ -850,6 +856,9 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         //        tp->mii.mdio_read = mdio_read;
         //        tp->mii.mdio_write = mdio_write;
 
+        if (rtskb_pool_init(&tp->skb_pool, rx_pool_size) < rx_pool_size)
+                goto err_out;
+
         if ( (i=rt_register_rtnetdev(rtdev)) )
                 goto err_out;
 
@@ -915,6 +924,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
 
 
 err_out:
+        rtskb_pool_release(&tp->skb_pool);
 #ifndef USE_IO_OPS
         if (tp->mmio_addr) iounmap (tp->mmio_addr);
 #endif /* !USE_IO_OPS */
@@ -941,6 +951,7 @@ static void __devexit rtl8139_remove_one (struct pci_dev *pdev)
         /* it's ok to call this even if we have no regions to free */
         rt_unregister_rtnetdev(rtdev);
         rt_rtdev_disconnect(rtdev);
+        rtskb_pool_release(&tp->skb_pool);
 
         pci_release_regions(pdev);
         pci_set_drvdata(pdev, NULL);
@@ -1540,12 +1551,12 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
                  * drop packets here under memory pressure.
                  */
 
-                skb = dev_alloc_rtskb (pkt_size + 2);
+                skb = dev_alloc_rtskb (pkt_size + 2, &tp->skb_pool);
                 if (skb) {
                         skb->rx = rx;
                         skb->rtdev = rtdev;
                         rtskb_reserve (skb, 2);        /* 16 byte align the IP fields. */
-                        
+
 
                         // eth_copy_and_sum (skb, &rx_ring[ring_offset + 4], pkt_size, 0);
                         memcpy (skb->data, &rx_ring[ring_offset + 4], pkt_size);
