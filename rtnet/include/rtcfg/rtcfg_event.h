@@ -28,7 +28,7 @@
 #include <linux/if_ether.h>
 #include <linux/netdevice.h>
 
-#include <rtcfg.h>
+#include <rtcfg_chrdev.h>
 #include <rtdev.h>
 #include <rtnet_rtpc.h>
 

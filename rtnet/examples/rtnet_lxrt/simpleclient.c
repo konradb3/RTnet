@@ -1,6 +1,6 @@
 /* simpleclient.c
  *
- * simpleclient - a simple client for demonstration of rtnet_lxrt
+ * simpleclient - a simple client for demonstration of rtnet's lxrt interface
  * 06/2003 by Hans-Peter Bock <hpbock@avaapgh.de>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
     /* Create new socket. */
-    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket_rt(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
 
         printf("Error opening socket: %d\n", sockfd);
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4800, 1, 0, 0);
     if (NULL == lxrtnettsk) {
-        rt_socket_close(sockfd);
+        close_rt(sockfd);
         printf("CANNOT INIT MASTER TASK\n");
         exit(1);
     }
@@ -88,22 +88,22 @@ int main(int argc, char *argv[]) {
     rt_make_hard_real_time();
 
     /* Bind socket to local address specified as parameter. */
-    ret = rt_socket_bind(sockfd, (struct sockaddr *) &local_addr,
-                         sizeof(struct sockaddr_in));
+    ret = bind_rt(sockfd, (struct sockaddr *) &local_addr,
+                  sizeof(struct sockaddr_in));
 
     /* Specify destination address for socket; needed for rt_socket_send(). */
-    rt_socket_connect(sockfd, (struct sockaddr *) &server_addr,
-                      sizeof(struct sockaddr_in));
+    connect_rt(sockfd, (struct sockaddr *) &server_addr,
+               sizeof(struct sockaddr_in));
 
     /* Send a message. */
-    rt_socket_send(sockfd, msg, sizeof(msg), 0);
+    send_rt(sockfd, msg, sizeof(msg), 0);
 
     /* Switch over to soft realtime mode. */
     rt_make_soft_real_time();
 
     /* Close socket.
      * Note: call must be in soft-mode because socket was created as non-rt! */
-    rt_socket_close(sockfd);
+    close_rt(sockfd);
 
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);

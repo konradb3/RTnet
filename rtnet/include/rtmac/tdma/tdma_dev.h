@@ -1,9 +1,9 @@
 /***
  *
- *  include/af_packet.h
+ *  include/rtmac/tdma/tdma_dev.h
  *
- *  RTnet - real-time networking subsystem
- *  Copyright (C) 2003,2004 Jan Kiszka <jan.kiszka@web.de>
+ *  rtmac - real-time networking media access control subsystem
+ *  Copyright (C) 2004 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,11 +21,14 @@
  *
  */
 
-#ifndef __RTNET_AF_PACKET_H_
-#define __RTNET_AF_PACKET_H_
+#ifndef __TDMA_DEV_H_
+#define __TDMA_DEV_H_
 
 
-extern int rt_packet_proto_init(void);
-extern void rt_packet_proto_release(void);
+#include <rtmac/tdma/tdma.h>
 
-#endif  /* __RTNET_AF_PACKET_H_ */
+
+extern int tdma_dev_init(struct rtnet_device *rtdev, struct rtmac_tdma *tdma);
+extern int tdma_dev_release(struct rtmac_tdma *tdma);
+
+#endif /* __TDMA_DEV_H_ */

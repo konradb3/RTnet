@@ -42,7 +42,7 @@
 /****************************************************************************
  * socket.c                                                                 *
  ****************************************************************************/
-EXPORT_SYMBOL(rt_socket);
+/*EXPORT_SYMBOL(rt_socket);
 EXPORT_SYMBOL(rt_socket_accept);
 EXPORT_SYMBOL(rt_socket_bind);
 EXPORT_SYMBOL(rt_socket_close);
@@ -57,7 +57,7 @@ EXPORT_SYMBOL(rt_socket_recvmsg);
 EXPORT_SYMBOL(rt_socket_getsockname);
 EXPORT_SYMBOL(rt_socket_setsockopt);
 EXPORT_SYMBOL(rt_socket_ioctl);
-EXPORT_SYMBOL(rt_socket_callback);
+EXPORT_SYMBOL(rt_socket_callback);*/
 
 
 /****************************************************************************

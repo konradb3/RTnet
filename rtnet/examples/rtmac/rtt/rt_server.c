@@ -8,6 +8,7 @@
  *
  *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *                2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  rtnet - real-time networking example
  *  rtmac - real-time media access control example
@@ -35,11 +36,8 @@
 
 #include <rtai.h>
 #include <rtai_sched.h>
-#include <rtai_fifos.h>
 
 #include <rtnet.h>
-
-//#define USE_CALLBACKS
 
 static char *local_ip_s  = "";
 static char *client_ip_s = "127.0.0.1";
@@ -56,10 +54,6 @@ MODULE_LICENSE("GPL");
 
 RT_TASK rt_task;
 
-#ifdef USE_CALLBACKS
-SEM     tx_sem;
-#endif
-
 #define RCV_PORT    36000
 #define XMT_PORT    35999
 
@@ -74,48 +68,6 @@ char tx_msg[65536];
 
 
 
-#ifdef USE_CALLBACKS
-
-void *process(void* arg)
-{
-    while(1) {
-        rt_sem_wait(&tx_sem);
-        rt_socket_sendto(sock, &tx_msg, reply_size, 0, (struct sockaddr *) &client_addr,
-                         sizeof (struct sockaddr_in));
-    }
-}
-
-
-
-int echo_rcv(int s,void *arg)
-{
-    int                 ret=0;
-    struct msghdr       msg;
-    struct iovec        iov;
-    struct sockaddr_in  addr;
-
-
-    memset(&msg, 0, sizeof(msg));
-    iov.iov_base=&buffer;
-    iov.iov_len=sizeof(RTIME);
-    msg.msg_name=&addr;
-    msg.msg_namelen=sizeof(addr);
-    msg.msg_iov=&iov;
-    msg.msg_iovlen=1;
-    msg.msg_control=NULL;
-    msg.msg_controllen=0;
-
-    ret=rt_socket_recvmsg(sock, &msg, 0);
-    if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {
-        memcpy(&tx_msg, &buffer, 8);
-        rt_sem_signal(&tx_sem);
-    }
-
-    return 0;
-}
-
-#else
-
 void process(void* arg)
 {
     struct msghdr       msg;
@@ -124,7 +76,6 @@ void process(void* arg)
     int                 ret;
 
     while(1) {
-        memset(&msg, 0, sizeof(msg));
         iov.iov_base=&buffer;
         iov.iov_len=sizeof(RTIME);
         msg.msg_name=&addr;
@@ -134,26 +85,21 @@ void process(void* arg)
         msg.msg_control=NULL;
         msg.msg_controllen=0;
 
-        ret=rt_socket_recvmsg(sock, &msg, 0);
+        ret = recvmsg_rt(sock, &msg, 0);
         if ( (ret <= 0) || (msg.msg_namelen != sizeof(struct sockaddr_in)) )
             return;
 
         memcpy(&tx_msg, &buffer, sizeof(RTIME));
 
-        rt_socket_sendto(sock, &tx_msg, reply_size, 0, (struct sockaddr *) &client_addr,
-                         sizeof (struct sockaddr_in));
+        sendto_rt(sock, &tx_msg, reply_size, 0, (struct sockaddr *) &client_addr,
+                  sizeof (struct sockaddr_in));
     }
 }
-
-#endif
 
 
 
 int init_module(void)
 {
-#ifdef USE_CALLBACKS
-    unsigned int nonblock = 1;
-#endif
     unsigned int add_rtskbs = 30;
     int ret;
 
@@ -175,7 +121,7 @@ int init_module(void)
 
     /* create rt-socket */
     rt_printk("create rtsocket\n");
-    if ((sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((sock = socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         rt_printk("socket not created\n");
         return sock;
     }
@@ -186,8 +132,9 @@ int init_module(void)
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(RCV_PORT);
     local_addr.sin_addr.s_addr = local_ip;
-    if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
-        rt_socket_close(sock);
+    if ((ret = bind_rt(sock, (struct sockaddr *)&local_addr,
+                       sizeof(struct sockaddr_in))) < 0) {
+        close_rt(sock);
         rt_printk("can't bind rtsocket\n");
         return ret;
     }
@@ -198,29 +145,18 @@ int init_module(void)
     client_addr.sin_family = AF_INET;
     client_addr.sin_port = htons(XMT_PORT);
     client_addr.sin_addr.s_addr = client_ip;
-    if ( (ret=rt_socket_connect(sock, (struct sockaddr *) &client_addr, sizeof(struct sockaddr_in)))<0 ) {
-        rt_socket_close(sock);
+    if ((ret = connect_rt(sock, (struct sockaddr *)&client_addr,
+                          sizeof(struct sockaddr_in))) < 0) {
+        close_rt(sock);
         rt_printk("can't connect rtsocket\n");
         return ret;
     }
 
-#ifdef USE_CALLBACKS
-    /* switch to non-blocking */
-    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
-    rt_printk("rt_setsockopt(RT_SO_NONBLOCK) = %d\n", ret);
-
-    /* set up receiving */
-    rt_socket_callback(sock, echo_rcv, NULL);
-
-    /* initialize semaphore */
-    rt_sem_init(&tx_sem, 0);
-#endif
-
     /* extend the socket pool */
-    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_EXTPOOL, &add_rtskbs, sizeof(add_rtskbs));
+    ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
-        rt_socket_close(sock);
-        rt_printk("rt_setsockopt(RT_SO_EXTPOOL) = %d\n", ret);
+        close_rt(sock);
+        rt_printk("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
         return -1;
     }
 
@@ -236,14 +172,11 @@ int init_module(void)
 void cleanup_module(void)
 {
     /* Important: First close the socket! */
-    while (rt_socket_close(sock) == -EAGAIN) {
+    while (close_rt(sock) == -EAGAIN) {
         printk("rt_server: Not all buffers freed yet - waiting...\n");
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
     rt_task_delete(&rt_task);
-#ifdef USE_CALLBACKS
-    rt_sem_delete(&tx_sem);
-#endif
 }

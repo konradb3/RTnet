@@ -60,6 +60,10 @@ CONFIG_RTNET_8139_FALSE = @CONFIG_RTNET_8139_FALSE@
 CONFIG_RTNET_8139_TRUE = @CONFIG_RTNET_8139_TRUE@
 CONFIG_RTNET_EEPRO100_FALSE = @CONFIG_RTNET_EEPRO100_FALSE@
 CONFIG_RTNET_EEPRO100_TRUE = @CONFIG_RTNET_EEPRO100_TRUE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE@
+CONFIG_RTNET_EXAMPLES_FALSE = @CONFIG_RTNET_EXAMPLES_FALSE@
+CONFIG_RTNET_EXAMPLES_TRUE = @CONFIG_RTNET_EXAMPLES_TRUE@
 CONFIG_RTNET_FCC_ENET_FALSE = @CONFIG_RTNET_FCC_ENET_FALSE@
 CONFIG_RTNET_FCC_ENET_TRUE = @CONFIG_RTNET_FCC_ENET_TRUE@
 CONFIG_RTNET_FEC_ENET_FALSE = @CONFIG_RTNET_FEC_ENET_FALSE@
@@ -183,6 +187,7 @@ noinst_LIBRARIES = libtdma.a
 libtdma_a_SOURCES = \
 	tdma_module.c \
 	tdma_cleanup.c \
+	tdma_dev.c \
 	tdma_event.c \
 	tdma_ioctl.c \
 	tdma_rx.c \
@@ -205,15 +210,16 @@ LIBRARIES = $(noinst_LIBRARIES)
 libtdma_a_AR = $(AR) cru
 libtdma_a_LIBADD =
 am_libtdma_a_OBJECTS = tdma_module.$(OBJEXT) tdma_cleanup.$(OBJEXT) \
-	tdma_event.$(OBJEXT) tdma_ioctl.$(OBJEXT) tdma_rx.$(OBJEXT) \
-	tdma_task.$(OBJEXT) tdma_timer.$(OBJEXT)
+	tdma_dev.$(OBJEXT) tdma_event.$(OBJEXT) tdma_ioctl.$(OBJEXT) \
+	tdma_rx.$(OBJEXT) tdma_task.$(OBJEXT) tdma_timer.$(OBJEXT)
 libtdma_a_OBJECTS = $(am_libtdma_a_OBJECTS)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/tdma_cleanup.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/tdma_event.Po ./$(DEPDIR)/tdma_ioctl.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/tdma_dev.Po ./$(DEPDIR)/tdma_event.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/tdma_ioctl.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/tdma_module.Po ./$(DEPDIR)/tdma_rx.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/tdma_task.Po ./$(DEPDIR)/tdma_timer.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -258,6 +264,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdma_cleanup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdma_dev.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdma_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdma_ioctl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdma_module.Po@am__quote@

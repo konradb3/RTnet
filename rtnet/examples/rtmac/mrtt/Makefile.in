@@ -20,7 +20,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../..
+top_builddir = ../../..
 
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
@@ -36,6 +36,7 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = @host@
+@CONFIG_NCURSES_TRUE@am__append_1 = showtime
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
@@ -60,6 +61,10 @@ CONFIG_RTNET_8139_FALSE = @CONFIG_RTNET_8139_FALSE@
 CONFIG_RTNET_8139_TRUE = @CONFIG_RTNET_8139_TRUE@
 CONFIG_RTNET_EEPRO100_FALSE = @CONFIG_RTNET_EEPRO100_FALSE@
 CONFIG_RTNET_EEPRO100_TRUE = @CONFIG_RTNET_EEPRO100_TRUE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE@
+CONFIG_RTNET_EXAMPLES_FALSE = @CONFIG_RTNET_EXAMPLES_FALSE@
+CONFIG_RTNET_EXAMPLES_TRUE = @CONFIG_RTNET_EXAMPLES_TRUE@
 CONFIG_RTNET_FCC_ENET_FALSE = @CONFIG_RTNET_FCC_ENET_FALSE@
 CONFIG_RTNET_FCC_ENET_TRUE = @CONFIG_RTNET_FCC_ENET_TRUE@
 CONFIG_RTNET_FEC_ENET_FALSE = @CONFIG_RTNET_FEC_ENET_FALSE@
@@ -174,31 +179,20 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-noinst_LIBRARIES = librt_client.a librt_client_parport.a librt_server.a
-noinst_PROGRAMS = linux_server showtime
+noinst_LIBRARIES = librt_client.a
+EXTRA_PROGRAMS = showtime
 
 librt_client_a_SOURCES = rt_client.c
-librt_client_parport_a_SOURCES = rt_client_parport.c
-librt_server_a_SOURCES = rt_server.c
 
 librt_client_a_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
+PROGS = $(am__append_1)
 
-librt_client_parport_a_CFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	@RTAI_KMOD_CFLAGS@
-
-
-librt_server_a_CFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_builddir)/include \
-	@RTAI_KMOD_CFLAGS@
-
-subdir = examples/rtt
+showtime_LDADD = $(NCURSES_LIBS)
+subdir = examples/rtmac/mrtt
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
@@ -209,26 +203,9 @@ librt_client_a_AR = $(AR) cru
 librt_client_a_LIBADD =
 am_librt_client_a_OBJECTS = librt_client_a-rt_client.$(OBJEXT)
 librt_client_a_OBJECTS = $(am_librt_client_a_OBJECTS)
-librt_client_parport_a_AR = $(AR) cru
-librt_client_parport_a_LIBADD =
-am_librt_client_parport_a_OBJECTS = \
-	librt_client_parport_a-rt_client_parport.$(OBJEXT)
-librt_client_parport_a_OBJECTS = $(am_librt_client_parport_a_OBJECTS)
-librt_server_a_AR = $(AR) cru
-librt_server_a_LIBADD =
-am_librt_server_a_OBJECTS = librt_server_a-rt_server.$(OBJEXT)
-librt_server_a_OBJECTS = $(am_librt_server_a_OBJECTS)
-noinst_PROGRAMS = linux_server$(EXEEXT) showtime$(EXEEXT)
-PROGRAMS = $(noinst_PROGRAMS)
-
-linux_server_SOURCES = linux_server.c
-linux_server_OBJECTS = linux_server.$(OBJEXT)
-linux_server_LDADD = $(LDADD)
-linux_server_DEPENDENCIES =
-linux_server_LDFLAGS =
+EXTRA_PROGRAMS = showtime$(EXEEXT)
 showtime_SOURCES = showtime.c
 showtime_OBJECTS = showtime.$(OBJEXT)
-showtime_LDADD = $(LDADD)
 showtime_DEPENDENCIES =
 showtime_LDFLAGS =
 
@@ -236,9 +213,7 @@ DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/librt_client_a-rt_client.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/librt_client_parport_a-rt_client_parport.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/librt_server_a-rt_server.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/linux_server.Po ./$(DEPDIR)/showtime.Po
+@AMDEP_TRUE@	./$(DEPDIR)/showtime.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -246,11 +221,9 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES = $(librt_client_a_SOURCES) \
-	$(librt_client_parport_a_SOURCES) $(librt_server_a_SOURCES) \
-	linux_server.c showtime.c
+DIST_SOURCES = $(librt_client_a_SOURCES) showtime.c
 DIST_COMMON = Makefile.am Makefile.in
-SOURCES = $(librt_client_a_SOURCES) $(librt_client_parport_a_SOURCES) $(librt_server_a_SOURCES) linux_server.c showtime.c
+SOURCES = $(librt_client_a_SOURCES) showtime.c
 
 all: all-am
 
@@ -258,7 +231,7 @@ all: all-am
 .SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  examples/rtt/Makefile
+	  $(AUTOMAKE) --foreign  examples/rtmac/mrtt/Makefile
 Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 
@@ -268,24 +241,6 @@ librt_client.a: $(librt_client_a_OBJECTS) $(librt_client_a_DEPENDENCIES)
 	-rm -f librt_client.a
 	$(librt_client_a_AR) librt_client.a $(librt_client_a_OBJECTS) $(librt_client_a_LIBADD)
 	$(RANLIB) librt_client.a
-librt_client_parport.a: $(librt_client_parport_a_OBJECTS) $(librt_client_parport_a_DEPENDENCIES) 
-	-rm -f librt_client_parport.a
-	$(librt_client_parport_a_AR) librt_client_parport.a $(librt_client_parport_a_OBJECTS) $(librt_client_parport_a_LIBADD)
-	$(RANLIB) librt_client_parport.a
-librt_server.a: $(librt_server_a_OBJECTS) $(librt_server_a_DEPENDENCIES) 
-	-rm -f librt_server.a
-	$(librt_server_a_AR) librt_server.a $(librt_server_a_OBJECTS) $(librt_server_a_LIBADD)
-	$(RANLIB) librt_server.a
-
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-linux_server$(EXEEXT): $(linux_server_OBJECTS) $(linux_server_DEPENDENCIES) 
-	@rm -f linux_server$(EXEEXT)
-	$(LINK) $(linux_server_LDFLAGS) $(linux_server_OBJECTS) $(linux_server_LDADD) $(LIBS)
 showtime$(EXEEXT): $(showtime_OBJECTS) $(showtime_DEPENDENCIES) 
 	@rm -f showtime$(EXEEXT)
 	$(LINK) $(showtime_LDFLAGS) $(showtime_OBJECTS) $(showtime_LDADD) $(LIBS)
@@ -297,9 +252,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librt_client_a-rt_client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librt_client_parport_a-rt_client_parport.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librt_server_a-rt_server.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linux_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/showtime.Po@am__quote@
 
 distclean-depend:
@@ -371,72 +323,6 @@ librt_client_a-rt_client.lo: rt_client.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_a_CFLAGS) $(CFLAGS) -c -o librt_client_a-rt_client.lo `test -f 'rt_client.c' || echo '$(srcdir)/'`rt_client.c
 
-librt_client_parport_a-rt_client_parport.o: rt_client_parport.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_parport_a_CFLAGS) $(CFLAGS) -MT librt_client_parport_a-rt_client_parport.o -MD -MP -MF "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o librt_client_parport_a-rt_client_parport.o `test -f 'rt_client_parport.c' || echo '$(srcdir)/'`rt_client_parport.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo" "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_client_parport.c' object='librt_client_parport_a-rt_client_parport.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/librt_client_parport_a-rt_client_parport.Po' tmpdepfile='$(DEPDIR)/librt_client_parport_a-rt_client_parport.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_parport_a_CFLAGS) $(CFLAGS) -c -o librt_client_parport_a-rt_client_parport.o `test -f 'rt_client_parport.c' || echo '$(srcdir)/'`rt_client_parport.c
-
-librt_client_parport_a-rt_client_parport.obj: rt_client_parport.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_parport_a_CFLAGS) $(CFLAGS) -MT librt_client_parport_a-rt_client_parport.obj -MD -MP -MF "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o librt_client_parport_a-rt_client_parport.obj `if test -f 'rt_client_parport.c'; then $(CYGPATH_W) 'rt_client_parport.c'; else $(CYGPATH_W) '$(srcdir)/rt_client_parport.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo" "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_client_parport.c' object='librt_client_parport_a-rt_client_parport.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/librt_client_parport_a-rt_client_parport.Po' tmpdepfile='$(DEPDIR)/librt_client_parport_a-rt_client_parport.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_parport_a_CFLAGS) $(CFLAGS) -c -o librt_client_parport_a-rt_client_parport.obj `if test -f 'rt_client_parport.c'; then $(CYGPATH_W) 'rt_client_parport.c'; else $(CYGPATH_W) '$(srcdir)/rt_client_parport.c'; fi`
-
-librt_client_parport_a-rt_client_parport.lo: rt_client_parport.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_parport_a_CFLAGS) $(CFLAGS) -MT librt_client_parport_a-rt_client_parport.lo -MD -MP -MF "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o librt_client_parport_a-rt_client_parport.lo `test -f 'rt_client_parport.c' || echo '$(srcdir)/'`rt_client_parport.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo" "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/librt_client_parport_a-rt_client_parport.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_client_parport.c' object='librt_client_parport_a-rt_client_parport.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/librt_client_parport_a-rt_client_parport.Plo' tmpdepfile='$(DEPDIR)/librt_client_parport_a-rt_client_parport.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_client_parport_a_CFLAGS) $(CFLAGS) -c -o librt_client_parport_a-rt_client_parport.lo `test -f 'rt_client_parport.c' || echo '$(srcdir)/'`rt_client_parport.c
-
-librt_server_a-rt_server.o: rt_server.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_server_a_CFLAGS) $(CFLAGS) -MT librt_server_a-rt_server.o -MD -MP -MF "$(DEPDIR)/librt_server_a-rt_server.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o librt_server_a-rt_server.o `test -f 'rt_server.c' || echo '$(srcdir)/'`rt_server.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/librt_server_a-rt_server.Tpo" "$(DEPDIR)/librt_server_a-rt_server.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/librt_server_a-rt_server.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_server.c' object='librt_server_a-rt_server.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/librt_server_a-rt_server.Po' tmpdepfile='$(DEPDIR)/librt_server_a-rt_server.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_server_a_CFLAGS) $(CFLAGS) -c -o librt_server_a-rt_server.o `test -f 'rt_server.c' || echo '$(srcdir)/'`rt_server.c
-
-librt_server_a-rt_server.obj: rt_server.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_server_a_CFLAGS) $(CFLAGS) -MT librt_server_a-rt_server.obj -MD -MP -MF "$(DEPDIR)/librt_server_a-rt_server.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o librt_server_a-rt_server.obj `if test -f 'rt_server.c'; then $(CYGPATH_W) 'rt_server.c'; else $(CYGPATH_W) '$(srcdir)/rt_server.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/librt_server_a-rt_server.Tpo" "$(DEPDIR)/librt_server_a-rt_server.Po"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/librt_server_a-rt_server.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_server.c' object='librt_server_a-rt_server.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/librt_server_a-rt_server.Po' tmpdepfile='$(DEPDIR)/librt_server_a-rt_server.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_server_a_CFLAGS) $(CFLAGS) -c -o librt_server_a-rt_server.obj `if test -f 'rt_server.c'; then $(CYGPATH_W) 'rt_server.c'; else $(CYGPATH_W) '$(srcdir)/rt_server.c'; fi`
-
-librt_server_a-rt_server.lo: rt_server.c
-@am__fastdepCC_TRUE@	if $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_server_a_CFLAGS) $(CFLAGS) -MT librt_server_a-rt_server.lo -MD -MP -MF "$(DEPDIR)/librt_server_a-rt_server.Tpo" \
-@am__fastdepCC_TRUE@	  -c -o librt_server_a-rt_server.lo `test -f 'rt_server.c' || echo '$(srcdir)/'`rt_server.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/librt_server_a-rt_server.Tpo" "$(DEPDIR)/librt_server_a-rt_server.Plo"; \
-@am__fastdepCC_TRUE@	else rm -f "$(DEPDIR)/librt_server_a-rt_server.Tpo"; exit 1; \
-@am__fastdepCC_TRUE@	fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_server.c' object='librt_server_a-rt_server.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/librt_server_a-rt_server.Plo' tmpdepfile='$(DEPDIR)/librt_server_a-rt_server.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(librt_server_a_CFLAGS) $(CFLAGS) -c -o librt_server_a-rt_server.lo `test -f 'rt_server.c' || echo '$(srcdir)/'`rt_server.c
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -502,7 +388,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-top_distdir = ../..
+top_distdir = ../../..
 distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
 
 distdir: $(DISTFILES)
@@ -534,7 +420,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES) $(PROGRAMS) all-local
+all-am: Makefile $(LIBRARIES) all-local
 
 installdirs:
 install: install-am
@@ -564,7 +450,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS mostlyclean-am
+	mostlyclean-am
 
 distclean: distclean-am
 
@@ -609,28 +495,22 @@ ps-am:
 uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS ctags distclean distclean-compile \
-	distclean-depend distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am info info-am install \
-	install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool pdf \
-	pdf-am ps ps-am tags uninstall uninstall-am uninstall-info-am
+	clean-generic clean-libtool clean-noinstLIBRARIES ctags \
+	distclean distclean-compile distclean-depend distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am info \
+	info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-info install-info-am \
+	install-man install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-info-am
 
 
 rt_client.o: librt_client.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_client_parport.o: librt_client_parport.a
-	$(LD) --whole-archive $< -r -o $@
-
-rt_server.o: librt_server.a
-	$(LD) --whole-archive $< -r -o $@
-
-all-local: rt_client.o rt_client_parport.o rt_server.o linux_server showtime
+all-local: rt_client.o $(PROGS)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

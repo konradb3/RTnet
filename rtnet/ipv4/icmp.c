@@ -30,7 +30,7 @@
 
 #include <rtskb.h>
 #include <rtnet_socket.h>
-#include <ipv4.h>
+#include <ipv4_chrdev.h>
 #include <ipv4/icmp.h>
 #include <ipv4/ip_output.h>
 #include <ipv4/protocol.h>
@@ -344,7 +344,7 @@ int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
 /***
  *  rt_icmp_socket
  */
-int rt_icmp_socket(struct rtsocket *sock)
+int rt_icmp_socket(struct rtdm_dev_context *context, int call_flags)
 {
     /* we don't support user-created ICMP sockets */
     return -ENOPROTOOPT;

@@ -30,9 +30,9 @@
 #include <rtnet_crc32.h>
 #include <rtnet_internal.h>
 #include <rtnet_rtpc.h>
-#include <rtnet_socket.h>
 #include <stack_mgr.h>
 #include <ipv4/af_inet.h>
+#include <packet/af_packet.h>
 
 MODULE_LICENSE("GPL");
 
@@ -210,27 +210,35 @@ int __init rtnet_init(void)
 #endif
 
     /* initialize the Stack-Manager */
-    if ((err=rt_stack_mgr_init(&STACK_manager)) != 0)
+    if ((err = rt_stack_mgr_init(&STACK_manager)) != 0)
         goto err_out3;
 
     /* initialize the RTDEV-Manager */
-    if ((err=rt_rtdev_mgr_init(&RTDEV_manager)) != 0)
+    if ((err = rt_rtdev_mgr_init(&RTDEV_manager)) != 0)
         goto err_out4;
 
-    rtsockets_init();
-    rt_inet_proto_init();
+    if ((err = rt_inet_proto_init()) != 0)
+        goto err_out5;
+
+    if ((err = rt_packet_proto_init()) != 0)
+        goto err_out6;
+
     rtnet_chrdev_init();
 
     if ((err = rtpc_init()) != 0)
-        goto err_out5;
+        goto err_out7;
 
     return 0;
 
 
-err_out5:
+err_out7:
     rtnet_chrdev_release();
+    rt_packet_proto_release();
+
+err_out6:
     rt_inet_proto_release();
 
+err_out5:
     rt_rtdev_mgr_delete(&RTDEV_manager);
 
 err_out4:
@@ -265,6 +273,7 @@ void rtnet_release(void)
     rt_stack_mgr_delete(&STACK_manager);
     rt_rtdev_mgr_delete(&RTDEV_manager);
 
+    rt_packet_proto_release();
     rt_inet_proto_release();
     rtskb_pools_release();
 

@@ -1,6 +1,6 @@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 
-SUBDIRS = examples tdma
+SUBDIRS = tdma
 
 noinst_LIBRARIES = librtmac.a
 

@@ -1,9 +1,9 @@
 /***
  *
- *  include/af_packet.h
+ *  include/rtmac.h
  *
- *  RTnet - real-time networking subsystem
- *  Copyright (C) 2003,2004 Jan Kiszka <jan.kiszka@web.de>
+ *  rtmac - real-time networking media access control subsystem
+ *  Copyright (C) 2004 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,11 +21,25 @@
  *
  */
 
-#ifndef __RTNET_AF_PACKET_H_
-#define __RTNET_AF_PACKET_H_
+#ifndef __RTMAC_H_
+#define __RTMAC_H_
+
+#include <rtdm.h>
 
 
-extern int rt_packet_proto_init(void);
-extern void rt_packet_proto_release(void);
+#ifndef RTIOC_TYPE_RTMAC
+#define RTIOC_TYPE_RTMAC        RTDM_CLASS_RTMAC
+#endif
 
-#endif  /* __RTNET_AF_PACKET_H_ */
+/* RTmac Discipline IOCTLs */
+#define RTMAC_RTIOC_TIMEOFFSET  _IOR(RTIOC_TYPE_RTMAC, 0x00, __s64)
+#define RTMAC_RTIOC_WAITONCYCLE _IOW(RTIOC_TYPE_RTMAC, 0x01, int)
+
+/* Common Cycle Types */
+#define RTMAC_WAIT_ON_DEFAULT   0x00
+#define RTMAC_WAIT_ON_XMIT      0x01
+
+/* TDMA-specific Cycle Types */
+#define TDMA_WAIT_ON_SOF        0x10
+
+#endif /* __RTMAC_H_ */

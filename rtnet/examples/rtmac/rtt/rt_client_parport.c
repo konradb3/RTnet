@@ -9,6 +9,7 @@
  *
  *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *                2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  rtnet - real-time networking example
  *  rtmac - real-time media access control example
@@ -57,7 +58,8 @@ MODULE_PARM_DESC (server_ip_s, "rt_echo_client: server ip-address");
 MODULE_PARM(parport, "i");
 MODULE_PARM(parirq, "i");
 
-RT_TASK rt_task;
+RT_TASK xmit_task;
+RT_TASK recv_task;
 
 #define RCV_PORT    35999
 #define SRV_PORT    36000
@@ -102,72 +104,68 @@ static void parport_irq_handler(void)
 
 
 
-void *process(void* arg)
+void process(void* arg)
 {
-    int ret = 0;
-
     while(1) {
         rt_sem_wait(&tx_sem);
 
         tx_time = rt_get_time_ns();
 
         /* send the time   */
-        ret=rt_socket_sendto(sock, &tx_time, sizeof(RTIME), 0,
-                             (struct sockaddr *) &server_addr,
-                             sizeof(struct sockaddr_in));
+        if (sendto_rt(sock, &tx_time, sizeof(RTIME), 0,
+                      (struct sockaddr *) &server_addr,
+                      sizeof(struct sockaddr_in)) < 0)
+            break;
     }
 }
 
 
 
-int echo_rcv(int s,void *arg)
+void echo_rcv(void *arg)
 {
-    int                 ret=0;
+    int                 ret;
     struct msghdr       msg;
     struct iovec        iov;
     struct sockaddr_in  addr;
 
 
-    memset(&msg,0,sizeof(msg));
-    iov.iov_base=&buffer;
-    iov.iov_len=BUFSIZE;
+    while (1) {
+        iov.iov_base=&buffer;
+        iov.iov_len=BUFSIZE;
 
-    msg.msg_name=&addr;
-    msg.msg_namelen=sizeof(addr);
-    msg.msg_iov=&iov;
-    msg.msg_iovlen=1;
-    msg.msg_control=NULL;
-    msg.msg_controllen=0;
+        msg.msg_name=&addr;
+        msg.msg_namelen=sizeof(addr);
+        msg.msg_iov=&iov;
+        msg.msg_iovlen=1;
+        msg.msg_control=NULL;
+        msg.msg_controllen=0;
 
-    ret=rt_socket_recvmsg(sock, &msg, 0);
+        ret = recvmsg_rt(sock, &msg, 0);
 
-    if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {
+        if ((ret > 0) && (msg.msg_namelen == sizeof(struct sockaddr_in))) {
+            union { unsigned long l; unsigned char c[4]; } rcv;
+            struct sockaddr_in *sin = msg.msg_name;
 
-        union { unsigned long l; unsigned char c[4]; } rcv;
-        struct sockaddr_in *sin = msg.msg_name;
+            outb(0xEF, PAR_DATA);
+            outb(0xFF, PAR_DATA);
 
-        outb(0xEF, PAR_DATA);
-        outb(0xFF, PAR_DATA);
+            /* get the time    */
+            rx_time = rt_get_time_ns();
+            memcpy (&tx_time, buffer, sizeof(RTIME));
 
-        /* get the time    */
-        rx_time = rt_get_time_ns();
-        memcpy (&tx_time, buffer, sizeof(RTIME));
+            rtf_put(PRINT_FIFO, &rx_time, sizeof(RTIME));
+            rtf_put(PRINT_FIFO, &tx_time, sizeof(RTIME));
 
-        rtf_put(PRINT_FIFO, &rx_time, sizeof(RTIME));
-        rtf_put(PRINT_FIFO, &tx_time, sizeof(RTIME));
-
-        /* copy the address */
-        rcv.l = sin->sin_addr.s_addr;
+            /* copy the address */
+            rcv.l = sin->sin_addr.s_addr;
+        }
     }
-
-    return 0;
 }
 
 
 
 int init_module(void)
 {
-    unsigned int nonblock = 1;
     unsigned int add_rtskbs = 30;
     int ret;
 
@@ -184,51 +182,45 @@ int init_module(void)
     rtf_create(PRINT_FIFO, 40000);
     rt_sem_init(&tx_sem, 0);
 
-    rt_printk ("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
-    rt_printk ("server ip address %s=%8x\n", server_ip_s, (unsigned int) server_ip);
+    rt_printk("local  ip address %s=%8x\n", local_ip_s, (unsigned int) local_ip);
+    rt_printk("server ip address %s=%8x\n", server_ip_s, (unsigned int) server_ip);
 
     /* create rt-socket */
     rt_printk("create rtsocket\n");
-    if ((sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((sock = socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         rt_printk("socket not created\n");
         return sock;
     }
 
-    /* switch to non-blocking */
-    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
-    rt_printk("rt_setsockopt(RT_SO_NONBLOCK) = %d\n", ret);
-
     /* extend the socket pool */
-    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_EXTPOOL, &add_rtskbs, sizeof(add_rtskbs));
+    ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
-        rt_socket_close(sock);
-        rt_printk("rt_setsockopt(RT_SO_EXTPOOL) = %d\n", ret);
+        close_rt(sock);
+        rt_printk("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
         return -1;
     }
 
     /* bind the rt-socket to local_addr */
-    memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(RCV_PORT);
     local_addr.sin_addr.s_addr = local_ip;
-    if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
-        rt_socket_close(sock);
+    if ((ret = bind_rt(sock, (struct sockaddr *)&local_addr,
+                       sizeof(struct sockaddr_in))) < 0) {
+        close_rt(sock);
         rt_printk("can't bind rtsocket\n");
         return ret;
     }
 
     /* set server-addr */
-    memset(&server_addr, 0, sizeof(struct sockaddr_in));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SRV_PORT);
     server_addr.sin_addr.s_addr = server_ip;
 
-    /* set up receiving */
-    rt_socket_callback(sock, echo_rcv, NULL);
+    rt_task_init(&xmit_task,(void *)process,0,4096,10,0,NULL);
+    rt_task_resume(&xmit_task);
 
-    ret=rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
-
-    rt_task_resume(&rt_task);
+    rt_task_init(&recv_task,(void *)echo_rcv,0,4096,9,0,NULL);
+    rt_task_resume(&recv_task);
 
     rt_request_global_irq(parirq, parport_irq_handler);
     rt_startup_irq(parirq);
@@ -249,15 +241,16 @@ void cleanup_module(void)
     outb(0, PAR_CONTROL);
 
     /* Important: First close the socket! */
-    while (rt_socket_close(sock) == -EAGAIN) {
+    while (close_rt(sock) == -EAGAIN) {
         printk("rt_server: Socket busy - waiting...\n");
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_printk("rt_task_delete() = %d\n",rt_task_delete(&rt_task));
-
     rt_sem_delete(&tx_sem);
+
+    rt_task_delete(&xmit_task);
+    rt_task_delete(&recv_task);
 
     rtf_destroy(PRINT_FIFO);
 }

@@ -35,7 +35,7 @@
 static int start_timer = 1;
 
 MODULE_PARM(start_timer, "i");
-MODULE_PARM_DESC(start_timer, "set to zero if RTAI timer already runs");
+MODULE_PARM_DESC(start_timer, "set to zero if RTAI timer is already running");
 #endif
 
 MODULE_LICENSE("GPL");

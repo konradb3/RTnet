@@ -1,6 +1,6 @@
 /* simpleserver.c
  *
- * simpleserver - a simple server for demonstration of rtnet_lxrt
+ * simpleserver - a simple server for demonstration of rtnet's lxrt interface
  * 06/2003 by Hans-Peter Bock <hpbock@avaapgh.de>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
     /* Create new socket. */
-    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket_rt(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
 
         printf("Error opening socket: %d\n", sockfd);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4900, 1, 0, 0);
     if (NULL == lxrtnettsk) {
-        rt_socket_close(sockfd);
+        close_rt(sockfd);
         printf("CANNOT INIT MASTER TASK\n");
         exit(1);
     }
@@ -83,18 +83,18 @@ int main(int argc, char *argv[]) {
     rt_make_hard_real_time();
 
     /* Bind socket to local address specified as parameter. */
-    ret = rt_socket_bind(sockfd, (struct sockaddr *) &local_addr,
-                         sizeof(struct sockaddr_in));
+    ret = bind_rt(sockfd, (struct sockaddr *) &local_addr,
+                  sizeof(struct sockaddr_in));
 
     /* Block until packet is received. */
-    ret = rt_socket_recv(sockfd, msg, sizeof(msg), 0);
+    ret = recv_rt(sockfd, msg, sizeof(msg), 0);
 
     /* Switch over to soft realtime mode. */
     rt_make_soft_real_time();
 
     /* Close socket.
      * Note: call must be in soft-mode because socket was created as non-rt! */
-    rt_socket_close(sockfd);
+    close_rt(sockfd);
 
     /* Stop the timer. */
     stop_rt_timer();

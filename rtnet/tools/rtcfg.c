@@ -35,8 +35,7 @@
 #include <netinet/in.h>
 #include <netinet/ether.h>
 
-#include <rtnet_chrdev.h>
-#include <rtcfg.h>
+#include <rtcfg_chrdev.h>
 
 
 #define DFLT_PACKET_SIZE        1500 /* Ethernet packet */

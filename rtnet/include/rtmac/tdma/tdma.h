@@ -1,30 +1,33 @@
-/* include/rtmac/tdma/tdma.h
+/***
  *
- * rtmac - real-time networking media access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
- *               2003 Jan Kiszka <Jan.Kiszka@web.de>
+ *  include/rtmac/tdma/tdma.h
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  rtmac - real-time networking media access control subsystem
+ *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #ifndef __TDMA_H_INTERNAL_
 #define __TDMA_H_INTERNAL_
 
-#ifdef __KERNEL__
-
 #include <linux/types.h>
+
+#include <rtdm_driver.h>
 
 #include <rtdev.h>
 #include <rtnet_internal.h>
@@ -149,6 +152,8 @@ struct rtmac_tdma {
     struct rtnet_device         *rtdev;
 
     struct timer_list           task_change_timer;
+
+    struct rtdm_device          api_device;
 
     /*** rt master specific ***/
     struct timer_list           rt_add_timer;
@@ -322,8 +327,5 @@ extern __u32 tdma_debug;
 #else
 #define TDMA_DEBUG(n, args...)
 #endif /* CONFIG_TDMA_DEBUG */
-
-
-#endif /* __KERNEL__ */
 
 #endif /* __TDMA_H_INTERNAL_ */

@@ -25,7 +25,7 @@
 
 #include <asm/uaccess.h>
 
-#include <ipv4.h>
+#include <ipv4_chrdev.h>
 #include <rtnet_internal.h>
 #include <rtnet_rtpc.h>
 #include <ipv4/arp.h>
@@ -196,6 +196,37 @@ static struct rtnet_ioctls ipv4_ioctls = {
     handler:        ipv4_ioctl
 };
 
+static struct rtdm_device ipv4_device = {
+    struct_version:     RTDM_DEVICE_STRUCT_VER,
+
+    device_flags:       RTDM_PROTOCOL_DEVICE,
+    context_size:       sizeof(struct rtsocket),
+
+    protocol_family:    PF_INET,
+    socket_type:        SOCK_DGRAM,
+
+    socket_rt:          rt_inet_socket,
+    socket_nrt:         rt_inet_socket,
+
+    /* default is UDP */
+    ops: {
+        close_rt:       rt_udp_close,
+        close_nrt:      rt_udp_close,
+        ioctl_rt:       rt_udp_ioctl,
+        ioctl_nrt:      rt_udp_ioctl,
+        recvmsg_rt:     rt_udp_recvmsg,
+        sendmsg_rt:     rt_udp_sendmsg
+    },
+
+    device_class:       RTDM_CLASS_NETWORK,
+    device_sub_class:   RTDM_SUBCLASS_RTNET,
+    driver_name:        rtnet_rtdm_driver_name,
+    peripheral_name:    "IPv4 Datagram Socket Interface",
+    provider_name:      rtnet_rtdm_provider_name,
+
+    proc_name:          "INET_DGRAM"
+};
+
 
 
 /***
@@ -207,20 +238,7 @@ int rt_inet_proto_init(void)
     int result;
 
 
-#ifdef CONFIG_PROC_FS
-    ipv4_proc_root = create_proc_entry("ipv4", S_IFDIR, rtnet_proc_root);
-    if (!ipv4_proc_root) {
-        /*ERRMSG*/printk("RTnet: unable to initialize /proc entry (ipv4)\n");
-        return -1;
-    }
-#endif /* CONFIG_PROC_FS */
-
     /* Network-Layer */
-    if ((result = rt_ip_routing_init()) < 0)
-        goto err1;
-    if ((result = rtnet_register_ioctls(&ipv4_ioctls)) < 0)
-        goto err2;
-
     rt_ip_init();
     rt_arp_init();
 
@@ -231,7 +249,25 @@ int rt_inet_proto_init(void)
     rt_icmp_init();
     rt_udp_init();
 
+#ifdef CONFIG_PROC_FS
+    ipv4_proc_root = create_proc_entry("ipv4", S_IFDIR, rtnet_proc_root);
+    if (!ipv4_proc_root) {
+        /*ERRMSG*/printk("RTnet: unable to initialize /proc entry (ipv4)\n");
+        return -1;
+    }
+#endif /* CONFIG_PROC_FS */
+
+    if ((result = rt_ip_routing_init()) < 0)
+        goto err1;
+    if ((result = rtnet_register_ioctls(&ipv4_ioctls)) < 0)
+        goto err2;
+    if ((result = rtdm_dev_register(&ipv4_device)) < 0)
+        goto err3;
+
     return 0;
+
+  err3:
+    rtnet_unregister_ioctls(&ipv4_ioctls);
 
   err2:
     rt_ip_routing_release();
@@ -240,6 +276,12 @@ int rt_inet_proto_init(void)
 #ifdef CONFIG_PROC_FS
     remove_proc_entry("ipv4", rtnet_proc_root);
 #endif /* CONFIG_PROC_FS */
+
+    rt_udp_release();
+    rt_icmp_release();
+    rt_arp_release();
+    rt_ip_release();
+
     return result;
 }
 
@@ -250,6 +292,14 @@ int rt_inet_proto_init(void)
  */
 void rt_inet_proto_release(void)
 {
+    rtdm_dev_unregister(&ipv4_device);
+    rtnet_unregister_ioctls(&ipv4_ioctls);
+    rt_ip_routing_release();
+
+#ifdef CONFIG_PROC_FS
+    remove_proc_entry("ipv4", rtnet_proc_root);
+#endif
+
     /* Transport-Layer */
     rt_udp_release();
     rt_icmp_release();
@@ -257,11 +307,4 @@ void rt_inet_proto_release(void)
     /* Network-Layer */
     rt_arp_release();
     rt_ip_release();
-    rt_ip_routing_release();
-
-    rtnet_unregister_ioctls(&ipv4_ioctls);
-
-#ifdef CONFIG_PROC_FS
-    remove_proc_entry("ipv4", rtnet_proc_root);
-#endif
 }

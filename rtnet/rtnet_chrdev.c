@@ -1,10 +1,10 @@
 /***
  *
  *  rtnet_chrdev.c - implements char device for management interface
- *  Copyright (C) 1999    Lineo, Inc
- *                1999,2002 David A. Schleef <ds@schleef.org>
- *                2002 Ulrich Marx <marx@fet.uni-hannover.de>
- *                2003,2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999       Lineo, Inc
+ *                1999, 2002 David A. Schleef <ds@schleef.org>
+ *                2002       Ulrich Marx <marx@fet.uni-hannover.de>
+ *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of version 2 of the GNU General Public License as

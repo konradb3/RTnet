@@ -29,7 +29,7 @@
 #include <rtnet_internal.h>
 
 
-extern void rt_inet_proto_init(void);
+extern int rt_inet_proto_init(void);
 extern void rt_inet_proto_release(void);
 
 #ifdef CONFIG_PROC_FS

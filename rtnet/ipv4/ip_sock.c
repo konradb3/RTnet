@@ -1,51 +1,25 @@
-/* ip_sock.c
+/***
  *
- * Copyright (C) 2003 Hans-Peter Bock <hpbock@avaapgh.de>
+ *  ipv4/ip_sock.c
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 2003 Hans-Peter Bock <hpbock@avaapgh.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
-
-// $Log: ip_sock.c,v $
-// Revision 1.8  2004/01/13 13:41:13  kiszka
-// * added getsockname support (now for all protocols)
-//
-// Revision 1.7  2003/10/28 13:27:43  kiszka
-// * index-based rtdev management
-// * added packet sockets
-// * introduced reference counters on sockets, layer 3 protocols, and devices
-// * disabled static socket API
-// * code cleanup
-// * several minor fixes (which I've already forgotten)
-//
-// Revision 1.6  2003/10/06 09:12:04  kiszka
-// * added MSG_PEEK support for UDP sockets
-// * revised some function declarations to conform the BSD API
-// * fixed some bugs regarding iovec handling (maybe not all...)
-//
-// Revision 1.5  2003/08/20 16:41:53  kiszka
-// * rt_ip_sockopt is now called from generic setsockopt function
-//
-// Revision 1.4  2003/05/27 09:50:41  kiszka
-// * applied new header file structure
-//
-// Revision 1.3  2003/05/21 07:00:23  hpbock
-// Corrected my email address.
-//
-// Revision 1.2  2003/02/05 08:40:08  hpbock
-// This file has been created by me (Hans-Peter Bock) - but I copied the Header from another file, so Ulrich Marx's name was still in it.
-//
 
 #include <linux/errno.h>
 #include <linux/socket.h>
@@ -67,6 +41,31 @@ int rt_ip_setsockopt(struct rtsocket *s, int level, int optname,
         case IP_TOS:
             s->prot.inet.tos = *(unsigned int *)optval;
             break;
+
+        default:
+            err = -ENOPROTOOPT;
+            break;
+    }
+
+    return err;
+}
+
+
+
+int rt_ip_getsockopt(struct rtsocket *s, int level, int optname,
+                     void *optval, socklen_t *optlen)
+{
+    int err = 0;
+
+    if (*optlen < sizeof(unsigned int))
+        return -EINVAL;
+
+    switch (optname) {
+        case IP_TOS:
+            *(unsigned int *)optval = s->prot.inet.tos;
+            *optlen = sizeof(unsigned int);
+            break;
+
         default:
             err = -ENOPROTOOPT;
             break;
@@ -95,4 +94,57 @@ int rt_ip_getsockname(struct rtsocket *s, struct sockaddr *addr,
     *addrlen = sizeof(struct sockaddr_in);
 
     return 0;
+}
+
+
+
+int rt_ip_getpeername(struct rtsocket *s, struct sockaddr *addr,
+                      socklen_t *addrlen)
+{
+    struct sockaddr_in *usin = (struct sockaddr_in *)addr;
+
+
+    if (*addrlen < sizeof(struct sockaddr_in))
+        return -EINVAL;
+
+    usin->sin_family      = AF_INET;
+    usin->sin_addr.s_addr = s->prot.inet.daddr;
+    usin->sin_port        = s->prot.inet.dport;
+
+    memset(usin->sin_zero, 0, sizeof(usin->sin_zero));
+
+    *addrlen = sizeof(struct sockaddr_in);
+
+    return 0;
+}
+
+
+
+int rt_ip_ioctl(struct rtdm_dev_context *context, int call_flags, int request,
+                void *arg)
+{
+    struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
+    struct rtdm_getsockaddr_args    *getaddr = arg;
+    struct rtdm_getsockopt_args     *getopt  = arg;
+    struct rtdm_setsockopt_args     *setopt  = arg;
+
+
+    switch (request) {
+        case RTIOC_SETSOCKOPT:
+            return rt_ip_setsockopt(sock, setopt->level, setopt->optname,
+                                    setopt->optval, setopt->optlen);
+
+        case RTIOC_GETSOCKOPT:
+            return rt_ip_getsockopt(sock, getopt->level, getopt->optname,
+                                    getopt->optval, getopt->optlen);
+
+        case RTIOC_GETSOCKNAME:
+            return rt_ip_getsockname(sock, getaddr->addr, getaddr->addrlen);
+
+        case RTIOC_GETPEERNAME:
+            return rt_ip_getpeername(sock, getaddr->addr, getaddr->addrlen);
+
+        default:
+            return rt_socket_if_ioctl(context, call_flags, request, arg);
+    }
 }

@@ -58,7 +58,6 @@ int rtdev_add_pack(struct rtpacket_type *pt)
     else {
         rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
 
-        rtos_print("RTnet: protocol place %d is already in use\n", hash);
         return -EADDRNOTAVAIL;
     }
 }
@@ -98,9 +97,6 @@ int rtdev_remove_pack(struct rtpacket_type *pt)
     }
     else {
         rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
-
-        rtos_print("RTnet: protocol %s not found\n",
-                   (pt->name) ? (pt->name) : "<noname>");
 
         return -ENOENT;
     }

@@ -7,6 +7,7 @@ noinst_LIBRARIES = libtdma.a
 libtdma_a_SOURCES = \
 	tdma_module.c \
 	tdma_cleanup.c \
+	tdma_dev.c \
 	tdma_event.c \
 	tdma_ioctl.c \
 	tdma_rx.c \

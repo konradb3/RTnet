@@ -23,7 +23,7 @@
 #include <linux/delay.h>
 #include <linux/netdevice.h>
 
-#include <tdma.h>
+#include <tdma_chrdev.h>
 #include <rtmac/tdma/tdma_event.h>
 #include <rtmac/tdma/tdma_module.h>
 

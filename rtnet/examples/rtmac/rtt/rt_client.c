@@ -8,6 +8,7 @@
  *
  *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *                2002 Marc Kleine-Budde <kleine-budde@gmx.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
  *  rtnet - real-time networking example
  *  rtmac - real-time media access control example
@@ -30,30 +31,34 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-
 #include <net/ip.h>
 
+#include <rtai.h>
+#include <rtai_sched.h>
+
 #include <rtnet.h>
-/* for sof_sync */
-#include <tdma.h>   /* includes rtai.h and rtai_sched.h */
+/* for rtmac_dev */
+#include <rtmac.h>
 
 #include <rtai_fifos.h>
 
 static char *local_ip_s  = "";
 static char *server_ip_s = "127.0.0.1";
 static int cycle = 1*1000*1000; /* = 1 s */
-static char *sof_sync = "";
+static char *rtmac_dev = "";
 
 MODULE_PARM (local_ip_s ,"s");
 MODULE_PARM (server_ip_s,"s");
 MODULE_PARM (cycle, "i");
-MODULE_PARM (sof_sync, "s");
+MODULE_PARM (rtmac_dev, "s");
 MODULE_PARM_DESC (local_ip_s, "rt_echo_client: lokal ip-address");
 MODULE_PARM_DESC (server_ip_s, "rt_echo_client: server ip-address");
-MODULE_PARM_DESC (cycle, "cycletime in us or sof counts");
-MODULE_PARM_DESC (sof_sync, "device name, synchronize with its SOF. WORKS WITH RTMAC/TDMA ONLY!");
+MODULE_PARM_DESC (cycle, "cycle time in us or cycle counts");
+MODULE_PARM_DESC (rtmac_dev,
+    "RTmac device name to synchronise on its bus cycle (e.g. TDMA0)");
 
-RT_TASK rt_task;
+RT_TASK xmit_task;
+RT_TASK recv_task;
 
 #define RCV_PORT    35999
 #define SRV_PORT    36000
@@ -73,19 +78,19 @@ static RTIME rx_time;
 unsigned long tsc1,tsc2;
 unsigned long cnt = 0;
 
-static struct rtmac_tdma  *tdma=NULL;
+static int tdma = -1;
 
 
 void process(void* arg)
 {
-    int ret = 0;
     int count;
+    int wait_on = RTMAC_WAIT_ON_DEFAULT;
 
     while(1) {
-        if (sof_sync[0]) {
+        if (rtmac_dev[0]) {
             count = cycle;
             while (count != 0) {
-                if (!tdma || tdma_wait_sof(tdma) != 0) {
+                if (ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, &wait_on) != 0) {
                     rt_printk("tdma_wait_sof() failed!");
                     return;
                 }
@@ -98,59 +103,58 @@ void process(void* arg)
         tx_time = rt_get_time_ns();
 
         /* send the time   */
-        ret=rt_socket_sendto(sock, &tx_time, sizeof(RTIME), 0,
-                             (struct sockaddr *) &server_addr,
-                             sizeof(struct sockaddr_in));
+        sendto_rt(sock, &tx_time, sizeof(RTIME), 0,
+                  (struct sockaddr *)&server_addr,
+                  sizeof(struct sockaddr_in));
     }
 }
 
 
 
-int echo_rcv(int s,void *arg)
+void echo_rcv(void *arg)
 {
-    int                 ret=0;
+    int                 ret;
     struct msghdr       msg;
     struct iovec        iov;
     struct sockaddr_in  addr;
 
 
-    memset(&msg,0,sizeof(msg));
-    iov.iov_base=&buffer;
-    iov.iov_len=BUFSIZE;
+    while (1) {
+        iov.iov_base=&buffer;
+        iov.iov_len=BUFSIZE;
 
-    msg.msg_name=&addr;
-    msg.msg_namelen=sizeof(addr);
-    msg.msg_iov=&iov;
-    msg.msg_iovlen=1;
-    msg.msg_control=NULL;
-    msg.msg_controllen=0;
+        msg.msg_name=&addr;
+        msg.msg_namelen=sizeof(addr);
+        msg.msg_iov=&iov;
+        msg.msg_iovlen=1;
+        msg.msg_control=NULL;
+        msg.msg_controllen=0;
 
-    ret=rt_socket_recvmsg(sock, &msg, 0);
+        ret = recvmsg_rt(sock, &msg, 0);
 
-    if ( (ret>0) && (msg.msg_namelen==sizeof(struct sockaddr_in)) ) {
+        if ((ret > 0) && (msg.msg_namelen == sizeof(struct sockaddr_in))) {
 
-        union { unsigned long l; unsigned char c[4]; } rcv;
-        struct sockaddr_in *sin = msg.msg_name;
+            union { unsigned long l; unsigned char c[4]; } rcv;
+            struct sockaddr_in *sin = msg.msg_name;
 
-        /* get the time    */
-        rx_time = rt_get_time_ns();
-        memcpy (&tx_time, buffer, sizeof(RTIME));
+            /* get the time    */
+            rx_time = rt_get_time_ns();
+            memcpy (&tx_time, buffer, sizeof(RTIME));
 
-        rtf_put(PRINT_FIFO, &rx_time, sizeof(RTIME));
-        rtf_put(PRINT_FIFO, &tx_time, sizeof(RTIME));
+            rtf_put(PRINT_FIFO, &rx_time, sizeof(RTIME));
+            rtf_put(PRINT_FIFO, &tx_time, sizeof(RTIME));
 
-        /* copy the address */
-        rcv.l = sin->sin_addr.s_addr;
+            /* copy the address */
+            rcv.l = sin->sin_addr.s_addr;
+        } else
+            break;
     }
-
-    return 0;
 }
 
 
 
 int init_module(void)
 {
-    unsigned int nonblock = 1;
     unsigned int add_rtskbs = 30;
     int ret;
 
@@ -164,11 +168,11 @@ int init_module(void)
         local_ip = INADDR_ANY;
     server_ip = rt_inet_aton(server_ip_s);
 
-    if (sof_sync[0] != '\0') {
-        tdma = tdma_get_by_device(sof_sync);
-        if (!tdma) {
-            rt_printk("You enable sof_sync but device '%s' not found"
-                " or no tdma attached.",sof_sync);
+    if (rtmac_dev[0] != '\0') {
+        tdma = open_rt(rtmac_dev, O_RDONLY);
+        if (tdma < 0) {
+            rt_printk("You enabled rtmac_dev but device '%s' not found"
+                " or no tdma attached.", rtmac_dev);
             return -ENODEV;
         }
     }
@@ -180,64 +184,66 @@ int init_module(void)
 
     /* create rt-socket */
     rt_printk("create rtsocket\n");
-    if ((sock=rt_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+    if ((sock = socket_rt(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         rt_printk("socket not created\n");
         return sock;
     }
 
-    /* switch to non-blocking */
-    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
-    rt_printk("rt_setsockopt(RT_SO_NONBLOCK) = %d\n", ret);
-
     /* extend the socket pool */
-    ret = rt_setsockopt(sock, SOL_SOCKET, RT_SO_EXTPOOL, &add_rtskbs, sizeof(add_rtskbs));
+    ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
-        rt_socket_close(sock);
-        rt_printk("rt_setsockopt(RT_SO_EXTPOOL) = %d\n", ret);
+        close_rt(sock);
+        rt_printk("ioctl_rt(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
         return -1;
     }
 
     /* bind the rt-socket to local_addr */
-    memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(RCV_PORT);
     local_addr.sin_addr.s_addr = local_ip;
-    if ( (ret=rt_socket_bind(sock, (struct sockaddr *) &local_addr, sizeof(struct sockaddr_in)))<0 ) {
-        rt_socket_close(sock);
+    if ((ret = bind_rt(sock, (struct sockaddr *)&local_addr,
+                       sizeof(struct sockaddr_in))) < 0) {
+        close_rt(sock);
         rt_printk("can't bind rtsocket\n");
         return ret;
     }
 
     /* set server-addr */
-    memset(&server_addr, 0, sizeof(struct sockaddr_in));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SRV_PORT);
     server_addr.sin_addr.s_addr = server_ip;
 
-    /* set up receiving */
-    rt_socket_callback(sock, echo_rcv, NULL);
-
-    ret = rt_task_init(&rt_task,(void *)process,0,4096,10,0,NULL);
-    if (sof_sync[0] != '\0') {
-        ret = rt_task_resume(&rt_task);
+    rt_task_init(&xmit_task,(void *)process,0,4096,10,0,NULL);
+    if (rtmac_dev[0] != '\0') {
+        rt_task_resume(&xmit_task);
     } else {
-        ret = rt_task_make_periodic_relative_ns( &rt_task, 10 * 1000*1000, cycle * 1000);
+        rt_task_make_periodic_relative_ns(&xmit_task, 10 * 1000*1000, cycle * 1000);
     }
 
-    return ret;
+    rt_task_init(&recv_task,(void *)echo_rcv,0,4096,9,0,NULL);
+    rt_task_resume(&recv_task);
+
+    return 0;
 }
 
 
 void cleanup_module(void)
 {
     /* Important: First close the socket! */
-    while (rt_socket_close(sock) == -EAGAIN) {
+    while (close_rt(sock) == -EAGAIN) {
         printk("rt_server: Socket busy - waiting...\n");
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_printk("rt_task_delete() = %d\n",rt_task_delete(&rt_task));
+    while (close_rt(tdma) == -EAGAIN) {
+        printk("rt_server: TDMA device busy - waiting...\n");
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
 
     rtf_destroy(PRINT_FIFO);
+
+    rt_task_delete(&xmit_task);
+    rt_task_delete(&recv_task);
 }

@@ -27,7 +27,7 @@
 
 #include <linux/netdevice.h>
 
-#include <rtcfg.h>
+#include <rtcfg_chrdev.h>
 #include <rtcfg/rtcfg_file.h>
 
 

@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 
 #include <rtnet_chrdev.h>
-#include <tdma.h>
+#include <tdma_chrdev.h>
 
 
 #define PRINT_FLAG_ALL          1
@@ -85,7 +85,7 @@ void print_dev(void)
                cmd.args.info.dev_addr[2], cmd.args.info.dev_addr[3],
                cmd.args.info.dev_addr[4], cmd.args.info.dev_addr[5]);
     else
-        printf("unknown (%X)", cmd.args.info.type);
+        printf("unknown (%X)\n", cmd.args.info.type);
 
     if (cmd.args.info.ip_addr != 0) {
         ip_addr.s_addr      = cmd.args.info.ip_addr;
@@ -93,11 +93,12 @@ void print_dev(void)
         printf("          IP address: %s  ", inet_ntoa(ip_addr));
         if (cmd.args.info.flags & IFF_BROADCAST)
             printf("Broadcast address: %s", inet_ntoa(broadcast_ip));
+        printf("\n");
     }
 
     flags = cmd.args.info.flags &
         (IFF_UP | IFF_BROADCAST | IFF_LOOPBACK | IFF_RUNNING | IFF_PROMISC);
-    printf("\n          %s%s%s%s%s%s MTU: %d\n\n",
+    printf("          %s%s%s%s%s%s MTU: %d\n\n",
            ((flags & IFF_UP) != 0) ? "UP " : "",
            ((flags & IFF_BROADCAST) != 0) ? "BROADCAST " : "",
            ((flags & IFF_LOOPBACK) != 0) ? "LOOPBACK " : "",

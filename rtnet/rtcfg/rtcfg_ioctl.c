@@ -26,7 +26,7 @@
 #include <linux/file.h>
 #include <linux/vmalloc.h>
 
-#include <rtcfg.h>
+#include <rtcfg_chrdev.h>
 #include <rtnet_rtpc.h>
 #include <rtcfg/rtcfg_conn_event.h>
 #include <rtcfg/rtcfg_event.h>

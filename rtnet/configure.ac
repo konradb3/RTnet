@@ -41,7 +41,7 @@ AC_SUBST(LD)
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 dnl ++++++++++++ copied from rtai 3.0 +++ start ++++++++++++++++++++++++++
 dnl ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 
+
 arch_supports_lxrt=
 arch_supports_leds=
 arch_supports_sim=
@@ -450,10 +450,6 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	AC_MSG_ERROR([*** internal error])
 esac
 
-AC_SUBST(RTAI_KMOD_CFLAGS)
-AC_SUBST(LXRT_CFLAGS)
-AC_SUBST(KERNEL_CFLAGS)
-
 
 dnl ======================================================================
 dnl		architecture tests....
@@ -791,6 +787,46 @@ fi
 
 
 dnl ======================================================================
+dnl		Built-in RTDM (RTAI)
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to build enclosed RTDM])
+AC_ARG_ENABLE(enclosed-rtdm,
+	AC_HELP_STRING([--enable-enclosed-rtdm], [built enclosed RTDM module (default=yes)]),
+	[case "$enableval" in
+	n | no ) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=no ;;
+	*) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes ;;
+	esac],
+	CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes)
+AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-no}])
+AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"])
+if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
+#	RTAI_KMOD_CFLAGS="$RTAI_KMOD_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
+#	LXRT_CFLAGS="$LXRT_CFLAGS -I\$(top_srcdir)/rtai_rtdm"
+	if test ! -f include/rtdm.h; then ln -s ../rtai_rtdm/rtdm.h include/rtdm.h; fi
+	if test ! -f include/rtdm_driver.h; then ln -s ../rtai_rtdm/rtdm_driver.h include/rtdm_driver.h; fi
+else
+	rm -f include/rtdm.h include/rtdm_driver.h
+fi
+
+
+dnl ======================================================================
+dnl		Examples
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to build examples])
+AC_ARG_ENABLE(examples,
+	AC_HELP_STRING([--enable-examples], [build examples (default=yes)]),
+	[case "$enableval" in
+	n | no ) CONFIG_RTNET_EXAMPLES=no ;;
+	*) CONFIG_RTNET_EXAMPLES=yes ;;
+	esac],
+	CONFIG_RTNET_EXAMPLES=yes)
+AC_MSG_RESULT([${CONFIG_RTNET_EXAMPLES:-no}])
+AM_CONDITIONAL(CONFIG_RTNET_EXAMPLES,[test "$CONFIG_RTNET_EXAMPLES" = "yes"])
+
+
+dnl ======================================================================
 dnl		compilation parameters
 dnl ======================================================================
 
@@ -832,6 +868,11 @@ if test "$CONFIG_RTNET_CHECKED" = "yes"; then
 fi
 
 
+AC_SUBST(RTAI_KMOD_CFLAGS)
+AC_SUBST(LXRT_CFLAGS)
+AC_SUBST(KERNEL_CFLAGS)
+
+
 AC_CONFIG_FILES([ \
 Makefile \
 examples/Makefile \
@@ -840,9 +881,12 @@ examples/round_trip_time/client/Makefile \
 examples/round_trip_time/server/Makefile \
 examples/rtnet_lxrt/Makefile \
 examples/rtskb_alloc/Makefile \
-examples/rtt/Makefile \
 examples/frag_ip/Makefile \
 examples/raw_packets/Makefile \
+examples/rtmac/Makefile \
+examples/rtmac/event/Makefile \
+examples/rtmac/mrtt/Makefile \
+examples/rtmac/rtt/Makefile \
 driver/Makefile \
 driver/tulip/Makefile \
 ethernet/Makefile \
@@ -852,13 +896,10 @@ lib/Makefile \
 tools/Makefile \
 rtmac/Makefile \
 rtmac/tdma/Makefile \
-rtmac/examples/Makefile \
-rtmac/examples/event/Makefile \
-rtmac/examples/mrtt/Makefile \
-rtmac/examples/rtt/Makefile \
 rtcfg/Makefile \
 include/Makefile \
 rtcap/Makefile \
+rtai_rtdm/Makefile \
 ])
 
 AC_OUTPUT

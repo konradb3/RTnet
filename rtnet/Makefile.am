@@ -10,7 +10,15 @@ if CONFIG_RTNET_RTCFG
 OPTDIRS += rtcfg
 endif
 
-SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools include $(OPTDIRS)
+if CONFIG_RTNET_ENCLOSED_RTAI_RTDM
+OPTDIRS += rtai_rtdm
+endif
+
+if CONFIG_RTNET_EXAMPLES
+OPTDIRS += examples
+endif
+
+SUBDIRS = driver ethernet ipv4 lib packet rtmac tools include $(OPTDIRS)
 
 noinst_LIBRARIES = librtnet.a
 
@@ -36,10 +44,10 @@ RTNET_BUILTIN_OBJS = \
 
 OBJS =
 
-if CONFIG_NEWLXRT
-librtnet_lxrt_a_SOURCES = rtnet_lxrt.c
-OBJS += rtnet_lxrt.o
-endif
+#if CONFIG_NEWLXRT
+#librtnet_lxrt_a_SOURCES = rtnet_lxrt.c
+#OBJS += rtnet_lxrt.o
+#endif
 
 if CONFIG_RTNET_PROXY
 libnetproxy_a_SOURCES = rtnetproxy.c

@@ -60,6 +60,10 @@ CONFIG_RTNET_8139_FALSE = @CONFIG_RTNET_8139_FALSE@
 CONFIG_RTNET_8139_TRUE = @CONFIG_RTNET_8139_TRUE@
 CONFIG_RTNET_EEPRO100_FALSE = @CONFIG_RTNET_EEPRO100_FALSE@
 CONFIG_RTNET_EEPRO100_TRUE = @CONFIG_RTNET_EEPRO100_TRUE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE@
+CONFIG_RTNET_EXAMPLES_FALSE = @CONFIG_RTNET_EXAMPLES_FALSE@
+CONFIG_RTNET_EXAMPLES_TRUE = @CONFIG_RTNET_EXAMPLES_TRUE@
 CONFIG_RTNET_FCC_ENET_FALSE = @CONFIG_RTNET_FCC_ENET_FALSE@
 CONFIG_RTNET_FCC_ENET_TRUE = @CONFIG_RTNET_FCC_ENET_TRUE@
 CONFIG_RTNET_FEC_ENET_FALSE = @CONFIG_RTNET_FEC_ENET_FALSE@
@@ -198,7 +202,7 @@ librt_server_a_CFLAGS = \
 	-I$(top_builddir)/include \
 	@RTAI_KMOD_CFLAGS@
 
-subdir = rtmac/examples/rtt
+subdir = examples/rtmac/rtt
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/autoconf/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
@@ -253,7 +257,7 @@ all: all-am
 .SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  rtmac/examples/rtt/Makefile
+	  $(AUTOMAKE) --foreign  examples/rtmac/rtt/Makefile
 Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 

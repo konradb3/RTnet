@@ -3,7 +3,7 @@
  *  rtmac/tdma/tdma_module.c
  *
  *  rtmac - real-time networking media access control subsystem
- *  Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
  *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/init.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
@@ -29,6 +30,7 @@
 #include <rtnet_sys.h>
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/tdma/tdma_cleanup.h>
+#include <rtmac/tdma/tdma_dev.h>
 #include <rtmac/tdma/tdma_event.h>
 #include <rtmac/tdma/tdma_ioctl.h>
 #include <rtmac/tdma/tdma_rx.h>
@@ -39,7 +41,7 @@
 static int start_timer = 1;
 
 MODULE_PARM(start_timer, "i");
-MODULE_PARM_DESC(start_timer, "set to zero if RTAI timer already runs");
+MODULE_PARM_DESC(start_timer, "set to zero if RTAI timer is already running");
 #endif
 
 __u32 tdma_debug = TDMA_DEFAULT_DEBUG_LEVEL;
@@ -114,7 +116,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     init_timer(&tdma->client_sent_ack_timer);
 
 
-    return 0;
+    return tdma_dev_init(rtdev, tdma);
 }
 
 
@@ -130,6 +132,10 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     info.rtdev = rtdev;
 
     ret = tdma_do_event(tdma, REQUEST_DOWN, &info);
+    if (ret < 0)
+        return ret;
+
+    ret = tdma_dev_release(tdma);
     if (ret < 0)
         return ret;
 
@@ -198,6 +204,14 @@ int tdma_nrt_packet_tx(struct rtskb *skb)
 
 
 
+int tdma_api_ioctl(struct rtdm_dev_context *context, int call_flags,
+                   int request, void *arg)
+{
+    return -ENOSYS;
+}
+
+
+
 #ifdef CONFIG_PROC_FS
 struct rtmac_proc_entry tdma_proc_entries[] = {
     { name: "tdma", handler: tdma_proc_read },
@@ -210,12 +224,12 @@ struct rtmac_disc tdma_disc = {
     priv_size:      sizeof(struct rtmac_tdma),
     disc_type:      __constant_htons(ETH_TDMA),
 
-    packet_rx:      &tdma_packet_rx,
-    rt_packet_tx:   &tdma_rt_packet_tx,
-    nrt_packet_tx:  &tdma_nrt_packet_tx,
+    packet_rx:      tdma_packet_rx,
+    rt_packet_tx:   tdma_rt_packet_tx,
+    nrt_packet_tx:  tdma_nrt_packet_tx,
 
-    attach:         &tdma_attach,
-    detach:         &tdma_detach,
+    attach:         tdma_attach,
+    detach:         tdma_detach,
 
     ioctls:         {
         service_name:   "RTmac/TDMA",
@@ -230,7 +244,7 @@ struct rtmac_disc tdma_disc = {
 
 
 
-int tdma_init(void)
+int __init tdma_init(void)
 {
     int ret;
 

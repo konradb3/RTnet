@@ -38,8 +38,9 @@ POST_UNINSTALL = :
 host_triplet = @host@
 @CONFIG_RTNET_RTCAP_TRUE@am__append_1 = rtcap
 @CONFIG_RTNET_RTCFG_TRUE@am__append_2 = rtcfg
-@CONFIG_NEWLXRT_TRUE@am__append_3 = rtnet_lxrt.o
-@CONFIG_RTNET_PROXY_TRUE@am__append_4 = rtnetproxy.o
+@CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE@am__append_3 = rtai_rtdm
+@CONFIG_RTNET_EXAMPLES_TRUE@am__append_4 = examples
+@CONFIG_RTNET_PROXY_TRUE@am__append_5 = rtnetproxy.o
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
@@ -64,6 +65,10 @@ CONFIG_RTNET_8139_FALSE = @CONFIG_RTNET_8139_FALSE@
 CONFIG_RTNET_8139_TRUE = @CONFIG_RTNET_8139_TRUE@
 CONFIG_RTNET_EEPRO100_FALSE = @CONFIG_RTNET_EEPRO100_FALSE@
 CONFIG_RTNET_EEPRO100_TRUE = @CONFIG_RTNET_EEPRO100_TRUE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE@
+CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE = @CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE@
+CONFIG_RTNET_EXAMPLES_FALSE = @CONFIG_RTNET_EXAMPLES_FALSE@
+CONFIG_RTNET_EXAMPLES_TRUE = @CONFIG_RTNET_EXAMPLES_TRUE@
 CONFIG_RTNET_FCC_ENET_FALSE = @CONFIG_RTNET_FCC_ENET_FALSE@
 CONFIG_RTNET_FCC_ENET_TRUE = @CONFIG_RTNET_FCC_ENET_TRUE@
 CONFIG_RTNET_FEC_ENET_FALSE = @CONFIG_RTNET_FEC_ENET_FALSE@
@@ -180,9 +185,9 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 
-OPTDIRS = $(am__append_1) $(am__append_2)
+OPTDIRS = $(am__append_1) $(am__append_2) $(am__append_3) $(am__append_4)
 
-SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools include $(OPTDIRS)
+SUBDIRS = driver ethernet ipv4 lib packet rtmac tools include $(OPTDIRS)
 
 noinst_LIBRARIES = librtnet.a
 
@@ -208,10 +213,13 @@ RTNET_BUILTIN_OBJS = \
 	packet/packet.o
 
 
-OBJS = $(am__append_3) $(am__append_4)
+OBJS = $(am__append_5)
 
-@CONFIG_NEWLXRT_TRUE@librtnet_lxrt_a_SOURCES = rtnet_lxrt.c
 
+#if CONFIG_NEWLXRT
+#librtnet_lxrt_a_SOURCES = rtnet_lxrt.c
+#OBJS += rtnet_lxrt.o
+#endif
 @CONFIG_RTNET_PROXY_TRUE@libnetproxy_a_SOURCES = rtnetproxy.c
 
 AM_CPPFLAGS = \
@@ -241,17 +249,16 @@ am_librtnet_a_OBJECTS = iovec.$(OBJEXT) rtdev.$(OBJEXT) \
 librtnet_a_OBJECTS = $(am_librtnet_a_OBJECTS)
 librtnet_lxrt_a_AR = $(AR) cru
 librtnet_lxrt_a_LIBADD =
-am__librtnet_lxrt_a_SOURCES_DIST = rtnet_lxrt.c
-@CONFIG_NEWLXRT_TRUE@am_librtnet_lxrt_a_OBJECTS = rtnet_lxrt.$(OBJEXT)
-librtnet_lxrt_a_OBJECTS = $(am_librtnet_lxrt_a_OBJECTS)
+librtnet_lxrt_a_SOURCES = librtnet_lxrt.a.c
+librtnet_lxrt_a_OBJECTS = librtnet_lxrt.a.$(OBJEXT)
 
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/iovec.Po ./$(DEPDIR)/rtdev.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/iovec.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/librtnet_lxrt.a.Po ./$(DEPDIR)/rtdev.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtdev_mgr.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_chrdev.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rtnet_lxrt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_module.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnet_rtpc.Po ./$(DEPDIR)/rtnet_syms.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rtnetproxy.Po ./$(DEPDIR)/rtskb.Po \
@@ -264,7 +271,7 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 DIST_SOURCES = $(am__libnetproxy_a_SOURCES_DIST) $(librtnet_a_SOURCES) \
-	$(am__librtnet_lxrt_a_SOURCES_DIST)
+	librtnet_lxrt.a.c
 
 RECURSIVE_TARGETS = info-recursive dvi-recursive pdf-recursive \
 	ps-recursive install-info-recursive uninstall-info-recursive \
@@ -278,9 +285,9 @@ DIST_COMMON = README ./config/rtnet_config_pre.h.in AUTHORS COPYING \
 	config/autoconf/install-sh config/autoconf/ltmain.sh \
 	config/autoconf/missing config/autoconf/mkinstalldirs configure \
 	configure.ac
-DIST_SUBDIRS = driver ethernet examples ipv4 lib packet rtmac tools \
-	include rtcap rtcfg
-SOURCES = $(libnetproxy_a_SOURCES) $(librtnet_a_SOURCES) $(librtnet_lxrt_a_SOURCES)
+DIST_SUBDIRS = driver ethernet ipv4 lib packet rtmac tools include rtcap \
+	rtcfg rtai_rtdm examples
+SOURCES = $(libnetproxy_a_SOURCES) $(librtnet_a_SOURCES) librtnet_lxrt.a.c
 
 all: all-recursive
 
@@ -342,10 +349,10 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iovec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/librtnet_lxrt.a.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtdev.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtdev_mgr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_chrdev.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_lxrt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_module.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_rtpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_syms.Po@am__quote@

@@ -1,6 +1,6 @@
 nobase_include_HEADERS = \
 		rtnet.h \
-		rtnet_lxrt.h
+		rtmac.h
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(includedir)

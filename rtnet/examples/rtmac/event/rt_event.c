@@ -5,7 +5,7 @@
  *  Example for tdma-based RTmac, global time and cycle based
  *  packet transmission.
  *
- *  Copyright (C) 2003 Jan Kiszka <Jan.Kiszka@Uweb.de>
+ *  Copyright (C) 2003, 2004 Jan Kiszka <Jan.Kiszka@Uweb.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,11 +27,19 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <asm/io.h>
-
 #include <net/ip.h>
 
+#include <rtnet_config.h>
+
+#include <rtai.h>
+#include <rtai_sched.h>
+
+#ifdef HAVE_RTAI_SEM_H
+#include <rtai_sem.h>
+#endif
+
 #include <rtnet.h>
-#include <tdma.h>   /* includes rtai header */
+#include <rtmac.h>
 
 #define PAR_DATA        io
 #define PAR_STATUS      io+1
@@ -59,7 +67,7 @@ MODULE_PARM(mode, "i");
 MODULE_PARM(io, "i");
 MODULE_PARM(irq, "i");
 
-static char* rteth_dev = "rteth0";
+static char* rtmac_dev = "TDMA0";
 static char* my_ip     = "";
 static char* dest_ip   = "10.255.255.255";
 MODULE_PARM(rteth_dev, "s");
@@ -68,24 +76,22 @@ MODULE_PARM(dest_ip, "s");
 
 MODULE_LICENSE("GPL");
 
-static unsigned long      irq_count = 0;
-static struct rtmac_tdma* tdma;
-static int                sock;
-static struct sockaddr_in dest_addr;
-static RT_TASK            task;
-static SEM                event_sem;
-static RTIME              time_stamp;
+static unsigned long        irq_count = 0;
+static int                  tdma;
+static int                  sock;
+static struct sockaddr_in   dest_addr;
+static RT_TASK              task;
+static SEM                  event_sem;
+static RTIME                time_stamp;
 
 
 void irq_handler(void)
 {
-    time_stamp = rt_get_time_ns() + tdma_get_delta_t(tdma);
+    time_stamp = rt_get_time_ns();
 
-    if (mode == MODE_SER)
-    {
+    if (mode == MODE_SER) {
         /* clear irq sources */
-        while ((inb(SER_IIR) & 0x01) == 0)
-        {
+        while ((inb(SER_IIR) & 0x01) == 0) {
             inb(SER_LSR);
             inb(SER_DATA);
             inb(SER_MSR);
@@ -108,33 +114,35 @@ void event_handler(int arg)
         RTIME         time_stamp;
         unsigned long count;
     } packet;
+    int wait_on = RTMAC_WAIT_ON_DEFAULT;
 
 
-    while (1)
-    {
+    while (1) {
         rt_sem_wait(&event_sem);
 
 
+        ioctl_rt(tdma, RTMAC_RTIOC_TIMEOFFSET, &packet.time_stamp);
+
         rt_disable_irq(irq);
 
-        packet.time_stamp = time_stamp;
+        packet.time_stamp += time_stamp;
         packet.count      = irq_count;
 
         rt_enable_irq(irq);
 
+        ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, &wait_on);
 
-        tdma_wait_sof(tdma);
 
-
-        rt_socket_sendto(sock, &packet, sizeof(packet), 0,
-                         (struct sockaddr*)&dest_addr,
-                         sizeof(struct sockaddr_in));
+        if (sendto_rt(sock, &packet, sizeof(packet), 0,
+                      (struct sockaddr*)&dest_addr,
+                      sizeof(struct sockaddr_in)) < 0)
+            break;
     }
 }
 
 
 
-int sync_callback(int socket, void* arg)
+void sync_callback(struct rtdm_dev_context *dummy, void* arg)
 {
     struct msghdr      msg;
 
@@ -149,17 +157,16 @@ int sync_callback(int socket, void* arg)
     msg.msg_control    = NULL;
     msg.msg_controllen = 0;
 
-    rt_socket_recvmsg(socket, &msg, 0);
-
-    return 0;
+    recvmsg_rt(sock, &msg, 0);
 }
 
 
 
 int init_module(void)
 {
-    unsigned int nonblock = 1;
-    struct sockaddr_in local_addr;
+    unsigned int            nonblock = 1;
+    struct sockaddr_in      local_addr;
+    struct rtnet_callback   callback = {sync_callback, NULL};
 
 
     printk("rt_event is using the following parameters:\n"
@@ -172,59 +179,56 @@ int init_module(void)
            io, irq, my_ip, dest_ip);
 
 
-    tdma = tdma_get_by_device(rteth_dev);
-    if (!tdma)
-    {
+    tdma = open_rt(rtmac_dev, O_RDONLY);
+    if (tdma < 0) {
         printk("ERROR: RTmac/TDMA not loaded!\n");
-        return 1;
+        return -ENODEV;
     }
 
 
-    sock = rt_socket(AF_INET,SOCK_DGRAM,0);
+    sock = socket_rt(AF_INET,SOCK_DGRAM,0);
 
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     local_addr.sin_family      = AF_INET;
     local_addr.sin_port        = htons(SYNC_PORT);
     local_addr.sin_addr.s_addr =
         (strlen(my_ip) != 0) ? rt_inet_aton(my_ip) : INADDR_ANY;
-    rt_socket_bind(sock, (struct sockaddr*)&local_addr, sizeof(struct sockaddr_in));
+    bind_rt(sock, (struct sockaddr*)&local_addr, sizeof(struct sockaddr_in));
 
     /* switch to non-blocking */
-    rt_setsockopt(sock, SOL_SOCKET, RT_SO_NONBLOCK, &nonblock, sizeof(nonblock));
+    ioctl_rt(sock, RTNET_RTIOC_NONBLOCK, &nonblock);
 
     memset(&dest_addr, 0, sizeof(struct sockaddr_in));
     dest_addr.sin_family      = AF_INET;
     dest_addr.sin_port        = htons(REPORT_PORT);
     dest_addr.sin_addr.s_addr = rt_inet_aton(dest_ip);
 
-    rt_socket_callback(sock, sync_callback, NULL);
+    ioctl_rt(sock, RTNET_RTIOC_CALLBACK, &callback);
 
 
     rt_task_init(&task, event_handler, 0, 4096, 10, 0, NULL);
     rt_sem_init(&event_sem, 0);
 
 
-    if (rt_request_global_irq(irq, irq_handler) != 0)
-    {
+    if (rt_request_global_irq(irq, irq_handler) != 0) {
         printk("ERROR: irq not available!\n");
-        goto Cleanup1;
+        rt_task_delete(&task);
+        rt_sem_delete(&event_sem);
+        return -EINVAL;
     }
 
-    if (mode == MODE_PAR)
-    {
+    if (mode == MODE_PAR) {
         /* trigger interrupt on Acknowledge pin (10) */
         outb(0x10, PAR_CONTROL);
     }
-    else
-    {
+    else {
         /* don't forget to specify io and irq (e.g. 0x3F8 / 4) */
 
         outb(0x00, SER_LCR);
         outb(0x00, SER_IER);
 
         /* clear irq sources */
-        while ((inb(SER_IIR) & 0x01) == 0)
-        {
+        while ((inb(SER_IIR) & 0x01) == 0) {
             printk("Loop init\n");
             inb(SER_LSR);
             inb(SER_DATA);
@@ -246,12 +250,6 @@ int init_module(void)
     rt_task_resume(&task);
 
     return 0;
-
-Cleanup1:
-    rt_task_delete(&task);
-    rt_sem_delete(&event_sem);
-
-    return 1;
 }
 
 
@@ -262,11 +260,16 @@ void cleanup_module(void)
     rt_shutdown_irq(irq);
     rt_free_global_irq(irq);
 
-    while (rt_socket_close(sock) == -EAGAIN) {
+    while (close_rt(sock) == -EAGAIN) {
         set_current_state(TASK_INTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rt_task_delete(&task);
+    while (close_rt(tdma) == -EAGAIN) {
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(1*HZ); /* wait a second */
+    }
+
     rt_sem_delete(&event_sem);
+    rt_task_delete(&task);
 }

@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
     /* Create new socket. */
-    sockfd = rt_socket(AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket_rt(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
 
         printf("Error opening socket: %d\n", sockfd);
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4800, 1, 0, 0);
     if (NULL == lxrtnettsk) {
-        rt_socket_close(sockfd);
+        close_rt(sockfd);
         printf("CANNOT INIT MASTER TASK\n");
         exit(1);
     }
@@ -75,10 +75,10 @@ int main(int argc, char *argv[])
     ifc.ifc_len = sizeof(ifr);
     ifc.ifc_req = ifr;
 
-    ret = rt_socket_ioctl(sockfd, SIOCGIFCONF, &ifc);
+    ret = ioctl_rt(sockfd, SIOCGIFCONF, &ifc);
     if (ret < 0) {
         rt_make_soft_real_time();
-        rt_socket_close(sockfd);
+        close_rt(sockfd);
         rt_task_delete(lxrtnettsk);
 
         printf("Error retrieving device list: %d\n", ret);
@@ -87,10 +87,10 @@ int main(int argc, char *argv[])
 
     while (ifc.ifc_len >= (int)sizeof(struct ifreq)) {
         memcpy(flags_ifr.ifr_name, ifc.ifc_req[devices].ifr_name, IFNAMSIZ);
-        ret = rt_socket_ioctl(sockfd, SIOCGIFFLAGS, &flags_ifr);
+        ret = ioctl_rt(sockfd, SIOCGIFFLAGS, &flags_ifr);
         if (ret < 0) {
             rt_make_soft_real_time();
-            rt_socket_close(sockfd);
+            close_rt(sockfd);
             rt_task_delete(lxrtnettsk);
 
             printf("Error retrieving flags for device %s: %d\n",
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
     /* Close socket.
      * Note: call must be in soft-mode because socket was created as non-rt! */
-    rt_socket_close(sockfd);
+    close_rt(sockfd);
 
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);

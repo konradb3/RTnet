@@ -1,22 +1,26 @@
-/* protocol.c
+/***
  *
- * rtnet - real-time networking subsystem
- * Copyright (C) 1999,2000 Zentropic Computing, LLC
- *               2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  ipv4/protocol.c
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  rtnet - real-time networking subsystem
+ *  Copyright (C) 1999,2000 Zentropic Computing, LLC
+ *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <linux/socket.h>
@@ -33,11 +37,11 @@ struct rtinet_protocol *rt_inet_protocols[MAX_RT_INET_PROTOCOLS];
  */
 void rt_inet_add_protocol(struct rtinet_protocol *prot)
 {
-    if ( prot!=NULL ) {
-        unsigned char hash = rt_inet_hashkey(prot->protocol);
-        if ( rt_inet_protocols[hash]==NULL )
-            rt_inet_protocols[hash] = prot;
-    }
+    unsigned char hash = rt_inet_hashkey(prot->protocol);
+
+
+    if ( rt_inet_protocols[hash]==NULL )
+        rt_inet_protocols[hash] = prot;
 }
 
 
@@ -46,23 +50,11 @@ void rt_inet_add_protocol(struct rtinet_protocol *prot)
  */
 void rt_inet_del_protocol(struct rtinet_protocol *prot)
 {
-    if ( prot!=NULL ) {
-        unsigned char hash = rt_inet_hashkey(prot->protocol);
-        if ( prot==rt_inet_protocols[hash] )
-            rt_inet_protocols[hash] = NULL;
-    }
-
-}
+    unsigned char hash = rt_inet_hashkey(prot->protocol);
 
 
-
-/***
- * rt_inet_get_protocol - get protocol-structure
- * @protocol: protocol id (maybe IPPROTO_UDP)
- */
-struct rtinet_protocol *rt_inet_get_protocol(int protocol)
-{
-    return  ( rt_inet_protocols[rt_inet_hashkey(protocol)] );
+    if ( prot==rt_inet_protocols[hash] )
+        rt_inet_protocols[hash] = NULL;
 }
 
 
@@ -72,14 +64,11 @@ struct rtinet_protocol *rt_inet_get_protocol(int protocol)
  * @sock: socket structure
  * @protocol: protocol id
  */
-int rt_inet_socket(struct rtsocket *sock, int protocol)
+int rt_inet_socket(struct rtdm_dev_context *context, int call_flags,
+                   int protocol)
 {
     struct rtinet_protocol  *prot;
 
-
-    /* only datagram-sockets */
-    if (sock->type != SOCK_DGRAM)
-        return -EAFNOSUPPORT;
 
     /* default is UDP */
     if (protocol == 0)
@@ -89,7 +78,7 @@ int rt_inet_socket(struct rtsocket *sock, int protocol)
 
     /* create the socket (call the socket creator) */
     if ((prot != NULL) && (prot->protocol == protocol))
-        return prot->init_socket(sock);
+        return prot->init_socket(context, call_flags);
     else {
         rtos_print("RTnet: protocol with id %d not found\n", protocol);
 
