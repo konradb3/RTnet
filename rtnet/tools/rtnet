@@ -20,17 +20,27 @@ EOF
 init_rtnet() {
     insmod $RTNET_MOD/rtnet.o >/dev/null || exit 1
     insmod $RTNET_MOD/$RT_DRIVER.o $RT_DRIVER_OPTIONS >/dev/null || exit 1
-    $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
     if [ $RT_LOOPBACK = "yes" ]; then
         insmod $RTNET_MOD/loopback-rt.o >/dev/null || exit 1
-        $RTIFCONFIG rtlo up 127.0.0.1
     fi
 
     if [ $RTCAP = "yes" ]; then
         insmod $RTNET_MOD/rtcap.o >/dev/null || exit 1
+    fi
+
+    $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
+
+    if [ $RT_LOOPBACK = "yes" ]; then
+        $RTIFCONFIG rtlo up 127.0.0.1
+    fi
+
+    if [ $RTCAP = "yes" ]; then
         ifconfig rteth0 up
         ifconfig rteth0-mac up
+        if [ $RT_LOOPBACK = "yes" ]; then
+            ifconfig rtlo up
+        fi
     fi
 
     insmod $RTNET_MOD/rtcfg.o >/dev/null
@@ -133,15 +143,16 @@ case "$1" in
         ifconfig vnic0 down 2>/dev/null
         ifconfig rteth0 down 2>/dev/null
         ifconfig rteth0-mac down 2>/dev/null
+        ifconfig rtlo down 2>/dev/null
 
         $RTIFCONFIG rteth0 mac down
 
-        rmmod tdma rtmac rtcfg rtcap 2>/dev/null
+        rmmod tdma rtmac rtcfg 2>/dev/null
 
         $RTIFCONFIG rteth0 down
         $RTIFCONFIG rtlo down 2>/dev/null
 
-        rmmod loopback-rt $RT_DRIVER rtnet 2>/dev/null
+        rmmod rtcap loopback-rt $RT_DRIVER rtnet 2>/dev/null
         ;;
 
     master)
@@ -154,9 +165,8 @@ case "$1" in
     capture)
         insmod $RTNET_MOD/rtnet.o >/dev/null || exit 1
         insmod $RTNET_MOD/$RT_DRIVER.o $RT_DRIVER_OPTIONS >/dev/null || exit 1
-        $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
-
         insmod $RTNET_MOD/rtcap.o start_timer=1 >/dev/null || exit 1
+        $RTIFCONFIG rteth0 up $IPADDR promisc
         ifconfig rteth0 up
         ifconfig rteth0-mac up
         ;;
