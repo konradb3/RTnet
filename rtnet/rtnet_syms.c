@@ -101,6 +101,7 @@ EXPORT_SYMBOL(rt_unregister_rtnetdev);
 EXPORT_SYMBOL(rtdev_get_by_name);
 EXPORT_SYMBOL(rtdev_get_by_index);
 EXPORT_SYMBOL(rtdev_get_by_hwaddr);
+EXPORT_SYMBOL(rtdev_get_loopback);
 
 EXPORT_SYMBOL(rtdev_xmit);
 
@@ -142,6 +143,7 @@ EXPORT_SYMBOL(rt_arp_send);
  ****************************************************************************/
 EXPORT_SYMBOL(rt_ip_route_add_host);
 EXPORT_SYMBOL(rt_ip_route_output);
+EXPORT_SYMBOL(rt_ip_route_del_all);
 
 
 /****************************************************************************
