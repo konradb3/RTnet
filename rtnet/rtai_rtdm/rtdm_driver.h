@@ -5,6 +5,7 @@
         Version:    0.6.0
         Copyright:  2003 Joerg Langenberg <joergel-at-gmx.de>
                     2004, 2005 Jan Kiszka <jan.kiszka-at-web.de>
+                    2005 Hans-Peter Bock <rtnet@avaapgh.de>
 
  ***************************************************************************/
 
@@ -27,6 +28,8 @@
 
 #ifdef CONFIG_RTNET_RTDM_SELECT
 #include <rtai_sem.h>
+
+#if 1 /* change this to zero, if you are living on the bleeding edge and want to examine waitqueues */
 typedef SEM             wait_queue_primitive_t;
 
 static inline int wq_element_init(wait_queue_primitive_t *wqe)
@@ -50,6 +53,90 @@ static inline int wq_wait(wait_queue_primitive_t *wqe)
     return rt_sem_wait(wqe);
     /* return rt_sem_wait_timed(event, *timeout); */
 }
+
+#else /* 1 */
+
+#include <rtnet_sys_rtai.h> /* needed for rtos_spinlock_t () */
+typedef SEM wait_queue_primitive_t;
+
+struct wait_queue_element;
+
+struct wait_queue_head {
+    struct wait_queue_element   *next;
+    struct wait_queue_element   *last;
+    rtos_spinlock_t             lock;
+};
+
+struct wait_queue_element {
+    struct wait_queue_element   *next, *prev;
+    struct wait_queue_head      *head;
+    wait_queue_primitive_t      *wqp;
+};
+
+static inline void wq_init(struct wait_queue_head *wqh)
+{
+    wqh->next = NULL;
+}
+
+static inline int wq_element_init(struct wait_queue_element *wqe)
+{
+    wqe = rt_malloc(sizeof(struct wait_queue_element));
+    if (wqe) {
+	wqe->next = NULL;
+	wqe->prev = NULL;
+	wqe->head = NULL;
+	wqe->wqp = NULL;
+    }
+    return ((int) wqe); /* this cast is evil */
+}
+
+static inline void wq_add(struct wait_queue_element *wqe,
+			 struct wait_queue_head *wqh,
+			 wait_queue_primitive_t *wqp)
+{
+    wqe->next = NULL;
+    wqe->head = wqh;
+    wqe->wqp = wqp;
+    
+    /* lock wait_queue_list */
+    if (NULL == wqh->next) { /* => list is empty */
+	wqe->prev = NULL;
+	wqh->next = wqe;
+    } else {
+	wqe->prev = wqh->last;
+	wqe->prev->next = wqe;
+    }
+    wqh->last = wqe;
+    /* unlock wait_queue_list */
+}
+
+static inline void wq_remove(struct wait_queue_element *wqe)
+{
+    /* lock wait_queue_list */
+    wqe->prev->next = wqe->next;
+    wqe->next->prev = wqe->prev;
+    /* unlock wait_queue_list */
+}
+
+static inline void wq_element_delete(struct wait_queue_element *wqe)
+{
+    rt_free(wqe);
+    wqe = NULL;
+}
+
+static inline void wq_signal(struct wait_queue_head *wqh)
+{
+    struct wait_queue_element *wqe;
+    /* lock wait_queue_list */
+    wqe = wqh->next;
+    while (NULL != wqe) {
+	rt_sem_signal(wqe->wqp);
+	wqe = wqe->next;
+    }
+    /* unlock wait_queue_list */
+}
+
+#endif /* 1 */
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 
 /* ----------- Device Flags ---------------------------------------------- */
@@ -213,3 +300,9 @@ extern int rtdm_dev_unregister(struct rtdm_device* device);
 
 
 #endif /* __RTDM_DRIVER_H */
+
+/*
+ * Local variables:
+ * c-basic-offset: 4
+ * End:
+ */
