@@ -8,15 +8,14 @@ handler) are free of any unbounded or unacceptable long delays, e.g. caused by
 waiting on hardware events.
 
 
-1. Add to beginning of file:
+1. Add to beginning of file (also add a #define for MAX_UNITS if it is missing
+   so far):
 
-    /*** RTnet ***/
     #include <rtnet_port.h>
 
-    static int cards = INT_MAX;
-    MODULE_PARM(cards, "i");
-    MODULE_PARM_DESC(cards, "number of cards to be supported");
-    /*** RTnet ***/
+    static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+    MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+    MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 
 
 2. disable any copybreak mechanism (rtskbs are all equally sized)
@@ -184,7 +183,10 @@ waiting on hardware events.
 
 26. add to the beginning of the probe or card-init function:
 
-    if (cards_found >= cards)
+    static int cards_found = -1;
+
+    cards_found++;
+    if (cards[cards_found] == 0)
         return -ENODEV;
 
 
