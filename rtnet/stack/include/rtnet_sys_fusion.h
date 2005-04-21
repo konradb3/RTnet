@@ -108,10 +108,21 @@ static inline void rtos_time_diff(rtos_time_t *result,
 #define rtos_spin_lock(lock)        rthal_spin_lock(lock)
 #define rtos_spin_unlock(lock)      rthal_spin_unlock(lock)
 
+#ifdef CONFIG_FUSION_07 /* old scheme according to fusion 0.7.1 and earlier */
+
 #define rtos_spin_lock_irqsave(lock, flags) \
     (flags) = rthal_spin_lock_irqsave(lock)
 #define rtos_spin_unlock_irqrestore(lock, flags) \
     rthal_spin_unlock_irqrestore(flags, lock)
+
+#else /* new scheme since fusion 0.7.2 */
+
+#define rtos_spin_lock_irqsave(lock, flags) \
+    rthal_spin_lock_irqsave(lock, flags)
+#define rtos_spin_unlock_irqrestore(lock, flags) \
+    rthal_spin_unlock_irqrestore(lock, flags)
+
+#endif /* CONFIG_FUSION_07 */
 
 #define rtos_local_irqsave(flags)   \
     rthal_local_irq_save(flags)

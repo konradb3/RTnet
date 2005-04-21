@@ -36,7 +36,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @CONFIG_NEWLXRT_TRUE@am__append_1 = lxrt
-@CONFIG_RTNET_RTDM_SELECT_TRUE@am__append_2 = select
+@CONFIG_FUSION_TRUE@am__append_2 = fusion
+@CONFIG_RTNET_RTDM_SELECT_TRUE@am__append_3 = select
 subdir = addons/examples
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -57,7 +58,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = frag-ip raw-packets round-trip-time rtmac lxrt select
+DIST_SUBDIRS = frag-ip raw-packets round-trip-time rtmac lxrt fusion \
+	select
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -73,6 +75,8 @@ CCAS = @CCAS@
 CCASFLAGS = @CCASFLAGS@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CONFIG_FUSION_FALSE = @CONFIG_FUSION_FALSE@
+CONFIG_FUSION_TRUE = @CONFIG_FUSION_TRUE@
 CONFIG_KBUILD_FALSE = @CONFIG_KBUILD_FALSE@
 CONFIG_KBUILD_TRUE = @CONFIG_KBUILD_TRUE@
 CONFIG_NCURSES_FALSE = @CONFIG_NCURSES_FALSE@
@@ -163,6 +167,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
 RTAI_KMOD_CFLAGS = @RTAI_KMOD_CFLAGS@
+RTAI_LIBRARIES = @RTAI_LIBRARIES@
 RTAI_USER_CFLAGS = @RTAI_USER_CFLAGS@
 RTNET_KBUILD_CLEAN = @RTNET_KBUILD_CLEAN@
 RTNET_KBUILD_CMD = @RTNET_KBUILD_CMD@
@@ -217,7 +222,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTDIRS = $(am__append_1) $(am__append_2)
+OPTDIRS = $(am__append_1) $(am__append_2) $(am__append_3)
 SUBDIRS = frag-ip raw-packets round-trip-time rtmac $(OPTDIRS)
 all: all-recursive
 

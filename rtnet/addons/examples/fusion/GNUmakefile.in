@@ -13,7 +13,8 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-SOURCES = $(libkernel_server_a_SOURCES)
+
+SOURCES = frag-ip.c rtnet_ifs.c
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -37,7 +38,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = addons/examples/select
+noinst_PROGRAMS = rtnet_ifs$(EXEEXT) frag-ip$(EXEEXT)
+subdir = addons/examples/fusion
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
@@ -47,12 +49,13 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
-ARFLAGS = cru
-libkernel_server_a_AR = $(AR) $(ARFLAGS)
-libkernel_server_a_LIBADD =
-am_libkernel_server_a_OBJECTS =  \
-	libkernel_server_a-rt_server.$(OBJEXT)
-libkernel_server_a_OBJECTS = $(am_libkernel_server_a_OBJECTS)
+PROGRAMS = $(noinst_PROGRAMS)
+frag_ip_SOURCES = frag-ip.c
+frag_ip_OBJECTS = frag-ip.$(OBJEXT)
+frag_ip_LDADD = $(LDADD)
+rtnet_ifs_SOURCES = rtnet_ifs.c
+rtnet_ifs_OBJECTS = rtnet_ifs.$(OBJEXT)
+rtnet_ifs_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -64,8 +67,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libkernel_server_a_SOURCES)
-DIST_SOURCES = $(libkernel_server_a_SOURCES)
+SOURCES = frag-ip.c rtnet_ifs.c
+DIST_SOURCES = frag-ip.c rtnet_ifs.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -230,20 +233,15 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
-modext = @RTNET_MODULE_EXT@
-EXTRA_LIBRARIES = libkernel_server.a
-libkernel_server_a_CPPFLAGS = \
-	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include \
-	@RTAI_KMOD_CFLAGS@
+AM_CFLAGS = \
+    -I$(top_srcdir)/stack/include \
+    -I$(top_builddir)/stack/include \
+    @RTAI_USER_CFLAGS@
 
-libkernel_server_a_SOURCES = \
-	rt_server.c
+AM_LDFLAGS = \
+    -lpthread -lrtai \
+    -L@RTAI_LIBRARIES@
 
-OBJS = rt_server$(modext)
-EXTRA_DIST = Makefile.kbuild
-DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -257,9 +255,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  addons/examples/select/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  addons/examples/fusion/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  addons/examples/select/GNUmakefile
+	  $(AUTOMAKE) --foreign  addons/examples/fusion/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -277,10 +275,19 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-libkernel_server.a: $(libkernel_server_a_OBJECTS) $(libkernel_server_a_DEPENDENCIES) 
-	-rm -f libkernel_server.a
-	$(libkernel_server_a_AR) libkernel_server.a $(libkernel_server_a_OBJECTS) $(libkernel_server_a_LIBADD)
-	$(RANLIB) libkernel_server.a
+
+clean-noinstPROGRAMS:
+	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
+frag-ip$(EXEEXT): $(frag_ip_OBJECTS) $(frag_ip_DEPENDENCIES) 
+	@rm -f frag-ip$(EXEEXT)
+	$(LINK) $(frag_ip_LDFLAGS) $(frag_ip_OBJECTS) $(frag_ip_LDADD) $(LIBS)
+rtnet_ifs$(EXEEXT): $(rtnet_ifs_OBJECTS) $(rtnet_ifs_DEPENDENCIES) 
+	@rm -f rtnet_ifs$(EXEEXT)
+	$(LINK) $(rtnet_ifs_LDFLAGS) $(rtnet_ifs_OBJECTS) $(rtnet_ifs_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -288,7 +295,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_server_a-rt_server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/frag-ip.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_ifs.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -310,20 +318,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-libkernel_server_a-rt_server.o: rt_server.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_server_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_server_a-rt_server.o -MD -MP -MF "$(DEPDIR)/libkernel_server_a-rt_server.Tpo" -c -o libkernel_server_a-rt_server.o `test -f 'rt_server.c' || echo '$(srcdir)/'`rt_server.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_server_a-rt_server.Tpo" "$(DEPDIR)/libkernel_server_a-rt_server.Po"; else rm -f "$(DEPDIR)/libkernel_server_a-rt_server.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_server.c' object='libkernel_server_a-rt_server.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_server_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_server_a-rt_server.o `test -f 'rt_server.c' || echo '$(srcdir)/'`rt_server.c
-
-libkernel_server_a-rt_server.obj: rt_server.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_server_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_server_a-rt_server.obj -MD -MP -MF "$(DEPDIR)/libkernel_server_a-rt_server.Tpo" -c -o libkernel_server_a-rt_server.obj `if test -f 'rt_server.c'; then $(CYGPATH_W) 'rt_server.c'; else $(CYGPATH_W) '$(srcdir)/rt_server.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_server_a-rt_server.Tpo" "$(DEPDIR)/libkernel_server_a-rt_server.Po"; else rm -f "$(DEPDIR)/libkernel_server_a-rt_server.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_server.c' object='libkernel_server_a-rt_server.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_server_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_server_a-rt_server.obj `if test -f 'rt_server.c'; then $(CYGPATH_W) 'rt_server.c'; else $(CYGPATH_W) '$(srcdir)/rt_server.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -412,7 +406,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile all-local
+all-am: GNUmakefile $(PROGRAMS) all-local
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -434,14 +428,14 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
-	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -490,35 +484,21 @@ ps-am:
 uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-local ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-info-am
+	clean-generic clean-libtool clean-noinstPROGRAMS ctags \
+	distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-exec install-exec-am install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
 
-rt_server.o: libkernel_server.a
-	$(LD) --whole-archive $< -r -o $@
-
-rt_server.ko: @RTNET_KBUILD_ENV@
-rt_server.ko: $(libkernel_server_a_SOURCES) FORCE
-	@RTNET_KBUILD_CMD@
-
-all-local: $(OBJS)
-
-#install-exec-local: $(OBJS)
-#	$(mkinstalldirs) $(moduledir)
-#	$(INSTALL_DATA) $^ $(moduledir)
-
-clean-local: $(libkernel_server_a_SOURCES)
-	@RTNET_KBUILD_CLEAN@
-
-.PHONY: FORCE
+all-local: \
+    rtnet_ifs \
+    frag-ip
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

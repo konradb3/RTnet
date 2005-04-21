@@ -210,9 +210,9 @@ static const int multicast_filter_limit = 32;
 
 #define DEFAULT_RX_POOL_SIZE    16
 
-static int cards = INT_MAX;
-MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "number of cards to be supported");
+static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** RTnet ***/
 
 /* These identify the driver base version and may not be removed. */
@@ -655,7 +655,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	pci_flags = via_rhine_chip_info[chip_id].pci_flags;
 
 /*** RTnet ***/
-	if (card_idx >= cards)
+	if (cards[card_idx] == 0)
 		goto err_out;
 /*** RTnet ***/
 

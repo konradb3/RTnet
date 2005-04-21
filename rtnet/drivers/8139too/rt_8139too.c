@@ -1,5 +1,5 @@
 /***
- * 8139too-rt.c - Realtime driver for
+ * rt_8139too.c - Realtime driver for
  * for more information, look to end of file or '8139too.c'
  *
  * Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
@@ -19,8 +19,17 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define DRV_NAME            "8139too-rt"
-#define DRV_VERSION         "0.9.24-rt0.3"
+ /*
+  * This Version was modified by Fabian Koch
+  * It includes a different implementation of the 'cards' module parameter
+  * we are using an array of integers to determine which cards to use
+  * for RTnet (e.g. cards=0,1,0)
+  *
+  * Thanks to Jan Kiszka for this idea
+  */
+
+#define DRV_NAME            "rt_8139too"
+#define DRV_VERSION         "0.9.24-rt0.4"
 
 #include <linux/config.h>
 #include <linux/module.h>
@@ -43,13 +52,14 @@
 // *** RTnet ***
 #include <rtnet_port.h>
 
+#define MAX_UNITS               8
 #define DEFAULT_RX_POOL_SIZE    16
 
-static int cards = INT_MAX;
+static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
 static unsigned int rx_pool_size = DEFAULT_RX_POOL_SIZE;
-MODULE_PARM(cards, "i");
+MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
 MODULE_PARM(rx_pool_size, "i");
-MODULE_PARM_DESC(cards, "number of cards to be supported");
+MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 // *** RTnet ***
 
@@ -67,7 +77,6 @@ MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 
 /* A few user-configurable values. */
 /* media options */
-#define MAX_UNITS 8
 #if 0
 static int media[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static int full_duplex[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
@@ -778,7 +787,6 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
 {
         struct rtnet_device *rtdev = NULL;
         struct rtl8139_private *tp;
-        static int cards_found /* = 0 */;
         int i, addr_len;
 #if 0
         int option;
@@ -789,7 +797,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
 
         board_idx++;
 
-        if( cards_found >= cards)
+        if( cards[board_idx] == 0)
                 return -ENODEV;
 
         /* when we're built into the kernel, the driver version message
@@ -814,7 +822,6 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         if ((i=rtl8139_init_board (pdev, &rtdev)) < 0)
                 return i;
 
-        cards_found++;
 
         tp = rtdev->priv;
         ioaddr = tp->mmio_addr;

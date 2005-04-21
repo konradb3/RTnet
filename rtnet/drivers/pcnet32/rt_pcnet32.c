@@ -59,11 +59,12 @@ DRV_NAME ".c:v" DRV_VERSION " " DRV_RELDATE " Jan.Kiszka@web.de\n";
 /*** RTnet ***/
 #include <rtnet_port.h>
 
+#define MAX_UNITS 8	/* More are supported, limit only on options */
 #define DEFAULT_RX_POOL_SIZE    16
 
-static int cards = INT_MAX;
-MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "number of cards to be supported");
+static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** RTnet ***/
 
 /*
@@ -77,7 +78,7 @@ static struct pci_device_id pcnet32_pci_tbl[] __devinitdata = {
 
 MODULE_DEVICE_TABLE (pci, pcnet32_pci_tbl);
 
-int cards_found __initdata;
+int cards_found __initdata = -1;
 
 /*
  * VLB I/O addresses
@@ -133,7 +134,6 @@ static unsigned char options_mapping[] = {
     PCNET32_PORT_ASEL			   /* 15 not supported	  */
 };
 
-#define MAX_UNITS 8	/* More are supported, limit only on options */
 static int options[MAX_UNITS];
 static int full_duplex[MAX_UNITS];
 
@@ -543,7 +543,8 @@ pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
     u8 promaddr[6];
 
     // *** RTnet ***
-    if (cards_found >= cards)
+    cards_found++;
+    if (cards[cards_found] == 0)
         return -ENODEV;
     // *** RTnet ***
 
@@ -852,7 +853,6 @@ pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
 /*** RTnet ***/
 
     printk(KERN_INFO "%s: registered as %s\n",dev->name, lp->name);
-    cards_found++;
     return 0;
 }
 

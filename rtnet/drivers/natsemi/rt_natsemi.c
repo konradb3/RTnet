@@ -175,11 +175,12 @@
 /*** RTnet ***/
 #include <rtnet_port.h>
 
+#define MAX_UNITS 8		/* More are supported, limit only on options */
 #define DEFAULT_RX_POOL_SIZE    16
 
-static int cards = INT_MAX;
-MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "number of cards to be supported");
+static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** RTnet ***/
 
 #define DRV_NAME	"natsemi-rt"
@@ -217,7 +218,6 @@ static int rx_copybreak;
    interoperability.
    The media type is usually passed in 'options[]'.
 */
-#define MAX_UNITS 8		/* More are supported, limit only on options */
 static int options[MAX_UNITS];
 static int full_duplex[MAX_UNITS];
 
@@ -776,10 +776,10 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	irq = pdev->irq;
 
 /*** RTnet ***/
-	if (find_cnt >= cards)
+	if (cards[find_cnt] == 0)
 		goto err_out;
 /*** RTnet ***/
-	
+
 	if (natsemi_pci_info[chip_idx].flags & PCI_USES_MASTER)
 		pci_set_master(pdev);
 

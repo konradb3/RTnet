@@ -71,8 +71,10 @@ typedef size_t          socklen_t;
 #define RTDM_SUBCLASS_UNMANAGED 1
 
 
-/* LXRT function IDs */
+/* LXRT / skin function IDs */
 #define RTDM_LXRT_IDX           6
+#define RTDM_SKIN_MAGIC         0x5254444D
+
 #define _RTDM_OPEN              0
 #define _RTDM_SOCKET            1
 #define _RTDM_CLOSE             2
@@ -81,7 +83,9 @@ typedef size_t          socklen_t;
 #define _RTDM_WRITE             5
 #define _RTDM_RECVMSG           6
 #define _RTDM_SENDMSG           7
+
 #ifdef CONFIG_RTNET_RTDM_SELECT
+
 #define _RTDM_POLL              8
 #define _RTDM_SELECT            9
 
@@ -309,6 +313,91 @@ RTAI_PROTO(ssize_t, sendmsg_rt, (int fd, const struct msghdr *msg, int flags))
 }
 
 #endif /* CONFIG_NEWLXRT */
+
+
+#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
+
+#ifdef CONFIG_FUSION_07
+#include <nucleus/syscall.h>
+#else  /* CONFIG_FUSION_07 */
+#include <nucleus/asm/syscall.h>
+#endif /* !CONFIG_FUSION_07 */
+
+extern int __rtdm_muxid;
+
+void __rtdm_init(void);
+
+/* Another intermediate hack: If you include rtdm.h in multiple application
+ * source files, define NO_RTDM_DEFINITIONS in all but one before the include
+ * statement in oder to avoid redefinitions.
+ */
+#ifndef NO_RTDM_DEFINITIONS
+int __rtdm_muxid = -1;
+
+void __rtdm_init(void)
+{
+    int muxid = XENOMAI_SYSCALL2(__xn_sys_bind, RTDM_SKIN_MAGIC, NULL);
+    if (muxid >= 0)
+        __rtdm_muxid = muxid;
+}
+#endif /* NO_RTDM_DEFINITIONS */
+
+
+static inline int open_rt(const char *path, int oflag, ...)
+{
+    if (__rtdm_muxid < 0)
+        __rtdm_init();
+
+    return XENOMAI_SKINCALL2(__rtdm_muxid, _RTDM_OPEN, path, oflag);
+}
+
+static inline int socket_rt(int protocol_family, int socket_type,
+                            int protocol)
+{
+    if (__rtdm_muxid < 0)
+        __rtdm_muxid = XENOMAI_SYSCALL2(__xn_sys_bind, RTDM_SKIN_MAGIC, NULL);
+
+    return XENOMAI_SKINCALL3(__rtdm_muxid, _RTDM_SOCKET, protocol_family,
+                             socket_type, protocol);
+}
+
+
+
+static inline int close_rt(int fd)
+{
+    return XENOMAI_SKINCALL1(__rtdm_muxid, _RTDM_CLOSE, fd);
+}
+
+static inline int ioctl_rt(int fd, int request, void* arg)
+{
+    return XENOMAI_SKINCALL3(__rtdm_muxid, _RTDM_IOCTL, fd, request, arg);
+}
+
+
+
+static inline ssize_t read_rt(int fd, void *buf, size_t nbyte)
+{
+    return XENOMAI_SKINCALL3(__rtdm_muxid, _RTDM_READ, fd, buf, nbyte);
+}
+
+static inline ssize_t write_rt(int fd, const void *buf, size_t nbyte)
+{
+    return XENOMAI_SKINCALL3(__rtdm_muxid, _RTDM_WRITE, fd, buf, nbyte);
+}
+
+
+
+static inline ssize_t recvmsg_rt(int fd, struct msghdr *msg, int flags)
+{
+    return XENOMAI_SKINCALL3(__rtdm_muxid, _RTDM_RECVMSG, fd, msg, flags);
+}
+
+static inline ssize_t sendmsg_rt(int fd, const struct msghdr *msg, int flags)
+{
+    return XENOMAI_SKINCALL3(__rtdm_muxid, _RTDM_SENDMSG, fd, msg, flags);
+}
+
+#endif /* CONFIG_FUSION_* */
 
 #endif /* __KERNEL__ */
 

@@ -128,9 +128,9 @@ int tulip_debug = TULIP_DEBUG;
 int tulip_debug = 1;
 #endif
 
-static int cards = INT_MAX;
-MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "number of cards to be supported");
+static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 
 
 
@@ -1346,7 +1346,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 
 	board_idx++;
 
-	if (board_idx >= cards)
+	if (cards[board_idx] == 0)
 		return -ENODEV;
 
 	/*

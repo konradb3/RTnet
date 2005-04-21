@@ -30,7 +30,7 @@
 */
 
 static const char *version =
-"eepro100-rt.c:1.36-RTnet-0.5 2002-2005 Jan Kiszka <Jan.Kiszka@web.de>\n"
+"eepro100-rt.c:1.36-RTnet-0.6 2002-2005 Jan Kiszka <Jan.Kiszka@web.de>\n"
 "eepro100-rt.c: based on eepro100.c 1.36 by D. Becker, A. V. Savochkin and others\n";
 
 #define final_version
@@ -130,9 +130,11 @@ static int debug = -1;			/* The debug level */
 #include <linux/if_vlan.h>
 #include <rtnet_port.h>
 
-static int cards = INT_MAX;
-MODULE_PARM(cards, "i");
-MODULE_PARM_DESC(cards, "number of cards to be supported");
+#define MAX_UNITS               8
+
+static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 // *** RTnet ***
 
 MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
@@ -599,14 +601,15 @@ static int __devinit eepro100_init_one (struct pci_dev *pdev,
 	unsigned long ioaddr;
 	int irq;
 	int acpi_idle_state = 0, pm;
-	static int cards_found /* = 0 */;
+	static int cards_found = -1;
 
 	static int did_version /* = 0 */;		/* Already printed version info. */
 	if (speedo_debug > 0  &&  did_version++ == 0)
 		printk(version);
 
 	// *** RTnet ***
-	if (cards_found >= cards)
+	cards_found++;
+	if (cards[cards_found] == 0)
 		goto err_out_none;
 	// *** RTnet ***
 
@@ -653,9 +656,7 @@ static int __devinit eepro100_init_one (struct pci_dev *pdev,
 
 	pci_set_master(pdev);
 
-	if (speedo_found1(pdev, ioaddr, cards_found, acpi_idle_state) == 0)
-		cards_found++;
-	else
+	if (speedo_found1(pdev, ioaddr, cards_found, acpi_idle_state) != 0)
 		goto err_out_iounmap;
 
 	return 0;
