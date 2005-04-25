@@ -47,15 +47,12 @@ int rtcfg_event_handler(struct rt_proc_call *call)
 
 void keep_cmd_add(struct rt_proc_call *call, void *priv_data)
 {
-    struct rtcfg_cmd *cmd;
-    int              result = rtpc_get_result(call);
+    int result = rtpc_get_result(call);
 
 
     /* do nothing on error (<0), or if file already present (=0) */
     if (result <= 0)
         return;
-
-    cmd = rtpc_get_priv(call, struct rtcfg_cmd);
 
     /* Don't cleanup any buffers, we are going to recycle them! */
     rtpc_set_cleanup_handler(call, NULL);

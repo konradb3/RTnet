@@ -52,10 +52,15 @@ static int sock;
 static char buffer_out[64*1024];
 static char buffer_in[64*1024];
 
+
+#ifndef T_PRIMARY
+#define T_PRIMARY  0x10000000
+#endif
+
 #define rt_printf(args, ...)                                \
 {                                                           \
     printf(args, ## __VA_ARGS__);                           \
-    XENOMAI_SYSCALL1(__xn_sys_migrate, FUSION_RTAI_DOMAIN); \
+    rt_task_set_mode(T_PRIMARY, 0, NULL);                   \
 }
 
 

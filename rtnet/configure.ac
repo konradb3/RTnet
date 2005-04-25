@@ -361,7 +361,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     0.7-fusion | 0.7.1-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-07
 	;;
-    0.7.2-fusion)
+    0.7.2-fusion | 0.7.3-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-072
 	;;
     *)
@@ -495,7 +495,7 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
 	AC_DEFINE(CONFIG_FUSION_07, 1, [We build for fusion 0.7/0.7.1])
 	;;
     fusion-072)
-	AC_DEFINE(CONFIG_FUSION_072, 1, [We build for fusion 0.7.2])
+	AC_DEFINE(CONFIG_FUSION_072, 1, [We build for fusion 0.7.2/0.7.3])
 	;;
     *)
 	AC_MSG_ERROR([*** No RTAI found in $with_rtai])
