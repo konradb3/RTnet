@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
@@ -53,8 +54,8 @@ static char buffer_out[64*1024];
 static char buffer_in[64*1024];
 
 
-#ifndef T_PRIMARY
-#define T_PRIMARY  0x10000000
+#ifndef XNTHREAD_SPARE0
+#define XNTHREAD_SPARE0 0x10000000
 #endif
 
 #define rt_printf(args, ...)                                \
@@ -258,4 +259,6 @@ int main(int argc, char *argv[])
 
     rt_task_delete(&rt_xmit_task);
     rt_task_delete(&rt_recv_task);
+
+    return 0;
 }
