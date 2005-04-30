@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,11 +47,8 @@ int rtcfg_event_handler(struct rt_proc_call *call)
 
 void keep_cmd_add(struct rt_proc_call *call, void *priv_data)
 {
-    int result = rtpc_get_result(call);
-
-
     /* do nothing on error (<0), or if file already present (=0) */
-    if (result <= 0)
+    if (rtpc_get_result(call) <= 0)
         return;
 
     /* Don't cleanup any buffers, we are going to recycle them! */
@@ -96,13 +93,12 @@ void cleanup_cmd_del(void *priv_data)
     /* unlock proc and update directory structure */
     rtcfg_unlockwr_proc(cmd->ifindex);
 
-    buf = cmd->args.del.conn_buf;
-    if (buf != NULL)
-        kfree(buf);
-
-    buf = cmd->args.del.stage1_data;
-    if (buf != NULL)
-        kfree(buf);
+    if (cmd->args.del.conn_buf != NULL) {
+        buf = cmd->args.del.conn_buf->stage1_data;
+        if (buf != NULL)
+            kfree(buf);
+        kfree(cmd->args.del.conn_buf);
+    }
 
     if (cmd->args.del.stage2_file != NULL) {
         buf = cmd->args.del.stage2_file->buffer;
@@ -191,6 +187,38 @@ void cleanup_cmd_announce(void *priv_data)
     rtskb = cmd->args.announce.rtskb;
     if (rtskb != NULL)
         kfree_rtskb(rtskb);
+}
+
+
+
+void cleanup_cmd_detach(void *priv_data)
+{
+    struct rtcfg_cmd *cmd = (struct rtcfg_cmd *)priv_data;
+    void             *buf;
+
+
+    /* unlock proc and update directory structure */
+    rtcfg_unlockwr_proc(cmd->ifindex);
+
+    if (cmd->args.detach.conn_buf) {
+        buf = cmd->args.detach.conn_buf->stage1_data;
+        if (buf != NULL)
+            kfree(buf);
+        kfree(cmd->args.detach.conn_buf);
+    }
+
+    if (cmd->args.detach.stage2_file != NULL) {
+        buf = cmd->args.detach.stage2_file->buffer;
+        if (buf)
+            vfree(buf);
+        kfree(cmd->args.detach.stage2_file);
+    }
+
+    if (cmd->args.detach.station_addr_list)
+        kfree(cmd->args.detach.station_addr_list);
+
+    if (cmd->args.detach.stage2_chain)
+        kfree_rtskb(cmd->args.detach.stage2_chain);
 }
 
 
@@ -348,10 +376,10 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 
         case RTCFG_IOC_DEL:
             cmd.args.del.conn_buf    = NULL;
-            cmd.args.del.stage1_data = NULL;
             cmd.args.del.stage2_file = NULL;
 
-            /* lock proc structure for modification */
+            /* lock proc structure for modification
+               (unlock in cleanup_cmd_del) */
             rtcfg_lockwr_proc(cmd.ifindex);
 
             ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
@@ -391,6 +419,23 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
             ret = rtpc_dispatch_call(rtcfg_event_handler,
                                      cmd.args.ready.timeout, &cmd,
                                      sizeof(cmd), NULL, NULL);
+            break;
+
+        case RTCFG_IOC_DETACH:
+            do {
+                cmd.args.detach.conn_buf          = NULL;
+                cmd.args.detach.stage2_file       = NULL;
+                cmd.args.detach.station_addr_list = NULL;
+                cmd.args.detach.stage2_chain      = NULL;
+
+                /* lock proc structure for modification
+                   (unlock in cleanup_cmd_detach) */
+                rtcfg_lockwr_proc(cmd.ifindex);
+
+                ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
+                                         sizeof(cmd), NULL,
+                                         cleanup_cmd_detach);
+            } while (ret == -EAGAIN);
             break;
 
         default:

@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 
 
 static int rtcfg_client_get_frag(int ifindex, struct rt_proc_call *call);
+static void rtcfg_client_detach(int ifindex, struct rt_proc_call *call);
 static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb);
 static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb);
 static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb);
@@ -44,10 +45,15 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb);
 int rtcfg_main_state_client_0(int ifindex, RTCFG_EVENT event_id,
                               void* event_data)
 {
-    struct rtskb *rtskb = (struct rtskb *)event_data;
+    struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
 
 
     switch (event_id) {
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
+
         case RTCFG_FRM_STAGE_1_CFG:
             rtcfg_client_recv_stage_1(ifindex, rtskb);
             break;
@@ -64,6 +70,7 @@ int rtcfg_main_state_client_0(int ifindex, RTCFG_EVENT event_id,
             break;
 
         default:
+            rtos_res_unlock(&device[ifindex].dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -77,8 +84,8 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
                               void* event_data)
 {
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
-    struct rtskb        *rtskb;
-    struct rt_proc_call *call;
+    struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
     struct rtcfg_cmd    *cmd_event;
     int                 ret;
 
@@ -86,8 +93,6 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
     switch (event_id) {
         case RTCFG_CMD_CLIENT:
             /* second trial (buffer was probably too small) */
-            rtos_res_lock(&rtcfg_dev->dev_lock);
-
             rtcfg_queue_blocking_call(ifindex,
                 (struct rt_proc_call *)event_data);
 
@@ -98,13 +103,12 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
             return -CALL_PENDING;
 
         case RTCFG_CMD_ANNOUNCE:
-            call      = (struct rt_proc_call *)event_data;
             cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
-            if (cmd_event->args.announce.burstrate == 0)
+            if (cmd_event->args.announce.burstrate == 0) {
+                rtos_res_unlock(&rtcfg_dev->dev_lock);
                 return -EINVAL;
-
-            rtos_res_lock(&rtcfg_dev->dev_lock);
+            }
 
             rtcfg_queue_blocking_call(ifindex,
                 (struct rt_proc_call *)event_data);
@@ -127,9 +131,11 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
 
             return -CALL_PENDING;
 
-        case RTCFG_FRM_ANNOUNCE_NEW:
-            rtskb = (struct rtskb *)event_data;
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
 
+        case RTCFG_FRM_ANNOUNCE_NEW:
             if (rtcfg_client_recv_announce(ifindex, rtskb) == 0) {
                 rtcfg_send_announce_reply(ifindex,
                                           rtskb->mac.ethernet->h_source);
@@ -140,8 +146,6 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
             break;
 
         case RTCFG_FRM_ANNOUNCE_REPLY:
-            rtskb = (struct rtskb *)event_data;
-
             if (rtcfg_client_recv_announce(ifindex, rtskb) == 0)
                 rtos_res_unlock(&device[ifindex].dev_lock);
 
@@ -149,17 +153,18 @@ int rtcfg_main_state_client_1(int ifindex, RTCFG_EVENT event_id,
             break;
 
         case RTCFG_FRM_READY:
-            rtskb = (struct rtskb *)event_data;
             if (rtcfg_client_recv_ready(ifindex, rtskb) == 0)
                 rtos_res_unlock(&device[ifindex].dev_lock);
             break;
 
         case RTCFG_FRM_STAGE_1_CFG:
             /* ignore */
-            kfree_rtskb((struct rtskb *)event_data);
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            kfree_rtskb(rtskb);
             break;
 
         default:
+            rtos_res_unlock(&rtcfg_dev->dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -173,14 +178,17 @@ int rtcfg_main_state_client_announced(int ifindex, RTCFG_EVENT event_id,
                                       void* event_data)
 {
     struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
     struct rtcfg_device *rtcfg_dev;
-    struct rt_proc_call *call;
 
 
     switch (event_id) {
         case RTCFG_CMD_ANNOUNCE:
-            call = (struct rt_proc_call *)event_data;
             return rtcfg_client_get_frag(ifindex, call);
+
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
 
         case RTCFG_FRM_STAGE_2_CFG:
             rtcfg_client_recv_stage_2_cfg(ifindex, rtskb);
@@ -223,10 +231,12 @@ int rtcfg_main_state_client_announced(int ifindex, RTCFG_EVENT event_id,
 
         case RTCFG_FRM_STAGE_1_CFG:
             /* ignore */
+            rtos_res_unlock(&device[ifindex].dev_lock);
             kfree_rtskb(rtskb);
             break;
 
         default:
+            rtos_res_unlock(&device[ifindex].dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -240,14 +250,17 @@ int rtcfg_main_state_client_announced(int ifindex, RTCFG_EVENT event_id,
 int rtcfg_main_state_client_all_known(int ifindex, RTCFG_EVENT event_id,
                                       void* event_data)
 {
-    struct rtskb *rtskb = (struct rtskb *)event_data;
-    struct rt_proc_call *call;
+    struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
 
 
     switch (event_id) {
         case RTCFG_CMD_ANNOUNCE:
-            call = (struct rt_proc_call *)event_data;
             return rtcfg_client_get_frag(ifindex, call);
+
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
 
         case RTCFG_FRM_STAGE_2_CFG_FRAG:
             rtcfg_client_recv_stage_2_frag(ifindex, rtskb);
@@ -273,10 +286,12 @@ int rtcfg_main_state_client_all_known(int ifindex, RTCFG_EVENT event_id,
 
         case RTCFG_FRM_STAGE_1_CFG:
             /* ignore */
+            rtos_res_unlock(&device[ifindex].dev_lock);
             kfree_rtskb(rtskb);
             break;
 
         default:
+            rtos_res_unlock(&device[ifindex].dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -290,10 +305,15 @@ int rtcfg_main_state_client_all_frames(int ifindex, RTCFG_EVENT event_id,
                                        void* event_data)
 {
     struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
     struct rtcfg_device *rtcfg_dev;
 
 
     switch (event_id) {
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
+
         case RTCFG_FRM_ANNOUNCE_NEW:
             if (rtcfg_client_recv_announce(ifindex, rtskb) == 0) {
                 rtcfg_send_announce_reply(ifindex,
@@ -340,10 +360,12 @@ int rtcfg_main_state_client_all_frames(int ifindex, RTCFG_EVENT event_id,
 
         case RTCFG_FRM_STAGE_1_CFG:
             /* ignore */
+            rtos_res_unlock(&device[ifindex].dev_lock);
             kfree_rtskb(rtskb);
             break;
 
         default:
+            rtos_res_unlock(&device[ifindex].dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -356,16 +378,13 @@ int rtcfg_main_state_client_2(int ifindex, RTCFG_EVENT event_id,
                               void* event_data)
 {
     struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
     struct rtcfg_device *rtcfg_dev;
-    struct rt_proc_call *call;
 
 
     switch (event_id) {
         case RTCFG_CMD_READY:
-            call = (struct rt_proc_call *)event_data;
-
             rtcfg_dev = &device[ifindex];
-            rtos_res_lock(&rtcfg_dev->dev_lock);
 
             if (rtcfg_dev->stations_ready == rtcfg_dev->other_stations)
                 rtpc_complete_call(call, 0);
@@ -382,6 +401,10 @@ int rtcfg_main_state_client_2(int ifindex, RTCFG_EVENT event_id,
             rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             return -CALL_PENDING;
+
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
 
         case RTCFG_FRM_READY:
             if (rtcfg_client_recv_ready(ifindex, rtskb) == 0)
@@ -403,10 +426,12 @@ int rtcfg_main_state_client_2(int ifindex, RTCFG_EVENT event_id,
 
         case RTCFG_FRM_STAGE_1_CFG:
             /* ignore */
+            rtos_res_unlock(&device[ifindex].dev_lock);
             kfree_rtskb(rtskb);
             break;
 
         default:
+            rtos_res_unlock(&device[ifindex].dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -420,10 +445,15 @@ int rtcfg_main_state_client_ready(int ifindex, RTCFG_EVENT event_id,
                                   void* event_data)
 {
     struct rtskb        *rtskb = (struct rtskb *)event_data;
+    struct rt_proc_call *call  = (struct rt_proc_call *)event_data;
     struct rtcfg_device *rtcfg_dev;
 
 
     switch (event_id) {
+        case RTCFG_CMD_DETACH:
+            rtcfg_client_detach(ifindex, call);
+            break;
+
         case RTCFG_FRM_READY:
             if (rtcfg_client_recv_ready(ifindex, rtskb) == 0) {
                 rtcfg_dev = &device[ifindex];
@@ -448,12 +478,11 @@ int rtcfg_main_state_client_ready(int ifindex, RTCFG_EVENT event_id,
             break;
 
         case RTCFG_FRM_STAGE_1_CFG:
-            /* ignore, TODO: reply!
-            kfree_rtskb(rtskb);*/
             rtcfg_client_update_server(ifindex, rtskb);
             break;
 
         default:
+            rtos_res_unlock(&device[ifindex].dev_lock);
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
             return -EINVAL;
@@ -472,8 +501,6 @@ static int rtcfg_client_get_frag(int ifindex, struct rt_proc_call *call)
 
 
     cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     if ((rtcfg_dev->flags & RTCFG_FLAG_STAGE_2_DATA) == 0) {
         rtos_res_unlock(&rtcfg_dev->dev_lock);
@@ -503,6 +530,37 @@ static int rtcfg_client_get_frag(int ifindex, struct rt_proc_call *call)
 
 
 
+static void rtcfg_client_detach(int ifindex, struct rt_proc_call *call)
+{
+    struct rtcfg_device *rtcfg_dev = &device[ifindex];
+    struct rtcfg_cmd    *cmd_event;
+
+
+    cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
+
+    cmd_event->args.detach.station_addr_list =
+        rtcfg_dev->spec.clt.station_addr_list;
+    cmd_event->args.detach.stage2_chain = rtcfg_dev->spec.clt.stage2_chain;
+
+    while (1) {
+        call = rtcfg_dequeue_blocking_call(ifindex);
+        if (call == NULL)
+            break;
+
+        rtpc_complete_call(call, -ENODEV);
+    }
+
+    if (rtcfg_dev->flags & FLAG_TIMER_STARTED)
+        rtos_task_delete(&rtcfg_dev->timer_task);
+    rtcfg_reset_device(ifindex);
+
+    rtcfg_next_main_state(cmd_event->ifindex, RTCFG_MAIN_OFF);
+
+    rtos_res_unlock(&rtcfg_dev->dev_lock);
+}
+
+
+
 /*** Client Frame Event Handlers ***/
 
 static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
@@ -518,6 +576,7 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_stage_1_cfg)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid stage_1_cfg frame\n");
         kfree_rtskb(rtskb);
         return;
@@ -527,8 +586,6 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
     __rtskb_pull(rtskb, sizeof(struct rtcfg_frm_stage_1_cfg));
 
     addr_type = stage_1_cfg->addr_type;
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     switch (stage_1_cfg->addr_type) {
         case RTCFG_ADDR_IP:
@@ -675,8 +732,8 @@ static int rtcfg_add_to_station_list(struct rtcfg_device *rtcfg_dev,
 
 /* Notes:
  *  o rtcfg_client_recv_announce does not release the passed rtskb.
- *  o If no error occured, rtcfg_client_recv_announce returns without releasing
- *    the devices lock.
+ *  o On success, rtcfg_client_recv_announce returns without releasing the
+ *    device lock.
  */
 static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
 {
@@ -690,12 +747,11 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
     announce_frm = (struct rtcfg_frm_announce *)rtskb->data;
 
     if (rtskb->len < sizeof(struct rtcfg_frm_announce)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid announce frame (id: %d)\n",
                     announce_frm->head.id);
         return -EINVAL;
     }
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     switch (announce_frm->addr_type) {
         case RTCFG_ADDR_IP:
@@ -808,6 +864,7 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_stage_2_cfg)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid stage_2_cfg frame\n");
         kfree_rtskb(rtskb);
         return;
@@ -829,8 +886,6 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
         else
             rtcfg_dev->flags |= FLAG_TIMER_STARTED;
     }
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     /* add server to station list */
     if (rtcfg_add_to_station_list(rtcfg_dev,
@@ -881,6 +936,7 @@ static void rtcfg_client_recv_stage_2_frag(int ifindex, struct rtskb *rtskb)
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_stage_2_cfg_frag)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid stage_2_cfg_frag frame\n");
         kfree_rtskb(rtskb);
         return;
@@ -888,8 +944,6 @@ static void rtcfg_client_recv_stage_2_frag(int ifindex, struct rtskb *rtskb)
 
     stage_2_frag = (struct rtcfg_frm_stage_2_cfg_frag *)rtskb->data;
     __rtskb_pull(rtskb, sizeof(struct rtcfg_frm_stage_2_cfg_frag));
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     data_len = MIN(rtcfg_dev->spec.clt.cfg_len - rtcfg_dev->spec.clt.cfg_offs,
                    rtskb->len);
@@ -920,8 +974,8 @@ static void rtcfg_client_recv_stage_2_frag(int ifindex, struct rtskb *rtskb)
 
 
 /* Notes:
- *  o If no error occured, rtcfg_client_recv_ready returns without releasing
- *    the devices lock.
+ *  o On success, rtcfg_client_recv_ready returns without releasing the
+ *    device lock.
  */
 static int rtcfg_client_recv_ready(int ifindex, struct rtskb *rtskb)
 {
@@ -933,12 +987,11 @@ static int rtcfg_client_recv_ready(int ifindex, struct rtskb *rtskb)
     ready_frm = (struct rtcfg_frm_simple *)rtskb->data;
 
     if (rtskb->len < sizeof(struct rtcfg_frm_simple)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid ready frame\n");
         kfree_rtskb(rtskb);
         return -EINVAL;
     }
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     for (i = 0; i < rtcfg_dev->stations_found; i++)
         /* Ethernet-specific! */
@@ -970,12 +1023,11 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
     dead_station_frm = (struct rtcfg_frm_dead_station *)rtskb->data;
 
     if (rtskb->len < sizeof(struct rtcfg_frm_dead_station)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid dead station frame\n");
         kfree_rtskb(rtskb);
         return;
     }
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     switch (dead_station_frm->addr_type) {
         case RTCFG_ADDR_IP:
@@ -1046,6 +1098,7 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_stage_1_cfg)) {
+        rtos_res_unlock(&rtcfg_dev->dev_lock);
         RTCFG_DEBUG(1, "RTcfg: received invalid stage_1_cfg frame\n");
         kfree_rtskb(rtskb);
         return;
@@ -1055,8 +1108,6 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
     __rtskb_pull(rtskb, sizeof(struct rtcfg_frm_stage_1_cfg));
 
     addr_type = stage_1_cfg->addr_type;
-
-    rtos_res_lock(&rtcfg_dev->dev_lock);
 
     switch (stage_1_cfg->addr_type) {
         case RTCFG_ADDR_IP:

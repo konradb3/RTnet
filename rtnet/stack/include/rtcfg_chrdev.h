@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ typedef enum {
     RTCFG_CMD_CLIENT,
     RTCFG_CMD_ANNOUNCE,
     RTCFG_CMD_READY,
-    RTCFG_CMD_DOWN,
+    RTCFG_CMD_DETACH,
 
     /* internal usage only */
     RTCFG_TIMER,
@@ -101,7 +101,6 @@ struct rtcfg_cmd {
 
             /* internal usage only */
             struct rtcfg_connection *conn_buf;
-            void                    *stage1_data;
             struct rtcfg_file       *stage2_file;
         } del;
 
@@ -134,6 +133,14 @@ struct rtcfg_cmd {
         struct {
             unsigned int            timeout;
         } ready;
+
+        struct {
+            /* internal usage only */
+            struct rtcfg_connection *conn_buf;
+            struct rtcfg_file       *stage2_file;
+            struct rtcfg_station    *station_addr_list;
+            struct rtskb            *stage2_chain;
+        } detach;
     } args;
 
     /* internal usage only */
@@ -156,7 +163,7 @@ struct rtcfg_cmd {
                                      struct rtcfg_cmd)
 #define RTCFG_IOC_READY         _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_READY,   \
                                      struct rtcfg_cmd)
-#define RTCFG_IOC_DOWN          _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DOWN,    \
+#define RTCFG_IOC_DETACH        _IOW(RTNET_IOC_TYPE_RTCFG, RTCFG_CMD_DETACH,  \
                                      struct rtcfg_cmd)
 
 #endif /* __RTCFG_H_ */

@@ -1,7 +1,7 @@
                      RTnet Configuration Service (RTcfg)
                      ===================================
 
-                                Revision: 1.7
+                                Revision: 1.8
 
 
 RTcfg is a configuration service for setting up a RTnet network and
@@ -359,6 +359,9 @@ and routing tables.
 Management Tool
 ===============
 
+NOTE: The following specifications are OPTIONAL. They describe the internal
+      realisation of RTcfg as applied to the implementation in RTnet.
+
 The RTcfg server and client functionality is controlled by the command line
 tool rtcfg.
 
@@ -391,7 +394,8 @@ connected to the specified device <dev>. <address> can be either an IP address
 (A.B.C.D) or a physical address (AA:BB:CC:DD:EE:FF). If a physical address is
 explicitely assigned using <hw_address>, the <address> parameter must define
 the client's IP address. Optionally, files can specified which will be passed
-during the different configuration stages. <timeout> (in milliseconds) defines
+during the different configuration stages. If <stage1_file> is "-", rtcfg will
+read the stage 1 data from standard input. <timeout> (in milliseconds) defines
 the internal timeout after which a half-finished client configuration is reset
 to its initial state again. By default this reset is never performed.
 
@@ -414,6 +418,11 @@ startup phase, and waits until all other stations are reporting to be ready as
 well. If <timeout> (in milliseconds) is given, rtcfg will return an error code
 when the synchronisation cannot be completed within the specified time. The
 default timeout is infinite.
+
+rtcfg <dev> detach
+
+Stops the RTcfg client on the specified device <dev>. Afterwards, the device
+can be re-configured to act as server or client.
 
 
 
@@ -451,106 +460,10 @@ stations are reporting to be ready as well. If <timeout> (in milliseconds) is
 given, rtcfg will return an error code when the synchronisation cannot be
 completed within the specified time. The default timeout is infinite.
 
+rtcfg <dev> detach
+
+Stops the RTcfg client on the specified device <dev>. Afterwards, the device
+can be re-configured to act as server or client.
 
 
-Example
--------
-
-This examples demonstrates how RTcfg can be used to start a RTnet/RTmac
-network. With the current version 0.6.1, only a common startup is possible.
-Future discipline implementations will also support adding new stations (with
-known addresses!) to the network during runtime. These implementations will
-then benefit from the stage 1 configuration mechanism.
-
-
-rtnetserver.sh:
-
-echo "Starting RTnet (RTmac master/RTcfg server)..."
-# basic setup
-rtifconfig rteth0 up $MYIP 255.255.255.0
-
-# RTmac-specific stuff, depends on the discipline
-# ***how it may look like in the future...***
-#rtmacconfig_tdma rteth0 master 2000
-#rtmacconfig_tdma rteth0 slot 0 -s 1500
-
-# setup the RTcfg server
-rtcfg rteth0 server
-rtcfg rteth0 add 192.168.0.2 -stage1 client2-1.sh -stage2 client2-2.sh
-rtcfg rteth0 add 192.168.0.3 -stage1 client3-1.sh -stage2 client3-2.sh
-[...]
-
-# wait for the configuration to be completed
-rtcfg rteth0 wait
-
-# setup RTmac according to version 0.6.1 and earlier
-# (with precautious delays)
-rtifconfig rteth0 mac master 2000
-rtifconfig rteth0 mac add 192.168.0.2 200
-rtifconfig rteth0 mac add 192.168.0.3 400
-sleep 5
-rtifconfig rteth0 mac up
-sleep 10
-
-rtcfg rteth0 ready
-echo "RTnet is running now."
-EOF
-
-
-client2-1.sh:
-
-# RTmac-specific stuff, depends on the discipline
-# ***how it may look like in the future...***
-#rtmacconfig_tdma rteth0 slot 200 -s 1000
-EOF
-
-
-client2-2.sh:
-
-echo "Hello, I'm client 192.168.0.2!"
-EOF
-
-
-client3-1.sh:
-
-# RTmac-specific stuff, depends on the discipline
-# ***how it may look like in the future...***
-#rtmacconfig_tdma rteth0 slot 300 -s 1500
-EOF
-
-
-client3-2.sh:
-
-echo "Hello, I'm client 192.168.0.3!"
-EOF
-
-
-rtnetclient.sh:
-
-echo "Starting RTnet (client)..."
-# basic setup
-rtifconfig rteth0 up $MY_IP 255.255.255.0
-
-# wait for the first configuration stage
-rtcfg rteth0 client -f /tmp/my_stage1_config
-
-# run the stage 1 script
-chmod u+x /tmp/my_stage1_config
-/tmp/my_stage1_config
-
-# announce myself and wait for the second stage
-rtcfg rteth0 announce -f /tmp/my_stage2_config
-
-# setup RTmac according to version 0.6.1 and earlier
-rtifconfig rteth0 mac client
-
-# run the stage 2 script
-chmod u+x /tmp/my_stage2_config
-/tmp/my_stage2_config
-
-rtcfg rteth0 ready
-echo "RTnet is running now."
-EOF
-
-
-2003, 2004, Jan Kiszka <jan.kiszka-at-web.de>
+2003-2005, Jan Kiszka <jan.kiszka-at-web.de>

@@ -50,7 +50,8 @@ connected to the specified device <dev>. <address> can be either an IP address
 (A.B.C.D) or a physical address (AA:BB:CC:DD:EE:FF). If a physical address is
 explicitely assigned using <hw_address>, the <address> parameter must define
 the client's IP address. Optionally, files can specified which will be passed
-during the different configuration stages. <timeout> (in milliseconds) defines
+during the different configuration stages. If <stage1_file> is "-", rtcfg will
+read the stage 1 data from standard input. <timeout> (in milliseconds) defines
 the internal timeout after which a half-finished client configuration is reset
 to its initial state again. By default this reset is never performed.
 
@@ -73,6 +74,11 @@ startup phase, and waits until all other stations are reporting to be ready as
 well. If <timeout> (in milliseconds) is given, rtcfg will return an error code
 when the synchronisation cannot be completed within the specified time. The
 default timeout is infinite.
+
+rtcfg <dev> detach
+
+Stops the RTcfg server on the specified device <dev>. Afterwards, the device
+can be re-configured to act as server or client.
 
 
 Client Commands
@@ -109,6 +115,11 @@ stations are reporting to be ready as well. If <timeout> (in milliseconds) is
 given, rtcfg will return an error code when the synchronisation cannot be
 completed within the specified time. The default timeout is infinite.
 
+rtcfg <dev> detach
+
+Stops the RTcfg client on the specified device <dev>. Afterwards, the device
+can be re-configured to act as server or client.
+
 
 Module Parameters
 -----------------
@@ -121,4 +132,4 @@ num_rtskbs      Number of realtime socket buffers used by the rtcfg module. You
                 working with multiple interfaces.
 
 
-2003-2004, Jan Kiszka <jan.kiszka-at-web.de>
+2003-2005, Jan Kiszka <jan.kiszka-at-web.de>

@@ -108,6 +108,7 @@ void rtcfg_next_main_state(int ifindex, RTCFG_MAIN_STATE state);
 void rtcfg_queue_blocking_call(int ifindex, struct rt_proc_call *call);
 struct rt_proc_call *rtcfg_dequeue_blocking_call(int ifindex);
 void rtcfg_complete_cmd(int ifindex, RTCFG_EVENT event_id, int result);
+void rtcfg_reset_device(int ifindex);
 
 void rtcfg_init_state_machines(void);
 void rtcfg_cleanup_state_machines(void);

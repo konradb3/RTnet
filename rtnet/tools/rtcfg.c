@@ -58,13 +58,15 @@ void help(void)
         "\t      [-stage2 <stage2_file>] [-t <timeout>]\n"
         "\trtcfg <dev> del <address>\n"
         "\trtcfg <dev> wait [-t <timeout>]\n"
-        "\trtcfg <dev> ready [-t <timeout>]\n\n"
+        "\trtcfg <dev> ready [-t <timeout>]\n"
+        "\trtcfg <dev> detach\n\n"
         "usage (client):\n"
         "\trtcfg <dev> client [-t <timeout>] [-c|-f <stage1_file>] "
             "[-m maxstations]\n"
         "\trtcfg <dev> announce [-t <timeout>] [-c|-f <stage2_file>]\n"
         "\t      [-b burstrate] [-r]\n"
-        "\trtcfg <dev> ready [-t <timeout>]\n");
+        "\trtcfg <dev> ready [-t <timeout>]\n"
+        "\trtcfg <dev> detach\n");
 
     exit(1);
 }
@@ -504,6 +506,20 @@ void cmd_ready(int argc, char *argv[])
 
 
 
+void cmd_detach(int argc, char *argv[])
+{
+    if (argc > 3)
+        help();
+
+    if (ioctl(f, RTCFG_IOC_DETACH, &cmd) < 0) {
+        perror("ioctl");
+        exit(1);
+    }
+    exit(0);
+}
+
+
+
 int main(int argc, char *argv[])
 {
     if ((argc < 3) || (strcmp(argv[1], "--help") == 0))
@@ -534,6 +550,9 @@ int main(int argc, char *argv[])
         cmd_announce(argc, argv);
     if (strcmp(argv[2], "ready") == 0)
         cmd_ready(argc, argv);
+
+    if (strcmp(argv[2], "detach") == 0)
+        cmd_detach(argc, argv);
 
     help();
 
