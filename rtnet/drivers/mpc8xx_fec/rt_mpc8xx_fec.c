@@ -199,6 +199,7 @@ struct fec_enet_private {
 	struct	net_device_stats stats;
 	uint	tx_full;
 	rtos_spinlock_t lock;
+	rtos_irq_t irq_handle;
 
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 	uint	phy_id;
@@ -226,7 +227,7 @@ static int  fec_enet_open(struct rtnet_device *rtev);
 static int  fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void fec_enet_tx(struct rtnet_device *rtdev);
 static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void fec_enet_interrupt(unsigned int irq, void *rtdev_id);
+static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt);
 static int  fec_enet_close(struct rtnet_device *dev);
 static void fec_restart(struct rtnet_device *rtdev, int duplex);
 static void fec_stop(struct rtnet_device *rtdev);
@@ -332,6 +333,8 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	struct fec_enet_private *fep;
 	volatile fec_t	*fecp;
 	volatile cbd_t	*bdp;
+	unsigned long	flags;
+	rtos_time_t	time;
 
 	RT_DEBUG(__FUNCTION__": ...\n");
 
@@ -378,9 +381,19 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	flush_dcache_range((unsigned long)skb->data,
 			   (unsigned long)skb->data + skb->len);
 
-	rtos_res_lock(&rtdev->xmit_lock);
-	rtos_irq_disable(rtdev->irq);
+#if 0
+	rtos_irq_disable(&fep->irq_handle);
 	rtos_spin_lock(&fep->lock);
+#else
+	rtos_spin_lock_irqsave(&fep->lock, flags);
+#endif
+
+	/* Get and patch time stamp just before the transmission */
+	if (skb->xmit_stamp) {
+		rtos_get_time(&time);
+		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+					       *skb->xmit_stamp);
+	}
 
 	/* Send it on its way.  Tell FEC its ready, interrupt when done,
 	 * its the last BD of the frame, and to put the CRC on the end.
@@ -409,9 +422,12 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	fep->cur_tx = (cbd_t *)bdp;
 
+#if 0
 	rtos_spin_unlock(&fep->lock);
-	rtos_irq_enable(rtdev->irq);
-	rtos_res_unlock(&rtdev->xmit_lock);
+	rtos_irq_enable(&fep->irq_handle);
+#else
+	rtos_spin_unlock_irqrestore(&fep->lock, flags);
+#endif
 
 	return 0;
 }
@@ -472,10 +488,10 @@ fec_timeout(struct net_device *dev)
 /* The interrupt handler.
  * This is called from the MPC core interrupt.
  */
-static	void
-fec_enet_interrupt(unsigned int irq, void *rtdev_id)
+static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct	fec_enet_private *fep = rtdev->priv;
 	int packets = 0;
 	volatile fec_t	*fecp;
 	uint	int_events;
@@ -521,7 +537,8 @@ fec_enet_interrupt(unsigned int irq, void *rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_end(irq);
+	rtos_irq_end(&fep->irq_handle);
+	RTOS_IRQ_RETURN_HANDLED();
 }
 
 
@@ -529,9 +546,8 @@ static void
 fec_enet_tx(struct rtnet_device *rtdev)
 {
 	struct rtskb *skb;
-	struct	fec_enet_private *fep;
+	struct	fec_enet_private *fep = rtdev->priv;
 	volatile cbd_t	*bdp;
-	fep = rtdev->priv;
 	rtos_spin_lock(&fep->lock);
 	bdp = fep->dirty_tx;
 
@@ -1562,6 +1578,8 @@ fec_enet_open(struct rtnet_device *rtdev)
 	 * a simple way to do that.
 	 */
 
+	RTNET_MOD_INC_USE_COUNT;
+
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 	fep->sequence_done = 0;
 	fep->link = 0;
@@ -1605,11 +1623,10 @@ fec_enet_open(struct rtnet_device *rtdev)
 		return 0;		/* Success */
 	}
 	return -ENODEV;		/* No PHY we understand */
-#else
+#else	/* !CONFIG_RTAI_RTNET_USE_MDIO */
 	fep->link = 1;
 	rtnetif_start_queue(rtdev);
 
-        MOD_INC_USE_COUNT;
 	return 0;	/* Success */
 #endif	/* CONFIG_RTAI_RTNET_USE_MDIO */
 
@@ -1622,9 +1639,9 @@ fec_enet_close(struct rtnet_device *rtdev)
 	*/
 	rtnetif_stop_queue(rtdev);
 
-	MOD_DEC_USE_COUNT;
 	fec_stop(rtdev);
 
+	RTNET_MOD_DEC_USE_COUNT;
 	return 0;
 }
 
@@ -1950,10 +1967,12 @@ int __init fec_enet_init(void)
 		printk(KERN_ERR "enet: Could not allocate ethernet device.\n");
 		return -1;
 	}
+	rtdev_alloc_name(rtdev, "rteth%d");
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
-	SET_MODULE_OWNER(rtdev);
-	fep = (struct fec_enet_private *)rtdev->priv;
+	RTNET_SET_MODULE_OWNER(rtdev);
+	rtdev->vers = RTDEV_VERS_2_0;
 
+	fep = (struct fec_enet_private *)rtdev->priv;
 	fecp = &(immap->im_cpm.cp_fec);
 
 	/* Whack a reset.  We should wait for this.
@@ -2040,16 +2059,16 @@ int __init fec_enet_init(void)
 	bdp--;
 	bdp->cbd_sc |= BD_SC_WRAP;
 
-	/* Install our interrupt handler. */
+	/* Install our interrupt handler.
+	*/
 	rt_stack_connect(rtdev, &STACK_manager);
-	i = rtos_irq_request(FEC_INTERRUPT,
-				      fec_enet_interrupt, rtdev);
-	if (i) {
-		MOD_DEC_USE_COUNT;
+	if ((i = rtos_irq_request(&fep->irq_handle, FEC_INTERRUPT,
+				  fec_enet_interrupt, rtdev))) {
+		printk(KERN_ERR "Couldn't request IRQ %d\n", rtdev->irq);
+		rtdev_free(rtdev);
 		return i;
 	}
-	rtos_irq_enable(FEC_INTERRUPT);
-
+	rtos_irq_enable(&fep->irq_handle);
 
 	rtdev->base_addr = (unsigned long)fecp;
 
@@ -2094,12 +2113,16 @@ int __init fec_enet_init(void)
 	if (!rx_pool_size)
 		rx_pool_size = RX_RING_SIZE * 2;
 	if (rtskb_pool_init(&fep->skb_pool, rx_pool_size) < rx_pool_size) {
+		rtos_irq_disable(&fep->irq_handle);
+		rtos_irq_free(&fep->irq_handle);
 		rtskb_pool_release(&fep->skb_pool);
 		rtdev_free(rtdev);
 		return -ENOMEM;
 	}
 
 	if ((i = rt_register_rtnetdev(rtdev))) {
+		rtos_irq_disable(&fep->irq_handle);
+		rtos_irq_free(&fep->irq_handle);
 		rtskb_pool_release(&fep->skb_pool);
 		rtdev_free(rtdev);
 		return i;
@@ -2404,8 +2427,8 @@ static void __exit fec_enet_cleanup(void)
 	struct fec_enet_private *fep = rtdev->priv;
 
 	if (rtdev) {
-		rtos_irq_disable(rtdev->irq);
-		rtos_irq_free(rtdev->irq);
+		rtos_irq_disable(&fep->irq_handle);
+		rtos_irq_free(&fep->irq_handle);
 
 		consistent_free(fep->rx_bd_base);
 

@@ -167,12 +167,13 @@ struct scc_enet_private {
 	struct	net_device_stats stats;
 	uint	tx_full;
 	rtos_spinlock_t lock;
+	rtos_irq_t irq_handle;
 };
 
 static int scc_enet_open(struct rtnet_device *rtdev);
 static int scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static void scc_enet_interrupt(unsigned int irq, void *rtdev_id);
+static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt);
 static int scc_enet_close(struct rtnet_device *rtdev);
 
 #ifdef ORIGINAL_VERSION
@@ -197,12 +198,12 @@ static int CPMVEC_ENET;
 static int
 scc_enet_open(struct rtnet_device *rtdev)
 {
+        MOD_INC_USE_COUNT;
+
 	/* I should reset the ring buffers here, but I don't yet know
 	 * a simple way to do that.
 	 */
 	rtnetif_start_queue(rtdev);
-
-        MOD_INC_USE_COUNT;
 
 	return 0;					/* Always succeed */
 }
@@ -212,6 +213,8 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	struct scc_enet_private *cep = (struct scc_enet_private *)rtdev->priv;
 	volatile cbd_t	*bdp;
+	unsigned long flags;
+	rtos_time_t time;
 
 	RT_DEBUG(__FUNCTION__": ...\n");
 
@@ -259,9 +262,19 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
 	// *** RTnet ***
-	rtos_res_lock(&rtdev->xmit_lock);
-	rtos_irq_disable(rtdev->irq);
+#if 0
+	rtos_irq_disable(&cep->irq_handle);
 	rtos_spin_lock(&cep->lock);
+#else
+	rtos_spin_lock_irqsave(&cep->lock, flags);
+#endif
+
+	/* Get and patch time stamp just before the transmission */
+	if (skb->xmit_stamp) {
+		rtos_get_time(&time);
+		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+					       *skb->xmit_stamp);
+	}
 
 	/* Send it on its way.  Tell CPM its ready, interrupt when done,
 	 * its the last BD of the frame, and to put the CRC on the end.
@@ -285,9 +298,13 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	cep->cur_tx = (cbd_t *)bdp;
 
+	// *** RTnet ***
+#if 0
 	rtos_spin_unlock(&cep->lock);
-	rtos_irq_enable(rtdev->irq);
-	rtos_res_unlock(&rtdev->xmit_lock);
+	rtos_irq_enable(&cep->irq_handle);
+#else
+	rtos_spin_unlock_irqrestore(&cep->lock, flags);
+#endif
 
 	return 0;
 }
@@ -329,12 +346,11 @@ scc_enet_timeout(struct net_device *dev)
 /* The interrupt handler.
  * This is called from the CPM handler, not the MPC core interrupt.
  */
-static void
-scc_enet_interrupt(unsigned int irq, void *rtdev_id)
+static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)rtdev_id;
+	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
 	int packets = 0;
-	volatile struct	scc_enet_private *cep;
+	struct	scc_enet_private *cep;
 	volatile cbd_t	*bdp;
 	ushort	int_events;
 	int	must_restart;
@@ -465,8 +481,8 @@ scc_enet_interrupt(unsigned int irq, void *rtdev_id)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_end(irq);
-	return;
+	rtos_irq_end(&cep->irq_handle);
+	RTOS_IRQ_RETURN_HANDLED();
 }
 
 /* During a receive, the cur_rx points to the current incoming buffer.
@@ -737,8 +753,11 @@ int __init scc_enet_init(void)
 		printk(KERN_ERR "enet: Could not allocate ethernet device.\n");
 		return -1;
 	}
+	rtdev_alloc_name(rtdev, "rteth%d");
 	rt_rtdev_connect(rtdev, &RTDEV_manager);
-	SET_MODULE_OWNER(rtdev);
+	RTNET_SET_MODULE_OWNER(rtdev);
+	rtdev->vers = RTDEV_VERS_2_0;
+
 	cep = (struct scc_enet_private *)rtdev->priv;
 	rtos_spin_lock_init(&cep->lock);
 
@@ -956,15 +975,14 @@ int __init scc_enet_init(void)
 	/* Install our interrupt handler.
 	*/
 	rtdev->irq = CPM_IRQ_OFFSET + CPMVEC_ENET;
-	i = rtos_irq_request(rtdev->irq,
-				      scc_enet_interrupt, rtdev);
-	if (i) {
+	rt_stack_connect(rtdev, &STACK_manager);
+	if ((i = rtos_irq_request(&cep->irq_handle, rtdev->irq, 
+				  scc_enet_interrupt, rtdev))) {
 		printk(KERN_ERR "Couldn't request IRQ %d\n", rtdev->irq);
-		MOD_DEC_USE_COUNT;
+		rtdev_free(rtdev);
 		return i;
 	}
-	rt_stack_connect(rtdev, &STACK_manager);
-	rtos_irq_enable(rtdev->irq);
+	rtos_irq_enable(&cep->irq_handle);
 	
 
 	/* Set GSMR_H to enable all normal operating modes.
@@ -1036,6 +1054,8 @@ int __init scc_enet_init(void)
 	if (!rx_pool_size)
 		rx_pool_size = RX_RING_SIZE * 2;
 	if (rtskb_pool_init(&cep->skb_pool, rx_pool_size) < rx_pool_size) {
+		rtos_irq_disable(&cep->irq_handle);
+		rtos_irq_free(&cep->irq_handle);
 		rtskb_pool_release(&cep->skb_pool);
 		rtdev_free(rtdev);
 		return -ENOMEM;
@@ -1043,6 +1063,8 @@ int __init scc_enet_init(void)
 
 	if ((i = rt_register_rtnetdev(rtdev))) {
 		printk(KERN_ERR "Couldn't register rtdev\n");
+		rtos_irq_disable(&cep->irq_handle);
+		rtos_irq_free(&cep->irq_handle);
 		rtskb_pool_release(&cep->skb_pool);
 		rtdev_free(rtdev);
 		return i;
@@ -1068,8 +1090,8 @@ static void __exit scc_enet_cleanup(void)
 	volatile scc_enet_t *ep;
 
 	if (rtdev) {
-		rtos_irq_disable(rtdev->irq);
-		rtos_irq_free(rtdev->irq);
+		rtos_irq_disable(&cep->irq_handle);
+		rtos_irq_free(&cep->irq_handle);
 
 		ep = (scc_enet_t *)(&cp->cp_dparam[PROFF_ENET]);
 		m8xx_cpm_dpfree(ep->sen_genscc.scc_rbase);
