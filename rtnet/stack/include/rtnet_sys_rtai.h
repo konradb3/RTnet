@@ -1,6 +1,6 @@
 /***
  *
- *  include/rtnet_sys_rai.h
+ *  include/rtnet_sys_rtai.h
  *
  *  RTnet - real-time networking subsystem
  *          RTOS abstraction layer - RTAI version
@@ -281,7 +281,7 @@ static inline void rtos_event_sem_signal(rtos_event_sem_t *event)
 }
 
 
-static inline int rtos_event_wait(rtos_event_sem_t *event)
+static inline int rtos_event_wait(rtos_event_t *event)
 {
     return rt_sem_wait(event);
 }
