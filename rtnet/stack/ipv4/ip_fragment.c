@@ -59,7 +59,7 @@ static struct ip_collector collector[COLLECTOR_COUNT];
 static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
 {
     int                 i;
-    unsigned int        flags;
+    unsigned long       flags;
     struct ip_collector *p_coll;
     struct iphdr        *iph = skb->nh.iph;
 
@@ -109,11 +109,12 @@ static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
  * */
 static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, int more_frags)
 {
-    int i;
-    unsigned int flags;
+    int                 i;
+    unsigned long       flags;
     struct ip_collector *p_coll;
-    struct iphdr *iph = skb->nh.iph;
-    struct rtskb *first_skb;
+    struct iphdr        *iph = skb->nh.iph;
+    struct rtskb        *first_skb;
+
 
     /* Search in existing collectors */
     for (i = 0; i < COLLECTOR_COUNT; i++)
@@ -201,9 +202,10 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
  */
 void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
 {
-    int i;
-    unsigned int flags;
+    int                 i;
+    unsigned long       flags;
     struct ip_collector *p_coll;
+
 
     for (i = 0; i < COLLECTOR_COUNT; i++)
     {
@@ -227,9 +229,10 @@ void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
  */
 static void cleanup_all_collectors(void)
 {
-    int i;
-    unsigned int flags;
+    int                 i;
+    unsigned long       flags;
     struct ip_collector *p_coll;
+
 
     for (i = 0; i < COLLECTOR_COUNT; i++)
     {
