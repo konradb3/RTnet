@@ -116,7 +116,7 @@ int rtcfg_do_main_event(int ifindex, RTCFG_EVENT event_id, void* event_data)
 
     rtos_res_lock(&device[ifindex].dev_lock);
 
-    main_state = device[ifindex].state
+    main_state = device[ifindex].state;
 
     RTCFG_DEBUG(3, "RTcfg: %s() rtdev=%d, event=%s, state=%s\n", __FUNCTION__,
                 ifindex, rtcfg_event[event_id], rtcfg_main_state[main_state]);
