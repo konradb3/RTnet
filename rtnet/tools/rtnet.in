@@ -251,7 +251,7 @@ case "$1" in
             $RTIFCONFIG rteth0 up $IPADDR $NETMASK_OPT
 
             echo -n "Stage 1: searching for master..."
-            /bin/sh -c "TDMACFG=$TDMACFG;IPADDR=$IPADDR;NETMASK_OPT=$NETMASK_OPT;`$RTCFG rteth0 client -c`"
+            /bin/sh -c "TDMACFG=$TDMACFG;IPADDR=$IPADDR;NETMASK_OPT=\"$NETMASK_OPT\";`$RTCFG rteth0 client -c`"
             echo
 
             echo -n "Stage 2: waiting for other slaves..."
