@@ -22247,8 +22247,8 @@ if test "${enable_examples+set}" = set; then
 else
   CONFIG_RTNET_EXAMPLES=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_EXAMPES}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_EXAMPES}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_EXAMPLES}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_EXAMPLES}" >&6
 
 
 if test "$CONFIG_RTNET_EXAMPLES" = "yes"; then
