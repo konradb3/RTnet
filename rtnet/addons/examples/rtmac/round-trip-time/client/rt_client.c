@@ -94,7 +94,7 @@ void process(void* arg)
                 count--;
             }
         } else {
-            rtos_task_wait_period();
+            rtos_task_wait_period(&xmit_task);
         }
 
         rtos_get_time(&time);

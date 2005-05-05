@@ -231,7 +231,7 @@ static inline void rtos_timer_stop(void)
     rt_timer_stop();
 }
 
-#define rtos_task_wait_period()     rt_task_wait_period()
+#define rtos_task_wait_period(task) rt_task_wait_period()
 #define rtos_busy_sleep(nanosecs)   rt_timer_spin(nanosecs)
 
 static inline void rtos_task_sleep_until(rtos_time_t *wakeup_time)
@@ -313,9 +313,9 @@ static inline int rtos_res_lock_init(rtos_res_lock_t *lock)
     return rt_mutex_create(lock, NULL);
 }
 
-static inline int rtos_res_lock_delete(rtos_res_lock_t *lock)
+static inline void rtos_res_lock_delete(rtos_res_lock_t *lock)
 {
-    return rt_mutex_delete(lock);
+    rt_mutex_delete(lock);
 }
 
 

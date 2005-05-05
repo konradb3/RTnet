@@ -550,8 +550,10 @@ static void rtcfg_client_detach(int ifindex, struct rt_proc_call *call)
         rtpc_complete_call(call, -ENODEV);
     }
 
-    if (rtcfg_dev->flags & FLAG_TIMER_STARTED)
+    if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
+        rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
         rtos_task_delete(&rtcfg_dev->timer_task);
+    }
     rtcfg_reset_device(ifindex);
 
     rtcfg_next_main_state(cmd_event->ifindex, RTCFG_MAIN_OFF);

@@ -83,7 +83,7 @@ void send_msg(int arg)
         if (ret != (int)sizeof(buffer_out))
             rtos_print(" rt_socket_sendmsg() = %d!\n", ret);
 
-        rtos_task_wait_period();
+        rtos_task_wait_period(&rt_xmit_task);
     }
 }
 

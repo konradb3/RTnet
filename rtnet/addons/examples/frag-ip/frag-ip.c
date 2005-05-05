@@ -90,7 +90,7 @@ void send_msg(int arg)
         if (ret != (int)(sizeof(msgsize) + size))
             rtos_print(" rt_sendmsg() = %d!\n", ret);
 
-        rtos_task_wait_period();
+        rtos_task_wait_period(&rt_xmit_task);
     }
 }
 

@@ -261,8 +261,10 @@ int __init rtpc_init(void)
 
     ret = rtos_task_init(&dispatch_task, rtpc_dispatch_handler, 0,
                          RTOS_LOWEST_RT_PRIORITY);
-    if (ret < 0)
+    if (ret < 0) {
+        rtos_event_sem_delete(&dispatch_event);
         rtos_nrt_signal_delete(&rtpc_nrt_signal);
+    }
 
     return ret;
 }

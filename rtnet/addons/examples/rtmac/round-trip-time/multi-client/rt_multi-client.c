@@ -90,7 +90,7 @@ void process(void * arg)
                   sizeof(struct sockaddr_in));
 
         /* wait one period */
-        rtos_task_wait_period();
+        rtos_task_wait_period(&xmit_task);
     }
 }
 

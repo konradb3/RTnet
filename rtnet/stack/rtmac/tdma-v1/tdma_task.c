@@ -112,7 +112,7 @@ void tdma_task_notify(int rtdev_id)
         /*
          * wait 'till begin of next period
          */
-        rtos_task_wait_period();
+        rtos_task_wait_period(NULL);
 
         /*
          * transmit packet
@@ -176,7 +176,7 @@ void tdma_task_config(int rtdev_id)
             /*
              * wait
              */
-            rtos_task_wait_period();
+            rtos_task_wait_period(NULL);
         }
     }
 
@@ -222,7 +222,7 @@ void tdma_task_master(int rtdev_id)
 
         skb = tdma_make_msg(rtdev, NULL, START_OF_FRAME, &data);
 
-        rtos_task_wait_period();
+        rtos_task_wait_period(NULL);
 
         if (!skb)
             continue;

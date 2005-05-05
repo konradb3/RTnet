@@ -3,6 +3,10 @@
 # script for loading/unloading RTnet, RTmac/TMDA, and RTcap
 #
 
+prefix="@prefix@"
+RTNETCFG="@sysconfdir@/rtnet.conf"
+
+
 usage() {
     cat << EOF
 Usage:
@@ -217,9 +221,6 @@ start_master() {
     echo
 }
 
-
-prefix="@prefix@"
-RTNETCFG="@sysconfdir@/rtnet.conf"
 
 if [ "$1" = "-cf" ]; then
     RTNETCFG="$2"

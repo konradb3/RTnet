@@ -522,18 +522,18 @@ int __init rtcfg_init_frames(void)
     int ret;
 
 
+    if (rtskb_pool_init(&rtcfg_pool, num_rtskbs) < num_rtskbs)
+        return -ENOMEM;
+
     rtskb_queue_init(&rx_queue);
     rtos_event_sem_init(&rx_event);
 
-    if (rtskb_pool_init(&rtcfg_pool, num_rtskbs) < num_rtskbs) {
-        ret = -ENOMEM;
-        goto error1;
-    }
-
     ret = rtos_task_init(&rx_task, rtcfg_rx_task, 0,
                          RTOS_LOWEST_RT_PRIORITY);
-    if (ret < 0)
+    if (ret < 0) {
+        rtos_event_sem_delete(&rx_event);
         goto error1;
+    }
 
     ret = rtdev_add_pack(&rtcfg_packet_type);
     if (ret < 0)
@@ -542,10 +542,10 @@ int __init rtcfg_init_frames(void)
     return 0;
 
   error2:
+    rtos_event_sem_delete(&rx_event);
     rtos_task_delete(&rx_task);
 
   error1:
-    rtos_event_sem_delete(&rx_event);
     rtskb_pool_release(&rtcfg_pool);
 
     return ret;

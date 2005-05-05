@@ -84,7 +84,7 @@ void process(void *arg)
 
     while (1) {
         /* wait one period */
-        rtos_task_wait_period();
+        rtos_task_wait_period(&rt_task);
 
         /* get time        */
         rtos_get_time(&time);

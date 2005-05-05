@@ -474,8 +474,10 @@ static int rtcfg_server_detach(int ifindex, struct rtcfg_cmd *cmd_event)
         return -EAGAIN;
     }
 
-    if (rtcfg_dev->flags & FLAG_TIMER_STARTED)
+    if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
+        rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
         rtos_task_delete(&rtcfg_dev->timer_task);
+    }
     rtcfg_reset_device(ifindex);
 
     rtcfg_next_main_state(ifindex, RTCFG_MAIN_OFF);

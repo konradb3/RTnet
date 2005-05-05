@@ -164,7 +164,8 @@ static void do_stacktask(int mgr_id)
 
     rtos_print("RTnet: stack-mgr started\n");
     while(1) {
-        rtos_event_sem_wait(&mgr->event);
+        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&mgr->event)))
+            return;
 
         while (1) {
             rtos_spin_lock_irqsave(&rxqueue.lock, flags);
@@ -252,6 +253,6 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
  */
 void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
 {
-    rtos_task_delete(&mgr->task);
     rtos_event_sem_delete(&mgr->event);
+    rtos_task_delete(&mgr->task);
 }

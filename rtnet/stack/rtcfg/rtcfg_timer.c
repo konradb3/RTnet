@@ -81,7 +81,7 @@ void rtcfg_timer(int ifindex)
 
         rtos_res_unlock(&rtcfg_dev->dev_lock);
 
-        rtos_task_wait_period();
+        rtos_task_wait_period(&rtcfg_dev->timer_task);
     }
 
     rtcfg_dev->flags &= ~FLAG_TIMER_STARTED;
