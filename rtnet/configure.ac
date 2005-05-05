@@ -1128,12 +1128,12 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build TDMA V1])
 AC_ARG_ENABLE(tdma-v1,
-	AS_HELP_STRING([--enable-tdma-v1], [build TDMA V1 discipline for RTmac @<:@default=yes@:>@]),
+	AS_HELP_STRING([--enable-tdma-v1], [build TDMA V1 discipline for RTmac @<:@default=no@:>@]),
 	[case "$enableval" in
-	n | no) CONFIG_RTNET_TDMAV1=no ;;
-	*) CONFIG_RTNET_TDMAV1=yes ;;
+	y | yes) CONFIG_RTNET_TDMAV1=yes ;;
+	*) CONFIG_RTNET_TDMAV1=no ;;
 	esac],
-	[CONFIG_RTNET_TDMAV1=yes])
+	[CONFIG_RTNET_TDMAV1=no])
 AC_MSG_RESULT([${CONFIG_RTNET_TDMAV1}])
 AM_CONDITIONAL(CONFIG_RTNET_TDMAV1,[test "$CONFIG_RTNET_TDMAV1" = "yes"])
 if test "$CONFIG_RTNET_TDMAV1" = "yes"; then

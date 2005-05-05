@@ -1068,7 +1068,7 @@ Optional Features:
                           [default=no]
   --enable-enclosed-rtdm  built enclosed RTDM module [default=yes]
   --enable-tdma-v1        build TDMA V1 discipline for RTmac
-                          [default=yes]
+                          [default=no]
   --enable-nomac          build NoMAC discipline for RTmac [default=no]
   --enable-rtdm-select    enable select function for RTDM (experimental)
                           [default=no]
@@ -22143,11 +22143,11 @@ echo $ECHO_N "checking whether to build TDMA V1... $ECHO_C" >&6
 if test "${enable_tdma_v1+set}" = set; then
   enableval="$enable_tdma_v1"
   case "$enableval" in
-	n | no) CONFIG_RTNET_TDMAV1=no ;;
-	*) CONFIG_RTNET_TDMAV1=yes ;;
+	y | yes) CONFIG_RTNET_TDMAV1=yes ;;
+	*) CONFIG_RTNET_TDMAV1=no ;;
 	esac
 else
-  CONFIG_RTNET_TDMAV1=yes
+  CONFIG_RTNET_TDMAV1=no
 fi;
 echo "$as_me:$LINENO: result: ${CONFIG_RTNET_TDMAV1}" >&5
 echo "${ECHO_T}${CONFIG_RTNET_TDMAV1}" >&6
