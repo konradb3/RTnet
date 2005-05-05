@@ -104,6 +104,7 @@ int rtcfg_proc_read_stations(char *buf, char **start, off_t offset, int count,
             conn = list_entry(entry, struct rtcfg_connection, entry);
 
             if ((conn->state != RTCFG_CONN_SEARCHING) &&
+                (conn->state != RTCFG_CONN_DEAD) &&
                 !RTNET_PROC_PRINT_EX("%02X:%02X:%02X:%02X:%02X:%02X\t%02X\n",
                                      conn->mac_addr[0], conn->mac_addr[1],
                                      conn->mac_addr[2], conn->mac_addr[3],
