@@ -1,3 +1,15 @@
+0.8.2
+- support of fusion since 0.7 (dropped earlier versions)
+- added userspace support to RTDM layer for fusion
+- added two fusion userspace examples
+- added detach functionality to rtcfg
+- fixed MPC drivers
+- RTAI 3.2 support, fixed issues with 3.0..r2
+- fixed bugs in rtnet script
+- improved RT-NIC assignment via "cards" module parameter
+- various tiny fixes
+
+
 0.8.1
 - added slot size enforcement to TDMA
 - fusion 0.6.9 support
