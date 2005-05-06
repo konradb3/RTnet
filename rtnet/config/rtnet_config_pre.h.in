@@ -1,5 +1,8 @@
 /* config/rtnet_config_pre.h.in.  Generated from configure.ac by autoheader.  */
 
+/* we are building for arm */
+#undef CONFIG_ARCH_ARM
+
 /* we are building for x86 */
 #undef CONFIG_ARCH_I386
 

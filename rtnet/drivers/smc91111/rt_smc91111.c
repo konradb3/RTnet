@@ -2179,7 +2179,7 @@ static const char smc_info_string[] =
 /*------------------------------------------------------------
  . Sysctl handler for all integer parameters
  .-------------------------------------------------------------*/
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8)
 static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
 				void *buffer, size_t *lenp, loff_t *ppos)
 #else
@@ -2414,7 +2414,7 @@ static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
 	val = *valp;
 
 	// Perform the generic integer operation
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8)
 	if ((ret = proc_dointvec(ctl, write, filp, buffer, lenp, ppos)) != 0)
 #else
 	if ((ret = proc_dointvec(ctl, write, filp, buffer, lenp)) != 0)

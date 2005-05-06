@@ -19250,10 +19250,10 @@ case "$host" in
 	RTNET_TARGET_ARCH=i386
 	wanted_kernel_arch=CONFIG_X86
         ;;
-#    arm-*)
-#	RTNET_TARGET_ARCH=arm
-#	wanted_kernel_arch=CONFIG_ARM
-#        ;;
+    arm-*)
+	RTNET_TARGET_ARCH=arm
+	wanted_kernel_arch=CONFIG_ARM
+        ;;
     powerpc-*|ppc-*)
 	RTNET_TARGET_ARCH=ppc
 	wanted_kernel_arch=CONFIG_PPC
@@ -21130,9 +21130,13 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	;;
-#    arm)
-#	AC_DEFINE(CONFIG_ARCH_ARM, 1, [we are trying to build for arm])
-#	;;
+    arm)
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_ARCH_ARM 1
+_ACEOF
+
+	;;
 #    cris)
 #	AC_DEFINE(CONFIG_ARCH_CRIS, 1, [we are trying to build for cris])
 #	;;

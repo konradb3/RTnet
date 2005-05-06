@@ -68,7 +68,7 @@ int nomac_nrt_packet_tx(struct rtskb *rtskb)
 
     /* note: this routine may be called both in rt and non-rt context
      *       => detect and wrap the context if necessary */
-    if (!rtos_in_rt_context) {
+    if (!rtos_in_rt_context()) {
         rtskb_queue_tail(&nrt_rtskb_queue, rtskb);
         rtos_event_sem_signal(&wakeup_sem);
         return 0;

@@ -29,7 +29,7 @@
 #include <linux/spinlock.h>
 
 #ifdef CONFIG_RTAI_24
-# define INTERFACE_TO_LINUX	/* makes RT_LINUX_PRIORITY visible */
+# define INTERFACE_TO_LINUX     /* makes RT_LINUX_PRIORITY visible */
 #endif
 
 #include <rtai.h>
@@ -382,6 +382,8 @@ static inline int rtos_irq_request(rtos_irq_t *irq_handle, unsigned int irq,
 #elif defined(CONFIG_ARCH_PPC)
     return rt_request_global_irq_ext(irq,
         (int (*)(unsigned int, unsigned long))handler, (unsigned long)arg);
+#elif defined(CONFIG_ARCH_ARM)
+    return rt_request_irq(irq, (rt_irq_handler_t)handler, arg, 0);
 #else
     #error Unsupported architecture.
 #endif
@@ -408,6 +410,8 @@ static inline void rtos_irq_end(rtos_irq_t *irq_handle)
     rt_enable_irq(*irq_handle);
 #elif defined(CONFIG_ARCH_PPC)
     rt_unmask_irq(*irq_handle);
+#elif defined(CONFIG_ARCH_ARM)
+    rt_enable_irq(*irq_handle);
 #else
 # error Unsupported architecture.
 #endif

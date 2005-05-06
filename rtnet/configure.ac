@@ -47,10 +47,10 @@ case "$host" in
 	RTNET_TARGET_ARCH=i386
 	wanted_kernel_arch=CONFIG_X86
         ;;
-#    arm-*)
-#	RTNET_TARGET_ARCH=arm
-#	wanted_kernel_arch=CONFIG_ARM
-#        ;;
+    arm-*)
+	RTNET_TARGET_ARCH=arm
+	wanted_kernel_arch=CONFIG_ARM
+        ;;
     powerpc-*|ppc-*)
 	RTNET_TARGET_ARCH=ppc
 	wanted_kernel_arch=CONFIG_PPC
@@ -619,9 +619,9 @@ case "${CONFIG_RTNET_RTAI_ARCH}" in
     ppc)
 	AC_DEFINE(CONFIG_ARCH_PPC, 1, [we are building for powerpc])
 	;;
-#    arm)
-#	AC_DEFINE(CONFIG_ARCH_ARM, 1, [we are trying to build for arm])
-#	;;
+    arm)
+	AC_DEFINE(CONFIG_ARCH_ARM, 1, [we are building for arm])
+	;;
 #    cris)
 #	AC_DEFINE(CONFIG_ARCH_CRIS, 1, [we are trying to build for cris])
 #	;;
