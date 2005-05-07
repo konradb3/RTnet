@@ -1,8 +1,8 @@
 /***
  *
- *  examples/raw_packets/raw_packets.c
+ *  examples/raw-packets/raw-packets.c
  *
- *  sends Ethernet packets to another raw_packets instance
+ *  sends Ethernet packets to another raw-packets instance
  *
  *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
@@ -81,7 +81,7 @@ void send_msg(int arg)
         rtos_print("Sending message of %d bytes\n", sizeof(buffer_out));
         ret = sendmsg_rt(sock, &msg, 0);
         if (ret != (int)sizeof(buffer_out))
-            rtos_print(" rt_socket_sendmsg() = %d!\n", ret);
+            rtos_print(" sendmsg_rt() = %d!\n", ret);
 
         rtos_task_wait_period(&rt_xmit_task);
     }
@@ -109,7 +109,7 @@ void recv_msg(int arg)
 
         ret = recvmsg_rt(sock, &msg, 0);
         if (ret <= 0) {
-            rtos_print(" rt_recvmsg() = %d\n", ret);
+            rtos_print(" recvmsg_rt() = %d\n", ret);
             return;
         } else {
             rtos_print("received packet from %02X:%02X:%02X:%02X:%02X:%02X, "
@@ -205,7 +205,7 @@ void cleanup_module(void)
 
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
-        printk("raw_packets: Socket busy - waiting...\n");
+        printk("raw-packets: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }

@@ -88,7 +88,7 @@ void send_msg(int arg)
         rtos_print("Sending message of %d+2 bytes\n", size);
         ret = sendmsg_rt(sock, &msg, 0);
         if (ret != (int)(sizeof(msgsize) + size))
-            rtos_print(" rt_sendmsg() = %d!\n", ret);
+            rtos_print(" sendmsg_rt() = %d!\n", ret);
 
         rtos_task_wait_period(&rt_xmit_task);
     }
@@ -119,7 +119,7 @@ void recv_msg(int arg)
 
         ret = recvmsg_rt(sock, &msg, 0);
         if (ret <= 0) {
-            rtos_print(" rt_recvmsg() = %d\n", ret);
+            rtos_print(" recvmsg_rt() = %d\n", ret);
             return;
         } else {
             unsigned long ip = ntohl(addr.sin_addr.s_addr);
@@ -228,7 +228,7 @@ void cleanup_module(void)
 
     /* Important: First close the socket! */
     while (close_rt(sock) == -EAGAIN) {
-        printk("rt_server: Socket busy - waiting...\n");
+        printk("frag-ip: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }

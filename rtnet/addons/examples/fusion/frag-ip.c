@@ -1,8 +1,8 @@
 /***
  *
- *  examples/fusion/frag_ip.c
+ *  examples/fusion/frag-ip.c
  *
- *  sends fragmented IP packets to another frag_ip instance - fusion version
+ *  sends fragmented IP packets to another frag-ip instance - fusion version
  *
  *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
@@ -89,7 +89,7 @@ void xmit_msg(void *arg)
         rt_printf("Sending message of %d+2 bytes\n", size);
         ret = sendmsg_rt(sock, &msg, 0);
         if (ret != (int)(sizeof(msgsize) + size))
-            rt_printf(" rt_sendmsg() = %d!\n", ret);
+            rt_printf(" sendmsg_rt() = %d!\n", ret);
 
         rt_task_wait_period();
     }
@@ -120,7 +120,7 @@ void recv_msg(void *arg)
 
         ret = recvmsg_rt(sock, &msg, 0);
         if (ret <= 0) {
-            rt_printf(" rt_recvmsg() = %d\n", ret);
+            rt_printf(" recvmsg_rt() = %d\n", ret);
             return;
         } else {
             unsigned long ip = ntohl(addr.sin_addr.s_addr);
