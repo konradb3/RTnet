@@ -408,10 +408,8 @@ static inline void rtos_irq_end(rtos_irq_t *irq_handle)
 {
 #if defined(CONFIG_ARCH_I386)
     rt_enable_irq(*irq_handle);
-#elif defined(CONFIG_ARCH_PPC)
+#elif defined(CONFIG_ARCH_PPC) || defined(CONFIG_ARCH_ARM)
     rt_unmask_irq(*irq_handle);
-#elif defined(CONFIG_ARCH_ARM)
-    rt_enable_irq(*irq_handle);
 #else
 # error Unsupported architecture.
 #endif
