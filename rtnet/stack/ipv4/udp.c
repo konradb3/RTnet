@@ -4,7 +4,7 @@
  *
  *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
  *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -264,6 +264,7 @@ int rt_udp_socket(struct rtdm_dev_context *context, int call_flags)
     /* enforce maximum number of UDP sockets */
     if (free_ports == 0) {
         rtos_spin_unlock_irqrestore(&udp_socket_base_lock, flags);
+        rt_socket_cleanup(context);
         return -EAGAIN;
     }
     free_ports--;
@@ -308,6 +309,8 @@ int rt_udp_close(struct rtdm_dev_context *context, int call_flags)
     if (sock->prot.inet.reg_index >= 0) {
         port = sock->prot.inet.reg_index;
         clear_bit(port % 32, &port_bitmap[port / 32]);
+
+        free_ports++;
 
         sock->prot.inet.reg_index = -1;
     }
