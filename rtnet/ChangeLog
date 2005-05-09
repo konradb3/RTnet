@@ -3,6 +3,8 @@
 - added userspace support to RTDM layer for fusion
 - added two fusion userspace examples
 - added detach functionality to rtcfg
+- experimental build for ARM platform
+- fixed cleanup bugs of udp sockets
 - fixed MPC drivers
 - RTAI 3.2 support, fixed issues with 3.0..r2
 - fixed bugs in rtnet script
