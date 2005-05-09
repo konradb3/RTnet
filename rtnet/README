@@ -5,7 +5,8 @@ What is it?
 -----------
 RTnet is real-time network protocol stack for RTAI (hard real-time Linux
 extension). It provides a standard socket API to be used with RTAI kernel
-modules and LXRT user space processes.
+modules and real-time user space processes.
+
 
 What are the requirements?
 --------------------------
@@ -14,12 +15,13 @@ What are the requirements?
 - RTAI 24.1.x: 24.1.9 or 24.1.11-24.1.13, NEWLXRT when using user space API
   RTAI 3.x: tested on 3.0[r1|r2|r4], 3.1, LXRT when using user space API
   RTAI/fusion 0.7 or better
-- x86 (required for LXRT interface) or PowerPC platform. Other platforms are
-  untested yet.
+- x86, PowerPC, or ARM platform
+  (other platforms are lacking up-to-date RTAI support)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
   AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x network adapter, MPC8260
   FCC, or MPC8xx SCC/FEC on-chip controllers, SMSC LAN91C111 embedded
   controller
+
 
 How to install it?
 ------------------
@@ -53,6 +55,7 @@ How to install it?
 8. run "mknod /dev/rtnet c 10 240" on your target system to create the
    configuration interface device node.
 
+
 How to test it?
 ---------------
 1. Shutdown the network device which shall become part of the RT-network and
@@ -70,11 +73,19 @@ How to test it?
    (like addons/examples/round_trip_time/run)
 
 
-RTnet is free software, and you are welcome to redistribute it under
-the terms of the GNU General Public License. This program comes with
-ABSOLUTELY NO WARRANTY. See "COPYING" for details.
+Special notes
+-------------
+- When running RTnet on ARM using a 2.4 kernel, you have to add the following
+  line to linux/arch/arm/kernel/armksyms.c:
 
-Contributors:
+  EXPORT_SYMBOL(__arch_strncpy_from_user);
+
+  Otherwise, rtai_rtdm will refuse to load. Don't forget to recompile and
+  install the modified kernel.
+
+
+Contributors
+------------
 Ulrich Marx                             - core programming
 <marx-at-fet.uni-hannover.de>
 Nathan Gustavson                        - testing and bug fixing
@@ -99,3 +110,8 @@ Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
                                           parts of this version are based on
                                           his code
+
+
+RTnet is free software, and you are welcome to redistribute it under
+the terms of the GNU General Public License. This program comes with
+ABSOLUTELY NO WARRANTY. See "COPYING" for details.
