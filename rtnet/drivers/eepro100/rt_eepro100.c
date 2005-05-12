@@ -1286,8 +1286,13 @@ speedo_init_rx_ring(struct rtnet_device *rtdev)
 		rtskb_reserve(skb, sizeof(struct RxFD));
 		if (last_rxf) {
 			last_rxf->link = cpu_to_le32(sp->rx_ring_dma[i]);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+			pci_dma_sync_single_for_device(sp->pdev, last_rxf_dma,
+					sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#else
 			pci_dma_sync_single(sp->pdev, last_rxf_dma,
 					sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#endif
 		}
 		last_rxf = rxf;
 		last_rxf_dma = sp->rx_ring_dma[i];
@@ -1296,14 +1301,24 @@ speedo_init_rx_ring(struct rtnet_device *rtdev)
 		/* This field unused by i82557. */
 		rxf->rx_buf_addr = 0xffffffff;
 		rxf->count = cpu_to_le32(PKT_BUF_SZ << 16);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+		pci_dma_sync_single_for_device(sp->pdev, sp->rx_ring_dma[i],
+				sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#else
 		pci_dma_sync_single(sp->pdev, sp->rx_ring_dma[i],
 				sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#endif
 	}
 	sp->dirty_rx = (unsigned int)(i - RX_RING_SIZE);
 	/* Mark the last entry as end-of-list. */
 	last_rxf->status = cpu_to_le32(0xC0000002);	/* '2' is flag value only. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	pci_dma_sync_single_for_device(sp->pdev, sp->rx_ring_dma[RX_RING_SIZE-1],
+			sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#else
 	pci_dma_sync_single(sp->pdev, sp->rx_ring_dma[RX_RING_SIZE-1],
 			sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#endif
 	sp->last_rxf = last_rxf;
 	sp->last_rxf_dma = last_rxf_dma;
 }
@@ -1783,8 +1798,13 @@ static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry
 	// *** RTnet ***
 	rtskb_reserve(skb, sizeof(struct RxFD));
 	rxf->rx_buf_addr = 0xffffffff;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	pci_dma_sync_single_for_device(sp->pdev, sp->rx_ring_dma[entry],
+			sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#else
 	pci_dma_sync_single(sp->pdev, sp->rx_ring_dma[entry],
 			sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#endif
 	return rxf;
 }
 
@@ -1797,8 +1817,13 @@ static inline void speedo_rx_link(struct rtnet_device *rtdev, int entry,
 	rxf->count = cpu_to_le32(PKT_BUF_SZ << 16);
 	sp->last_rxf->link = cpu_to_le32(rxf_dma);
 	sp->last_rxf->status &= cpu_to_le32(~0xC0000000);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	pci_dma_sync_single_for_device(sp->pdev, sp->last_rxf_dma,
+			sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#else
 	pci_dma_sync_single(sp->pdev, sp->last_rxf_dma,
 			sizeof(struct RxFD), PCI_DMA_TODEVICE);
+#endif
 	sp->last_rxf = rxf;
 	sp->last_rxf_dma = rxf_dma;
 }
@@ -1871,8 +1896,13 @@ speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 		int status;
 		int pkt_len;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+		pci_dma_sync_single_for_cpu(sp->pdev, sp->rx_ring_dma[entry],
+			sizeof(struct RxFD), PCI_DMA_FROMDEVICE);
+#else
 		pci_dma_sync_single(sp->pdev, sp->rx_ring_dma[entry],
 			sizeof(struct RxFD), PCI_DMA_FROMDEVICE);
+#endif
 		status = le32_to_cpu(sp->rx_ringp[entry]->status);
 		pkt_len = le32_to_cpu(sp->rx_ringp[entry]->count) & 0x3fff;
 

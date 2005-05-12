@@ -1035,7 +1035,7 @@ int __init smc_findirq( int ioaddr )
 	/* I have to do a STI() here, because this is called from
 	   a routine that does an CLI during this process, making it
 	   rather difficult to get interrupts for auto detection */
-	sti();
+	local_irq_enable();
 
 	cookie = probe_irq_on();
 
@@ -1087,7 +1087,7 @@ int __init smc_findirq( int ioaddr )
 
 	/* clear hardware interrupts again, because that's how it
 	   was when I was called... */
-	cli();
+	local_irq_disable();
 
 	/* and return what I found */
 	return probe_irq_off(cookie);
