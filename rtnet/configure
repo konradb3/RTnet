@@ -20772,6 +20772,9 @@ echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
     0.7.2-fusion | 0.7.3-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-072
 	;;
+    0.7.4-fusion)
+	CONFIG_RTNET_RTAI_VERSION=fusion-074
+	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&5
 echo "$as_me: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&2;}
@@ -20967,6 +20970,13 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	;;
+    fusion-074)
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_FUSION_074 1
+_ACEOF
+
+	;;
     *)
 	{ { echo "$as_me:$LINENO: error: *** No RTAI found in $with_rtai" >&5
 echo "$as_me: error: *** No RTAI found in $with_rtai" >&2;}
@@ -20977,7 +20987,8 @@ esac
 
 
 if test "$CONFIG_RTNET_RTAI_VERSION" = fusion-07 || \
-                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072; then
+                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072 || \
+                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-074; then
   CONFIG_FUSION_TRUE=
   CONFIG_FUSION_FALSE='#'
 else

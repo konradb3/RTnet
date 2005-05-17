@@ -364,6 +364,9 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     0.7.2-fusion | 0.7.3-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-072
 	;;
+    0.7.4-fusion)
+	CONFIG_RTNET_RTAI_VERSION=fusion-074
+	;;
     *)
 	AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
 	;;
@@ -497,13 +500,17 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
     fusion-072)
 	AC_DEFINE(CONFIG_FUSION_072, 1, [We build for fusion 0.7.2/0.7.3])
 	;;
+    fusion-074)
+	AC_DEFINE(CONFIG_FUSION_074, 1, [We build for fusion 0.7.4])
+	;;
     *)
 	AC_MSG_ERROR([*** No RTAI found in $with_rtai])
 	;;
 esac
 
 AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_RTNET_RTAI_VERSION" = fusion-07 || \
-                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072])
+                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072 || \
+                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-074])
 
 
 dnl ======================================================================

@@ -363,12 +363,20 @@ static inline void rtos_pend_nrt_signal(rtos_nrt_signal_t *nrt_sig)
 /* Fifo management */
 static inline int rtos_fifo_create(rtos_fifo_t *fifo, int minor, int size)
 {
+#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
     return rt_pipe_open(fifo, minor);
+#else
+    return rt_pipe_create(fifo, NULL, minor);
+#endif /* CONFIG_FUSION_07 || CONFIG_FUSION_072 */
 }
 
 static inline void rtos_fifo_destroy(rtos_fifo_t *fifo)
 {
+#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
     rt_pipe_close(fifo);
+#else
+    rt_pipe_delete(fifo);
+#endif /* CONFIG_FUSION_07 || CONFIG_FUSION_072 */
 }
 
 static inline int rtos_fifo_put(rtos_fifo_t *fifo, void *buf, int size)

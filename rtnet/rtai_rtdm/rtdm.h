@@ -174,9 +174,9 @@ extern ssize_t rtdm_sendmsg(int call_flags, int fd,
 
 #ifdef CONFIG_RTNET_RTDM_SELECT
 extern int rtdm_select(int call_flags, int n,
-		       fd_set *readfds,
-		       fd_set *writefds,
-		       fd_set *exceptfds); /* struct timeval timeout */
+                       fd_set *readfds,
+                       fd_set *writefds,
+                       fd_set *exceptfds); /* struct timeval timeout */
 
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 
@@ -230,9 +230,9 @@ static inline ssize_t sendmsg_rt(int fd, const struct msghdr *msg, int flags)
 
 #ifdef CONFIG_RTNET_RTDM_SELECT
 static inline int select_rt(int call_flags, int n,
-			    fd_set *readfds,
-			    fd_set *writefds,
-			    fd_set *exceptfds)
+                            fd_set *readfds,
+                            fd_set *writefds,
+                            fd_set *exceptfds)
 {
     return rtdm_select(call_flags, n, readfds, writefds, exceptfds); /* timeval is missing here */
 }
@@ -315,13 +315,14 @@ RTAI_PROTO(ssize_t, sendmsg_rt, (int fd, const struct msghdr *msg, int flags))
 #endif /* CONFIG_NEWLXRT */
 
 
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
+#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072) || \
+    defined(CONFIG_FUSION_074)
 
 #ifdef CONFIG_FUSION_07
 #include <nucleus/syscall.h>
-#else  /* CONFIG_FUSION_07 */
+#else  /* !CONFIG_FUSION_07 */
 #include <nucleus/asm/syscall.h>
-#endif /* !CONFIG_FUSION_07 */
+#endif /* CONFIG_FUSION_07 */
 
 extern int __rtdm_muxid;
 

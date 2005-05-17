@@ -36,7 +36,8 @@
 #include <rtnet_config.h>
 
 
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
+    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
 /* RTAI 24.1.x and 3.x */
 
 #include <rtai.h>
@@ -59,7 +60,8 @@ static inline int in_nrt_context(void)
 }
 
 
-#elif defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
+#elif defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072) || \
+      defined(CONFIG_FUSION_074)
 /* fusion >= 0.7 - intermediate solution */
 
 #include <nucleus/heap.h>
@@ -713,18 +715,18 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 
     /* register wq_element on all sockets marked in readfds */
     for (i=0; i<=n; i++) {
-	if (FD_ISSET(i, &rfds)) {
-	    context = get_context(i);
-	    if (context) {
-		ops = context->ops;
+        if (FD_ISSET(i, &rfds)) {
+            context = get_context(i);
+            if (context) {
+                ops = context->ops;
 #warning what if pollwait_rt is NULL?
-		ops->pollwait_rt(context, &wakeme);
+                ops->pollwait_rt(context, &wakeme);
 #warning what if there is data already available (call poll here)
-	    } else {
-		rt_printk("==> Problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
-		FD_CLR(i, &rfds);
-	    }
-	}
+            } else {
+                rt_printk("==> Problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
+                FD_CLR(i, &rfds);
+            }
+        }
     }
 
     /* wait until something happens */
@@ -732,27 +734,27 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 
     /* register wq_element on all sockets marked in rfds */
     for (i=0; i<=n; i++) {
-	if (FD_ISSET(i, &rfds)) {
-	    context = get_context(i);
-	    if (context) {
-		ops = context->ops;
+        if (FD_ISSET(i, &rfds)) {
+            context = get_context(i);
+            if (context) {
+                ops = context->ops;
 #warning what if poll*_rt is NULL?
-		ops->pollfree_rt(context);
+                ops->pollfree_rt(context);
 
-		mask = ops->poll_rt(context);
-		if (mask & POLLIN) {
-		    /* set specific bit in result readfds */
-		    FD_SET(i, &readfds);
-		    ret++;
-		}
+                mask = ops->poll_rt(context);
+                if (mask & POLLIN) {
+                    /* set specific bit in result readfds */
+                    FD_SET(i, &readfds);
+                    ret++;
+                }
 
 #warning It is not nice to unlock the context twice here!
-		RTDM_UNLOCK_CONTEXT(context);
-		RTDM_UNLOCK_CONTEXT(context);
-	    } else {
-		rt_printk("==> Serious problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
-	    }
-	}
+                RTDM_UNLOCK_CONTEXT(context);
+                RTDM_UNLOCK_CONTEXT(context);
+            } else {
+                rt_printk("==> Serious problem: context == NULL (%s:%d)\n", __FILE__, __LINE__);
+            }
+        }
     }
 
     wq_element_delete(&wakeme);
