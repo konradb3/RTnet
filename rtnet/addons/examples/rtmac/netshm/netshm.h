@@ -34,7 +34,7 @@ struct netshm_attach_args {
     size_t  local_mem_offs;
     size_t  local_mem_size;
     int     recv_task_prio;
-    int     xmit_prio;
+    int     xmit_params;
 };
 
 

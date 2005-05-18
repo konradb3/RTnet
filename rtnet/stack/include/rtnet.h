@@ -43,7 +43,8 @@ struct rtnet_callback {
 #endif
 
 /* RTnet-specific IOCTLs */
-#define RTNET_RTIOC_PRIORITY    _IOW(RTIOC_TYPE_NETWORK, 0x10, unsigned int)
+#define RTNET_RTIOC_XMITPARAMS  _IOW(RTIOC_TYPE_NETWORK, 0x10, unsigned int)
+#define RTNET_RTIOC_PRIORITY    RTNET_RTIOC_XMITPARAMS  /* legacy */
 #define RTNET_RTIOC_TIMEOUT     _IOW(RTIOC_TYPE_NETWORK, 0x11, int64_t)
 #define RTNET_RTIOC_CALLBACK    _IOW(RTIOC_TYPE_NETWORK, 0x12, \
                                      struct rtnet_callback)
@@ -51,11 +52,20 @@ struct rtnet_callback {
 #define RTNET_RTIOC_EXTPOOL     _IOW(RTIOC_TYPE_NETWORK, 0x14, unsigned int)
 #define RTNET_RTIOC_SHRPOOL     _IOW(RTIOC_TYPE_NETWORK, 0x15, unsigned int)
 
-/* socket priorities */
+/* socket transmission priorities */
 #define SOCK_MAX_PRIO           0
-#define SOCK_DEF_PRIO           SOCK_MAX_PRIO+(SOCK_MIN_PRIO-SOCK_MAX_PRIO+1)/2
-#define SOCK_MIN_PRIO           SOCK_NRT_PRIO-1
+#define SOCK_DEF_PRIO           SOCK_MAX_PRIO + \
+                                    (SOCK_MIN_PRIO-SOCK_MAX_PRIO+1)/2
+#define SOCK_MIN_PRIO           SOCK_NRT_PRIO - 1
 #define SOCK_NRT_PRIO           31
+
+/* socket transmission channels */
+#define SOCK_DEF_RT_CHANNEL     0           /* default rt xmit channel     */
+#define SOCK_DEF_NRT_CHANNEL    1           /* default non-rt xmit channel */
+#define SOCK_USER_CHANNEL       2           /* first user-defined channel  */
+
+/* argument construction for RTNET_RTIOC_XMITPARAMS */
+#define SOCK_XMIT_PARAMS(priority, channel) ((priority) | ((channel) << 16))
 
 
 /* function name wrappers */

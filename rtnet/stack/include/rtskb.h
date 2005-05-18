@@ -29,6 +29,7 @@
 
 #include <linux/skbuff.h>
 
+#include <rtnet.h>
 #include <rtnet_internal.h>
 
 
@@ -248,11 +249,12 @@ struct rtskb_prio_queue {
 #define RTSKB_CHANNEL_MASK      0xFFFF0000  /* bits 16..31: xmit channel */
 #define RTSKB_CHANNEL_SHIFT     16
 
-#define RTSKB_DEF_RT_CHANNEL    0           /* default rt xmit channel     */
-#define RTSKB_DEF_NRT_CHANNEL   1           /* default non-rt xmit channel */
-#define RTSKB_USER_CHANNEL      2           /* first user-defined channel  */
+#define RTSKB_DEF_RT_CHANNEL    SOCK_DEF_RT_CHANNEL
+#define RTSKB_DEF_NRT_CHANNEL   SOCK_DEF_NRT_CHANNEL
+#define RTSKB_USER_CHANNEL      SOCK_USER_CHANNEL
 
-#define RTSKB_PRIO_VALUE(priority, channel) ((priority) | ((channel) << 16))
+/* Note: always keep SOCK_XMIT_PARAMS consistent with definitions above! */
+#define RTSKB_PRIO_VALUE        SOCK_XMIT_PARAMS
 
 
 /* default values for the module parameter */

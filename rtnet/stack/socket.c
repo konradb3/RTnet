@@ -149,7 +149,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
 
 
     switch (request) {
-        case RTNET_RTIOC_PRIORITY:
+        case RTNET_RTIOC_XMITPARAMS:
             sock->priority = *(unsigned int *)arg;
             break;
 

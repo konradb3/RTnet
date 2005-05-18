@@ -120,7 +120,7 @@ int __init init_module(void)
     params.local_mem_offs = shm_local_offs * sizeof(int);
     params.local_mem_size = shm_local_size * sizeof(int);
     params.recv_task_prio = -1; /*default */
-    params.xmit_prio      = -1; /*default */
+    params.xmit_params    = -1; /*default */
     ret = ioctl_rt(netshm, NETSHM_RTIOC_ATTACH, &params);
     if (ret < 0) {
         rtos_print("ioctl_rt(NETSHM_RTIOC_ATTACH) = %d!\n", ret);
