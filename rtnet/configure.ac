@@ -147,7 +147,7 @@ fi
 # check for the right Makefile
 if test "$CONFIG_RTNET_RTAI_24" != "n"; then
     if test "`sed -n -e \"s/^PROJECT = \(.*\)/\1/p\" ${with_rtai}/Makefile`" = "RTAI"; then
-	RTAI_DIR=$with_rtai
+	RTAI_DIR="`cd $with_rtai && pwd`"	# let the shell normalize the path
     	AC_MSG_RESULT([$RTAI_DIR])
     else
  	CONFIG_RTNET_RTAI_24=n
@@ -174,7 +174,7 @@ if test x"$CONFIG_RTNET_RTAI_24" \!= x"n"; then
 
     CONFIG_RTNET_RTAI_VERSION=24
 
-    RTAI_LINUX_DIR=`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`
+    RTAI_LINUX_DIR="`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
 
 #
 # make some checks on the kernel
@@ -310,8 +310,8 @@ fi
 if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     AC_MSG_CHECKING([for RTAI 3 installation])
     RTAI_CONFIG="${with_rtai}/bin/rtai-config"
-    if test -x ${RTAI_CONFIG}; then
-        RTAI_DIR="`echo ${with_rtai} | sed -e s,[/]*$,,`"	# strip trailing slashes
+    if test -x "${RTAI_CONFIG}"; then
+        RTAI_DIR="`cd ${with_rtai} && pwd`"	# let the shell normalize the path
 	AC_MSG_RESULT([${RTAI_DIR}])
     else
 	CONFIG_RTNET_RTAI_3=n
@@ -330,12 +330,12 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 # e.g.: 'make DESTDIR=/foo install'
 #
     AC_MSG_CHECKING([for RTAI DESTDIR])
-    RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,[/]*$,,`"		# strip trailing slashes
+    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"			# let the shell normalize the path
     if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
-	RTNET_RTAI_DESTDIR="`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,`"
+	RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
 	export DESTDIR="${RTNET_RTAI_DESTDIR}"
 
-	RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,[/]*$,,`"	# strip trailing slashes
+	RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"		# let the shell normalize the path
 	if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
 	    AC_MSG_RESULT([${DESTDIR}])
 	else
