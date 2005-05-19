@@ -20545,7 +20545,7 @@ fi
 # check for the right Makefile
 if test "$CONFIG_RTNET_RTAI_24" != "n"; then
     if test "`sed -n -e \"s/^PROJECT = \(.*\)/\1/p\" ${with_rtai}/Makefile`" = "RTAI"; then
-	RTAI_DIR=$with_rtai
+	RTAI_DIR="`cd $with_rtai && pwd`"	# let the shell normalize the path
     	echo "$as_me:$LINENO: result: $RTAI_DIR" >&5
 echo "${ECHO_T}$RTAI_DIR" >&6
     else
@@ -20578,7 +20578,7 @@ echo "$as_me: error: *** No configured RTAI found in $RTAI_DIR" >&2;}
 
     CONFIG_RTNET_RTAI_VERSION=24
 
-    RTAI_LINUX_DIR=`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`
+    RTAI_LINUX_DIR="`sed -n -e "s/^LINUXDIR=\(.*\)/\1/p" $RTAI_DIR/.buildvars`"
 
 #
 # make some checks on the kernel
@@ -20710,8 +20710,8 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     echo "$as_me:$LINENO: checking for RTAI 3 installation" >&5
 echo $ECHO_N "checking for RTAI 3 installation... $ECHO_C" >&6
     RTAI_CONFIG="${with_rtai}/bin/rtai-config"
-    if test -x ${RTAI_CONFIG}; then
-        RTAI_DIR="`echo ${with_rtai} | sed -e s,/*$,,`"	# strip trailing slashes
+    if test -x "${RTAI_CONFIG}"; then
+        RTAI_DIR="`cd ${with_rtai} && pwd`"	# let the shell normalize the path
 	echo "$as_me:$LINENO: result: ${RTAI_DIR}" >&5
 echo "${ECHO_T}${RTAI_DIR}" >&6
     else
@@ -20733,12 +20733,12 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 #
     echo "$as_me:$LINENO: checking for RTAI DESTDIR" >&5
 echo $ECHO_N "checking for RTAI DESTDIR... $ECHO_C" >&6
-    RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,/*$,,`"		# strip trailing slashes
+    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"			# let the shell normalize the path
     if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
-	RTNET_RTAI_DESTDIR="`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,`"
+	RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
 	export DESTDIR="${RTNET_RTAI_DESTDIR}"
 
-	RTNET_RTAI_PREFIX="`${RTAI_CONFIG} --prefix | sed -e s,/*$,,`"	# strip trailing slashes
+	RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"		# let the shell normalize the path
 	if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
 	    echo "$as_me:$LINENO: result: ${DESTDIR}" >&5
 echo "${ECHO_T}${DESTDIR}" >&6
