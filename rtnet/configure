@@ -20766,9 +20766,6 @@ echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
     3.2*)
 	CONFIG_RTNET_RTAI_VERSION=32
 	;;
-    0.7-fusion | 0.7.1-fusion)
-	CONFIG_RTNET_RTAI_VERSION=fusion-07
-	;;
     0.7.2-fusion | 0.7.3-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-072
 	;;
@@ -20956,13 +20953,6 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	;;
-    fusion-07)
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_FUSION_07 1
-_ACEOF
-
-	;;
     fusion-072)
 
 cat >>confdefs.h <<\_ACEOF
@@ -20986,8 +20976,7 @@ esac
 
 
 
-if test "$CONFIG_RTNET_RTAI_VERSION" = fusion-07 || \
-                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072 || \
+if test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072 || \
                               test "$CONFIG_RTNET_RTAI_VERSION" = fusion-074; then
   CONFIG_FUSION_TRUE=
   CONFIG_FUSION_FALSE='#'

@@ -108,21 +108,10 @@ static inline void rtos_time_diff(rtos_time_t *result,
 #define rtos_spin_lock(lock)        rthal_spin_lock(lock)
 #define rtos_spin_unlock(lock)      rthal_spin_unlock(lock)
 
-#ifdef CONFIG_FUSION_07 /* old scheme according to fusion 0.7.1 and earlier */
-
-#define rtos_spin_lock_irqsave(lock, flags) \
-    (flags) = rthal_spin_lock_irqsave(lock)
-#define rtos_spin_unlock_irqrestore(lock, flags) \
-    rthal_spin_unlock_irqrestore(flags, lock)
-
-#else /* new scheme since fusion 0.7.2 */
-
 #define rtos_spin_lock_irqsave(lock, flags) \
     rthal_spin_lock_irqsave(lock, flags)
 #define rtos_spin_unlock_irqrestore(lock, flags) \
     rthal_spin_unlock_irqrestore(lock, flags)
-
-#endif /* CONFIG_FUSION_07 */
 
 #define rtos_local_irqsave(flags)   \
     rthal_local_irq_save(flags)
@@ -361,23 +350,31 @@ static inline void rtos_pend_nrt_signal(rtos_nrt_signal_t *nrt_sig)
 
 
 /* Fifo management */
+#if defined(CONFIG_FUSION_072)
+
 static inline int rtos_fifo_create(rtos_fifo_t *fifo, int minor, int size)
 {
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
     return rt_pipe_open(fifo, minor);
-#else
-    return rt_pipe_create(fifo, NULL, minor);
-#endif /* CONFIG_FUSION_07 || CONFIG_FUSION_072 */
 }
 
 static inline void rtos_fifo_destroy(rtos_fifo_t *fifo)
 {
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
     rt_pipe_close(fifo);
-#else
-    rt_pipe_delete(fifo);
-#endif /* CONFIG_FUSION_07 || CONFIG_FUSION_072 */
 }
+
+#else /* !CONFIG_FUSION_072 */
+
+static inline int rtos_fifo_create(rtos_fifo_t *fifo, int minor, int size)
+{
+    return rt_pipe_create(fifo, NULL, minor);
+}
+
+static inline void rtos_fifo_destroy(rtos_fifo_t *fifo)
+{
+    rt_pipe_delete(fifo);
+}
+
+#endif /* !CONFIG_FUSION_072 */
 
 static inline int rtos_fifo_put(rtos_fifo_t *fifo, void *buf, int size)
 {

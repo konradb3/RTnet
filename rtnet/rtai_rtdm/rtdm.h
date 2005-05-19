@@ -315,14 +315,9 @@ RTAI_PROTO(ssize_t, sendmsg_rt, (int fd, const struct msghdr *msg, int flags))
 #endif /* CONFIG_NEWLXRT */
 
 
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072) || \
-    defined(CONFIG_FUSION_074)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
 
-#ifdef CONFIG_FUSION_07
-#include <nucleus/syscall.h>
-#else  /* !CONFIG_FUSION_07 */
 #include <nucleus/asm/syscall.h>
-#endif /* CONFIG_FUSION_07 */
 
 extern int __rtdm_muxid;
 

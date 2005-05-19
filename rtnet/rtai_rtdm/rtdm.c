@@ -60,9 +60,8 @@ static inline int in_nrt_context(void)
 }
 
 
-#elif defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072) || \
-      defined(CONFIG_FUSION_074)
-/* fusion >= 0.7 - intermediate solution */
+#elif defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
+/* fusion >= 0.7.2 - intermediate solution */
 
 #include <nucleus/heap.h>
 #include <rtai/task.h>
@@ -72,18 +71,14 @@ static inline int in_nrt_context(void)
 #define rt_malloc                   xnmalloc
 #define rt_free                     xnfree
 
-#ifdef CONFIG_FUSION_07
-#define rt_spin_lock_irqsave        rthal_spin_lock_irqsave
-#define rt_spin_unlock_irqrestore   rthal_spin_unlock_irqrestore
-#else
 static inline unsigned long rt_spin_lock_irqsave(spinlock_t *lock)
 {
     unsigned long flags;
     rthal_spin_lock_irqsave(lock, flags);
     return flags;
 }
+
 #define rt_spin_unlock_irqrestore(flags, lock)  rthal_spin_unlock_irqrestore(lock, flags)
-#endif
 
 
 static inline int in_nrt_context(void)
@@ -868,7 +863,7 @@ static struct rt_fun_entry lxrt_fun_entry[] = {
 
 
 
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
 
 static int sys_rtdm_open(struct task_struct *curr, struct pt_regs *regs)
 {
@@ -1470,7 +1465,7 @@ int init_module(void)
     }
 #endif /* CONFIG_NEWLXRT */
 
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
     rtdm_muxid = xnshadow_register_interface("RTDM", RTDM_SKIN_MAGIC,
         sizeof(rtdm_systab) / sizeof(rtdm_systab[0]), rtdm_systab, NULL);
     if (rtdm_muxid < 0) {
@@ -1488,8 +1483,8 @@ int init_module(void)
     ret = -EAGAIN;
 #endif /* CONFIG_PROC_FS */
 
-#if defined(CONFIG_NEWLXRT) || defined(CONFIG_FUSION_07) || \
-    defined(CONFIG_FUSION_072)
+#if defined(CONFIG_NEWLXRT) || defined(CONFIG_FUSION_072) || \
+    defined(CONFIG_FUSION_074)
   rem_all:
 #endif
 #ifdef CONFIG_PROC_FS
@@ -1543,7 +1538,7 @@ void cleanup_module(void)
             lxrt_fun_entry, RTDM_LXRT_IDX);
 #endif /* CONFIG_NEWLXRT */
 
-#if defined(CONFIG_FUSION_07) || defined(CONFIG_FUSION_072)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
     xnshadow_unregister_interface(rtdm_muxid);
 #endif /* CONFIG_FUSION_07* */
 
