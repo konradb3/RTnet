@@ -1,5 +1,5 @@
 0.8.2
-- support of fusion since 0.7 (dropped earlier versions)
+- support for fusion 0.7.2..0.7.4 (dropped earlier versions)
 - added userspace support to RTDM layer for fusion
 - added two fusion userspace examples
 - added detach functionality to rtcfg
@@ -9,6 +9,10 @@
 - RTAI 3.2 support, fixed issues with 3.0..r2
 - fixed bugs in rtnet script
 - improved RT-NIC assignment via "cards" module parameter
+- fixed compilation on 2.6.11 kernels
+- fixed DESTDIR detection in configure
+- API cleanup with respect to packet transmission priorities and channels
+  (i.e. explicit TDMA slot selection)
 - various tiny fixes
 
 
