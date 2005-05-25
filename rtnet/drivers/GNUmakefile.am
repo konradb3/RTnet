@@ -36,6 +36,10 @@ if CONFIG_RTNET_FEC_ENET
 OPTDIRS += mpc8xx_fec
 endif
 
+if CONFIG_RTNET_MPC52XX_FEC
+OPTDIRS += mpc52xx_fec
+endif
+
 if CONFIG_RTNET_TULIP
 OPTDIRS += tulip
 endif

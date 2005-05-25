@@ -37,6 +37,7 @@ How to install it?
        --enable-fcc-enet        compiles the MPC8260 FCC driver
        --enable-scc-enet        compiles the MPC8xx SCC driver
        --enable-fec-enet        compiles the MPC8xx FEC driver
+       --enable-mpc52xx-fec     compiles the MPC52xx FEC driver
        --enable-smc91111        compiles the SMSC LAN91C111 driver
        --enable-rtcap           enables capturing support (see README.rtcap)
        --enable-net-routing     enables network routing (see README.routing)

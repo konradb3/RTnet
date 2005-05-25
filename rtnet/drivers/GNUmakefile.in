@@ -44,8 +44,9 @@ host_triplet = @host@
 @CONFIG_RTNET_FCC_ENET_TRUE@am__append_7 = mpc8260_fcc_enet
 @CONFIG_RTNET_SCC_ENET_TRUE@am__append_8 = mpc8xx_enet
 @CONFIG_RTNET_FEC_ENET_TRUE@am__append_9 = mpc8xx_fec
-@CONFIG_RTNET_TULIP_TRUE@am__append_10 = tulip
-@CONFIG_RTNET_SMC91111_TRUE@am__append_11 = smc91111
+@CONFIG_RTNET_MPC52XX_FEC_TRUE@am__append_10 = mpc52xx_fec
+@CONFIG_RTNET_TULIP_TRUE@am__append_11 = tulip
+@CONFIG_RTNET_SMC91111_TRUE@am__append_12 = smc91111
 subdir = drivers
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -67,8 +68,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = experimental 8139too eepro100 pcnet32 via-rhine natsemi \
-	loopback mpc8260_fcc_enet mpc8xx_enet mpc8xx_fec tulip \
-	smc91111
+	loopback mpc8260_fcc_enet mpc8xx_enet mpc8xx_fec mpc52xx_fec \
+	tulip smc91111
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -108,6 +109,8 @@ CONFIG_RTNET_FEC_ENET_FALSE = @CONFIG_RTNET_FEC_ENET_FALSE@
 CONFIG_RTNET_FEC_ENET_TRUE = @CONFIG_RTNET_FEC_ENET_TRUE@
 CONFIG_RTNET_LOOPBACK_FALSE = @CONFIG_RTNET_LOOPBACK_FALSE@
 CONFIG_RTNET_LOOPBACK_TRUE = @CONFIG_RTNET_LOOPBACK_TRUE@
+CONFIG_RTNET_MPC52XX_FEC_FALSE = @CONFIG_RTNET_MPC52XX_FEC_FALSE@
+CONFIG_RTNET_MPC52XX_FEC_TRUE = @CONFIG_RTNET_MPC52XX_FEC_TRUE@
 CONFIG_RTNET_NATSEMI_FALSE = @CONFIG_RTNET_NATSEMI_FALSE@
 CONFIG_RTNET_NATSEMI_TRUE = @CONFIG_RTNET_NATSEMI_TRUE@
 CONFIG_RTNET_NOMAC_FALSE = @CONFIG_RTNET_NOMAC_FALSE@
@@ -234,7 +237,7 @@ target_alias = @target_alias@
 OPTDIRS = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11)
+	$(am__append_10) $(am__append_11) $(am__append_12)
 SUBDIRS = experimental $(OPTDIRS)
 all: all-recursive
 

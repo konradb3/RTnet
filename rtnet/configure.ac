@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.8.2],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.8.3],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -1009,6 +1009,18 @@ AC_MSG_RESULT([${CONFIG_RTNET_FEC_ENET}])
 AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
 
 
+AC_MSG_CHECKING([whether to build MPC52xx fec driver])
+AC_ARG_ENABLE(mpc52xx-fec,
+	AS_HELP_STRING([--enable-mpc52xx-fec], [build MPC52xx fec driver]),
+	[case "$enableval" in
+	y | yes) CONFIG_RTNET_MPC52XX_FEC=yes ;;
+	*) CONFIG_RTNET_MPC52XX_FEC=no ;;
+	esac],
+	[CONFIG_RTNET_MPC52XX_FEC=no])
+AC_MSG_RESULT([${CONFIG_RTNET_MPC52XX_FEC}])
+AM_CONDITIONAL(CONFIG_RTNET_MPC52XX_FEC,[test "$CONFIG_RTNET_MPC52XX_FEC" = "yes"])
+
+
 AC_MSG_CHECKING([whether to build SMSC LAN91C111 driver])
 AC_ARG_ENABLE(smc91111,
 	AS_HELP_STRING([--enable-smc91111], [build SMSC LAN91C111 driver]),
@@ -1305,6 +1317,7 @@ if test x$CONFIG_KBUILD = xy; then
 	drivers/8139too \
 	drivers/eepro100 \
 	drivers/loopback \
+	drivers/mpc52xx_fec \
 	drivers/mpc8260_fcc_enet \
 	drivers/mpc8xx_enet \
 	drivers/mpc8xx_fec \
@@ -1368,6 +1381,7 @@ AC_CONFIG_FILES([ \
     drivers/8139too/GNUmakefile \
     drivers/eepro100/GNUmakefile \
     drivers/loopback/GNUmakefile \
+    drivers/mpc52xx_fec/GNUmakefile \
     drivers/mpc8260_fcc_enet/GNUmakefile \
     drivers/mpc8xx_enet/GNUmakefile \
     drivers/mpc8xx_fec/GNUmakefile \
