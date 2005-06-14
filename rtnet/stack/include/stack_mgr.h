@@ -22,6 +22,8 @@
 
 #ifdef __KERNEL__
 
+#include <linux/list.h>
+
 #include <rtnet_internal.h>
 #include <rtdev.h>
 
@@ -30,16 +32,19 @@
  * network layer protocol (layer 3)
  */
 
-#define MAX_RT_PROTOCOLS        64
+#define RTPACKET_HASH_TBL_SIZE  64
+#define RTPACKET_HASH_KEY_MASK  (RTPACKET_HASH_TBL_SIZE-1)
 
 struct rtpacket_type {
-    char           *name;
-    unsigned short type;
-    short          refcount;
+    unsigned short      type;
+    short               refcount;
 
-    int            (*handler)(struct rtskb *, struct rtpacket_type *);
-    int            (*err_handler)(struct rtskb *, struct rtnet_device *,
-                                  struct rtpacket_type *);
+    int                 (*handler)(struct rtskb *, struct rtpacket_type *);
+    int                 (*err_handler)(struct rtskb *, struct rtnet_device *,
+                                       struct rtpacket_type *);
+
+    char                *name;
+    struct list_head    list_entry;
 };
 
 
@@ -60,8 +65,8 @@ static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 }
 
 
-extern struct rtpacket_type *rt_packets[MAX_RT_PROTOCOLS];
-extern rtos_spinlock_t      rt_packets_lock;
+extern struct list_head rt_packets[RTPACKET_HASH_TBL_SIZE];
+extern rtos_spinlock_t  rt_packets_lock;
 
 
 #endif /* __KERNEL__ */

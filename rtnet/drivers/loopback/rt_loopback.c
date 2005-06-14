@@ -71,7 +71,7 @@ static int rt_loopback_close (struct rtnet_device *rtdev)
 static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
     unsigned short          hash;
-    struct rtpacket_type    *pt;
+    struct rtpacket_type    *pt_entry;
     unsigned long           flags;
     rtos_time_t             time;
 
@@ -95,31 +95,34 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
     rtcap_report_incoming(skb);
 
-    hash = ntohs(skb->protocol) & (MAX_RT_PROTOCOLS-1);
+    hash = ntohs(skb->protocol) & RTPACKET_HASH_KEY_MASK;
 
     rtos_spin_lock_irqsave(&rt_packets_lock, flags);
 
-    pt = rt_packets[hash];
+    list_for_each_entry(pt_entry, &rt_packets[hash], list_entry)
+        if (pt_entry->type == skb->protocol) {
+            pt_entry->refcount++;
+            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
 
-    if ((pt != NULL) && (pt->type == skb->protocol)) {
-        pt->refcount++;
-        rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+            pt_entry->handler(skb, pt_entry);
 
-        pt->handler(skb, pt);
+            rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+            pt_entry->refcount--;
+            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
 
-        rtos_spin_lock_irqsave(&rt_packets_lock, flags);
-        pt->refcount--;
-        rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
-    } else {
-        rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+            goto out;
+        }
 
+    rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+
+    /* don't warn if running in promiscuous mode (RTcap...?) */
+    if ((rtdev->flags & IFF_PROMISC) == 0)
         rtos_print("RTnet: unknown layer-3 protocol\n");
 
-        kfree_rtskb(skb);
-    }
+    kfree_rtskb(skb);
 
+  out:
     rtdev_dereference(rtdev);
-
     return 0;
 }
 
