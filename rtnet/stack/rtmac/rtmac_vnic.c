@@ -132,7 +132,7 @@ static int rtmac_vnic_open(struct net_device *dev)
 
 
 
-static int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
+int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
 {
     struct rtnet_device     *rtdev = (struct rtnet_device*)dev->priv;
     struct net_device_stats *stats = &rtdev->mac_priv->vnic_stats;
@@ -236,7 +236,6 @@ static int rtmac_vnic_init(struct net_device *dev)
     ether_setup(dev);
 
     dev->open            = rtmac_vnic_open;
-    dev->hard_start_xmit = rtmac_vnic_xmit;
     dev->get_stats       = rtmac_vnic_get_stats;
     dev->change_mtu      = rtmac_vnic_change_mtu;
     dev->set_mac_address = NULL;
@@ -251,12 +250,16 @@ static int rtmac_vnic_init(struct net_device *dev)
 
 
 
-int rtmac_vnic_add(struct rtnet_device *rtdev)
+int rtmac_vnic_add(struct rtnet_device *rtdev, vnic_xmit_handler vnic_xmit)
 {
     int                 res;
     struct rtmac_priv   *mac_priv = rtdev->mac_priv;
     struct net_device   *vnic = &mac_priv->vnic;
 
+
+    /* does the discipline request vnic support? */
+    if (!vnic_xmit)
+        return 0;
 
     mac_priv->vnic_registered = 0;
     mac_priv->vnic_max_mtu    = rtdev->mtu - sizeof(struct rtmac_hdr);
@@ -270,8 +273,11 @@ int rtmac_vnic_add(struct rtnet_device *rtdev)
     }
 
     memset(vnic, 0, sizeof(struct net_device));
-    vnic->init = rtmac_vnic_init;
-    vnic->priv = rtdev;
+
+    vnic->init            = rtmac_vnic_init;
+    vnic->hard_start_xmit = vnic_xmit;
+    vnic->priv            = rtdev;
+
     strcpy(vnic->name, "vnic");
     strncpy(vnic->name+4 /*"vnic"*/, rtdev->name+5 /*"rteth"*/, IFNAMSIZ-4);
 

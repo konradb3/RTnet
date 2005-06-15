@@ -98,7 +98,7 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
     rtdev_reference(rtdev);
 
     /* create the VNIC */
-    ret = rtmac_vnic_add(rtdev);
+    ret = rtmac_vnic_add(rtdev, disc->vnic_xmit);
     if (ret < 0) {
         printk("RTmac: Warning, VNIC creation failed for rtdev %s.\n", rtdev->name);
     }

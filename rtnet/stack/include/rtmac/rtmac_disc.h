@@ -32,6 +32,11 @@
 #include <rtnet_chrdev.h>
 
 
+#define RTMAC_NO_VNIC       NULL
+#define RTMAC_DEFAULT_VNIC  rtmac_vnic_xmit
+
+typedef int (*vnic_xmit_handler)(struct sk_buff *skb, struct net_device *dev);
+
 struct rtmac_priv {
     int (*orig_start_xmit)(struct rtskb *skb, struct rtnet_device *dev);
     struct net_device       vnic;
@@ -64,6 +69,8 @@ struct rtmac_disc {
 
     unsigned int        (*get_mtu)(struct rtnet_device *rtdev,
                                    unsigned int priority);
+
+    vnic_xmit_handler   vnic_xmit;
 
     int                 (*attach)(struct rtnet_device *rtdev, void *disc_priv);
     int                 (*detach)(struct rtnet_device *rtdev, void *disc_priv);
