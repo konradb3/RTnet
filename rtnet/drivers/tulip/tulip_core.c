@@ -1235,7 +1235,7 @@ static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 }
 #endif /* set_rx_mode */
 
-#ifdef CONFIG_TULIP_MWI
+#ifdef XXX_CONFIG_TULIP_MWI
 static void __devinit tulip_mwi_config (struct pci_dev *pdev,
 					struct net_device *dev)
 {
@@ -1493,7 +1493,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	rtdev->base_addr = ioaddr;
 	rtdev->irq = irq;
 
-#ifdef CONFIG_TULIP_MWI
+#ifdef XXX_CONFIG_TULIP_MWI
 	if (!force_csr0 && (tp->flags & HAS_PCI_MWI))
 		tulip_mwi_config (pdev, rtdev);
 #else
