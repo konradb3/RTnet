@@ -1,0 +1,37 @@
++ diff -u linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile.FECMOD linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile
+--- linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile.FECMOD	2004-12-13 00:18:37.000000000 +0100
++++ linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile	2005-06-12 11:21:32.000000000 +0200
+@@ -13,6 +13,9 @@
+ O_TARGET 			:= 5xxx_io.o
+ 
+ subdir-$(CONFIG_MPC5200)	:= bestcomm
++
++export-objs			:= sdma.o
++
+ obj-$(CONFIG_MPC5200) 		:= bestcomm/bestcomm.o sdma.o
+ 
+ ifeq ($(CONFIG_MPC5100),y)
++ diff -u linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c.FECMOD linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c
+--- linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c.FECMOD	2003-12-03 20:08:19.000000000 +0100
++++ linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c	2005-06-16 16:38:31.756321464 +0200
+@@ -255,3 +255,20 @@
+ 
+ 	return tasknum;
+ }
++
++
++/*
++ * Hack to permit kernel modules accessing SDMA and BESTCOMM.
++ */
++#include <linux/module.h>
++
++void *mpc5xxx_task_get_bd_ring(int taskId)
++{
++      return TaskGetBDRing(taskId);
++}
++
++EXPORT_SYMBOL(mpc5xxx_task_get_bd_ring);
++EXPORT_SYMBOL(mpc5xxx_sdma_enable_task);
++EXPORT_SYMBOL(mpc5xxx_sdma_fec_rx_task_setup);
++EXPORT_SYMBOL(mpc5xxx_sdma_fec_tx_task_setup);
++EXPORT_SYMBOL(mpc5xxx_sdma_disable_task);

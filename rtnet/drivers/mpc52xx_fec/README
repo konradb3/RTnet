@@ -1,0 +1,60 @@
+This is the RTnet driver for the MPC 52xx FEC for the Linux 
+kernel 2.4.25 (DENX linuxppc_2_4_devel tree). Unfortunately, 
+the kernel requires a small patch to permit kernel modules 
+accessing SDMA and BESTCOMM functions (the FEC driver is not
+supported as module). The patch linuxppc_2_4_devel-fec.patch 
+is available in this directory.
+
+First apply the RTAI kernel patch, then the FEC module patch
+mentioned above and finally disable including the FEC driver
+in the Linux kernel before you make it:
+
+  $ cd linuxppc_2_4_devel
+  $ patch -p1 < <path>/linuxppc_2_4_devel-rtai.patch
+  $ patch -p1 < <path>/linuxppc_2_4_devel-fec.patch
+  $ export CROSS_COMPILE=ppc_82xx-
+  $ make icecube_5200_config
+  $ make menuconfig
+  ...
+  MPC5xxx I/O Options  --->
+        [*] Use USE Motorola BestComm API Implementation
+        [ ] FEC Ethernet
+  $ make dep
+  $ make uImage
+
+This is the build process for the Icecube-Board using the
+ELDK.
+
+The file rt_mpc52xx_fec.h contains a few configuration
+option. Please customize them according to your needs 
+(according to your standard Linux kernel configuration):
+
+  $ cat rt_mpc52xx_fec.h
+  ...
+  /* Define board specific options */
+  #define CONFIG_RTNET_USE_MDIO
+  #define CONFIG_RTNET_FEC_GENERIC_PHY
+  #define CONFIG_RTNET_FEC_LXT971
+  #undef CONFIG_RTNET_FEC_DP83847
+
+Then configure and cross compile RTnet as shown:
+
+  $ export DESTDIR=/opt/eldk/ppc_82xx
+  $ export RTAI_ROOT=$DESTDIR/usr/realtime
+  $ export CROSS_COMPILE=ppc_82xx-
+  $ CC=${CROSS_COMPILE}gcc \
+    LD=${CROSS_COMPILE}ld \
+    AR=${CROSS_COMPILE}ar \
+    RANLIB=${CROSS_COMPILE}ranlib \
+    ./configure --host=powerpc-linux --build=i686-linux \
+    --with-rtai=$RTAI_ROOT --prefix=/usr/realtime \
+    --enable-mpc52xx-fec
+
+Note that RTnet gets installed into $DESTDIR/usr/realtime
+like RTAI.
+
+Also be aware that the MPC52xx has only one on-chip ethernet 
+port. Driver development using a ram-disk based system might 
+be cumbersome. In case a PCI ethernet card can be mounted,
+a NFS mounted root file-system might be more convenient.
+

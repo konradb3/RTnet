@@ -11,10 +11,12 @@
  * "as is" without any warranty of any kind, whether express or implied.
  *
  * Ported to RTnet from "linuxppc_2_4_devel/arch/ppc/5xxx_io/fec.c".
- * Copyright (c) 2005 Wolfgang Grandegger (wg@denx.de)
+ * Copyright (c) 2005 Wolfgang Grandegger <wg@denx.de>
  */
 
+#ifdef ORIGINAL_CODE
 static const char *version = "fec.c v0.2\n";
+#endif
 
 #include <linux/module.h>
 
@@ -43,7 +45,10 @@ static const char *version = "fec.c v0.2\n";
 #include <linux/ethtool.h>
 #include <linux/skbuff.h>
 #include <asm/delay.h>
-#include "fec.h"
+
+#include <rtnet_port.h>
+
+#include "rt_mpc52xx_fec.h"
 #ifdef CONFIG_UBOOT
 #include <asm/ppcboot.h>
 #endif
@@ -53,9 +58,28 @@ static const char *version = "fec.c v0.2\n";
 #define MPC5100_FIX10HDX
 #endif
 
-#ifdef CONFIG_NET_FASTROUTE
+#ifdef CONFIG_RTNET_NET_FASTROUTE
 #error "Fast Routing on MPC5200 ethernet not supported"
 #endif
+
+#ifndef CONFIG_BESTCOMM_API
+#error "Bestcomm API is required!"
+#endif
+
+#if 1
+#undef MPC5xxx_FEC_DEBUG
+#define MPC5xxx_FEC_DEBUG 2
+#endif
+
+MODULE_AUTHOR("Maintainer: Wolfgang Grandegger <wg@denx.de>");
+MODULE_DESCRIPTION("RTnet driver for MPC52xx FEC");
+MODULE_LICENSE("GPL");
+
+static unsigned int rx_pool_size =  0;
+MODULE_PARM(rx_pool_size, "i");
+MODULE_PARM_DESC(rx_pool_size, "Receive buffer pool size");
+
+#define printk(fmt,args...)	rtos_print (fmt ,##args)
 
 extern int mpc5xxx_sdma_fec_rx_task_setup(int num_bufs, int maxbufsize);
 extern int mpc5xxx_sdma_fec_tx_task_setup(int num_bufs);
@@ -70,22 +94,25 @@ extern u32 scEthernetXmit_TDT;
 extern int mpc5xxx_sdma_load_task(u32 *task_start);
 #endif
 
-static struct net_device *mpc5xxx_fec_dev;
-static void mpc5xxx_fec_interrupt(int, void *, struct pt_regs *);
-static void mpc5xxx_sdma_receive_interrupt(int, void *, struct pt_regs *);
-static void mpc5xxx_sdma_transmit_interrupt(int, void *, struct pt_regs *);
-static struct net_device_stats *mpc5xxx_fec_get_stats(struct net_device *);
-static void mpc5xxx_fec_set_multicast_list(struct net_device *dev);
-
-#ifdef CONFIG_USE_MDIO
-static void mpc5xxx_fec_mii(struct net_device *dev);
-static int mpc5xxx_fec_ioctl(struct net_device *, struct ifreq *rq, int cmd);
-static int mpc5xxx_netdev_ethtool_ioctl(struct net_device *dev, void *useraddr);
+static struct rtnet_device *mpc5xxx_fec_dev;
+static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_fec_interrupt);
+static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt);
+static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_transmit_interrupt);
+#ifdef ORIGINAL_VERSION
+static struct rtnet_device_stats *mpc5xxx_fec_get_stats(struct rtnet_device *);
+static void mpc5xxx_fec_set_multicast_list(struct rtnet_device *dev);
+#endif
+#ifdef CONFIG_RTNET_USE_MDIO
+static void mpc5xxx_fec_mii(struct rtnet_device *dev);
+#ifdef ORIGINAL_CODE
+static int mpc5xxx_fec_ioctl(struct rtnet_device *, struct ifreq *rq, int cmd);
+static int mpc5xxx_netdev_ethtool_ioctl(struct rtnet_device *dev, void *useraddr);
+#endif /* ORIGINAL_CODE */
 static void mdio_timer_callback(unsigned long data);
-static void mii_display_status(struct net_device *dev);
-#ifdef CONFIG_USE_MDIO_NOT_YET
-static void mpc5xxx_mdio_callback(uint regval, struct net_device *dev, uint data);
-static int mpc5xxx_mdio_read(struct net_device *dev, int phy_id, int location);
+static void mii_display_status(struct rtnet_device *dev);
+#ifdef CONFIG_RTNET_USE_MDIO_NOT_YET
+static void mpc5xxx_mdio_callback(uint regval, struct rtnet_device *dev, uint data);
+static int mpc5xxx_mdio_read(struct rtnet_device *dev, int phy_id, int location);
 #endif
 
 /* MII processing.  We keep this as simple as possible.  Requests are
@@ -94,7 +121,7 @@ static int mpc5xxx_mdio_read(struct net_device *dev, int phy_id, int location);
  */
 typedef struct mii_list {
 	uint    mii_regval;
-	void    (*mii_func)(uint val, struct net_device *dev, uint data);
+	void    (*mii_func)(uint val, struct rtnet_device *dev, uint data);
 	struct  mii_list *mii_next;
 	uint    mii_data;
 } mii_list_t;
@@ -110,8 +137,8 @@ typedef struct mdio_read_data {
 	struct task_struct *sleeping_task;
 } mdio_read_data_t;
 
-static int mii_queue(struct net_device *dev, int request,
-		void (*func)(uint, struct net_device *, uint), uint data);
+static int mii_queue(struct rtnet_device *dev, int request,
+		void (*func)(uint, struct rtnet_device *, uint), uint data);
 
 /* Make MII read/write commands for the FEC.
  * */
@@ -152,23 +179,25 @@ static int mii_queue(struct net_device *dev, int request,
 #define PHY_STAT_100HDX	0x4000	/* 100 Mbit half duplex selected */
 #define PHY_STAT_100FDX	0x8000	/* 100 Mbit full duplex selected */
 
-#endif	/* CONFIG_USE_MDIO */
+#endif	/* CONFIG_RTNET_USE_MDIO */
 
 u8 mpc5xxx_fec_mac_addr[6];
 u8 null_mac[6];
 
-static void mpc5xxx_fec_tx_timeout(struct net_device *dev)
+#ifdef ORIGINAL_CODE
+static void mpc5xxx_fec_tx_timeout(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 
 	priv->stats.tx_errors++;
 
 	if (!priv->tx_full)
-		netif_wake_queue(dev);
+		rtnetif_wake_queue(dev);
 }
+#endif
 
 static void
-mpc5xxx_fec_set_paddr(struct net_device *dev, u8 *mac)
+mpc5xxx_fec_set_paddr(struct rtnet_device *dev, u8 *mac)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
@@ -178,21 +207,23 @@ mpc5xxx_fec_set_paddr(struct net_device *dev, u8 *mac)
 	out_be32(&fec->paddr2, (mac[4]<<24) | (mac[5]<<16) | 0x8808);
 }
 
+#ifdef ORIGINAL_CODE
 static int
-mpc5xxx_fec_set_mac_address(struct net_device *dev, void *addr)
+mpc5xxx_fec_set_mac_address(struct rtnet_device *dev, void *addr)
 {
 	struct sockaddr *sock = (struct sockaddr *)addr;
 
 	mpc5xxx_fec_set_paddr(dev, sock->sa_data);
 	return 0;
 }
+#endif
 
 /* This function is called to start or restart the FEC during a link
  * change.  This happens on fifo errors or when switching between half
  * and full duplex.
  */
 static void
-mpc5xxx_fec_restart(struct net_device *dev, int duplex)
+mpc5xxx_fec_restart(struct rtnet_device *dev, int duplex)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
@@ -222,11 +253,13 @@ mpc5xxx_fec_restart(struct net_device *dev, int duplex)
 	out_be32(&fec->paddr2,
 		((*(u16 *)&dev->dev_addr[4]) << 16) | 0x8808);
 
+#ifdef ORIGINAL_CODE
 	mpc5xxx_fec_set_multicast_list(dev);
+#endif
 
 	rcntrl = MPC5xxx_FEC_RECV_BUFFER_SIZE << 16;	/* max frame length */
 	rcntrl |= MPC5xxx_FEC_RCNTRL_FCE;
-#ifdef	CONFIG_USE_MDIO
+#ifdef	CONFIG_RTNET_USE_MDIO
 	rcntrl |= MPC5xxx_FEC_RCNTRL_MII_MODE;
 #endif
 	if (duplex)
@@ -238,13 +271,15 @@ mpc5xxx_fec_restart(struct net_device *dev, int duplex)
 	out_be32(&fec->r_cntrl, rcntrl);
 	out_be32(&fec->x_cntrl, tcntrl);
 
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 	/* Set MII speed. */
 	out_be32(&fec->mii_speed, priv->phy_speed);
 #endif
 
 	priv->full_duplex = duplex;
+#ifdef CONFIG_RTNET_USE_MDIO
 	priv->duplex_change = 0;
+#endif
 #if MPC5xxx_FEC_DEBUG > 4
 	printk("%s: duplex set to %d\n", dev->name, priv->full_duplex);
 #endif
@@ -254,7 +289,7 @@ mpc5xxx_fec_restart(struct net_device *dev, int duplex)
 
 	/* Enable interrupts we wish to service.
 	*/
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 	out_be32(&fec->imask, 0xf0fe0000);	/* enable all intr but tfint */
 #else
 	out_be32(&fec->imask, 0xf07e0000);	/* enable all intr but tfint */
@@ -269,13 +304,13 @@ mpc5xxx_fec_restart(struct net_device *dev, int duplex)
 	if (priv->tx_full)
 	{
 		priv->tx_full = 0;
-		netif_wake_queue(dev);
+		rtnetif_wake_queue(dev);
 	}
 }
 
-#ifdef	CONFIG_USE_MDIO
+#ifdef	CONFIG_RTNET_USE_MDIO
 static void
-mpc5xxx_fec_mii(struct net_device *dev)
+mpc5xxx_fec_mii(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
@@ -305,7 +340,7 @@ mpc5xxx_fec_mii(struct net_device *dev)
 }
 
 static int
-mii_queue(struct net_device *dev, int regval, void (*func)(uint, struct net_device *, uint), uint data)
+mii_queue(struct rtnet_device *dev, int regval, void (*func)(uint, struct rtnet_device *, uint), uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
@@ -323,8 +358,7 @@ mii_queue(struct net_device *dev, int regval, void (*func)(uint, struct net_devi
 
 	retval = 0;
 
-	save_flags(flags);
-	cli();
+	rtos_spin_lock_irqsave(&priv->lock, flags);
 
 	if ((mip = mii_free) != NULL) {
 		mii_free = mip->mii_next;
@@ -342,12 +376,12 @@ mii_queue(struct net_device *dev, int regval, void (*func)(uint, struct net_devi
 	} else
 		retval = 1;
 
-	restore_flags(flags);
+	rtos_spin_unlock_irqrestore(&priv->lock, flags);
 
 	return retval;
 }
 
-static void mii_do_cmd(struct net_device *dev, const phy_cmd_t *c)
+static void mii_do_cmd(struct rtnet_device *dev, const phy_cmd_t *c)
 {
 	int k;
 
@@ -358,7 +392,7 @@ static void mii_do_cmd(struct net_device *dev, const phy_cmd_t *c)
 		mii_queue(dev, (c+k)->mii_data, (c+k)->funct, 0);
 }
 
-static void mii_parse_sr(uint mii_reg, struct net_device *dev, uint data)
+static void mii_parse_sr(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint s = priv->phy_status;
@@ -386,7 +420,7 @@ static void mii_parse_sr(uint mii_reg, struct net_device *dev, uint data)
 	}
 }
 
-static void mii_parse_cr(uint mii_reg, struct net_device *dev, uint data)
+static void mii_parse_cr(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint s = priv->phy_status;
@@ -401,7 +435,7 @@ static void mii_parse_cr(uint mii_reg, struct net_device *dev, uint data)
 	priv->phy_status = s;
 }
 
-static void mii_parse_anar(uint mii_reg, struct net_device *dev, uint data)
+static void mii_parse_anar(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint s = priv->phy_status;
@@ -424,7 +458,7 @@ static void mii_parse_anar(uint mii_reg, struct net_device *dev, uint data)
 /* Generic PHY support.  Should work for all PHYs, but does not support link
  * change interrupts.
  */
-#ifdef CONFIG_FEC_GENERIC_PHY
+#ifdef CONFIG_RTNET_FEC_GENERIC_PHY
 
 static phy_info_t phy_info_generic = {
 	0x00000000, /* 0-->match any PHY */
@@ -459,12 +493,12 @@ static phy_info_t phy_info_generic = {
 		{ mk_mii_end, }
 	},
 };
-#endif	/* CONFIG_FEC_GENERIC_PHY */
+#endif	/* CONFIG_RTNET_FEC_GENERIC_PHY */
 
 /* ------------------------------------------------------------------------- */
 /* The Level one LXT971 is used on some of my custom boards		     */
 
-#ifdef CONFIG_FEC_LXT971
+#ifdef CONFIG_RTNET_FEC_LXT971
 
 /* register definitions for the 971 */
 
@@ -475,7 +509,7 @@ static phy_info_t phy_info_generic = {
 #define MII_LXT971_LCR	20	/* LED Control Register		*/
 #define MII_LXT971_TCR	30	/* Transmit Control Register	*/
 
-static void mii_parse_lxt971_sr2(uint mii_reg, struct net_device *dev, uint data)
+static void mii_parse_lxt971_sr2(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint s = priv->phy_status;
@@ -559,18 +593,18 @@ static phy_info_t phy_info_lxt971 = {
 	},
 };
 
-#endif /* CONFIG_FEC_LXT971 */
+#endif /* CONFIG_RTNET_FEC_LXT971 */
 
 /* ----------------------------------------------------------------- */
 /* The National Semiconductor DP83847 is used on a INKA 4X0 board    */
 /* ----------------------------------------------------------------- */
 
-#ifdef CONFIG_FEC_DP83847
+#ifdef CONFIG_RTNET_FEC_DP83847
 
 /* Register definitions */
 #define MII_DP83847_PHYSTS 0x10  /* PHY Status Register */
 
-static void mii_parse_dp83847_physts(uint mii_reg, struct net_device *dev, uint data)
+static void mii_parse_dp83847_physts(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint s = priv->phy_status;
@@ -626,30 +660,30 @@ static phy_info_t phy_info_dp83847 = {
 	}
 };
 
-#endif /* CONFIG_FEC_DP83847 */
+#endif /* CONFIG_RTNET_FEC_DP83847 */
 
 static phy_info_t *phy_info[] = {
 
-#ifdef CONFIG_FEC_LXT971
+#ifdef CONFIG_RTNET_FEC_LXT971
 	&phy_info_lxt971,
-#endif /* CONFIG_FEC_LXT971 */
+#endif /* CONFIG_RTNET_FEC_LXT971 */
 
-#ifdef CONFIG_FEC_DP83847
+#ifdef CONFIG_RTNET_FEC_DP83847
 	&phy_info_dp83847,
-#endif /* CONFIG_FEC_DP83847 */
+#endif /* CONFIG_RTNET_FEC_DP83847 */
 
-#ifdef CONFIG_FEC_GENERIC_PHY
+#ifdef CONFIG_RTNET_FEC_GENERIC_PHY
 	/* Generic PHY support.  This must be the last PHY in the table.
 	 * It will be used to support any PHY that doesn't match a previous
 	 * entry in the table.
 	 */
 	&phy_info_generic,
-#endif /* CONFIG_FEC_GENERIC_PHY */
+#endif /* CONFIG_RTNET_FEC_GENERIC_PHY */
 
 	NULL
 };
 
-static void mii_display_config(struct net_device *dev)
+static void mii_display_config(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint s = priv->phy_status;
@@ -680,7 +714,7 @@ static void mii_display_config(struct net_device *dev)
 	priv->sequence_done = 1;
 }
 
-static void mii_queue_config(uint mii_reg, struct net_device *dev, uint data)
+static void mii_queue_config(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 
@@ -697,7 +731,7 @@ phy_cmd_t phy_cmd_config[] = { { mk_mii_read(MII_REG_CR), mii_queue_config },
 /* Read remainder of PHY ID.
 */
 static void
-mii_discover_phy3(uint mii_reg, struct net_device *dev, uint data)
+mii_discover_phy3(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	int	i;
@@ -726,7 +760,7 @@ mii_discover_phy3(uint mii_reg, struct net_device *dev, uint data)
  * with a valid ID.  This usually happens quickly.
  */
 static void
-mii_discover_phy(uint mii_reg, struct net_device *dev, uint data)
+mii_discover_phy(uint mii_reg, struct rtnet_device *dev, uint data)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	uint	phytype;
@@ -751,10 +785,13 @@ mii_discover_phy(uint mii_reg, struct net_device *dev, uint data)
 }
 
 static void
-mpc5xxx_fec_link_up(struct net_device *dev)
+mpc5xxx_fec_link_up(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)(dev->priv);
+	printk("mpc5xxx_fec_link_up: link_up=%d\n", priv->link_up);
+#ifdef ORIGINAL_CODE
 	priv->link_up = 0;
+#endif
 	mii_display_status(dev);
 	if (priv->duplex_change) {
 #if MPC5xxx_FEC_DEBUG > 1
@@ -770,15 +807,22 @@ mpc5xxx_fec_link_up(struct net_device *dev)
  */
 static void mdio_timer_callback(unsigned long data)
 {
-	struct net_device *dev = (struct net_device *)data;
+	struct rtnet_device *dev = (struct rtnet_device *)data;
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)(dev->priv);
 	mii_do_cmd(dev, priv->phy->ack_int);
 
+	printk("mdio_timer_callback: link_up=%d\n", priv->link_up);
 	if (priv->link_up) {
+#ifdef ORIGINAL_CODE
 		priv->link_up_task.routine = (void *)mpc5xxx_fec_link_up;
 		priv->link_up_task.data = dev;
 		schedule_task(&priv->link_up_task);
+#else
+		mpc5xxx_fec_link_up(dev);
+		return;
+#endif
 	}
+
 	/* Reschedule in 1 second */
 	priv->phy_timer_list.expires = jiffies + (1000 * HZ / 1000);
 	add_timer(&priv->phy_timer_list);
@@ -787,17 +831,15 @@ static void mdio_timer_callback(unsigned long data)
 /*
  * Displays the current status of the PHY.
  */
-static void mii_display_status(struct net_device *dev)
+static void mii_display_status(struct rtnet_device *dev)
 {
     struct mpc5xxx_fec_priv *priv = dev->priv;
     uint s = priv->phy_status;
 
-    printk("%s: status: ", dev->name);
-
     if (!priv->link) {
-        printk("link down");
+        printk("%s: link down", dev->name);
     } else {
-        printk("link up");
+        printk("%s: link up", dev->name);
 
         switch(s & PHY_STAT_SPMASK) {
         case PHY_STAT_100FDX: printk(", 100 Mbps Full Duplex"); break;
@@ -817,17 +859,17 @@ static void mii_display_status(struct net_device *dev)
 
     printk(".\n");
 }
-#endif	/* CONFIG_USE_MDIO */
+#endif	/* CONFIG_RTNET_USE_MDIO */
 
 static int
-mpc5xxx_fec_open(struct net_device *dev)
+mpc5xxx_fec_open(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 #ifndef CONFIG_BESTCOMM_API
 	struct mpc5xxx_sram_fec *sram= priv->sram;
 	struct mpc5xxx_sdma *sdma = priv->sdma;
 #endif
-	struct sk_buff *skb;
+	struct rtskb *skb;
 	int i;
 	struct mpc5xxx_rbuf *rbuf;
 #if MPC5xxx_FEC_DEBUG > 1
@@ -837,6 +879,8 @@ mpc5xxx_fec_open(struct net_device *dev)
 #if MPC5xxx_FEC_DEBUG > 1
 	printk("mpc5xxx_fec_open\n");
 #endif
+
+	RTNET_MOD_INC_USE_COUNT;
 
 	/*
 	 * Initialize receive queue
@@ -856,11 +900,11 @@ mpc5xxx_fec_open(struct net_device *dev)
 #endif
 
 	for (i=0; i<MPC5xxx_FEC_RBD_NUM; i++) {
-		skb = dev_alloc_skb(sizeof *rbuf);
+		skb = dev_alloc_rtskb(sizeof *rbuf, &priv->skb_pool);
 		if (skb == 0)
 			goto eagain;
-		skb->dev = dev;
-		rbuf = (struct mpc5xxx_rbuf *)skb_put(skb, sizeof *rbuf);
+		skb->rtdev = dev;
+		rbuf = (struct mpc5xxx_rbuf *)rtskb_put(skb, sizeof *rbuf);
 #if MPC5xxx_FEC_DEBUG > 0
 		memset(rbuf, 0, sizeof *rbuf);
 		flush_dcache_range((u32)rbuf, (u32)rbuf + sizeof *rbuf);
@@ -930,7 +974,7 @@ mpc5xxx_fec_open(struct net_device *dev)
 	out_be32((u32*)&sram->rbd_next, (u32)sram->rbd);
 #endif
 
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 	if (!priv->sequence_done) {
 		if (!priv->phy) {
 			printk("mpc5xxx_fec_open: PHY not configured\n");
@@ -954,15 +998,21 @@ mpc5xxx_fec_open(struct net_device *dev)
 		priv->phy_timer_list.data = (unsigned long)dev;
 		priv->phy_timer_list.function = mdio_timer_callback;
 		add_timer(&priv->phy_timer_list);
+#ifdef ORIGINAL_CODE
 #if MPC5xxx_FEC_DEBUG > 1
 		printk("%s: started link monitor\n", dev->name);
 #endif
+#else  /* !ORIGINAL_CODE */
+		printk("%s: waiting for link to get up...\n", dev->name);
+		while (!priv->link_up)
+			schedule();
+#endif /* ORIGINAL_CODE */
 	}
-#endif /* CONFIG_USE_MDIO */
+#endif /* CONFIG_RTNET_USE_MDIO */
 
 	mpc5xxx_sdma_enable_task(priv->r_tasknum);
 
-	netif_start_queue(dev);
+	rtnetif_start_queue(dev);
 
 	return 0;
 
@@ -972,7 +1022,7 @@ eagain:
 		skb = fec_finish_skb(&priv->r_queue);
 		if (skb == 0)
 			break;
-		dev_kfree_skb(skb);
+		dev_kfree_rtskb(skb);
 	}
 
 	return -EAGAIN;
@@ -981,24 +1031,26 @@ eagain:
 #define MUST_ALIGN_TRANSMIT_DATA
 #ifdef	MUST_ALIGN_TRANSMIT_DATA
 
-/* Ensure the data within an sk_buff is longword aligned.
- * May return a new sk_buff (or NULL). ++BSE
+/* Ensure the data within an rtskb is longword aligned.
+ * May return a new rtskb (or NULL). ++BSE
  */
-static inline struct sk_buff *
-skb_align(struct sk_buff *skb)
+static inline struct rtskb *
+skb_align(struct rtskb *skb)
 {
 	void *data = skb->data;
 	size_t len = skb->len;
 	size_t pad = (int) skb->data & 3;
-	struct sk_buff *skb2;
+#ifdef ORIGINAL_CODE
+	struct rtskb *skb2;
 
 	if (!pad) {
 		return skb;
 	}
-	if (!skb_cloned(skb)) {
+
+	if (!rtskb_cloned(skb)) {
 		/* slide data within existing buffer */
-		skb_push(skb, pad);
-		skb_trim(skb, len);
+		rtskb_push(skb, pad);
+		rtskb_trim(skb, len);
 		memmove(skb->data, data, len);
 		return skb;
 	}
@@ -1006,10 +1058,19 @@ skb_align(struct sk_buff *skb)
 	skb2 = alloc_skb(len, GFP_ATOMIC);
 	if (skb2) {
 		memcpy(skb2->data, data, len);
-		skb_put(skb2, len);
+		rtskb_put(skb2, len);
 	}
-	kfree_skb(skb);
+	kfree_rtskb(skb);
 	return skb2;
+#else
+	if (pad) {
+		/* slide data within existing buffer */
+		rtskb_push(skb, pad);
+		rtskb_trim(skb, len);
+		memmove(skb->data, data, len);	
+	}
+	return skb;
+#endif
 }
 
 #endif
@@ -1020,11 +1081,13 @@ skb_align(struct sk_buff *skb)
  * calls are done at the proper times.
  */
 static int
-mpc5xxx_fec_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+mpc5xxx_fec_hard_start_xmit(struct rtskb *skb, struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	int pad;
 	short length;
+	unsigned long	flags;
+	rtos_time_t	time;
 
 #if MPC5xxx_FEC_DEBUG > 4
 	printk("mpc5xxx_fec_hard_start_xmit:\n");
@@ -1048,7 +1111,7 @@ mpc5xxx_fec_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 */ 
 	pad = ETH_ZLEN - skb->len;
 	if (pad > 0) {
-		skb = skb_pad(skb, pad);
+		skb = rtskb_padto(skb, ETH_ZLEN);
 		if (skb == 0)
 			return 0;
 		length += pad;
@@ -1071,7 +1134,7 @@ mpc5xxx_fec_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	fec_set_start_skb(&priv->t_queue, skb);
 	fec_set_start_data(&priv->t_queue, virt_to_phys((void *)skb->data));
 
-	spin_lock_irq(&priv->lock);
+	rtos_spin_lock_irqsave(&priv->lock, flags);
 #ifdef CONFIG_BESTCOMM_API
 	fec_set_start_status(&priv->t_queue, MPC5xxx_FEC_TBD_INIT | length);
 #else
@@ -1079,30 +1142,39 @@ mpc5xxx_fec_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	fec_set_start_len(&priv->t_queue, length);
 #endif
 
+#ifdef ORIGINAL_CODE
 	dev->trans_start = jiffies;
+#endif
 
 	mpc5xxx_sdma_enable_task(priv->t_tasknum);
+
+
+	/* Get and patch time stamp just before the transmission */
+	if (skb->xmit_stamp) {
+		rtos_get_time(&time);
+		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
+					       *skb->xmit_stamp);
+	}
 
 	fec_next_start(&priv->t_queue);
 
 	if (fec_start_status(&priv->t_queue) & MPC5xxx_FEC_TBD_TFD) {
 		priv->tx_full = 1;
-		netif_stop_queue(dev);
+	        rtnetif_stop_queue(dev);
 	}
-	spin_unlock_irq(&priv->lock);
+	rtos_spin_unlock_irqrestore(&priv->lock, flags);
 
 	return 0;
 }
 
 /* This handles SDMA transmit task interrupts
  */
-static void
-mpc5xxx_sdma_transmit_interrupt(int irq, void *dev_id, struct pt_regs * regs)
+static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_transmit_interrupt)
 {
-	struct net_device *dev = dev_id;
+	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 
-	spin_lock(&priv->lock);
+	rtos_spin_lock(&priv->lock);
 
 #if MPC5xxx_FEC_DEBUG > 4
 	printk("mpc5xxx_sdma_transmit_interrupt:\n");
@@ -1121,29 +1193,35 @@ mpc5xxx_sdma_transmit_interrupt(int irq, void *dev_id, struct pt_regs * regs)
 		fec_set_finish_status(&priv->t_queue, 0);
 		fec_set_finish_data(&priv->t_queue, 0);
 #endif
-		dev_kfree_skb_irq(fec_finish_skb(&priv->t_queue));
+		dev_kfree_rtskb(fec_finish_skb(&priv->t_queue));
 		fec_next_finish(&priv->t_queue);
 
 		priv->tx_full = 0;
 	}
 
-	if (netif_queue_stopped(dev) && !priv->tx_full)
-		netif_wake_queue(dev);
+	if (rtnetif_queue_stopped(dev) && !priv->tx_full)
+		rtnetif_wake_queue(dev);
 
-	spin_unlock(&priv->lock);
+	rtos_spin_unlock(&priv->lock);
+
+	rtos_irq_end(&priv->t_irq_handle);
+	RTOS_IRQ_RETURN_HANDLED();
 }
 
-static void
-mpc5xxx_sdma_receive_interrupt(int irq, void *dev_id, struct pt_regs * regs)
+static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt)
 {
-	struct net_device *dev = dev_id;
+	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
-	struct sk_buff *skb;
-	struct sk_buff *nskb;
+	struct rtskb *skb;
+	struct rtskb *nskb;
 	struct mpc5xxx_rbuf *rbuf;
 	struct mpc5xxx_rbuf *nrbuf;
 	u32 status;
 	int length;
+	int packets = 0;
+	rtos_time_t time_stamp;
+
+	rtos_get_time(&time_stamp);
 
 #if MPC5xxx_FEC_DEBUG > 4
 	printk("mpc5xxx_sdma_receive_interrupt:\n");
@@ -1177,7 +1255,7 @@ mpc5xxx_sdma_receive_interrupt(int irq, void *dev_id, struct pt_regs * regs)
 		}
 #endif
 		/* allocate replacement skb */
-		nskb = dev_alloc_skb(sizeof *nrbuf);
+		nskb = dev_alloc_rtskb(sizeof *nrbuf, &priv->skb_pool);
 		if (nskb == NULL) {
 			printk(KERN_NOTICE
 			"%s: Memory squeeze, dropping packet.\n",
@@ -1186,8 +1264,8 @@ mpc5xxx_sdma_receive_interrupt(int irq, void *dev_id, struct pt_regs * regs)
 			nrbuf = (struct mpc5xxx_rbuf *)skb->data;
 		}
 		else {
-			nskb->dev = dev;
-			nrbuf = (struct mpc5xxx_rbuf *)skb_put(nskb,
+			nskb->rtdev = dev;
+			nrbuf = (struct mpc5xxx_rbuf *)rtskb_put(nskb,
 					sizeof *nrbuf);
 #if MPC5xxx_FEC_DEBUG > 0
 			memset(nrbuf, 0, sizeof *nrbuf);
@@ -1211,10 +1289,14 @@ mpc5xxx_sdma_receive_interrupt(int irq, void *dev_id, struct pt_regs * regs)
 				}
 			}
 #endif
-			skb_trim(skb, length);
-			skb->protocol = eth_type_trans(skb, dev);
-			netif_rx(skb);
+			rtskb_trim(skb, length);
+			skb->protocol = rt_eth_type_trans(skb, dev);
+			memcpy(&skb->time_stamp, &time_stamp, sizeof(rtos_time_t));
+			rtnetif_rx(skb);
+			packets++;
+#ifdef ORIGINAL_CODE
 			dev->last_rx = jiffies;
+#endif
 			fec_set_finish_skb(&priv->r_queue, nskb);
 		}
 
@@ -1228,10 +1310,13 @@ mpc5xxx_sdma_receive_interrupt(int irq, void *dev_id, struct pt_regs * regs)
 			break;
 	}
 
-	return;
+	if (packets > 0)
+		rt_mark_stack_mgr(dev);
+	rtos_irq_end(&priv->r_irq_handle);
+	RTOS_IRQ_RETURN_HANDLED();
 }
 
-static void mpc5xxx_fec_reinit(struct net_device *dev)
+static void mpc5xxx_fec_reinit(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
@@ -1241,11 +1326,11 @@ static void mpc5xxx_fec_reinit(struct net_device *dev)
 #ifdef CONFIG_MPC5200
 	u16 u16_value;
 #endif
-	int i;
 	u32 u32_value;
-	static void mpc5xxx_fec_update_stat(struct net_device *);
-
-	netif_stop_queue(dev);
+#ifdef ORIGINAL_CODE
+	static void mpc5xxx_fec_update_stat(struct rtnet_device *);
+#endif
+	rtnetif_stop_queue(dev);
 	out_be32(&fec->imask, 0x0); 
 
 	/* Disable the rx and tx queues. */
@@ -1271,7 +1356,7 @@ static void mpc5xxx_fec_reinit(struct net_device *dev)
 
 	/* Reconfigure FEC */
 	u32_value = in_be32(&priv->gpio->port_config);
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 	u32_value |= 0x00050000;	/* 100MBit with MD */
 #else
 	u32_value |= 0x00020000;	/* 10MBit with 7-wire */
@@ -1298,27 +1383,31 @@ static void mpc5xxx_fec_reinit(struct net_device *dev)
 
 	mpc5xxx_fec_restart(dev, priv->full_duplex);
 
+#ifdef ORIGINAL_CODE
 	/*
 	* Read MIB counters in order to reset them,
 	* then zero all the stats fields in memory
 	*/
 	mpc5xxx_fec_update_stat(dev);
+#endif
 
+#ifdef CONFIG_USE_MDIO
 	if (priv->sequence_done) { /* redo the mpc5xxx_fec_open() */
+		int i;
 		/* Free rx buffers */
 		for (i=0; i<MPC5xxx_FEC_RBD_NUM; i++) {
-			dev_kfree_skb(fec_finish_skb(&priv->r_queue));
+			dev_kfree_rtskb(fec_finish_skb(&priv->r_queue));
 			fec_next_finish(&priv->r_queue);
 		}
 		mpc5xxx_fec_open(dev);
 	}
+#endif
 	return;
 }
 
-static void
-mpc5xxx_fec_interrupt(int irq, void *dev_id, struct pt_regs *regs)
+static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_fec_interrupt)
 {
-	struct net_device *dev = (struct net_device *)dev_id;
+	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
 	int ievent;
@@ -1339,29 +1428,35 @@ mpc5xxx_fec_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 		mpc5xxx_fec_reinit(dev);
 	}
 	else if (ievent & MPC5xxx_FEC_IEVENT_MII) {
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 		mpc5xxx_fec_mii(dev);
 #else
 		printk("%s[%d] %s: unexpected MPC5xxx_FEC_IEVENT_MII\n"
 			__FILE__, __LINE__, __FUNCTION__);
-#endif /* CONFIG_USE_MDIO */
+#endif /* CONFIG_RTNET_USE_MDIO */
 	}
+
+	rtos_irq_end(&priv->irq_handle);
+	RTOS_IRQ_RETURN_HANDLED();
 }
 
 static int
-mpc5xxx_fec_close(struct net_device *dev)
+mpc5xxx_fec_close(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	unsigned long timeout;
 	int i;
 
+#ifdef ORIGINAL_CODE
 	/* Stop the link-up-monitor timer */
 	del_timer(&priv->phy_timer_list);
+#endif
 
 	priv->open_time = 0;
+#ifdef CONFIG_RTNET_USE_MDIO
 	priv->sequence_done = 0;
-
-	netif_stop_queue(dev);
+#endif
+	rtnetif_stop_queue(dev);
 
 	/* Wait for rx queue to drain */
 	timeout = jiffies + 2*HZ;
@@ -1376,24 +1471,30 @@ mpc5xxx_fec_close(struct net_device *dev)
 
 	/* Free rx Buffers */
 	for (i=0; i<MPC5xxx_FEC_RBD_NUM; i++) {
-		dev_kfree_skb(fec_finish_skb(&priv->r_queue));
+		dev_kfree_rtskb(fec_finish_skb(&priv->r_queue));
 		fec_next_finish(&priv->r_queue);
 	}
 
+
+#ifdef ORIGINAL_CODE
 	mpc5xxx_fec_get_stats(dev);
+#endif
+
+	RTNET_MOD_DEC_USE_COUNT;
 
 	return 0;
 }
 
+#ifdef ORIGINAL_CODE
 /*
  * Get the current statistics.
  * This may be called with the card open or closed.
  */
-static struct net_device_stats *
-mpc5xxx_fec_get_stats(struct net_device *dev)
+static struct rtnet_device_stats *
+mpc5xxx_fec_get_stats(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
-	struct net_device_stats *stats = &priv->stats;
+	struct rtnet_device_stats *stats = &priv->stats;
 	struct mpc5xxx_fec *fec = priv->fec;
 
 	stats->rx_bytes = in_be32(&fec->rmon_r_octets);
@@ -1435,10 +1536,10 @@ mpc5xxx_fec_get_stats(struct net_device *dev)
 }
 
 static void
-mpc5xxx_fec_update_stat(struct net_device *dev)
+mpc5xxx_fec_update_stat(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
-	struct net_device_stats *stats = &priv->stats;
+	struct rtnet_device_stats *stats = &priv->stats;
 	struct mpc5xxx_fec *fec = priv->fec;
 
 	out_be32(&fec->mib_control, MPC5xxx_FEC_MIB_DISABLE);
@@ -1453,7 +1554,7 @@ mpc5xxx_fec_update_stat(struct net_device *dev)
  * Set or clear the multicast filter for this adaptor.
  */
 static void
-mpc5xxx_fec_set_multicast_list(struct net_device *dev)
+mpc5xxx_fec_set_multicast_list(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
@@ -1492,18 +1593,19 @@ mpc5xxx_fec_set_multicast_list(struct net_device *dev)
 		out_be32(&fec->gaddr2, gaddr2);
 	}
 }
+#endif /* ORIGINAL_CODE */
 
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 
-#ifdef CONFIG_USE_MDIO_NOT_YET
-static void mpc5xxx_mdio_callback(uint regval, struct net_device *dev, uint data)
+#ifdef CONFIG_RTNET_USE_MDIO_NOT_YET
+static void mpc5xxx_mdio_callback(uint regval, struct rtnet_device *dev, uint data)
 {
 	mdio_read_data_t* mrd = (mdio_read_data_t *)data;
 	mrd->regval = 0xFFFF & regval;
 	wake_up_process(mrd->sleeping_task);
 }
 
-static int mpc5xxx_mdio_read(struct net_device *dev, int phy_id, int location)
+static int mpc5xxx_mdio_read(struct rtnet_device *dev, int phy_id, int location)
 {
 	uint retval;
 	mdio_read_data_t* mrd = (mdio_read_data_t *)kmalloc(sizeof(*mrd),
@@ -1521,18 +1623,22 @@ static int mpc5xxx_mdio_read(struct net_device *dev, int phy_id, int location)
 
 	return retval;
 }
-#endif
+#endif /* CONFIG_RTNET_USE_MDIO_NOT_YET */
 
-static void mpc5xxx_mdio_write(struct net_device *dev, int phy_id, int location, int value)
+#ifdef ORIGINAL_CODE
+static void mpc5xxx_mdio_write(struct rtnet_device *dev, int phy_id, int location, int value)
 {
 	mii_queue(dev, mk_mii_write(location, value), NULL, 0);
 }
-#endif	/* CONFIG_USE_MDIO */
+#endif
 
+#endif	/* CONFIG_RTNET_USE_MDIO */
+
+#ifdef ORIGINAL_CODE
 static int
-mpc5xxx_netdev_ethtool_ioctl(struct net_device *dev, void *useraddr)
+mpc5xxx_netdev_ethtool_ioctl(struct rtnet_device *dev, void *useraddr)
 {
-#ifdef CONFIG_USE_MDIO_NOT_YET_XXX
+#ifdef CONFIG_RTNET_USE_MDIO_NOT_YET_XXX
 	struct mpc5xxx_fec_priv *private = (struct mpc5xxx_fec_priv *)dev->priv;
 #endif
 	u32 ethcmd;
@@ -1554,7 +1660,7 @@ mpc5xxx_netdev_ethtool_ioctl(struct net_device *dev, void *useraddr)
 			return 0;
 		}
 		/* get settings */
-#ifdef CONFIG_USE_MDIO_NOT_YET_XXX
+#ifdef CONFIG_RTNET_USE_MDIO_NOT_YET_XXX
 	case ETHTOOL_GSET:{
 			struct ethtool_cmd ecmd = { ETHTOOL_GSET };
 			spin_lock_irq(&private->lock);
@@ -1609,9 +1715,9 @@ mpc5xxx_netdev_ethtool_ioctl(struct net_device *dev, void *useraddr)
 }
 
 static int
-mpc5xxx_fec_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
+mpc5xxx_fec_ioctl(struct rtnet_device *dev, struct ifreq *rq, int cmd)
 {
-#ifdef CONFIG_USE_MDIO_NOT_YET_XXX
+#ifdef CONFIG_RTNET_USE_MDIO_NOT_YET_XXX
 	struct mii_ioctl_data *data = (struct mii_ioctl_data *) &rq->ifr_data;
 	int phy = dev->base_addr & 0x1f;
 #endif
@@ -1623,7 +1729,7 @@ mpc5xxx_fec_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 					dev, (void *) rq->ifr_data);
 		break;
 
-#ifdef CONFIG_USE_MDIO_NOT_YET_XXX
+#ifdef CONFIG_RTNET_USE_MDIO_NOT_YET_XXX
 	case SIOCGMIIPHY:	/* Get address of MII PHY in use. */
 	case SIOCDEVPRIVATE:	/* for binary compat, remove in 2.5 */
 		data->phy_id = phy;
@@ -1676,12 +1782,13 @@ mpc5xxx_fec_mac_setup(char *mac_address)
 }
 
 __setup("mpc5xxx_mac=", mpc5xxx_fec_mac_setup);
+#endif /* ORIGINAL_CODE */
 
 static int __init
 mpc5xxx_fec_init(void)
 {
 	struct mpc5xxx_fec *fec;
-	struct net_device *dev;
+	struct rtnet_device *dev;
 	struct mpc5xxx_fec_priv *priv;
 	int i;
 #ifndef CONFIG_BESTCOMM_API
@@ -1704,9 +1811,13 @@ mpc5xxx_fec_init(void)
 	printk("mpc5xxx_fec_init\n");
 #endif
 
-	dev = init_etherdev(NULL, sizeof *priv);
+	dev = rt_alloc_etherdev(sizeof(*priv));
 	if (!dev)
 		return -EIO;
+	rtdev_alloc_name(dev, "rteth%d");
+	rt_rtdev_connect(dev, &RTDEV_manager);
+	RTNET_SET_MODULE_OWNER(dev);
+	dev->vers = RTDEV_VERS_2_0;
 
 	mpc5xxx_fec_dev = dev;
 	priv = (struct mpc5xxx_fec_priv *)dev->priv;
@@ -1716,11 +1827,13 @@ mpc5xxx_fec_init(void)
 	priv->fec = fec = (struct mpc5xxx_fec *)MPC5xxx_FEC;
 	priv->gpio = (struct mpc5xxx_gpio *)MPC5xxx_GPIO;
 	priv->sdma = (struct mpc5xxx_sdma *)MPC5xxx_SDMA;
-	spin_lock_init(&priv->lock);
+	rtos_spin_lock_init(&priv->lock);
+	rt_stack_connect(dev, &STACK_manager);
 
 	dev->open		= mpc5xxx_fec_open;
 	dev->stop		= mpc5xxx_fec_close;
 	dev->hard_start_xmit	= mpc5xxx_fec_hard_start_xmit;
+#ifdef ORIGINAL_CODE
 	dev->do_ioctl		= mpc5xxx_fec_ioctl;
 	dev->get_stats		= mpc5xxx_fec_get_stats;
 	dev->set_mac_address	= mpc5xxx_fec_set_mac_address;
@@ -1728,9 +1841,28 @@ mpc5xxx_fec_init(void)
 
 	dev->tx_timeout		= mpc5xxx_fec_tx_timeout;
 	dev->watchdog_timeo	= MPC5xxx_FEC_WATCHDOG_TIMEOUT; 
+#endif /* ORIGINAL_CODE */
 	dev->flags &= ~IFF_RUNNING;
 
-#ifdef CONFIG_NET_FASTROUTE
+	if (!rx_pool_size)
+		rx_pool_size = MPC5xxx_FEC_RBD_NUM * 2;
+	if (rtskb_pool_init(&priv->skb_pool, rx_pool_size) < rx_pool_size) {
+		rtos_irq_disable(&priv->irq_handle);
+		rtos_irq_free(&priv->irq_handle);
+		rtskb_pool_release(&priv->skb_pool);
+		rtdev_free(dev);
+		return -ENOMEM;
+	}
+
+	if ((i = rt_register_rtnetdev(dev))) {
+		rtos_irq_disable(&priv->irq_handle);
+		rtos_irq_free(&priv->irq_handle);
+		rtskb_pool_release(&priv->skb_pool);
+		rtdev_free(dev);
+		return i;
+	}
+
+#ifdef CONFIG_RTNET_NET_FASTROUTE
 	dev->accept_fastpath = mpc5xxx_fec_accept_fastpath;
 #endif
 	if (memcmp(mpc5xxx_fec_mac_addr, null_mac, 6) != 0)
@@ -1771,21 +1903,32 @@ mpc5xxx_fec_init(void)
 	priv->r_irq = MPC5xxx_SDMA_IRQ_BASE + priv->r_tasknum;
 	priv->t_irq = MPC5xxx_SDMA_IRQ_BASE + priv->t_tasknum;
 
-	if (request_irq(MPC5xxx_FEC_IRQ, &mpc5xxx_fec_interrupt,
-			SA_INTERRUPT | SA_SAMPLE_RANDOM, "eth_err", dev)) {
-		panic("FEC interrupt allocation failed\n");
+	if ((i = rtos_irq_request(&priv->irq_handle, MPC5xxx_FEC_IRQ,
+				  mpc5xxx_fec_interrupt, dev))) {
+		rtdev_free(dev);
+		printk(KERN_ERR "FEC interrupt allocation failed\n");
+		return i;
 	}
 	dev->irq = MPC5xxx_FEC_IRQ;
 
-	if (request_irq(priv->r_irq, &mpc5xxx_sdma_receive_interrupt,
-			SA_INTERRUPT | SA_SAMPLE_RANDOM, "eth_recv", dev)) {
-		panic("FEC receive task interrupt allocation failed\n");
+	if ((i = rtos_irq_request(&priv->r_irq_handle, priv->r_irq,
+				  mpc5xxx_sdma_receive_interrupt, dev))) {
+		rtdev_free(dev);
+		printk(KERN_ERR "FEC receive task interrupt allocation failed\n");
+		return i;
 	}
 
-	if (request_irq(priv->t_irq, &mpc5xxx_sdma_transmit_interrupt,
-			SA_INTERRUPT | SA_SAMPLE_RANDOM, "eth_xmit", dev)) {
-		panic("FEC transmit task interrupt allocation failed\n");
+
+	if ((i = rtos_irq_request(&priv->t_irq_handle, priv->t_irq,
+				  mpc5xxx_sdma_transmit_interrupt, dev))) {
+		rtdev_free(dev);
+		printk(KERN_ERR "FEC transmit task interrupt allocation failed\n");
+		return i;
 	}
+
+	rtos_irq_enable(&priv->irq_handle);
+	rtos_irq_enable(&priv->r_irq_handle);
+	rtos_irq_enable(&priv->t_irq_handle);
 
 #if MPC5xxx_FEC_DEBUG > 1
 	printk("fec_irq %d, r_irq %d, t_irq %d\n",
@@ -1793,7 +1936,7 @@ mpc5xxx_fec_init(void)
 #endif
 
 	u32_value = in_be32(&priv->gpio->port_config);
-#ifdef CONFIG_USE_MDIO
+#ifdef CONFIG_RTNET_USE_MDIO
 	u32_value |= 0x00050000;	/* 100MBit with MD	*/
 #else
 	u32_value |= 0x00020000;	/* 10MBit with 7-wire	*/
@@ -1817,7 +1960,7 @@ mpc5xxx_fec_init(void)
 	out_be16(&priv->sdma->PtdCntrl, u16_value);
 #endif
 
-#if !defined(CONFIG_USE_MDIO)
+#if !defined(CONFIG_RTNET_USE_MDIO)
 	mpc5xxx_fec_restart (dev, 0);	/* always use half duplex mode only */
 #else
 	for (i=0; i<NMII-1; i++)
@@ -1844,11 +1987,13 @@ mpc5xxx_fec_init(void)
 	priv->old_status = 0;
 #endif
 
+#ifdef ORIGINAL_CODE
 	/*
 	 * Read MIB counters in order to reset them,
 	 * then zero all the stats fields in memory
 	 */
 	mpc5xxx_fec_update_stat(dev);
+#endif
 
 	return 0;
 }
@@ -1856,15 +2001,23 @@ mpc5xxx_fec_init(void)
 static void __exit
 mpc5xxx_fec_uninit(void)
 {
-	struct net_device *dev = mpc5xxx_fec_dev;
+	struct rtnet_device *dev = mpc5xxx_fec_dev;
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 
-	unregister_netdev(dev);
-	free_irq(dev->irq, dev);
-	free_irq(priv->r_irq, dev);
-	free_irq(priv->t_irq, dev);
-	kfree(dev->priv);
-	dev->priv = NULL;
+	rt_stack_disconnect(dev);
+	rt_unregister_rtnetdev(dev);
+	rt_rtdev_disconnect(dev);
+
+	rtos_irq_disable(&priv->irq_handle);
+	rtos_irq_disable(&priv->r_irq_handle);
+	rtos_irq_disable(&priv->t_irq_handle);
+	rtos_irq_free(&priv->irq_handle);
+	rtos_irq_free(&priv->r_irq_handle);
+	rtos_irq_free(&priv->t_irq_handle);
+
+	rtskb_pool_release(&priv->skb_pool);
+	printk("%s: unloaded\n", dev->name);
+	rtdev_free(dev);
 }
 
 static int __init
@@ -1882,6 +2035,3 @@ mpc5xxx_fec_module_exit(void)
 module_init(mpc5xxx_fec_module_init);
 module_exit(mpc5xxx_fec_module_exit);
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Dale Farnsworth");
-MODULE_DESCRIPTION("Ethernet driver for Motorola MPC5xxx FEC");
