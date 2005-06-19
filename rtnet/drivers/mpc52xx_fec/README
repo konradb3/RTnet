@@ -49,6 +49,8 @@ Then configure and cross compile RTnet as shown:
     ./configure --host=powerpc-linux --build=i686-linux \
     --with-rtai=$RTAI_ROOT --prefix=/usr/realtime \
     --enable-mpc52xx-fec
+  $ make
+  $ make install
 
 Note that RTnet gets installed into $DESTDIR/usr/realtime
 like RTAI.
