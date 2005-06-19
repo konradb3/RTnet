@@ -811,7 +811,6 @@ static void mdio_timer_callback(unsigned long data)
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)(dev->priv);
 	mii_do_cmd(dev, priv->phy->ack_int);
 
-	printk("mdio_timer_callback: link_up=%d\n", priv->link_up);
 	if (priv->link_up) {
 #ifdef ORIGINAL_CODE
 		priv->link_up_task.routine = (void *)mpc5xxx_fec_link_up;
@@ -836,10 +835,11 @@ static void mii_display_status(struct rtnet_device *dev)
     struct mpc5xxx_fec_priv *priv = dev->priv;
     uint s = priv->phy_status;
 
+    printk("%s: ", dev->name);
     if (!priv->link) {
-        printk("%s: link down", dev->name);
+        printk("link down");
     } else {
-        printk("%s: link up", dev->name);
+        printk("link up");
 
         switch(s & PHY_STAT_SPMASK) {
         case PHY_STAT_100FDX: printk(", 100 Mbps Full Duplex"); break;
