@@ -12,7 +12,7 @@
 /* We build for fusion 0.7.2/0.7.3 */
 #undef CONFIG_FUSION_072
 
-/* We build for fusion 0.7.4/0.7.5/0.8 */
+/* We build for fusion 0.7.4 or better */
 #undef CONFIG_FUSION_074
 
 /* RTAI LXRT */
