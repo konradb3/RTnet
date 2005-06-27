@@ -160,6 +160,7 @@ static void do_stacktask(int mgr_id)
             return;
 
         while (1) {
+          next_packet:
             rtos_spin_lock_irqsave(&rxqueue.lock, flags);
 
             skb = __rtskb_dequeue(&rxqueue);
@@ -191,7 +192,7 @@ static void do_stacktask(int mgr_id)
                     rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
 
                     rtdev_dereference(rtdev);
-                    continue;
+                    goto next_packet;
                 }
 
             rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
