@@ -20,7 +20,7 @@ MODULE_EXT="@RTNET_MODULE_EXT@"
 
 # RT-NIC driver
 RT_DRIVER="rt_eepro100"
-RT_DRIVER_OPTIONS="cards=1"
+RT_DRIVER_OPTIONS="cards=1,0,0,0"
 
 # IP address and netmask of this station
 #   The TDMA_CONFIG file overrides these parameters for masters and backup
