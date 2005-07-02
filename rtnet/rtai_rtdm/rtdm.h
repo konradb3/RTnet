@@ -480,8 +480,8 @@ static inline int getsockname_rt(int fd, struct sockaddr *name,
     return ioctl_rt(fd, RTIOC_GETSOCKNAME, &args);
 }
 
-static inline int rt_socket_getpeername(int fd, struct sockaddr *name,
-                                        socklen_t *namelen)
+static inline int getpeername_rt(int fd, struct sockaddr *name,
+                                 socklen_t *namelen)
 {
     struct rtdm_getsockaddr_args args = {name, namelen};
 
