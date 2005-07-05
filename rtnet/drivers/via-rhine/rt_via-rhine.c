@@ -1367,10 +1367,10 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 
 			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
 		} else {
-			 /* no need to block the interrupts */
+			 /* no need to block the interrupts during copy */
 			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
-			rtos_saveflags(flags);
-			rtos_spin_lock(&np->lock);
+
+			rtos_spin_lock_irqsave(&np->lock, flags);
 		}
 /*** RTnet ***/
 
@@ -1398,7 +1398,6 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	np->tx_ring[entry].desc_length =
 		cpu_to_le32(TXDESC | (skb->len >= ETH_ZLEN ? skb->len : ETH_ZLEN));
 
-	/* lock eth irq */
 	wmb();
 	np->tx_ring[entry].tx_status = cpu_to_le32(DescOwn);
 	wmb();

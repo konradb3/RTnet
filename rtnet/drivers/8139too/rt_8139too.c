@@ -1321,8 +1321,6 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         unsigned long flags;
         rtos_time_t time;
 
-        rtos_irq_disable(&tp->irq_handle);
-
         /* Calculate the next Tx descriptor entry. */
         entry = tp->cur_tx % NUM_TX_DESC;
 
@@ -1333,14 +1331,16 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
                         *skb->xmit_stamp =
                                 cpu_to_be64(rtos_time_to_nanosecs(&time) +
                                 *skb->xmit_stamp);
-                } else
-                        rtos_saveflags(flags);
-
-                rtskb_copy_and_csum_dev(skb, tp->tx_buf[entry]);
+                        /* typically, we are only copying a few bytes here */
+                        rtskb_copy_and_csum_dev(skb, tp->tx_buf[entry]);
+                } else {
+                        /* copy larger packets outside the lock */
+                        rtskb_copy_and_csum_dev(skb, tp->tx_buf[entry]);
+                        rtos_local_irqsave(flags);
+                }
         } else {
                 dev_kfree_rtskb(skb);
                 tp->stats.tx_dropped++;
-                rtos_irq_enable(&tp->irq_handle);
                 return 0;
         }
 
@@ -1354,8 +1354,7 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         if ((tp->cur_tx - NUM_TX_DESC) == tp->dirty_tx)
                 rtnetif_stop_queue (rtdev);
         rtos_spin_unlock_irqrestore(&tp->lock, flags);
-        rtos_irq_enable(&tp->irq_handle);
-        
+
         dev_kfree_rtskb(skb);
 
 #ifdef DEBUG
