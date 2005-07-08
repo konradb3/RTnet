@@ -375,12 +375,6 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	fep->stats.tx_bytes += skb->len;
 	fep->skb_cur = (fep->skb_cur+1) & TX_RING_MOD_MASK;
 
-	/* Push the data cache so the CPM does not get stale memory
-	 * data.
-	 */
-	flush_dcache_range((unsigned long)skb->data,
-			   (unsigned long)skb->data + skb->len);
-
 #if 0
 	rtos_irq_disable(&fep->irq_handle);
 	rtos_spin_lock(&fep->lock);
@@ -394,6 +388,12 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
 					       *skb->xmit_stamp);
 	}
+	
+	/* Push the data cache so the CPM does not get stale memory
+	 * data.
+	 */
+	flush_dcache_range((unsigned long)skb->data,
+			   (unsigned long)skb->data + skb->len);
 
 	/* Send it on its way.  Tell FEC its ready, interrupt when done,
 	 * its the last BD of the frame, and to put the CRC on the end.
