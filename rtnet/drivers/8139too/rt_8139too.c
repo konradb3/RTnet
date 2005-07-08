@@ -640,7 +640,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         /* dev and rtdev->priv zeroed in alloc_etherdev */
         rtdev=rt_alloc_etherdev(sizeof (struct rtl8139_private));
         if (rtdev==NULL) {
-                rtos_print (KERN_ERR PFX "%s: Unable to alloc new net device\n", pdev->slot_name);
+                rtos_print (KERN_ERR PFX "%s: Unable to alloc new net device\n", pci_name(pdev));
                 return -ENOMEM;
         }
         rtdev_alloc_name(rtdev, "rteth%d");
@@ -672,25 +672,25 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
 #ifdef USE_IO_OPS
         /* make sure PCI base addr 0 is PIO */
         if (!(pio_flags & IORESOURCE_IO)) {
-                rtos_print (KERN_ERR PFX "%s: region #0 not a PIO resource, aborting\n", pdev->slot_name);
+                rtos_print (KERN_ERR PFX "%s: region #0 not a PIO resource, aborting\n", pci_name(pdev));
                 rc = -ENODEV;
                 goto err_out;
         }
         /* check for weird/broken PCI region reporting */
         if (pio_len < RTL_MIN_IO_SIZE) {
-                rtos_print (KERN_ERR PFX "%s: Invalid PCI I/O region size(s), aborting\n", pdev->slot_name);
+                rtos_print (KERN_ERR PFX "%s: Invalid PCI I/O region size(s), aborting\n", pci_name(pdev));
                 rc = -ENODEV;
                 goto err_out;
         }
 #else
         /* make sure PCI base addr 1 is MMIO */
         if (!(mmio_flags & IORESOURCE_MEM)) {
-                rtos_print(KERN_ERR PFX "%s: region #1 not an MMIO resource, aborting\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: region #1 not an MMIO resource, aborting\n", pci_name(pdev));
                 rc = -ENODEV;
                 goto err_out;
         }
         if (mmio_len < RTL_MIN_IO_SIZE) {
-                rtos_print(KERN_ERR PFX "%s: Invalid PCI mem region size(s), aborting\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: Invalid PCI mem region size(s), aborting\n", pci_name(pdev));
                 rc = -ENODEV;
                 goto err_out;
         }
@@ -711,7 +711,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         /* ioremap MMIO region */
         ioaddr = ioremap (mmio_start, mmio_len);
         if (ioaddr == NULL) {
-                rtos_print(KERN_ERR PFX "%s: cannot remap MMIO, aborting\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: cannot remap MMIO, aborting\n", pci_name(pdev));
                 rc = -EIO;
                 goto err_out;
         }
@@ -724,7 +724,7 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
 
         /* check for missing/broken hardware */
         if (RTL_R32 (TxConfig) == 0xFFFFFFFF) {
-                rtos_print(KERN_ERR PFX "%s: Chip not responding, ignoring board\n", pdev->slot_name);
+                rtos_print(KERN_ERR PFX "%s: Chip not responding, ignoring board\n", pci_name(pdev));
                 rc = -EIO;
                 goto err_out;
         }
@@ -815,7 +815,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         if (pdev->vendor == PCI_VENDOR_ID_REALTEK &&
             pdev->device == PCI_DEVICE_ID_REALTEK_8139 && pci_rev >= 0x20) {
                 rtos_print(KERN_INFO PFX "pci dev %s (id %04x:%04x rev %02x) is an enhanced 8139C+ chip\n",
-                          pdev->slot_name, pdev->vendor, pdev->device, pci_rev);
+                          pci_name(pdev), pdev->vendor, pdev->device, pci_rev);
                 rtos_print(KERN_INFO PFX "Use the \"8139cp\" driver for improved performance and stability.\n");
         }
 

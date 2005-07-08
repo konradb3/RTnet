@@ -1059,7 +1059,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 		printed_version = 1;
 	}
 
-	print_name = pdev ? pdev->slot_name : "3c59x";
+	print_name = pdev ? pci_name(pdev) : "3c59x";
 
     // *** RTnet ***
 	rtdev = rt_alloc_etherdev(sizeof(*vp));

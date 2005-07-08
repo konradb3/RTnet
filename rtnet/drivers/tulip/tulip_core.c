@@ -1245,7 +1245,7 @@ static void __devinit tulip_mwi_config (struct pci_dev *pdev,
 	u32 csr0;
 
 	if (tulip_debug > 3)
-		printk(KERN_DEBUG "%s: tulip_mwi_config()\n", pdev->slot_name);
+		printk(KERN_DEBUG "%s: tulip_mwi_config()\n", pci_name(pdev));
 
 	tp->csr0 = csr0 = 0;
 
@@ -1313,7 +1313,7 @@ out:
 	tp->csr0 = csr0;
 	if (tulip_debug > 2)
 		printk(KERN_DEBUG "%s: MWI config cacheline=%d, csr0=%08x\n",
-		       pdev->slot_name, cache, csr0);
+		       pci_name(pdev), cache, csr0);
 }
 #endif
 
@@ -1443,7 +1443,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 
 	if (pci_resource_len (pdev, 0) < tulip_tbl[chip_idx].io_size) {
 		printk(KERN_ERR PFX "%s: I/O region (0x%lx@0x%lx) too small, "
-			"aborting\n", pdev->slot_name,
+			"aborting\n", pci_name(pdev),
 			pci_resource_len (pdev, 0),
 			pci_resource_start (pdev, 0));
 		goto err_out_free_netdev;
