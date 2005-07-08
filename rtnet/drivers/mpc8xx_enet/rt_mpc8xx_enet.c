@@ -254,12 +254,6 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	cep->stats.tx_bytes += skb->len;
 	cep->skb_cur = (cep->skb_cur+1) & TX_RING_MOD_MASK;
 	
-	/* Push the data cache so the CPM does not get stale memory
-	 * data.
-	 */
-	flush_dcache_range((unsigned long)(skb->data),
-					(unsigned long)(skb->data + skb->len));
-
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
 	// *** RTnet ***
 #if 0
@@ -275,6 +269,13 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
 					       *skb->xmit_stamp);
 	}
+
+	/* Push the data cache so the CPM does not get stale memory
+	 * data.
+	 */
+	flush_dcache_range((unsigned long)(skb->data),
+			   (unsigned long)(skb->data + skb->len));
+
 
 	/* Send it on its way.  Tell CPM its ready, interrupt when done,
 	 * its the last BD of the frame, and to put the CRC on the end.
