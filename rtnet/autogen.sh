@@ -44,4 +44,8 @@ aclocal-1.9 -I config/m4
 libtoolize --force --copy
 autoheader
 automake-1.9 --add-missing --copy --gnu -Wall
-autoconf -Wall
+if test x"${1}" = x"verbose"; then
+    autoconf -Wall
+else
+    autoconf
+fi
