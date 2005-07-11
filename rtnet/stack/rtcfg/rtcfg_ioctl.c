@@ -305,7 +305,8 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
 
         file->size = filp->f_dentry->d_inode->i_size;
 
-        file->buffer = vmalloc(file->size);
+        /* allocate buffer even for empty files */
+        file->buffer = vmalloc((file->size)? file->size : 1);
         if (file->buffer == NULL) {
             rtcfg_unlockwr_proc(cmd->ifindex);
             fput(filp);
@@ -343,7 +344,7 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
     if (file != NULL) {
         if (file->buffer != NULL)
             vfree(file->buffer);
-        kfree(data_buf);
+        kfree(file);
     }
     return ret;
 }
