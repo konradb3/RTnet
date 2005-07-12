@@ -3,8 +3,8 @@
  *  rtmac/tdma/tdma_dev.c
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ int tdma_dev_init(struct rtnet_device *rtdev, struct tdma_priv *tdma)
                                         RTNET_PACKAGE_VERSION ")";
     tdma->api_device.peripheral_name  = "TDMA API";
     tdma->api_device.provider_name    =
-        "(C) 2002-2004 RTnet Development Team, http://rtnet.sf.net";
+        "(C) 2002-2005 RTnet Development Team, http://rtnet.sf.net";
 
     return rtdm_dev_register(&tdma->api_device);
 }

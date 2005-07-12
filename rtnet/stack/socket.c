@@ -5,7 +5,7 @@
  *  Copyright (C) 1999       Lineo, Inc
  *                1999, 2002 David A. Schleef <ds@schleef.org>
  *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in so
 const char rtnet_rtdm_driver_name[] =
     "RTnet " RTNET_PACKAGE_VERSION;
 const char rtnet_rtdm_provider_name[] =
-    "(C) 1999-2004 RTnet Development Team, http://rtnet.sf.net";
+    "(C) 1999-2005 RTnet Development Team, http://rtnet.sf.net";
 
 
 /************************************************************************
