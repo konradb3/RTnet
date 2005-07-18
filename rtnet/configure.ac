@@ -361,8 +361,11 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
     0.7.2-fusion | 0.7.3-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-072
 	;;
-    0.7.4-fusion | 0.7.5-fusion | 0.8*-fusion)
+    0.7.4-fusion | 0.7.5-fusion | 0.8-fusion | 0.8.1-fusion | 0.8.2-fusion)
 	CONFIG_RTNET_RTAI_VERSION=fusion-074
+	;;
+    0.8.3-fusion)
+	CONFIG_RTNET_RTAI_VERSION=fusion-083
 	;;
     *)
 	AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
@@ -409,7 +412,7 @@ if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 
 	    ;;
 
-	fusion-07*)	# ---> FUSION <---
+	fusion-07* | fusion-083)	# ---> FUSION <---
 
 	    # check for native RTAI skin, needed by rtnet
 	    AC_MSG_CHECKING([for RTAI native skin])
@@ -495,7 +498,10 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
 	AC_DEFINE(CONFIG_FUSION_072, 1, [We build for fusion 0.7.2/0.7.3])
 	;;
     fusion-074)
-	AC_DEFINE(CONFIG_FUSION_074, 1, [We build for fusion 0.7.4 or better])
+	AC_DEFINE(CONFIG_FUSION_074, 1, [We build for fusion 0.7.4 - 0.8.2])
+	;;
+    fusion-083)
+	AC_DEFINE(CONFIG_FUSION_083, 1, [We build for fusion 0.8.3])
 	;;
     *)
 	AC_MSG_ERROR([*** No RTAI found in $with_rtai])
@@ -503,7 +509,8 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
 esac
 
 AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_RTNET_RTAI_VERSION" = fusion-072 || \
-                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-074])
+                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-074 || \
+                              test "$CONFIG_RTNET_RTAI_VERSION" = fusion-083])
 
 
 dnl ======================================================================
@@ -554,7 +561,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	;;
-    fusion-07*)
+    fusion-07* | fusion-083)
 	RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
 	RTAI_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
@@ -573,7 +580,7 @@ if test "$CONFIG_KBUILD" = "y"; then
 	31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
 	    ;;
-	fusion-07*)
+	fusion-07* | fusion-083)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
 	    ;;
 	*)
@@ -588,7 +595,7 @@ else
 	30 | 31 | 32)
 	    RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
 	    ;;
-	fusion-07*)
+	fusion-07* | fusion-083)
 	    AC_MSG_ERROR([*** internal error])
 	    ;;
 	*)
@@ -749,7 +756,7 @@ if test "${CONFIG_KBUILD}" = "y"; then	# building against linux-2.6
 #include <linux/kernel.h>
 		])
             ;;
-	fusion-07*)
+	fusion-07* | fusion-083)
 	    BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h],
 		[],
 		[AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -779,7 +786,7 @@ else					# building against linux-2.4
 #include <linux/kernel.h>
             ])
 	    ;;
-	fusion-07*)
+	fusion-07* | fusion-083)
 	    AC_MSG_ERROR([*** internal error])
 	    ;;
 	*)
@@ -826,7 +833,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
 	    *) CONFIG_NEWLXRT=no ;;
 	esac
 	;;
-    fusion-07*) CONFIG_NEWLXRT=no
+    fusion-07* | fusion-083) CONFIG_NEWLXRT=no
 	;;
     *)
 	AC_MSG_ERROR([*** internal error])

@@ -398,7 +398,11 @@ static inline int rtos_irq_request(rtos_irq_t *irq_handle, unsigned int irq,
 {
     int ret;
 
+#ifdef CONFIG_FUSION_083
+    ret = rt_intr_create(irq_handle, irq, handler, NULL);
+#else
     ret = rt_intr_create(irq_handle, irq, handler);
+#endif
     irq_handle->private_data = arg;
     return ret;
 }

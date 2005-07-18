@@ -60,7 +60,8 @@ static inline int in_nrt_context(void)
 }
 
 
-#elif defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
+#elif defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
+      defined(CONFIG_FUSION_083)
 /* fusion >= 0.7.2 - intermediate solution */
 
 #include <nucleus/heap.h>
@@ -863,7 +864,8 @@ static struct rt_fun_entry lxrt_fun_entry[] = {
 
 
 
-#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
+    defined(CONFIG_FUSION_083)
 
 static int sys_rtdm_open(struct task_struct *curr, struct pt_regs *regs)
 {
@@ -1465,7 +1467,8 @@ int init_module(void)
     }
 #endif /* CONFIG_NEWLXRT */
 
-#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
+    defined(CONFIG_FUSION_083)
     rtdm_muxid = xnshadow_register_interface("RTDM", RTDM_SKIN_MAGIC,
         sizeof(rtdm_systab) / sizeof(rtdm_systab[0]), rtdm_systab, NULL);
     if (rtdm_muxid < 0) {
@@ -1484,7 +1487,7 @@ int init_module(void)
 #endif /* CONFIG_PROC_FS */
 
 #if defined(CONFIG_NEWLXRT) || defined(CONFIG_FUSION_072) || \
-    defined(CONFIG_FUSION_074)
+    defined(CONFIG_FUSION_074) || defined(CONFIG_FUSION_083)
   rem_all:
 #endif
 #ifdef CONFIG_PROC_FS
@@ -1538,7 +1541,8 @@ void cleanup_module(void)
             lxrt_fun_entry, RTDM_LXRT_IDX);
 #endif /* CONFIG_NEWLXRT */
 
-#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074)
+#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
+    defined(CONFIG_FUSION_083)
     xnshadow_unregister_interface(rtdm_muxid);
 #endif /* CONFIG_FUSION_07* */
 
