@@ -750,11 +750,12 @@ enum rx_desc_status {
 	IPChksumValid=1<<29, TCPChksumValid=1<<30, UDPChksumValid=1<<31,
 };
 
-#ifdef MAX_SKB_FRAGS
-#define DO_ZEROCOPY 1
-#else
+// *** RTnet ***
+//#ifdef MAX_SKB_FRAGS
+//#define DO_ZEROCOPY 1
+//#else
 #define DO_ZEROCOPY 0
-#endif
+//#endif
 
 struct boom_tx_desc {
 	u32 next;					/* Last entry points to 0.   */
