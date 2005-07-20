@@ -1,3 +1,16 @@
+0.8.3
+- added support for fusion 0.8.0..0.8.3
+- added experimental MPC 52xxx FEC driver
+- enabled kernel 2.6.12 compilation
+- revised locking in critical sections of rt_8139too and rt_via-rhine
+- implemented hash chains for layer 2 protocol management
+  (avoids protocol handler rejection on hashkey collision)
+- extended RTmac to let discipline switch off VNIC support or override xmit
+  handler
+- fixed handling of zero-sized stage 2 files in RTcfg
+- fixed cleanup bug in RTcfg
+- fixed rtnet.conf to let rt-driver grab only one NIC by default (again)
+
 0.8.2
 - support for fusion 0.7.2..0.7.4 (dropped earlier versions)
 - added userspace support to RTDM layer for fusion
