@@ -132,10 +132,10 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
     unsigned int        i;
     unsigned long       flags;
     int                 res;
-    RTNET_PROC_PRINT_VARS(80);
+    RTNET_PROC_PRINT_VARS_EX(80);
 
 
-    if (!RTNET_PROC_PRINT("Hash\tDestination\tHW Address\t\tDevice\n"))
+    if (!RTNET_PROC_PRINT_EX("Hash\tDestination\tHW Address\t\tDevice\n"))
         goto done;
 
     for (key = 0; key < HOST_HASH_TBL_SIZE; key++) {
@@ -159,7 +159,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
 
             rtos_spin_unlock_irqrestore(&host_table_lock, flags);
 
-            res = RTNET_PROC_PRINT("%02X\t%u.%u.%u.%-3u\t"
+            res = RTNET_PROC_PRINT_EX("%02X\t%u.%u.%u.%-3u\t"
                     "%02X:%02X:%02X:%02X:%02X:%02X\t%s\n",
                     key, NIPQUAD(dest_host.ip),
                     dest_host.dev_addr[0], dest_host.dev_addr[1],
@@ -175,7 +175,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
     }
 
   done:
-    RTNET_PROC_PRINT_DONE;
+    RTNET_PROC_PRINT_DONE_EX;
 }
 
 
@@ -192,10 +192,10 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
     unsigned int        index;
     unsigned int        i;
     unsigned long       flags;
-    RTNET_PROC_PRINT_VARS(80);
+    RTNET_PROC_PRINT_VARS_EX(80);
 
 
-    if (!RTNET_PROC_PRINT("Hash\tDestination\tMask\t\t\tGateway\n"))
+    if (!RTNET_PROC_PRINT_EX("Hash\tDestination\tMask\t\t\tGateway\n"))
         goto done;
 
     for (key = 0; key < NET_HASH_TBL_SIZE + 1; key++) {
@@ -220,15 +220,18 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
             rtos_spin_unlock_irqrestore(&net_table_lock, flags);
 
             if (key < NET_HASH_TBL_SIZE) {
-                if (!RTNET_PROC_PRINT("%02X\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
-                                      "%u.%u.%u.%-3u\n",
-                                      key, NIPQUAD(dest_net_ip),
-                                      NIPQUAD(dest_net_mask), NIPQUAD(gw_ip)))
+                if (!RTNET_PROC_PRINT_EX("%02X\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u"
+                                         "\t\t%u.%u.%u.%-3u\n",
+                                         key, NIPQUAD(dest_net_ip),
+                                         NIPQUAD(dest_net_mask),
+                                         NIPQUAD(gw_ip)))
                     goto done;
             } else {
-                if (!RTNET_PROC_PRINT("*\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
-                                      "%u.%u.%u.%-3u\n", NIPQUAD(dest_net_ip),
-                                      NIPQUAD(dest_net_mask), NIPQUAD(gw_ip)))
+                if (!RTNET_PROC_PRINT_EX("*\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u\t\t"
+                                         "%u.%u.%u.%-3u\n",
+                                         NIPQUAD(dest_net_ip),
+                                         NIPQUAD(dest_net_mask),
+                                         NIPQUAD(gw_ip)))
                     goto done;
             }
 
@@ -237,7 +240,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
     }
 
   done:
-    RTNET_PROC_PRINT_DONE;
+    RTNET_PROC_PRINT_DONE_EX;
 }
 #endif /* CONFIG_RTNET_NETWORK_ROUTING */
 
