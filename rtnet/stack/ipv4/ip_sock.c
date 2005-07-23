@@ -2,8 +2,8 @@
  *
  *  ipv4/ip_sock.c
  *
- *  Copyright (C) 2003 Hans-Peter Bock <hpbock@avaapgh.de>
- *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003       Hans-Peter Bock <hpbock@avaapgh.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -124,31 +124,31 @@ int rt_ip_getpeername(struct rtsocket *s, struct sockaddr *addr,
 
 
 
-int rt_ip_ioctl(struct rtdm_dev_context *context, int call_flags, int request,
-                void *arg)
+int rt_ip_ioctl(struct rtdm_dev_context *context, rtdm_user_info_t *user_info,
+                int request, void *arg)
 {
     struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
-    struct rtdm_getsockaddr_args    *getaddr = arg;
-    struct rtdm_getsockopt_args     *getopt  = arg;
-    struct rtdm_setsockopt_args     *setopt  = arg;
+    struct _rtdm_getsockaddr_args   *getaddr = arg;
+    struct _rtdm_getsockopt_args    *getopt  = arg;
+    struct _rtdm_setsockopt_args    *setopt  = arg;
 
 
     switch (request) {
-        case RTIOC_SETSOCKOPT:
+        case _RTIOC_SETSOCKOPT:
             return rt_ip_setsockopt(sock, setopt->level, setopt->optname,
                                     setopt->optval, setopt->optlen);
 
-        case RTIOC_GETSOCKOPT:
+        case _RTIOC_GETSOCKOPT:
             return rt_ip_getsockopt(sock, getopt->level, getopt->optname,
                                     getopt->optval, getopt->optlen);
 
-        case RTIOC_GETSOCKNAME:
+        case _RTIOC_GETSOCKNAME:
             return rt_ip_getsockname(sock, getaddr->addr, getaddr->addrlen);
 
-        case RTIOC_GETPEERNAME:
+        case _RTIOC_GETPEERNAME:
             return rt_ip_getpeername(sock, getaddr->addr, getaddr->addrlen);
 
         default:
-            return rt_socket_if_ioctl(context, call_flags, request, arg);
+            return rt_socket_if_ioctl(context, user_info, request, arg);
     }
 }

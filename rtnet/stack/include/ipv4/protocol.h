@@ -3,9 +3,9 @@
  *  include/ipv4/protocol.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,7 +42,8 @@ struct rtinet_protocol {
     struct rtsocket     *(*dest_socket)(struct rtskb *);
     int                 (*rcv_handler)(struct rtskb *);
     void                (*err_handler)(struct rtskb *);
-    int                 (*init_socket)(struct rtdm_dev_context *, int);
+    int                 (*init_socket)(struct rtdm_dev_context *,
+                                       rtdm_user_info_t *);
 };
 
 
@@ -51,7 +52,7 @@ extern struct rtinet_protocol *rt_inet_protocols[];
 #define rt_inet_hashkey(id)  (id & (MAX_RT_INET_PROTOCOLS-1))
 extern void rt_inet_add_protocol(struct rtinet_protocol *prot);
 extern void rt_inet_del_protocol(struct rtinet_protocol *prot);
-extern int rt_inet_socket(struct rtdm_dev_context *context, int call_flags,
-                          int protocol);
+extern int rt_inet_socket(struct rtdm_dev_context *context,
+                          rtdm_user_info_t *user_info, int protocol);
 
 #endif  /* __RTNET_PROTOCOL_H_ */

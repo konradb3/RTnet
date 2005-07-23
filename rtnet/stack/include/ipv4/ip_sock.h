@@ -3,7 +3,7 @@
  *  include/ipv4/ip_sock.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 2003,2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #include <rtnet_socket.h>
 
 
-extern int rt_ip_ioctl(struct rtdm_dev_context *context, int call_flags,
-                       int request, void *arg);
+extern int rt_ip_ioctl(struct rtdm_dev_context *context,
+                       rtdm_user_info_t *user_info, int request, void *arg);
 
 #endif  /* __RTNET_IP_SOCK_H_ */

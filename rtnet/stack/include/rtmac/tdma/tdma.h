@@ -3,8 +3,8 @@
  *  include/rtmac/tdma/tdma.h
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #ifndef __TDMA_H_
 #define __TDMA_H_
 
-#include <rtdm_driver.h>
+#include <rtdm/rtdm_driver.h>
 
 #include <rtnet_config.h>
 #include <rtnet_rtpc.h>
@@ -73,7 +73,7 @@ struct tdma_job {
 struct tdma_slot {
     struct tdma_job             head;
 
-    rtos_time_t                 offset;
+    nanosecs_t                  offset;
     unsigned int                period;
     unsigned int                phasing;
     unsigned int                mtu;
@@ -88,7 +88,7 @@ struct tdma_request_cal {
     struct tdma_job             head;
 
     struct tdma_priv            *tdma;
-    rtos_time_t                 offset;
+    nanosecs_t                  offset;
     nanosecs_t                  offset_ns;
     unsigned int                period;
     unsigned int                phasing;
@@ -104,7 +104,7 @@ struct tdma_reply_cal {
     struct tdma_job             head;
 
     u32                         reply_cycle;
-    rtos_time_t                 reply_offset;
+    nanosecs_t                  reply_offset;
     struct rtskb                *reply_rtskb;
 };
 
@@ -122,16 +122,16 @@ struct tdma_priv {
                                          ) & (ALIGN_RTOS_TASK-1)];
 #endif
     rtos_task_t                 worker_task;
-    rtos_event_sem_t            worker_wakeup;
+    rtos_event_t                worker_wakeup;
     rtos_event_t                xmit_event;
     rtos_event_t                sync_event;
 
     unsigned long               flags;
     unsigned int                cal_rounds;
     u32                         current_cycle;
-    rtos_time_t                 current_cycle_start;
+    nanosecs_t                  current_cycle_start;
     nanosecs_t                  master_packet_delay_ns;
-    rtos_time_t                 clock_offset;
+    nanosecs_t                  clock_offset;
 
     struct tdma_job             sync_job;
     struct tdma_job             *first_job;
@@ -148,8 +148,8 @@ struct tdma_priv {
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
     struct rtskb_queue          cal_rtskb_pool;
-    rtos_time_t                 cycle_period;
-    rtos_time_t                 backup_sync_inc;
+    nanosecs_t                  cycle_period;
+    nanosecs_t                  backup_sync_inc;
 #endif
 
 #ifdef CONFIG_PROC_FS

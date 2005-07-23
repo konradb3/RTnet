@@ -6,7 +6,7 @@
  *  Copyright (C) 1999       Lineo, Inc
  *                1999, 2002 David A. Schleef <ds@schleef.org>
  *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include <rtnet_sys.h>
 #include <stack_mgr.h>
 
-#include <rtdm_driver.h>
+#include <rtdm/rtdm_driver.h>
 
 
 #define RT_SOCK_NONBLOCK    RTDM_USER_CONTEXT_FLAG
@@ -52,9 +52,9 @@ struct rtsocket {
     rtos_spinlock_t         param_lock;
 
     volatile unsigned int   priority;
-    rtos_time_t             timeout;    /* receive timeout, 0 for infinite */
+    nanosecs_t              timeout;    /* receive timeout, 0 for infinite */
 
-    rtos_event_sem_t        wakeup_event; /* for blocking calls */
+    rtos_sem_t              pending_sem;
 #ifdef CONFIG_RTNET_RTDM_SELECT
     wait_queue_primitive_t  *wakeup_select; /* for selecting calls - this
 					       SHOULD be the head of a wait
@@ -105,8 +105,10 @@ static inline struct rtdm_dev_context *rt_socket_context(struct rtsocket *sock)
 extern int rt_socket_init(struct rtdm_dev_context *context);
 extern int rt_socket_cleanup(struct rtdm_dev_context *context);
 extern int rt_socket_common_ioctl(struct rtdm_dev_context *context,
-                                  int call_flags, int request, void *arg);
-extern int rt_socket_if_ioctl(struct rtdm_dev_context *context, int call_flags,
+                                  rtdm_user_info_t *user_info,
+                                  int request, void *arg);
+extern int rt_socket_if_ioctl(struct rtdm_dev_context *context,
+                              rtdm_user_info_t *user_info,
                               int request, void *arg);
 
 #endif  /* __RTNET_SOCKET_H_ */

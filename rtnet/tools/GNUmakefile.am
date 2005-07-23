@@ -1,5 +1,6 @@
 OPTPROGS =
 OPTSCRIPTS =
+OPTCONF =
 
 if CONFIG_RTNET_RTCFG
 OPTPROGS += rtcfg
@@ -9,11 +10,12 @@ if CONFIG_RTNET_NOMAC
 OPTPROGS += nomaccfg
 endif
 
-if CONFIG_RTNET_TDMAV1
-OPTSCRIPTS += rtnet-tdma-v1
+if CONFIG_RTNET_TDMA
+OPTPROGS += tdmacfg
+OPTCONF += tdma.conf
 endif
 
-sbin_PROGRAMS = rtifconfig rtroute rtping tdmacfg $(OPTPROGS)
+sbin_PROGRAMS = rtifconfig rtroute rtping $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
@@ -27,7 +29,7 @@ install-exec-local: rtnet $(OPTSCRIPTS)
  		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
 	done
 
-install-data-local: rtnet.conf tdma.conf
+install-data-local: rtnet.conf $(OPTCONF)
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
 	for FILE in $^; do					\
 		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\

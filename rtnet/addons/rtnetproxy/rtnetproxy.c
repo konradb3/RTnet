@@ -102,7 +102,7 @@ static rtos_nrt_signal_t rtnetproxy_signal;
 /* Thread for transmission */
 static rtos_task_t rtnetproxy_thread;
 
-static rtos_event_sem_t rtnetproxy_event;
+static rtos_sem_t rtnetproxy_sem;
 
 /* ***********************************************************************
  * Returns the next pointer from the ringbuffer or zero if nothing is
@@ -249,7 +249,7 @@ static inline void send_data_out(struct sk_buff *skb)
  * whenever new frames have to be sent out or if the
  * "used" rtskb ringbuffer is full.
  * ************************************************************************ */
-static void rtnetproxy_transmit_thread(int arg)
+static void rtnetproxy_transmit_thread(void *arg)
 {
     struct sk_buff *skb;
     struct rtskb *del;
@@ -268,7 +268,7 @@ static void rtnetproxy_transmit_thread(int arg)
             write_to_ringbuffer(&ring_skb_rtnet_kernel, skb);
         }
         /* Will be activated with next frame to send... */
-        rtos_event_sem_wait(&rtnetproxy_event);
+        rtos_sem_down(&rtnetproxy_sem, 0);
     }
 }
 
@@ -297,7 +297,7 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 
     /* Signal rtnet that there are packets waiting to be processed...
      * */
-    rtos_event_sem_signal(&rtnetproxy_event);
+    rtos_sem_up(&rtnetproxy_sem);
 
     /* Delete all "used" skbs that already have been processed... */
     {
@@ -335,7 +335,7 @@ static int rtnetproxy_recv(struct rtskb *rtskb)
     else if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb))
     {
         /* Switch over to kernel context: */
-        rtos_pend_nrt_signal(&rtnetproxy_signal);
+        rtos_nrt_pend_signal(&rtnetproxy_signal);
     }
     else
     {
@@ -375,7 +375,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     skb->ip_summed = CHECKSUM_UNNECESSARY;
     skb->pkt_type = PACKET_HOST;  /* Extremely important! Why?!? */
 
-    rtos_time_to_timeval(&rtskb->time_stamp, &skb->stamp);
+    rtos_ns_to_timeval(rtskb->time_stamp, &skb->stamp);
 
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;
@@ -400,14 +400,14 @@ static void rtnetproxy_signal_handler(void)
         rtnetproxy_kernel_recv(rtskb);
         /* Place "used" rtskb in backqueue... */
         while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
-            rtos_event_sem_signal(&rtnetproxy_event);
+            rtos_sem_up(&rtnetproxy_sem);
         }
     }
 
     /* Signal rtnet that there are "used" rtskbs waiting to be processed...
      * Resume the rtnetproxy_thread to recycle "used" rtskbs
      * */
-    rtos_event_sem_signal(&rtnetproxy_event);
+    rtos_sem_up(&rtnetproxy_sem);
 }
 
 /* ************************************************************************
@@ -502,7 +502,7 @@ static int __init rtnetproxy_init_module(void)
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
     /* Init the task for transmission */
-    rtos_event_sem_init(&rtnetproxy_event);
+    rtos_sem_init(&rtnetproxy_sem);
     rtos_task_init(&rtnetproxy_thread, rtnetproxy_transmit_thread, 0,
                    RTOS_LOWEST_RT_PRIORITY);
 
@@ -528,7 +528,7 @@ static void __exit rtnetproxy_cleanup_module(void)
     rtos_nrt_signal_delete(&rtnetproxy_signal);
 
     rtos_task_delete(&rtnetproxy_thread);
-    rtos_event_sem_delete(&rtnetproxy_event);
+    rtos_sem_delete(&rtnetproxy_sem);
 
     /* Free the ringbuffers... */
     {

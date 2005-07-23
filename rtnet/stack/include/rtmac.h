@@ -24,13 +24,15 @@
 #ifndef __RTMAC_H_
 #define __RTMAC_H_
 
-#include <rtdm.h>
+#include <rtdm/rtdm.h>
 
 
-#ifndef RTIOC_TYPE_RTMAC
+/* sub-classes: RTDM_CLASS_RTMAC */
+#define RTDM_SUBCLASS_TDMA      0
+#define RTDM_SUBCLASS_UNMANAGED 1
+
 #define RTIOC_TYPE_RTMAC        RTDM_CLASS_RTMAC
-#endif
-
+    
 /* RTmac Discipline IOCTLs */
 #define RTMAC_RTIOC_TIMEOFFSET  _IOR(RTIOC_TYPE_RTMAC, 0x00, __s64)
 #define RTMAC_RTIOC_WAITONCYCLE _IOW(RTIOC_TYPE_RTMAC, 0x01, int)

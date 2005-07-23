@@ -4,7 +4,7 @@
  *
  *  RTnet - real-time networking subsystem
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,11 +34,11 @@
 #include <rtnet_sys.h>
 
 
-static rtos_spinlock_t   pending_calls_lock = RTOS_SPIN_LOCK_UNLOCKED;
-static rtos_spinlock_t   processed_calls_lock = RTOS_SPIN_LOCK_UNLOCKED;
-static rtos_event_sem_t  dispatch_event;
-static rtos_task_t       dispatch_task;
-static rtos_nrt_signal_t rtpc_nrt_signal;
+static rtos_spinlock_t      pending_calls_lock = RTOS_SPIN_LOCK_UNLOCKED;
+static rtos_spinlock_t      processed_calls_lock = RTOS_SPIN_LOCK_UNLOCKED;
+static rtos_event_t         dispatch_event;
+static rtos_task_t          dispatch_task;
+static rtos_nrt_signal_t    rtpc_nrt_signal;
 
 LIST_HEAD(pending_calls);
 LIST_HEAD(processed_calls);
@@ -111,7 +111,7 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
     list_add_tail(&call->list_entry, &pending_calls);
     rtos_spin_unlock_irqrestore(&pending_calls_lock, flags);
 
-    rtos_event_sem_signal(&dispatch_event);
+    rtos_event_signal(&dispatch_event);
 
     if (timeout > 0) {
         ret = wait_event_interruptible_timeout(call->call_wq,
@@ -163,7 +163,7 @@ static inline void rtpc_queue_processed_call(struct rt_proc_call *call)
     list_add_tail(&call->list_entry, &processed_calls);
     rtos_spin_unlock_irqrestore(&processed_calls_lock, flags);
 
-    rtos_pend_nrt_signal(&rtpc_nrt_signal);
+    rtos_nrt_pend_signal(&rtpc_nrt_signal);
 }
 
 
@@ -187,22 +187,18 @@ static inline struct rt_proc_call *rtpc_dequeue_processed_call(void)
 
 
 
-static void rtpc_dispatch_handler(int arg)
+static void rtpc_dispatch_handler(void *arg)
 {
     struct rt_proc_call *call;
     int                 ret;
 
 
-    while (1) {
-        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&dispatch_event)))
-            return;
-
-        call = rtpc_dequeue_pending_call();
-
-        ret = call->proc(call);
-        if (ret != -CALL_PENDING)
-            rtpc_complete_call(call, ret);
-    }
+    while (rtos_event_wait(&dispatch_event, 0) == 0)
+        while ((call = rtpc_dequeue_pending_call())) {
+            ret = call->proc(call);
+            if (ret != -CALL_PENDING)
+                rtpc_complete_call(call, ret);
+        }
 }
 
 
@@ -257,12 +253,12 @@ int __init rtpc_init(void)
     if (ret < 0)
         return ret;
 
-    rtos_event_sem_init(&dispatch_event);
+    rtos_event_init(&dispatch_event);
 
     ret = rtos_task_init(&dispatch_task, rtpc_dispatch_handler, 0,
                          RTOS_LOWEST_RT_PRIORITY);
     if (ret < 0) {
-        rtos_event_sem_delete(&dispatch_event);
+        rtos_event_delete(&dispatch_event);
         rtos_nrt_signal_delete(&rtpc_nrt_signal);
     }
 
@@ -273,7 +269,7 @@ int __init rtpc_init(void)
 
 void rtpc_cleanup(void)
 {
-    rtos_event_sem_delete(&dispatch_event);
+    rtos_event_delete(&dispatch_event);
     rtos_task_delete(&dispatch_task);
     rtos_nrt_signal_delete(&rtpc_nrt_signal);
 }

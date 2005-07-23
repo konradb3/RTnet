@@ -141,20 +141,16 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
     struct rtcfg_device     *rtcfg_dev = &device[ifindex];
     struct rt_proc_call     *call      = (struct rt_proc_call *)event_data;
     struct rtcfg_cmd        *cmd_event;
-    rtos_time_t             period;
     int                     ret;
 
     cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
     switch (event_id) {
         case RTCFG_CMD_SERVER:
-            rtos_nanosecs_to_time(
-                ((nanosecs_t)cmd_event->args.server.period)*1000000, &period);
-
             INIT_LIST_HEAD(&rtcfg_dev->spec.srv.conn_list);
 
             ret = rtos_task_init_periodic(&rtcfg_dev->timer_task, rtcfg_timer,
-                                          ifindex, RTOS_LOWEST_RT_PRIORITY,
-                                          &period);
+                    (void *)ifindex, RTOS_LOWEST_RT_PRIORITY,
+                    ((nanosecs_t)cmd_event->args.server.period) * 1000000);
             if (ret < 0) {
                 rtos_res_unlock(&rtcfg_dev->dev_lock);
                 return ret;
@@ -166,10 +162,9 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
 
             rtcfg_dev->spec.srv.heartbeat = cmd_event->args.server.heartbeat;
 
-            rtos_nanosecs_to_time(
-                ((nanosecs_t)cmd_event->args.server.heartbeat)*1000000*
-                cmd_event->args.server.threshold,
-                &rtcfg_dev->spec.srv.heartbeat_timeout);
+            rtcfg_dev->spec.srv.heartbeat_timeout =
+                    ((nanosecs_t)cmd_event->args.server.heartbeat) * 1000000 *
+                    cmd_event->args.server.threshold;
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_SERVER_RUNNING);
 
@@ -320,9 +315,8 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
     new_conn->stage1_data  = cmd_event->args.add.stage1_data;
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
     new_conn->burstrate    = rtcfg_dev->burstrate;
-
-    rtos_nanosecs_to_time(((nanosecs_t)cmd_event->args.add.timeout)*1000000,
-                          &new_conn->cfg_timeout);
+    new_conn->cfg_timeout  =
+            ((nanosecs_t)cmd_event->args.add.timeout) * 1000000;
 
     if (cmd_event->args.add.addr_type == RTCFG_ADDR_IP) {
         /* MAC address yet unknown -> use broadcast address */

@@ -3,8 +3,8 @@
  *  rtmac/nomac/nomac_proto.c
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 
 static struct rtskb_queue   nrt_rtskb_queue;
 static rtos_task_t          wrapper_task;
-static rtos_event_sem_t     wakeup_sem;
+static rtos_event_t         wakeup_sem;
 static int                  shutdown;
 
 
@@ -70,7 +70,7 @@ int nomac_nrt_packet_tx(struct rtskb *rtskb)
      *       => detect and wrap the context if necessary */
     if (!rtos_in_rt_context()) {
         rtskb_queue_tail(&nrt_rtskb_queue, rtskb);
-        rtos_event_sem_signal(&wakeup_sem);
+        rtos_event_signal(&wakeup_sem);
         return 0;
     } else {
         rtdev = rtskb->rtdev;
@@ -86,14 +86,14 @@ int nomac_nrt_packet_tx(struct rtskb *rtskb)
 
 
 
-void nrt_xmit_task(int arg)
+void nrt_xmit_task(void *arg)
 {
     struct rtskb        *rtskb;
     struct rtnet_device *rtdev;
 
 
     while (!shutdown) {
-        if ((rtskb = rtskb_dequeue(&nrt_rtskb_queue))) {
+        while ((rtskb = rtskb_dequeue(&nrt_rtskb_queue))) {
             rtdev = rtskb->rtdev;
 
             /* no MAC: we simply transmit the packet under xmit_lock */
@@ -101,7 +101,7 @@ void nrt_xmit_task(int arg)
             rtmac_xmit(rtskb);
             rtos_res_unlock(&rtdev->xmit_lock);
         }
-        rtos_event_sem_wait(&wakeup_sem);
+        rtos_event_wait(&wakeup_sem, 0);
     }
 }
 
@@ -123,14 +123,12 @@ int __init nomac_proto_init(void)
 
 
     rtskb_queue_init(&nrt_rtskb_queue);
-    ret = rtos_event_sem_init(&wakeup_sem);
-    if (ret < 0)
-        return ret;
+    rtos_event_init(&wakeup_sem);
 
     ret = rtos_task_init(&wrapper_task, nrt_xmit_task, 0,
                          RTOS_LOWEST_RT_PRIORITY);
     if (ret < 0) {
-        rtos_event_sem_delete(&wakeup_sem);
+        rtos_event_delete(&wakeup_sem);
         return ret;
     }
 
@@ -142,8 +140,6 @@ int __init nomac_proto_init(void)
 void nomac_proto_cleanup(void)
 {
     shutdown = 1;
-    rtos_event_sem_signal(&wakeup_sem);
-
+    rtos_event_delete(&wakeup_sem);
     rtos_task_delete(&wrapper_task);
-    rtos_event_sem_delete(&wakeup_sem);
 }

@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,8 +55,8 @@ struct rtcfg_connection {
     u32                     cfg_offs;
     unsigned int            flags;
     unsigned int            burstrate;
-    rtos_time_t             last_frame;
-    rtos_time_t             cfg_timeout;
+    nanosecs_t              last_frame;
+    nanosecs_t              cfg_timeout;
 #ifdef CONFIG_PROC_FS
     struct proc_dir_entry   *proc_entry;
 #endif

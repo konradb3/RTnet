@@ -57,7 +57,7 @@ int rtmac_vnic_rx(struct rtskb *rtskb, u16 type)
 
     rtdev_reference(rtskb->rtdev);
     rtskb_queue_tail(&rx_queue, rtskb);
-    rtos_pend_nrt_signal(&vnic_signal);
+    rtos_nrt_pend_signal(&vnic_signal);
 
     return 0;
 }

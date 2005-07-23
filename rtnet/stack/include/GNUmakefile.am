@@ -20,7 +20,6 @@ noinst_HEADERS = \
 	\
 	nomac_chrdev.h \
 	tdma_chrdev.h \
-	tdma-v1_chrdev.h \
 	\
 	rtcfg_chrdev.h \
 	\
@@ -62,21 +61,11 @@ noinst_HEADERS = \
 	rtmac/tdma/tdma_dev.h \
 	rtmac/tdma/tdma_ioctl.h \
 	rtmac/tdma/tdma_proto.h \
-	rtmac/tdma/tdma_worker.h \
-	rtmac/tdma-v1/tdma.h \
-	rtmac/tdma-v1/tdma_cleanup.h \
-	rtmac/tdma-v1/tdma_dev.h \
-	rtmac/tdma-v1/tdma_event.h \
-	rtmac/tdma-v1/tdma_ioctl.h \
-	rtmac/tdma-v1/tdma_module.h \
-	rtmac/tdma-v1/tdma_rx.h \
-	rtmac/tdma-v1/tdma_task.h \
-	rtmac/tdma-v1/tdma_timer.h
+	rtmac/tdma/tdma_worker.h
 
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(includedir)
-	$(INSTALL_HEADER) rtnet_config.h $(DESTDIR)$(includedir)/rtnet_config.h
 
 EXTRA_DIST = INCLUDE.policy
 

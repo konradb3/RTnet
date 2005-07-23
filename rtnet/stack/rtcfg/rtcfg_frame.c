@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,10 +36,10 @@ static unsigned int num_rtskbs = 32;
 MODULE_PARM(num_rtskbs, "i");
 MODULE_PARM_DESC(num_rtskbs, "Number of realtime socket buffers used by RTcfg");
 
-static struct rtskb_queue rtcfg_pool;
-static rtos_task_t        rx_task;
-static rtos_event_sem_t   rx_event;
-static struct rtskb_queue rx_queue;
+static struct rtskb_queue   rtcfg_pool;
+static rtos_task_t          rx_task;
+static rtos_event_t         rx_event;
+static struct rtskb_queue   rx_queue;
 
 
 
@@ -48,7 +48,7 @@ static int rtcfg_rx_handler(struct rtskb *rtskb, struct rtpacket_type *pt)
     if (rtskb_acquire(rtskb, &rtcfg_pool) == 0) {
         rtdev_reference(rtskb->rtdev);
         rtskb_queue_tail(&rx_queue, rtskb);
-        rtos_event_sem_signal(&rx_event);
+        rtos_event_signal(&rx_event);
     } else
         kfree_rtskb(rtskb);
 
@@ -57,43 +57,40 @@ static int rtcfg_rx_handler(struct rtskb *rtskb, struct rtpacket_type *pt)
 
 
 
-static void rtcfg_rx_task(int arg)
+static void rtcfg_rx_task(void *arg)
 {
     struct rtskb          *rtskb;
     struct rtcfg_frm_head *frm_head;
     struct rtnet_device   *rtdev;
 
 
-    while (1) {
-        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&rx_event)))
-            return;
+    while (rtos_event_wait(&rx_event, 0) == 0)
+        while ((rtskb = rtskb_dequeue(&rx_queue))) {
+            rtdev = rtskb->rtdev;
 
-        rtskb = rtskb_dequeue(&rx_queue);
-        rtdev = rtskb->rtdev;
+            if (rtskb->pkt_type == PACKET_OTHERHOST) {
+                rtdev_dereference(rtdev);
+                kfree_rtskb(rtskb);
+                continue;
+            }
 
-        if (rtskb->pkt_type == PACKET_OTHERHOST) {
+            if (rtskb->len < sizeof(struct rtcfg_frm_head)) {
+                RTCFG_DEBUG(1, "RTcfg: %s() received an invalid frame\n",
+                            __FUNCTION__);
+                rtdev_dereference(rtdev);
+                kfree_rtskb(rtskb);
+                continue;
+            }
+
+            frm_head = (struct rtcfg_frm_head *)rtskb->data;
+
+            if (rtcfg_do_main_event(rtskb->rtdev->ifindex,
+                                    frm_head->id + RTCFG_FRM_STAGE_1_CFG,
+                                    rtskb) < 0)
+                kfree_rtskb(rtskb);
+
             rtdev_dereference(rtdev);
-            kfree_rtskb(rtskb);
-            continue;
         }
-
-        if (rtskb->len < sizeof(struct rtcfg_frm_head)) {
-            RTCFG_DEBUG(1, "RTcfg: %s() received an invalid frame\n",
-                        __FUNCTION__);
-            rtdev_dereference(rtdev);
-            kfree_rtskb(rtskb);
-            continue;
-        }
-
-        frm_head = (struct rtcfg_frm_head *)rtskb->data;
-
-        if (rtcfg_do_main_event(rtskb->rtdev->ifindex,
-                                frm_head->id + RTCFG_FRM_STAGE_1_CFG,
-                                rtskb) < 0)
-            kfree_rtskb(rtskb);
-
-        rtdev_dereference(rtdev);
-    }
 }
 
 
@@ -526,12 +523,12 @@ int __init rtcfg_init_frames(void)
         return -ENOMEM;
 
     rtskb_queue_init(&rx_queue);
-    rtos_event_sem_init(&rx_event);
+    rtos_event_init(&rx_event);
 
     ret = rtos_task_init(&rx_task, rtcfg_rx_task, 0,
                          RTOS_LOWEST_RT_PRIORITY);
     if (ret < 0) {
-        rtos_event_sem_delete(&rx_event);
+        rtos_event_delete(&rx_event);
         goto error1;
     }
 
@@ -542,7 +539,7 @@ int __init rtcfg_init_frames(void)
     return 0;
 
   error2:
-    rtos_event_sem_delete(&rx_event);
+    rtos_event_delete(&rx_event);
     rtos_task_delete(&rx_task);
 
   error1:
@@ -564,7 +561,7 @@ void rtcfg_cleanup_frames(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rtos_event_sem_delete(&rx_event);
+    rtos_event_delete(&rx_event);
     rtos_task_delete(&rx_task);
 
     while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {

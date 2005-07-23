@@ -861,7 +861,6 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
     struct rtcfg_frm_stage_2_cfg *stage_2_cfg;
     struct rtcfg_device          *rtcfg_dev = &device[ifindex];
     size_t                       data_len;
-    rtos_time_t                  period;
     int                          ret;
 
 
@@ -876,13 +875,9 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
     __rtskb_pull(rtskb, sizeof(struct rtcfg_frm_stage_2_cfg));
 
     if (stage_2_cfg->heartbeat_period) {
-        rtos_nanosecs_to_time(
-            ((nanosecs_t)ntohs(stage_2_cfg->heartbeat_period))*
-            1000000, &period);
-
         ret = rtos_task_init_periodic(&rtcfg_dev->timer_task, rtcfg_timer,
-                                      ifindex, RTOS_LOWEST_RT_PRIORITY,
-                                      &period);
+                (void *)ifindex, RTOS_LOWEST_RT_PRIORITY,
+                ((nanosecs_t)ntohs(stage_2_cfg->heartbeat_period)) * 1000000);
         if (ret < 0)
             /*ERRMSG*/rtos_print("RTcfg: unable to create timer task\n");
         else

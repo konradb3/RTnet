@@ -8,7 +8,7 @@ AM_CFLAGS = \
     @RTAI_USER_CFLAGS@
 
 AM_LDFLAGS = \
-    -lpthread -lrtai \
+    -lpthread -lrtai -lrtdm \
     -L@RTAI_LIBRARIES@
 
 all-local: \

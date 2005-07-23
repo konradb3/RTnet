@@ -1,6 +1,6 @@
 OPTDIRS =
 
-if CONFIG_NEWLXRT
+if CONFIG_RTNET_LXRT
 OPTDIRS += lxrt
 endif
 
@@ -12,4 +12,5 @@ if CONFIG_RTNET_RTDM_SELECT
 OPTDIRS += select
 endif
 
-SUBDIRS = frag-ip raw-packets round-trip-time rtmac $(OPTDIRS)
+#SUBDIRS = frag-ip raw-packets round-trip-time rtmac $(OPTDIRS)
+SUBDIRS = frag-ip raw-packets $(OPTDIRS)

@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     printf("RTnet, interface lister for RTAI/fusion\n");
 
     /* Create new socket. */
-    sockfd = socket_rt(AF_INET, SOCK_DGRAM, 0);
+    sockfd = rt_dev_socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
 
         printf("Error opening socket: %d\n", sockfd);
@@ -57,9 +57,9 @@ int main(int argc, char *argv[])
     ifc.ifc_len = sizeof(ifr);
     ifc.ifc_req = ifr;
 
-    ret = ioctl_rt(sockfd, SIOCGIFCONF, &ifc);
+    ret = rt_dev_ioctl(sockfd, SIOCGIFCONF, &ifc);
     if (ret < 0) {
-        close_rt(sockfd);
+        rt_dev_close(sockfd);
 
         printf("Error retrieving device list: %d\n", ret);
         return 1;
@@ -67,9 +67,9 @@ int main(int argc, char *argv[])
 
     while (ifc.ifc_len >= (int)sizeof(struct ifreq)) {
         memcpy(flags_ifr.ifr_name, ifc.ifc_req[devices].ifr_name, IFNAMSIZ);
-        ret = ioctl_rt(sockfd, SIOCGIFFLAGS, &flags_ifr);
+        ret = rt_dev_ioctl(sockfd, SIOCGIFFLAGS, &flags_ifr);
         if (ret < 0) {
-            close_rt(sockfd);
+            rt_dev_close(sockfd);
 
             printf("Error retrieving flags for device %s: %d\n",
                    flags_ifr.ifr_name, ret);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         devices++;
     }
 
-    close_rt(sockfd);
+    rt_dev_close(sockfd);
 
     for (i = 0; i < devices; i++)
         printf("Device %s: IP %d.%d.%d.%d, flags 0x%08X\n", ifr[i].ifr_name,

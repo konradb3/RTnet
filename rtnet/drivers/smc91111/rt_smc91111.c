@@ -843,7 +843,6 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 	unsigned short		ioaddr;
 	byte			* buf;
 	unsigned long		flags;
-	rtos_time_t		time;
 	union {
 		nanosecs_t	ns;
 		char		buf[sizeof(nanosecs_t)];
@@ -924,9 +923,7 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 
 	/* get and patch time stamp just before the transmission */
 	if (skb->xmit_stamp) {
-		rtos_get_time(&time);
-		xmit_stamp.ns = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-			*skb->xmit_stamp);
+		xmit_stamp.ns = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
 
 		/* point to the patch address */
 		outw(PTR_AUTOINC |
@@ -1505,7 +1502,7 @@ static void smc_timeout (struct net_device *dev)
  ---------------------------------------------------------------------*/
 static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
 {
-	struct rtnet_device *dev 	= (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device);
 	int ioaddr 		= dev->base_addr;
 	struct smc_local *lp 	= (struct smc_local *)dev->priv;
 
@@ -1686,10 +1683,8 @@ static void smc_rcv(struct rtnet_device *dev)
 	int 	packet_number;
 	word	status;
 	word	packet_length;
-	rtos_time_t time_stamp;
+	nanosecs_t time_stamp = rtos_get_time();
 	int		timeout;
-
-	rtos_get_time(&time_stamp);
 
 	PRINTK3("%s:smc_rcv\n", dev->name);
 
@@ -1797,7 +1792,7 @@ static void smc_rcv(struct rtnet_device *dev)
 #endif
 
 		skb->protocol = rt_eth_type_trans(skb, dev );
-		memcpy(&skb->time_stamp, &time_stamp, sizeof(rtos_time_t));
+		skb->time_stamp = time_stamp;
 		rtnetif_rx(skb);
 		lp->stats.rx_packets++;
 	} else {

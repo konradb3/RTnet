@@ -718,7 +718,7 @@ static void init_registers(struct rtnet_device *dev);
 static int start_tx(struct rtskb *skb, struct rtnet_device *dev);
 static RTOS_IRQ_HANDLER_PROTO(intr_handler);
 static void netdev_error(struct rtnet_device *dev, int intr_status);
-static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp);
+static void netdev_rx(struct rtnet_device *dev, nanosecs_t *time_stamp);
 static void netdev_tx_done(struct rtnet_device *dev);
 static void __set_rx_mode(struct rtnet_device *dev);
 /*static void set_rx_mode(struct rtnet_device *dev);*/
@@ -1680,7 +1680,6 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 	unsigned entry;
 /*** RTnet ***/
 	unsigned long flags;
-	rtos_time_t time;
 /*** RTnet ***/
 
 	/* Note: Ordering is important here, set the field with the
@@ -1702,12 +1701,9 @@ static int start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 
 	if (!np->hands_off) {
 		/* get and patch time stamp just before the transmission */
-		if (skb->xmit_stamp) {
-			rtos_get_time(&time);
-			*skb->xmit_stamp =
-				cpu_to_be64(rtos_time_to_nanosecs(&time) +
+		if (skb->xmit_stamp)
+			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
 				*skb->xmit_stamp);
-		}
 		np->tx_ring[entry].cmd_status = cpu_to_le32(DescOwn | skb->len);
 		/* StrongARM: Explicitly cache flush np->tx_ring and
 		 * skb->data,skb->len. */
@@ -1787,15 +1783,12 @@ static void netdev_tx_done(struct rtnet_device *dev)
    after the Tx thread. */
 static RTOS_IRQ_HANDLER_PROTO(intr_handler)
 {
-/*	struct net_device *dev = dev_instance;*/
-	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG(); /*** RTnet ***/
+	nanosecs_t time_stamp = rtos_get_time(); /*** RTnet ***/
+	struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device); /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
 	unsigned int old_packet_cnt = np->stats.rx_packets; /*** RTnet ***/
 	long ioaddr = dev->base_addr;
 	int boguscnt = max_interrupt_work;
-	rtos_time_t time_stamp; /*** RTnet ***/
-
-	rtos_get_time(&time_stamp); /*** RTnet ***/
 
 	if (np->hands_off)
 		RTOS_IRQ_RETURN_UNHANDLED();
@@ -1851,7 +1844,7 @@ static RTOS_IRQ_HANDLER_PROTO(intr_handler)
 
 /* This routine is logically part of the interrupt handler, but separated
    for clarity and better register allocation. */
-static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp)
+static void netdev_rx(struct rtnet_device *dev, nanosecs_t *time_stamp)
 {
 	struct netdev_private *np = dev->priv;
 	int entry = np->cur_rx % RX_RING_SIZE;
@@ -1925,7 +1918,7 @@ static void netdev_rx(struct rtnet_device *dev, rtos_time_t *time_stamp)
 			}
 /*** RTnet ***/
 			skb->protocol = rt_eth_type_trans(skb, dev);
-			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = *time_stamp;
 			rtnetif_rx(skb);
 			/*dev->last_rx = jiffies;*/
 /*** RTnet ***/

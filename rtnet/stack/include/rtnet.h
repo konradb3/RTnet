@@ -5,7 +5,7 @@
  *  RTnet - real-time networking subsystem
  *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
  *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@
 #ifndef __RTNET_H_
 #define __RTNET_H_
 
-
-#include <rtdm.h>
+#include <rtdm/rtdm.h>
 
 
 struct rtdm_dev_context;
@@ -38,9 +37,10 @@ struct rtnet_callback {
 };
 
 
-#ifndef RTIOC_TYPE_NETWORK
+/* sub-classes: RTDM_CLASS_NETWORK */
+#define RTDM_SUBCLASS_RTNET     0
+
 #define RTIOC_TYPE_NETWORK      RTDM_CLASS_NETWORK
-#endif
 
 /* RTnet-specific IOCTLs */
 #define RTNET_RTIOC_XMITPARAMS  _IOW(RTIOC_TYPE_NETWORK, 0x10, unsigned int)
@@ -69,47 +69,24 @@ struct rtnet_callback {
 
 
 /* function name wrappers */
-#if defined(USE_RT_XXX_WRAPPER) || defined(USE_RT_SOCKET_XXX_WRAPPER)
-#define rt_socket               socket_rt
-#endif /* USE_RT_XXX_WRAPPER || USE_RT_SOCKET_XXX_WRAPPER */
-
-#ifdef USE_RT_XXX_WRAPPER
-#define rt_close                close_rt
-#define rt_ioctl                ioctl_rt
-#define rt_bind                 bind_rt
-#define rt_connect              connect_rt
-#define rt_listen               listen_rt
-#define rt_accept               accept_rt
-#define rt_recv                 recv_rt
-#define rt_recvfrom             recvfrom_rt
-#define rt_recvmsg              recvmsg_rt
-#define rt_send                 send_rt
-#define rt_sendto               sendto_rt
-#define rt_sendmsg              sendmsg_rt
-#define rt_getsockopt           getsockopt_rt
-#define rt_setsockopt           setsockopt_rt
-#define rt_getsockname          getsockname_rt
-#define rt_getpeername          getpeername_rt
-#endif /*USE_RT_XXX_WRAPPER */
-
-#ifdef USE_RT_SOCKET_XXX_WRAPPER
-#define rt_socket_close         close_rt
-#define rt_socket_ioctl         ioctl_rt
-#define rt_socket_bind          bind_rt
-#define rt_socket_connect       connect_rt
-#define rt_socket_listen        listen_rt
-#define rt_socket_accept        accept_rt
-#define rt_socket_recv          recv_rt
-#define rt_socket_recvfrom      recvfrom_rt
-#define rt_socket_recvmsg       recvmsg_rt
-#define rt_socket_send          send_rt
-#define rt_socket_sendto        sendto_rt
-#define rt_socket_sendmsg       sendmsg_rt
-#define rt_socket_getsockopt    getsockopt_rt
-#define rt_socket_setsockopt    setsockopt_rt
-#define rt_socket_getsockname   getsockname_rt
-#define rt_socket_getpeername   getpeername_rt
-#endif /* USE_RT_SOCKET_XXX_WRAPPER */
+#define socket_rt               rt_dev_socket
+#define open_rt                 rt_dev_open
+#define close_rt                rt_dev_close
+#define ioctl_rt                rt_dev_ioctl
+#define bind_rt                 rt_dev_bind
+#define connect_rt              rt_dev_connect
+#define listen_rt               rt_dev_listen
+#define accept_rt               rt_dev_accept
+#define recv_rt                 rt_dev_recv
+#define recvfrom_rt             rt_dev_recvfrom
+#define recvmsg_rt              rt_dev_recvmsg
+#define send_rt                 rt_dev_send
+#define sendto_rt               rt_dev_sendto
+#define sendmsg_rt              rt_dev_sendmsg
+#define getsockopt_rt           rt_dev_getsockopt
+#define setsockopt_rt           rt_dev_setsockopt
+#define getsockname_rt          rt_dev_getsockname
+#define getpeername_rt          rt_dev_getpeername
 
 
 #ifdef __KERNEL__

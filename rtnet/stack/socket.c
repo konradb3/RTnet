@@ -70,10 +70,10 @@ int rt_socket_init(struct rtdm_dev_context *context)
 
     rtskb_queue_init(&sock->incoming);
 
-    rtos_nanosecs_to_time(0, &sock->timeout);
+    sock->timeout = 0;
 
     rtos_spin_lock_init(&sock->param_lock);
-    rtos_event_sem_init(&sock->wakeup_event);
+    rtos_sem_init(&sock->pending_sem);
 
     if (test_bit(RTDM_CREATED_IN_NRT, &context->context_flags))
         pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
@@ -105,7 +105,7 @@ int rt_socket_cleanup(struct rtdm_dev_context *context)
     unsigned long   flags;
 
 
-    rtos_event_sem_delete(&sock->wakeup_event);
+    rtos_sem_delete(&sock->pending_sem);
 
     rtos_spin_lock_irqsave(&sock->param_lock, flags);
 
@@ -138,7 +138,8 @@ int rt_socket_cleanup(struct rtdm_dev_context *context)
 /***
  *  rt_socket_common_ioctl
  */
-int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
+int rt_socket_common_ioctl(struct rtdm_dev_context *context,
+                           rtdm_user_info_t *user_info,
                            int request, void *arg)
 {
     struct rtsocket         *sock = (struct rtsocket *)&context->dev_private;
@@ -154,15 +155,11 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
             break;
 
         case RTNET_RTIOC_TIMEOUT:
-            rtos_spin_lock_irqsave(&sock->param_lock, flags);
-
-            rtos_nanosecs_to_time(*(nanosecs_t *)arg, &sock->timeout);
-
-            rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
+            sock->timeout = *(nanosecs_t *)arg;
             break;
 
         case RTNET_RTIOC_CALLBACK:
-            if (test_bit(RTDM_USER_MODE_CALL, &context->context_flags))
+            if (user_info)
                 return -EACCES;
 
             rtos_spin_lock_irqsave(&sock->param_lock, flags);
@@ -194,7 +191,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
             rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
 
             if (test_bit(RTDM_CREATED_IN_NRT, &context->context_flags)) {
-                if (!(call_flags & RTDM_NRT_CALL))
+                if (rtdm_in_rt_context())
                     return -EACCES;
                 ret = rtskb_pool_extend(&sock->skb_pool, rtskbs);
             } else
@@ -216,7 +213,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
             rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
 
             if (test_bit(RTDM_CREATED_IN_NRT, &context->context_flags)) {
-                if (!(call_flags & RTDM_NRT_CALL))
+                if (rtdm_in_rt_context())
                     return -EACCES;
                 ret = rtskb_pool_shrink(&sock->skb_pool, *(unsigned int *)arg);
             } else
@@ -238,8 +235,8 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context, int call_flags,
 /***
  *  rt_socket_if_ioctl
  */
-int rt_socket_if_ioctl(struct rtdm_dev_context *context, int call_flags,
-                       int request, void *arg)
+int rt_socket_if_ioctl(struct rtdm_dev_context *context,
+                       rtdm_user_info_t *user_info, int request, void *arg)
 {
     struct rtnet_device     *rtdev;
     struct ifreq            *cur_ifr;

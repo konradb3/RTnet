@@ -36,7 +36,8 @@ static int nomac_dev_openclose(void)
 
 
 
-static int nomac_dev_ioctl(struct rtdm_dev_context *context, int call_flags,
+static int nomac_dev_ioctl(struct rtdm_dev_context *context,
+                           rtdm_user_info_t *user_info,
                            int request, void *arg)
 {
     struct nomac_priv   *nomac;
@@ -72,15 +73,13 @@ int nomac_dev_init(struct rtnet_device *rtdev, struct nomac_priv *nomac)
         (pos >= rtdev->name) && ((*pos) >= '0') && (*pos <= '9'); pos--);
     strncat(nomac->api_device.device_name+5, pos+1, IFNAMSIZ-5);
 
-    nomac->api_device.open_rt  =
-        (int (*)(struct rtdm_dev_context *, int, int))nomac_dev_openclose;
-    nomac->api_device.open_nrt =
-        (int (*)(struct rtdm_dev_context *, int, int))nomac_dev_openclose;
+    nomac->api_device.open_rt  = (rtdm_open_handler_t)nomac_dev_openclose;
+    nomac->api_device.open_nrt = (rtdm_open_handler_t)nomac_dev_openclose;
 
     nomac->api_device.ops.close_rt  =
-        (int (*)(struct rtdm_dev_context *, int))nomac_dev_openclose;
+            (rtdm_close_handler_t)nomac_dev_openclose;
     nomac->api_device.ops.close_nrt =
-        (int (*)(struct rtdm_dev_context *, int))nomac_dev_openclose;
+            (rtdm_close_handler_t)nomac_dev_openclose;
 
     nomac->api_device.ops.ioctl_rt  = nomac_dev_ioctl;
     nomac->api_device.ops.ioctl_nrt = nomac_dev_ioctl;

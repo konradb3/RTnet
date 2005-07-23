@@ -1319,7 +1319,6 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         unsigned int entry;
         unsigned int len = skb->len;
         unsigned long flags;
-        rtos_time_t time;
 
         /* Calculate the next Tx descriptor entry. */
         entry = tp->cur_tx % NUM_TX_DESC;
@@ -1327,10 +1326,8 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         if (likely(len < TX_BUF_SIZE)) {
                 if (unlikely(skb->xmit_stamp != NULL)) {
                         rtos_local_irqsave(flags);
-                        rtos_get_time(&time);
-                        *skb->xmit_stamp =
-                                cpu_to_be64(rtos_time_to_nanosecs(&time) +
-                                *skb->xmit_stamp);
+                        *skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
+                                                       *skb->xmit_stamp);
                         /* typically, we are only copying a few bytes here */
                         rtskb_copy_and_csum_dev(skb, tp->tx_buf[entry]);
                 } else {
@@ -1513,7 +1510,7 @@ static void rtl8139_rx_err
 
 static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
                                   struct rtl8139_private *tp, void *ioaddr,
-                                  rtos_time_t *time_stamp)
+                                  nanosecs_t *time_stamp)
 {
         unsigned char *rx_ring;
         u16 cur_rx;
@@ -1567,7 +1564,7 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
 
                 skb = dev_alloc_rtskb (pkt_size + 2, &tp->skb_pool);
                 if (skb) {
-                        memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+                        skb->time_stamp = *time_stamp;
                         skb->rtdev = rtdev;
                         rtskb_reserve (skb, 2);        /* 16 byte align the IP fields. */
 
@@ -1650,7 +1647,9 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
    after the Tx thread. */
 static RTOS_IRQ_HANDLER_PROTO(rtl8139_interrupt)
 {
-        struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+        nanosecs_t time_stamp = rtos_get_time();
+
+        struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);
         struct rtl8139_private *tp = rtdev->priv;
 
         int boguscnt = max_interrupt_work;
@@ -1661,9 +1660,6 @@ static RTOS_IRQ_HANDLER_PROTO(rtl8139_interrupt)
         int link_changed = 0; /* avoid bogus "uninit" warning */
 
         int saved_status = 0;
-        rtos_time_t time_stamp;
-
-        rtos_get_time(&time_stamp);
 
         rtos_spin_lock(&tp->lock);
 

@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ static int rtcfg_conn_state_searching(struct rtcfg_connection *conn,
             break;
 
         case RTCFG_FRM_ANNOUNCE_REPLY:
-            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+            conn->last_frame = rtskb->time_stamp;
 
             rtcfg_next_conn_state(conn, RTCFG_CONN_READY);
 
@@ -146,7 +146,7 @@ static int rtcfg_conn_state_stage_1(struct rtcfg_connection *conn,
 
     switch (event_id) {
         case RTCFG_FRM_ACK_CFG:
-            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+            conn->last_frame = rtskb->time_stamp;
 
             ack_cfg = (struct rtcfg_frm_ack_cfg *)rtskb->data;
             conn->cfg_offs = ntohl(ack_cfg->ack_len);
@@ -203,7 +203,7 @@ static int rtcfg_conn_state_stage_2(struct rtcfg_connection *conn,
 
     switch (event_id) {
         case RTCFG_FRM_READY:
-            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+            conn->last_frame = rtskb->time_stamp;
 
             rtcfg_next_conn_state(conn, RTCFG_CONN_READY);
 
@@ -241,7 +241,7 @@ static int rtcfg_conn_state_ready(struct rtcfg_connection *conn,
             break;
 
         case RTCFG_FRM_HEARTBEAT:
-            memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+            conn->last_frame = rtskb->time_stamp;
             break;
 
         default:
@@ -284,7 +284,7 @@ static void rtcfg_conn_recv_announce_new(struct rtcfg_connection *conn,
     int                       packets;
 
 
-    memcpy(&conn->last_frame, &rtskb->time_stamp, sizeof(rtos_time_t));
+    conn->last_frame = rtskb->time_stamp;
 
     announce_new = (struct rtcfg_frm_announce *)rtskb->data;
 
@@ -319,19 +319,14 @@ static void rtcfg_conn_recv_announce_new(struct rtcfg_connection *conn,
 
 static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
 {
-    rtos_time_t         now;
-    rtos_time_t         deadline;
     struct rtnet_device *rtdev;
     struct rtcfg_device *rtcfg_dev;
 
 
-    if (RTOS_TIME_IS_ZERO(&conn->cfg_timeout))
+    if (!conn->cfg_timeout)
         return;
 
-    rtos_get_time(&now);
-    rtos_time_sum(&deadline, &conn->last_frame, &conn->cfg_timeout);
-
-    if (!RTOS_TIME_IS_BEFORE(&now, &deadline)) {
+    if (rtos_get_time() >= conn->last_frame + conn->cfg_timeout) {
         rtcfg_dev = &device[conn->ifindex];
 
         rtcfg_dev->stations_found--;
@@ -357,21 +352,16 @@ static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
 
 static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
 {
-    rtos_time_t         now;
-    rtos_time_t         deadline;
-    rtos_time_t         *timeout;
+    nanosecs_t          timeout;
     struct rtnet_device *rtdev;
     struct rtcfg_device *rtcfg_dev;
 
 
-    timeout = &device[conn->ifindex].spec.srv.heartbeat_timeout;
-    if (RTOS_TIME_IS_ZERO(timeout))
+    timeout = device[conn->ifindex].spec.srv.heartbeat_timeout;
+    if (!timeout)
         return;
 
-    rtos_get_time(&now);
-    rtos_time_sum(&deadline, &conn->last_frame, timeout);
-
-    if (!RTOS_TIME_IS_BEFORE(&now, &deadline)) {
+    if (rtos_get_time() >= conn->last_frame + timeout) {
         rtcfg_dev = &device[conn->ifindex];
 
         rtcfg_dev->stations_found--;

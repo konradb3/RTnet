@@ -84,7 +84,7 @@ void rtcap_rx_hook(struct rtskb *rtskb)
 
     rtskb->cap_flags |= RTSKB_CAP_SHARED;
 
-    rtos_pend_nrt_signal(&cap_signal);
+    rtos_nrt_pend_signal(&cap_signal);
 }
 
 
@@ -108,7 +108,7 @@ int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
     rtskb->cap_len   = rtskb->len;
     rtskb->cap_flags |= RTSKB_CAP_SHARED;
 
-    rtos_get_time(&rtskb->time_stamp);
+    rtskb->time_stamp = rtos_get_time();
 
     rtos_spin_lock_irqsave(&rtcap_lock, flags);
 
@@ -120,7 +120,7 @@ int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
     rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
 
-    rtos_pend_nrt_signal(&cap_signal);
+    rtos_nrt_pend_signal(&cap_signal);
 
     return tap_dev->orig_xmit(rtskb, rtdev);
 }
@@ -132,7 +132,7 @@ int rtcap_loopback_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
     struct tap_device_t *tap_dev = &tap_device[rtskb->rtdev->ifindex];
 
 
-    rtos_get_time(&rtskb->time_stamp);
+    rtskb->time_stamp = rtos_get_time();
 
     return tap_dev->orig_xmit(rtskb, rtdev);
 }
@@ -219,15 +219,15 @@ static void rtcap_signal_handler(void)
             if (active & TAP_DEV) {
                 skb->dev      = &tap_device[ifindex].tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
-                rtos_time_to_timeval(&rtskb->time_stamp, &skb->stamp);
+                rtos_ns_to_timeval(rtskb->time_stamp, &skb->stamp);
 
                 rtmac_skb = NULL;
                 if ((rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) &&
                     (active & RTMAC_TAP_DEV)) {
                     rtmac_skb = skb_clone(skb, GFP_ATOMIC);
                     if (rtmac_skb != NULL)
-                        rtos_time_to_timeval(&rtskb->cap_rtmac_stamp,
-                                             &rtmac_skb->stamp);
+                        rtos_ns_to_timeval(rtskb->cap_rtmac_stamp,
+                                           &rtmac_skb->stamp);
                 }
 
                 rtcap_kfree_rtskb(rtskb);
@@ -244,7 +244,7 @@ static void rtcap_signal_handler(void)
             } else if (rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) {
                 skb->dev      = &tap_device[ifindex].rtmac_tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
-                rtos_time_to_timeval(&rtskb->cap_rtmac_stamp, &skb->stamp);
+                rtos_ns_to_timeval(rtskb->cap_rtmac_stamp, &skb->stamp);
 
                 rtcap_kfree_rtskb(rtskb);
 

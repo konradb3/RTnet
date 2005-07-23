@@ -101,7 +101,7 @@ int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev)
 }
 
 
-static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, rtos_time_t *time_stamp)
+static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 {
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	int entry = tp->cur_rx % RX_RING_SIZE;
@@ -201,7 +201,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, rtos_time_t *time_stamp
 				tp->rx_buffers[entry].mapping = 0;
 			}
 			skb->protocol = /*RTnet*/rt_eth_type_trans(skb, rtdev);
-			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = *time_stamp;
 			/*RTnet*/rtnetif_rx(skb);
 
 			tp->stats.rx_packets++;
@@ -217,7 +217,8 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, rtos_time_t *time_stamp
    after the Tx thread. */
 RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();/*RTnet*/
+	nanosecs_t time_stamp = rtos_get_time();/*RTnet*/
+	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);/*RTnet*/
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
 	unsigned int csr5;
@@ -230,14 +231,6 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 	int maxtx = TX_RING_SIZE;
 	int maxoi = TX_RING_SIZE;
 	unsigned int work_count = tulip_max_interrupt_work;
-	rtos_time_t time_stamp;
-
-	/* Read current time ASAP. It's used with RTmac.
-	 * Note: More than one packet may arrive us within one interrupt.
-	 *       These packets will get the same time stamp.
-	 * WY
-	 */
-	rtos_get_time(&time_stamp);
 
 	/* Let's see whether the interrupt really is for us */
 	csr5 = inl(ioaddr + CSR5);

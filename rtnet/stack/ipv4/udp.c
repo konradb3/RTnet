@@ -240,7 +240,8 @@ int rt_udp_connect(struct rtsocket *sock, const struct sockaddr *serv_addr,
  *  rt_udp_socket - create a new UDP-Socket
  *  @s: socket
  */
-int rt_udp_socket(struct rtdm_dev_context *context, int call_flags)
+int rt_udp_socket(struct rtdm_dev_context *context,
+                  rtdm_user_info_t *user_info)
 {
     struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
     int             ret;
@@ -294,7 +295,8 @@ int rt_udp_socket(struct rtdm_dev_context *context, int call_flags)
 /***
  *  rt_udp_close
  */
-int rt_udp_close(struct rtdm_dev_context *context, int call_flags)
+int rt_udp_close(struct rtdm_dev_context *context,
+                 rtdm_user_info_t *user_info)
 {
     struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
     struct rtskb    *del;
@@ -329,26 +331,26 @@ int rt_udp_close(struct rtdm_dev_context *context, int call_flags)
 
 
 
-int rt_udp_ioctl(struct rtdm_dev_context *context, int call_flags, int request,
-                 void *arg)
+int rt_udp_ioctl(struct rtdm_dev_context *context,
+                 rtdm_user_info_t *user_info, int request, void *arg)
 {
     struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
-    struct rtdm_setsockaddr_args *setaddr = arg;
+    struct _rtdm_setsockaddr_args *setaddr = arg;
 
 
     /* fast path for common socket IOCTLs */
     if (_IOC_TYPE(request) == RTIOC_TYPE_NETWORK)
-        return rt_socket_common_ioctl(context, call_flags, request, arg);
+        return rt_socket_common_ioctl(context, user_info, request, arg);
 
     switch (request) {
-        case RTIOC_BIND:
+        case _RTIOC_BIND:
             return rt_udp_bind(sock, setaddr->addr, setaddr->addrlen);
 
-        case RTIOC_CONNECT:
+        case _RTIOC_CONNECT:
             return rt_udp_connect(sock, setaddr->addr, setaddr->addrlen);
 
         default:
-            return rt_ip_ioctl(context, call_flags, request, arg);
+            return rt_ip_ioctl(context, user_info, request, arg);
     }
 }
 
@@ -357,8 +359,9 @@ int rt_udp_ioctl(struct rtdm_dev_context *context, int call_flags, int request,
 /***
  *  rt_udp_recvmsg
  */
-ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context, int call_flags,
-                       struct msghdr *msg, int msg_flags)
+ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
+                       rtdm_user_info_t *user_info, struct msghdr *msg,
+                       int msg_flags)
 {
     struct rtsocket     *sock = (struct rtsocket *)&context->dev_private;
     size_t              len   = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
@@ -369,34 +372,26 @@ ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context, int call_flags,
     size_t              data_len;
     struct udphdr       *uh;
     struct sockaddr_in  *sin;
+    nanosecs_t          timeout = sock->timeout;
     int                 ret;
-    unsigned long       flags;
-    rtos_time_t         timeout;
 
 
-    /* block on receive event */
-    if (!test_bit(RT_SOCK_NONBLOCK, &context->context_flags) &&
-        ((msg_flags & MSG_DONTWAIT) == 0))
-        while ((skb = rtskb_dequeue_chain(&sock->incoming)) == NULL) {
-            rtos_spin_lock_irqsave(&sock->param_lock, flags);
-            memcpy(&timeout, &sock->timeout, sizeof(timeout));
-            rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
+    /* non-blocking receive? */
+    if (test_bit(RT_SOCK_NONBLOCK, &context->context_flags) ||
+        (msg_flags & MSG_DONTWAIT))
+        timeout = -1;
 
-            if (!RTOS_TIME_IS_ZERO(&timeout)) {
-                ret = rtos_event_sem_wait_timed(&sock->wakeup_event, &timeout);
-                if (ret == RTOS_EVENT_TIMEOUT)
-                    return -ETIMEDOUT;
-            } else
-                ret = rtos_event_sem_wait(&sock->wakeup_event);
-
-            if (RTOS_EVENT_ERROR(ret))
-                return -ENOTSOCK;
-        }
-    else {
-        skb = rtskb_dequeue_chain(&sock->incoming);
-        if (skb == NULL)
-            return -EAGAIN;
+    ret = rtos_sem_down(&sock->pending_sem, timeout);
+    if (unlikely(ret < 0)) {
+        if (ret == -EWOULDBLOCK)
+            ret = -EAGAIN;
+        else if (ret != -ETIMEDOUT)
+            ret = -ENOTSOCK;
+        return ret;
     }
+
+    skb = rtskb_dequeue_chain(&sock->incoming);
+    RTNET_ASSERT(skb != NULL, return -EFAULT;);
 
     uh = skb->h.uh;
     data_len = ntohs(uh->len) - sizeof(struct udphdr);
@@ -515,7 +510,8 @@ static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned
 /***
  *  rt_udp_sendmsg
  */
-ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context, int call_flags,
+ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context,
+                       rtdm_user_info_t *user_info,
                        const struct msghdr *msg, int msg_flags)
 {
     struct rtsocket     *sock = (struct rtsocket *)&context->dev_private;
@@ -727,7 +723,7 @@ int rt_udp_rcv (struct rtskb *skb)
 
 
     rtskb_queue_tail(&sock->incoming, skb);
-    rtos_event_sem_signal(&sock->wakeup_event);
+    rtos_sem_up(&sock->pending_sem);
 
     rtos_spin_lock_irqsave(&sock->param_lock, flags);
 #ifdef CONFIG_RTNET_RTDM_SELECT

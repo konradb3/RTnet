@@ -553,7 +553,7 @@ static void via_rhine_tx_timeout(struct net_device *dev);*/
 static int  via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev);
 static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt);
 static void via_rhine_tx(struct rtnet_device *dev);
-static void via_rhine_rx(struct rtnet_device *dev, rtos_time_t *time_stamp);
+static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp);
 static void via_rhine_error(struct rtnet_device *dev, int intr_status);
 static void via_rhine_set_rx_mode(struct rtnet_device *dev);
 /*static struct net_device_stats *via_rhine_get_stats(struct net_device *dev);
@@ -1326,7 +1326,6 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	u32 intr_status;
 /*** RTnet ***/
 	unsigned long flags;
-	rtos_time_t time;
 /*** RTnet ***/
 
 	/* Caution: the write order is important here, set the field
@@ -1360,9 +1359,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 		if (skb->xmit_stamp) {
 			rtos_spin_lock_irqsave(&np->lock, flags);
 
-			rtos_get_time(&time);
-			*skb->xmit_stamp =
-				cpu_to_be64(rtos_time_to_nanosecs(&time) +
+			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
 				*skb->xmit_stamp);
 
 			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
@@ -1386,12 +1383,9 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 		rtos_spin_lock_irqsave(&np->lock, flags);
 
 		/* get and patch time stamp just before the transmission */
-		if (skb->xmit_stamp) {
-			rtos_get_time(&time);
-			*skb->xmit_stamp =
-				cpu_to_be64(rtos_time_to_nanosecs(&time) +
+		if (skb->xmit_stamp)
+			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
 				*skb->xmit_stamp);
-		}
 /*** RTnet ***/
 	}
 
@@ -1436,15 +1430,13 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
    after the Tx thread. */
 static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt) /*** RTnet ***/
 {
-	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG(); /*** RTnet ***/
+	nanosecs_t time_stamp = rtos_get_time(); /*** RTnet ***/
+	struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device); /*** RTnet ***/
 	long ioaddr;
 	u32 intr_status;
 	int boguscnt = max_interrupt_work;
 	struct netdev_private *np = dev->priv; /*** RTnet ***/
 	unsigned int old_packet_cnt = np->stats.rx_packets; /*** RTnet ***/
-	rtos_time_t time_stamp; /*** RTnet ***/
-
-	rtos_get_time(&time_stamp); /*** RTnet ***/
 
 	ioaddr = dev->base_addr;
 
@@ -1570,7 +1562,7 @@ static void via_rhine_tx(struct rtnet_device *dev) /*** RTnet ***/
 
 /* This routine is logically part of the interrupt handler, but isolated
    for clarity and better register allocation. */
-static void via_rhine_rx(struct rtnet_device *dev, rtos_time_t *time_stamp) /*** RTnet ***/
+static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
 	int entry = np->cur_rx % RX_RING_SIZE;
@@ -1659,7 +1651,7 @@ static void via_rhine_rx(struct rtnet_device *dev, rtos_time_t *time_stamp) /***
 			}
 /*** RTnet ***/
 			skb->protocol = rt_eth_type_trans(skb, dev);
-			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = *time_stamp;
 			rtnetif_rx(skb);
 			/*dev->last_rx = jiffies;*/
 /*** RTnet ***/

@@ -59,34 +59,6 @@ static inline int in_nrt_context(void)
     return (rt_whoami()->priority == RT_SCHED_LINUX_PRIORITY);
 }
 
-
-#elif defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
-      defined(CONFIG_FUSION_083)
-/* fusion >= 0.7.2 - intermediate solution */
-
-#include <nucleus/heap.h>
-#include <rtai/task.h>
-
-
-#define rt_printk                   printk
-#define rt_malloc                   xnmalloc
-#define rt_free                     xnfree
-
-static inline unsigned long rt_spin_lock_irqsave(spinlock_t *lock)
-{
-    unsigned long flags;
-    rthal_spin_lock_irqsave(lock, flags);
-    return flags;
-}
-
-#define rt_spin_unlock_irqrestore(flags, lock)  rthal_spin_unlock_irqrestore(lock, flags)
-
-
-static inline int in_nrt_context(void)
-{
-    return adp_current == adp_root;
-}
-
 #endif
 
 #include <rtdm.h>
@@ -184,9 +156,7 @@ static int                  open_fildes;    /* used file descriptors */
 static int                  name_hash_key_mask;
 static int                  proto_hash_key_mask;
 
-#ifdef CONFIG_NEWLXRT
 static RT_TASK              *rt_base_linux_task; /* for LXRT registering */
-#endif
 
 #ifdef CONFIG_PROC_FS
 static struct proc_dir_entry *rtdm_proc_root; /* /proc/rtai/rtdm */
@@ -768,8 +738,6 @@ int rtdm_select(int call_flags, int n, fd_set *readfds, fd_set *writefds, fd_set
 #endif /* CONFIG_RTNET_RTDM_SELECT */
 
 
-#ifdef CONFIG_NEWLXRT
-
 static int rtdm_open_lxrt(const char *path, int oflag)
 {
     char    krnl_path[RTDM_MAX_DEVNAME_LEN + 1];
@@ -859,118 +827,6 @@ static struct rt_fun_entry lxrt_fun_entry[] = {
     [_RTDM_RECVMSG] = {0, rtdm_recvmsg_lxrt},
     [_RTDM_SENDMSG] = {0, rtdm_sendmsg_lxrt}
 };
-
-#endif /* CONFIG_NEWLXRT */
-
-
-
-#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
-    defined(CONFIG_FUSION_083)
-
-static int sys_rtdm_open(struct task_struct *curr, struct pt_regs *regs)
-{
-    char    krnl_path[RTDM_MAX_DEVNAME_LEN + 1];
-    int     ret;
-
-
-    ret = strncpy_from_user(krnl_path, (const char *)__xn_reg_arg1(regs),
-                            RTDM_MAX_DEVNAME_LEN);
-    if (ret >= 0)
-        ret = rtdm_open(RTDM_USER_MODE_CALL, (const char *)__xn_reg_arg1(regs),
-                        __xn_reg_arg2(regs));
-    return ret;
-}
-
-
-
-static int sys_rtdm_socket(struct task_struct *curr, struct pt_regs *regs)
-{
-    return rtdm_socket(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs),
-                       __xn_reg_arg2(regs), __xn_reg_arg3(regs));
-}
-
-
-
-static int sys_rtdm_close(struct task_struct *curr, struct pt_regs *regs)
-{
-    return rtdm_close(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs));
-}
-
-
-
-static int sys_rtdm_ioctl(struct task_struct *curr, struct pt_regs *regs)
-{
-    return rtdm_ioctl(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs),
-                      __xn_reg_arg2(regs), (void *)__xn_reg_arg3(regs));
-}
-
-
-
-static int sys_rtdm_read(struct task_struct *curr, struct pt_regs *regs)
-{
-    return rtdm_read(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs),
-                     (void *)__xn_reg_arg2(regs), __xn_reg_arg3(regs));
-}
-
-
-
-static int sys_rtdm_write(struct task_struct *curr, struct pt_regs *regs)
-{
-    return rtdm_write(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs),
-                      (const void *)__xn_reg_arg2(regs), __xn_reg_arg3(regs));
-}
-
-
-
-static int sys_rtdm_recvmsg(struct task_struct *curr, struct pt_regs *regs)
-{
-    struct msghdr   krnl_msg;
-    int             ret;
-
-
-    ret = copy_from_user(&krnl_msg, (struct msghdr *)__xn_reg_arg2(regs),
-                         sizeof(struct msghdr));
-    if (ret >= 0)
-        ret = rtdm_recvmsg(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs),
-                           (struct msghdr *)__xn_reg_arg2(regs),
-                           __xn_reg_arg3(regs));
-    return ret;
-}
-
-
-
-static int sys_rtdm_sendmsg(struct task_struct *curr, struct pt_regs *regs)
-{
-    struct msghdr   krnl_msg;
-    int             ret;
-
-
-    ret = copy_from_user(&krnl_msg, (struct msghdr *)__xn_reg_arg2(regs),
-                         sizeof(struct msghdr));
-    if (ret >= 0)
-        ret = rtdm_sendmsg(RTDM_USER_MODE_CALL, __xn_reg_arg1(regs),
-                           (struct msghdr *)__xn_reg_arg2(regs),
-                           __xn_reg_arg3(regs));
-    return ret;
-}
-
-
-
-static int rtdm_muxid;
-
-static xnsysent_t rtdm_systab[] = {
-    [_RTDM_OPEN]    = { sys_rtdm_open,    __xn_exec_current },
-    [_RTDM_SOCKET]  = { sys_rtdm_socket,  __xn_exec_current },
-    [_RTDM_CLOSE]   = { sys_rtdm_close,   __xn_exec_current },
-    [_RTDM_IOCTL]   = { sys_rtdm_ioctl,   __xn_exec_current },
-    [_RTDM_READ]    = { sys_rtdm_read,    __xn_exec_current },
-    [_RTDM_WRITE]   = { sys_rtdm_write,   __xn_exec_current },
-    [_RTDM_RECVMSG] = { sys_rtdm_recvmsg, __xn_exec_current },
-    [_RTDM_SENDMSG] = { sys_rtdm_sendmsg, __xn_exec_current },
-};
-
-
-#endif /* CONFIG_FUSION_07* */
 
 
 
@@ -1373,9 +1229,7 @@ int init_module(void)
 {
     int                     ret = 0;
     int                     i;
-#ifdef CONFIG_NEWLXRT
     RT_TASK                 *rt_linux_task[NR_RT_CPUS];
-#endif
 #ifdef CONFIG_PROC_FS
     struct proc_dir_entry   *proc_entry;
 #endif
@@ -1454,7 +1308,6 @@ int init_module(void)
     proc_entry->read_proc = proc_read_fildes;
 #endif /* CONFIG_PROC_FS */
 
-#ifdef CONFIG_NEWLXRT
     /* Initialise LXRT function table if LXRT is available */
     rt_base_linux_task = rt_get_base_linux_task(rt_linux_task);
     if (rt_base_linux_task->task_trap_handler[0]) {
@@ -1465,18 +1318,6 @@ int init_module(void)
             goto rem_all;
         }
     }
-#endif /* CONFIG_NEWLXRT */
-
-#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
-    defined(CONFIG_FUSION_083)
-    rtdm_muxid = xnshadow_register_interface("RTDM", RTDM_SKIN_MAGIC,
-        sizeof(rtdm_systab) / sizeof(rtdm_systab[0]), rtdm_systab, NULL);
-    if (rtdm_muxid < 0) {
-        ret = rtdm_muxid;
-        ERR_PK("RTDM : error registering syscall interface\n");
-        goto rem_all;
-    }
-#endif /* CONFIG_FUSION_07* */
 
     return 0;
 
@@ -1486,10 +1327,7 @@ int init_module(void)
     ret = -EAGAIN;
 #endif /* CONFIG_PROC_FS */
 
-#if defined(CONFIG_NEWLXRT) || defined(CONFIG_FUSION_072) || \
-    defined(CONFIG_FUSION_074) || defined(CONFIG_FUSION_083)
   rem_all:
-#endif
 #ifdef CONFIG_PROC_FS
     remove_proc_entry("fildes", rtdm_proc_root);
     remove_proc_entry("open_fildes", rtdm_proc_root);
@@ -1534,17 +1372,10 @@ void cleanup_module(void)
     kfree(rtdm_named_devices);
     kfree(rtdm_protocol_devices);
 
-#ifdef CONFIG_NEWLXRT
     /* unregister LXRT functions */
     if (rt_base_linux_task->task_trap_handler[1])
         ((int (*)(void *, int))rt_base_linux_task->task_trap_handler[1])(
             lxrt_fun_entry, RTDM_LXRT_IDX);
-#endif /* CONFIG_NEWLXRT */
-
-#if defined(CONFIG_FUSION_072) || defined(CONFIG_FUSION_074) || \
-    defined(CONFIG_FUSION_083)
-    xnshadow_unregister_interface(rtdm_muxid);
-#endif /* CONFIG_FUSION_07* */
 
     printk("RTDM: unloaded\n");
     return;

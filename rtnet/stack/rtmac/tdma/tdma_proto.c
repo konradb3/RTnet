@@ -35,7 +35,6 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     struct rtnet_device     *rtdev = tdma->rtdev;
     struct rtskb            *rtskb;
     struct tdma_frm_sync    *sync;
-    nanosecs_t              offs_ns;
 
 
     rtskb = alloc_rtskb(rtdev->hard_header_len + sizeof(struct rtmac_hdr) +
@@ -58,12 +57,10 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     sync->head.version = __constant_htons(TDMA_FRM_VERSION);
     sync->head.id      = __constant_htons(TDMA_FRM_SYNC);
 
-    offs_ns = rtos_time_to_nanosecs(&tdma->clock_offset);
-
     sync->cycle_no         = htonl(tdma->current_cycle);
-    sync->xmit_stamp       = offs_ns;
-    sync->sched_xmit_stamp = cpu_to_be64(offs_ns +
-        rtos_time_to_nanosecs(&tdma->current_cycle_start));
+    sync->xmit_stamp       = tdma->clock_offset;
+    sync->sched_xmit_stamp =
+            cpu_to_be64(tdma->clock_offset + tdma->current_cycle_start);
 
     rtskb->xmit_stamp = &sync->xmit_stamp;
 
@@ -208,8 +205,8 @@ int tdma_packet_rx(struct rtskb *rtskb)
     struct tdma_priv        *tdma;
     struct tdma_frm_head    *head;
     nanosecs_t              delay;
-    rtos_time_t             cycle_start;
-    rtos_time_t             clock_offset;
+    nanosecs_t              cycle_start;
+    nanosecs_t              clock_offset;
     struct rt_proc_call     *call;
     struct tdma_request_cal *req_cal_job;
 #ifdef CONFIG_RTNET_TDMA_MASTER
@@ -234,16 +231,14 @@ int tdma_packet_rx(struct rtskb *rtskb)
             rtskb_pull(rtskb, sizeof(struct tdma_frm_sync));
 
             /* see "Time Arithmetics" in the TDMA specification */
-            rtos_nanosecs_to_time(be64_to_cpu(SYNC_FRM(head)->xmit_stamp) +
-                                  tdma->master_packet_delay_ns, &clock_offset);
-            rtos_time_diff(&clock_offset, &clock_offset, &rtskb->time_stamp);
+            clock_offset = be64_to_cpu(SYNC_FRM(head)->xmit_stamp) +
+                    tdma->master_packet_delay_ns;
+            clock_offset -= rtskb->time_stamp;
 
-            rtos_nanosecs_to_time(
-                be64_to_cpu(SYNC_FRM(head)->sched_xmit_stamp), &cycle_start);
-            rtos_time_diff(&cycle_start, &cycle_start, &clock_offset);
+            cycle_start = SYNC_FRM(head)->sched_xmit_stamp - clock_offset;
 
             rtos_spin_lock_irqsave(&tdma->lock, flags);
-            tdma->current_cycle = ntohl(SYNC_FRM(head)->cycle_no);
+            tdma->current_cycle       = ntohl(SYNC_FRM(head)->cycle_no);
             tdma->current_cycle_start = cycle_start;
             tdma->clock_offset        = clock_offset;
             rtos_spin_unlock_irqrestore(&tdma->lock,flags);
@@ -295,8 +290,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             rpl_cal_frm->head.id      = __constant_htons(TDMA_FRM_RPL_CAL);
 
             rpl_cal_frm->request_xmit_stamp = REQ_CAL_FRM(head)->xmit_stamp;
-            rpl_cal_frm->reception_stamp    =
-                cpu_to_be64(rtos_time_to_nanosecs(&rtskb->time_stamp));
+            rpl_cal_frm->reception_stamp    = cpu_to_be64(rtskb->time_stamp);
             rpl_cal_frm->xmit_stamp         = 0;
 
             reply_rtskb->xmit_stamp = &rpl_cal_frm->xmit_stamp;
@@ -310,11 +304,11 @@ int tdma_packet_rx(struct rtskb *rtskb)
 
             rpl_cal_job->head.id        = XMIT_RPL_CAL;
             rpl_cal_job->head.ref_count = 0;
-            rpl_cal_job->reply_cycle = ntohl(REQ_CAL_FRM(head)->reply_cycle);
-            rpl_cal_job->reply_rtskb = reply_rtskb;
-            rtos_nanosecs_to_time(
-                be64_to_cpu(REQ_CAL_FRM(head)->reply_slot_offset),
-                &rpl_cal_job->reply_offset);
+            rpl_cal_job->reply_cycle    =
+                    ntohl(REQ_CAL_FRM(head)->reply_cycle);
+            rpl_cal_job->reply_rtskb    = reply_rtskb;
+            rpl_cal_job->reply_offset   =
+                    be64_to_cpu(REQ_CAL_FRM(head)->reply_slot_offset);
 
             rtos_spin_lock_irqsave(&tdma->lock, flags);
 
@@ -323,11 +317,10 @@ int tdma_packet_rx(struct rtskb *rtskb)
                 job = list_entry(job->entry.prev, struct tdma_job, entry);
                 if ((job == tdma->first_job) ||
                     ((job->id >= 0) &&
-                     RTOS_TIME_IS_BEFORE(&SLOT_JOB(job)->offset,
-                                         &rpl_cal_job->reply_offset)) ||
+                     (SLOT_JOB(job)->offset < rpl_cal_job->reply_offset)) ||
                     ((job->id == XMIT_RPL_CAL) &&
-                     RTOS_TIME_IS_BEFORE(&REPLY_CAL_JOB(job)->reply_offset,
-                                         &rpl_cal_job->reply_offset)))
+                     (REPLY_CAL_JOB(job)->reply_offset <
+                            rpl_cal_job->reply_offset)))
                     break;
             }
             list_add(&rpl_cal_job->head.entry, &job->entry);
@@ -342,7 +335,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             rtskb_pull(rtskb, sizeof(struct tdma_frm_rpl_cal));
 
             /* see "Time Arithmetics" in the TDMA specification */
-            delay = (rtos_time_to_nanosecs(&rtskb->time_stamp) -
+            delay = (rtskb->time_stamp -
                      be64_to_cpu(RPL_CAL_FRM(head)->request_xmit_stamp)) -
                     (be64_to_cpu(RPL_CAL_FRM(head)->xmit_stamp) -
                      be64_to_cpu(RPL_CAL_FRM(head)->reception_stamp));

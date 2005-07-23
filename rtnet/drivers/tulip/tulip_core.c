@@ -697,7 +697,6 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	dma_addr_t mapping;
 	/*RTnet*/
 	unsigned long flags;
-	rtos_time_t time;
 
 	rtos_spin_lock_irqsave(&tp->lock, flags);
 
@@ -739,11 +738,8 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 
 	/*RTnet*/
 	/* get and patch time stamp just before the transmission */
-	if (skb->xmit_stamp) {
-		rtos_get_time(&time);
-		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-			*skb->xmit_stamp);
-	}
+	if (skb->xmit_stamp)
+		*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
 	/*RTnet*/
 
 	wmb();

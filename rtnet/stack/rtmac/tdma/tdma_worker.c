@@ -26,17 +26,16 @@
 #include <rtmac/tdma/tdma_proto.h>
 
 
-void tdma_worker(int arg)
+void tdma_worker(void *arg)
 {
     struct tdma_priv    *tdma = (struct tdma_priv *)arg;
     struct tdma_job     *job, *prev_job;
     struct rtskb        *rtskb;
-    rtos_time_t         time;
     unsigned long       flags;
     int                 ret;
 
 
-    rtos_event_sem_wait(&tdma->worker_wakeup);
+    rtos_event_wait(&tdma->worker_wakeup, 0);
     if (test_bit(TDMA_FLAG_SHUTDOWN, &tdma->flags))
         return;
 
@@ -46,17 +45,14 @@ void tdma_worker(int arg)
     rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
     do {
-//rtos_print("job = %d\n", job->id);
         if (job->id == WAIT_ON_SYNC)
-            rtos_event_wait(&tdma->sync_event);
+            rtos_event_wait(&tdma->sync_event, 0);
         else if (job->id >= 0) {
-            if ((SLOT_JOB(job)->period == 1) ||
-                (tdma->current_cycle % SLOT_JOB(job)->period ==
-                    SLOT_JOB(job)->phasing)) {
-                rtos_time_sum(&time, &tdma->current_cycle_start,
-                              &SLOT_JOB(job)->offset);
-                rtos_task_sleep_until(&time);
-
+            if (((SLOT_JOB(job)->period == 1) ||
+                 (tdma->current_cycle % SLOT_JOB(job)->period ==
+                        SLOT_JOB(job)->phasing)) &&
+                (rtos_task_sleep_until(tdma->current_cycle_start +
+                        SLOT_JOB(job)->offset) == 0)) {
                 rtos_spin_lock_irqsave(&tdma->lock, flags);
                 rtskb = __rtskb_prio_dequeue(&SLOT_JOB(job)->queue);
                 if (!rtskb)
@@ -69,28 +65,25 @@ void tdma_worker(int arg)
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
         } else if (job->id == XMIT_SYNC) {
-            rtos_time_sum(&time, &tdma->current_cycle_start,
-                          &tdma->cycle_period);
-            rtos_task_sleep_until(&time);
-
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
-            tdma->current_cycle++;
-            rtos_time_sum(&tdma->current_cycle_start,
-                &tdma->current_cycle_start, &tdma->cycle_period);
-            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
-
-            tdma_xmit_sync_frame(tdma);
+            if (rtos_task_sleep_until(tdma->current_cycle_start +
+                    tdma->cycle_period) == 0) {
+                rtos_spin_lock_irqsave(&tdma->lock, flags);
+                tdma->current_cycle++;
+                tdma->current_cycle_start += tdma->cycle_period;
+                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    
+                tdma_xmit_sync_frame(tdma);
+            }
+            /* else: skip entry for this cycle */
 
         } else if (job->id == BACKUP_SYNC) {
-            rtos_time_sum(&time, &tdma->current_cycle_start,
-                          &tdma->backup_sync_inc);
-            rtos_task_sleep_until(&time);
+            rtos_task_sleep_until(tdma->current_cycle_start +
+                    tdma->backup_sync_inc);
 
             if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
                 rtos_spin_lock_irqsave(&tdma->lock, flags);
                 tdma->current_cycle++;
-                rtos_time_sum(&tdma->current_cycle_start,
-                    &tdma->current_cycle_start, &tdma->cycle_period);
+                tdma->current_cycle_start += tdma->cycle_period;
                 rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
                 tdma_xmit_sync_frame(tdma);
@@ -118,13 +111,12 @@ void tdma_worker(int arg)
 
                 rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
-                rtos_time_sum(&time, &tdma->current_cycle_start,
-                              &REQUEST_CAL_JOB(job)->offset);
-                rtos_task_sleep_until(&time);
-
-                ret = tdma_xmit_request_cal_frame(tdma,
-                    tdma->current_cycle + REQUEST_CAL_JOB(job)->period,
-                    REQUEST_CAL_JOB(job)->offset_ns);
+                ret = rtos_task_sleep_until(tdma->current_cycle_start +
+                                            REQUEST_CAL_JOB(job)->offset);
+                if (ret < 0)
+                    ret = tdma_xmit_request_cal_frame(tdma,
+                        tdma->current_cycle + REQUEST_CAL_JOB(job)->period,
+                        REQUEST_CAL_JOB(job)->offset_ns);
 
                 /* terminate call on error */
                 if (ret < 0) {
@@ -156,11 +148,10 @@ void tdma_worker(int arg)
 
                 rtos_spin_unlock_irqrestore(&tdma->lock, flags);
 
-                if (REPLY_CAL_JOB(job)->reply_cycle == tdma->current_cycle) {
-                    rtos_time_sum(&time, &tdma->current_cycle_start,
-                                  &REPLY_CAL_JOB(job)->reply_offset);
-                    rtos_task_sleep_until(&time);
-
+                if ((REPLY_CAL_JOB(job)->reply_cycle ==
+                        tdma->current_cycle) &&
+                    (rtos_task_sleep_until(tdma->current_cycle_start +
+                        REPLY_CAL_JOB(job)->reply_offset) == 0)) {
                     rtmac_xmit(REPLY_CAL_JOB(job)->reply_rtskb);
                 } else {
                     /* cleanup if cycle already passed */
@@ -170,9 +161,6 @@ void tdma_worker(int arg)
                 job = prev_job;
             }
 #endif /* CONFIG_RTNET_TDMA_MASTER */
-
-        } else {
-            /*DEBUG*/rtos_print("TDMA: Unknown job %d\n", job->id);
         }
 
         rtos_spin_lock_irqsave(&tdma->lock, flags);

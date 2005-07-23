@@ -88,9 +88,9 @@ void xmit_msg(void *arg)
         msg.msg_iovlen  = 2;
 
         rt_printf("Sending message of %d+2 bytes\n", size);
-        ret = sendmsg_rt(sock, &msg, 0);
+        ret = rt_dev_sendmsg(sock, &msg, 0);
         if (ret != (int)(sizeof(msgsize) + size))
-            rt_printf(" sendmsg_rt() = %d!\n", ret);
+            rt_printf(" rt_dev_sendmsg() = %d!\n", ret);
 
         rt_task_wait_period();
     }
@@ -119,9 +119,9 @@ void recv_msg(void *arg)
         msg.msg_iov     = iov;
         msg.msg_iovlen  = 2;
 
-        ret = recvmsg_rt(sock, &msg, 0);
+        ret = rt_dev_recvmsg(sock, &msg, 0);
         if (ret <= 0) {
-            rt_printf(" recvmsg_rt() = %d\n", ret);
+            rt_printf(" rt_dev_recvmsg() = %d\n", ret);
             return;
         } else {
             unsigned long ip = ntohl(addr.sin_addr.s_addr);
@@ -193,17 +193,17 @@ int main(int argc, char *argv[])
         buffer_out[i] = i & 0xFF;
 
     /* create rt-socket */
-    sock = socket_rt(AF_INET,SOCK_DGRAM,0);
+    sock = rt_dev_socket(AF_INET,SOCK_DGRAM,0);
     if (sock < 0) {
-        printf(" socket_rt() = %d!\n", sock);
+        printf(" rt_dev_socket() = %d!\n", sock);
         return sock;
     }
 
     /* extend the socket pool */
-    ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
+    ret = rt_dev_ioctl(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
-        printf(" ioctl_rt(RT_IOC_SO_EXTPOOL) = %d\n", ret);
-        close_rt(sock);
+        printf(" rt_dev_ioctl(RT_IOC_SO_EXTPOOL) = %d\n", ret);
+        rt_dev_close(sock);
         return -1;
     }
 
@@ -212,10 +212,11 @@ int main(int argc, char *argv[])
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(PORT);
     local_addr.sin_addr.s_addr = INADDR_ANY;
-    ret = bind_rt(sock, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_in));
+    ret = rt_dev_bind(sock, (struct sockaddr *)&local_addr,
+                      sizeof(struct sockaddr_in));
     if (ret < 0) {
-        printf(" bind_rt() = %d!\n", ret);
-        close_rt(sock);
+        printf(" rt_dev_bind() = %d!\n", ret);
+        rt_dev_close(sock);
         return ret;
     }
 
@@ -232,14 +233,14 @@ int main(int argc, char *argv[])
     ret = rt_task_create(&rt_recv_task, "Receiver", 0, 10, 0);
     if (ret != 0) {
         printf(" rt_task_create(recv) = %d!\n", ret);
-        close_rt(sock);
+        rt_dev_close(sock);
         return ret;
     }
 
     ret = rt_task_create(&rt_xmit_task, "Sender", 0, 9, 0);
     if (ret != 0) {
         printf(" rt_task_create(xmit) = %d!\n", ret);
-        close_rt(sock);
+        rt_dev_close(sock);
         rt_task_delete(&rt_recv_task);
         return ret;
     }
@@ -253,7 +254,7 @@ int main(int argc, char *argv[])
         rt_timer_stop();
 
     /* Important: First close the socket! */
-    while (close_rt(sock) == -EAGAIN) {
+    while (rt_dev_close(sock) == -EAGAIN) {
         printf("frag-ip: Socket busy - waiting...\n");
         sleep(1);
     }

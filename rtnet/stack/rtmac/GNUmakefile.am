@@ -9,11 +9,11 @@ if CONFIG_RTNET_NOMAC
 OPTDIRS += nomac
 endif
 
-if CONFIG_RTNET_TDMAV1
-OPTDIRS += tdma-v1
+if CONFIG_RTNET_TDMA
+OPTDIRS += tdma
 endif
 
-SUBDIRS = tdma $(OPTDIRS)
+SUBDIRS = $(OPTDIRS)
 
 libkernel_rtmac_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \

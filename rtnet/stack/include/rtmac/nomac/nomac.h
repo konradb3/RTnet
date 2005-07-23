@@ -3,8 +3,8 @@
  *  include/rtmac/nomac/nomac.h
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 #ifndef __NOMAC_H_
 #define __NOMAC_H_
 
-#include <rtdm_driver.h>
+#include <rtdm/rtdm_driver.h>
 
 #include <rtnet_config.h>
 #include <rtmac/rtmac_disc.h>

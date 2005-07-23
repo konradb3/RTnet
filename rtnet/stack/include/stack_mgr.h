@@ -1,22 +1,27 @@
-/* stack_mgr.h
+/***
  *
- * RTnet - real-time networking subsystem
- * Copyright (C) 2002, Ulrich Marx <marx@fet.uni-hannover.de>
+ *  stack_mgr.h
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  RTnet - real-time networking subsystem
+ *  Copyright (C) 2002      Ulrich Marx <marx@fet.uni-hannover.de>
+ *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #ifndef __STACK_MGR_H_
 #define __STACK_MGR_H_
 
@@ -61,7 +66,7 @@ extern void rtnetif_tx(struct rtnet_device *rtdev);
 
 static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 {
-    rtos_event_sem_signal(rtdev->stack_event);
+    rtos_event_signal(rtdev->stack_event);
 }
 
 

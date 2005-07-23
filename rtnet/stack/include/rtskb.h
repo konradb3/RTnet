@@ -3,8 +3,8 @@
  *  include/rtskb.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>,
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>,
+ *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -166,7 +166,7 @@ struct rtskb {
     struct rtsocket     *sk;        /* assigned socket */
     struct rtnet_device *rtdev;     /* source or destination device */
 
-    rtos_time_t         time_stamp; /* arrival or transmission (RTcap) time */
+    nanosecs_t          time_stamp; /* arrival or transmission (RTcap) time */
 
     /* patch address of the transmission time stamp, can be NULL
      * calculation: *xmit_stamp = cpu_to_be64(time_in_ns + *xmit_stamp)
@@ -223,7 +223,7 @@ struct rtskb {
     struct rtskb        *cap_next;  /* used for capture queue               */
     unsigned char       *cap_start; /* start offset for capturing           */
     unsigned int        cap_len;    /* capture length of this rtskb         */
-    rtos_time_t         cap_rtmac_stamp; /* RTmac enqueuing time            */
+    nanosecs_t          cap_rtmac_stamp; /* RTmac enqueuing time            */
 #endif
 };
 
@@ -759,7 +759,7 @@ static inline void rtcap_mark_rtmac_enqueue(struct rtskb *skb)
 {
     /* rtskb start and length are probably not valid yet */
     skb->cap_flags |= RTSKB_CAP_RTMAC_STAMP;
-    rtos_get_time(&skb->cap_rtmac_stamp);
+    skb->cap_rtmac_stamp = rtos_get_time();
 }
 
 #else /* ifndef CONFIG_RTNET_RTCAP */

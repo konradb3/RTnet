@@ -345,7 +345,7 @@ static int  pcnet32_probe1(unsigned long, unsigned int, int, struct pci_dev *);
 static int  pcnet32_open(struct rtnet_device *);
 static int  pcnet32_init_ring(struct rtnet_device *);
 static int  pcnet32_start_xmit(struct rtskb *, struct rtnet_device *);
-static int  pcnet32_rx(struct rtnet_device *, rtos_time_t *time_stamp);
+static int  pcnet32_rx(struct rtnet_device *, nanosecs_t *time_stamp);
 //static void pcnet32_tx_timeout (struct net_device *dev);
 static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt);
 static int  pcnet32_close(struct rtnet_device *);
@@ -1132,7 +1132,6 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
     u16 status;
     int entry;
     unsigned long flags;
-    rtos_time_t time; /*** RTnet ***/
 
     if (pcnet32_debug > 3) {
 	rtos_print(KERN_DEBUG "%s: pcnet32_start_xmit() called, csr0 %4.4x.\n",
@@ -1178,11 +1177,8 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 
 /*** RTnet ***/
     /* get and patch time stamp just before the transmission */
-    if (skb->xmit_stamp) {
-        rtos_get_time(&time);
-        *skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-            *skb->xmit_stamp);
-    }
+    if (skb->xmit_stamp)
+        *skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
 /*** RTnet ***/
 
     wmb();
@@ -1211,16 +1207,14 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 /* The PCNET32 interrupt handler. */
 static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 {
-    struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG(); /*** RTnet ***/
+    nanosecs_t time_stamp = rtos_get_time(); /*** RTnet ***/
+    struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device); /*** RTnet ***/
     struct pcnet32_private *lp;
     unsigned long ioaddr;
     u16 csr0,rap;
     int boguscnt =  max_interrupt_work;
     int must_restart;
     unsigned int old_packet_cnt; /*** RTnet ***/
-    rtos_time_t time_stamp; /*** RTnet ***/
-
-    rtos_get_time(&time_stamp); /*** RTnet **/
 
 /*** RTnet ***
     if (!dev) {
@@ -1375,7 +1369,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 }
 
 static int
-pcnet32_rx(struct rtnet_device *dev, rtos_time_t *time_stamp) /*** RTnet ***/
+pcnet32_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** RTnet ***/
 {
     struct pcnet32_private *lp = dev->priv;
     int entry = lp->cur_rx & RX_RING_MOD_MASK;
@@ -1459,7 +1453,7 @@ pcnet32_rx(struct rtnet_device *dev, rtos_time_t *time_stamp) /*** RTnet ***/
 #endif
 		lp->stats.rx_bytes += skb->len;
 		skb->protocol=rt_eth_type_trans(skb,dev);
-		memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+		skb->time_stamp = *time_stamp;
 		rtnetif_rx(skb);
 		///dev->last_rx = jiffies;
 /*** RTnet ***/

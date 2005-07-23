@@ -86,8 +86,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     memset(tdma->slot_table, 0, table_size);
 
     set_bit(TDMA_FLAG_MASTER, &tdma->flags);
-    rtos_nanosecs_to_time(cfg->args.master.cycle_period,
-                          &tdma->cycle_period);
+    tdma->cycle_period       = cfg->args.master.cycle_period;
     tdma->sync_job.ref_count = 0;
     INIT_LIST_HEAD(&tdma->sync_job.entry);
 
@@ -95,11 +94,9 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
         tdma->sync_job.id = XMIT_SYNC;
     else {
         set_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags);
-        tdma->sync_job.id = BACKUP_SYNC;
-        rtos_nanosecs_to_time(cfg->args.master.backup_sync_offset,
-                              &tdma->backup_sync_inc);
-        rtos_time_sum(&tdma->backup_sync_inc, &tdma->backup_sync_inc,
-                      &tdma->cycle_period);
+        tdma->sync_job.id     = BACKUP_SYNC;
+        tdma->backup_sync_inc =
+                cfg->args.master.backup_sync_offset + tdma->cycle_period;
     }
 
     /* did we detect another active master? */
@@ -110,12 +107,12 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
         if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags))
             printk("TDMA: warning, no primary master detected!\n");
         set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
-        rtos_get_time(&tdma->current_cycle_start);
+        tdma->current_cycle_start = rtos_get_time();
     }
 
     tdma->first_job = tdma->current_job = &tdma->sync_job;
 
-    rtos_event_sem_signal(&tdma->worker_wakeup);
+    rtos_event_signal(&tdma->worker_wakeup);
 
     set_bit(TDMA_FLAG_ATTACHED, &tdma->flags);
 
@@ -177,7 +174,7 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
 
     tdma->first_job = tdma->current_job = &tdma->sync_job;
 
-    rtos_event_sem_signal(&tdma->worker_wakeup);
+    rtos_event_signal(&tdma->worker_wakeup);
 
     set_bit(TDMA_FLAG_ATTACHED, &tdma->flags);
 
@@ -331,7 +328,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
         req_cal.phasing        = cfg->args.set_slot.phasing;
         req_cal.cal_rounds     = tdma->cal_rounds;
         req_cal.cal_results    = cfg->args.set_slot.cal_results;
-        rtos_nanosecs_to_time(cfg->args.set_slot.offset, &req_cal.offset);
+        req_cal.offset         = cfg->args.set_slot.offset;
 
         req_cal.result_buffer =
             kmalloc(req_cal.cal_rounds * sizeof(nanosecs_t), GFP_KERNEL);
@@ -379,7 +376,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
                 tdma->sync_job.id = XMIT_SYNC;
 
             /* wait 2 cycle periods for the mode switch */
-            cycle_ms = rtos_time_to_nanosecs(&tdma->cycle_period);
+            cycle_ms = tdma->cycle_period;
             do_div(cycle_ms, 1000000);
             set_current_state(TASK_UNINTERRUPTIBLE);
             schedule_timeout(1 + (2 * (unsigned int)cycle_ms * HZ)/1000);
@@ -402,7 +399,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     slot->phasing        = cfg->args.set_slot.phasing;
     slot->mtu            = cfg->args.set_slot.size;
     slot->size           = cfg->args.set_slot.size + rtdev->hard_header_len;
-    rtos_nanosecs_to_time(cfg->args.set_slot.offset, &slot->offset);
+    slot->offset         = cfg->args.set_slot.offset;
     rtskb_prio_queue_init(&slot->queue);
 
     old_slot = tdma->slot_table[id];
@@ -419,13 +416,12 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
             prev_job = job;
             job = list_entry(job->entry.next, struct tdma_job, entry);
             if (((job->id >= 0) &&
-                 (RTOS_TIME_IS_BEFORE(&slot->offset, &SLOT_JOB(job)->offset) ||
-                  (RTOS_TIME_EQUALS(&slot->offset, &SLOT_JOB(job)->offset) &&
+                 ((slot->offset < SLOT_JOB(job)->offset) ||
+                  ((slot->offset == SLOT_JOB(job)->offset) &&
                    (slot->head.id <= SLOT_JOB(job)->head.id)))) ||
 #ifdef CONFIG_RTNET_TDMA_MASTER
                 ((job->id == XMIT_RPL_CAL) &&
-                  RTOS_TIME_IS_BEFORE(&slot->offset,
-                                      &REPLY_CAL_JOB(job)->reply_offset)) ||
+                  (slot->offset < REPLY_CAL_JOB(job)->reply_offset)) ||
 #endif /* CONFIG_RTNET_TDMA_MASTER */
                 (job == tdma->first_job))
                 break;

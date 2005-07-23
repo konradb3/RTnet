@@ -30,6 +30,6 @@
 
 #define DEF_WORKER_PRIO         RTOS_HIGHEST_RT_PRIORITY
 
-void tdma_worker(int arg);
+void tdma_worker(void *arg);
 
 #endif /* __TDMA_WORKER_H_ */

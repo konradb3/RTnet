@@ -1,30 +1,36 @@
- /***
- * rtnet_internal.h - internal declarations
+/***
  *
- * Copyright (C) 1999      Lineo, Inc
- *               1999,2002 David A. Schleef <ds@schleef.org>
- *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  rtnet_internal.h - internal declarations
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  RTnet - real-time networking subsystem
+ *  Copyright (C) 1999       Lineo, Inc
+ *                1999, 2002 David A. Schleef <ds@schleef.org>
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #ifndef __RTNET_INTERNAL_H_
 #define __RTNET_INTERNAL_H_
 
 #include <linux/module.h>
 
 #include <rtnet_sys.h>
+
 
 #ifdef CONFIG_RTNET_CHECKED
 #define RTNET_ASSERT(expr, func) \
@@ -54,9 +60,9 @@ struct rtnet_device;
 
 
 struct rtnet_mgr {
-    rtos_task_t      task;
+    rtos_task_t     task;
 /*    MBX     mbx;*/
-    rtos_event_sem_t event;
+    rtos_event_t    event;
 };
 
 

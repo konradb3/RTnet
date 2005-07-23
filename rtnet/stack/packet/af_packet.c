@@ -48,7 +48,7 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     else {
         rtdev_reference(skb->rtdev);
         rtskb_queue_tail(&sock->incoming, skb);
-        rtos_event_sem_signal(&sock->wakeup_event);
+        rtos_sem_up(&sock->pending_sem);
 
         rtos_spin_lock_irqsave(&sock->param_lock, flags);
         callback_func = sock->callback_func;
@@ -155,8 +155,8 @@ int rt_packet_getsockname(struct rtsocket *sock, struct sockaddr *addr,
 /***
  * rt_packet_socket - initialize a packet socket
  */
-int rt_packet_socket(struct rtdm_dev_context *context, int call_flags,
-                     int protocol)
+int rt_packet_socket(struct rtdm_dev_context *context,
+                     rtdm_user_info_t *user_info, int protocol)
 {
     struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
     int             ret;
@@ -190,7 +190,8 @@ int rt_packet_socket(struct rtdm_dev_context *context, int call_flags,
 /***
  *  rt_packet_close
  */
-int rt_packet_close(struct rtdm_dev_context *context, int call_flags)
+int rt_packet_close(struct rtdm_dev_context *context,
+                    rtdm_user_info_t *user_info)
 {
     struct rtsocket         *sock = (struct rtsocket *)&context->dev_private;
     struct rtpacket_type    *pt = &sock->prot.packet.packet_type;
@@ -223,28 +224,28 @@ int rt_packet_close(struct rtdm_dev_context *context, int call_flags)
 /***
  *  rt_packet_ioctl
  */
-int rt_packet_ioctl(struct rtdm_dev_context *context, int call_flags,
-                    int request, void *arg)
+int rt_packet_ioctl(struct rtdm_dev_context *context,
+                    rtdm_user_info_t *user_info, int request, void *arg)
 {
     struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
-    struct rtdm_setsockaddr_args *setaddr = arg;
-    struct rtdm_getsockaddr_args *getaddr = arg;
+    struct _rtdm_setsockaddr_args *setaddr = arg;
+    struct _rtdm_getsockaddr_args *getaddr = arg;
 
 
     /* fast path for common socket IOCTLs */
     if (_IOC_TYPE(request) == RTIOC_TYPE_NETWORK)
-        return rt_socket_common_ioctl(context, call_flags, request, arg);
+        return rt_socket_common_ioctl(context, user_info, request, arg);
 
     switch (request) {
-        case RTIOC_BIND:
+        case _RTIOC_BIND:
             return rt_packet_bind(sock, setaddr->addr, setaddr->addrlen);
 
-        case RTIOC_GETSOCKNAME:
+        case _RTIOC_GETSOCKNAME:
             return rt_packet_getsockname(sock, getaddr->addr,
                                          getaddr->addrlen);
 
         default:
-            return rt_socket_if_ioctl(context, call_flags, request, arg);
+            return rt_socket_if_ioctl(context, user_info, request, arg);
     }
 }
 
@@ -253,8 +254,9 @@ int rt_packet_ioctl(struct rtdm_dev_context *context, int call_flags,
 /***
  *  rt_packet_recvmsg
  */
-ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context, int call_flags,
-                          struct msghdr *msg, int msg_flags)
+ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context,
+                          rtdm_user_info_t *user_info, struct msghdr *msg,
+                          int msg_flags)
 {
     struct rtsocket     *sock = (struct rtsocket *)&context->dev_private;
     size_t              len   = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
@@ -264,33 +266,25 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context, int call_flags,
     struct ethhdr       *eth;
     struct sockaddr_ll  *sll;
     int                 ret;
-    unsigned long       flags;
-    rtos_time_t         timeout;
+    nanosecs_t          timeout = sock->timeout;
 
 
-    /* block on receive event */
-    if (!test_bit(RT_SOCK_NONBLOCK, &context->context_flags) &&
-        ((msg_flags & MSG_DONTWAIT) == 0))
-        while ((skb = rtskb_dequeue_chain(&sock->incoming)) == NULL) {
-            rtos_spin_lock_irqsave(&sock->param_lock, flags);
-            memcpy(&timeout, &sock->timeout, sizeof(timeout));
-            rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
+    /* non-blocking receive? */
+    if (test_bit(RT_SOCK_NONBLOCK, &context->context_flags) ||
+        (msg_flags & MSG_DONTWAIT))
+        timeout = -1;
 
-            if (!RTOS_TIME_IS_ZERO(&timeout)) {
-                ret = rtos_event_sem_wait_timed(&sock->wakeup_event, &timeout);
-                if (ret == RTOS_EVENT_TIMEOUT)
-                    return -ETIMEDOUT;
-            } else
-                ret = rtos_event_sem_wait(&sock->wakeup_event);
-
-            if (RTOS_EVENT_ERROR(ret))
-                return -ENOTSOCK;
-        }
-    else {
-        skb = rtskb_dequeue_chain(&sock->incoming);
-        if (skb == NULL)
-            return -EAGAIN;
+    ret = rtos_sem_down(&sock->pending_sem, timeout);
+    if (unlikely(ret < 0)) {
+        if (ret == -EWOULDBLOCK)
+            ret = -EAGAIN;
+        else if (ret != -ETIMEDOUT)
+            ret = -ENOTSOCK;
+        return ret;
     }
+
+    skb = rtskb_dequeue_chain(&sock->incoming);
+    RTNET_ASSERT(skb != NULL, return -EFAULT;);
 
     eth = skb->mac.ethernet;
 
@@ -335,7 +329,8 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context, int call_flags,
 /***
  *  rt_packet_sendmsg
  */
-ssize_t rt_packet_sendmsg(struct rtdm_dev_context *context, int call_flags,
+ssize_t rt_packet_sendmsg(struct rtdm_dev_context *context,
+                          rtdm_user_info_t *user_info,
                           const struct msghdr *msg, int flags)
 {
     struct rtsocket     *sock = (struct rtsocket *)&context->dev_private;

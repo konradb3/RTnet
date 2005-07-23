@@ -3,9 +3,9 @@
  *  ipv4/af_inet.c
  *
  *  rtnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -191,9 +191,9 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
 
 static struct rtnet_ioctls ipv4_ioctls = {
-    service_name:   "IPv4",
-    ioctl_type:     RTNET_IOC_TYPE_IPV4,
-    handler:        ipv4_ioctl
+    service_name:       "IPv4",
+    ioctl_type:         RTNET_IOC_TYPE_IPV4,
+    handler:            ipv4_ioctl
 };
 
 static struct rtdm_device ipv4_device = {
@@ -217,7 +217,7 @@ static struct rtdm_device ipv4_device = {
         recvmsg_rt:     rt_udp_recvmsg,
         sendmsg_rt:     rt_udp_sendmsg,
 #ifdef CONFIG_RTNET_RTDM_SELECT
-	poll_rt:        rt_udp_poll,
+        poll_rt:        rt_udp_poll,
         /* there should be only the function poll() */
         pollwait_rt:    rt_udp_pollwait,
         pollfree_rt:    rt_udp_pollfree,

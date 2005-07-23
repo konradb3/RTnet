@@ -3,9 +3,9 @@
  *  include/ipv4/udp.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,19 +31,24 @@
 #include <ipv4/protocol.h>
 
 
-#define RT_UDP_SOCKETS      64  /* only increase with care (lookup delays!),
-                                 * must be power of 2 */
+/* Maximum number of active udp sockets
+   Only increase with care (look-up delays!), must be power of 2 */
+#define RT_UDP_SOCKETS      64
 
 
 extern struct rtinet_protocol udp_protocol;
 
 
-extern int rt_udp_close(struct rtdm_dev_context *context, int call_flags);
-extern int rt_udp_ioctl(struct rtdm_dev_context *context, int call_flags,
+extern int rt_udp_close(struct rtdm_dev_context *context,
+                        rtdm_user_info_t *user_info);
+extern int rt_udp_ioctl(struct rtdm_dev_context *context,
+                        rtdm_user_info_t *user_info,
                         int request, void *arg);
-extern ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context, int call_flags,
+extern ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
+                              rtdm_user_info_t *user_info,
                               struct msghdr *msg, int flags);
-extern ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context, int call_flags,
+extern ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context,
+                              rtdm_user_info_t *user_info,
                               const struct msghdr *msg, int flags);
 #ifdef CONFIG_RTNET_RTDM_SELECT
 extern unsigned int rt_udp_poll(struct rtdm_dev_context *context); /* , poll_table *wait) */

@@ -101,14 +101,9 @@ waiting on hardware events.
       transmission (take care if data has to be transfered manually, i.e.
       without DMA):
 
-      rtos_time_t time;
-      ...
       /* get and patch time stamp just before the transmission */
-      if (skb->xmit_stamp) {
-          rtos_get_time(&time);
-          *skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-              *skb->xmit_stamp);
-      }
+      if (skb->xmit_stamp)
+          *skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
 
 17.3. make the code above and the transmission triggering atomical by switching
       off all interrupts:
@@ -140,7 +135,7 @@ waiting on hardware events.
 
     static RTOS_IRQ_HANDLER_PROTO(XXX_interrupt)
     {
-        struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+        struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device);
         ...
 
     Also adapt the prototype of the interrupt handler accordingly if provided.

@@ -1,24 +1,28 @@
-/* rtdev.h
+/***
  *
- * RTnet - real-time networking subsystem
- * Copyright (C) 1999      Lineo, Inc
- *               1999,2002 David A. Schleef <ds@schleef.org>
- *               2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  rtdev.h
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  RTnet - real-time networking subsystem
+ *  Copyright (C) 1999       Lineo, Inc
+ *                1999, 2002 David A. Schleef <ds@schleef.org>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
+
 #ifndef __RTDEV_H_
 #define __RTDEV_H_
 
@@ -97,7 +101,7 @@ struct rtnet_device {
     __u32               broadcast_ip; /* broadcast IP in network order */
 
     int                 rxqueue_len;
-    rtos_event_sem_t    *stack_event;
+    rtos_event_t        *stack_event;
 
     rtos_res_lock_t     xmit_lock;  /* protects xmit routine        */
     rtos_spinlock_t     rtdev_lock; /* management lock              */

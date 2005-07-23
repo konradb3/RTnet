@@ -142,11 +142,11 @@ void rtnetif_tx(struct rtnet_device *rtdev)
 
 
 /***
- *      do_stacktask
+ *      stackmgr_task
  */
-static void do_stacktask(int mgr_id)
+static void stackmgr_task(void *arg)
 {
-    struct rtnet_mgr        *mgr = (struct rtnet_mgr *)mgr_id;
+    rtos_event_t            *mgr_event = &((struct rtnet_mgr *)arg)->event;
     struct rtskb            *skb;
     unsigned short          hash;
     struct rtpacket_type    *pt_entry;
@@ -155,10 +155,7 @@ static void do_stacktask(int mgr_id)
 
 
     rtos_print("RTnet: stack-mgr started\n");
-    while(1) {
-        if (RTOS_EVENT_ERROR(rtos_event_sem_wait(&mgr->event)))
-            return;
-
+    while (rtos_event_wait(mgr_event, 0) == 0)
         while (1) {
           next_packet:
             rtos_spin_lock_irqsave(&rxqueue.lock, flags);
@@ -204,7 +201,6 @@ static void do_stacktask(int mgr_id)
             kfree_rtskb(skb);
             rtdev_dereference(rtdev);
         }
-    }
 }
 
 
@@ -240,9 +236,9 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
     for (i = 0; i < RTPACKET_HASH_TBL_SIZE; i++)
         INIT_LIST_HEAD(&rt_packets[i]);
 
-    rtos_event_sem_init(&mgr->event);
+    rtos_event_init(&mgr->event);
 
-    return rtos_task_init(&mgr->task, do_stacktask, (int)mgr,
+    return rtos_task_init(&mgr->task, stackmgr_task, mgr,
                           RTNET_STACK_PRIORITY);
 }
 
@@ -253,6 +249,6 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
  */
 void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
 {
-    rtos_event_sem_delete(&mgr->event);
+    rtos_event_delete(&mgr->event);
     rtos_task_delete(&mgr->task);
 }

@@ -61,7 +61,7 @@ static char buffer_in[1500];
 
 
 
-void send_msg(int arg)
+void send_msg(void *arg)
 {
     int ret;
     struct msghdr msg;
@@ -79,9 +79,9 @@ void send_msg(int arg)
         msg.msg_iovlen  = 1;
 
         rtos_print("Sending message of %d bytes\n", sizeof(buffer_out));
-        ret = sendmsg_rt(sock, &msg, 0);
+        ret = rt_dev_sendmsg(sock, &msg, 0);
         if (ret != (int)sizeof(buffer_out))
-            rtos_print(" sendmsg_rt() = %d!\n", ret);
+            rtos_print(" rt_dev_sendmsg() = %d!\n", ret);
 
         rtos_task_wait_period(&rt_xmit_task);
     }
@@ -89,7 +89,7 @@ void send_msg(int arg)
 
 
 
-void recv_msg(int arg)
+void recv_msg(void *arg)
 {
     int ret;
     struct msghdr msg;
@@ -107,9 +107,9 @@ void recv_msg(int arg)
         msg.msg_iov     = &iov;
         msg.msg_iovlen  = 1;
 
-        ret = recvmsg_rt(sock, &msg, 0);
+        ret = rt_dev_recvmsg(sock, &msg, 0);
         if (ret <= 0) {
-            rtos_print(" recvmsg_rt() = %d\n", ret);
+            rtos_print(" rt_dev_recvmsg() = %d\n", ret);
             return;
         } else {
             rtos_print("received packet from %02X:%02X:%02X:%02X:%02X:%02X, "
@@ -126,7 +126,6 @@ void recv_msg(int arg)
 int init_module(void)
 {
     int ret;
-    rtos_time_t cycle;
     struct sockaddr_ll local_addr;
 
 
@@ -149,9 +148,9 @@ int init_module(void)
 #endif
 
     /* create rt-socket */
-    sock = socket_rt(PF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
+    sock = rt_dev_socket(PF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
     if (sock < 0) {
-        printk(" socket_rt() = %d!\n", sock);
+        printk(" rt_dev_socket() = %d!\n", sock);
         return sock;
     }
 
@@ -160,11 +159,11 @@ int init_module(void)
     local_addr.sll_family   = PF_PACKET;
     local_addr.sll_protocol = htons(PROTOCOL);
     local_addr.sll_ifindex  = local_if;
-    ret = bind_rt(sock, (struct sockaddr *)&local_addr,
-                  sizeof(struct sockaddr_ll));
+    ret = rt_dev_bind(sock, (struct sockaddr *)&local_addr,
+                      sizeof(struct sockaddr_ll));
     if (ret < 0) {
-        printk(" bind_rt() = %d!\n", ret);
-        close_rt(sock);
+        printk(" rt_dev_bind() = %d!\n", ret);
+        rt_dev_close(sock);
         return ret;
     }
 
@@ -175,18 +174,17 @@ int init_module(void)
     }
 #endif
 
-    rtos_nanosecs_to_time(CYCLE, &cycle);
-    ret = rtos_task_init_periodic(&rt_xmit_task, send_msg, 0, 10, &cycle);
+    ret = rtos_task_init_periodic(&rt_xmit_task, send_msg, 0, 10, CYCLE);
     if (ret != 0) {
         printk(" rtos_task_init_periodic(rt_xmit_task) = %d!\n", ret);
-        close_rt(sock);
+        rt_dev_close(sock);
         return ret;
     }
 
     ret = rtos_task_init(&rt_recv_task, recv_msg, 0, 9);
     if (ret != 0) {
         printk(" rtos_task_init(rt_recv_task) = %d!\n", ret);
-        close_rt(sock);
+        rt_dev_close(sock);
         rtos_task_delete(&rt_xmit_task);
         return ret;
     }
@@ -204,7 +202,7 @@ void cleanup_module(void)
 #endif
 
     /* Important: First close the socket! */
-    while (close_rt(sock) == -EAGAIN) {
+    while (rt_dev_close(sock) == -EAGAIN) {
         printk("raw-packets: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */

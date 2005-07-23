@@ -65,7 +65,7 @@ static char buffer_in[64*1024];
 
 
 
-void send_msg(int arg)
+void send_msg(void *arg)
 {
     int ret;
     struct msghdr msg;
@@ -86,9 +86,9 @@ void send_msg(int arg)
         msg.msg_iovlen  = 2;
 
         rtos_print("Sending message of %d+2 bytes\n", size);
-        ret = sendmsg_rt(sock, &msg, 0);
+        ret = rt_dev_sendmsg(sock, &msg, 0);
         if (ret != (int)(sizeof(msgsize) + size))
-            rtos_print(" sendmsg_rt() = %d!\n", ret);
+            rtos_print(" rt_dev_sendmsg() = %d!\n", ret);
 
         rtos_task_wait_period(&rt_xmit_task);
     }
@@ -96,7 +96,7 @@ void send_msg(int arg)
 
 
 
-void recv_msg(int arg)
+void recv_msg(void *arg)
 {
     int ret;
     struct msghdr msg;
@@ -117,9 +117,9 @@ void recv_msg(int arg)
         msg.msg_iov     = iov;
         msg.msg_iovlen  = 2;
 
-        ret = recvmsg_rt(sock, &msg, 0);
+        ret = rt_dev_recvmsg(sock, &msg, 0);
         if (ret <= 0) {
-            rtos_print(" recvmsg_rt() = %d\n", ret);
+            rtos_print(" rt_dev_recvmsg() = %d\n", ret);
             return;
         } else {
             unsigned long ip = ntohl(addr.sin_addr.s_addr);
@@ -140,7 +140,6 @@ int init_module(void)
 {
     int ret;
     unsigned int i;
-    rtos_time_t cycle;
     struct sockaddr_in local_addr;
     unsigned long dest_ip = rt_inet_aton(dest_ip_s);
 
@@ -159,17 +158,17 @@ int init_module(void)
         buffer_out[i] = i & 0xFF;
 
     /* create rt-socket */
-    sock = socket_rt(AF_INET,SOCK_DGRAM,0);
+    sock = rt_dev_socket(AF_INET,SOCK_DGRAM,0);
     if (sock < 0) {
-        printk(" socket_rt() = %d!\n", sock);
+        printk(" rt_dev_socket() = %d!\n", sock);
         return sock;
     }
 
     /* extend the socket pool */
-    ret = ioctl_rt(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
+    ret = rt_dev_ioctl(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != (int)add_rtskbs) {
-        printk(" ioctl_rt(RT_IOC_SO_EXTPOOL) = %d\n", ret);
-        close_rt(sock);
+        printk(" rt_dev_ioctl(RT_IOC_SO_EXTPOOL) = %d\n", ret);
+        rt_dev_close(sock);
         return -1;
     }
 
@@ -178,10 +177,11 @@ int init_module(void)
     local_addr.sin_family = AF_INET;
     local_addr.sin_port = htons(PORT);
     local_addr.sin_addr.s_addr = INADDR_ANY;
-    ret = bind_rt(sock, (struct sockaddr *)&local_addr, sizeof(struct sockaddr_in));
+    ret = rt_dev_bind(sock, (struct sockaddr *)&local_addr,
+                      sizeof(struct sockaddr_in));
     if (ret < 0) {
-        printk(" bind_rt() = %d!\n", ret);
-        close_rt(sock);
+        printk(" rt_dev_bind() = %d!\n", ret);
+        rt_dev_close(sock);
         return ret;
     }
 
@@ -201,15 +201,14 @@ int init_module(void)
     if (ret != 0)
     {
         printk(" rtos_task_init(recv) = %d!\n", ret);
-        close_rt(sock);
+        rt_dev_close(sock);
         return ret;
     }
 
-    rtos_nanosecs_to_time(CYCLE, &cycle);
-    ret = rtos_task_init_periodic(&rt_xmit_task, send_msg, 0, 10, &cycle);
+    ret = rtos_task_init_periodic(&rt_xmit_task, send_msg, 0, 10, CYCLE);
     if (ret != 0) {
         printk(" rtos_task_init_periodic(xmit) = %d!\n", ret);
-        close_rt(sock);
+        rt_dev_close(sock);
         rtos_task_delete(&rt_recv_task);
         return ret;
     }
@@ -227,7 +226,7 @@ void cleanup_module(void)
 #endif
 
     /* Important: First close the socket! */
-    while (close_rt(sock) == -EAGAIN) {
+    while (rt_dev_close(sock) == -EAGAIN) {
         printk("frag-ip: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */

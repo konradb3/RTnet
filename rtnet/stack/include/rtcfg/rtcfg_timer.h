@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,6 @@
 #define __RTCFG_TIMER_H_
 
 
-void rtcfg_timer(int ifindex);
+void rtcfg_timer(void *arg);
 
 #endif /* __RTCFG_TIMER_H_ */

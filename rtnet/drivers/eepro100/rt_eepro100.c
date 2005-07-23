@@ -577,7 +577,7 @@ static void speedo_init_rx_ring(struct rtnet_device *rtdev);
 //static void speedo_tx_timeout(struct rtnet_device *rtdev);
 static int speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force);
-static int speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp);
+static int speedo_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp);
 static void speedo_tx_buffer_gc(struct rtnet_device *rtdev);
 static RTOS_IRQ_HANDLER_PROTO(speedo_interrupt);
 static int speedo_close(struct rtnet_device *rtdev);
@@ -1455,7 +1455,6 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	int entry;
 	// *** RTnet ***
 	unsigned long flags;
-	rtos_time_t time;
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
 
@@ -1519,11 +1518,8 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	rtos_local_irqsave(flags);
 
 	/* get and patch time stamp just before the transmission */
-	if (skb->xmit_stamp) {
-		rtos_get_time(&time);
-		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-			*skb->xmit_stamp);
-	}
+	if (skb->xmit_stamp)
+		*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
 // *** RTnet ***
 
 	clear_suspend(sp->last_cmd);
@@ -1622,17 +1618,15 @@ static void speedo_tx_buffer_gc(struct rtnet_device *rtdev)
 static RTOS_IRQ_HANDLER_PROTO(speedo_interrupt)
 {
 	// *** RTnet ***
-	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+    nanosecs_t time_stamp = rtos_get_time();
+    struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);
 	int packets = 0;
-	rtos_time_t time_stamp;
 	// *** RTnet ***
 
 	struct speedo_private *sp;
 	long ioaddr, boguscnt = max_interrupt_work;
 	unsigned short status;
 
-
-	rtos_get_time(&time_stamp);
 
 #ifndef final_version
 	if (rtdev == NULL) {
@@ -1882,7 +1876,7 @@ static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force)
 }
 
 static int
-speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
+speedo_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
 {
 	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int entry = sp->cur_rx % RX_RING_SIZE;
@@ -1981,7 +1975,7 @@ speedo_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 			}
 			skb->protocol = rt_eth_type_trans(skb, rtdev);
 			//rtmac
-			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = *time_stamp;
 			//rtmac
 			rtnetif_rx(skb);
 			(*packets)++;

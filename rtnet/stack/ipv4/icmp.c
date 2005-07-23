@@ -194,7 +194,6 @@ static void rt_icmp_echo_reply(struct rtskb *skb)
     unsigned long       flags;
     struct rt_proc_call *call;
     struct ipv4_cmd     *cmd;
-    rtos_time_t         time;
 
 
     rtos_spin_lock_irqsave(&echo_calls_lock, flags);
@@ -217,11 +216,8 @@ static void rt_icmp_echo_reply(struct rtskb *skb)
     if ((skb->h.icmph->un.echo.id == cmd->args.ping.id) &&
         (ntohs(skb->h.icmph->un.echo.sequence) == cmd->args.ping.sequence) &&
         skb->len == cmd->args.ping.msg_size) {
-        if (skb->len >= sizeof(nanosecs_t)) {
-            rtos_get_time(&time);
-            cmd->args.ping.rtt =
-                rtos_time_to_nanosecs(&time) - *((nanosecs_t *)skb->data);
-        }
+        if (skb->len >= sizeof(nanosecs_t))
+            cmd->args.ping.rtt = rtos_get_time() - *((nanosecs_t *)skb->data);
         rtpc_complete_call(call, sizeof(struct icmphdr) + skb->len);
     } else
         rtpc_complete_call(call, 0);
@@ -319,7 +315,6 @@ static int rt_icmp_send_request(u32 daddr, struct icmp_bxm *icmp_param)
 int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
 {
     struct icmp_bxm icmp_param;
-    rtos_time_t     time;
     unsigned char   pattern_buf[msg_size];
     off_t           pos;
 
@@ -340,8 +335,7 @@ int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
         for (pos = 0; pos < icmp_param.data_len; pos++)
             pattern_buf[pos] = pos & 0xFF;
 
-        rtos_get_time(&time);
-        icmp_param.head.timestamp = rtos_time_to_nanosecs(&time);
+        icmp_param.head.timestamp = rtos_get_time();
     } else {
         icmp_param.head_len = sizeof(struct icmphdr) + msg_size;
         icmp_param.data_len = 0;
@@ -359,7 +353,8 @@ int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
 /***
  *  rt_icmp_socket
  */
-int rt_icmp_socket(struct rtdm_dev_context *context, int call_flags)
+int rt_icmp_socket(struct rtdm_dev_context *context,
+                   rtdm_user_info_t *user_info)
 {
     /* we don't support user-created ICMP sockets */
     return -ENOPROTOOPT;

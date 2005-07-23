@@ -40,13 +40,13 @@ build_triplet = @build@
 host_triplet = @host@
 @CONFIG_RTNET_RTCFG_TRUE@am__append_1 = rtcfg
 @CONFIG_RTNET_NOMAC_TRUE@am__append_2 = nomaccfg
-@CONFIG_RTNET_TDMAV1_TRUE@am__append_3 = rtnet-tdma-v1
+@CONFIG_RTNET_TDMA_TRUE@am__append_3 = tdmacfg
+@CONFIG_RTNET_TDMA_TRUE@am__append_4 = tdma.conf
 sbin_PROGRAMS = rtifconfig$(EXEEXT) rtroute$(EXEEXT) rtping$(EXEEXT) \
-	tdmacfg$(EXEEXT) $(am__EXEEXT_3)
+	$(am__EXEEXT_4)
 subdir = tools
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
-	$(srcdir)/rtnet-tdma-v1.in $(srcdir)/rtnet.conf.in \
-	$(srcdir)/rtnet.in
+	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/configure.ac
@@ -54,10 +54,11 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
-CONFIG_CLEAN_FILES = rtnet rtnet.conf rtnet-tdma-v1
+CONFIG_CLEAN_FILES = rtnet rtnet.conf
 @CONFIG_RTNET_RTCFG_TRUE@am__EXEEXT_1 = rtcfg$(EXEEXT)
 @CONFIG_RTNET_NOMAC_TRUE@am__EXEEXT_2 = nomaccfg$(EXEEXT)
-am__EXEEXT_3 = $(am__EXEEXT_1) $(am__EXEEXT_2)
+@CONFIG_RTNET_TDMA_TRUE@am__EXEEXT_3 = tdmacfg$(EXEEXT)
+am__EXEEXT_4 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
 am__installdirs = "$(DESTDIR)$(sbindir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
@@ -116,8 +117,6 @@ CONFIG_KBUILD_FALSE = @CONFIG_KBUILD_FALSE@
 CONFIG_KBUILD_TRUE = @CONFIG_KBUILD_TRUE@
 CONFIG_NCURSES_FALSE = @CONFIG_NCURSES_FALSE@
 CONFIG_NCURSES_TRUE = @CONFIG_NCURSES_TRUE@
-CONFIG_NEWLXRT_FALSE = @CONFIG_NEWLXRT_FALSE@
-CONFIG_NEWLXRT_TRUE = @CONFIG_NEWLXRT_TRUE@
 CONFIG_RTNET_3C59X_FALSE = @CONFIG_RTNET_3C59X_FALSE@
 CONFIG_RTNET_3C59X_TRUE = @CONFIG_RTNET_3C59X_TRUE@
 CONFIG_RTNET_8139_FALSE = @CONFIG_RTNET_8139_FALSE@
@@ -134,6 +133,8 @@ CONFIG_RTNET_FEC_ENET_FALSE = @CONFIG_RTNET_FEC_ENET_FALSE@
 CONFIG_RTNET_FEC_ENET_TRUE = @CONFIG_RTNET_FEC_ENET_TRUE@
 CONFIG_RTNET_LOOPBACK_FALSE = @CONFIG_RTNET_LOOPBACK_FALSE@
 CONFIG_RTNET_LOOPBACK_TRUE = @CONFIG_RTNET_LOOPBACK_TRUE@
+CONFIG_RTNET_LXRT_FALSE = @CONFIG_RTNET_LXRT_FALSE@
+CONFIG_RTNET_LXRT_TRUE = @CONFIG_RTNET_LXRT_TRUE@
 CONFIG_RTNET_MPC52XX_FEC_FALSE = @CONFIG_RTNET_MPC52XX_FEC_FALSE@
 CONFIG_RTNET_MPC52XX_FEC_TRUE = @CONFIG_RTNET_MPC52XX_FEC_TRUE@
 CONFIG_RTNET_NATSEMI_FALSE = @CONFIG_RTNET_NATSEMI_FALSE@
@@ -154,8 +155,8 @@ CONFIG_RTNET_SCC_ENET_FALSE = @CONFIG_RTNET_SCC_ENET_FALSE@
 CONFIG_RTNET_SCC_ENET_TRUE = @CONFIG_RTNET_SCC_ENET_TRUE@
 CONFIG_RTNET_SMC91111_FALSE = @CONFIG_RTNET_SMC91111_FALSE@
 CONFIG_RTNET_SMC91111_TRUE = @CONFIG_RTNET_SMC91111_TRUE@
-CONFIG_RTNET_TDMAV1_FALSE = @CONFIG_RTNET_TDMAV1_FALSE@
-CONFIG_RTNET_TDMAV1_TRUE = @CONFIG_RTNET_TDMAV1_TRUE@
+CONFIG_RTNET_TDMA_FALSE = @CONFIG_RTNET_TDMA_FALSE@
+CONFIG_RTNET_TDMA_TRUE = @CONFIG_RTNET_TDMA_TRUE@
 CONFIG_RTNET_TULIP_FALSE = @CONFIG_RTNET_TULIP_FALSE@
 CONFIG_RTNET_TULIP_TRUE = @CONFIG_RTNET_TULIP_TRUE@
 CONFIG_RTNET_VIA_RHINE_FALSE = @CONFIG_RTNET_VIA_RHINE_FALSE@
@@ -259,8 +260,9 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTPROGS = $(am__append_1) $(am__append_2)
-OPTSCRIPTS = $(am__append_3)
+OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3)
+OPTSCRIPTS = 
+OPTCONF = $(am__append_4)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
@@ -302,8 +304,6 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 rtnet: $(top_builddir)/config.status $(srcdir)/rtnet.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 rtnet.conf: $(top_builddir)/config.status $(srcdir)/rtnet.conf.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-rtnet-tdma-v1: $(top_builddir)/config.status $(srcdir)/rtnet-tdma-v1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
@@ -576,7 +576,7 @@ install-exec-local: rtnet $(OPTSCRIPTS)
  		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
 	done
 
-install-data-local: rtnet.conf tdma.conf
+install-data-local: rtnet.conf $(OPTCONF)
 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
 	for FILE in $^; do					\
 		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\

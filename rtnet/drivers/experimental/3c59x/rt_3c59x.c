@@ -887,8 +887,8 @@ static void mdio_write(struct rtnet_device *vp, int phy_id, int location, int va
 
 static int vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
-static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static int boomerang_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
+static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static int boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
 static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt);
 static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt);
 static int vortex_close(struct rtnet_device *rtdev);
@@ -2155,7 +2155,7 @@ static void vortex_tx_timeout(struct rtnet_device *dev)
  * the cache impact.
  */
 static void
-vortex_error(struct rtnet_device *rtdev, int status, rtos_time_t *time_stamp)
+vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
@@ -2263,7 +2263,6 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
 	unsigned long flags;
-	rtos_time_t time;
 
 	/* Put out the doubleword header... */
 	outl(skb->len, ioaddr + TX_FIFO);
@@ -2277,12 +2276,9 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		vp->tx_skb = skb;
 
 		rtos_local_irqsave(flags);
-		if (unlikely(skb->xmit_stamp != NULL)) {
-			rtos_get_time(&time);
-			*skb->xmit_stamp = cpu_to_be64(
-			                        rtos_time_to_nanosecs(&time) +
-			                        *skb->xmit_stamp);
-		}
+		if (unlikely(skb->xmit_stamp != NULL))
+			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
+				*skb->xmit_stamp);
 		outw(StartDMADown, ioaddr + EL3_CMD);
 		rtos_local_irqrestore(flags);
 
@@ -2335,7 +2331,6 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	int entry = vp->cur_tx % TX_RING_SIZE;
 	struct boom_tx_desc *prev_entry = &vp->tx_ring[(vp->cur_tx-1) % TX_RING_SIZE];
 	unsigned long flags;
-	rtos_time_t time;
 
 	if (vortex_debug > 6) {
 		rtos_print(KERN_DEBUG "boomerang_start_xmit()\n");
@@ -2410,11 +2405,8 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	issue_and_wait(rtdev, DownStall);
 
 	rtos_local_irqsave(flags);
-	if (unlikely(skb->xmit_stamp != NULL)) {
-		rtos_get_time(&time);
-		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-		                               *skb->xmit_stamp);
-	}
+	if (unlikely(skb->xmit_stamp != NULL))
+		*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
 
 	prev_entry->next = cpu_to_le32(vp->tx_ring_dma + entry * sizeof(struct boom_tx_desc));
 	if (inl(ioaddr + DownListPtr) == 0) {
@@ -2451,9 +2443,9 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 {
 	// *** RTnet ***
-	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	nanosecs_t time_stamp = rtos_get_time();
+	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);
 	int packets = 0;
-	rtos_time_t time_stamp;
 	// *** RTnet ***
 
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
@@ -2461,7 +2453,6 @@ static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 	int status;
 	int work_done = max_interrupt_work;
 
-	rtos_get_time(&time_stamp);
 	ioaddr = rtdev->base_addr;
 	rtos_spin_lock(&vp->lock);
 
@@ -2563,9 +2554,9 @@ handler_exit:
 static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 {
 	// *** RTnet ***
-	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	nanosecs_t time_stamp = rtos_get_time();
+	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);
 	int packets = 0;
-	rtos_time_t time_stamp;
 	// *** RTnet ***
 
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
@@ -2573,7 +2564,6 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 	int status;
 	int work_done = max_interrupt_work;
 
-	rtos_get_time(&time_stamp);
 	ioaddr = rtdev->base_addr;
 
 	/*
@@ -2696,7 +2686,7 @@ handler_exit:
     RTOS_IRQ_RETURN_HANDLED();
 }
 
-static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
+static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
@@ -2747,7 +2737,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time
 				}
 				outw(RxDiscard, ioaddr + EL3_CMD); /* Pop top Rx packet. */
 				skb->protocol = rt_eth_type_trans(skb, rtdev);
-				memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+				skb->time_stamp = *time_stamp;
 				rtnetif_rx(skb);
 				//rtdev->last_rx = jiffies;
 				vp->stats.rx_packets++;
@@ -2770,7 +2760,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time
 }
 
 static int
-boomerang_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
+boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	int entry = vp->cur_rx % RX_RING_SIZE;
@@ -2830,7 +2820,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
 				vp->rx_nocopy++;
 			}
 			skb->protocol = rt_eth_type_trans(skb, rtdev);
-			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = *time_stamp;
 			{					/* Use hardware checksum info. */
 				int csum_bits = rx_status & 0xee000000;
 				if (csum_bits &&

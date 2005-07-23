@@ -3,9 +3,9 @@
  *  ipv4/protocol.c
  *
  *  rtnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,8 +64,8 @@ void rt_inet_del_protocol(struct rtinet_protocol *prot)
  * @sock: socket structure
  * @protocol: protocol id
  */
-int rt_inet_socket(struct rtdm_dev_context *context, int call_flags,
-                   int protocol)
+int rt_inet_socket(struct rtdm_dev_context *context,
+                   rtdm_user_info_t *user_info, int protocol)
 {
     struct rtinet_protocol  *prot;
 
@@ -78,7 +78,7 @@ int rt_inet_socket(struct rtdm_dev_context *context, int call_flags,
 
     /* create the socket (call the socket creator) */
     if ((prot != NULL) && (prot->protocol == protocol))
-        return prot->init_socket(context, call_flags);
+        return prot->init_socket(context, user_info);
     else {
         rtos_print("RTnet: protocol with id %d not found\n", protocol);
 
