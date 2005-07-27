@@ -62,7 +62,7 @@ static char buffer_in[64*1024];
 #define rt_printf(args, ...)                                \
 {                                                           \
     printf(args, ## __VA_ARGS__);                           \
-    rt_task_set_mode(T_PRIMARY, 0, NULL);                   \
+    rt_task_set_mode(0, T_PRIMARY, NULL);                   \
 }
 
 
