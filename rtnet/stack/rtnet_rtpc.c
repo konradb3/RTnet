@@ -141,12 +141,14 @@ int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
 static inline struct rt_proc_call *rtpc_dequeue_pending_call(void)
 {
     unsigned long       flags;
-    struct rt_proc_call *call;
+    struct rt_proc_call *call = NULL;
 
 
     rtos_spin_lock_irqsave(&pending_calls_lock, flags);
-    call = (struct rt_proc_call *)pending_calls.next;
-    list_del(&call->list_entry);
+    if (!list_empty(&pending_calls)) {
+        call = (struct rt_proc_call *)pending_calls.next;
+        list_del(&call->list_entry);
+    }
     rtos_spin_unlock_irqrestore(&pending_calls_lock, flags);
 
     return call;
@@ -171,15 +173,14 @@ static inline void rtpc_queue_processed_call(struct rt_proc_call *call)
 static inline struct rt_proc_call *rtpc_dequeue_processed_call(void)
 {
     unsigned long flags;
-    struct rt_proc_call *call;
+    struct rt_proc_call *call = NULL;
 
 
     rtos_spin_lock_irqsave(&processed_calls_lock, flags);
     if (!list_empty(&processed_calls)) {
         call = (struct rt_proc_call *)processed_calls.next;
         list_del(&call->list_entry);
-    } else
-        call = NULL;
+    }
     rtos_spin_unlock_irqrestore(&processed_calls_lock, flags);
 
     return call;
