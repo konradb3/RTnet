@@ -35,7 +35,7 @@ void tdma_worker(void *arg)
     int                 ret;
 
 
-    rtos_event_wait(&tdma->worker_wakeup, 0);
+    rtos_event_wait(&tdma->worker_wakeup);
     if (test_bit(TDMA_FLAG_SHUTDOWN, &tdma->flags))
         return;
 
@@ -46,7 +46,7 @@ void tdma_worker(void *arg)
 
     do {
         if (job->id == WAIT_ON_SYNC)
-            rtos_event_wait(&tdma->sync_event, 0);
+            rtos_event_wait(&tdma->sync_event);
         else if (job->id >= 0) {
             if (((SLOT_JOB(job)->period == 1) ||
                  (tdma->current_cycle % SLOT_JOB(job)->period ==
@@ -71,7 +71,7 @@ void tdma_worker(void *arg)
                 tdma->current_cycle++;
                 tdma->current_cycle_start += tdma->cycle_period;
                 rtos_spin_unlock_irqrestore(&tdma->lock, flags);
-    
+
                 tdma_xmit_sync_frame(tdma);
             }
             /* else: skip entry for this cycle */
@@ -113,7 +113,7 @@ void tdma_worker(void *arg)
 
                 ret = rtos_task_sleep_until(tdma->current_cycle_start +
                                             REQUEST_CAL_JOB(job)->offset);
-                if (ret < 0)
+                if (ret == 0)
                     ret = tdma_xmit_request_cal_frame(tdma,
                         tdma->current_cycle + REQUEST_CAL_JOB(job)->period,
                         REQUEST_CAL_JOB(job)->offset_ns);

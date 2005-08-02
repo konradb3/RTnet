@@ -235,7 +235,8 @@ int tdma_packet_rx(struct rtskb *rtskb)
                     tdma->master_packet_delay_ns;
             clock_offset -= rtskb->time_stamp;
 
-            cycle_start = SYNC_FRM(head)->sched_xmit_stamp - clock_offset;
+            cycle_start = be64_to_cpu(SYNC_FRM(head)->sched_xmit_stamp) -
+                    clock_offset;
 
             rtos_spin_lock_irqsave(&tdma->lock, flags);
             tdma->current_cycle       = ntohl(SYNC_FRM(head)->cycle_no);

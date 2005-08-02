@@ -381,7 +381,7 @@ ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
         (msg_flags & MSG_DONTWAIT))
         timeout = -1;
 
-    ret = rtos_sem_down(&sock->pending_sem, timeout);
+    ret = rtos_sem_timeddown(&sock->pending_sem, timeout);
     if (unlikely(ret < 0)) {
         if (ret == -EWOULDBLOCK)
             ret = -EAGAIN;

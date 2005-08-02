@@ -33,7 +33,7 @@ int tdma_dev_init(struct rtnet_device *rtdev, struct tdma_priv *tdma);
 
 static inline int tdma_dev_release(struct tdma_priv *tdma)
 {
-    return rtdm_dev_unregister(&tdma->api_device);
+    return rtdm_dev_unregister(&tdma->api_device, 1000);
 }
 
 #endif /* __TDMA_DEV_H_ */

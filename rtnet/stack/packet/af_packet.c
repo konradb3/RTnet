@@ -274,7 +274,7 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context,
         (msg_flags & MSG_DONTWAIT))
         timeout = -1;
 
-    ret = rtos_sem_down(&sock->pending_sem, timeout);
+    ret = rtos_sem_timeddown(&sock->pending_sem, timeout);
     if (unlikely(ret < 0)) {
         if (ret == -EWOULDBLOCK)
             ret = -EAGAIN;
@@ -448,11 +448,7 @@ int rt_packet_proto_init(void)
 
 void rt_packet_proto_release(void)
 {
-    while (rtdm_dev_unregister(&packet_proto_dev) == -EAGAIN) {
-        printk("RTnet: waiting for remaining open packet sockets\n");
-        set_current_state(TASK_UNINTERRUPTIBLE);
-        schedule_timeout(1*HZ); /* sleep 1 second */
-    }
+    rtdm_dev_unregister(&packet_proto_dev, 1000);
 }
 
 

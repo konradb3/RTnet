@@ -155,7 +155,7 @@ static void stackmgr_task(void *arg)
 
 
     rtos_print("RTnet: stack-mgr started\n");
-    while (rtos_event_wait(mgr_event, 0) == 0)
+    while (rtos_event_wait(mgr_event) == 0)
         while (1) {
           next_packet:
             rtos_spin_lock_irqsave(&rxqueue.lock, flags);

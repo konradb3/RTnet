@@ -268,7 +268,7 @@ static void rtnetproxy_transmit_thread(void *arg)
             write_to_ringbuffer(&ring_skb_rtnet_kernel, skb);
         }
         /* Will be activated with next frame to send... */
-        rtos_sem_down(&rtnetproxy_sem, 0);
+        rtos_sem_down(&rtnetproxy_sem);
     }
 }
 

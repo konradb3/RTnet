@@ -101,7 +101,7 @@ void nrt_xmit_task(void *arg)
             rtmac_xmit(rtskb);
             rtos_res_unlock(&rtdev->xmit_lock);
         }
-        rtos_event_wait(&wakeup_sem, 0);
+        rtos_event_wait(&wakeup_sem);
     }
 }
 

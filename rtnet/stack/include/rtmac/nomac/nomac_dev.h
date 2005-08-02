@@ -33,7 +33,7 @@ int nomac_dev_init(struct rtnet_device *rtdev, struct nomac_priv *nomac);
 
 static inline int nomac_dev_release(struct nomac_priv *nomac)
 {
-    return rtdm_dev_unregister(&nomac->api_device);
+    return rtdm_dev_unregister(&nomac->api_device, 1000);
 }
 
 #endif /* __NOMAC_DEV_H_ */

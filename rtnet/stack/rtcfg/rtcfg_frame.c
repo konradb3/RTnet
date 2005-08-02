@@ -64,7 +64,7 @@ static void rtcfg_rx_task(void *arg)
     struct rtnet_device   *rtdev;
 
 
-    while (rtos_event_wait(&rx_event, 0) == 0)
+    while (rtos_event_wait(&rx_event) == 0)
         while ((rtskb = rtskb_dequeue(&rx_queue))) {
             rtdev = rtskb->rtdev;
 

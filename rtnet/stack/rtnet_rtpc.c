@@ -194,7 +194,7 @@ static void rtpc_dispatch_handler(void *arg)
     int                 ret;
 
 
-    while (rtos_event_wait(&dispatch_event, 0) == 0)
+    while (rtos_event_wait(&dispatch_event) == 0)
         while ((call = rtpc_dequeue_pending_call())) {
             ret = call->proc(call);
             if (ret != -CALL_PENDING)

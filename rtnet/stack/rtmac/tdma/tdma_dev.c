@@ -64,7 +64,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
                 (*(int *)arg != TDMA_WAIT_ON_SYNC))
                 return -EINVAL;
 
-            return rtos_event_wait(&tdma->sync_event, 0);
+            return rtos_event_wait(&tdma->sync_event);
 
         default:
             return -ENOTTY;

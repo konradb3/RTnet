@@ -298,7 +298,7 @@ int rt_inet_proto_init(void)
  */
 void rt_inet_proto_release(void)
 {
-    rtdm_dev_unregister(&ipv4_device);
+    rtdm_dev_unregister(&ipv4_device, 1000);
     rtnet_unregister_ioctls(&ipv4_ioctls);
     rt_ip_routing_release();
 

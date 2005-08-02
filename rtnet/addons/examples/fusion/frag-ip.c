@@ -55,17 +55,6 @@ static char buffer_out[64*1024];
 static char buffer_in[64*1024];
 
 
-#ifndef XNTHREAD_SPARE0
-#define XNTHREAD_SPARE0 0x10000000
-#endif
-
-#define rt_printf(args, ...)                                \
-{                                                           \
-    printf(args, ## __VA_ARGS__);                           \
-    rt_task_set_mode(0, T_PRIMARY, NULL);                   \
-}
-
-
 void xmit_msg(void *arg)
 {
     int ret;
@@ -87,10 +76,10 @@ void xmit_msg(void *arg)
         msg.msg_iov     = iov;
         msg.msg_iovlen  = 2;
 
-        rt_printf("Sending message of %d+2 bytes\n", size);
+        printf("Sending message of %d+2 bytes\n", size);
         ret = rt_dev_sendmsg(sock, &msg, 0);
         if (ret != (int)(sizeof(msgsize) + size))
-            rt_printf(" rt_dev_sendmsg() = %d!\n", ret);
+            printf(" rt_dev_sendmsg() = %d!\n", ret);
 
         rt_task_wait_period();
     }
@@ -121,12 +110,12 @@ void recv_msg(void *arg)
 
         ret = rt_dev_recvmsg(sock, &msg, 0);
         if (ret <= 0) {
-            rt_printf(" rt_dev_recvmsg() = %d\n", ret);
+            printf(" rt_dev_recvmsg() = %d\n", ret);
             return;
         } else {
             unsigned long ip = ntohl(addr.sin_addr.s_addr);
 
-            rt_printf("received packet from %lu.%lu.%lu.%lu, length: %d+2, "
+            printf("received packet from %lu.%lu.%lu.%lu, length: %d+2, "
                 "encoded length: %d,\n flags: %X, content %s\n", ip >> 24,
                 (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF,
                 ret-sizeof(msgsize), msgsize, msg.msg_flags,
