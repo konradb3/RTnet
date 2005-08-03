@@ -38,12 +38,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@CONFIG_RTNET_RTCFG_TRUE@am__append_1 = rtcfg
-@CONFIG_RTNET_NOMAC_TRUE@am__append_2 = nomaccfg
-@CONFIG_RTNET_TDMA_TRUE@am__append_3 = tdmacfg
-@CONFIG_RTNET_TDMA_TRUE@am__append_4 = tdma.conf
-sbin_PROGRAMS = rtifconfig$(EXEEXT) rtroute$(EXEEXT) rtping$(EXEEXT) \
-	$(am__EXEEXT_4)
+@CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = rtping rtroute
+@CONFIG_RTNET_RTCFG_TRUE@am__append_2 = rtcfg
+@CONFIG_RTNET_NOMAC_TRUE@am__append_3 = nomaccfg
+@CONFIG_RTNET_TDMA_TRUE@am__append_4 = tdmacfg
+@CONFIG_RTNET_TDMA_TRUE@am__append_5 = tdma.conf
+sbin_PROGRAMS = rtifconfig$(EXEEXT) $(am__EXEEXT_5)
 subdir = tools
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
 	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
@@ -55,10 +55,13 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES = rtnet rtnet.conf
-@CONFIG_RTNET_RTCFG_TRUE@am__EXEEXT_1 = rtcfg$(EXEEXT)
-@CONFIG_RTNET_NOMAC_TRUE@am__EXEEXT_2 = nomaccfg$(EXEEXT)
-@CONFIG_RTNET_TDMA_TRUE@am__EXEEXT_3 = tdmacfg$(EXEEXT)
-am__EXEEXT_4 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
+@CONFIG_RTNET_RTIPV4_TRUE@am__EXEEXT_1 = rtping$(EXEEXT) \
+@CONFIG_RTNET_RTIPV4_TRUE@	rtroute$(EXEEXT)
+@CONFIG_RTNET_RTCFG_TRUE@am__EXEEXT_2 = rtcfg$(EXEEXT)
+@CONFIG_RTNET_NOMAC_TRUE@am__EXEEXT_3 = nomaccfg$(EXEEXT)
+@CONFIG_RTNET_TDMA_TRUE@am__EXEEXT_4 = tdmacfg$(EXEEXT)
+am__EXEEXT_5 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_4)
 am__installdirs = "$(DESTDIR)$(sbindir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
@@ -151,6 +154,10 @@ CONFIG_RTNET_RTCFG_FALSE = @CONFIG_RTNET_RTCFG_FALSE@
 CONFIG_RTNET_RTCFG_TRUE = @CONFIG_RTNET_RTCFG_TRUE@
 CONFIG_RTNET_RTDM_SELECT_FALSE = @CONFIG_RTNET_RTDM_SELECT_FALSE@
 CONFIG_RTNET_RTDM_SELECT_TRUE = @CONFIG_RTNET_RTDM_SELECT_TRUE@
+CONFIG_RTNET_RTIPV4_FALSE = @CONFIG_RTNET_RTIPV4_FALSE@
+CONFIG_RTNET_RTIPV4_TRUE = @CONFIG_RTNET_RTIPV4_TRUE@
+CONFIG_RTNET_RTPACKET_FALSE = @CONFIG_RTNET_RTPACKET_FALSE@
+CONFIG_RTNET_RTPACKET_TRUE = @CONFIG_RTNET_RTPACKET_TRUE@
 CONFIG_RTNET_SCC_ENET_FALSE = @CONFIG_RTNET_SCC_ENET_FALSE@
 CONFIG_RTNET_SCC_ENET_TRUE = @CONFIG_RTNET_SCC_ENET_TRUE@
 CONFIG_RTNET_SMC91111_FALSE = @CONFIG_RTNET_SMC91111_FALSE@
@@ -260,9 +267,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3)
+OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4)
 OPTSCRIPTS = 
-OPTCONF = $(am__append_4)
+OPTCONF = $(am__append_5)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include

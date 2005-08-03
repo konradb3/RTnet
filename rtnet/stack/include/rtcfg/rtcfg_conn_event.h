@@ -47,7 +47,9 @@ struct rtcfg_connection {
     u8                      mac_addr[MAX_ADDR_LEN];
     unsigned int            addr_type;
     union {
+#ifdef CONFIG_RTNET_RTIPV4
         u32                 ip_addr;
+#endif
     } addr;
     void                    *stage1_data;
     size_t                  stage1_size;

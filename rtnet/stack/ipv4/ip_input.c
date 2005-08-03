@@ -169,3 +169,8 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     kfree_rtskb(skb);
     return NET_RX_DROP;
 }
+
+
+#ifdef CONFIG_RTNET_PROXY
+EXPORT_SYMBOL(rt_ip_register_fallback);
+#endif

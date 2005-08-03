@@ -126,7 +126,6 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
 
 
 
-#ifdef CONFIG_RTNET_TDMA_SLAVE
 static int tdma_ioctl_slave(struct rtnet_device *rtdev,
                             struct tdma_config *cfg)
 {
@@ -184,7 +183,6 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
     rtmac_disc_detach(rtdev);
     return ret;
 }
-#endif /* CONFIG_RTNET_TDMA_SLAVE */
 
 
 
@@ -591,11 +589,10 @@ int tdma_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = tdma_ioctl_master(rtdev, &cfg);
             break;
 #endif
-#ifdef CONFIG_RTNET_TDMA_SLAVE
         case TDMA_IOC_SLAVE:
             ret = tdma_ioctl_slave(rtdev, &cfg);
             break;
-#endif
+
         case TDMA_IOC_CAL_RESULT_SIZE:
             ret = tdma_ioctl_cal_result_size(rtdev, &cfg);
             break;

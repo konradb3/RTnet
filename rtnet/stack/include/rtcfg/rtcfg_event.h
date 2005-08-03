@@ -74,7 +74,9 @@ struct rtcfg_device {
         struct {
             unsigned int            addr_type;
             union {
+#ifdef CONFIG_RTNET_RTIPV4
                 u32                 ip_addr;
+#endif
             } srv_addr;
             u8                      srv_mac_addr[MAX_ADDR_LEN];
             u8                      *stage2_buffer;

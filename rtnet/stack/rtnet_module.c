@@ -1,9 +1,9 @@
 /***
  *
- *  rtnet_module.c - module framework, proc file system
+ *  stack/rtnet_module.c - module framework, proc file system
  *
- *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,8 +30,6 @@
 #include <rtnet_internal.h>
 #include <rtnet_rtpc.h>
 #include <stack_mgr.h>
-#include <ipv4/af_inet.h>
-#include <packet/af_packet.h>
 
 MODULE_LICENSE("GPL");
 
@@ -190,7 +188,6 @@ static void rtnet_proc_unregister(void)
 
 
 
-
 /**
  *  rtnet_init()
  */
@@ -219,28 +216,16 @@ int __init rtnet_init(void)
     if ((err = rt_rtdev_mgr_init(&RTDEV_manager)) != 0)
         goto err_out4;
 
-    if ((err = rt_inet_proto_init()) != 0)
-        goto err_out5;
-
-    if ((err = rt_packet_proto_init()) != 0)
-        goto err_out6;
-
     rtnet_chrdev_init();
 
     if ((err = rtpc_init()) != 0)
-        goto err_out7;
+        goto err_out5;
 
     return 0;
 
 
-err_out7:
-    rtnet_chrdev_release();
-    rt_packet_proto_release();
-
-err_out6:
-    rt_inet_proto_release();
-
 err_out5:
+    rtnet_chrdev_release();
     rt_rtdev_mgr_delete(&RTDEV_manager);
 
 err_out4:
@@ -259,8 +244,6 @@ err_out1:
 }
 
 
-
-
 /**
  *  rtnet_release()
  */
@@ -273,8 +256,6 @@ void rtnet_release(void)
     rt_stack_mgr_delete(&STACK_manager);
     rt_rtdev_mgr_delete(&RTDEV_manager);
 
-    rt_packet_proto_release();
-    rt_inet_proto_release();
     rtskb_pools_release();
 
 #ifdef CONFIG_PROC_FS
@@ -285,6 +266,10 @@ void rtnet_release(void)
 }
 
 
-
 module_init(rtnet_init);
 module_exit(rtnet_release);
+
+
+EXPORT_SYMBOL(rtnet_proc_root);
+EXPORT_SYMBOL(STACK_manager);
+EXPORT_SYMBOL(RTDEV_manager);

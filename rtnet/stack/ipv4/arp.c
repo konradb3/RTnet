@@ -30,13 +30,8 @@
  *  arp_send:   Create and send an arp packet. If (dest_hw == NULL),
  *              we create a broadcast message.
  */
-void rt_arp_send(int type,
-                 int ptype,
-                 u32 dest_ip,
-                 struct rtnet_device *rtdev,
-                 u32 src_ip,
-                 unsigned char *dest_hw,
-                 unsigned char *src_hw,
+void rt_arp_send(int type, int ptype, u32 dest_ip, struct rtnet_device *rtdev,
+                 u32 src_ip, unsigned char *dest_hw, unsigned char *src_hw,
                  unsigned char *target_hw)
 {
     struct rtskb *skb;

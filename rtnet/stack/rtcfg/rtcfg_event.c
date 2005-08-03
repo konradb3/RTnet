@@ -296,7 +296,6 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
 {
     struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
-    struct rtnet_device     *rtdev;
     struct rtcfg_connection *conn;
     struct rtcfg_connection *new_conn;
     struct list_head        *entry;
@@ -311,7 +310,9 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
     new_conn->ifindex      = cmd_event->ifindex;
     new_conn->state        = RTCFG_CONN_SEARCHING;
     new_conn->addr_type    = cmd_event->args.add.addr_type;
+#ifdef CONFIG_RTNET_RTIPV4
     new_conn->addr.ip_addr = cmd_event->args.add.ip_addr;
+#endif
     new_conn->stage1_data  = cmd_event->args.add.stage1_data;
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
     new_conn->burstrate    = rtcfg_dev->burstrate;
@@ -319,6 +320,9 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
             ((nanosecs_t)cmd_event->args.add.timeout) * 1000000;
 
     if (cmd_event->args.add.addr_type == RTCFG_ADDR_IP) {
+#ifdef CONFIG_RTNET_RTIPV4
+        struct rtnet_device *rtdev;
+
         /* MAC address yet unknown -> use broadcast address */
         rtdev = rtdev_get_by_index(cmd_event->ifindex);
         if (rtdev == NULL) {
@@ -327,6 +331,9 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
         }
         memcpy(new_conn->mac_addr, rtdev->broadcast, MAX_ADDR_LEN);
         rtdev_dereference(rtdev);
+#else /* !CONFIG_RTNET_RTIPV4 */
+        return -EPROTONOSUPPORT;
+#endif /* CONFIG_RTNET_RTIPV4 */
     } else
         memcpy(new_conn->mac_addr, cmd_event->args.add.mac_addr, MAX_ADDR_LEN);
 
@@ -350,11 +357,15 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
     list_for_each(entry, &rtcfg_dev->spec.srv.conn_list) {
         conn = list_entry(entry, struct rtcfg_connection, entry);
 
-        if (((addr_type == RTCFG_ADDR_IP) &&
+        if (
+#ifdef CONFIG_RTNET_RTIPV4
+            ((addr_type == RTCFG_ADDR_IP) &&
              (conn->addr.ip_addr == cmd_event->args.add.ip_addr)) ||
+#endif /* CONFIG_RTNET_RTIPV4 */
             ((addr_type == RTCFG_ADDR_MAC) &&
              (memcmp(conn->mac_addr, new_conn->mac_addr,
-                     MAX_ADDR_LEN) == 0))) {
+                     MAX_ADDR_LEN) == 0))
+           ) {
             rtos_res_unlock(&rtcfg_dev->dev_lock);
 
             if ((new_conn->stage2_file) &&
@@ -400,9 +411,11 @@ static int rtcfg_server_del(struct rtcfg_cmd *cmd_event)
     list_for_each(entry, &rtcfg_dev->spec.srv.conn_list) {
         conn = list_entry(entry, struct rtcfg_connection, entry);
 
-        if ((addr_type == conn->addr_type) &&
-            (((addr_type == RTCFG_ADDR_IP) &&
+        if ((addr_type == conn->addr_type) && (
+#ifdef CONFIG_RTNET_RTIPV4
+             ((addr_type == RTCFG_ADDR_IP) &&
               (conn->addr.ip_addr == cmd_event->args.add.ip_addr)) ||
+#endif /* CONFIG_RTNET_RTIPV4 */
              ((addr_type == RTCFG_ADDR_MAC) &&
               (memcmp(conn->mac_addr, cmd_event->args.add.mac_addr,
                       MAX_ADDR_LEN) == 0)))) {
@@ -492,7 +505,6 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
     struct list_head          *entry;
     struct rtcfg_frm_announce *announce;
     struct rtcfg_connection   *conn;
-    struct rtnet_device       *rtdev;
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_announce)) {
@@ -507,6 +519,7 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
         conn = list_entry(entry, struct rtcfg_connection, entry);
 
         switch (announce->addr_type) {
+#ifdef CONFIG_RTNET_RTIPV4
             case RTCFG_ADDR_IP:
                 if (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) &&
                     (*(u32 *)announce->addr == conn->addr.ip_addr)) {
@@ -514,11 +527,9 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
                     memcpy(conn->mac_addr, rtskb->mac.ethernet->h_source,
                            ETH_ALEN);
 
-                    rtdev = rtskb->rtdev;
-
                     /* update routing table */
                     rt_ip_route_add_host(conn->addr.ip_addr, conn->mac_addr,
-                                         rtdev);
+                                         rtskb->rtdev);
 
                     /* remove IP address */
                     __rtskb_pull(rtskb, RTCFG_ADDRSIZE_IP);
@@ -528,6 +539,7 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
                     goto out;
                 }
                 break;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
             case RTCFG_ADDR_MAC:
                 /* Ethernet-specific! */

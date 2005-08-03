@@ -145,8 +145,12 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
 
     rtskb_size = rtdev->hard_header_len +
         sizeof(struct rtcfg_frm_stage_1_cfg) + conn->stage1_size +
+#ifdef CONFIG_RTNET_RTIPV4
         (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
         2*RTCFG_ADDRSIZE_IP : 0);
+#else /* !CONFIG_RTNET_RTIPV4 */
+        0;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -163,6 +167,7 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
     stage_1_frm->head.version = 0;
     stage_1_frm->addr_type    = conn->addr_type & RTCFG_ADDR_MASK;
 
+#ifdef CONFIG_RTNET_RTIPV4
     if (stage_1_frm->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, 2*RTCFG_ADDRSIZE_IP);
 
@@ -176,6 +181,7 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
         stage_1_frm = (struct rtcfg_frm_stage_1_cfg *)
             (((u8 *)stage_1_frm) + RTCFG_ADDRSIZE_IP);
     }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     stage_1_frm->burstrate = device[conn->ifindex].burstrate;
     stage_1_frm->cfg_len   = htons(conn->stage1_size);
@@ -301,8 +307,12 @@ int rtcfg_send_announce_new(int ifindex)
         return -ENODEV;
 
     rtskb_size = rtdev->hard_header_len + sizeof(struct rtcfg_frm_announce) +
+#ifdef CONFIG_RTNET_RTIPV4
         (((rtcfg_dev->spec.clt.addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
         RTCFG_ADDRSIZE_IP : 0);
+#else /* !CONFIG_RTNET_RTIPV4 */
+        0;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -319,6 +329,7 @@ int rtcfg_send_announce_new(int ifindex)
     announce_new->head.version = 0;
     announce_new->addr_type    = rtcfg_dev->spec.clt.addr_type;
 
+#ifdef CONFIG_RTNET_RTIPV4
     if (announce_new->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
@@ -327,6 +338,7 @@ int rtcfg_send_announce_new(int ifindex)
         announce_new = (struct rtcfg_frm_announce *)
             (((u8 *)announce_new) + RTCFG_ADDRSIZE_IP);
     }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     announce_new->flags     = rtcfg_dev->flags;
     announce_new->burstrate = rtcfg_dev->burstrate;
@@ -351,8 +363,12 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
 
     rtskb_size = rtdev->hard_header_len +
         sizeof(struct rtcfg_frm_announce) +
+#ifdef CONFIG_RTNET_RTIPV4
         ((rtcfg_dev->spec.clt.addr_type == RTCFG_ADDR_IP) ?
         RTCFG_ADDRSIZE_IP : 0);
+#else /* !CONFIG_RTNET_RTIPV4 */
+        0;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -369,6 +385,7 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
     announce_rpl->head.version = 0;
     announce_rpl->addr_type    = rtcfg_dev->spec.clt.addr_type;
 
+#ifdef CONFIG_RTNET_RTIPV4
     if (announce_rpl->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
@@ -377,6 +394,7 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
         announce_rpl = (struct rtcfg_frm_announce *)
             (((u8 *)announce_rpl) + RTCFG_ADDRSIZE_IP);
     }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     announce_rpl->flags     = rtcfg_dev->flags & RTCFG_FLAG_READY;
     announce_rpl->burstrate = 0; /* padding field */
@@ -469,8 +487,12 @@ int rtcfg_send_dead_station(struct rtcfg_connection *conn)
 
     rtskb_size = rtdev->hard_header_len +
         sizeof(struct rtcfg_frm_dead_station) +
+#ifdef CONFIG_RTNET_RTIPV4
         (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) ?
         RTCFG_ADDRSIZE_IP : 0);
+#else /* !CONFIG_RTNET_RTIPV4 */
+        0;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     rtskb = alloc_rtskb(rtskb_size, &rtcfg_pool);
     if (rtskb == NULL) {
@@ -487,6 +509,7 @@ int rtcfg_send_dead_station(struct rtcfg_connection *conn)
     dead_station_frm->head.version = 0;
     dead_station_frm->addr_type    = conn->addr_type & RTCFG_ADDR_MASK;
 
+#ifdef CONFIG_RTNET_RTIPV4
     if (dead_station_frm->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
@@ -495,6 +518,7 @@ int rtcfg_send_dead_station(struct rtcfg_connection *conn)
         dead_station_frm = (struct rtcfg_frm_dead_station *)
             (((u8 *)dead_station_frm) + RTCFG_ADDRSIZE_IP);
     }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
     /* Ethernet-specific! */
     memcpy(dead_station_frm->physical_addr, conn->mac_addr, ETH_ALEN);

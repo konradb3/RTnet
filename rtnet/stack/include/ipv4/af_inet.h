@@ -3,9 +3,9 @@
  *  include/ipv4/af_inet.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004 Jan Kiszka <jan.kiszka@wev.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@wev.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,9 +28,6 @@
 
 #include <rtnet_internal.h>
 
-
-extern int rt_inet_proto_init(void);
-extern void rt_inet_proto_release(void);
 
 #ifdef CONFIG_PROC_FS
 extern struct proc_dir_entry *ipv4_proc_root;

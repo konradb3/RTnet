@@ -1,20 +1,23 @@
-/* stack_mgr.c - Stack-Manager
+/***
  *
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *  stack/stack_mgr.c - Stack-Manager
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <rtdev.h>
@@ -252,3 +255,17 @@ void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
     rtos_event_delete(&mgr->event);
     rtos_task_delete(&mgr->task);
 }
+
+
+EXPORT_SYMBOL(rtdev_add_pack);
+EXPORT_SYMBOL(rtdev_remove_pack);
+
+EXPORT_SYMBOL(rtnetif_rx);
+EXPORT_SYMBOL(rt_mark_stack_mgr);
+EXPORT_SYMBOL(rtnetif_tx);
+
+EXPORT_SYMBOL(rt_stack_connect);
+EXPORT_SYMBOL(rt_stack_disconnect);
+
+EXPORT_SYMBOL(rt_packets);
+EXPORT_SYMBOL(rt_packets_lock);

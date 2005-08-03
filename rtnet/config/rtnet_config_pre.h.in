@@ -54,6 +54,12 @@
 /* RTDM select support */
 #undef CONFIG_RTNET_RTDM_SELECT
 
+/* Real-Time IPv4 support */
+#undef CONFIG_RTNET_RTIPV4
+
+/* TDMA master support */
+#undef CONFIG_RTNET_TDMA_MASTER
+
 #ifdef __IN_RTNET__
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */

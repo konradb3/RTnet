@@ -27,6 +27,7 @@
 #include <net/ip.h>
 
 #include <rtnet_internal.h>
+#include <rtnet_chrdev.h>
 #include <ipv4/af_inet.h>
 #include <ipv4/route.h>
 
@@ -823,3 +824,12 @@ void rt_ip_routing_release(void)
     rt_route_proc_unregister();
 #endif /* CONFIG_PROC_FS */
 }
+
+
+EXPORT_SYMBOL(rt_ip_route_add_host);
+EXPORT_SYMBOL(rt_ip_route_del_host);
+EXPORT_SYMBOL(rt_ip_route_del_all);
+
+#ifdef CONFIG_RTNET_PROXY
+EXPORT_SYMBOL(rt_ip_route_output);
+#endif

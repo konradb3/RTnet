@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/module.h>
 #include <asm/uaccess.h>
 
 #include <ipv4_chrdev.h>
@@ -35,6 +36,8 @@
 #include <ipv4/route.h>
 #include <ipv4/udp.h>
 
+
+MODULE_LICENSE("GPL");
 
 struct route_solicit_params {
     struct rtnet_device *rtdev;
@@ -190,6 +193,78 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
 
 
+unsigned long rt_inet_aton(const char *ip)
+{
+    int p, n, c;
+    union { unsigned long l; char c[4]; } u;
+    p = n = 0;
+    while ((c = *ip++)) {
+        if (c != '.') {
+            n = n*10 + c-'0';
+        } else {
+            if (n > 0xFF) {
+                return 0;
+            }
+            u.c[p++] = n;
+            n = 0;
+        }
+    }
+    u.c[3] = n;
+    return u.l;
+}
+
+
+
+static void rt_ip_ifup(struct rtnet_device *rtdev,
+                       struct rtnet_core_cmd *up_cmd)
+{
+    struct rtnet_device *tmp;
+    int                 i;
+
+
+    rt_ip_route_del_all(rtdev); /* cleanup routing table */
+
+    if (up_cmd->args.up.ip_addr != 0xFFFFFFFF) {
+        rtdev->local_ip     = up_cmd->args.up.ip_addr;
+        rtdev->broadcast_ip = up_cmd->args.up.broadcast_ip;
+    }
+
+    if (rtdev->local_ip != 0) {
+        if (rtdev->flags & IFF_LOOPBACK) {
+            for (i = 0; i < MAX_RT_DEVICES; i++)
+                if ((tmp = rtdev_get_by_index(i)) != NULL) {
+                    rt_ip_route_add_host(tmp->local_ip,
+                                         rtdev->dev_addr, rtdev);
+                    rtdev_dereference(tmp);
+                }
+        } else if ((tmp = rtdev_get_loopback()) != NULL) {
+            rt_ip_route_add_host(rtdev->local_ip,
+                                 tmp->dev_addr, tmp);
+            rtdev_dereference(tmp);
+        }
+
+        if (rtdev->flags & IFF_BROADCAST)
+            rt_ip_route_add_host(up_cmd->args.up.broadcast_ip,
+                                 rtdev->broadcast, rtdev);
+    }
+}
+
+
+
+static void rt_ip_ifdown(struct rtnet_device *rtdev)
+{
+    rt_ip_route_del_all(rtdev);
+}
+
+
+
+static struct rtdev_event_hook  rtdev_hook = {
+    register_device:    NULL,
+    unregister_device:  NULL,
+    ifup:               rt_ip_ifup,
+    ifdown:             rt_ip_ifdown
+};
+
 static struct rtnet_ioctls ipv4_ioctls = {
     service_name:       "IPv4",
     ioctl_type:         RTNET_IOC_TYPE_IPV4,
@@ -234,11 +309,7 @@ static struct rtdm_device ipv4_device = {
 };
 
 
-
-/***
- *  rt_inet_proto_init
- */
-int rt_inet_proto_init(void)
+int __init rt_ipv4_proto_init(void)
 {
     int i;
     int result;
@@ -270,6 +341,8 @@ int rt_inet_proto_init(void)
     if ((result = rtdm_dev_register(&ipv4_device)) < 0)
         goto err3;
 
+    rtdev_add_event_hook(&rtdev_hook);
+
     return 0;
 
   err3:
@@ -292,12 +365,9 @@ int rt_inet_proto_init(void)
 }
 
 
-
-/***
- *  rt_inet_proto_release
- */
-void rt_inet_proto_release(void)
+void rt_ipv4_proto_release(void)
 {
+    rtdev_del_event_hook(&rtdev_hook);
     rtdm_dev_unregister(&ipv4_device, 1000);
     rtnet_unregister_ioctls(&ipv4_ioctls);
     rt_ip_routing_release();
@@ -314,3 +384,10 @@ void rt_inet_proto_release(void)
     rt_arp_release();
     rt_ip_release();
 }
+
+
+module_init(rt_ipv4_proto_init);
+module_exit(rt_ipv4_proto_release);
+
+
+EXPORT_SYMBOL(rt_inet_aton);

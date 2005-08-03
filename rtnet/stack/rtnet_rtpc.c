@@ -1,6 +1,6 @@
 /***
  *
- *  rtnet_rtpc.c
+ *  stack/rtnet_rtpc.c
  *
  *  RTnet - real-time networking subsystem
  *
@@ -274,3 +274,8 @@ void rtpc_cleanup(void)
     rtos_task_delete(&dispatch_task);
     rtos_nrt_signal_delete(&rtpc_nrt_signal);
 }
+
+
+EXPORT_SYMBOL(rtpc_dispatch_call);
+EXPORT_SYMBOL(rtpc_complete_call);
+EXPORT_SYMBOL(rtpc_complete_call_nrt);

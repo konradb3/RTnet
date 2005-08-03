@@ -5,6 +5,14 @@ EXTRA_LIBRARIES = libkernel_rtnet.a
 
 OPTDIRS =
 
+if CONFIG_RTNET_RTIPV4
+OPTDIRS += ipv4
+endif
+
+if CONFIG_RTNET_RTPACKET
+OPTDIRS += packet
+endif
+
 if CONFIG_RTNET_RTCFG
 OPTDIRS += rtcfg
 endif
@@ -23,25 +31,10 @@ libkernel_rtnet_a_SOURCES = \
 	rtnet_chrdev.c \
 	rtnet_module.c \
 	rtnet_rtpc.c \
-	rtnet_syms.c \
 	rtskb.c \
 	socket.c \
 	stack_mgr.c\
-	\
-	ethernet/eth.c \
-	\
-	ipv4/route.c \
-	ipv4/protocol.c \
-	ipv4/arp.c \
-	ipv4/af_inet.c \
-	ipv4/ip_input.c \
-	ipv4/ip_sock.c \
-	ipv4/udp.c \
-	ipv4/icmp.c \
-	ipv4/ip_output.c \
-	ipv4/ip_fragment.c \
-	\
-	packet/af_packet.c
+	eth.c
 
 OBJS = rtnet$(modext)
 

@@ -158,9 +158,11 @@ int rtcfg_proc_read_conn_state(char *buf, char **start, off_t offset,
                           conn->mac_addr[4], conn->mac_addr[5]))
         goto done;
 
+#ifdef CONFIG_RTNET_RTIPV4
     if ((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP)
         RTNET_PROC_PRINT("ip:\t\t\t%u.%u.%u.%u\n",
                          NIPQUAD(conn->addr.ip_addr));
+#endif /* CONFIG_RTNET_RTIPV4 */
 
   done:
     RTNET_PROC_PRINT_DONE;
@@ -183,10 +185,12 @@ void rtcfg_update_conn_proc_entries(int ifindex)
         conn = list_entry(entry, struct rtcfg_connection, entry);
 
         switch (conn->addr_type & RTCFG_ADDR_MASK) {
+#ifdef CONFIG_RTNET_RTIPV4
             case RTCFG_ADDR_IP:
                 snprintf(name_buf, 64, "CLIENT_%u.%u.%u.%u",
                          NIPQUAD(conn->addr.ip_addr));
                 break;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
             default: /* RTCFG_ADDR_MAC */
                 snprintf(name_buf, 64,
@@ -282,9 +286,11 @@ void rtcfg_remove_rtdev(struct rtnet_device *rtdev)
 
 
 
-static struct rtdev_register_hook register_hook = {
+static struct rtdev_event_hook rtdev_hook = {
     register_device:    rtcfg_new_rtdev,
-    unregister_device:  rtcfg_remove_rtdev
+    unregister_device:  rtcfg_remove_rtdev,
+    ifup:               NULL,
+    ifdown:             NULL
 };
 
 
@@ -307,7 +313,7 @@ int rtcfg_init_proc(void)
         }
     }
 
-    rtdev_add_register_hook(&register_hook);
+    rtdev_add_event_hook(&rtdev_hook);
     return 0;
 
   err1:
@@ -323,7 +329,7 @@ void rtcfg_cleanup_proc(void)
     int                 i;
 
 
-    rtdev_del_register_hook(&register_hook);
+    rtdev_del_event_hook(&rtdev_hook);
 
     for (i = 0; i < MAX_RT_DEVICES; i++) {
         rtdev = rtdev_get_by_index(i);

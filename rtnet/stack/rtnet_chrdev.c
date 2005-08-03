@@ -1,10 +1,11 @@
 /***
  *
- *  rtnet_chrdev.c - implements char device for management interface
+ *  stack/rtnet_chrdev.c - implements char device for management interface
+ *
  *  Copyright (C) 1999       Lineo, Inc
  *                1999, 2002 David A. Schleef <ds@schleef.org>
  *                2002       Ulrich Marx <marx@fet.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of version 2 of the GNU General Public License as
@@ -102,10 +103,10 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                             unsigned long arg)
 {
     struct rtnet_core_cmd   cmd;
-    struct rtnet_device     *tmp;
+    struct list_head        *entry;
+    struct rtdev_event_hook *hook;
     int                     ret;
     unsigned long           flags;
-    int                     i;
 
 
     ret = copy_from_user(&cmd, (void *)arg, sizeof(cmd));
@@ -125,31 +126,15 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = rtdev_open(rtdev);    /* also = 0 if dev already up */
 
             if (ret == 0) {
-                rt_ip_route_del_all(rtdev); /* cleanup routing table */
+                down(&rtnet_devices_nrt_lock);
 
-                if (cmd.args.up.ip_addr != 0xFFFFFFFF) {
-                    rtdev->local_ip     = cmd.args.up.ip_addr;
-                    rtdev->broadcast_ip = cmd.args.up.broadcast_ip;
+                list_for_each(entry, &event_hook_list) {
+                    hook = list_entry(entry, struct rtdev_event_hook, entry);
+                    if (hook->ifup)
+                        hook->ifup(rtdev, &cmd);
                 }
 
-                if (rtdev->local_ip != 0) {
-                    if (rtdev->flags & IFF_LOOPBACK) {
-                        for (i = 0; i < MAX_RT_DEVICES; i++)
-                            if ((tmp = rtdev_get_by_index(i)) != NULL) {
-                                rt_ip_route_add_host(tmp->local_ip,
-                                                    rtdev->dev_addr, rtdev);
-                                rtdev_dereference(tmp);
-                            }
-                    } else if ((tmp = rtdev_get_loopback()) != NULL) {
-                        rt_ip_route_add_host(rtdev->local_ip,
-                                             tmp->dev_addr, tmp);
-                        rtdev_dereference(tmp);
-                    }
-
-                    if (rtdev->flags & IFF_BROADCAST)
-                        rt_ip_route_add_host(cmd.args.up.broadcast_ip,
-                                             rtdev->broadcast, rtdev);
-                }
+                up(&rtnet_devices_nrt_lock);
             }
 
             up(&rtdev->nrt_lock);
@@ -177,7 +162,16 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                 ret = rtdev->mac_detach(rtdev);
 
             if (ret == 0) {
-                rt_ip_route_del_all(rtdev);
+                down(&rtnet_devices_nrt_lock);
+
+                list_for_each(entry, &event_hook_list) {
+                    hook = list_entry(entry, struct rtdev_event_hook, entry);
+                    if (hook->ifdown)
+                        hook->ifdown(rtdev);
+                }
+
+                up(&rtnet_devices_nrt_lock);
+
                 ret = rtdev_close(rtdev);
             }
 
@@ -316,3 +310,7 @@ void rtnet_chrdev_release(void)
 {
     misc_deregister(&rtnet_chr_misc_dev);
 }
+
+
+EXPORT_SYMBOL(rtnet_register_ioctls);
+EXPORT_SYMBOL(rtnet_unregister_ioctls);

@@ -1,21 +1,23 @@
 /***
- * rtnet/rtskb.c - rtskb implementation for rtnet
  *
- * Copyright (C) 2002 Ulrich Marx <marx@fet.uni-hannover.de>,
- *               2003 Jan Kiszka <jan.kiszka@web.de>
+ *  stack/rtskb.c - rtskb implementation for rtnet
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
-
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *  Copyright (C) 2002 Ulrich Marx <marx@fet.uni-hannover.de>,
+ *                2003 Jan Kiszka <jan.kiszka@web.de>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of version 2 of the GNU General Public License as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 #include <linux/module.h>
@@ -540,3 +542,26 @@ void rtskb_pools_release(void)
         printk(KERN_CRIT "RTnet: rtskb memory leakage detected "
                "- reboot required!\n");
 }
+
+
+EXPORT_SYMBOL(rtskb_copy_and_csum_bits);
+EXPORT_SYMBOL(rtskb_copy_and_csum_dev);
+
+EXPORT_SYMBOL(alloc_rtskb);
+EXPORT_SYMBOL(kfree_rtskb);
+
+EXPORT_SYMBOL(rtskb_pool_init);
+EXPORT_SYMBOL(__rtskb_pool_release);
+EXPORT_SYMBOL(global_pool);
+
+EXPORT_SYMBOL(rtskb_acquire);
+
+#ifdef CONFIG_RTNET_CHECKED
+EXPORT_SYMBOL(rtskb_over_panic);
+EXPORT_SYMBOL(rtskb_under_panic);
+#endif
+
+#ifdef CONFIG_RTNET_RTCAP
+EXPORT_SYMBOL(rtcap_lock);
+EXPORT_SYMBOL(rtcap_handler);
+#endif

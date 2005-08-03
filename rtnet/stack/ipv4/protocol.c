@@ -85,28 +85,3 @@ int rt_inet_socket(struct rtdm_dev_context *context,
         return -ENOPROTOOPT;
     }
 }
-
-
-
-/***
- *
- */
-unsigned long rt_inet_aton(const char *ip)
-{
-    int p, n, c;
-    union { unsigned long l; char c[4]; } u;
-    p = n = 0;
-    while ((c = *ip++)) {
-        if (c != '.') {
-            n = n*10 + c-'0';
-        } else {
-            if (n > 0xFF) {
-                return 0;
-            }
-            u.c[p++] = n;
-            n = 0;
-        }
-    }
-    u.c[3] = n;
-    return u.l;
-}

@@ -1,23 +1,26 @@
-/* rtnet/rtdev.c - implement a rtnet device
+/***
  *
- * Copyright (C) 1999       Lineo, Inc
- *               1999, 2002 David A. Schleef <ds@schleef.org>
- *               2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *               2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  stack/rtdev.c - NIC device driver layer
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  Copyright (C) 1999       Lineo, Inc
+ *                1999, 2002 David A. Schleef <ds@schleef.org>
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <asm/semaphore.h>
@@ -42,7 +45,7 @@ static struct rtnet_device  *rtnet_devices[MAX_RT_DEVICES];
 static struct rtnet_device  *loopback_device;
 static rtos_spinlock_t      rtnet_devices_rt_lock  = RTOS_SPIN_LOCK_UNLOCKED;
 
-LIST_HEAD(register_hook_list);
+LIST_HEAD(event_hook_list);
 DECLARE_MUTEX(rtnet_devices_nrt_lock);
 
 static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
@@ -330,9 +333,9 @@ static inline int __rtdev_new_index(void)
  */
 int rt_register_rtnetdev(struct rtnet_device *rtdev)
 {
-    struct list_head            *entry;
-    struct rtdev_register_hook  *hook;
-    unsigned long               flags;
+    struct list_head        *entry;
+    struct rtdev_event_hook *hook;
+    unsigned long           flags;
 
 
     /* requires at least driver layer version 2.0 */
@@ -371,8 +374,8 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
 
     rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
 
-    list_for_each(entry, &register_hook_list) {
-        hook = list_entry(entry, struct rtdev_register_hook, entry);
+    list_for_each(entry, &event_hook_list) {
+        hook = list_entry(entry, struct rtdev_event_hook, entry);
         if (hook->register_device)
             hook->register_device(rtdev);
     }
@@ -395,9 +398,9 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
  */
 int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 {
-    struct list_head            *entry;
-    struct rtdev_register_hook  *hook;
-    unsigned long               flags;
+    struct list_head        *entry;
+    struct rtdev_event_hook *hook;
+    unsigned long           flags;
 
 
     RTNET_ASSERT(rtdev->ifindex != 0,
@@ -429,8 +432,8 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
     rtos_spin_unlock_irqrestore(&rtnet_devices_rt_lock, flags);
 
-    list_for_each(entry, &register_hook_list) {
-        hook = list_entry(entry, struct rtdev_register_hook, entry);
+    list_for_each(entry, &event_hook_list) {
+        hook = list_entry(entry, struct rtdev_event_hook, entry);
         if (hook->unregister_device)
             hook->unregister_device(rtdev);
     }
@@ -449,16 +452,16 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
 
 
-void rtdev_add_register_hook(struct rtdev_register_hook *hook)
+void rtdev_add_event_hook(struct rtdev_event_hook *hook)
 {
     down(&rtnet_devices_nrt_lock);
-    list_add(&hook->entry, &register_hook_list);
+    list_add(&hook->entry, &event_hook_list);
     up(&rtnet_devices_nrt_lock);
 }
 
 
 
-void rtdev_del_register_hook(struct rtdev_register_hook *hook)
+void rtdev_del_event_hook(struct rtdev_event_hook *hook)
 {
     down(&rtnet_devices_nrt_lock);
     list_del(&hook->entry);
@@ -603,3 +606,28 @@ unsigned int rt_hard_mtu(struct rtnet_device *rtdev, unsigned int priority)
 {
     return rtdev->mtu;
 }
+
+
+EXPORT_SYMBOL(rt_alloc_etherdev);
+EXPORT_SYMBOL(rtdev_free);
+
+EXPORT_SYMBOL(rtdev_alloc_name);
+
+EXPORT_SYMBOL(rt_register_rtnetdev);
+EXPORT_SYMBOL(rt_unregister_rtnetdev);
+
+EXPORT_SYMBOL(rtdev_add_event_hook);
+EXPORT_SYMBOL(rtdev_del_event_hook);
+
+EXPORT_SYMBOL(rtdev_get_by_name);
+EXPORT_SYMBOL(rtdev_get_by_index);
+EXPORT_SYMBOL(rtdev_get_by_hwaddr);
+EXPORT_SYMBOL(rtdev_get_loopback);
+
+EXPORT_SYMBOL(rtdev_xmit);
+
+#ifdef CONFIG_RTNET_PROXY
+EXPORT_SYMBOL(rtdev_xmit_proxy);
+#endif
+
+EXPORT_SYMBOL(rt_hard_mtu);

@@ -22,9 +22,6 @@
  *
  */
 
-#define CONFIG_RTNET_TDMA_MASTER
-#define CONFIG_RTNET_TDMA_SLAVE
-
 #ifndef __TDMA_H_
 #define __TDMA_H_
 

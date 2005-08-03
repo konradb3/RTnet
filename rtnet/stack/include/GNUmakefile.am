@@ -37,8 +37,6 @@ noinst_HEADERS = \
 	ipv4/udp.h \
 	ipv4_chrdev.h \
 	\
-	packet/af_packet.h \
-	\
 	rtcfg/rtcfg.h \
 	rtcfg/rtcfg_client_event.h \
 	rtcfg/rtcfg_conn_event.h \

@@ -91,9 +91,13 @@ struct rtnet_callback {
 
 #ifdef __KERNEL__
 
-/* utils */
-extern unsigned long rt_inet_aton(const char *ip);
-extern int rt_eth_aton(char *addr_buf, const char *mac);
+/* utility functions */
+
+/* provided by rt_ipv4 */
+unsigned long rt_inet_aton(const char *ip);
+
+/* provided by rt_packet */
+int rt_eth_aton(char *addr_buf, const char *mac);
 
 #endif  /* __KERNEL__ */
 

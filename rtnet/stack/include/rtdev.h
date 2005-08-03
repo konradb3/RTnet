@@ -139,42 +139,50 @@ struct rtnet_device {
                                    unsigned int priority);
 };
 
-struct rtdev_register_hook {
+
+struct rtnet_core_cmd;
+
+struct rtdev_event_hook {
     struct list_head    entry;
     void                (*register_device)(struct rtnet_device *rtdev);
     void                (*unregister_device)(struct rtnet_device *rtdev);
+    void                (*ifup)(struct rtnet_device *rtdev,
+                                struct rtnet_core_cmd *up_cmd);
+    void                (*ifdown)(struct rtnet_device *rtdev);
 };
 
+extern struct list_head event_hook_list;
+extern struct semaphore rtnet_devices_nrt_lock;
 
-extern struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
-extern void rtdev_free(struct rtnet_device *rtdev);
 
-extern int rt_register_rtnetdev(struct rtnet_device *rtdev);
-extern int rt_unregister_rtnetdev(struct rtnet_device *rtdev);
+struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
+void rtdev_free(struct rtnet_device *rtdev);
 
-extern void rtdev_add_register_hook(struct rtdev_register_hook *hook);
-extern void rtdev_del_register_hook(struct rtdev_register_hook *hook);
+int rt_register_rtnetdev(struct rtnet_device *rtdev);
+int rt_unregister_rtnetdev(struct rtnet_device *rtdev);
 
-extern void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
+void rtdev_add_event_hook(struct rtdev_event_hook *hook);
+void rtdev_del_event_hook(struct rtdev_event_hook *hook);
 
-extern struct rtnet_device *rtdev_get_by_name(const char *if_name);
-extern struct rtnet_device *rtdev_get_by_index(int ifindex);
-extern struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
-extern struct rtnet_device *rtdev_get_loopback(void);
+void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
+
+struct rtnet_device *rtdev_get_by_name(const char *if_name);
+struct rtnet_device *rtdev_get_by_index(int ifindex);
+struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
+struct rtnet_device *rtdev_get_loopback(void);
 #define rtdev_reference(rtdev)      atomic_inc(&(rtdev)->refcount)
 #define rtdev_dereference(rtdev)    atomic_dec(&(rtdev)->refcount)
 
-extern int rtdev_xmit(struct rtskb *skb);
+int rtdev_xmit(struct rtskb *skb);
 
 #ifdef CONFIG_RTNET_PROXY
-extern int rtdev_xmit_proxy(struct rtskb *skb);
+int rtdev_xmit_proxy(struct rtskb *skb);
 #endif
 
-extern unsigned int rt_hard_mtu(struct rtnet_device *rtdev,
-                                unsigned int priority);
+unsigned int rt_hard_mtu(struct rtnet_device *rtdev, unsigned int priority);
 
-extern int rtdev_open(struct rtnet_device *rtdev);
-extern int rtdev_close(struct rtnet_device *rtdev);
+int rtdev_open(struct rtnet_device *rtdev);
+int rtdev_close(struct rtnet_device *rtdev);
 
 
 #endif  /* __KERNEL__ */

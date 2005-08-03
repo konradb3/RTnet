@@ -111,7 +111,6 @@ void event_handler(int arg)
         nanosecs_t      time_stamp;
         unsigned long   count;
     } packet;
-    int wait_on = RTMAC_WAIT_ON_DEFAULT;
 
 
     while (1) {
@@ -126,7 +125,7 @@ void event_handler(int arg)
 
         rtos_irq_enable(&irq_handle);
 
-        ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, &wait_on);
+        ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, RTMAC_WAIT_ON_DEFAULT);
 
         if (sendto_rt(sock, &packet, sizeof(packet), 0,
                       (struct sockaddr*)&dest_addr,

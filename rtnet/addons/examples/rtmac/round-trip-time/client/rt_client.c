@@ -79,7 +79,6 @@ static int tdma = -1;
 void process(void* arg)
 {
     int         count;
-    int         wait_on = RTMAC_WAIT_ON_DEFAULT;
     rtos_time_t time;
     nanosecs_t  tx_time;
 
@@ -87,7 +86,8 @@ void process(void* arg)
         if (rtmac_dev[0]) {
             count = cycle;
             while (count != 0) {
-                if (ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE, &wait_on) != 0) {
+                if (ioctl_rt(tdma, RTMAC_RTIOC_WAITONCYCLE,
+                             RTMAC_WAIT_ON_DEFAULT) != 0) {
                     rtos_print("tdma_wait_sof() failed!");
                     return;
                 }

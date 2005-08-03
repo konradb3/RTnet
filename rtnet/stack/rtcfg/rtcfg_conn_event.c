@@ -319,7 +319,6 @@ static void rtcfg_conn_recv_announce_new(struct rtcfg_connection *conn,
 
 static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
 {
-    struct rtnet_device *rtdev;
     struct rtcfg_device *rtcfg_dev;
 
 
@@ -337,7 +336,10 @@ static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
         conn->cfg_offs = 0;
         conn->flags    = 0;
 
+#ifdef CONFIG_RTNET_RTIPV4
         if (conn->addr_type == RTCFG_ADDR_IP) {
+            struct rtnet_device *rtdev;
+
             /* MAC address yet unknown -> use broadcast address */
             rtdev = rtdev_get_by_index(conn->ifindex);
             if (rtdev == NULL)
@@ -345,6 +347,7 @@ static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
             memcpy(conn->mac_addr, rtdev->broadcast, MAX_ADDR_LEN);
             rtdev_dereference(rtdev);
         }
+#endif /* CONFIG_RTNET_RTIPV4 */
     }
 }
 
@@ -353,7 +356,6 @@ static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
 static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
 {
     nanosecs_t          timeout;
-    struct rtnet_device *rtdev;
     struct rtcfg_device *rtcfg_dev;
 
 
@@ -374,7 +376,10 @@ static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
         conn->cfg_offs = 0;
         conn->flags    = 0;
 
+#ifdef CONFIG_RTNET_RTIPV4
         if ((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) {
+            struct rtnet_device *rtdev;
+
             rt_ip_route_del_host(conn->addr.ip_addr);
 
             if (conn->addr_type == RTCFG_ADDR_IP) {
@@ -386,5 +391,6 @@ static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
                 rtdev_dereference(rtdev);
             }
         }
+#endif /* CONFIG_RTNET_RTIPV4 */
     }
 }

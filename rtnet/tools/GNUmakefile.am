@@ -2,6 +2,10 @@ OPTPROGS =
 OPTSCRIPTS =
 OPTCONF =
 
+if CONFIG_RTNET_RTIPV4
+OPTPROGS += rtping rtroute
+endif
+
 if CONFIG_RTNET_RTCFG
 OPTPROGS += rtcfg
 endif
@@ -15,7 +19,7 @@ OPTPROGS += tdmacfg
 OPTCONF += tdma.conf
 endif
 
-sbin_PROGRAMS = rtifconfig rtroute rtping $(OPTPROGS)
+sbin_PROGRAMS = rtifconfig $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \

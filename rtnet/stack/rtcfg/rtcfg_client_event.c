@@ -571,8 +571,6 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
     struct rt_proc_call          *call;
     struct rtcfg_cmd             *cmd_event;
     struct rtcfg_device          *rtcfg_dev = &device[ifindex];
-    struct rtnet_device          *rtdev, *tmp;
-    u32                          daddr, saddr, mask, bcast;
     u8                           addr_type;
     int                          ret;
 
@@ -590,7 +588,11 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
     addr_type = stage_1_cfg->addr_type;
 
     switch (stage_1_cfg->addr_type) {
-        case RTCFG_ADDR_IP:
+#ifdef CONFIG_RTNET_RTIPV4
+        case RTCFG_ADDR_IP: {
+            struct rtnet_device *rtdev, *tmp;
+            u32                 daddr, saddr, mask, bcast;
+
             if (rtskb->len < sizeof(struct rtcfg_frm_stage_1_cfg) +
                     2*RTCFG_ADDRSIZE_IP) {
                 rtos_res_unlock(&rtcfg_dev->dev_lock);
@@ -651,6 +653,8 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
 
             rtcfg_dev->spec.clt.srv_addr.ip_addr = saddr;
             break;
+        }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
         case RTCFG_ADDR_MAC:
             /* nothing to do */
@@ -741,7 +745,6 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
 {
     struct rtcfg_frm_announce *announce_frm;
     struct rtcfg_device       *rtcfg_dev = &device[ifindex];
-    struct rtnet_device       *rtdev;
     u32                       i;
     int                       result;
 
@@ -756,6 +759,7 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
     }
 
     switch (announce_frm->addr_type) {
+#ifdef CONFIG_RTNET_RTIPV4
         case RTCFG_ADDR_IP:
             if (rtskb->len < sizeof(struct rtcfg_frm_announce) +
                     RTCFG_ADDRSIZE_IP) {
@@ -765,16 +769,15 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
                 return -EINVAL;
             }
 
-            rtdev = rtskb->rtdev;
-
             /* update routing table */
             rt_ip_route_add_host(*(u32 *)announce_frm->addr,
-                                 rtskb->mac.ethernet->h_source, rtdev);
+                                 rtskb->mac.ethernet->h_source, rtskb->rtdev);
 
             announce_frm = (struct rtcfg_frm_announce *)
                 (((u8 *)announce_frm) + RTCFG_ADDRSIZE_IP);
 
             break;
+#endif /* CONFIG_RTNET_RTIPV4 */
 
         case RTCFG_ADDR_MAC:
             /* nothing to do */
@@ -1014,7 +1017,6 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
     struct rtcfg_frm_dead_station *dead_station_frm;
     struct rtcfg_device           *rtcfg_dev = &device[ifindex];
     u32                           i;
-    u32                           ip;
 
 
     dead_station_frm = (struct rtcfg_frm_dead_station *)rtskb->data;
@@ -1027,7 +1029,10 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
     }
 
     switch (dead_station_frm->addr_type) {
-        case RTCFG_ADDR_IP:
+#ifdef CONFIG_RTNET_RTIPV4
+        case RTCFG_ADDR_IP: {
+            u32 ip;
+
             if (rtskb->len < sizeof(struct rtcfg_frm_dead_station) +
                     RTCFG_ADDRSIZE_IP) {
                 rtos_res_unlock(&rtcfg_dev->dev_lock);
@@ -1046,6 +1051,8 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
                 (((u8 *)dead_station_frm) + RTCFG_ADDRSIZE_IP);
 
             break;
+        }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
         case RTCFG_ADDR_MAC:
             /* nothing to do */
@@ -1089,8 +1096,6 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
 {
     struct rtcfg_frm_stage_1_cfg *stage_1_cfg;
     struct rtcfg_device          *rtcfg_dev = &device[ifindex];
-    struct rtnet_device          *rtdev;
-    u32                          daddr, saddr;
     u8                           addr_type;
 
 
@@ -1107,7 +1112,11 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
     addr_type = stage_1_cfg->addr_type;
 
     switch (stage_1_cfg->addr_type) {
-        case RTCFG_ADDR_IP:
+#ifdef CONFIG_RTNET_RTIPV4
+        case RTCFG_ADDR_IP: {
+            struct rtnet_device *rtdev;
+            u32                 daddr, saddr;
+
             if (rtskb->len < sizeof(struct rtcfg_frm_stage_1_cfg) +
                     2*RTCFG_ADDRSIZE_IP) {
                 rtos_res_unlock(&rtcfg_dev->dev_lock);
@@ -1142,6 +1151,8 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
 
             rtcfg_dev->spec.clt.srv_addr.ip_addr = saddr;
             break;
+        }
+#endif /* CONFIG_RTNET_RTIPV4 */
 
         case RTCFG_ADDR_MAC:
             /* nothing to do */

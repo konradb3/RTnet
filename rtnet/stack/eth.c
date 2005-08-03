@@ -1,20 +1,23 @@
-/*
- * rtnet/socket.c - sockets implementation for rtnet
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+/***
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  stack/eth.c - Ethernet-specific functions
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
  */
 
 #include <linux/netdevice.h>
@@ -127,3 +130,6 @@ unsigned short rt_eth_type_trans(struct rtskb *skb, struct rtnet_device *rtdev)
     return htons(ETH_P_802_2);
 }
 
+
+EXPORT_SYMBOL(rt_eth_header);
+EXPORT_SYMBOL(rt_eth_type_trans);

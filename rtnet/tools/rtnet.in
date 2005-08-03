@@ -23,6 +23,8 @@ EOF
 
 init_rtnet() {
     insmod $RTNET_MOD/rtnet$MODULE_EXT >/dev/null || exit 1
+    insmod $RTNET_MOD/rtipv4$MODULE_EXT >/dev/null || exit 1
+    insmod $RTNET_MOD/rtpacket$MODULE_EXT >/dev/null || exit 1
     insmod $RTNET_MOD/$RT_DRIVER$MODULE_EXT $RT_DRIVER_OPTIONS >/dev/null || exit 1
 
     if [ $RT_LOOPBACK = "yes" ]; then
@@ -280,7 +282,7 @@ case "$1" in
         $RTIFCONFIG rteth0 down
         $RTIFCONFIG rtlo down 2>/dev/null
 
-        rmmod tdma rtmac rtcfg rtcap rt_loopback $RT_DRIVER rtnet 2>/dev/null
+        rmmod tdma rtmac rtcfg rtcap rt_loopback $RT_DRIVER rtpacket rtipv4 rtnet 2>/dev/null
         ;;
 
     master)

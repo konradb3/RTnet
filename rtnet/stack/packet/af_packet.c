@@ -3,7 +3,7 @@
  *  packet/af_packet.c
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +21,15 @@
  *
  */
 
+#include <linux/module.h>
 #include <linux/if_arp.h> /* ARPHRD_ETHER */
 #include <linux/sched.h>
 
 #include <rtnet_iovec.h>
 #include <rtnet_socket.h>
 #include <stack_mgr.h>
+
+MODULE_LICENSE("GPL");
 
 
 /***
@@ -438,12 +441,10 @@ static struct rtdm_device   packet_proto_dev = {
 };
 
 
-
-int rt_packet_proto_init(void)
+int __init rt_packet_proto_init(void)
 {
     return rtdm_dev_register(&packet_proto_dev);
 }
-
 
 
 void rt_packet_proto_release(void)
@@ -452,12 +453,16 @@ void rt_packet_proto_release(void)
 }
 
 
+module_init(rt_packet_proto_init);
+module_exit(rt_packet_proto_release);
+
+
 
 /**********************************************************
  * Utilities                                              *
  **********************************************************/
 
-int hex2int(char hex_char)
+static int hex2int(char hex_char)
 {
     if ((hex_char >= '0') && (hex_char <= '9'))
         return hex_char - '0';
@@ -501,3 +506,5 @@ int rt_eth_aton(char *addr_buf, const char *mac)
     }
     return 0;
 }
+
+EXPORT_SYMBOL(rt_eth_aton);

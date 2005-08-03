@@ -1,6 +1,6 @@
 /***
  *
- *  rtnet/socket.c - sockets implementation for rtnet
+ *  stack/socket.c - sockets implementation for rtnet
  *
  *  Copyright (C) 1999       Lineo, Inc
  *                1999, 2002 David A. Schleef <ds@schleef.org>
@@ -36,7 +36,6 @@
 #include <rtnet_iovec.h>
 #include <rtnet_socket.h>
 #include <ipv4/protocol.h>
-#include <packet/af_packet.h>
 
 
 #define SKB_POOL_CLOSED     RTDM_USER_CONTEXT_FLAG + 0
@@ -299,3 +298,11 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *context,
 
     return ret;
 }
+
+
+EXPORT_SYMBOL(rtnet_rtdm_driver_name);
+EXPORT_SYMBOL(rtnet_rtdm_provider_name);
+EXPORT_SYMBOL(rt_socket_init);
+EXPORT_SYMBOL(rt_socket_cleanup);
+EXPORT_SYMBOL(rt_socket_common_ioctl);
+EXPORT_SYMBOL(rt_socket_if_ioctl);

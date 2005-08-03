@@ -209,13 +209,13 @@ int tdma_packet_rx(struct rtskb *rtskb)
     nanosecs_t              clock_offset;
     struct rt_proc_call     *call;
     struct tdma_request_cal *req_cal_job;
+    unsigned long           flags;
 #ifdef CONFIG_RTNET_TDMA_MASTER
     struct rtskb            *reply_rtskb;
     struct rtnet_device     *rtdev;
     struct tdma_frm_rpl_cal *rpl_cal_frm;
     struct tdma_reply_cal   *rpl_cal_job;
     struct tdma_job         *job;
-    unsigned long           flags;
 #endif
 
 

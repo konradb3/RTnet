@@ -115,6 +115,10 @@ CONFIG_RTNET_RTCFG_FALSE = @CONFIG_RTNET_RTCFG_FALSE@
 CONFIG_RTNET_RTCFG_TRUE = @CONFIG_RTNET_RTCFG_TRUE@
 CONFIG_RTNET_RTDM_SELECT_FALSE = @CONFIG_RTNET_RTDM_SELECT_FALSE@
 CONFIG_RTNET_RTDM_SELECT_TRUE = @CONFIG_RTNET_RTDM_SELECT_TRUE@
+CONFIG_RTNET_RTIPV4_FALSE = @CONFIG_RTNET_RTIPV4_FALSE@
+CONFIG_RTNET_RTIPV4_TRUE = @CONFIG_RTNET_RTIPV4_TRUE@
+CONFIG_RTNET_RTPACKET_FALSE = @CONFIG_RTNET_RTPACKET_FALSE@
+CONFIG_RTNET_RTPACKET_TRUE = @CONFIG_RTNET_RTPACKET_TRUE@
 CONFIG_RTNET_SCC_ENET_FALSE = @CONFIG_RTNET_SCC_ENET_FALSE@
 CONFIG_RTNET_SCC_ENET_TRUE = @CONFIG_RTNET_SCC_ENET_TRUE@
 CONFIG_RTNET_SMC91111_FALSE = @CONFIG_RTNET_SMC91111_FALSE@
@@ -263,8 +267,6 @@ noinst_HEADERS = \
 	ipv4/udp.h \
 	ipv4_chrdev.h \
 	\
-	packet/af_packet.h \
-	\
 	rtcfg/rtcfg.h \
 	rtcfg/rtcfg_client_event.h \
 	rtcfg/rtcfg_conn_event.h \
@@ -402,7 +404,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/packet $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma
+	$(mkdir_p) $(distdir)/ethernet $(distdir)/ipv4 $(distdir)/rtcfg $(distdir)/rtmac $(distdir)/rtmac/nomac $(distdir)/rtmac/tdma
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

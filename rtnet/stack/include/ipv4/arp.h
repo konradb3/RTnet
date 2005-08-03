@@ -36,35 +36,16 @@
 #define RT_ARP_SKB_PRIO     RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO-1, \
                                              RTSKB_DEF_NRT_CHANNEL)
 
-/*#define RT_ARP_ADDR_LEN  6
-#define RT_ARP_TABLE_LEN 20
-
-
-struct rt_arp_table_struct {
-    struct rt_arp_table_struct  *next;
-    struct rt_arp_table_struct  *prev;
-
-    u32                         ip_addr;
-    char                        hw_addr[RT_ARP_ADDR_LEN];
-};*/
-
-
-/*extern struct rt_arp_table_struct *free_arp_list;
-extern struct rt_arp_table_struct *arp_list;*/
-
-extern void rt_arp_send(int type, int ptype, u32 dest_ip,
-                        struct rtnet_device *rtdev, u32 src_ip,
-                        unsigned char *dest_hw, unsigned char *src_hw,
-                        unsigned char *target_hw);
+void rt_arp_send(int type, int ptype, u32 dest_ip,
+                 struct rtnet_device *rtdev, u32 src_ip,
+                 unsigned char *dest_hw, unsigned char *src_hw,
+                 unsigned char *target_hw);
 
 static inline void rt_arp_solicit(struct rtnet_device *rtdev, u32 target)
 {
     rt_arp_send(ARPOP_REQUEST, ETH_P_ARP, target, rtdev, rtdev->local_ip,
                 NULL, NULL, NULL);
 }
-
-/*extern void rt_arp_table_add(u32 ip_addr, unsigned char *hw_addr);
-extern void rt_arp_table_del(u32 ip_addr);*/
 
 static inline int rt_arp_table_lookup(struct dest_route *arp_entry, u32 ip)
 {
@@ -78,13 +59,8 @@ static inline int rt_arp_table_lookup(struct dest_route *arp_entry, u32 ip)
     return result;
 }
 
-/*extern struct rt_arp_table_struct *rt_arp_table_lookup(u32 ip_addr);
-extern struct rt_arp_table_struct *rt_rarp_table_lookup(char *hw_addr);
-
-extern void rt_arp_table_display(void);*/
-
-extern void __init rt_arp_init(void);
-extern void rt_arp_release(void);
+void __init rt_arp_init(void);
+void rt_arp_release(void);
 
 
 #endif  /* __RTNET_ARP_H_ */

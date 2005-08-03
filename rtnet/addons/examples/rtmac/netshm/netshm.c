@@ -1,6 +1,7 @@
 /***
  *
  *  netshm.c
+ *  FIXME: port over to Process Image model (see rt_cifibm driver)
  *
  *  netshm - simple device providing a distributed pseudo shared memory
  *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
@@ -384,7 +385,6 @@ int netshm_ioctl_rt(struct rtdm_dev_context *context, int call_flags,
                     int request, void *arg)
 {
     struct netshm_priv  *priv  = GET_PRIV(context);
-    int                 waiton = RTMAC_WAIT_ON_DEFAULT;
     int                 ret;
 
 
@@ -411,7 +411,8 @@ int netshm_ioctl_rt(struct rtdm_dev_context *context, int call_flags,
             /* wait on completion of processing cycle (first cycle) */
             RTDM_LOCK_CONTEXT(priv->rtmac_ctx);
             ret = priv->rtmac_ioctl(priv->rtmac_ctx, call_flags,
-                                    RTMAC_RTIOC_WAITONCYCLE, &waiton);
+                                    RTMAC_RTIOC_WAITONCYCLE,
+                                    RTMAC_WAIT_ON_DEFAULT);
             if (ret < 0) {
                 RTDM_UNLOCK_CONTEXT(priv->rtmac_ctx);
                 return ret;
@@ -425,7 +426,8 @@ int netshm_ioctl_rt(struct rtdm_dev_context *context, int call_flags,
 
             /* wait on completion of communication cycle (second cycle) */
             ret = priv->rtmac_ioctl(priv->rtmac_ctx, call_flags,
-                                    RTMAC_RTIOC_WAITONCYCLE, &waiton);
+                                    RTMAC_RTIOC_WAITONCYCLE,
+                                    RTMAC_WAIT_ON_DEFAULT);
             RTDM_UNLOCK_CONTEXT(priv->rtmac_ctx);
 
             rtos_res_lock(&priv->mem_lock);
