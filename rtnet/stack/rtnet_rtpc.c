@@ -81,10 +81,10 @@ do {                                                                        \
 
 
 
-int rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
-                       void* priv_data, size_t priv_data_size,
-                       rtpc_copy_back_proc copy_back_handler,
-                       rtpc_cleanup_proc cleanup_handler)
+int rtnet_rtpc_dispatch_call(rtpc_proc proc, unsigned int timeout,
+                             void* priv_data, size_t priv_data_size,
+                             rtpc_copy_back_proc copy_back_handler,
+                             rtpc_cleanup_proc cleanup_handler)
 {
     struct rt_proc_call *call;
     unsigned long       flags;
@@ -223,7 +223,7 @@ static void rtpc_signal_handler(void)
 
 
 
-void rtpc_complete_call(struct rt_proc_call *call, int result)
+void rtnet_rtpc_complete_call(struct rt_proc_call *call, int result)
 {
     call->result = result;
     rtpc_queue_processed_call(call);
@@ -231,7 +231,7 @@ void rtpc_complete_call(struct rt_proc_call *call, int result)
 
 
 
-void rtpc_complete_call_nrt(struct rt_proc_call *call, int result)
+void rtnet_rtpc_complete_call_nrt(struct rt_proc_call *call, int result)
 {
     call->processed = 1;
     wake_up(&call->call_wq);
@@ -276,6 +276,6 @@ void rtpc_cleanup(void)
 }
 
 
-EXPORT_SYMBOL(rtpc_dispatch_call);
-EXPORT_SYMBOL(rtpc_complete_call);
-EXPORT_SYMBOL(rtpc_complete_call_nrt);
+EXPORT_SYMBOL(rtnet_rtpc_dispatch_call);
+EXPORT_SYMBOL(rtnet_rtpc_complete_call);
+EXPORT_SYMBOL(rtnet_rtpc_complete_call_nrt);

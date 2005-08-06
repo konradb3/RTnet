@@ -69,14 +69,22 @@ void print_dev(void)
 
     if ((cmd.args.info.flags & IFF_LOOPBACK) != 0)
         printf("Local Loopback\n");
-    else if (cmd.args.info.type == ARPHRD_ETHER)
-        printf("Ethernet  Hardware address: "
-               "%02X:%02X:%02X:%02X:%02X:%02X\n",
-               cmd.args.info.dev_addr[0], cmd.args.info.dev_addr[1],
-               cmd.args.info.dev_addr[2], cmd.args.info.dev_addr[3],
-               cmd.args.info.dev_addr[4], cmd.args.info.dev_addr[5]);
     else
-        printf("unknown (%X)\n", cmd.args.info.type);
+        switch (cmd.args.info.type) {
+            case ARPHRD_ETHER:
+            case ARPHRD_IEEE1394:
+                printf("%s Hardware address: "
+                       "%02X:%02X:%02X:%02X:%02X:%02X\n",
+                       (cmd.args.info.type == ARPHRD_ETHER) ?
+                           "Ethernet " : "Eth1394 ",
+                       cmd.args.info.dev_addr[0], cmd.args.info.dev_addr[1],
+                       cmd.args.info.dev_addr[2], cmd.args.info.dev_addr[3],
+                       cmd.args.info.dev_addr[4], cmd.args.info.dev_addr[5]);
+                break;
+
+            default:
+                printf("unknown (%X)\n", cmd.args.info.type);
+        }
 
     if (cmd.args.info.ip_addr != 0) {
         ip_addr.s_addr      = cmd.args.info.ip_addr;

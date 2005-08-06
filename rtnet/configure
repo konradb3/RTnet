@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS LIBOBJS CONFIG_FUSION_TRUE CONFIG_FUSION_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_VIA_RHINE_TRUE CONFIG_RTNET_VIA_RHINE_FALSE CONFIG_RTNET_NATSEMI_TRUE CONFIG_RTNET_NATSEMI_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE CONFIG_RTNET_MPC52XX_FEC_TRUE CONFIG_RTNET_MPC52XX_FEC_FALSE CONFIG_RTNET_SMC91111_TRUE CONFIG_RTNET_SMC91111_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTCAP_TRUE CONFIG_RTNET_RTCAP_FALSE CONFIG_RTNET_PROXY_TRUE CONFIG_RTNET_PROXY_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE CONFIG_RTNET_RTDM_SELECT_TRUE CONFIG_RTNET_RTDM_SELECT_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTAI_KMOD_CFLAGS RTAI_USER_CFLAGS RTAI_LIBRARIES LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS LIBOBJS CONFIG_FUSION_TRUE CONFIG_FUSION_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_VIA_RHINE_TRUE CONFIG_RTNET_VIA_RHINE_FALSE CONFIG_RTNET_NATSEMI_TRUE CONFIG_RTNET_NATSEMI_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE CONFIG_RTNET_MPC52XX_FEC_TRUE CONFIG_RTNET_MPC52XX_FEC_FALSE CONFIG_RTNET_SMC91111_TRUE CONFIG_RTNET_SMC91111_FALSE CONFIG_RTNET_ETH1394_TRUE CONFIG_RTNET_ETH1394_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTCAP_TRUE CONFIG_RTNET_RTCAP_FALSE CONFIG_RTNET_PROXY_TRUE CONFIG_RTNET_PROXY_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE CONFIG_RTNET_RTDM_SELECT_TRUE CONFIG_RTNET_RTDM_SELECT_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTAI_KMOD_CFLAGS RTAI_USER_CFLAGS RTAI_LIBRARIES RTFW_KMOD_CFLAGS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1060,6 +1060,7 @@ Optional Features:
   --enable-fec-enet       build fec enet driver
   --enable-mpc52xx-fec    build MPC52xx fec driver
   --enable-smc91111       build SMSC LAN91C111 driver
+  --enable-eth1394        build Eth1394 driver
   --enable-loopback       build loopback driver [default=yes]
   --enable-rtipv4         enable real-time IPv4 support [default=yes]
   --enable-net-routing    enable IP network routing [default=no]
@@ -1091,6 +1092,7 @@ Optional Packages:
   --with-tags[=TAGS]
                           include additional configurations [automatic]
   --with-rtai=RTAI        installation path of RTAI 3.x or RTAI/fusion
+  --with-rtfw=RTFW        path to RT-FireWire source
   --with-module-dir=<module-dir>
                           Installation directory for modules
 
@@ -3780,7 +3782,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3783 "configure"' > conftest.$ac_ext
+  echo '#line 3785 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5359,7 +5361,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5362:" \
+echo "$as_me:5364:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6428,11 +6430,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6431: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6433: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6435: \$? = $ac_status" >&5
+   echo "$as_me:6437: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6683,11 +6685,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6686: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6688: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6690: \$? = $ac_status" >&5
+   echo "$as_me:6692: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6743,11 +6745,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6746: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6748: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6750: \$? = $ac_status" >&5
+   echo "$as_me:6752: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8943,7 +8945,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8946 "configure"
+#line 8948 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9041,7 +9043,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9044 "configure"
+#line 9046 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11261,11 +11263,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11264: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11266: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11268: \$? = $ac_status" >&5
+   echo "$as_me:11270: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -11321,11 +11323,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11324: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11326: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11328: \$? = $ac_status" >&5
+   echo "$as_me:11330: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12684,7 +12686,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12687 "configure"
+#line 12689 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12782,7 +12784,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12785 "configure"
+#line 12787 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13637,11 +13639,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13640: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13642: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13644: \$? = $ac_status" >&5
+   echo "$as_me:13646: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13697,11 +13699,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13700: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13702: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13704: \$? = $ac_status" >&5
+   echo "$as_me:13706: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15753,11 +15755,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15756: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15758: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15760: \$? = $ac_status" >&5
+   echo "$as_me:15762: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16008,11 +16010,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16011: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16013: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16015: \$? = $ac_status" >&5
+   echo "$as_me:16017: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16068,11 +16070,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16071: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16073: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16075: \$? = $ac_status" >&5
+   echo "$as_me:16077: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18268,7 +18270,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18271 "configure"
+#line 18273 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18366,7 +18368,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18369 "configure"
+#line 18371 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20684,6 +20686,21 @@ fi;
 
 
 
+# Check whether --with-rtfw or --without-rtfw was given.
+if test "${with_rtfw+set}" = set; then
+  withval="$with_rtfw"
+  case "${withval}" in
+    "" | y | ye | yes | n | no)
+        { { echo "$as_me:$LINENO: error: You must supply an argument to --with-rtfw if eth1394 is built in." >&5
+echo "$as_me: error: You must supply an argument to --with-rtfw if eth1394 is built in." >&2;}
+   { (exit 1); exit 1; }; } ;;
+    esac
+else
+  with_rtnet="/usr/src/rt-firewire"
+fi;
+
+
+
 unset CONFIG_RTNET_RTAI_3
 
 #
@@ -20952,6 +20969,26 @@ fi
 
 
 
+unset CONFIG_RTNET_RTFW
+#
+# the presence of ieee1394.h is a good indication for rtnet
+#
+if test x"$CONFIG_RTNET_RTFW" \!= x"n"; then
+    echo "$as_me:$LINENO: checking for RT-FireWire source" >&5
+echo $ECHO_N "checking for RT-FireWire source... $ECHO_C" >&6
+    IEEE1394_H="${with_rtfw}/include/ieee1394.h"
+    if test -f ${IEEE1394_H}; then
+        RTNET_RTFW_PREFIX="`echo ${with_rtfw} | sed -e s,/*$,,`"      # strip trailing slashes
+        echo "$as_me:$LINENO: result: ${RTNET_RTFW_PREFIX}" >&5
+echo "${ECHO_T}${RTNET_RTFW_PREFIX}" >&6
+    else
+        CONFIG_RTNET_RTFW=n
+        echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    fi
+fi
+
+
 
 case "${RTAI_LINUX_VERSION}" in
     2.4.*)
@@ -21057,6 +21094,10 @@ fi
 
 
 
+RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/include"
+
+
+
 echo "$as_me:$LINENO: checking for RTAI target arch" >&5
 echo $ECHO_N "checking for RTAI target arch... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTAI_ARCH}" >&5
@@ -21154,6 +21195,7 @@ else
                 ARCH=\$(RTNET_TARGET_ARCH)                                  \
                 M=\"\`pwd\`\"                                               \
                 V=\$(V)                                                     \
+                rtfw_dir=\"${RTNET_RTFW_PREFIX}\"                           \
                 rtai_dir=\"${RTNET_RTAI_PREFIX}\"                           \
                 top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"                 \
                 top_builddir=\"\`cd \$(top_builddir) && pwd\`\"             \
@@ -21162,7 +21204,7 @@ else
                 build_target='\$(basename \$@)'                             \
                 modules                                                     \
                 "
-    RTNET_KBUILD_CLEAN="                                                            \
+    RTNET_KBUILD_CLEAN="                                                    \
         @rm -f *.ko *.mod.c .*.cmd *.o;                                     \
         for src in \$^; do                                                  \
             if test -h \`basename \$\$src\`; then                           \
@@ -21872,6 +21914,32 @@ fi
 
 
 
+echo "$as_me:$LINENO: checking whether to build Eth1394 driver" >&5
+echo $ECHO_N "checking whether to build Eth1394 driver... $ECHO_C" >&6
+# Check whether --enable-eth1394 or --disable-eth1394 was given.
+if test "${enable_eth1394+set}" = set; then
+  enableval="$enable_eth1394"
+  case "$enableval" in
+        y | yes) CONFIG_RTNET_ETH1394=yes ;;
+        *) CONFIG_RTNET_ETH1394=no ;;
+    esac
+else
+  CONFIG_RTNET_  ETH1394=no
+fi;
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ETH1394}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_ETH1394}" >&6
+
+
+if test "$CONFIG_RTNET_ETH1394" = "yes"; then
+  CONFIG_RTNET_ETH1394_TRUE=
+  CONFIG_RTNET_ETH1394_FALSE='#'
+else
+  CONFIG_RTNET_ETH1394_TRUE='#'
+  CONFIG_RTNET_ETH1394_FALSE=
+fi
+
+
+
 echo "$as_me:$LINENO: checking whether to build loopback driver" >&5
 echo $ECHO_N "checking whether to build loopback driver... $ECHO_C" >&6
 # Check whether --enable-loopback or --disable-loopback was given.
@@ -22340,6 +22408,7 @@ RTAI_USER_CFLAGS="-D__IN_RTNET__ $RTAI_USER_CFLAGS"
 
 
 
+
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
         addons/examples/frag-ip \
@@ -22361,6 +22430,7 @@ if test x$CONFIG_KBUILD = xy; then
         \
         drivers/8139too \
         drivers/eepro100 \
+        drivers/eth1394 \
         drivers/loopback \
         drivers/mpc52xx_fec \
         drivers/mpc8260_fcc_enet \
@@ -22390,7 +22460,7 @@ fi
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile addons/GNUmakefile addons/examples/GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/fusion/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/select/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/3c59x/GNUmakefile rtai_rtdm/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile addons/GNUmakefile addons/examples/GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/fusion/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/select/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/eth1394/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/3c59x/GNUmakefile rtai_rtdm/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf"
 
 
 cat >confcache <<\_ACEOF
@@ -22621,6 +22691,13 @@ if test -z "${CONFIG_RTNET_SMC91111_TRUE}" && test -z "${CONFIG_RTNET_SMC91111_F
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_SMC91111\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"CONFIG_RTNET_SMC91111\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTNET_ETH1394_TRUE}" && test -z "${CONFIG_RTNET_ETH1394_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_ETH1394\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_RTNET_ETH1394\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -23177,6 +23254,7 @@ do
   "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
   "drivers/8139too/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/8139too/GNUmakefile" ;;
   "drivers/eepro100/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eepro100/GNUmakefile" ;;
+  "drivers/eth1394/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eth1394/GNUmakefile" ;;
   "drivers/loopback/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/loopback/GNUmakefile" ;;
   "drivers/mpc52xx_fec/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc52xx_fec/GNUmakefile" ;;
   "drivers/mpc8260_fcc_enet/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc8260_fcc_enet/GNUmakefile" ;;
@@ -23404,6 +23482,8 @@ s,@CONFIG_RTNET_MPC52XX_FEC_TRUE@,$CONFIG_RTNET_MPC52XX_FEC_TRUE,;t t
 s,@CONFIG_RTNET_MPC52XX_FEC_FALSE@,$CONFIG_RTNET_MPC52XX_FEC_FALSE,;t t
 s,@CONFIG_RTNET_SMC91111_TRUE@,$CONFIG_RTNET_SMC91111_TRUE,;t t
 s,@CONFIG_RTNET_SMC91111_FALSE@,$CONFIG_RTNET_SMC91111_FALSE,;t t
+s,@CONFIG_RTNET_ETH1394_TRUE@,$CONFIG_RTNET_ETH1394_TRUE,;t t
+s,@CONFIG_RTNET_ETH1394_FALSE@,$CONFIG_RTNET_ETH1394_FALSE,;t t
 s,@CONFIG_RTNET_LOOPBACK_TRUE@,$CONFIG_RTNET_LOOPBACK_TRUE,;t t
 s,@CONFIG_RTNET_LOOPBACK_FALSE@,$CONFIG_RTNET_LOOPBACK_FALSE,;t t
 s,@CONFIG_RTNET_RTIPV4_TRUE@,$CONFIG_RTNET_RTIPV4_TRUE,;t t
@@ -23429,6 +23509,7 @@ s,@CONFIG_RTNET_EXAMPLES_FALSE@,$CONFIG_RTNET_EXAMPLES_FALSE,;t t
 s,@RTAI_KMOD_CFLAGS@,$RTAI_KMOD_CFLAGS,;t t
 s,@RTAI_USER_CFLAGS@,$RTAI_USER_CFLAGS,;t t
 s,@RTAI_LIBRARIES@,$RTAI_LIBRARIES,;t t
+s,@RTFW_KMOD_CFLAGS@,$RTFW_KMOD_CFLAGS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

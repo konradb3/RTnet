@@ -48,4 +48,8 @@ if CONFIG_RTNET_SMC91111
 OPTDIRS += smc91111
 endif
 
+if CONFIG_RTNET_ETH1394
+OPTDIRS += eth1394
+endif
+
 SUBDIRS = experimental $(OPTDIRS)

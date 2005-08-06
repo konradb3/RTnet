@@ -127,6 +127,18 @@ AC_ARG_WITH(rtai,
 
 
 dnl ======================================================================
+dnl            rt-firewire sources
+dnl ======================================================================
+AC_ARG_WITH(rtfw,
+    AS_HELP_STRING([--with-rtfw=RTFW], [path to RT-FireWire source ]),
+    [case "${withval}" in
+    "" | y | ye | yes | n | no)
+        AC_MSG_ERROR([You must supply an argument to --with-rtfw if eth1394 is built in.]) ;;
+    esac],
+    with_rtnet="/usr/src/rt-firewire")
+
+
+dnl ======================================================================
 dnl =========== try to find rtai-3 =======================================
 dnl ======================================================================
 
@@ -325,6 +337,26 @@ AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_RTNET_RTAI_VERSION" = fusion-090])
 
 
 dnl ======================================================================
+dnl =========== try to find rt-firewire ==================================
+dnl ======================================================================
+unset CONFIG_RTNET_RTFW
+#
+# the presence of ieee1394.h is a good indication for rtnet
+#
+if test x"$CONFIG_RTNET_RTFW" \!= x"n"; then
+    AC_MSG_CHECKING([for RT-FireWire source])
+    IEEE1394_H="${with_rtfw}/include/ieee1394.h"
+    if test -f ${IEEE1394_H}; then
+        RTNET_RTFW_PREFIX="`echo ${with_rtfw} | sed -e s,[/]*$,,`"      # strip trailing slashes
+        AC_MSG_RESULT([${RTNET_RTFW_PREFIX}])
+    else
+        CONFIG_RTNET_RTFW=n
+        AC_MSG_RESULT([no])
+    fi
+fi
+
+
+dnl ======================================================================
 dnl             check linux version
 dnl ======================================================================
 
@@ -410,6 +442,13 @@ fi
 
 
 dnl ======================================================================
+dnl            import RT-FireWire includes
+dnl ======================================================================
+
+RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/include"
+
+
+dnl ======================================================================
 dnl             architecture tests....
 dnl ======================================================================
 
@@ -491,6 +530,7 @@ else
                 ARCH=\$(RTNET_TARGET_ARCH)                                  \
                 M=\"\`pwd\`\"                                               \
                 V=\$(V)                                                     \
+                rtfw_dir=\"${RTNET_RTFW_PREFIX}\"                           \
                 rtai_dir=\"${RTNET_RTAI_PREFIX}\"                           \
                 top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"                 \
                 top_builddir=\"\`cd \$(top_builddir) && pwd\`\"             \
@@ -499,7 +539,7 @@ else
                 build_target='\$(basename \$@)'                             \
                 modules                                                     \
                 "
-    RTNET_KBUILD_CLEAN="                                                            \
+    RTNET_KBUILD_CLEAN="                                                    \
         @rm -f *.ko *.mod.c .*.cmd *.o;                                     \
         for src in \$^; do                                                  \
             if test -h \`basename \$\$src\`; then                           \
@@ -830,6 +870,18 @@ AC_MSG_RESULT([${CONFIG_RTNET_SMC91111}])
 AM_CONDITIONAL(CONFIG_RTNET_SMC91111,[test "$CONFIG_RTNET_SMC91111" = "yes"])
 
 
+AC_MSG_CHECKING([whether to build Eth1394 driver])
+AC_ARG_ENABLE(eth1394,
+    AS_HELP_STRING([--enable-eth1394], [build Eth1394 driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_ETH1394=yes ;;
+        *) CONFIG_RTNET_ETH1394=no ;;
+    esac],
+    [CONFIG_RTNET_  ETH1394=no])
+AC_MSG_RESULT([${CONFIG_RTNET_ETH1394}])
+AM_CONDITIONAL(CONFIG_RTNET_ETH1394,[test "$CONFIG_RTNET_ETH1394" = "yes"])
+
+
 AC_MSG_CHECKING([whether to build loopback driver])
 AC_ARG_ENABLE(loopback,
     AS_HELP_STRING([--enable-loopback], [build loopback driver @<:@default=yes@:>@]),
@@ -1135,6 +1187,7 @@ RTAI_USER_CFLAGS="-D__IN_RTNET__ $RTAI_USER_CFLAGS"
 AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(RTAI_USER_CFLAGS)
 AC_SUBST(RTAI_LIBRARIES)
+AC_SUBST(RTFW_KMOD_CFLAGS)
 
 
 dnl ======================================================================
@@ -1162,6 +1215,7 @@ if test x$CONFIG_KBUILD = xy; then
         \
         drivers/8139too \
         drivers/eepro100 \
+        drivers/eth1394 \
         drivers/loopback \
         drivers/mpc52xx_fec \
         drivers/mpc8260_fcc_enet \
@@ -1227,6 +1281,7 @@ AC_CONFIG_FILES([ \
     drivers/GNUmakefile \
     drivers/8139too/GNUmakefile \
     drivers/eepro100/GNUmakefile \
+    drivers/eth1394/GNUmakefile \
     drivers/loopback/GNUmakefile \
     drivers/mpc52xx_fec/GNUmakefile \
     drivers/mpc8260_fcc_enet/GNUmakefile \

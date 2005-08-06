@@ -13,7 +13,7 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-SOURCES = $(libkernel_collector_a_SOURCES)
+SOURCES = $(libkernel_eth1394_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -21,7 +21,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../../../../..
+top_builddir = ../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -37,7 +37,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = addons/examples/rtmac/event/collector
+subdir = drivers/eth1394
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
@@ -48,11 +48,11 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 ARFLAGS = cru
-libkernel_collector_a_AR = $(AR) $(ARFLAGS)
-libkernel_collector_a_LIBADD =
-am_libkernel_collector_a_OBJECTS =  \
-	libkernel_collector_a-rt_collector.$(OBJEXT)
-libkernel_collector_a_OBJECTS = $(am_libkernel_collector_a_OBJECTS)
+libkernel_eth1394_a_AR = $(AR) $(ARFLAGS)
+libkernel_eth1394_a_LIBADD =
+am_libkernel_eth1394_a_OBJECTS =  \
+	libkernel_eth1394_a-rt_eth1394.$(OBJEXT)
+libkernel_eth1394_a_OBJECTS = $(am_libkernel_eth1394_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -64,8 +64,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libkernel_collector_a_SOURCES)
-DIST_SOURCES = $(libkernel_collector_a_SOURCES)
+SOURCES = $(libkernel_eth1394_a_SOURCES)
+DIST_SOURCES = $(libkernel_eth1394_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -241,16 +241,17 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
-EXTRA_LIBRARIES = libkernel_collector.a
-libkernel_collector_a_CPPFLAGS = \
+EXTRA_LIBRARIES = libkernel_eth1394.a
+libkernel_eth1394_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
-	@RTAI_KMOD_CFLAGS@
+	@RTAI_KMOD_CFLAGS@ \
+	@RTFW_KMOD_CFLAGS@
 
-libkernel_collector_a_SOURCES = \
-	rt_collector.c
+libkernel_eth1394_a_SOURCES = \
+	rt_eth1394.c
 
-OBJS = rt_collector$(modext)
+OBJS = rt_eth1394$(modext)
 EXTRA_DIST = Makefile.kbuild
 DISTCLEANFILES = Makefile
 all: all-am
@@ -266,9 +267,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  addons/examples/rtmac/event/collector/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  drivers/eth1394/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  addons/examples/rtmac/event/collector/GNUmakefile
+	  $(AUTOMAKE) --foreign  drivers/eth1394/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -286,10 +287,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-libkernel_collector.a: $(libkernel_collector_a_OBJECTS) $(libkernel_collector_a_DEPENDENCIES) 
-	-rm -f libkernel_collector.a
-	$(libkernel_collector_a_AR) libkernel_collector.a $(libkernel_collector_a_OBJECTS) $(libkernel_collector_a_LIBADD)
-	$(RANLIB) libkernel_collector.a
+libkernel_eth1394.a: $(libkernel_eth1394_a_OBJECTS) $(libkernel_eth1394_a_DEPENDENCIES) 
+	-rm -f libkernel_eth1394.a
+	$(libkernel_eth1394_a_AR) libkernel_eth1394.a $(libkernel_eth1394_a_OBJECTS) $(libkernel_eth1394_a_LIBADD)
+	$(RANLIB) libkernel_eth1394.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -297,7 +298,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_collector_a-rt_collector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -320,19 +321,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libkernel_collector_a-rt_collector.o: rt_collector.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_collector_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_collector_a-rt_collector.o -MD -MP -MF "$(DEPDIR)/libkernel_collector_a-rt_collector.Tpo" -c -o libkernel_collector_a-rt_collector.o `test -f 'rt_collector.c' || echo '$(srcdir)/'`rt_collector.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_collector_a-rt_collector.Tpo" "$(DEPDIR)/libkernel_collector_a-rt_collector.Po"; else rm -f "$(DEPDIR)/libkernel_collector_a-rt_collector.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_collector.c' object='libkernel_collector_a-rt_collector.o' libtool=no @AMDEPBACKSLASH@
+libkernel_eth1394_a-rt_eth1394.o: rt_eth1394.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eth1394_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_eth1394_a-rt_eth1394.o -MD -MP -MF "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Tpo" -c -o libkernel_eth1394_a-rt_eth1394.o `test -f 'rt_eth1394.c' || echo '$(srcdir)/'`rt_eth1394.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Tpo" "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po"; else rm -f "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_eth1394.c' object='libkernel_eth1394_a-rt_eth1394.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_collector_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_collector_a-rt_collector.o `test -f 'rt_collector.c' || echo '$(srcdir)/'`rt_collector.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eth1394_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_eth1394_a-rt_eth1394.o `test -f 'rt_eth1394.c' || echo '$(srcdir)/'`rt_eth1394.c
 
-libkernel_collector_a-rt_collector.obj: rt_collector.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_collector_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_collector_a-rt_collector.obj -MD -MP -MF "$(DEPDIR)/libkernel_collector_a-rt_collector.Tpo" -c -o libkernel_collector_a-rt_collector.obj `if test -f 'rt_collector.c'; then $(CYGPATH_W) 'rt_collector.c'; else $(CYGPATH_W) '$(srcdir)/rt_collector.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_collector_a-rt_collector.Tpo" "$(DEPDIR)/libkernel_collector_a-rt_collector.Po"; else rm -f "$(DEPDIR)/libkernel_collector_a-rt_collector.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_collector.c' object='libkernel_collector_a-rt_collector.obj' libtool=no @AMDEPBACKSLASH@
+libkernel_eth1394_a-rt_eth1394.obj: rt_eth1394.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eth1394_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_eth1394_a-rt_eth1394.obj -MD -MP -MF "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Tpo" -c -o libkernel_eth1394_a-rt_eth1394.obj `if test -f 'rt_eth1394.c'; then $(CYGPATH_W) 'rt_eth1394.c'; else $(CYGPATH_W) '$(srcdir)/rt_eth1394.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Tpo" "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po"; else rm -f "$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_eth1394.c' object='libkernel_eth1394_a-rt_eth1394.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_collector_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_collector_a-rt_collector.obj `if test -f 'rt_collector.c'; then $(CYGPATH_W) 'rt_collector.c'; else $(CYGPATH_W) '$(srcdir)/rt_collector.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eth1394_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_eth1394_a-rt_eth1394.obj `if test -f 'rt_eth1394.c'; then $(CYGPATH_W) 'rt_eth1394.c'; else $(CYGPATH_W) '$(srcdir)/rt_eth1394.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -470,7 +471,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am:
+install-exec-am: install-exec-local
 
 install-info: install-info-am
 
@@ -503,28 +504,28 @@ uninstall-am: uninstall-info-am
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-info-am
+	install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
 
-rt_collector.o: libkernel_collector.a
+rt_eth1394.o: libkernel_eth1394.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_collector.ko: @RTNET_KBUILD_ENV@
-rt_collector.ko: $(libkernel_collector_a_SOURCES) FORCE
+rt_eth1394.ko: @RTNET_KBUILD_ENV@
+rt_eth1394.ko: $(libkernel_eth1394_a_SOURCES) FORCE
 	@RTNET_KBUILD_CMD@
 
 all-local: $(OBJS)
 
-#install-exec-local: $(OBJS)
-#	$(mkinstalldirs) $(moduledir)
-#	$(INSTALL_DATA) $^ $(moduledir)
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
 
-clean-local: $(libkernel_collector_a_SOURCES)
+clean-local: $(libkernel_eth1394_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
 
 .PHONY: FORCE
