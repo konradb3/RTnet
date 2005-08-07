@@ -31,7 +31,7 @@ AC_DEFINE_UNQUOTED(CONFIG_RTNET_HOST_STRING, "$host", [Host system alias])
 RTNET_HOST_STRING="$host"
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_COMPILER, "`$CC -v 2>&1 | tail -n 1`" , [Compiler])
 
-AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2])
+AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2 no-dist-gzip])
 AM_MAINTAINER_MODE
 AC_PROG_LIBTOOL
 AM_PROG_AS
