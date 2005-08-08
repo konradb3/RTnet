@@ -383,10 +383,8 @@ ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
 
     ret = rtos_sem_timeddown(&sock->pending_sem, timeout);
     if (unlikely(ret < 0)) {
-        if (ret == -EWOULDBLOCK)
-            ret = -EAGAIN;
-        else if (ret != -ETIMEDOUT)
-            ret = -ENOTSOCK;
+        if ((ret != -EWOULDBLOCK) && (ret != -ETIMEDOUT))
+            ret = -EBADF;   /* socket has been closed */
         return ret;
     }
 

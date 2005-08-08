@@ -46,9 +46,10 @@
 
 /* some configurables */
 
-#define RTNET_STACK_PRIORITY    RTOS_HIGHEST_RT_PRIORITY + RTOS_LOWER_PRIORITY
-/*#define RTNET_RTDEV_PRIORITY    5*/
-#define DROPPING_RTSKB          20
+#define RTNET_DEF_STACK_PRIORITY \
+    RTOS_HIGHEST_RT_PRIORITY + RTOS_LOWER_PRIORITY
+/*#define RTNET_RTDEV_PRIORITY        5*/
+#define DROPPING_RTSKB              20
 
 
 struct rtnet_device;

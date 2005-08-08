@@ -25,6 +25,11 @@
 #include <stack_mgr.h>
 
 
+static unsigned int stack_mgr_prio = RTNET_DEF_STACK_PRIORITY;
+MODULE_PARM(stack_mgr_prio, "i");
+MODULE_PARM_DESC(stack_mgr_prio, "Priority of the stack manager task");
+
+
 static struct rtskb_queue rxqueue;
 
 struct list_head    rt_packets[RTPACKET_HASH_TBL_SIZE];
@@ -241,8 +246,7 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 
     rtos_event_init(&mgr->event);
 
-    return rtos_task_init(&mgr->task, stackmgr_task, mgr,
-                          RTNET_STACK_PRIORITY);
+    return rtos_task_init(&mgr->task, stackmgr_task, mgr, stack_mgr_prio);
 }
 
 
