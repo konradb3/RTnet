@@ -44,11 +44,6 @@ static unsigned int socket_rtskbs = DEFAULT_SOCKET_RTSKBS;
 MODULE_PARM(socket_rtskbs, "i");
 MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in socket pools");
 
-const char rtnet_rtdm_driver_name[] =
-    "RTnet " RTNET_PACKAGE_VERSION;
-const char rtnet_rtdm_provider_name[] =
-    "(C) 1999-2005 RTnet Development Team, http://rtnet.sf.net";
-
 
 /************************************************************************
  *  internal socket functions                                           *
@@ -300,8 +295,6 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *context,
 }
 
 
-EXPORT_SYMBOL(rtnet_rtdm_driver_name);
-EXPORT_SYMBOL(rtnet_rtdm_provider_name);
 EXPORT_SYMBOL(rt_socket_init);
 EXPORT_SYMBOL(rt_socket_cleanup);
 EXPORT_SYMBOL(rt_socket_common_ioctl);

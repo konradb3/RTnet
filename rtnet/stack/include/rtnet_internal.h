@@ -70,6 +70,8 @@ struct rtnet_mgr {
 extern struct rtnet_mgr STACK_manager;
 extern struct rtnet_mgr RTDEV_manager;
 
+extern const char rtnet_rtdm_provider_name[];
+
 
 #ifdef CONFIG_PROC_FS
 

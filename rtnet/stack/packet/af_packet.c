@@ -431,8 +431,9 @@ static struct rtdm_device   packet_proto_dev = {
 
     device_class:       RTDM_CLASS_NETWORK,
     device_sub_class:   RTDM_SUBCLASS_RTNET,
-    driver_name:        rtnet_rtdm_driver_name,
-    peripheral_name:    "Packet Socket Interface",
+    driver_name:        "rtpacket",
+    driver_version:     RTNET_RTDM_VER,
+    peripheral_name:    "Real-Time Packet Socket Interface",
     provider_name:      rtnet_rtdm_provider_name,
 
     proc_name:          "PACKET_DGRAM"

@@ -37,6 +37,9 @@ MODULE_LICENSE("GPL");
 struct rtnet_mgr STACK_manager;
 struct rtnet_mgr RTDEV_manager;
 
+const char rtnet_rtdm_provider_name[] =
+    "(C) 1999-2005 RTnet Development Team, http://www.rtnet.org";
+
 
 /***
  *      proc filesystem section
@@ -273,3 +276,4 @@ module_exit(rtnet_release);
 EXPORT_SYMBOL(rtnet_proc_root);
 EXPORT_SYMBOL(STACK_manager);
 EXPORT_SYMBOL(RTDEV_manager);
+EXPORT_SYMBOL(rtnet_rtdm_provider_name);

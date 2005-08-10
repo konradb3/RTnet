@@ -301,8 +301,9 @@ static struct rtdm_device ipv4_device = {
 
     device_class:       RTDM_CLASS_NETWORK,
     device_sub_class:   RTDM_SUBCLASS_RTNET,
-    driver_name:        rtnet_rtdm_driver_name,
-    peripheral_name:    "IPv4 Datagram Socket Interface",
+    driver_name:        "rtipv4",
+    driver_version:     RTNET_RTDM_VER,
+    peripheral_name:    "Real-Time IPv4 Datagram Socket Interface",
     provider_name:      rtnet_rtdm_provider_name,
 
     proc_name:          "INET_DGRAM"

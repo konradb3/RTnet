@@ -87,10 +87,6 @@ struct rtsocket {
 };
 
 
-extern const char rtnet_rtdm_driver_name[];
-extern const char rtnet_rtdm_provider_name[];
-
-
 static inline struct rtdm_dev_context *rt_socket_context(struct rtsocket *sock)
 {
     return (struct rtdm_dev_context *)((void *)sock -

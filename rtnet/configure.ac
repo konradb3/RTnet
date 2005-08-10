@@ -877,7 +877,7 @@ AC_ARG_ENABLE(eth1394,
         y | yes) CONFIG_RTNET_ETH1394=yes ;;
         *) CONFIG_RTNET_ETH1394=no ;;
     esac],
-    [CONFIG_RTNET_  ETH1394=no])
+    [CONFIG_RTNET_ETH1394=no])
 AC_MSG_RESULT([${CONFIG_RTNET_ETH1394}])
 AM_CONDITIONAL(CONFIG_RTNET_ETH1394,[test "$CONFIG_RTNET_ETH1394" = "yes"])
 
@@ -1188,6 +1188,18 @@ AC_SUBST(RTAI_KMOD_CFLAGS)
 AC_SUBST(RTAI_USER_CFLAGS)
 AC_SUBST(RTAI_LIBRARIES)
 AC_SUBST(RTFW_KMOD_CFLAGS)
+
+
+dnl ======================================================================
+dnl             generate RTDM version define
+dnl ======================================================================
+
+MAJOR=`echo ${VERSION} | sed -e 's/\([[0-9]]*\)\.[[0-9]]*\.[[0-9]]*/\1/'`
+MINOR=`echo ${VERSION} | sed -e 's/[[0-9]]*\.\([[0-9]]*\)\.[[0-9]]*/\1/'`
+BUGFIX=`echo ${VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)/\1/'`
+AC_DEFINE_UNQUOTED(RTNET_RTDM_VER,
+    [RTDM_DRIVER_VER($MAJOR, $MINOR, $BUGFIX)],
+    [RTDM Driver Version])
 
 
 dnl ======================================================================

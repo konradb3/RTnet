@@ -88,11 +88,10 @@ int nomac_dev_init(struct rtnet_device *rtdev, struct nomac_priv *nomac)
 
     nomac->api_device.device_class     = RTDM_CLASS_RTMAC;
     nomac->api_device.device_sub_class = RTDM_SUBCLASS_UNMANAGED;
-    nomac->api_device.driver_name      = "RTmac/NoMAC (RTnet "
-                                        RTNET_PACKAGE_VERSION ")";
+    nomac->api_device.driver_name      = "nomac";
+    nomac->api_device.driver_version   = RTNET_RTDM_VER;
     nomac->api_device.peripheral_name  = "NoMAC API";
-    nomac->api_device.provider_name    =
-        "(C) 2002-2005 RTnet Development Team, http://rtnet.sf.net";
+    nomac->api_device.provider_name    = rtnet_rtdm_provider_name;
 
     return rtdm_dev_register(&nomac->api_device);
 }

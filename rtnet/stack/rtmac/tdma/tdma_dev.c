@@ -141,11 +141,10 @@ int tdma_dev_init(struct rtnet_device *rtdev, struct tdma_priv *tdma)
 
     tdma->api_device.device_class     = RTDM_CLASS_RTMAC;
     tdma->api_device.device_sub_class = RTDM_SUBCLASS_TDMA;
-    tdma->api_device.driver_name      = "RTmac/TDMA (RTnet "
-                                        RTNET_PACKAGE_VERSION ")";
+    tdma->api_device.driver_name      = "tdma";
+    tdma->api_device.driver_version   = RTNET_RTDM_VER;
     tdma->api_device.peripheral_name  = "TDMA API";
-    tdma->api_device.provider_name    =
-        "(C) 2002-2005 RTnet Development Team, http://rtnet.sf.net";
+    tdma->api_device.provider_name    = rtnet_rtdm_provider_name;
 
     return rtdm_dev_register(&tdma->api_device);
 }
