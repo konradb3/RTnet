@@ -444,6 +444,7 @@ ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
     else {
         __rtskb_push(first_skb, sizeof(struct udphdr));
         rtskb_queue_head(&sock->incoming, first_skb);
+        rtos_sem_up(&sock->pending_sem);
     }
 
     return copied;

@@ -319,8 +319,10 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context,
     if ((msg_flags & MSG_PEEK) == 0) {
         rtdev_dereference(skb->rtdev);
         kfree_rtskb(skb);
-    } else
+    } else {
         rtskb_queue_head(&sock->incoming, skb);
+        rtos_sem_up(&sock->pending_sem);
+    }
 
     return real_len;
 }
