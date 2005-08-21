@@ -13,7 +13,7 @@ if CONFIG_RTNET_TDMA
 OPTDIRS += tdma
 endif
 
-SUBDIRS = $(OPTDIRS)
+SUBDIRS = . $(OPTDIRS)
 
 libkernel_rtmac_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
@@ -45,6 +45,9 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtmac_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+distclean-local:
+	@RTNET_KBUILD_DISTCLEAN@
 
 EXTRA_DIST = Makefile.kbuild
 

@@ -29,6 +29,9 @@ install-exec-local: $(OBJS)
 clean-local: $(libkernel_pcnet32_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
 
+distclean-local:
+	@RTNET_KBUILD_DISTCLEAN@
+
 EXTRA_DIST = Makefile.kbuild
 
 DISTCLEANFILES = Makefile

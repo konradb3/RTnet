@@ -188,6 +188,7 @@ RTAI_USER_CFLAGS = @RTAI_USER_CFLAGS@
 RTFW_KMOD_CFLAGS = @RTFW_KMOD_CFLAGS@
 RTNET_KBUILD_CLEAN = @RTNET_KBUILD_CLEAN@
 RTNET_KBUILD_CMD = @RTNET_KBUILD_CMD@
+RTNET_KBUILD_DISTCLEAN = @RTNET_KBUILD_DISTCLEAN@
 RTNET_KBUILD_ENV = @RTNET_KBUILD_ENV@
 RTNET_MODULE_DIR = @RTNET_MODULE_DIR@
 RTNET_MODULE_EXT = @RTNET_MODULE_EXT@
@@ -456,7 +457,7 @@ distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -501,9 +502,9 @@ uninstall-am: uninstall-info-am
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-exec-local install-info \
+	distclean-local distclean-tags distdir dvi dvi-am html html-am \
+	info info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-exec-local install-info \
 	install-info-am install-man install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
@@ -526,6 +527,9 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_natsemi_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+distclean-local:
+	@RTNET_KBUILD_DISTCLEAN@
 
 .PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

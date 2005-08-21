@@ -80,7 +80,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = nomac tdma
+DIST_SUBDIRS = . nomac tdma
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -201,6 +201,7 @@ RTAI_USER_CFLAGS = @RTAI_USER_CFLAGS@
 RTFW_KMOD_CFLAGS = @RTFW_KMOD_CFLAGS@
 RTNET_KBUILD_CLEAN = @RTNET_KBUILD_CLEAN@
 RTNET_KBUILD_CMD = @RTNET_KBUILD_CMD@
+RTNET_KBUILD_DISTCLEAN = @RTNET_KBUILD_DISTCLEAN@
 RTNET_KBUILD_ENV = @RTNET_KBUILD_ENV@
 RTNET_MODULE_DIR = @RTNET_MODULE_DIR@
 RTNET_MODULE_EXT = @RTNET_MODULE_EXT@
@@ -256,7 +257,7 @@ moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
 modext = @RTNET_MODULE_EXT@
 EXTRA_LIBRARIES = libkernel_rtmac.a
 OPTDIRS = $(am__append_1) $(am__append_2)
-SUBDIRS = $(OPTDIRS)
+SUBDIRS = . $(OPTDIRS)
 libkernel_rtmac_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
@@ -651,7 +652,7 @@ distclean: distclean-recursive
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-recursive
 
@@ -699,9 +700,9 @@ uninstall-info: uninstall-info-recursive
 	check-am clean clean-generic clean-libtool clean-local \
 	clean-recursive ctags ctags-recursive distclean \
 	distclean-compile distclean-generic distclean-libtool \
-	distclean-recursive distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am \
+	distclean-local distclean-recursive distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-exec install-exec-am \
 	install-exec-local install-info install-info-am install-man \
 	install-strip installcheck installcheck-am installdirs \
 	installdirs-am maintainer-clean maintainer-clean-generic \
@@ -726,6 +727,9 @@ install-exec-local: $(OBJS)
 
 clean-local: $(libkernel_rtmac_a_SOURCES)
 	@RTNET_KBUILD_CLEAN@
+
+distclean-local:
+	@RTNET_KBUILD_DISTCLEAN@
 
 .PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

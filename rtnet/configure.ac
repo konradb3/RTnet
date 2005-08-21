@@ -404,6 +404,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
         RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
         CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
         RTAI_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
+        RTNET_RTAI_SYMBOLS="${RTNET_RTAI_PREFIX}/symbols"
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -537,6 +538,7 @@ else
                 srcdir=\"\`cd \$(srcdir) && pwd\`\"                         \
                 build_objs='\$(call src2obj,c,\$^)'                         \
                 build_target='\$(basename \$@)'                             \
+                MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"        \
                 modules                                                     \
                 "
     RTNET_KBUILD_CLEAN="                                                    \
@@ -546,17 +548,24 @@ else
                 rm -f \`basename \$\$src\`;                                 \
             fi;                                                             \
         done;                                                               \
-        if test -d .tmp_versions; then                                      \
-            rm -rf .tmp_versions;                                           \
-        fi;                                                                 \
+        "
+    RTNET_KBUILD_DISTCLEAN="                                                \
+        @for mod in \${OBJS}; do                                            \
+            rm -f \`cd \$(top_builddir) && pwd\`/symbols/\`echo \$\$mod |   \
+                sed -e's/${RTNET_MODULE_EXT}//'\`.mod;                      \
+        done;                                                               \
         "
     dnl === Hack to suppress undefined symbol warnings during MODPOST stage ===
-    if test -e $RTAI_LINUX_DIR/Module.symvers; then
-        mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
-    fi
-    if test -e $RTAI_LINUX_DIR/vmlinux; then
-        mv $RTAI_LINUX_DIR/vmlinux $RTAI_LINUX_DIR/vmlinux.let_modpost_be_quiet
-    fi
+    case "${CONFIG_RTNET_RTAI_VERSION}" in
+        31 | 32)
+            if test -e $RTAI_LINUX_DIR/Module.symvers; then
+                mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
+            fi
+            if test -e $RTAI_LINUX_DIR/vmlinux; then
+                mv $RTAI_LINUX_DIR/vmlinux $RTAI_LINUX_DIR/vmlinux.let_modpost_be_quiet
+            fi
+            ;;
+    esac
 fi
 
 AC_MSG_CHECKING([for kernel module extension])
@@ -566,6 +575,7 @@ AC_SUBST(RTNET_MODULE_EXT)
 AC_SUBST(RTNET_KBUILD_ENV)
 AC_SUBST(RTNET_KBUILD_CMD)
 AC_SUBST(RTNET_KBUILD_CLEAN)
+AC_SUBST(RTNET_KBUILD_DISTCLEAN)
 
 bs_kmodext=$RTNET_MODULE_EXT
 bs_kcompile="make -C $RTAI_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
@@ -1196,9 +1206,9 @@ dnl ======================================================================
 
 MAJOR=`echo ${VERSION} | sed -e 's/\([[0-9]]*\)\.[[0-9]]*\.[[0-9]]*/\1/'`
 MINOR=`echo ${VERSION} | sed -e 's/[[0-9]]*\.\([[0-9]]*\)\.[[0-9]]*/\1/'`
-BUGFIX=`echo ${VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)/\1/'`
+PATCH=`echo ${VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)/\1/'`
 AC_DEFINE_UNQUOTED(RTNET_RTDM_VER,
-    [RTDM_DRIVER_VER($MAJOR, $MINOR, $BUGFIX)],
+    [RTDM_DRIVER_VER($MAJOR, $MINOR, $PATCH)],
     [RTDM Driver Version])
 
 
@@ -1252,6 +1262,19 @@ if test x$CONFIG_KBUILD = xy; then
         ; do
             AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
         done
+fi
+
+
+dnl ======================================================================
+dnl             create links to RTAI symbols
+dnl ======================================================================
+
+if test x$CONFIG_KBUILD = xy; then
+    mkdir -p symbols
+    rm -rf symbols/*
+    for FILE in `ls ${RTNET_RTAI_SYMBOLS}/*`; do
+        ${LN_S} ${FILE} symbols/$(basename ${FILE})
+    done
 fi
 
 
