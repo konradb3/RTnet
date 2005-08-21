@@ -78,7 +78,9 @@ void xmit_msg(void *arg)
 
         printf("Sending message of %d+2 bytes\n", size);
         ret = rt_dev_sendmsg(sock, &msg, 0);
-        if (ret != (int)(sizeof(msgsize) + size))
+        if (ret == -EBADF)
+            return;
+        else if (ret != (int)(sizeof(msgsize) + size))
             printf(" rt_dev_sendmsg() = %d!\n", ret);
 
         rt_task_wait_period();
@@ -171,6 +173,7 @@ int main(int argc, char *argv[])
 
     signal(SIGTERM, catch_signal);
     signal(SIGINT, catch_signal);
+    signal(SIGHUP, catch_signal);
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
     printf("destination ip address %s=%08x\n", dest_ip_s, dest_ip.s_addr);
