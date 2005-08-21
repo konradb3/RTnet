@@ -404,7 +404,7 @@ case "${CONFIG_RTNET_RTAI_VERSION}" in
         RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
         CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
         RTAI_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
-        RTNET_RTAI_SYMBOLS="${RTNET_RTAI_PREFIX}/symbols"
+        RTNET_RTAI_SYMBOLS="`${RTAI_CONFIG} --symbol-dir`"
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -517,6 +517,7 @@ if test x$CONFIG_KBUILD = x; then
     RTNET_KBUILD_ENV=
     RTNET_KBUILD_CMD=
     RTNET_KBUILD_CLEAN=
+    RTNET_KBUILD_DISTCLEAN=
 else
     RTNET_MODULE_EXT=.ko
     RTNET_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
