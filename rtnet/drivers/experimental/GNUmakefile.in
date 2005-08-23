@@ -36,6 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @CONFIG_RTNET_3C59X_TRUE@am__append_1 = 3c59x
+@CONFIG_RTNET_R8169_TRUE@am__append_2 = r8169
 subdir = drivers/experimental
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -56,7 +57,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = 3c59x
+DIST_SUBDIRS = 3c59x r8169
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -108,6 +109,8 @@ CONFIG_RTNET_PCNET32_FALSE = @CONFIG_RTNET_PCNET32_FALSE@
 CONFIG_RTNET_PCNET32_TRUE = @CONFIG_RTNET_PCNET32_TRUE@
 CONFIG_RTNET_PROXY_FALSE = @CONFIG_RTNET_PROXY_FALSE@
 CONFIG_RTNET_PROXY_TRUE = @CONFIG_RTNET_PROXY_TRUE@
+CONFIG_RTNET_R8169_FALSE = @CONFIG_RTNET_R8169_FALSE@
+CONFIG_RTNET_R8169_TRUE = @CONFIG_RTNET_R8169_TRUE@
 CONFIG_RTNET_RTCAP_FALSE = @CONFIG_RTNET_RTCAP_FALSE@
 CONFIG_RTNET_RTCAP_TRUE = @CONFIG_RTNET_RTCAP_TRUE@
 CONFIG_RTNET_RTCFG_FALSE = @CONFIG_RTNET_RTCFG_FALSE@
@@ -229,7 +232,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTDIRS = $(am__append_1)
+OPTDIRS = $(am__append_1) $(am__append_2)
 SUBDIRS = $(OPTDIRS)
 all: all-recursive
 

@@ -13,8 +13,7 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
-SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c tdmacfg.c
+SOURCES = $(libkernel_r8169_a_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -22,7 +21,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ..
+top_builddir = ../../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -38,15 +37,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = rtping rtroute
-@CONFIG_RTNET_RTCFG_TRUE@am__append_2 = rtcfg
-@CONFIG_RTNET_NOMAC_TRUE@am__append_3 = nomaccfg
-@CONFIG_RTNET_TDMA_TRUE@am__append_4 = tdmacfg
-@CONFIG_RTNET_TDMA_TRUE@am__append_5 = tdma.conf
-sbin_PROGRAMS = rtifconfig$(EXEEXT) $(am__EXEEXT_5)
-subdir = tools
-DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
-	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
+subdir = drivers/experimental/r8169
+DIST_COMMON = README $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/configure.ac
@@ -54,35 +46,12 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
-CONFIG_CLEAN_FILES = rtnet rtnet.conf
-@CONFIG_RTNET_RTIPV4_TRUE@am__EXEEXT_1 = rtping$(EXEEXT) \
-@CONFIG_RTNET_RTIPV4_TRUE@	rtroute$(EXEEXT)
-@CONFIG_RTNET_RTCFG_TRUE@am__EXEEXT_2 = rtcfg$(EXEEXT)
-@CONFIG_RTNET_NOMAC_TRUE@am__EXEEXT_3 = nomaccfg$(EXEEXT)
-@CONFIG_RTNET_TDMA_TRUE@am__EXEEXT_4 = tdmacfg$(EXEEXT)
-am__EXEEXT_5 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4)
-am__installdirs = "$(DESTDIR)$(sbindir)"
-sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(sbin_PROGRAMS)
-nomaccfg_SOURCES = nomaccfg.c
-nomaccfg_OBJECTS = nomaccfg.$(OBJEXT)
-nomaccfg_LDADD = $(LDADD)
-rtcfg_SOURCES = rtcfg.c
-rtcfg_OBJECTS = rtcfg.$(OBJEXT)
-rtcfg_LDADD = $(LDADD)
-rtifconfig_SOURCES = rtifconfig.c
-rtifconfig_OBJECTS = rtifconfig.$(OBJEXT)
-rtifconfig_LDADD = $(LDADD)
-rtping_SOURCES = rtping.c
-rtping_OBJECTS = rtping.$(OBJEXT)
-rtping_LDADD = $(LDADD)
-rtroute_SOURCES = rtroute.c
-rtroute_OBJECTS = rtroute.$(OBJEXT)
-rtroute_LDADD = $(LDADD)
-tdmacfg_SOURCES = tdmacfg.c
-tdmacfg_OBJECTS = tdmacfg.$(OBJEXT)
-tdmacfg_LDADD = $(LDADD)
+CONFIG_CLEAN_FILES =
+ARFLAGS = cru
+libkernel_r8169_a_AR = $(AR) $(ARFLAGS)
+libkernel_r8169_a_LIBADD =
+am_libkernel_r8169_a_OBJECTS = libkernel_r8169_a-rt_r8169.$(OBJEXT)
+libkernel_r8169_a_OBJECTS = $(am_libkernel_r8169_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -94,9 +63,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c tdmacfg.c
-DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c \
-	tdmacfg.c
+SOURCES = $(libkernel_r8169_a_SOURCES)
+DIST_SOURCES = $(libkernel_r8169_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -273,15 +241,20 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4)
-OPTSCRIPTS = 
-OPTCONF = $(am__append_5)
-AM_CPPFLAGS = \
+moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
+modext = @RTNET_MODULE_EXT@
+EXTRA_LIBRARIES = libkernel_r8169.a
+libkernel_r8169_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include
+	-I$(top_builddir)/stack/include \
+	@RTAI_KMOD_CFLAGS@
 
-EXTRA_DIST = tdma.conf
+libkernel_r8169_a_SOURCES = \
+	rt_r8169.c
+
+OBJS = rt_r8169$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -295,9 +268,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  tools/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  drivers/experimental/r8169/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  tools/GNUmakefile
+	  $(AUTOMAKE) --foreign  drivers/experimental/r8169/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -315,56 +288,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-rtnet: $(top_builddir)/config.status $(srcdir)/rtnet.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-rtnet.conf: $(top_builddir)/config.status $(srcdir)/rtnet.conf.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-install-sbinPROGRAMS: $(sbin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(sbindir)" || $(mkdir_p) "$(DESTDIR)$(sbindir)"
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	     || test -f $$p1 \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(sbinPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(sbindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(sbinPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(sbindir)/$$f" || exit 1; \
-	  else :; fi; \
-	done
-
-uninstall-sbinPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(sbindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(sbindir)/$$f"; \
-	done
-
-clean-sbinPROGRAMS:
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-nomaccfg$(EXEEXT): $(nomaccfg_OBJECTS) $(nomaccfg_DEPENDENCIES) 
-	@rm -f nomaccfg$(EXEEXT)
-	$(LINK) $(nomaccfg_LDFLAGS) $(nomaccfg_OBJECTS) $(nomaccfg_LDADD) $(LIBS)
-rtcfg$(EXEEXT): $(rtcfg_OBJECTS) $(rtcfg_DEPENDENCIES) 
-	@rm -f rtcfg$(EXEEXT)
-	$(LINK) $(rtcfg_LDFLAGS) $(rtcfg_OBJECTS) $(rtcfg_LDADD) $(LIBS)
-rtifconfig$(EXEEXT): $(rtifconfig_OBJECTS) $(rtifconfig_DEPENDENCIES) 
-	@rm -f rtifconfig$(EXEEXT)
-	$(LINK) $(rtifconfig_LDFLAGS) $(rtifconfig_OBJECTS) $(rtifconfig_LDADD) $(LIBS)
-rtping$(EXEEXT): $(rtping_OBJECTS) $(rtping_DEPENDENCIES) 
-	@rm -f rtping$(EXEEXT)
-	$(LINK) $(rtping_LDFLAGS) $(rtping_OBJECTS) $(rtping_LDADD) $(LIBS)
-rtroute$(EXEEXT): $(rtroute_OBJECTS) $(rtroute_DEPENDENCIES) 
-	@rm -f rtroute$(EXEEXT)
-	$(LINK) $(rtroute_LDFLAGS) $(rtroute_OBJECTS) $(rtroute_LDADD) $(LIBS)
-tdmacfg$(EXEEXT): $(tdmacfg_OBJECTS) $(tdmacfg_DEPENDENCIES) 
-	@rm -f tdmacfg$(EXEEXT)
-	$(LINK) $(tdmacfg_LDFLAGS) $(tdmacfg_OBJECTS) $(tdmacfg_LDADD) $(LIBS)
+libkernel_r8169.a: $(libkernel_r8169_a_OBJECTS) $(libkernel_r8169_a_DEPENDENCIES) 
+	-rm -f libkernel_r8169.a
+	$(libkernel_r8169_a_AR) libkernel_r8169.a $(libkernel_r8169_a_OBJECTS) $(libkernel_r8169_a_LIBADD)
+	$(RANLIB) libkernel_r8169.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -372,12 +299,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nomaccfg.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtifconfig.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtping.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtroute.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdmacfg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_r8169_a-rt_r8169.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -399,6 +321,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_r8169_a-rt_r8169.o: rt_r8169.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_r8169_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_r8169_a-rt_r8169.o -MD -MP -MF "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo" -c -o libkernel_r8169_a-rt_r8169.o `test -f 'rt_r8169.c' || echo '$(srcdir)/'`rt_r8169.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo" "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Po"; else rm -f "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_r8169.c' object='libkernel_r8169_a-rt_r8169.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_r8169_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_r8169_a-rt_r8169.o `test -f 'rt_r8169.c' || echo '$(srcdir)/'`rt_r8169.c
+
+libkernel_r8169_a-rt_r8169.obj: rt_r8169.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_r8169_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_r8169_a-rt_r8169.obj -MD -MP -MF "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo" -c -o libkernel_r8169_a-rt_r8169.obj `if test -f 'rt_r8169.c'; then $(CYGPATH_W) 'rt_r8169.c'; else $(CYGPATH_W) '$(srcdir)/rt_r8169.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo" "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Po"; else rm -f "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_r8169.c' object='libkernel_r8169_a-rt_r8169.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_r8169_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_r8169_a-rt_r8169.obj `if test -f 'rt_r8169.c'; then $(CYGPATH_W) 'rt_r8169.c'; else $(CYGPATH_W) '$(srcdir)/rt_r8169.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -487,11 +423,8 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile $(PROGRAMS) all-local
+all-am: GNUmakefile all-local
 installdirs:
-	for dir in "$(DESTDIR)$(sbindir)"; do \
-	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -512,14 +445,14 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-sbinPROGRAMS \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -537,9 +470,9 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local
+install-data-am:
 
-install-exec-am: install-exec-local install-sbinPROGRAMS
+install-exec-am: install-exec-local
 
 install-info: install-info-am
 
@@ -565,36 +498,38 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
+uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-sbinPROGRAMS ctags distclean \
+	clean-generic clean-libtool clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-data-local install-exec install-exec-am \
-	install-exec-local install-info install-info-am install-man \
-	install-sbinPROGRAMS install-strip installcheck \
+	install install-am install-data install-data-am install-exec \
+	install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am \
-	uninstall-sbinPROGRAMS
+	tags uninstall uninstall-am uninstall-info-am
 
 
-all-local: rtifconfig rtroute rtping $(OPTPROGS)
+rt_r8169.o: libkernel_r8169.a
+	$(LD) --whole-archive $< -r -o $@
 
-install-exec-local: rtnet $(OPTSCRIPTS)
-	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	for FILE in $^; do					\
- 		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
-	done
+rt_r8169.ko: @RTNET_KBUILD_ENV@
+rt_r8169.ko: $(libkernel_r8169_a_SOURCES) FORCE
+	@RTNET_KBUILD_CMD@
 
-install-data-local: rtnet.conf $(OPTCONF)
-	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
-	for FILE in $^; do					\
-		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\
-	done
+all-local: $(OBJS)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_r8169_a_SOURCES)
+	@RTNET_KBUILD_CLEAN@
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

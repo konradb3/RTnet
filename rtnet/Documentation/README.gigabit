@@ -1,0 +1,15 @@
+This file contains general informations on Gigabit Ethernet networking
+and RTnet.
+
+SUPPORTED NETWORK INTERFACES:
+- Realtek RTL8169-based cards, like D-Link DGE528-T
+  (Driver: rt_r8169)
+
+LIMITATIONS:
+- The MTU is actually limited to 1500 bytes, though jumbo frames
+  could deliver up to ~7500 bytes within one packet.
+  The RTnet core has to be modified for this, we're working
+  on it. :-)
+
+More documentation follows... =8-)
+                                                                 Klaus Keppler

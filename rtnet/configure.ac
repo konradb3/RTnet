@@ -904,6 +904,19 @@ AC_ARG_ENABLE(loopback,
 AC_MSG_RESULT([${CONFIG_RTNET_LOOPBACK}])
 AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
 
+AC_MSG_CHECKING([whether to build Realtek 8169 (Gigabit) driver])
+AC_ARG_ENABLE(r8169,
+    AS_HELP_STRING([--enable-r8169], [build Realtek 8169 (Gigabit) driver (experimental)]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_R8169=yes ;;
+        *) CONFIG_RTNET_R8169=no ;;
+    esac],
+    [CONFIG_RTNET_R8169=no])
+if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
+    CONFIG_RTNET_R8169=yes
+fi
+AC_MSG_RESULT([${CONFIG_RTNET_R8169}])
+AM_CONDITIONAL(CONFIG_RTNET_R8169,[test "$CONFIG_RTNET_R8169" = "yes"])
 
 dnl ======================================================================
 dnl             Real-Time IPv4
@@ -1250,6 +1263,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/tulip \
         drivers/via-rhine \
         drivers/experimental/3c59x \
+        drivers/experimental/r8169 \
         \
         rtai_rtdm \
         \
@@ -1330,6 +1344,7 @@ AC_CONFIG_FILES([ \
     drivers/via-rhine/GNUmakefile \
     drivers/experimental/GNUmakefile \
     drivers/experimental/3c59x/GNUmakefile \
+    drivers/experimental/r8169/GNUmakefile \
     \
     rtai_rtdm/GNUmakefile \
     \
