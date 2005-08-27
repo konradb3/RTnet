@@ -266,8 +266,6 @@ struct rtskb_prio_queue {
 #define ALIGN_RTSKB_STRUCT_LEN      SKB_DATA_ALIGN(sizeof(struct rtskb))
 #define RTSKB_SIZE                  1544    /* maximum needed by pcnet32-rt */
 
-extern unsigned int socket_rtskbs;      /* default number of rtskb's in socket pools */
-
 extern unsigned int rtskb_pools;        /* current number of rtskb pools      */
 extern unsigned int rtskb_pools_max;    /* maximum number of rtskb pools      */
 extern unsigned int rtskb_amount;       /* current number of allocated rtskbs */

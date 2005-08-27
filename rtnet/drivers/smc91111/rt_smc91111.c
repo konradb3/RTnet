@@ -1488,6 +1488,163 @@ static void smc_timeout (struct net_device *dev)
 }
 #endif
 
+/*-------------------------------------------------------------
+ .
+ . smc_rcv -  receive a packet from the card
+ .
+ . There is ( at least ) a packet waiting to be read from
+ . chip-memory.
+ .
+ . o Read the status
+ . o If an error, record it
+ . o otherwise, read in the packet
+ --------------------------------------------------------------
+*/
+static inline void smc_rcv(struct rtnet_device *dev)
+{
+	struct smc_local *lp = (struct smc_local *)dev->priv;
+	int 	ioaddr = dev->base_addr;
+	int 	packet_number;
+	word	status;
+	word	packet_length;
+	nanosecs_t time_stamp = rtos_get_time();
+	int		timeout;
+
+	PRINTK3("%s:smc_rcv\n", dev->name);
+
+	/* assume bank 2 */
+
+	packet_number = inw( ioaddr + RXFIFO_REG );
+
+	if ( packet_number & RXFIFO_REMPTY ) {
+
+		/* we got called , but nothing was on the FIFO */
+		PRINTK("%s: WARNING: smc_rcv with nothing on FIFO. \n",
+			dev->name);
+		/* don't need to restore anything */
+		return;
+	}
+
+	/*  start reading from the start of the packet */
+	outw( PTR_READ | PTR_RCV | PTR_AUTOINC, ioaddr + PTR_REG );
+	inw( ioaddr + MMU_CMD_REG ); /* min delay to avoid errors... */
+
+	/* First two words are status and packet_length */
+	status 		= inw( ioaddr + DATA_REG );
+	packet_length 	= inw( ioaddr + DATA_REG );
+
+	packet_length &= 0x07ff;  /* mask off top bits */
+
+	PRINTK2("RCV: STATUS %4x LENGTH %4x\n", status, packet_length );
+
+	if ( !(status & RS_ERRORS ) ){
+		/* do stuff to make a new packet */
+		struct rtskb  * skb;
+		byte		* data;
+
+		/* set multicast stats */
+		if ( status & RS_MULTICAST )
+			lp->stats.multicast++;
+
+		// Allocate enough memory for entire receive frame, to be safe
+		skb = alloc_rtskb(packet_length, &lp->skb_pool);
+
+		/* Adjust for having already read the first two words */
+		packet_length -= 4;
+
+		if ( skb == NULL ) {
+			rtos_print(KERN_NOTICE "%s: Low memory, packet dropped.\n",
+				dev->name);
+			lp->stats.rx_dropped++;
+			goto done;
+		}
+
+		/*
+		 ! This should work without alignment, but it could be
+		 ! in the worse case
+		*/
+		/* TODO: Should I use 32bit alignment here ? */
+		rtskb_reserve( skb, 2 );   /* 16 bit alignment */
+
+		skb->rtdev = dev;
+
+		/* =>
+    ODD-BYTE ISSUE : The odd byte problem has been fixed in the LAN91C111 Rev B.
+		So we check if the Chip Revision, stored in smsc_local->ChipRev, is = 1.
+		If so then we increment the packet length only if RS_ODDFRAME is set.
+		If the Chip's revision is equal to 0, then we blindly increment the packet length
+		by 1, thus always assuming that the packet is odd length, leaving the higher layer
+		to decide the actual length.
+			-- Pramod
+		<= */
+		if ((9 == lp->ChipID) && (1 == lp->ChipRev))
+		{
+			if (status & RS_ODDFRAME)
+				data = rtskb_put( skb, packet_length + 1 );
+			else
+				data = rtskb_put( skb, packet_length);
+
+		}
+		else
+		{
+			// set odd length for bug in LAN91C111, REV A
+			// which never sets RS_ODDFRAME
+			data = rtskb_put( skb, packet_length + 1 );
+		}
+
+#ifdef USE_32_BIT
+		PRINTK3(" Reading %d dwords (and %d bytes) \n",
+			packet_length >> 2, packet_length & 3 );
+		/* QUESTION:  Like in the TX routine, do I want
+		   to send the DWORDs or the bytes first, or some
+		   mixture.  A mixture might improve already slow PIO
+		   performance  */
+		insl(ioaddr + DATA_REG , data, packet_length >> 2 );
+		/* read the left over bytes */
+		insb( ioaddr + DATA_REG, data + (packet_length & 0xFFFFFC),
+			packet_length & 0x3  );
+#else
+		PRINTK3(" Reading %d words and %d byte(s) \n",
+			(packet_length >> 1 ), packet_length & 1 );
+		insw(ioaddr + DATA_REG , data, packet_length >> 1);
+
+#endif // USE_32_BIT
+
+#if	SMC_DEBUG > 2
+		rtos_print("Receiving Packet\n");
+		print_packet( data, packet_length );
+#endif
+
+		skb->protocol = rt_eth_type_trans(skb, dev );
+		skb->time_stamp = time_stamp;
+		rtnetif_rx(skb);
+		lp->stats.rx_packets++;
+	} else {
+		/* error ... */
+		lp->stats.rx_errors++;
+
+		if ( status & RS_ALGNERR )  lp->stats.rx_frame_errors++;
+		if ( status & (RS_TOOSHORT | RS_TOOLONG ) )
+			lp->stats.rx_length_errors++;
+		if ( status & RS_BADCRC)	lp->stats.rx_crc_errors++;
+	}
+
+	timeout = MMU_CMD_TIMEOUT;
+	while ( inw( ioaddr + MMU_CMD_REG ) & MC_BUSY ) {
+		rtos_busy_sleep(1000); // Wait until not busy
+		if (--timeout == 0) {
+			rtos_print("%s: ERROR: timeout while waiting on MMU.\n",
+				dev->name);
+			break;
+		}
+	}
+done:
+	/*  error or good, tell the card to get rid of this packet */
+	outw( MC_RELEASE, ioaddr + MMU_CMD_REG );
+
+	return;
+}
+
 /*--------------------------------------------------------------------
  .
  . This is the main routine of the driver, to handle the net_device when
@@ -1662,163 +1819,6 @@ static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
 	//dev->interrupt = 0;
 	PRINTK3("%s: Interrupt done\n", dev->name);
 	RTOS_IRQ_RETURN_HANDLED();
-}
-
-/*-------------------------------------------------------------
- .
- . smc_rcv -  receive a packet from the card
- .
- . There is ( at least ) a packet waiting to be read from
- . chip-memory.
- .
- . o Read the status
- . o If an error, record it
- . o otherwise, read in the packet
- --------------------------------------------------------------
-*/
-static void smc_rcv(struct rtnet_device *dev)
-{
-	struct smc_local *lp = (struct smc_local *)dev->priv;
-	int 	ioaddr = dev->base_addr;
-	int 	packet_number;
-	word	status;
-	word	packet_length;
-	nanosecs_t time_stamp = rtos_get_time();
-	int		timeout;
-
-	PRINTK3("%s:smc_rcv\n", dev->name);
-
-	/* assume bank 2 */
-
-	packet_number = inw( ioaddr + RXFIFO_REG );
-
-	if ( packet_number & RXFIFO_REMPTY ) {
-
-		/* we got called , but nothing was on the FIFO */
-		PRINTK("%s: WARNING: smc_rcv with nothing on FIFO. \n",
-			dev->name);
-		/* don't need to restore anything */
-		return;
-	}
-
-	/*  start reading from the start of the packet */
-	outw( PTR_READ | PTR_RCV | PTR_AUTOINC, ioaddr + PTR_REG );
-	inw( ioaddr + MMU_CMD_REG ); /* min delay to avoid errors... */
-
-	/* First two words are status and packet_length */
-	status 		= inw( ioaddr + DATA_REG );
-	packet_length 	= inw( ioaddr + DATA_REG );
-
-	packet_length &= 0x07ff;  /* mask off top bits */
-
-	PRINTK2("RCV: STATUS %4x LENGTH %4x\n", status, packet_length );
-
-	if ( !(status & RS_ERRORS ) ){
-		/* do stuff to make a new packet */
-		struct rtskb  * skb;
-		byte		* data;
-
-		/* set multicast stats */
-		if ( status & RS_MULTICAST )
-			lp->stats.multicast++;
-
-		// Allocate enough memory for entire receive frame, to be safe
-		skb = alloc_rtskb(packet_length, &lp->skb_pool);
-
-		/* Adjust for having already read the first two words */
-		packet_length -= 4;
-
-		if ( skb == NULL ) {
-			rtos_print(KERN_NOTICE "%s: Low memory, packet dropped.\n",
-				dev->name);
-			lp->stats.rx_dropped++;
-			goto done;
-		}
-
-		/*
-		 ! This should work without alignment, but it could be
-		 ! in the worse case
-		*/
-		/* TODO: Should I use 32bit alignment here ? */
-		rtskb_reserve( skb, 2 );   /* 16 bit alignment */
-
-		skb->rtdev = dev;
-
-		/* =>
-    ODD-BYTE ISSUE : The odd byte problem has been fixed in the LAN91C111 Rev B.
-		So we check if the Chip Revision, stored in smsc_local->ChipRev, is = 1.
-		If so then we increment the packet length only if RS_ODDFRAME is set.
-		If the Chip's revision is equal to 0, then we blindly increment the packet length
-		by 1, thus always assuming that the packet is odd length, leaving the higher layer
-		to decide the actual length.
-			-- Pramod
-		<= */
-		if ((9 == lp->ChipID) && (1 == lp->ChipRev))
-		{
-			if (status & RS_ODDFRAME)
-				data = rtskb_put( skb, packet_length + 1 );
-			else
-				data = rtskb_put( skb, packet_length);
-
-		}
-		else
-		{
-			// set odd length for bug in LAN91C111, REV A
-			// which never sets RS_ODDFRAME
-			data = rtskb_put( skb, packet_length + 1 );
-		}
-
-#ifdef USE_32_BIT
-		PRINTK3(" Reading %d dwords (and %d bytes) \n",
-			packet_length >> 2, packet_length & 3 );
-		/* QUESTION:  Like in the TX routine, do I want
-		   to send the DWORDs or the bytes first, or some
-		   mixture.  A mixture might improve already slow PIO
-		   performance  */
-		insl(ioaddr + DATA_REG , data, packet_length >> 2 );
-		/* read the left over bytes */
-		insb( ioaddr + DATA_REG, data + (packet_length & 0xFFFFFC),
-			packet_length & 0x3  );
-#else
-		PRINTK3(" Reading %d words and %d byte(s) \n",
-			(packet_length >> 1 ), packet_length & 1 );
-		insw(ioaddr + DATA_REG , data, packet_length >> 1);
-
-#endif // USE_32_BIT
-
-#if	SMC_DEBUG > 2
-		rtos_print("Receiving Packet\n");
-		print_packet( data, packet_length );
-#endif
-
-		skb->protocol = rt_eth_type_trans(skb, dev );
-		skb->time_stamp = time_stamp;
-		rtnetif_rx(skb);
-		lp->stats.rx_packets++;
-	} else {
-		/* error ... */
-		lp->stats.rx_errors++;
-
-		if ( status & RS_ALGNERR )  lp->stats.rx_frame_errors++;
-		if ( status & (RS_TOOSHORT | RS_TOOLONG ) )
-			lp->stats.rx_length_errors++;
-		if ( status & RS_BADCRC)	lp->stats.rx_crc_errors++;
-	}
-
-	timeout = MMU_CMD_TIMEOUT;
-	while ( inw( ioaddr + MMU_CMD_REG ) & MC_BUSY ) {
-		rtos_busy_sleep(1000); // Wait until not busy
-		if (--timeout == 0) {
-			rtos_print("%s: ERROR: timeout while waiting on MMU.\n",
-				dev->name);
-			break;
-		}
-	}
-done:
-	/*  error or good, tell the card to get rid of this packet */
-	outw( MC_RELEASE, ioaddr + MMU_CMD_REG );
-
-	return;
 }
 
 
@@ -3741,8 +3741,8 @@ static void smc_phy_configure(struct rtnet_device* dev)
 	// Wait for the auto-negotiation to complete.  This may take from
 	// 2 to 3 seconds.
 	// Wait for the reset to complete, or time out
-	timeout = 20; // Wait up to 10 seconds
-	while (timeout--)
+	timeout = 20-1; // Wait up to 10 seconds
+	do
 		{
 		status = smc_read_phy_register(ioaddr, phyaddr, PHY_STAT_REG);
 		if (status & PHY_STAT_ANEG_ACK)
@@ -3774,6 +3774,7 @@ static void smc_phy_configure(struct rtnet_device* dev)
 				PHY_CNTL_SPEED | PHY_CNTL_DPLX);
 			}
 		}
+	while (timeout--);
 
 	if (timeout < 1)
 		{

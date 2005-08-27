@@ -36,9 +36,6 @@
 #define RT_UDP_SOCKETS      64
 
 
-extern struct rtinet_protocol udp_protocol;
-
-
 extern int rt_udp_close(struct rtdm_dev_context *context,
                         rtdm_user_info_t *user_info);
 extern int rt_udp_ioctl(struct rtdm_dev_context *context,
