@@ -915,7 +915,7 @@ static inline int is_datagram_complete(struct list_head *lh, int dg_size)
  * ethernet header, and fill it with some of our other fields. This is
  * an incoming packet from the 1394 bus.  */
 static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
-				  char *buf, int len)
+				  char *buf, int len, nanosecs_t time_stamp)
 {
 	struct rtskb *skb;
 	unsigned long flags;
@@ -924,7 +924,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 	u16 ether_type = 0;  /* initialized to clear warning */
 	int hdr_len;
 	
-	nanosecs_t time_stamp = rtos_get_time();
+	//~ nanosecs_t time_stamp = rtos_get_time();
 
 	priv = (struct eth1394_priv *)dev->priv;
 
@@ -1122,7 +1122,7 @@ static int eth1394_write(struct hpsb_host *host, struct hpsb_packet *packet, uns
 	int ret = eth1394_data_handler(hi->dev, packet->header[1]>>16, //source id
 							 packet->header[0]>>16, //dest id
 							 (char *)packet->data, //data 
-							packet->data_size);
+							packet->data_size, packet->time_stamp);
 	//we only get the request packet, serve it, but dont free it, since it does not belong to us!!!!
 	
 	if(ret)
@@ -1176,7 +1176,7 @@ static void eth1394_iso(struct hpsb_iso *iso, void *arg)
 			continue;
 		}
 		eth1394_data_handler(dev, source_id, LOCAL_BUS | ALL_NODES,
-				       buf, len);
+				       buf, len, rtos_get_time());
 	}
 
 	hpsb_iso_recv_release_packets(iso, i);
@@ -1372,7 +1372,7 @@ static void eth1394_complete_cb(struct hpsb_packet *packet, void *__ptask);
  *But before that, it also constructs the FireWire packet according to
  * ptask
  */
-static int eth1394_send_packet(struct packet_task *ptask, unsigned int tx_len)
+static int eth1394_send_packet(struct packet_task *ptask, unsigned int tx_len, nanosecs_t *xmit_stamp)
 {
 	struct eth1394_priv *priv = ptask->priv;
 	struct hpsb_packet *packet = NULL;
@@ -1383,6 +1383,8 @@ static int eth1394_send_packet(struct packet_task *ptask, unsigned int tx_len)
 		ret = -ENOMEM;
 		return ret;
 	}
+	if(xmit_stamp)
+		packet->xmit_stamp = xmit_stamp;
 
 	if (ptask->tx_type == ETH1394_GASP) {
 		int length = tx_len + (2 * sizeof(quadlet_t)); //for the extra gasp overhead
@@ -1457,7 +1459,7 @@ static void eth1394_complete_cb(struct hpsb_packet *packet, void *__ptask)
 		/* Add the encapsulation header to the fragment */
 		tx_len = eth1394_encapsulate(ptask->skb, ptask->max_payload,
 					       &ptask->hdr);
-		if (eth1394_send_packet(ptask, tx_len))
+		if (eth1394_send_packet(ptask, tx_len, NULL))
 			eth1394_dg_complete(ptask, 1);
 	} else {
 		eth1394_dg_complete(ptask, fail);
@@ -1607,10 +1609,11 @@ static int eth1394_tx (struct rtskb *skb, struct rtnet_device *dev)
 	/* Add the encapsulation header to the fragment */
 	tx_len = eth1394_encapsulate(skb, max_payload, &ptask->hdr);
 	//dev->trans_start = jiffies;
-	if(skb->xmit_stamp)
-		*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+	//~ if(skb->xmit_stamp)
+		//~ *skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+		
 	
-	if (eth1394_send_packet(ptask, tx_len))
+	if (eth1394_send_packet(ptask, tx_len, skb->xmit_stamp))
 		goto fail;
 	
 	rtnetif_wake_queue(dev);
