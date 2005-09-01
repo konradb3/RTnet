@@ -1,0 +1,13 @@
+config RTNET_EXP_DRIVERS
+    bool "Experimental Drivers"
+    default n
+
+config RTNET_DRIVER_3C59X
+    bool "3Com 59x"
+    depends on RTNET_EXP_DRIVERS
+    default n
+
+config RTNET_DRIVER_R8169
+    bool "Realtek 8169 (Gigabit)"
+    depends on RTNET_EXP_DRIVERS
+    default n

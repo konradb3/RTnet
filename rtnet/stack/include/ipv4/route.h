@@ -43,18 +43,18 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
 int rt_ip_route_del_host(u32 addr);
 void rt_ip_route_del_all(struct rtnet_device *rtdev);
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr);
 int rt_ip_route_del_net(u32 addr, u32 mask);
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
-#ifdef CONFIG_RTNET_ROUTER
+#ifdef CONFIG_RTNET_RTIPV4_ROUTER
 extern int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr);
-#endif /* CONFIG_RTNET_ROUTER */
+#endif /* CONFIG_RTNET_RTIPV4_ROUTER */
 
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
 extern int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr);
-#endif /* CONFIG_RTNET_PROXY */
+#endif /* CONFIG_RTNET_ADDON_PROXY */
 
 extern int __init rt_ip_routing_init(void);
 extern void rt_ip_routing_release(void);

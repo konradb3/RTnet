@@ -67,7 +67,7 @@ static int                  allocated_host_routes;
 static struct host_route    *host_table[HOST_HASH_TBL_SIZE];
 static rtos_spinlock_t      host_table_lock;
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 static struct net_route     net_routes[NET_ROUTES];
 static struct net_route     *free_net_route;
 static int                  allocated_net_routes;
@@ -78,7 +78,7 @@ static rtos_spinlock_t      net_table_lock;
 MODULE_PARM(net_hash_key_shift, "i");
 MODULE_PARM_DESC(net_hash_key_shift, "destination right shift for "
                  "network hash key (default: 8)");
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
 
 
@@ -89,9 +89,9 @@ MODULE_PARM_DESC(net_hash_key_shift, "destination right shift for "
 static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
                               int *eof, void *data)
 {
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     u32 mask;
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
     RTNET_PROC_PRINT_VARS(256);
 
 
@@ -101,7 +101,7 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
                           HOST_HASH_TBL_SIZE))
         goto done;
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     mask = NET_HASH_KEY_MASK << net_hash_key_shift;
     if (!RTNET_PROC_PRINT("Network routes allocated/total:\t%d/%d\n"
                           "Network hash table size:\t%d\n"
@@ -109,9 +109,9 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
                           allocated_net_routes, NET_ROUTES, NET_HASH_TBL_SIZE,
                           net_hash_key_shift, mask))
         goto done;
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
-#ifdef CONFIG_RTNET_ROUTER
+#ifdef CONFIG_RTNET_RTIPV4_ROUTER
     RTNET_PROC_PRINT("IP Router:\t\t\tyes\n");
 #else
     RTNET_PROC_PRINT("IP Router:\t\t\tno\n");
@@ -181,7 +181,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
 
 
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
                                   int count, int *eof, void *data)
 {
@@ -243,7 +243,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
   done:
     RTNET_PROC_PRINT_DONE_EX;
 }
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
 
 
@@ -271,20 +271,20 @@ static int __init rt_route_proc_register(void)
         goto err3;
     proc_entry->read_proc = rt_host_route_read_proc;
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     proc_entry = create_proc_entry("net_route", S_IFREG | S_IRUGO | S_IWUSR,
                                    ipv4_proc_root);
     if (!proc_entry)
         goto err4;
     proc_entry->read_proc = rt_net_route_read_proc;
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
     return 0;
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
   err4:
     remove_proc_entry("arp", ipv4_proc_root);
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
   err3:
     remove_proc_entry("host_route", ipv4_proc_root);
@@ -304,9 +304,9 @@ static void rt_route_proc_unregister(void)
     remove_proc_entry("route", ipv4_proc_root);
     remove_proc_entry("arp", ipv4_proc_root);
     remove_proc_entry("host_route", ipv4_proc_root);
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     remove_proc_entry("net_route", ipv4_proc_root);
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 }
 #endif /* CONFIG_PROC_FS */
 
@@ -499,7 +499,7 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
 
 
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 /***
  *  rt_alloc_net_route - allocates new network route
  */
@@ -643,7 +643,7 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
 
     return -ENOENT;
 }
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
 
 
@@ -658,7 +658,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
     struct host_route   *host_rt;
     unsigned int        key;
 
-#ifndef CONFIG_RTNET_NETWORK_ROUTING
+#ifndef CONFIG_RTNET_RTIPV4_NETROUTING
     #define DADDR       daddr
 #else
     #define DADDR       real_daddr
@@ -669,7 +669,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
 
   restart:
-#endif /* !CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* !CONFIG_RTNET_RTIPV4_NETROUTING */
     key = ntohl(daddr) & HOST_HASH_KEY_MASK;
 
     rtos_spin_lock_irqsave(&host_table_lock, flags);
@@ -694,7 +694,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
     rtos_spin_unlock_irqrestore(&host_table_lock, flags);
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     if (lookup_gw) {
         lookup_gw = 0;
         key = (ntohl(daddr) >> net_hash_key_shift) & NET_HASH_KEY_MASK;
@@ -736,7 +736,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
         rtos_spin_unlock_irqrestore(&net_table_lock, flags);
     }
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
     /*ERRMSG*/rtos_print("RTnet: host %u.%u.%u.%u unreachable\n", NIPQUAD(daddr));
     return -EHOSTUNREACH;
@@ -744,7 +744,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
 
 
-#ifdef CONFIG_RTNET_ROUTER
+#ifdef CONFIG_RTNET_RTIPV4_ROUTER
 int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr)
 {
     struct rtnet_device *rtdev = rtskb->rtdev;
@@ -782,7 +782,7 @@ int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr)
     kfree_rtskb(rtskb);
     return 1;
 }
-#endif /* CONFIG_RTNET_ROUTER */
+#endif /* CONFIG_RTNET_RTIPV4_ROUTER */
 
 
 
@@ -800,13 +800,13 @@ int __init rt_ip_routing_init(void)
 
     rtos_spin_lock_init(&host_table_lock);
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     for (i = 0; i < NET_ROUTES-2; i++)
         net_routes[i].next = &net_routes[i+1];
     free_net_route = &net_routes[0];
 
     rtos_spin_lock_init(&net_table_lock);
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
 #ifdef CONFIG_PROC_FS
     return rt_route_proc_register();
@@ -830,6 +830,6 @@ EXPORT_SYMBOL(rt_ip_route_add_host);
 EXPORT_SYMBOL(rt_ip_route_del_host);
 EXPORT_SYMBOL(rt_ip_route_del_all);
 
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
 EXPORT_SYMBOL(rt_ip_route_output);
 #endif

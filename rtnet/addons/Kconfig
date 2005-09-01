@@ -1,0 +1,11 @@
+menu "Add-Ons"
+
+config RTNET_ADDON_RTCAP
+    bool "Real-Time Capturing Support"
+    default n
+
+config RTNET_ADDON_PROXY
+    bool "IP protocol proxy (legacy)"
+    default n
+
+endmenu

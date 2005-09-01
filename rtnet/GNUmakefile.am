@@ -1,9 +1,20 @@
+RTAI_RTDM =
 OPTDIRS =
 
 if CONFIG_RTNET_ENCLOSED_RTAI_RTDM
-OPTDIRS += rtai_rtdm
+RTAI_RTDM += rtai_rtdm
 endif
 
-SUBDIRS = $(OPTDIRS) stack drivers addons tools Documentation
+if CONFIG_RTNET_EXAMPLES
+OPTDIRS += examples
+endif
 
-EXTRA_DIST = autogen.sh
+SUBDIRS = $(RTAI_RTDM) stack drivers addons $(OPTDIRS) tools Documentation scripts
+
+EXTRA_DIST = makefile Kconfig
+
+reconfig xconfig gconfig mconfig menuconfig config oldconfig help:
+	@$(MAKE) -f $(srcdir)/makefile $@ \
+	srctree=$(srcdir) ARCH=@RTAI_HOST_STRING@ CROSS_COMPILE=@CROSS_COMPILE@
+
+.PHONY: reconfig xconfig gconfig mconfig menuconfig config oldconfig help

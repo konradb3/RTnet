@@ -1,0 +1,6 @@
+menuconfig RTNET_RTMAC
+    bool "RTmac Layer"
+    default y
+
+source "stack/rtmac/tdma/Kconfig"
+source "stack/rtmac/nomac/Kconfig"

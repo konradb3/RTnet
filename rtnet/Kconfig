@@ -1,0 +1,22 @@
+config RTNET_VERSION
+    string
+    default "0.9.0"
+
+mainmenu "RTnet configuration"
+
+config RTAI_DIR
+    string "RTAI/fusion Installation Path"
+    default "/usr/realtime"
+
+config RTNET_INSTALLDIR
+    string "Installation Path of RTnet"
+    default "/usr/local/rtnet"
+
+config RTNET_CHECKED
+    bool "Internal Bug Checks"
+    default n
+
+source "stack/Kconfig"
+source "drivers/Kconfig"
+source "addons/Kconfig"
+source "examples/Kconfig"

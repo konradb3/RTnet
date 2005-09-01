@@ -1,0 +1,11 @@
+OPTDIRS =
+
+if CONFIG_RTAI_CLASSIC
+OPTDIRS += rtai-classic
+endif
+
+if CONFIG_RTAI_FUSION
+OPTDIRS += rtai-fusion
+endif
+
+SUBDIRS = generic $(OPTDIRS)

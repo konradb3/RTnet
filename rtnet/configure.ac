@@ -92,25 +92,31 @@ AM_CONDITIONAL(CONFIG_NCURSES,[test x"${NCURSES_LIBS}" != x""])
 AC_SUBST(NCURSES_LIBS)
 
 
-# Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h])
+dnl ======================================================================
+dnl             Load the RTnet configuration.
+dnl ======================================================================
 
+RTNET_KCONFIG_FILE=$srcdir/defconfig
+kconfig_type=default
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_STRUCT_TM
-AC_C_VOLATILE
+AC_ARG_WITH(kconfig-file,
+    AS_HELP_STRING([--with-kconfig-file=<kconfig-file>], [KConfig parameter file]),
+    [
+        case "$withval" in
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-kconfig-file.])
+          ;;
+        esac
+        RTNET_KCONFIG_FILE="$withval"
+        kconfig_type=supplied
+    ])
 
-# Checks for library functions.
-AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MEMCMP
-AC_TYPE_SIGNAL
-AC_CHECK_FUNCS([inet_ntoa memset socket strchr strerror])
+AC_MSG_CHECKING([for RTnet Kconfig file])
+if test \! -f $RTNET_KCONFIG_FILE; then
+    AC_MSG_ERROR([Kconfig-file $RTNET_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file])
+fi
+. $RTNET_KCONFIG_FILE
+AC_MSG_RESULT([$RTNET_KCONFIG_FILE ($kconfig_type)])
 
 
 dnl ======================================================================
@@ -120,239 +126,192 @@ dnl ======================================================================
 AC_ARG_WITH(rtai,
     AS_HELP_STRING([--with-rtai=RTAI], [installation path of RTAI 3.x or RTAI/fusion]),
     [case "${withval}" in
-    "" | y | ye | yes | n | no)
-        AC_MSG_ERROR([You must supply an argument to --with-rtai.]) ;;
-    esac],
-    with_rtai="/usr/src/rtai")
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-rtai.]) ;;
+        *)
+            CONFIG_RTAI_DIR=${withval} ;;
+    esac])
 
 
 dnl ======================================================================
-dnl            rt-firewire sources
+dnl             RT-FireWire sources
 dnl ======================================================================
 AC_ARG_WITH(rtfw,
-    AS_HELP_STRING([--with-rtfw=RTFW], [path to RT-FireWire source ]),
+    AS_HELP_STRING([--with-rtfw=RTFW], [path of RT-FireWire source code]),
     [case "${withval}" in
-    "" | y | ye | yes | n | no)
-        AC_MSG_ERROR([You must supply an argument to --with-rtfw if eth1394 is built in.]) ;;
-    esac],
-    with_rtnet="/usr/src/rt-firewire")
+        "" | y | ye | yes | n | no)
+            AC_MSG_ERROR([You must supply an argument to --with-rtfw.]) ;;
+        *)
+            CONFIG_RTFIREWIRE_DIR=${withval} ;;
+    esac])
 
 
 dnl ======================================================================
-dnl =========== try to find rtai-3 =======================================
+dnl             try to find RTAI
 dnl ======================================================================
 
-unset CONFIG_RTNET_RTAI_3
-
-#
-# the presence of rtai-config is a good indication for rtai >= 3
-#
-if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
-    AC_MSG_CHECKING([for RTAI 3 installation])
-    RTAI_CONFIG="${with_rtai}/bin/rtai-config"
-    if test -x "${RTAI_CONFIG}"; then
-        RTAI_DIR="`cd ${with_rtai} && pwd`"     # let the shell normalize the path
-        AC_MSG_RESULT([${RTAI_DIR}])
-    else
-        CONFIG_RTNET_RTAI_3=n
-        AC_MSG_RESULT([no])
-    fi
+AC_MSG_CHECKING([for RTAI installation])
+RTAI_CONFIG="${CONFIG_RTAI_DIR}/bin/rtai-config"
+if test -x "${RTAI_CONFIG}"; then
+    RTAI_DIR="`cd ${CONFIG_RTAI_DIR} && pwd`"   # let the shell normalize the path
+    AC_MSG_RESULT([${RTAI_DIR}])
+else
+    AC_MSG_ERROR([*** No RTAI found in $CONFIG_RTAI_DIR])
 fi
 
 #
-# from now we think we've found RTAI-3, so if we got en error
+# from now we think we've found RTAI, so if we got en error
 # it will be fatal, thus exit with AC_MSG_ERROR
 #
 
-if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 #
 # check if rtai-3 is installed with DESTDIR
 # e.g.: 'make DESTDIR=/foo install'
 #
-    AC_MSG_CHECKING([for RTAI DESTDIR])
-    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"                 # let the shell normalize the path
-    if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
-        RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
-        export DESTDIR="${RTNET_RTAI_DESTDIR}"
+AC_MSG_CHECKING([for RTAI DESTDIR])
+RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"                 # let the shell normalize the path
+if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
+    RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
+    export DESTDIR="${RTNET_RTAI_DESTDIR}"
 
-        RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"             # let the shell normalize the path
-        if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
-            AC_MSG_RESULT([${DESTDIR}])
-        else
-            AC_MSG_ERROR([*** Cannot identify DESTDIR])
-        fi
+    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"             # let the shell normalize the path
+    if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
+        AC_MSG_RESULT([${DESTDIR}])
     else
-        AC_MSG_RESULT([none])
+        AC_MSG_ERROR([*** Cannot identify DESTDIR])
     fi
+else
+    AC_MSG_RESULT([none])
+fi
 
-    AC_MSG_CHECKING([for RTAI version])
-    CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
+AC_MSG_CHECKING([for RTAI version])
+CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
-    case "$CONFIG_RTNET_RTAI_3_VERSION" in
+case "$CONFIG_RTNET_RTAI_3_VERSION" in
     3.0*)
         CONFIG_RTNET_RTAI_VERSION=30
+        AC_DEFINE(CONFIG_RTAI_30, 1, [We build for rtai 3.0rx])
         ;;
     3.1*)
         CONFIG_RTNET_RTAI_VERSION=31
+        AC_DEFINE(CONFIG_RTAI_31, 1, [We build for rtai 3.1rx])
         ;;
     3.2*)
         CONFIG_RTNET_RTAI_VERSION=32
+        AC_DEFINE(CONFIG_RTAI_32, 1, [We build for rtai 3.2rx])
         ;;
     0.8.99-fusion | 0.9*-fusion)
         CONFIG_RTNET_RTAI_VERSION=fusion-090
+        AC_DEFINE(CONFIG_FUSION_090, 1, [We build for fusion 0.9.x])
         ;;
     *)
         AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
         ;;
-    esac
-    AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
+esac
+AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
+AM_CONDITIONAL(CONFIG_RTAI_CLASSIC,[test "$CONFIG_RTNET_RTAI_VERSION" = 3*])
+AM_CONDITIONAL(CONFIG_RTAI_FUSION,[test "$CONFIG_RTNET_RTAI_VERSION" = fusion-090])
 
-    AC_MSG_CHECKING([for RTAI config file])
-    CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
-    if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
-        CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
-        if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
-            AC_MSG_ERROR([*** RTAI configuration file not found])
-        fi
+AC_MSG_CHECKING([for RTAI config file])
+CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
+if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
+    CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
+    if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
+        AC_MSG_ERROR([*** RTAI configuration file not found])
     fi
-    AC_MSG_RESULT([${CONFIG_RTNET_RTAI_CONFIG_FILE}])
+fi
+AC_MSG_RESULT([${CONFIG_RTNET_RTAI_CONFIG_FILE}])
 
 # source (load) the rtai configuration
-    . ${CONFIG_RTNET_RTAI_CONFIG_FILE}
+. ${CONFIG_RTNET_RTAI_CONFIG_FILE}
 
-    case "$CONFIG_RTNET_RTAI_VERSION" in
-        30 | 31 | 32)   # ---> RTAI 3.x <---
-
-            # check for semas, needed by rtnet
-            AC_MSG_CHECKING([for RTAI semaphores])
-            case "${CONFIG_RTAI_SEM}" in
-                y | m) AC_MSG_RESULT([${CONFIG_RTAI_SEM}]) ;;
-                *) AC_MSG_ERROR([*** Please enable semaphores in RTAI]) ;;
-            esac
-
-            # check for RT malloc, needed by rtnet
-            AC_MSG_CHECKING([for RTAI malloc])
-            case "${CONFIG_RTAI_MALLOC}" in
-                y | m) AC_MSG_RESULT([${CONFIG_RTAI_MALLOC}]) ;;
-                *) AC_MSG_ERROR([*** Please enable real-time malloc in RTAI]) ;;
-            esac
-
-            # check for fifos, needed by rtnet-examples
-            AC_MSG_CHECKING([for RTAI fifos])
-            case "${CONFIG_RTAI_FIFOS}" in
-                y | m) AC_MSG_RESULT([${CONFIG_RTAI_FIFOS}]) ;;
-                *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
-            esac
-
-            ;;
-
-        fusion-090)     # ---> FUSION <---
-
-            # check for native RTAI skin, needed by rtnet
-            AC_MSG_CHECKING([for RTAI RTDM skin])
-            case "${CONFIG_RTAI_SKIN_RTDM}" in
-                y) AC_MSG_RESULT([${CONFIG_RTAI_SKIN_RTDM}]) ;;
-                *) AC_MSG_ERROR([*** Please enable RTDM skin]) ;;
-            esac
-
-            # check for semas, needed by rtnet
-            AC_MSG_CHECKING([for RTAI Semaphores])
-            case "${CONFIG_RTAI_OPT_NATIVE_SEM}" in
-                y) AC_MSG_RESULT([${CONFIG_RTAI_OPT_NATIVE_SEM}]) ;;
-                *) AC_MSG_ERROR([*** Please enable semaphores in RTAI]) ;;
-            esac
-
-            # malloc support is built-in for RTAI/fusion
-
-            # check for pipes, needed by rtnet
-            AC_MSG_CHECKING([for RTAI pipes])
-            case "${CONFIG_RTAI_OPT_NATIVE_PIPE}" in
-                y) AC_MSG_RESULT([${CONFIG_RTAI_OPT_NATIVE_PIPE}]) ;;
-                *) AC_MSG_ERROR([*** Please enable pipes in RTAI]) ;;
-            esac
-
-            # check for mutexes, needed by rtnet
-            AC_MSG_CHECKING([for RTAI mutexes])
-            case "${CONFIG_RTAI_OPT_NATIVE_MUTEX}" in
-                y) AC_MSG_RESULT([${CONFIG_RTAI_OPT_NATIVE_MUTEX}]) ;;
-                *) AC_MSG_ERROR([*** Please enable mutexes in RTAI]) ;;
-            esac
-
-            ;;
-
-        *)              # ---> oops <----
-            AC_MSG_ERROR([*** internal error])
-            ;;
-    esac
-
-# get linux kernel tree and version
-    AC_MSG_CHECKING([for Linux source tree])
-    RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-    case "$CONFIG_RTNET_RTAI_3_VERSION" in
-        3.0 | 3.0r1 | 3.0r2)
-
-            eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
-            ;;
-        *)
-            RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-            ;;
-    esac
-
-#source (load) the kernel configuration
-    . ${RTAI_LINUX_DIR}/.config
-
-    AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
-fi
-
-dnl =========== end of rtai 3 detection ==================================
-
-
-#
-# now let's see wich version of rtai we've found
-# exit with error if there isn't any version
-#
 case "$CONFIG_RTNET_RTAI_VERSION" in
-    30)
-        AC_DEFINE(CONFIG_RTAI_30, 1, [We build for rtai 3.0rx])
+    30 | 31 | 32)   # ---> RTAI 3.x <---
+
+        # check for semas, needed by rtnet
+        AC_MSG_CHECKING([for RTAI semaphores])
+        case "${CONFIG_RTAI_SEM}" in
+            y | m) AC_MSG_RESULT([${CONFIG_RTAI_SEM}]) ;;
+            *) AC_MSG_ERROR([*** Please enable semaphores in RTAI]) ;;
+        esac
+
+        # check for RT malloc, needed by rtnet
+        AC_MSG_CHECKING([for RTAI malloc])
+        case "${CONFIG_RTAI_MALLOC}" in
+            y | m) AC_MSG_RESULT([${CONFIG_RTAI_MALLOC}]) ;;
+            *) AC_MSG_ERROR([*** Please enable real-time malloc in RTAI]) ;;
+        esac
+
+        # check for fifos, needed by rtnet-examples
+        AC_MSG_CHECKING([for RTAI fifos])
+        case "${CONFIG_RTAI_FIFOS}" in
+            y | m) AC_MSG_RESULT([${CONFIG_RTAI_FIFOS}]) ;;
+            *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
+        esac
+
         ;;
-    31)
-        AC_DEFINE(CONFIG_RTAI_31, 1, [We build for rtai 3.1rx])
+
+    fusion-090)     # ---> FUSION <---
+
+        # check for native RTAI skin, needed by rtnet
+        AC_MSG_CHECKING([for RTAI RTDM skin])
+        case "${CONFIG_RTAI_SKIN_RTDM}" in
+            y) AC_MSG_RESULT([${CONFIG_RTAI_SKIN_RTDM}]) ;;
+            *) AC_MSG_ERROR([*** Please enable RTDM skin]) ;;
+        esac
+
+        # check for pipes, needed by rtnet
+#        AC_MSG_CHECKING([for RTAI pipes])
+#        case "${CONFIG_RTAI_OPT_NATIVE_PIPE}" in
+#            y) AC_MSG_RESULT([${CONFIG_RTAI_OPT_NATIVE_PIPE}]) ;;
+#            *) AC_MSG_ERROR([*** Please enable pipes in RTAI]) ;;
+#        esac
+
         ;;
-    32)
-        AC_DEFINE(CONFIG_RTAI_32, 1, [We build for rtai 3.2rx])
-        ;;
-    fusion-090)
-        AC_DEFINE(CONFIG_FUSION_090, 1, [We build for fusion 0.9.x])
-        ;;
-    *)
-        AC_MSG_ERROR([*** No RTAI found in $with_rtai])
+
+    *)              # ---> oops <----
+        AC_MSG_ERROR([*** internal error])
         ;;
 esac
 
-AM_CONDITIONAL(CONFIG_FUSION,[test "$CONFIG_RTNET_RTAI_VERSION" = fusion-090])
+# get linux kernel tree and version
+AC_MSG_CHECKING([for Linux source tree])
+RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
+case "$CONFIG_RTNET_RTAI_3_VERSION" in
+    3.0 | 3.0r1 | 3.0r2)
+
+        eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
+        ;;
+    *)
+        RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+        ;;
+esac
+
+#source (load) the kernel configuration
+. ${RTAI_LINUX_DIR}/.config
+
+AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
+
+dnl =========== end of RTAI detection ==================================
 
 
 dnl ======================================================================
 dnl =========== try to find rt-firewire ==================================
 dnl ======================================================================
-unset CONFIG_RTNET_RTFW
 #
-# the presence of ieee1394.h is a good indication for rtnet
+# the presence of ieee1394.h is a good indication for RT-FireWire
 #
-if test x"$CONFIG_RTNET_RTFW" \!= x"n"; then
-    AC_MSG_CHECKING([for RT-FireWire source])
-    IEEE1394_H="${with_rtfw}/include/ieee1394.h"
-    if test -f ${IEEE1394_H}; then
-        RTNET_RTFW_PREFIX="`echo ${with_rtfw} | sed -e s,[/]*$,,`"      # strip trailing slashes
-        AC_MSG_RESULT([${RTNET_RTFW_PREFIX}])
-    else
-        CONFIG_RTNET_RTFW=n
-        AC_MSG_RESULT([no])
-    fi
+AC_MSG_CHECKING([for RT-FireWire source])
+IEEE1394_H="${CONFIG_RTFIREWIRE_DIR}/include/ieee1394.h"
+if test -f ${IEEE1394_H}; then
+    RTNET_RTFW_PREFIX="`echo ${CONFIG_RTFIREWIRE_DIR} | sed -e s,[/]*$,,`"  # strip trailing slashes
+    AC_MSG_RESULT([${RTNET_RTFW_PREFIX}])
+else
+    AC_MSG_RESULT([none])
 fi
 
 
@@ -612,7 +571,7 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
                 ])
             ;;
         fusion-090)
-            BS_CHECK_KHEADERS([rtai/sem.h rtai/mutex.h rtai/pipe.h rtdm/rtdm.h rtdm/rtdm_driver.h],
+            BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
                 [],
                 [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
                 [
@@ -670,11 +629,11 @@ AC_MSG_CHECKING([for RTAI 3.x LXRT enabled])
 case "${CONFIG_RTNET_RTAI_VERSION}" in
     30 | 31 | 32)
         case "${CONFIG_RTAI_SCHED_LXRT}" in
-            y | m) CONFIG_RTNET_LXRT=yes ;;
-            *) CONFIG_RTNET_LXRT=no ;;
+            y | m) CONFIG_RTNET_LXRT=y ;;
+            *) CONFIG_RTNET_LXRT=n ;;
         esac
         ;;
-    fusion-090) CONFIG_RTNET_LXRT=no
+    fusion-090) CONFIG_RTNET_LXRT=n
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -683,7 +642,7 @@ esac
 AC_MSG_RESULT([${CONFIG_RTNET_LXRT}])
 
 AC_MSG_CHECKING([for CONFIG_REGPARM activated in Linux Kernel])
-if test "${CONFIG_RTNET_LXRT}" = "yes" -a "${CONFIG_REGPARM}" = "y"; then
+if test "${CONFIG_RTNET_LXRT}" = "y" -a "${CONFIG_REGPARM}" = "y"; then
     AC_MSG_WARN([
 
 *** LXRT interface for RTnet disabled ***
@@ -692,13 +651,13 @@ ${RTAI_LINUX_DIR}
 and rebuild your kernel in order to build LXRT interface for RTNET
 
 ])
-    CONFIG_RTNET_LXRT=no
+    CONFIG_RTNET_LXRT=n
 else
-    AC_MSG_RESULT([${CONFIG_REGPARM:-no}])
+    AC_MSG_RESULT([${CONFIG_REGPARM:-n}])
 fi
 
-AM_CONDITIONAL(CONFIG_RTNET_LXRT,[test "$CONFIG_RTNET_LXRT" = "yes"])
-if test "$CONFIG_RTNET_LXRT" = "yes"; then
+AM_CONDITIONAL(CONFIG_RTNET_LXRT,[test "$CONFIG_RTNET_LXRT" = "y"])
+if test "$CONFIG_RTNET_LXRT" = "y"; then
     AC_DEFINE(CONFIG_RTNET_LXRT, 1, [RTAI LXRT])
 fi
 
@@ -707,216 +666,170 @@ dnl ======================================================================
 dnl             network interface card driver
 dnl ======================================================================
 
-AC_MSG_CHECKING([whether to build all PCI network driver])
-AC_ARG_ENABLE(allpci,
-    AS_HELP_STRING([--enable-allpci], [build all PCI NIC drivers]),
-    [case "$enableval" in
-        y | yes) CONFIG_RTNET_ALLPCI=yes ;;
-        *) CONFIG_RTNET_ALLPCI=no ;;
-    esac],
-    [CONFIG_RTNET_ALLPCI=no])
-AC_MSG_RESULT([${CONFIG_RTNET_ALLPCI}])
-
-
-AC_MSG_CHECKING([whether to build 3Com 59x driver])
-AC_ARG_ENABLE(3c59x,
-    AS_HELP_STRING([--enable-3c59x], [build 3Com 59x driver]),
-    [case "$enableval" in
-        y | yes) CONFIG_RTNET_3C59X=yes ;;
-        *) CONFIG_RTNET_3C59X=no ;;
-    esac],
-    [CONFIG_RTNET_3C59X=no])
-# 3Com should be enabled manually, not by allpci
-AC_MSG_RESULT([${CONFIG_RTNET_3C59X}])
-AM_CONDITIONAL(CONFIG_RTNET_3C59X,[test "$CONFIG_RTNET_3C59X" = "yes"])
-
-
 AC_MSG_CHECKING([whether to build Realtek 8139 driver])
 AC_ARG_ENABLE(8139,
     AS_HELP_STRING([--enable-8139], [build Realtek 8139 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_8139=yes ;;
-        *) CONFIG_RTNET_8139=no ;;
-    esac],
-    [CONFIG_RTNET_8139=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_8139=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_8139}])
-AM_CONDITIONAL(CONFIG_RTNET_8139,[test "$CONFIG_RTNET_8139" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_8139=y ;;
+        *) CONFIG_RTNET_DRIVER_8139=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_8139:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_8139,[test "$CONFIG_RTNET_DRIVER_8139" = "y"])
 
 
 AC_MSG_CHECKING([whether to build Intel EtherExpressPro/100 driver])
 AC_ARG_ENABLE(eepro100,
     AS_HELP_STRING([--enable-eepro100], [build Intel EtherExpressPro/100 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_EEPRO100=yes ;;
-        *) CONFIG_RTNET_EEPRO100=no ;;
-    esac],
-    [CONFIG_RTNET_EEPRO100=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_EEPRO100=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_EEPRO100}])
-AM_CONDITIONAL(CONFIG_RTNET_EEPRO100,[test "$CONFIG_RTNET_EEPRO100" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_EEPRO100=y ;;
+        *) CONFIG_RTNET_DRIVER_EEPRO100=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_EEPRO100:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_EEPRO100,[test "$CONFIG_RTNET_DRIVER_EEPRO100" = "y"])
 
 
 AC_MSG_CHECKING([whether to build AMD PCnet32 driver])
 AC_ARG_ENABLE(pcnet32,
     AS_HELP_STRING([--enable-pcnet32], [build AMD PCnet32 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_PCNET32=yes ;;
-        *) CONFIG_RTNET_PCNET32=no ;;
-    esac],
-    [CONFIG_RTNET_PCNET32=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_PCNET32=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_PCNET32}])
-AM_CONDITIONAL(CONFIG_RTNET_PCNET32,[test "$CONFIG_RTNET_PCNET32" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_PCNET32=y ;;
+        *) CONFIG_RTNET_DRIVER_PCNET32=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_PCNET32:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_PCNET32,[test "$CONFIG_RTNET_DRIVER_PCNET32" = "y"])
 
 
 AC_MSG_CHECKING([whether to build VIA Rhine driver])
 AC_ARG_ENABLE(via-rhine,
     AS_HELP_STRING([--enable-via-rhine], [build VIA Rhine driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_VIA_RHINE=yes ;;
-        *) CONFIG_RTNET_VIA_RHINE=no ;;
-    esac],
-    [CONFIG_RTNET_VIA_RHINE=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_VIA_RHINE=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_VIA_RHINE}])
-AM_CONDITIONAL(CONFIG_RTNET_VIA_RHINE,[test "$CONFIG_RTNET_VIA_RHINE" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_VIA_RHINE=y ;;
+        *) CONFIG_RTNET_DRIVER_VIA_RHINE=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_VIA_RHINE:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_VIA_RHINE,[test "$CONFIG_RTNET_DRIVER_VIA_RHINE" = "y"])
 
 
 AC_MSG_CHECKING([whether to build NatSemi driver])
 AC_ARG_ENABLE(natsemi,
     AS_HELP_STRING([--enable-natsemi], [build NatSemi driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_NATSEMI=yes ;;
-        *) CONFIG_RTNET_NATSEMI=no ;;
-    esac],
-    [CONFIG_RTNET_NATSEMI=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_NATSEMI=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_NATSEMI}])
-AM_CONDITIONAL(CONFIG_RTNET_NATSEMI,[test "$CONFIG_RTNET_NATSEMI" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_NATSEMI=y ;;
+        *) CONFIG_RTNET_DRIVER_NATSEMI=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_NATSEMI:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_NATSEMI,[test "$CONFIG_RTNET_DRIVER_NATSEMI" = "y"])
 
 
 AC_MSG_CHECKING([whether to build tulip driver])
 AC_ARG_ENABLE(tulip,
     AS_HELP_STRING([--enable-tulip], [build tulip driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_TULIP=yes ;;
-        *) CONFIG_RTNET_TULIP=no ;;
-    esac],
-    [CONFIG_RTNET_TULIP=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_TULIP=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_TULIP}])
-AM_CONDITIONAL(CONFIG_RTNET_TULIP,[test "$CONFIG_RTNET_TULIP" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_TULIP=y ;;
+        *) CONFIG_RTNET_DRIVER_TULIP=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_TULIP:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_TULIP,[test "$CONFIG_RTNET_DRIVER_TULIP" = "y"])
 
 
 AC_MSG_CHECKING([whether to build fcc enet driver])
 AC_ARG_ENABLE(fcc-enet,
     AS_HELP_STRING([--enable-fcc-enet], [build fcc enet driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_FCC_ENET=yes ;;
-        *) CONFIG_RTNET_FCC_ENET=no ;;
-    esac],
-    [CONFIG_RTNET_FCC_ENET=no])
-AC_MSG_RESULT([${CONFIG_RTNET_FCC_ENET}])
-AM_CONDITIONAL(CONFIG_RTNET_FCC_ENET,[test "$CONFIG_RTNET_FCC_ENET" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_FCC_ENET=y ;;
+        *) CONFIG_RTNET_DRIVER_FCC_ENET=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_FCC_ENET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_FCC_ENET,[test "$CONFIG_RTNET_DRIVER_FCC_ENET" = "y"])
 
 
 AC_MSG_CHECKING([whether to build scc enet driver])
 AC_ARG_ENABLE(scc-enet,
     AS_HELP_STRING([--enable-scc-enet], [build scc enet driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_SCC_ENET=yes ;;
-        *) CONFIG_RTNET_SCC_ENET=no ;;
-    esac],
-    [CONFIG_RTNET_SCC_ENET=no])
-AC_MSG_RESULT([${CONFIG_RTNET_SCC_ENET}])
-AM_CONDITIONAL(CONFIG_RTNET_SCC_ENET,[test "$CONFIG_RTNET_SCC_ENET" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_SCC_ENET=y ;;
+        *) CONFIG_RTNET_DRIVER_SCC_ENET=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_SCC_ENET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_SCC_ENET,[test "$CONFIG_RTNET_DRIVER_SCC_ENET" = "y"])
 
 
 AC_MSG_CHECKING([whether to build fec enet driver])
 AC_ARG_ENABLE(fec-enet,
     AS_HELP_STRING([--enable-fec-enet], [build fec enet driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_FEC_ENET=yes ;;
-        *) CONFIG_RTNET_FEC_ENET=no ;;
-    esac],
-    [CONFIG_RTNET_FEC_ENET=no])
-AC_MSG_RESULT([${CONFIG_RTNET_FEC_ENET}])
-AM_CONDITIONAL(CONFIG_RTNET_FEC_ENET,[test "$CONFIG_RTNET_FEC_ENET" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_FEC_ENET=y ;;
+        *) CONFIG_RTNET_DRIVER_FEC_ENET=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_FEC_ENET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_FEC_ENET,[test "$CONFIG_RTNET_DRIVER_FEC_ENET" = "y"])
 
 
 AC_MSG_CHECKING([whether to build MPC52xx fec driver])
 AC_ARG_ENABLE(mpc52xx-fec,
     AS_HELP_STRING([--enable-mpc52xx-fec], [build MPC52xx fec driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_MPC52XX_FEC=yes ;;
-        *) CONFIG_RTNET_MPC52XX_FEC=no ;;
-    esac],
-    [CONFIG_RTNET_MPC52XX_FEC=no])
-AC_MSG_RESULT([${CONFIG_RTNET_MPC52XX_FEC}])
-AM_CONDITIONAL(CONFIG_RTNET_MPC52XX_FEC,[test "$CONFIG_RTNET_MPC52XX_FEC" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_MPC52XX_FEC=y ;;
+        *) CONFIG_RTNET_DRIVER_MPC52XX_FEC=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_MPC52XX_FEC:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_MPC52XX_FEC,[test "$CONFIG_RTNET_DRIVER_MPC52XX_FEC" = "y"])
 
 
 AC_MSG_CHECKING([whether to build SMSC LAN91C111 driver])
 AC_ARG_ENABLE(smc91111,
     AS_HELP_STRING([--enable-smc91111], [build SMSC LAN91C111 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_SMC91111=yes ;;
-        *) CONFIG_RTNET_SMC91111=no ;;
-    esac],
-    [CONFIG_RTNET_SMC91111=no])
-AC_MSG_RESULT([${CONFIG_RTNET_SMC91111}])
-AM_CONDITIONAL(CONFIG_RTNET_SMC91111,[test "$CONFIG_RTNET_SMC91111" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_SMC91111=y ;;
+        *) CONFIG_RTNET_DRIVER_SMC91111=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_SMC91111:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_SMC91111,[test "$CONFIG_RTNET_DRIVER_SMC91111" = "y"])
 
 
 AC_MSG_CHECKING([whether to build Eth1394 driver])
 AC_ARG_ENABLE(eth1394,
     AS_HELP_STRING([--enable-eth1394], [build Eth1394 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_ETH1394=yes ;;
-        *) CONFIG_RTNET_ETH1394=no ;;
-    esac],
-    [CONFIG_RTNET_ETH1394=no])
-AC_MSG_RESULT([${CONFIG_RTNET_ETH1394}])
-AM_CONDITIONAL(CONFIG_RTNET_ETH1394,[test "$CONFIG_RTNET_ETH1394" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_ETH1394=y ;;
+        *) CONFIG_RTNET_DRIVER_ETH1394=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_ETH1394:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_ETH1394,[test "$CONFIG_RTNET_DRIVER_ETH1394" = "y"])
 
 
 AC_MSG_CHECKING([whether to build loopback driver])
 AC_ARG_ENABLE(loopback,
     AS_HELP_STRING([--enable-loopback], [build loopback driver @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_LOOPBACK=no ;;
-        *) CONFIG_RTNET_LOOPBACK=yes ;;
-    esac],
-    [CONFIG_RTNET_LOOPBACK=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_LOOPBACK}])
-AM_CONDITIONAL(CONFIG_RTNET_LOOPBACK,[test "$CONFIG_RTNET_LOOPBACK" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_LOOPBACK=y ;;
+        *) CONFIG_RTNET_DRIVER_LOOPBACK=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_LOOPBACK:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_LOOPBACK,[test "$CONFIG_RTNET_DRIVER_LOOPBACK" = "y"])
+
+
+AC_MSG_CHECKING([whether to build 3Com 59x driver])
+AC_ARG_ENABLE(3c59x,
+    AS_HELP_STRING([--enable-3c59x], [build 3Com 59x driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRIVER_3C59X=y ;;
+        *) CONFIG_RTNET_DRIVER_3C59X=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_3C59X:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_3C59X,[test "$CONFIG_RTNET_DRIVER_3C59X" = "y"])
+
 
 AC_MSG_CHECKING([whether to build Realtek 8169 (Gigabit) driver])
 AC_ARG_ENABLE(r8169,
-    AS_HELP_STRING([--enable-r8169], [build Realtek 8169 (Gigabit) driver (experimental)]),
+    AS_HELP_STRING([--enable-r8169], [build Realtek 8169 (Gigabit) driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_R8169=yes ;;
-        *) CONFIG_RTNET_R8169=no ;;
-    esac],
-    [CONFIG_RTNET_R8169=no])
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_R8169=yes
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_R8169}])
-AM_CONDITIONAL(CONFIG_RTNET_R8169,[test "$CONFIG_RTNET_R8169" = "yes"])
+        y | yes) CONFIG_RTNET_DRIVER_R8169=y ;;
+        *) CONFIG_RTNET_DRIVER_R8169=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_R8169:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRIVER_R8169,[test "$CONFIG_RTNET_DRIVER_R8169" = "y"])
+
 
 dnl ======================================================================
 dnl             Real-Time IPv4
@@ -926,13 +839,12 @@ AC_MSG_CHECKING([whether to build real-time IPv4 support])
 AC_ARG_ENABLE(rtipv4,
     AS_HELP_STRING([--enable-rtipv4], [enable real-time IPv4 support @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_RTIPV4=no ;;
-        *) CONFIG_RTNET_RTIPV4=yes ;;
-    esac],
-    [CONFIG_RTNET_RTIPV4=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4}])
-AM_CONDITIONAL(CONFIG_RTNET_RTIPV4,[test "$CONFIG_RTNET_RTIPV4" = "yes"])
-if test "$CONFIG_RTNET_RTIPV4" = "yes"; then
+        y | yes) CONFIG_RTNET_RTIPV4=y ;;
+        *) CONFIG_RTNET_RTIPV4=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTIPV4,[test "$CONFIG_RTNET_RTIPV4" = "y"])
+if test "$CONFIG_RTNET_RTIPV4" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4,1,[Real-Time IPv4 support])
 fi
 
@@ -940,26 +852,24 @@ AC_MSG_CHECKING([whether to enable IP network routing])
 AC_ARG_ENABLE(net-routing,
     AS_HELP_STRING([--enable-net-routing], [enable IP network routing @<:@default=no@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_NETWORK_ROUTING=yes ;;
-        *) CONFIG_RTNET_NETWORK_ROUTING=no ;;
-    esac],
-    [CONFIG_RTNET_NETWORK_ROUTING=no])
-AC_MSG_RESULT([${CONFIG_RTNET_NETWORK_ROUTING}])
-if test "$CONFIG_RTNET_NETWORK_ROUTING" = "yes"; then
-    AC_DEFINE(CONFIG_RTNET_NETWORK_ROUTING, 1, [Network routing])
+        y | yes) CONFIG_RTNET_RTIPV4_NETROUTING=y ;;
+        *) CONFIG_RTNET_RTIPV4_NETROUTING=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_NETROUTING:-n}])
+if test "$CONFIG_RTNET_RTIPV4_NETROUTING" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_RTIPV4_NETROUTING, 1, [Network routing])
 fi
 
 AC_MSG_CHECKING([whether to enable IP router support])
 AC_ARG_ENABLE(router,
     AS_HELP_STRING([--enable-router], [enable IP router @<:@default=no@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_ROUTER=yes ;;
-        *) CONFIG_RTNET_ROUTER=no ;;
-    esac],
-    [CONFIG_RTNET_ROUTER=no])
-AC_MSG_RESULT([${CONFIG_RTNET_ROUTER}])
-if test "$CONFIG_RTNET_ROUTER" = "yes"; then
-    AC_DEFINE(CONFIG_RTNET_ROUTER, 1, [Router])
+        y | yes) CONFIG_RTNET_RTIPV4_ROUTER=y ;;
+        *) CONFIG_RTNET_RTIPV4_ROUTER=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_ROUTER:-n}])
+if test "CONFIG_RTNET_RTIPV4_ROUTER" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_RTIPV4_ROUTER, 1, [Router])
 fi
 
 
@@ -969,14 +879,13 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build real-time packet socket support])
 AC_ARG_ENABLE(rtpacket,
-    AS_HELP_STRING([--enable-rtpacket], [build real-time packet socket support @<:@default=yes@:>@]),
+    AS_HELP_STRING([--enable-rtpacket], [build Real-Time Packet socket support @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_RTPACKET=no ;;
-        *) CONFIG_RTNET_RTPACKET=yes ;;
-    esac],
-    [CONFIG_RTNET_RTPACKET=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_RTPACKET}])
-AM_CONDITIONAL(CONFIG_RTNET_RTPACKET,[test "$CONFIG_RTNET_RTPACKET" = "yes"])
+        y | yes) CONFIG_RTNET_RTPACKET=y ;;
+        *) CONFIG_RTNET_RTPACKET=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTPACKET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTPACKET,[test "$CONFIG_RTNET_RTPACKET" = "y"])
 
 
 dnl ======================================================================
@@ -987,63 +896,38 @@ AC_MSG_CHECKING([whether to build RTcfg])
 AC_ARG_ENABLE(rtcfg,
     AS_HELP_STRING([--enable-rtcfg], [build RTcfg @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_RTCFG=no ;;
-        *) CONFIG_RTNET_RTCFG=yes ;;
-    esac],
-    [CONFIG_RTNET_RTCFG=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_RTCFG}])
-AM_CONDITIONAL(CONFIG_RTNET_RTCFG,[test "$CONFIG_RTNET_RTCFG" = "yes"])
+        y | yes) CONFIG_RTNET_RTCFG=y ;;
+        *) CONFIG_RTNET_RTCFG=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTCFG:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTCFG,[test "$CONFIG_RTNET_RTCFG" = "y"])
 
 AC_MSG_CHECKING([whether to enable RTcfg debug support])
 AC_ARG_ENABLE(rtcfg-dbg,
     AS_HELP_STRING([--enable-rtcfg-dbg], [enable RTcfg debugging @<:@default=no@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
-        *) CONFIG_RTNET_RTCFG_DEBUG=no ;;
-    esac],
-    [CONFIG_RTNET_RTCFG_DEBUG=no])
-AC_MSG_RESULT([${CONFIG_RTNET_RTCFG_DEBUG}])
-if test "$CONFIG_RTNET_RTCFG_DEBUG" = "yes"; then
+        y | yes) CONFIG_RTNET_RTCFG_DEBUG=y ;;
+        *) CONFIG_RTNET_RTCFG_DEBUG=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTCFG_DEBUG:-n}])
+if test "$CONFIG_RTNET_RTCFG_DEBUG" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTCFG_DEBUG,1,[RTcfg debug])
 fi
 
 
 dnl ======================================================================
-dnl             RTcap
+dnl             RTmac
 dnl ======================================================================
 
-AC_MSG_CHECKING([whether to enable RTcap support])
-AC_ARG_ENABLE(rtcap,
-    AS_HELP_STRING([--enable-rtcap], [enable RTcap support and build capturing module @<:@default=no@:>@]),
+AC_MSG_CHECKING([whether to build RTmac])
+AC_ARG_ENABLE(nomac,
+    AS_HELP_STRING([--enable-rtmac], [build Real-Time Media Access Control Layer @<:@default=yes@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_RTCAP=yes ;;
-        *) CONFIG_RTNET_RTCAP=no ;;
-    esac],
-    [CONFIG_RTNET_RTCAP=no])
-AC_MSG_RESULT([${CONFIG_RTNET_RTCAP}])
-AM_CONDITIONAL(CONFIG_RTNET_RTCAP,[test "$CONFIG_RTNET_RTCAP" = "yes"])
-if test "$CONFIG_RTNET_RTCAP" = "yes"; then
-    AC_DEFINE(CONFIG_RTNET_RTCAP,1,[RTcap support])
-fi
-
-
-dnl ======================================================================
-dnl             rtnetproxy
-dnl ======================================================================
-
-AC_MSG_CHECKING([whether to build rtnetproxy])
-AC_ARG_ENABLE(proxy,
-    AS_HELP_STRING([--enable-proxy], [build IP protocol proxy driver (legacy) @<:@default=no@:>@]),
-    [case "$enableval" in
-        y | yes) CONFIG_RTNET_PROXY=yes ;;
-        *) CONFIG_RTNET_PROXY=no ;;
-    esac],
-    [CONFIG_RTNET_PROXY=no])
-AC_MSG_RESULT([${CONFIG_RTNET_PROXY}])
-AM_CONDITIONAL(CONFIG_RTNET_PROXY,[test "$CONFIG_RTNET_PROXY" = "yes"])
-if test "$CONFIG_RTNET_PROXY" = "yes"; then
-    AC_DEFINE(CONFIG_RTNET_PROXY,1,[rtnetproxy support])
-fi
+        y | yes) CONFIG_RTNET_RTMAC=y ;;
+        *) CONFIG_RTNET_RTMAC=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTMAC:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTMAC,[test "$CONFIG_RTNET_RTMAC" = "y"])
 
 
 dnl ======================================================================
@@ -1054,23 +938,21 @@ AC_MSG_CHECKING([whether to build TDMA])
 AC_ARG_ENABLE(tdma,
     AS_HELP_STRING([--enable-tdma], [build TDMA discipline for RTmac @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_TDMA=no ;;
-        *) CONFIG_RTNET_TDMA=yes ;;
-    esac],
-    [CONFIG_RTNET_TDMA=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_TDMA}])
-AM_CONDITIONAL(CONFIG_RTNET_TDMA,[test "$CONFIG_RTNET_TDMA" = "yes"])
+        y | yes) CONFIG_RTNET_TDMA=y ;;
+        *) CONFIG_RTNET_TDMA=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_TDMA:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_TDMA,[test "$CONFIG_RTNET_TDMA" = "y"])
 
 AC_MSG_CHECKING([whether to enable TDMA master support])
 AC_ARG_ENABLE(tdma-master,
     AS_HELP_STRING([--enable-tdma-master], [enable TDMA master support @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_TDMA_MASTER=no ;;
-        *) CONFIG_RTNET_TDMA_MASTER=yes ;;
-    esac],
-    [CONFIG_RTNET_TDMA_MASTER=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_TDMA_MASTER}])
-if test "$CONFIG_RTNET_TDMA_MASTER" = "yes"; then
+        y | yes) CONFIG_RTNET_TDMA_MASTER=y ;;
+        *) CONFIG_RTNET_TDMA_MASTER=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_TDMA_MASTER:-n}])
+if test "$CONFIG_RTNET_TDMA_MASTER" = "y"; then
     AC_DEFINE(CONFIG_RTNET_TDMA_MASTER,1,[TDMA master support])
 fi
 
@@ -1083,12 +965,42 @@ AC_MSG_CHECKING([whether to build NoMAC])
 AC_ARG_ENABLE(nomac,
     AS_HELP_STRING([--enable-nomac], [build NoMAC discipline for RTmac @<:@default=no@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_NOMAC=yes ;;
-        *) CONFIG_RTNET_NOMAC=no ;;
-    esac],
-    [CONFIG_RTNET_NOMAC=no])
-AC_MSG_RESULT([${CONFIG_RTNET_NOMAC}])
-AM_CONDITIONAL(CONFIG_RTNET_NOMAC,[test "$CONFIG_RTNET_NOMAC" = "yes"])
+        y | yes) CONFIG_RTNET_NOMAC=y ;;
+        *) CONFIG_RTNET_NOMAC=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_NOMAC:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_NOMAC,[test "$CONFIG_RTNET_NOMAC" = "y"])
+
+
+dnl ======================================================================
+dnl             Add-Ons
+dnl ======================================================================
+
+AC_MSG_CHECKING([whether to enable RTcap support])
+AC_ARG_ENABLE(rtcap,
+    AS_HELP_STRING([--enable-rtcap], [enable RTcap support and build capturing module @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_ADDON_RTCAP=y ;;
+        *) CONFIG_RTNET_ADDON_RTCAP=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_ADDON_RTCAP:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_ADDON_RTCAP,[test "$CONFIG_RTNET_ADDON_RTCAP" = "y"])
+if test "$CONFIG_RTNET_ADDON_RTCAP" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_ADDON_RTCAP,1,[RTcap support])
+fi
+
+AC_MSG_CHECKING([whether to build rtnetproxy])
+AC_ARG_ENABLE(proxy,
+    AS_HELP_STRING([--enable-proxy], [build IP protocol proxy driver (legacy) @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_ADDON_PROXY=y ;;
+        *) CONFIG_RTNET_ADDON_PROXY=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_ADDON_PROXY:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_ADDON_PROXY,[test "$CONFIG_RTNET_ADDON_PROXY" = "y"])
+if test "$CONFIG_RTNET_ADDON_PROXY" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_ADDON_PROXY,1,[rtnetproxy support])
+fi
 
 
 dnl ======================================================================
@@ -1099,17 +1011,17 @@ AC_MSG_CHECKING([whether to build enclosed RTDM])
 AC_ARG_ENABLE(enclosed-rtdm,
     AS_HELP_STRING([--enable-enclosed-rtdm], [built enclosed RTDM module @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=no ;;
-        *) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes ;;
+        n | no) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
+        *) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y ;;
     esac],
-    [CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes])
+    [CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y])
 case "${CONFIG_RTNET_RTAI_VERSION}" in
     fusion-090)
-        CONFIG_RTNET_ENCLOSED_RTAI_RTDM=no ;;
+        CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
 esac
-AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM}])
-AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"])
-if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
+AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "y"])
+if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "y"; then
     AC_CONFIG_LINKS(stack/include/rtdm.h:rtai_rtdm/rtdm.h)
     AC_CONFIG_LINKS(stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
 else
@@ -1125,19 +1037,19 @@ AC_MSG_CHECKING([whether to enable RTDM select])
 AC_ARG_ENABLE(rtdm-select,
     AS_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental) @<:@default=no@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_RTDM_SELECT=yes ;;
-        *) CONFIG_RTNET_RTDM_SELECT=no ;;
+        y | yes) CONFIG_RTNET_RTDM_SELECT=y ;;
+        *) CONFIG_RTNET_RTDM_SELECT=n ;;
     esac],
-    [CONFIG_RTNET_RTDM_SELECT=no])
-AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT}])
+    [CONFIG_RTNET_RTDM_SELECT=n])
+AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT:-n}])
 
 dnl When RTDM select has matured, the example compilation should no longer
 dnl depend on the internal select support by RTnet. Instead, running the
 dnl example shall give an error.
 
-AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "yes"])
+AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "y"])
 
-if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
+if test "$CONFIG_RTNET_RTDM_SELECT" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM select support])
 fi
 
@@ -1150,12 +1062,12 @@ AC_MSG_CHECKING([whether to build examples])
 AC_ARG_ENABLE(examples,
     AS_HELP_STRING([--enable-examples], [build examples @<:@default=yes@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_EXAMPLES=no ;;
-        *) CONFIG_RTNET_EXAMPLES=yes ;;
+        n | no) CONFIG_RTNET_EXAMPLES=n ;;
+        *) CONFIG_RTNET_EXAMPLES=y ;;
     esac],
-    [CONFIG_RTNET_EXAMPLES=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_EXAMPLES}])
-AM_CONDITIONAL(CONFIG_RTNET_EXAMPLES,[test "$CONFIG_RTNET_EXAMPLES" = "yes"])
+    [CONFIG_RTNET_EXAMPLES=y])
+AC_MSG_RESULT([${CONFIG_RTNET_EXAMPLES:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_EXAMPLES,[test "$CONFIG_RTNET_EXAMPLES" = "y"])
 
 
 dnl ======================================================================
@@ -1164,14 +1076,13 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to enable internal bug checks])
 AC_ARG_ENABLE(checks,
-    AS_HELP_STRING([--enable-checks], [enable internal bug checks @<:@default=yes@:>@]),
+    AS_HELP_STRING([--enable-checks], [enable internal bug checks @<:@default=no@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_CHECKED=no ;;
-        *) CONFIG_RTNET_CHECKED=yes ;;
-    esac],
-    [CONFIG_RTNET_CHECKED=yes])
-AC_MSG_RESULT([${CONFIG_RTNET_CHECKED}])
-if test "$CONFIG_RTNET_CHECKED" = "yes"; then
+        y | yes) CONFIG_RTNET_CHECKED=y ;;
+        *) CONFIG_RTNET_CHECKED=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_CHECKED:-n}])
+if test "$CONFIG_RTNET_CHECKED" = "y"; then
     AC_DEFINE(CONFIG_RTNET_CHECKED, 1, [Bug checks])
 fi
 
@@ -1232,23 +1143,6 @@ dnl ======================================================================
 
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
-        addons/examples/frag-ip \
-        addons/examples/raw-packets \
-        addons/examples/round-trip-time/client \
-        addons/examples/round-trip-time/server \
-        addons/examples/rtmac/event/collector \
-        addons/examples/rtmac/event/handler \
-        addons/examples/rtmac/netshm \
-        addons/examples/rtmac/netshm/kernel-demo \
-        addons/examples/rtmac/round-trip-time/client \
-        addons/examples/rtmac/round-trip-time/multi-client \
-        addons/examples/rtmac/round-trip-time/parport-client \
-        addons/examples/rtmac/round-trip-time/server \
-        addons/examples/select \
-        \
-        addons/rtcap \
-        addons/rtnetproxy \
-        \
         drivers/8139too \
         drivers/eepro100 \
         drivers/eth1394 \
@@ -1265,8 +1159,6 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/experimental/3c59x \
         drivers/experimental/r8169 \
         \
-        rtai_rtdm \
-        \
         stack \
         stack/packet \
         stack/ipv4 \
@@ -1274,10 +1166,29 @@ if test x$CONFIG_KBUILD = xy; then
         stack/rtmac \
         stack/rtmac/nomac \
         stack/rtmac/tdma \
+        \
+        addons/rtcap \
+        addons/rtnetproxy \
+        \
+        examples/rtai-fusion/native/kernel \
+        \
+        rtai_rtdm \
         ; do
             AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
-        done
+    done
 fi
+
+dnl        addons/examples/round-trip-time/client \
+dnl        addons/examples/round-trip-time/server \
+dnl        addons/examples/rtmac/event/collector \
+dnl        addons/examples/rtmac/event/handler \
+dnl        addons/examples/rtmac/netshm \
+dnl        addons/examples/rtmac/netshm/kernel-demo \
+dnl        addons/examples/rtmac/round-trip-time/client \
+dnl        addons/examples/rtmac/round-trip-time/multi-client \
+dnl        addons/examples/rtmac/round-trip-time/parport-client \
+dnl        addons/examples/rtmac/round-trip-time/server \
+dnl        addons/examples/select \
 
 
 dnl ======================================================================
@@ -1302,32 +1213,6 @@ AC_CONFIG_FILES([ \
     \
     Documentation/GNUmakefile \
     \
-    addons/GNUmakefile \
-    addons/examples/GNUmakefile \
-    addons/examples/frag-ip/GNUmakefile \
-    addons/examples/fusion/GNUmakefile \
-    addons/examples/lxrt/GNUmakefile \
-    addons/examples/raw-packets/GNUmakefile \
-    addons/examples/round-trip-time/GNUmakefile \
-    addons/examples/round-trip-time/client/GNUmakefile \
-    addons/examples/round-trip-time/linux-client/GNUmakefile \
-    addons/examples/round-trip-time/server/GNUmakefile \
-    addons/examples/rtmac/GNUmakefile \
-    addons/examples/rtmac/event/GNUmakefile \
-    addons/examples/rtmac/event/collector/GNUmakefile \
-    addons/examples/rtmac/event/handler/GNUmakefile \
-    addons/examples/rtmac/netshm/GNUmakefile \
-    addons/examples/rtmac/netshm/kernel-demo/GNUmakefile \
-    addons/examples/rtmac/round-trip-time/GNUmakefile \
-    addons/examples/rtmac/round-trip-time/client/GNUmakefile \
-    addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile \
-    addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile \
-    addons/examples/rtmac/round-trip-time/server/GNUmakefile \
-    addons/examples/select/GNUmakefile \
-    \
-    addons/rtcap/GNUmakefile \
-    addons/rtnetproxy/GNUmakefile \
-    \
     drivers/GNUmakefile \
     drivers/8139too/GNUmakefile \
     drivers/eepro100/GNUmakefile \
@@ -1346,8 +1231,6 @@ AC_CONFIG_FILES([ \
     drivers/experimental/3c59x/GNUmakefile \
     drivers/experimental/r8169/GNUmakefile \
     \
-    rtai_rtdm/GNUmakefile \
-    \
     stack/GNUmakefile \
     stack/include/GNUmakefile \
     stack/packet/GNUmakefile \
@@ -1360,7 +1243,39 @@ AC_CONFIG_FILES([ \
     tools/GNUmakefile \
     tools/rtnet \
     tools/rtnet.conf \
+    \
+    addons/GNUmakefile \
+    addons/rtcap/GNUmakefile \
+    addons/rtnetproxy/GNUmakefile \
+    \
+    examples/GNUmakefile \
+    examples/generic/GNUmakefile \
+    examples/rtai-classic/GNUmakefile \
+    examples/rtai-fusion/GNUmakefile \
+    examples/rtai-fusion/native/GNUmakefile \
+    examples/rtai-fusion/native/kernel/GNUmakefile \
+    \
+    rtai_rtdm/GNUmakefile \
+    \
+    scripts/GNUmakefile \
     ])
+
+dnl    examples/round-trip-time/GNUmakefile \
+dnl    examples/round-trip-time/client/GNUmakefile \
+dnl    examples/round-trip-time/linux-client/GNUmakefile \
+dnl    examples/round-trip-time/server/GNUmakefile \
+dnl    examples/rtmac/GNUmakefile \
+dnl    examples/rtmac/event/GNUmakefile \
+dnl    examples/rtmac/event/collector/GNUmakefile \
+dnl    examples/rtmac/event/handler/GNUmakefile \
+dnl    examples/rtmac/netshm/GNUmakefile \
+dnl    examples/rtmac/netshm/kernel-demo/GNUmakefile \
+dnl    examples/rtmac/round-trip-time/GNUmakefile \
+dnl    examples/rtmac/round-trip-time/client/GNUmakefile \
+dnl    examples/rtmac/round-trip-time/multi-client/GNUmakefile \
+dnl    examples/rtmac/round-trip-time/parport-client/GNUmakefile \
+dnl    examples/rtmac/round-trip-time/server/GNUmakefile \
+dnl    examples/select/GNUmakefile \
 
 AC_OUTPUT
 

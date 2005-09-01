@@ -1,0 +1,9 @@
+config RTNET_TDMA
+    bool "TDMA discipline for RTmac"
+    depends RTNET_RTMAC
+    default y
+
+config RTNET_TDMA_MASTER
+    bool "TDMA master support"
+    depends RTNET_TDMA
+    default y

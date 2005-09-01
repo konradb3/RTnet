@@ -109,13 +109,13 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
     const char verstr[] =
         "RTnet " RTNET_PACKAGE_VERSION " - built on " __DATE__ " " __TIME__ "\n"
         "RTcap:      "
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
             "yes\n"
 #else
             "no\n"
 #endif
         "rtnetproxy: "
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
             "yes\n"
 #else
             "no\n"

@@ -1,0 +1,7 @@
+menu "Examples"
+
+config RTNET_EXAMPLES
+    bool "RTnet Application Examples"
+    default n
+
+endmenu

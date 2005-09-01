@@ -217,7 +217,7 @@ struct rtskb {
     int                 chain_len;
 #endif
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
     int                 cap_flags;  /* see RTSKB_CAP_xxx                    */
     struct rtskb        *cap_comp_skb; /* compensation rtskb                */
     struct rtskb        *cap_next;  /* used for capture queue               */
@@ -730,7 +730,7 @@ extern unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb,
 extern void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to);
 
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
 
 extern rtos_spinlock_t rtcap_lock;
 extern void (*rtcap_handler)(struct rtskb *skb);
@@ -760,13 +760,13 @@ static inline void rtcap_mark_rtmac_enqueue(struct rtskb *skb)
     skb->cap_rtmac_stamp = rtos_get_time();
 }
 
-#else /* ifndef CONFIG_RTNET_RTCAP */
+#else /* ifndef CONFIG_RTNET_ADDON_RTCAP */
 
 #define rtcap_mark_incoming(skb)
 #define rtcap_report_incoming(skb)
 #define rtcap_mark_rtmac_enqueue(skb)
 
-#endif /* CONFIG_RTNET_RTCAP */
+#endif /* CONFIG_RTNET_ADDON_RTCAP */
 
 
 #endif /* __KERNEL__ */

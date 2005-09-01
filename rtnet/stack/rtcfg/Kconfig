@@ -1,0 +1,8 @@
+config RTNET_RTCFG
+    bool "RTcfg Service"
+    default y
+
+config RTNET_RTCFG_DEBUG
+    bool "RTcfg Debugging"
+    depends on RTNET_RTCFG
+    default n

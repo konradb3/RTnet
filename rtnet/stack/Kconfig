@@ -1,0 +1,8 @@
+menu "Protocol Stack"
+
+source "stack/ipv4/Kconfig"
+source "stack/packet/Kconfig"
+source "stack/rtmac/Kconfig"
+source "stack/rtcfg/Kconfig"
+
+endmenu

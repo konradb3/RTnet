@@ -1,0 +1,75 @@
+menu "Drivers"
+
+comment "Common PCI Drivers"
+
+config RTNET_DRIVER_PCNET32
+    bool "AMD PCnet32"
+    default n
+
+config RTNET_DRIVER_TULIP
+    bool "DEC Tulip"
+    default n
+
+config RTNET_DRIVER_EEPRO100
+    bool "Intel EtherExpress PRO/100"
+    default y
+
+config RTNET_DRIVER_NATSEMI
+    bool "NatSemi"
+    default n
+
+config RTNET_DRIVER_8139
+    bool "Realtek 8139"
+    default y
+
+config RTNET_DRIVER_VIA_RHINE
+    bool "VIA Rhine"
+    default n
+
+
+if ARCH = ppc
+
+comment "Embedded MPC Drivers"
+
+config RTNET_DRIVER_FCC_ENET
+    bool "MPC8260 FCC Ethernet"
+    default n
+
+config RTNET_DRIVER_FEC_ENET
+    bool "MPC8xx FEC Ethernet"
+    default n
+
+config RTNET_DRIVER_SCC_ENET
+    bool "MPC8xx SCC Ethernet"
+    default n
+
+config RTNET_DRIVER_MPC52XX_FEC
+    bool "MPC52xx FEC Ethernet"
+    default n
+
+endif
+
+
+comment "Misc Drivers"
+
+config RTNET_DRIVER_LOOPBACK
+    bool "Loopback"
+    default y
+
+config RTNET_DRIVER_SMC91111
+    bool "SMSC LAN91C111"
+    default n
+
+config RTNET_DRIVER_ETH1394
+    bool "Ethernet over 1394"
+    default n
+
+config RTFIREWIRE_DIR
+    string "Path of RT-FireWire Source Code"
+    depends on RTNET_DRIVER_ETH1394
+    default "/usr/src/rt-firewire"
+
+
+source "drivers/experimental/Kconfig"
+
+endmenu

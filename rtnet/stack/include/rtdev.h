@@ -175,7 +175,7 @@ struct rtnet_device *rtdev_get_loopback(void);
 
 int rtdev_xmit(struct rtskb *skb);
 
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
 int rtdev_xmit_proxy(struct rtskb *skb);
 #endif
 

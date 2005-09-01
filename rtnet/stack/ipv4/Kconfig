@@ -1,0 +1,13 @@
+config RTNET_RTIPV4
+    bool "Real-Time IPv4"
+    default y
+
+config RTNET_RTIPV4_NETROUTING
+    bool "IP Network Routing"
+    depends on RTNET_RTIPV4
+    default n
+
+config RTNET_RTIPV4_ROUTER
+    bool "IP Router"
+    depends on RTNET_RTIPV4
+    default n

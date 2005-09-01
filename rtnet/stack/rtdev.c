@@ -561,7 +561,7 @@ int rtdev_xmit(struct rtskb *skb)
 
 
 
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
 /***
  *      rtdev_xmit_proxy - send rtproxy packet
  */
@@ -598,7 +598,7 @@ int rtdev_xmit_proxy(struct rtskb *skb)
 
     return ret;
 }
-#endif /* CONFIG_RTNET_PROXY */
+#endif /* CONFIG_RTNET_ADDON_PROXY */
 
 
 
@@ -626,7 +626,7 @@ EXPORT_SYMBOL(rtdev_get_loopback);
 
 EXPORT_SYMBOL(rtdev_xmit);
 
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
 EXPORT_SYMBOL(rtdev_xmit_proxy);
 #endif
 

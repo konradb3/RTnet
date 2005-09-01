@@ -1,0 +1,4 @@
+config RTNET_NOMAC
+    bool "NoMAC discipline for RTmac"
+    depends RTNET_RTMAC
+    default n

@@ -30,7 +30,7 @@ all-local: rtifconfig rtroute rtping $(OPTPROGS)
 install-exec-local: rtnet $(OPTSCRIPTS)
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)
 	for FILE in $^; do					\
- 		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
+		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
 	done
 
 install-data-local: rtnet.conf $(OPTCONF)

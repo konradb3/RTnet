@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS LIBOBJS CONFIG_FUSION_TRUE CONFIG_FUSION_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_KBUILD_DISTCLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_3C59X_TRUE CONFIG_RTNET_3C59X_FALSE CONFIG_RTNET_8139_TRUE CONFIG_RTNET_8139_FALSE CONFIG_RTNET_EEPRO100_TRUE CONFIG_RTNET_EEPRO100_FALSE CONFIG_RTNET_PCNET32_TRUE CONFIG_RTNET_PCNET32_FALSE CONFIG_RTNET_VIA_RHINE_TRUE CONFIG_RTNET_VIA_RHINE_FALSE CONFIG_RTNET_NATSEMI_TRUE CONFIG_RTNET_NATSEMI_FALSE CONFIG_RTNET_TULIP_TRUE CONFIG_RTNET_TULIP_FALSE CONFIG_RTNET_FCC_ENET_TRUE CONFIG_RTNET_FCC_ENET_FALSE CONFIG_RTNET_SCC_ENET_TRUE CONFIG_RTNET_SCC_ENET_FALSE CONFIG_RTNET_FEC_ENET_TRUE CONFIG_RTNET_FEC_ENET_FALSE CONFIG_RTNET_MPC52XX_FEC_TRUE CONFIG_RTNET_MPC52XX_FEC_FALSE CONFIG_RTNET_SMC91111_TRUE CONFIG_RTNET_SMC91111_FALSE CONFIG_RTNET_ETH1394_TRUE CONFIG_RTNET_ETH1394_FALSE CONFIG_RTNET_LOOPBACK_TRUE CONFIG_RTNET_LOOPBACK_FALSE CONFIG_RTNET_R8169_TRUE CONFIG_RTNET_R8169_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTCAP_TRUE CONFIG_RTNET_RTCAP_FALSE CONFIG_RTNET_PROXY_TRUE CONFIG_RTNET_PROXY_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE CONFIG_RTNET_RTDM_SELECT_TRUE CONFIG_RTNET_RTDM_SELECT_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTAI_KMOD_CFLAGS RTAI_USER_CFLAGS RTAI_LIBRARIES RTFW_KMOD_CFLAGS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS CONFIG_RTAI_CLASSIC_TRUE CONFIG_RTAI_CLASSIC_FALSE CONFIG_RTAI_FUSION_TRUE CONFIG_RTAI_FUSION_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_KBUILD_DISTCLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_DRIVER_8139_TRUE CONFIG_RTNET_DRIVER_8139_FALSE CONFIG_RTNET_DRIVER_EEPRO100_TRUE CONFIG_RTNET_DRIVER_EEPRO100_FALSE CONFIG_RTNET_DRIVER_PCNET32_TRUE CONFIG_RTNET_DRIVER_PCNET32_FALSE CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE CONFIG_RTNET_DRIVER_NATSEMI_TRUE CONFIG_RTNET_DRIVER_NATSEMI_FALSE CONFIG_RTNET_DRIVER_TULIP_TRUE CONFIG_RTNET_DRIVER_TULIP_FALSE CONFIG_RTNET_DRIVER_FCC_ENET_TRUE CONFIG_RTNET_DRIVER_FCC_ENET_FALSE CONFIG_RTNET_DRIVER_SCC_ENET_TRUE CONFIG_RTNET_DRIVER_SCC_ENET_FALSE CONFIG_RTNET_DRIVER_FEC_ENET_TRUE CONFIG_RTNET_DRIVER_FEC_ENET_FALSE CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE CONFIG_RTNET_DRIVER_SMC91111_TRUE CONFIG_RTNET_DRIVER_SMC91111_FALSE CONFIG_RTNET_DRIVER_ETH1394_TRUE CONFIG_RTNET_DRIVER_ETH1394_FALSE CONFIG_RTNET_DRIVER_LOOPBACK_TRUE CONFIG_RTNET_DRIVER_LOOPBACK_FALSE CONFIG_RTNET_DRIVER_3C59X_TRUE CONFIG_RTNET_DRIVER_3C59X_FALSE CONFIG_RTNET_DRIVER_R8169_TRUE CONFIG_RTNET_DRIVER_R8169_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTMAC_TRUE CONFIG_RTNET_RTMAC_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ADDON_RTCAP_TRUE CONFIG_RTNET_ADDON_RTCAP_FALSE CONFIG_RTNET_ADDON_PROXY_TRUE CONFIG_RTNET_ADDON_PROXY_FALSE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE CONFIG_RTNET_RTDM_SELECT_TRUE CONFIG_RTNET_RTDM_SELECT_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTAI_KMOD_CFLAGS RTAI_USER_CFLAGS RTAI_LIBRARIES RTFW_KMOD_CFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1047,8 +1047,6 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-allpci         build all PCI NIC drivers
-  --enable-3c59x          build 3Com 59x driver
   --enable-8139           build Realtek 8139 driver
   --enable-eepro100       build Intel EtherExpressPro/100 driver
   --enable-pcnet32        build AMD PCnet32 driver
@@ -1062,26 +1060,29 @@ Optional Features:
   --enable-smc91111       build SMSC LAN91C111 driver
   --enable-eth1394        build Eth1394 driver
   --enable-loopback       build loopback driver [default=yes]
-  --enable-r8169          build Realtek 8169 (Gigabit) driver (experimental)
+  --enable-3c59x          build 3Com 59x driver
+  --enable-r8169          build Realtek 8169 (Gigabit) driver
   --enable-rtipv4         enable real-time IPv4 support [default=yes]
   --enable-net-routing    enable IP network routing [default=no]
   --enable-router         enable IP router [default=no]
-  --enable-rtpacket       build real-time packet socket support
+  --enable-rtpacket       build Real-Time Packet socket support
                           [default=yes]
   --enable-rtcfg          build RTcfg [default=yes]
   --enable-rtcfg-dbg      enable RTcfg debugging [default=no]
+  --enable-rtmac          build Real-Time Media Access Control Layer
+                          [default=yes]
+  --enable-tdma           build TDMA discipline for RTmac [default=yes]
+  --enable-tdma-master    enable TDMA master support [default=yes]
+  --enable-nomac          build NoMAC discipline for RTmac [default=no]
   --enable-rtcap          enable RTcap support and build capturing module
                           [default=no]
   --enable-proxy          build IP protocol proxy driver (legacy)
                           [default=no]
-  --enable-tdma           build TDMA discipline for RTmac [default=yes]
-  --enable-tdma-master    enable TDMA master support [default=yes]
-  --enable-nomac          build NoMAC discipline for RTmac [default=no]
   --enable-enclosed-rtdm  built enclosed RTDM module [default=yes]
   --enable-rtdm-select    enable select function for RTDM (experimental)
                           [default=no]
   --enable-examples       build examples [default=yes]
-  --enable-checks         enable internal bug checks [default=yes]
+  --enable-checks         enable internal bug checks [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1092,8 +1093,10 @@ Optional Packages:
                           both]
   --with-tags[=TAGS]
                           include additional configurations [automatic]
+  --with-kconfig-file=<kconfig-file>
+                          KConfig parameter file
   --with-rtai=RTAI        installation path of RTAI 3.x or RTAI/fusion
-  --with-rtfw=RTFW        path to RT-FireWire source
+  --with-rtfw=RTFW        path of RT-FireWire source code
   --with-module-dir=<module-dir>
                           Installation directory for modules
 
@@ -3783,7 +3786,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3786 "configure"' > conftest.$ac_ext
+  echo '#line 3789 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5362,7 +5365,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5365:" \
+echo "$as_me:5368:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6431,11 +6434,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6434: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6437: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6438: \$? = $ac_status" >&5
+   echo "$as_me:6441: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6686,11 +6689,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6689: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6692: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6693: \$? = $ac_status" >&5
+   echo "$as_me:6696: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6746,11 +6749,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6749: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6752: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6753: \$? = $ac_status" >&5
+   echo "$as_me:6756: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8946,7 +8949,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8949 "configure"
+#line 8952 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9044,7 +9047,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9047 "configure"
+#line 9050 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11264,11 +11267,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11267: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11270: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11271: \$? = $ac_status" >&5
+   echo "$as_me:11274: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -11324,11 +11327,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11327: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11330: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11331: \$? = $ac_status" >&5
+   echo "$as_me:11334: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12687,7 +12690,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12690 "configure"
+#line 12693 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12785,7 +12788,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12788 "configure"
+#line 12791 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13640,11 +13643,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13643: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13646: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13647: \$? = $ac_status" >&5
+   echo "$as_me:13650: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13700,11 +13703,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13703: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13706: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13707: \$? = $ac_status" >&5
+   echo "$as_me:13710: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15756,11 +15759,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15759: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15762: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15763: \$? = $ac_status" >&5
+   echo "$as_me:15766: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16011,11 +16014,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16014: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16017: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16018: \$? = $ac_status" >&5
+   echo "$as_me:16021: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16071,11 +16074,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16074: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16077: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16078: \$? = $ac_status" >&5
+   echo "$as_me:16081: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18271,7 +18274,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18274 "configure"
+#line 18277 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18369,7 +18372,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18372 "configure"
+#line 18375 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19530,1144 +19533,37 @@ fi
 
 
 
-# Checks for header files.
-echo "$as_me:$LINENO: checking for ANSI C header files" >&5
-echo $ECHO_N "checking for ANSI C header files... $ECHO_C" >&6
-if test "${ac_cv_header_stdc+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <float.h>
 
-int
-main ()
-{
+RTNET_KCONFIG_FILE=$srcdir/defconfig
+kconfig_type=default
 
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_header_stdc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_header_stdc=no
+# Check whether --with-kconfig-file or --without-kconfig-file was given.
+if test "${with_kconfig_file+set}" = set; then
+  withval="$with_kconfig_file"
+
+        case "$withval" in
+        "" | y | ye | yes | n | no)
+            { { echo "$as_me:$LINENO: error: You must supply an argument to --with-kconfig-file." >&5
+echo "$as_me: error: You must supply an argument to --with-kconfig-file." >&2;}
+   { (exit 1); exit 1; }; }
+          ;;
+        esac
+        RTNET_KCONFIG_FILE="$withval"
+        kconfig_type=supplied
+
+fi;
+
+echo "$as_me:$LINENO: checking for RTnet Kconfig file" >&5
+echo $ECHO_N "checking for RTnet Kconfig file... $ECHO_C" >&6
+if test \! -f $RTNET_KCONFIG_FILE; then
+    { { echo "$as_me:$LINENO: error: Kconfig-file $RTNET_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file" >&5
+echo "$as_me: error: Kconfig-file $RTNET_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file" >&2;}
+   { (exit 1); exit 1; }; }
 fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test $ac_cv_header_stdc = yes; then
-  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <string.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "memchr" >/dev/null 2>&1; then
-  :
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <stdlib.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "free" >/dev/null 2>&1; then
-  :
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
-  if test "$cross_compiling" = yes; then
-  :
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <ctype.h>
-#if ((' ' & 0x0FF) == 0x020)
-# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
-# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
-#else
-# define ISLOWER(c) \
-		   (('a' <= (c) && (c) <= 'i') \
-		     || ('j' <= (c) && (c) <= 'r') \
-		     || ('s' <= (c) && (c) <= 'z'))
-# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
-#endif
-
-#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
-int
-main ()
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (XOR (islower (i), ISLOWER (i))
-	|| toupper (i) != TOUPPER (i))
-      exit(2);
-  exit (0);
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  :
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-ac_cv_header_stdc=no
-fi
-rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_stdc" >&5
-echo "${ECHO_T}$ac_cv_header_stdc" >&6
-if test $ac_cv_header_stdc = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define STDC_HEADERS 1
-_ACEOF
-
-fi
-
-
-
-
-
-
-
-
-
-
-for ac_header in arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking $ac_header usability" >&5
-echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking $ac_header presence" >&5
-echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <$ac_header>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
-echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------------------ ##
-## Report this to rtnet-users@lists.sourceforge.net ##
-## ------------------------------------------------ ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  eval "$as_ac_Header=\$ac_header_preproc"
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-
-fi
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-
-# Checks for typedefs, structures, and compiler characteristics.
-echo "$as_me:$LINENO: checking for an ANSI C-conforming const" >&5
-echo $ECHO_N "checking for an ANSI C-conforming const... $ECHO_C" >&6
-if test "${ac_cv_c_const+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-int
-main ()
-{
-/* FIXME: Include the comments suggested by Paul. */
-#ifndef __cplusplus
-  /* Ultrix mips cc rejects this.  */
-  typedef int charset[2];
-  const charset x;
-  /* SunOS 4.1.1 cc rejects this.  */
-  char const *const *ccp;
-  char **p;
-  /* NEC SVR4.0.2 mips cc rejects this.  */
-  struct point {int x, y;};
-  static struct point const zero = {0,0};
-  /* AIX XL C 1.02.0.0 rejects this.
-     It does not let you subtract one const X* pointer from another in
-     an arm of an if-expression whose if-part is not a constant
-     expression */
-  const char *g = "string";
-  ccp = &g + (g ? g-g : 0);
-  /* HPUX 7.0 cc rejects these. */
-  ++ccp;
-  p = (char**) ccp;
-  ccp = (char const *const *) p;
-  { /* SCO 3.2v4 cc rejects this.  */
-    char *t;
-    char const *s = 0 ? (char *) 0 : (char const *) 0;
-
-    *t++ = 0;
-  }
-  { /* Someone thinks the Sun supposedly-ANSI compiler will reject this.  */
-    int x[] = {25, 17};
-    const int *foo = &x[0];
-    ++foo;
-  }
-  { /* Sun SC1.0 ANSI compiler rejects this -- but not the above. */
-    typedef const int *iptr;
-    iptr p = 0;
-    ++p;
-  }
-  { /* AIX XL C 1.02.0.0 rejects this saying
-       "k.c", line 2.27: 1506-025 (S) Operand must be a modifiable lvalue. */
-    struct s { int j; const int *ap[3]; };
-    struct s *b; b->j = 5;
-  }
-  { /* ULTRIX-32 V3.1 (Rev 9) vcc rejects this */
-    const int foo = 10;
-  }
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_const=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_c_const=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_const" >&5
-echo "${ECHO_T}$ac_cv_c_const" >&6
-if test $ac_cv_c_const = no; then
-
-cat >>confdefs.h <<\_ACEOF
-#define const
-_ACEOF
-
-fi
-
-echo "$as_me:$LINENO: checking for inline" >&5
-echo $ECHO_N "checking for inline... $ECHO_C" >&6
-if test "${ac_cv_c_inline+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_c_inline=no
-for ac_kw in inline __inline__ __inline; do
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#ifndef __cplusplus
-typedef int foo_t;
-static $ac_kw foo_t static_foo () {return 0; }
-$ac_kw foo_t foo () {return 0; }
-#endif
-
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_inline=$ac_kw; break
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-done
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_inline" >&5
-echo "${ECHO_T}$ac_cv_c_inline" >&6
-
-
-case $ac_cv_c_inline in
-  inline | yes) ;;
-  *)
-    case $ac_cv_c_inline in
-      no) ac_val=;;
-      *) ac_val=$ac_cv_c_inline;;
-    esac
-    cat >>confdefs.h <<_ACEOF
-#ifndef __cplusplus
-#define inline $ac_val
-#endif
-_ACEOF
-    ;;
-esac
-
-echo "$as_me:$LINENO: checking for off_t" >&5
-echo $ECHO_N "checking for off_t... $ECHO_C" >&6
-if test "${ac_cv_type_off_t+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main ()
-{
-if ((off_t *) 0)
-  return 0;
-if (sizeof (off_t))
-  return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_type_off_t=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_type_off_t=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_type_off_t" >&5
-echo "${ECHO_T}$ac_cv_type_off_t" >&6
-if test $ac_cv_type_off_t = yes; then
-  :
-else
-
-cat >>confdefs.h <<_ACEOF
-#define off_t long
-_ACEOF
-
-fi
-
-echo "$as_me:$LINENO: checking for pid_t" >&5
-echo $ECHO_N "checking for pid_t... $ECHO_C" >&6
-if test "${ac_cv_type_pid_t+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main ()
-{
-if ((pid_t *) 0)
-  return 0;
-if (sizeof (pid_t))
-  return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_type_pid_t=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_type_pid_t=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_type_pid_t" >&5
-echo "${ECHO_T}$ac_cv_type_pid_t" >&6
-if test $ac_cv_type_pid_t = yes; then
-  :
-else
-
-cat >>confdefs.h <<_ACEOF
-#define pid_t int
-_ACEOF
-
-fi
-
-echo "$as_me:$LINENO: checking for size_t" >&5
-echo $ECHO_N "checking for size_t... $ECHO_C" >&6
-if test "${ac_cv_type_size_t+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main ()
-{
-if ((size_t *) 0)
-  return 0;
-if (sizeof (size_t))
-  return 0;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_type_size_t=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_type_size_t=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_type_size_t" >&5
-echo "${ECHO_T}$ac_cv_type_size_t" >&6
-if test $ac_cv_type_size_t = yes; then
-  :
-else
-
-cat >>confdefs.h <<_ACEOF
-#define size_t unsigned
-_ACEOF
-
-fi
-
-echo "$as_me:$LINENO: checking whether struct tm is in sys/time.h or time.h" >&5
-echo $ECHO_N "checking whether struct tm is in sys/time.h or time.h... $ECHO_C" >&6
-if test "${ac_cv_struct_tm+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <time.h>
-
-int
-main ()
-{
-struct tm *tp; tp->tm_sec;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_struct_tm=time.h
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_struct_tm=sys/time.h
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_struct_tm" >&5
-echo "${ECHO_T}$ac_cv_struct_tm" >&6
-if test $ac_cv_struct_tm = sys/time.h; then
-
-cat >>confdefs.h <<\_ACEOF
-#define TM_IN_SYS_TIME 1
-_ACEOF
-
-fi
-
-echo "$as_me:$LINENO: checking for working volatile" >&5
-echo $ECHO_N "checking for working volatile... $ECHO_C" >&6
-if test "${ac_cv_c_volatile+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-volatile int x;
-int * volatile y;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_c_volatile=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_c_volatile=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_c_volatile" >&5
-echo "${ECHO_T}$ac_cv_c_volatile" >&6
-if test $ac_cv_c_volatile = no; then
-
-cat >>confdefs.h <<\_ACEOF
-#define volatile
-_ACEOF
-
-fi
-
-
-# Checks for library functions.
-if test $ac_cv_c_compiler_gnu = yes; then
-    echo "$as_me:$LINENO: checking whether $CC needs -traditional" >&5
-echo $ECHO_N "checking whether $CC needs -traditional... $ECHO_C" >&6
-if test "${ac_cv_prog_gcc_traditional+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-    ac_pattern="Autoconf.*'x'"
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sgtty.h>
-Autoconf TIOCGETP
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "$ac_pattern" >/dev/null 2>&1; then
-  ac_cv_prog_gcc_traditional=yes
-else
-  ac_cv_prog_gcc_traditional=no
-fi
-rm -f conftest*
-
-
-  if test $ac_cv_prog_gcc_traditional = no; then
-    cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <termio.h>
-Autoconf TCGETA
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "$ac_pattern" >/dev/null 2>&1; then
-  ac_cv_prog_gcc_traditional=yes
-fi
-rm -f conftest*
-
-  fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_prog_gcc_traditional" >&5
-echo "${ECHO_T}$ac_cv_prog_gcc_traditional" >&6
-  if test $ac_cv_prog_gcc_traditional = yes; then
-    CC="$CC -traditional"
-  fi
-fi
-
-echo "$as_me:$LINENO: checking for working memcmp" >&5
-echo $ECHO_N "checking for working memcmp... $ECHO_C" >&6
-if test "${ac_cv_func_memcmp_working+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "$cross_compiling" = yes; then
-  ac_cv_func_memcmp_working=no
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-int
-main ()
-{
-
-  /* Some versions of memcmp are not 8-bit clean.  */
-  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
-  if (memcmp(&c0, &c2, 1) >= 0 || memcmp(&c1, &c2, 1) >= 0)
-    exit (1);
-
-  /* The Next x86 OpenStep bug shows up only when comparing 16 bytes
-     or more and with at least one buffer not starting on a 4-byte boundary.
-     William Lewis provided this test program.   */
-  {
-    char foo[21];
-    char bar[21];
-    int i;
-    for (i = 0; i < 4; i++)
-      {
-	char *a = foo + i;
-	char *b = bar + i;
-	strcpy (a, "--------01111111");
-	strcpy (b, "--------10000000");
-	if (memcmp (a, b, 16) >= 0)
-	  exit (1);
-      }
-    exit (0);
-  }
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_func_memcmp_working=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-ac_cv_func_memcmp_working=no
-fi
-rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-echo "$as_me:$LINENO: result: $ac_cv_func_memcmp_working" >&5
-echo "${ECHO_T}$ac_cv_func_memcmp_working" >&6
-test $ac_cv_func_memcmp_working = no && case $LIBOBJS in
-    "memcmp.$ac_objext"   | \
-  *" memcmp.$ac_objext"   | \
-    "memcmp.$ac_objext "* | \
-  *" memcmp.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS memcmp.$ac_objext" ;;
-esac
-
-
-echo "$as_me:$LINENO: checking return type of signal handlers" >&5
-echo $ECHO_N "checking return type of signal handlers... $ECHO_C" >&6
-if test "${ac_cv_type_signal+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <signal.h>
-#ifdef signal
-# undef signal
-#endif
-#ifdef __cplusplus
-extern "C" void (*signal (int, void (*)(int)))(int);
-#else
-void (*signal ()) ();
-#endif
-
-int
-main ()
-{
-int i;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_type_signal=void
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_type_signal=int
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $ac_cv_type_signal" >&5
-echo "${ECHO_T}$ac_cv_type_signal" >&6
-
-cat >>confdefs.h <<_ACEOF
-#define RETSIGTYPE $ac_cv_type_signal
-_ACEOF
-
-
-
-
-
-
-
-for ac_func in inet_ntoa memset socket strchr strerror
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $ac_func innocuous_$ac_func
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $ac_func
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-return f != $ac_func;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_var=no"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
+. $RTNET_KCONFIG_FILE
+echo "$as_me:$LINENO: result: $RTNET_KCONFIG_FILE ($kconfig_type)" >&5
+echo "${ECHO_T}$RTNET_KCONFIG_FILE ($kconfig_type)" >&6
 
 
 
@@ -20676,13 +19572,13 @@ done
 if test "${with_rtai+set}" = set; then
   withval="$with_rtai"
   case "${withval}" in
-    "" | y | ye | yes | n | no)
-        { { echo "$as_me:$LINENO: error: You must supply an argument to --with-rtai." >&5
+        "" | y | ye | yes | n | no)
+            { { echo "$as_me:$LINENO: error: You must supply an argument to --with-rtai." >&5
 echo "$as_me: error: You must supply an argument to --with-rtai." >&2;}
    { (exit 1); exit 1; }; } ;;
+        *)
+            CONFIG_RTAI_DIR=${withval} ;;
     esac
-else
-  with_rtai="/usr/src/rtai"
 fi;
 
 
@@ -20691,260 +19587,91 @@ fi;
 if test "${with_rtfw+set}" = set; then
   withval="$with_rtfw"
   case "${withval}" in
-    "" | y | ye | yes | n | no)
-        { { echo "$as_me:$LINENO: error: You must supply an argument to --with-rtfw if eth1394 is built in." >&5
-echo "$as_me: error: You must supply an argument to --with-rtfw if eth1394 is built in." >&2;}
+        "" | y | ye | yes | n | no)
+            { { echo "$as_me:$LINENO: error: You must supply an argument to --with-rtfw." >&5
+echo "$as_me: error: You must supply an argument to --with-rtfw." >&2;}
    { (exit 1); exit 1; }; } ;;
+        *)
+            CONFIG_RTFIREWIRE_DIR=${withval} ;;
     esac
-else
-  with_rtnet="/usr/src/rt-firewire"
 fi;
 
 
 
-unset CONFIG_RTNET_RTAI_3
-
-#
-# the presence of rtai-config is a good indication for rtai >= 3
-#
-if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
-    echo "$as_me:$LINENO: checking for RTAI 3 installation" >&5
-echo $ECHO_N "checking for RTAI 3 installation... $ECHO_C" >&6
-    RTAI_CONFIG="${with_rtai}/bin/rtai-config"
-    if test -x "${RTAI_CONFIG}"; then
-        RTAI_DIR="`cd ${with_rtai} && pwd`"     # let the shell normalize the path
-        echo "$as_me:$LINENO: result: ${RTAI_DIR}" >&5
+echo "$as_me:$LINENO: checking for RTAI installation" >&5
+echo $ECHO_N "checking for RTAI installation... $ECHO_C" >&6
+RTAI_CONFIG="${CONFIG_RTAI_DIR}/bin/rtai-config"
+if test -x "${RTAI_CONFIG}"; then
+    RTAI_DIR="`cd ${CONFIG_RTAI_DIR} && pwd`"   # let the shell normalize the path
+    echo "$as_me:$LINENO: result: ${RTAI_DIR}" >&5
 echo "${ECHO_T}${RTAI_DIR}" >&6
-    else
-        CONFIG_RTNET_RTAI_3=n
-        echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-    fi
+else
+    { { echo "$as_me:$LINENO: error: *** No RTAI found in $CONFIG_RTAI_DIR" >&5
+echo "$as_me: error: *** No RTAI found in $CONFIG_RTAI_DIR" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 #
-# from now we think we've found RTAI-3, so if we got en error
+# from now we think we've found RTAI, so if we got en error
 # it will be fatal, thus exit with AC_MSG_ERROR
 #
 
-if test x"$CONFIG_RTNET_RTAI_3" \!= x"n"; then
 #
 # check if rtai-3 is installed with DESTDIR
 # e.g.: 'make DESTDIR=/foo install'
 #
-    echo "$as_me:$LINENO: checking for RTAI DESTDIR" >&5
+echo "$as_me:$LINENO: checking for RTAI DESTDIR" >&5
 echo $ECHO_N "checking for RTAI DESTDIR... $ECHO_C" >&6
-    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"                 # let the shell normalize the path
-    if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
-        RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
-        export DESTDIR="${RTNET_RTAI_DESTDIR}"
+RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"                 # let the shell normalize the path
+if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
+    RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
+    export DESTDIR="${RTNET_RTAI_DESTDIR}"
 
-        RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"             # let the shell normalize the path
-        if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
-            echo "$as_me:$LINENO: result: ${DESTDIR}" >&5
+    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"             # let the shell normalize the path
+    if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
+        echo "$as_me:$LINENO: result: ${DESTDIR}" >&5
 echo "${ECHO_T}${DESTDIR}" >&6
-        else
-            { { echo "$as_me:$LINENO: error: *** Cannot identify DESTDIR" >&5
+    else
+        { { echo "$as_me:$LINENO: error: *** Cannot identify DESTDIR" >&5
 echo "$as_me: error: *** Cannot identify DESTDIR" >&2;}
    { (exit 1); exit 1; }; }
-        fi
-    else
-        echo "$as_me:$LINENO: result: none" >&5
+    fi
+else
+    echo "$as_me:$LINENO: result: none" >&5
 echo "${ECHO_T}none" >&6
-    fi
-
-    echo "$as_me:$LINENO: checking for RTAI version" >&5
-echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
-    CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
-
-    case "$CONFIG_RTNET_RTAI_3_VERSION" in
-    3.0*)
-        CONFIG_RTNET_RTAI_VERSION=30
-        ;;
-    3.1*)
-        CONFIG_RTNET_RTAI_VERSION=31
-        ;;
-    3.2*)
-        CONFIG_RTNET_RTAI_VERSION=32
-        ;;
-    0.8.99-fusion | 0.9*-fusion)
-        CONFIG_RTNET_RTAI_VERSION=fusion-090
-        ;;
-    *)
-        { { echo "$as_me:$LINENO: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&5
-echo "$as_me: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&2;}
-   { (exit 1); exit 1; }; }
-        ;;
-    esac
-    echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTAI_3_VERSION}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTAI_3_VERSION}" >&6
-
-    echo "$as_me:$LINENO: checking for RTAI config file" >&5
-echo $ECHO_N "checking for RTAI config file... $ECHO_C" >&6
-    CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
-    if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
-        CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
-        if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
-            { { echo "$as_me:$LINENO: error: *** RTAI configuration file not found" >&5
-echo "$as_me: error: *** RTAI configuration file not found" >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-    fi
-    echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTAI_CONFIG_FILE}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTAI_CONFIG_FILE}" >&6
-
-# source (load) the rtai configuration
-    . ${CONFIG_RTNET_RTAI_CONFIG_FILE}
-
-    case "$CONFIG_RTNET_RTAI_VERSION" in
-        30 | 31 | 32)   # ---> RTAI 3.x <---
-
-            # check for semas, needed by rtnet
-            echo "$as_me:$LINENO: checking for RTAI semaphores" >&5
-echo $ECHO_N "checking for RTAI semaphores... $ECHO_C" >&6
-            case "${CONFIG_RTAI_SEM}" in
-                y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SEM}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_SEM}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable semaphores in RTAI" >&5
-echo "$as_me: error: *** Please enable semaphores in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            # check for RT malloc, needed by rtnet
-            echo "$as_me:$LINENO: checking for RTAI malloc" >&5
-echo $ECHO_N "checking for RTAI malloc... $ECHO_C" >&6
-            case "${CONFIG_RTAI_MALLOC}" in
-                y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_MALLOC}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_MALLOC}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable real-time malloc in RTAI" >&5
-echo "$as_me: error: *** Please enable real-time malloc in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            # check for fifos, needed by rtnet-examples
-            echo "$as_me:$LINENO: checking for RTAI fifos" >&5
-echo $ECHO_N "checking for RTAI fifos... $ECHO_C" >&6
-            case "${CONFIG_RTAI_FIFOS}" in
-                y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_FIFOS}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_FIFOS}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable fifos in RTAI" >&5
-echo "$as_me: error: *** Please enable fifos in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            ;;
-
-        fusion-090)     # ---> FUSION <---
-
-            # check for native RTAI skin, needed by rtnet
-            echo "$as_me:$LINENO: checking for RTAI RTDM skin" >&5
-echo $ECHO_N "checking for RTAI RTDM skin... $ECHO_C" >&6
-            case "${CONFIG_RTAI_SKIN_RTDM}" in
-                y) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SKIN_RTDM}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_SKIN_RTDM}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable RTDM skin" >&5
-echo "$as_me: error: *** Please enable RTDM skin" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            # check for semas, needed by rtnet
-            echo "$as_me:$LINENO: checking for RTAI Semaphores" >&5
-echo $ECHO_N "checking for RTAI Semaphores... $ECHO_C" >&6
-            case "${CONFIG_RTAI_OPT_NATIVE_SEM}" in
-                y) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_OPT_NATIVE_SEM}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_OPT_NATIVE_SEM}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable semaphores in RTAI" >&5
-echo "$as_me: error: *** Please enable semaphores in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            # malloc support is built-in for RTAI/fusion
-
-            # check for pipes, needed by rtnet
-            echo "$as_me:$LINENO: checking for RTAI pipes" >&5
-echo $ECHO_N "checking for RTAI pipes... $ECHO_C" >&6
-            case "${CONFIG_RTAI_OPT_NATIVE_PIPE}" in
-                y) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_OPT_NATIVE_PIPE}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_OPT_NATIVE_PIPE}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable pipes in RTAI" >&5
-echo "$as_me: error: *** Please enable pipes in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            # check for mutexes, needed by rtnet
-            echo "$as_me:$LINENO: checking for RTAI mutexes" >&5
-echo $ECHO_N "checking for RTAI mutexes... $ECHO_C" >&6
-            case "${CONFIG_RTAI_OPT_NATIVE_MUTEX}" in
-                y) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_OPT_NATIVE_MUTEX}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_OPT_NATIVE_MUTEX}" >&6 ;;
-                *) { { echo "$as_me:$LINENO: error: *** Please enable mutexes in RTAI" >&5
-echo "$as_me: error: *** Please enable mutexes in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-            esac
-
-            ;;
-
-        *)              # ---> oops <----
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
-            ;;
-    esac
-
-# get linux kernel tree and version
-    echo "$as_me:$LINENO: checking for Linux source tree" >&5
-echo $ECHO_N "checking for Linux source tree... $ECHO_C" >&6
-    RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-    case "$CONFIG_RTNET_RTAI_3_VERSION" in
-        3.0 | 3.0r1 | 3.0r2)
-
-            eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
-            ;;
-        *)
-            RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-            ;;
-    esac
-
-#source (load) the kernel configuration
-    . ${RTAI_LINUX_DIR}/.config
-
-    echo "$as_me:$LINENO: result: $RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&5
-echo "${ECHO_T}$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&6
 fi
 
+echo "$as_me:$LINENO: checking for RTAI version" >&5
+echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
+CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
-
-#
-# now let's see wich version of rtai we've found
-# exit with error if there isn't any version
-#
-case "$CONFIG_RTNET_RTAI_VERSION" in
-    30)
+case "$CONFIG_RTNET_RTAI_3_VERSION" in
+    3.0*)
+        CONFIG_RTNET_RTAI_VERSION=30
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTAI_30 1
 _ACEOF
 
         ;;
-    31)
+    3.1*)
+        CONFIG_RTNET_RTAI_VERSION=31
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTAI_31 1
 _ACEOF
 
         ;;
-    32)
+    3.2*)
+        CONFIG_RTNET_RTAI_VERSION=32
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTAI_32 1
 _ACEOF
 
         ;;
-    fusion-090)
+    0.8.99-fusion | 0.9*-fusion)
+        CONFIG_RTNET_RTAI_VERSION=fusion-090
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_FUSION_090 1
@@ -20952,41 +19679,157 @@ _ACEOF
 
         ;;
     *)
-        { { echo "$as_me:$LINENO: error: *** No RTAI found in $with_rtai" >&5
-echo "$as_me: error: *** No RTAI found in $with_rtai" >&2;}
+        { { echo "$as_me:$LINENO: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&5
+echo "$as_me: error: *** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR" >&2;}
    { (exit 1); exit 1; }; }
         ;;
 esac
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTAI_3_VERSION}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTAI_3_VERSION}" >&6
 
 
-
-if test "$CONFIG_RTNET_RTAI_VERSION" = fusion-090; then
-  CONFIG_FUSION_TRUE=
-  CONFIG_FUSION_FALSE='#'
+if test "$CONFIG_RTNET_RTAI_VERSION" = 3*; then
+  CONFIG_RTAI_CLASSIC_TRUE=
+  CONFIG_RTAI_CLASSIC_FALSE='#'
 else
-  CONFIG_FUSION_TRUE='#'
-  CONFIG_FUSION_FALSE=
+  CONFIG_RTAI_CLASSIC_TRUE='#'
+  CONFIG_RTAI_CLASSIC_FALSE=
 fi
 
 
 
-unset CONFIG_RTNET_RTFW
-#
-# the presence of ieee1394.h is a good indication for rtnet
-#
-if test x"$CONFIG_RTNET_RTFW" \!= x"n"; then
-    echo "$as_me:$LINENO: checking for RT-FireWire source" >&5
-echo $ECHO_N "checking for RT-FireWire source... $ECHO_C" >&6
-    IEEE1394_H="${with_rtfw}/include/ieee1394.h"
-    if test -f ${IEEE1394_H}; then
-        RTNET_RTFW_PREFIX="`echo ${with_rtfw} | sed -e s,/*$,,`"      # strip trailing slashes
-        echo "$as_me:$LINENO: result: ${RTNET_RTFW_PREFIX}" >&5
-echo "${ECHO_T}${RTNET_RTFW_PREFIX}" >&6
-    else
-        CONFIG_RTNET_RTFW=n
-        echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
+if test "$CONFIG_RTNET_RTAI_VERSION" = fusion-090; then
+  CONFIG_RTAI_FUSION_TRUE=
+  CONFIG_RTAI_FUSION_FALSE='#'
+else
+  CONFIG_RTAI_FUSION_TRUE='#'
+  CONFIG_RTAI_FUSION_FALSE=
+fi
+
+
+echo "$as_me:$LINENO: checking for RTAI config file" >&5
+echo $ECHO_N "checking for RTAI config file... $ECHO_C" >&6
+CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
+if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
+    CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
+    if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
+        { { echo "$as_me:$LINENO: error: *** RTAI configuration file not found" >&5
+echo "$as_me: error: *** RTAI configuration file not found" >&2;}
+   { (exit 1); exit 1; }; }
     fi
+fi
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTAI_CONFIG_FILE}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTAI_CONFIG_FILE}" >&6
+
+# source (load) the rtai configuration
+. ${CONFIG_RTNET_RTAI_CONFIG_FILE}
+
+case "$CONFIG_RTNET_RTAI_VERSION" in
+    30 | 31 | 32)   # ---> RTAI 3.x <---
+
+        # check for semas, needed by rtnet
+        echo "$as_me:$LINENO: checking for RTAI semaphores" >&5
+echo $ECHO_N "checking for RTAI semaphores... $ECHO_C" >&6
+        case "${CONFIG_RTAI_SEM}" in
+            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SEM}" >&5
+echo "${ECHO_T}${CONFIG_RTAI_SEM}" >&6 ;;
+            *) { { echo "$as_me:$LINENO: error: *** Please enable semaphores in RTAI" >&5
+echo "$as_me: error: *** Please enable semaphores in RTAI" >&2;}
+   { (exit 1); exit 1; }; } ;;
+        esac
+
+        # check for RT malloc, needed by rtnet
+        echo "$as_me:$LINENO: checking for RTAI malloc" >&5
+echo $ECHO_N "checking for RTAI malloc... $ECHO_C" >&6
+        case "${CONFIG_RTAI_MALLOC}" in
+            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_MALLOC}" >&5
+echo "${ECHO_T}${CONFIG_RTAI_MALLOC}" >&6 ;;
+            *) { { echo "$as_me:$LINENO: error: *** Please enable real-time malloc in RTAI" >&5
+echo "$as_me: error: *** Please enable real-time malloc in RTAI" >&2;}
+   { (exit 1); exit 1; }; } ;;
+        esac
+
+        # check for fifos, needed by rtnet-examples
+        echo "$as_me:$LINENO: checking for RTAI fifos" >&5
+echo $ECHO_N "checking for RTAI fifos... $ECHO_C" >&6
+        case "${CONFIG_RTAI_FIFOS}" in
+            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_FIFOS}" >&5
+echo "${ECHO_T}${CONFIG_RTAI_FIFOS}" >&6 ;;
+            *) { { echo "$as_me:$LINENO: error: *** Please enable fifos in RTAI" >&5
+echo "$as_me: error: *** Please enable fifos in RTAI" >&2;}
+   { (exit 1); exit 1; }; } ;;
+        esac
+
+        ;;
+
+    fusion-090)     # ---> FUSION <---
+
+        # check for native RTAI skin, needed by rtnet
+        echo "$as_me:$LINENO: checking for RTAI RTDM skin" >&5
+echo $ECHO_N "checking for RTAI RTDM skin... $ECHO_C" >&6
+        case "${CONFIG_RTAI_SKIN_RTDM}" in
+            y) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SKIN_RTDM}" >&5
+echo "${ECHO_T}${CONFIG_RTAI_SKIN_RTDM}" >&6 ;;
+            *) { { echo "$as_me:$LINENO: error: *** Please enable RTDM skin" >&5
+echo "$as_me: error: *** Please enable RTDM skin" >&2;}
+   { (exit 1); exit 1; }; } ;;
+        esac
+
+        # check for pipes, needed by rtnet
+#        AC_MSG_CHECKING([for RTAI pipes])
+#        case "${CONFIG_RTAI_OPT_NATIVE_PIPE}" in
+#            y) AC_MSG_RESULT([${CONFIG_RTAI_OPT_NATIVE_PIPE}]) ;;
+#            *) AC_MSG_ERROR([*** Please enable pipes in RTAI]) ;;
+#        esac
+
+        ;;
+
+    *)              # ---> oops <----
+        { { echo "$as_me:$LINENO: error: *** internal error" >&5
+echo "$as_me: error: *** internal error" >&2;}
+   { (exit 1); exit 1; }; }
+        ;;
+esac
+
+# get linux kernel tree and version
+echo "$as_me:$LINENO: checking for Linux source tree" >&5
+echo $ECHO_N "checking for Linux source tree... $ECHO_C" >&6
+RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
+case "$CONFIG_RTNET_RTAI_3_VERSION" in
+    3.0 | 3.0r1 | 3.0r2)
+
+        eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+        RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
+        ;;
+    *)
+        RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+        ;;
+esac
+
+#source (load) the kernel configuration
+. ${RTAI_LINUX_DIR}/.config
+
+echo "$as_me:$LINENO: result: $RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&5
+echo "${ECHO_T}$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})" >&6
+
+
+
+#
+# the presence of ieee1394.h is a good indication for RT-FireWire
+#
+echo "$as_me:$LINENO: checking for RT-FireWire source" >&5
+echo $ECHO_N "checking for RT-FireWire source... $ECHO_C" >&6
+IEEE1394_H="${CONFIG_RTFIREWIRE_DIR}/include/ieee1394.h"
+if test -f ${IEEE1394_H}; then
+    RTNET_RTFW_PREFIX="`echo ${CONFIG_RTFIREWIRE_DIR} | sed -e s,/*$,,`"  # strip trailing slashes
+    echo "$as_me:$LINENO: result: ${RTNET_RTFW_PREFIX}" >&5
+echo "${ECHO_T}${RTNET_RTFW_PREFIX}" >&6
+else
+    echo "$as_me:$LINENO: result: none" >&5
+echo "${ECHO_T}none" >&6
 fi
 
 
@@ -21335,10 +20178,7 @@ done
         fusion-090)
 
 
-
-
-
-for ac_header in rtai/sem.h rtai/mutex.h rtai/pipe.h rtdm/rtdm.h rtdm/rtdm_driver.h
+for ac_header in rtdm/rtdm.h rtdm/rtdm_driver.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -21519,11 +20359,11 @@ echo $ECHO_N "checking for RTAI 3.x LXRT enabled... $ECHO_C" >&6
 case "${CONFIG_RTNET_RTAI_VERSION}" in
     30 | 31 | 32)
         case "${CONFIG_RTAI_SCHED_LXRT}" in
-            y | m) CONFIG_RTNET_LXRT=yes ;;
-            *) CONFIG_RTNET_LXRT=no ;;
+            y | m) CONFIG_RTNET_LXRT=y ;;
+            *) CONFIG_RTNET_LXRT=n ;;
         esac
         ;;
-    fusion-090) CONFIG_RTNET_LXRT=no
+    fusion-090) CONFIG_RTNET_LXRT=n
         ;;
     *)
         { { echo "$as_me:$LINENO: error: *** internal error" >&5
@@ -21536,7 +20376,7 @@ echo "${ECHO_T}${CONFIG_RTNET_LXRT}" >&6
 
 echo "$as_me:$LINENO: checking for CONFIG_REGPARM activated in Linux Kernel" >&5
 echo $ECHO_N "checking for CONFIG_REGPARM activated in Linux Kernel... $ECHO_C" >&6
-if test "${CONFIG_RTNET_LXRT}" = "yes" -a "${CONFIG_REGPARM}" = "y"; then
+if test "${CONFIG_RTNET_LXRT}" = "y" -a "${CONFIG_REGPARM}" = "y"; then
     { echo "$as_me:$LINENO: WARNING:
 
 *** LXRT interface for RTnet disabled ***
@@ -21553,15 +20393,15 @@ ${RTAI_LINUX_DIR}
 and rebuild your kernel in order to build LXRT interface for RTNET
 
 " >&2;}
-    CONFIG_RTNET_LXRT=no
+    CONFIG_RTNET_LXRT=n
 else
-    echo "$as_me:$LINENO: result: ${CONFIG_REGPARM:-no}" >&5
-echo "${ECHO_T}${CONFIG_REGPARM:-no}" >&6
+    echo "$as_me:$LINENO: result: ${CONFIG_REGPARM:-n}" >&5
+echo "${ECHO_T}${CONFIG_REGPARM:-n}" >&6
 fi
 
 
 
-if test "$CONFIG_RTNET_LXRT" = "yes"; then
+if test "$CONFIG_RTNET_LXRT" = "y"; then
   CONFIG_RTNET_LXRT_TRUE=
   CONFIG_RTNET_LXRT_FALSE='#'
 else
@@ -21569,55 +20409,12 @@ else
   CONFIG_RTNET_LXRT_FALSE=
 fi
 
-if test "$CONFIG_RTNET_LXRT" = "yes"; then
+if test "$CONFIG_RTNET_LXRT" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_LXRT 1
 _ACEOF
 
-fi
-
-
-
-echo "$as_me:$LINENO: checking whether to build all PCI network driver" >&5
-echo $ECHO_N "checking whether to build all PCI network driver... $ECHO_C" >&6
-# Check whether --enable-allpci or --disable-allpci was given.
-if test "${enable_allpci+set}" = set; then
-  enableval="$enable_allpci"
-  case "$enableval" in
-        y | yes) CONFIG_RTNET_ALLPCI=yes ;;
-        *) CONFIG_RTNET_ALLPCI=no ;;
-    esac
-else
-  CONFIG_RTNET_ALLPCI=no
-fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ALLPCI}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_ALLPCI}" >&6
-
-
-echo "$as_me:$LINENO: checking whether to build 3Com 59x driver" >&5
-echo $ECHO_N "checking whether to build 3Com 59x driver... $ECHO_C" >&6
-# Check whether --enable-3c59x or --disable-3c59x was given.
-if test "${enable_3c59x+set}" = set; then
-  enableval="$enable_3c59x"
-  case "$enableval" in
-        y | yes) CONFIG_RTNET_3C59X=yes ;;
-        *) CONFIG_RTNET_3C59X=no ;;
-    esac
-else
-  CONFIG_RTNET_3C59X=no
-fi;
-# 3Com should be enabled manually, not by allpci
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_3C59X}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_3C59X}" >&6
-
-
-if test "$CONFIG_RTNET_3C59X" = "yes"; then
-  CONFIG_RTNET_3C59X_TRUE=
-  CONFIG_RTNET_3C59X_FALSE='#'
-else
-  CONFIG_RTNET_3C59X_TRUE='#'
-  CONFIG_RTNET_3C59X_FALSE=
 fi
 
 
@@ -21628,25 +20425,20 @@ echo $ECHO_N "checking whether to build Realtek 8139 driver... $ECHO_C" >&6
 if test "${enable_8139+set}" = set; then
   enableval="$enable_8139"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_8139=yes ;;
-        *) CONFIG_RTNET_8139=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_8139=y ;;
+        *) CONFIG_RTNET_DRIVER_8139=n ;;
     esac
-else
-  CONFIG_RTNET_8139=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_8139=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_8139}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_8139}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_8139:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_8139:-n}" >&6
 
 
-if test "$CONFIG_RTNET_8139" = "yes"; then
-  CONFIG_RTNET_8139_TRUE=
-  CONFIG_RTNET_8139_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_8139" = "y"; then
+  CONFIG_RTNET_DRIVER_8139_TRUE=
+  CONFIG_RTNET_DRIVER_8139_FALSE='#'
 else
-  CONFIG_RTNET_8139_TRUE='#'
-  CONFIG_RTNET_8139_FALSE=
+  CONFIG_RTNET_DRIVER_8139_TRUE='#'
+  CONFIG_RTNET_DRIVER_8139_FALSE=
 fi
 
 
@@ -21657,25 +20449,20 @@ echo $ECHO_N "checking whether to build Intel EtherExpressPro/100 driver... $ECH
 if test "${enable_eepro100+set}" = set; then
   enableval="$enable_eepro100"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_EEPRO100=yes ;;
-        *) CONFIG_RTNET_EEPRO100=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_EEPRO100=y ;;
+        *) CONFIG_RTNET_DRIVER_EEPRO100=n ;;
     esac
-else
-  CONFIG_RTNET_EEPRO100=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_EEPRO100=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_EEPRO100}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_EEPRO100}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_EEPRO100:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_EEPRO100:-n}" >&6
 
 
-if test "$CONFIG_RTNET_EEPRO100" = "yes"; then
-  CONFIG_RTNET_EEPRO100_TRUE=
-  CONFIG_RTNET_EEPRO100_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_EEPRO100" = "y"; then
+  CONFIG_RTNET_DRIVER_EEPRO100_TRUE=
+  CONFIG_RTNET_DRIVER_EEPRO100_FALSE='#'
 else
-  CONFIG_RTNET_EEPRO100_TRUE='#'
-  CONFIG_RTNET_EEPRO100_FALSE=
+  CONFIG_RTNET_DRIVER_EEPRO100_TRUE='#'
+  CONFIG_RTNET_DRIVER_EEPRO100_FALSE=
 fi
 
 
@@ -21686,25 +20473,20 @@ echo $ECHO_N "checking whether to build AMD PCnet32 driver... $ECHO_C" >&6
 if test "${enable_pcnet32+set}" = set; then
   enableval="$enable_pcnet32"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_PCNET32=yes ;;
-        *) CONFIG_RTNET_PCNET32=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_PCNET32=y ;;
+        *) CONFIG_RTNET_DRIVER_PCNET32=n ;;
     esac
-else
-  CONFIG_RTNET_PCNET32=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_PCNET32=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_PCNET32}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_PCNET32}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_PCNET32:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_PCNET32:-n}" >&6
 
 
-if test "$CONFIG_RTNET_PCNET32" = "yes"; then
-  CONFIG_RTNET_PCNET32_TRUE=
-  CONFIG_RTNET_PCNET32_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_PCNET32" = "y"; then
+  CONFIG_RTNET_DRIVER_PCNET32_TRUE=
+  CONFIG_RTNET_DRIVER_PCNET32_FALSE='#'
 else
-  CONFIG_RTNET_PCNET32_TRUE='#'
-  CONFIG_RTNET_PCNET32_FALSE=
+  CONFIG_RTNET_DRIVER_PCNET32_TRUE='#'
+  CONFIG_RTNET_DRIVER_PCNET32_FALSE=
 fi
 
 
@@ -21715,25 +20497,20 @@ echo $ECHO_N "checking whether to build VIA Rhine driver... $ECHO_C" >&6
 if test "${enable_via_rhine+set}" = set; then
   enableval="$enable_via_rhine"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_VIA_RHINE=yes ;;
-        *) CONFIG_RTNET_VIA_RHINE=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_VIA_RHINE=y ;;
+        *) CONFIG_RTNET_DRIVER_VIA_RHINE=n ;;
     esac
-else
-  CONFIG_RTNET_VIA_RHINE=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_VIA_RHINE=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_VIA_RHINE}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_VIA_RHINE}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_VIA_RHINE:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_VIA_RHINE:-n}" >&6
 
 
-if test "$CONFIG_RTNET_VIA_RHINE" = "yes"; then
-  CONFIG_RTNET_VIA_RHINE_TRUE=
-  CONFIG_RTNET_VIA_RHINE_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_VIA_RHINE" = "y"; then
+  CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE=
+  CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE='#'
 else
-  CONFIG_RTNET_VIA_RHINE_TRUE='#'
-  CONFIG_RTNET_VIA_RHINE_FALSE=
+  CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE='#'
+  CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE=
 fi
 
 
@@ -21744,25 +20521,20 @@ echo $ECHO_N "checking whether to build NatSemi driver... $ECHO_C" >&6
 if test "${enable_natsemi+set}" = set; then
   enableval="$enable_natsemi"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_NATSEMI=yes ;;
-        *) CONFIG_RTNET_NATSEMI=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_NATSEMI=y ;;
+        *) CONFIG_RTNET_DRIVER_NATSEMI=n ;;
     esac
-else
-  CONFIG_RTNET_NATSEMI=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_NATSEMI=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_NATSEMI}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_NATSEMI}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_NATSEMI:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_NATSEMI:-n}" >&6
 
 
-if test "$CONFIG_RTNET_NATSEMI" = "yes"; then
-  CONFIG_RTNET_NATSEMI_TRUE=
-  CONFIG_RTNET_NATSEMI_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_NATSEMI" = "y"; then
+  CONFIG_RTNET_DRIVER_NATSEMI_TRUE=
+  CONFIG_RTNET_DRIVER_NATSEMI_FALSE='#'
 else
-  CONFIG_RTNET_NATSEMI_TRUE='#'
-  CONFIG_RTNET_NATSEMI_FALSE=
+  CONFIG_RTNET_DRIVER_NATSEMI_TRUE='#'
+  CONFIG_RTNET_DRIVER_NATSEMI_FALSE=
 fi
 
 
@@ -21773,25 +20545,20 @@ echo $ECHO_N "checking whether to build tulip driver... $ECHO_C" >&6
 if test "${enable_tulip+set}" = set; then
   enableval="$enable_tulip"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_TULIP=yes ;;
-        *) CONFIG_RTNET_TULIP=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_TULIP=y ;;
+        *) CONFIG_RTNET_DRIVER_TULIP=n ;;
     esac
-else
-  CONFIG_RTNET_TULIP=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_TULIP=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_TULIP}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_TULIP}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_TULIP:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_TULIP:-n}" >&6
 
 
-if test "$CONFIG_RTNET_TULIP" = "yes"; then
-  CONFIG_RTNET_TULIP_TRUE=
-  CONFIG_RTNET_TULIP_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_TULIP" = "y"; then
+  CONFIG_RTNET_DRIVER_TULIP_TRUE=
+  CONFIG_RTNET_DRIVER_TULIP_FALSE='#'
 else
-  CONFIG_RTNET_TULIP_TRUE='#'
-  CONFIG_RTNET_TULIP_FALSE=
+  CONFIG_RTNET_DRIVER_TULIP_TRUE='#'
+  CONFIG_RTNET_DRIVER_TULIP_FALSE=
 fi
 
 
@@ -21802,22 +20569,20 @@ echo $ECHO_N "checking whether to build fcc enet driver... $ECHO_C" >&6
 if test "${enable_fcc_enet+set}" = set; then
   enableval="$enable_fcc_enet"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_FCC_ENET=yes ;;
-        *) CONFIG_RTNET_FCC_ENET=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_FCC_ENET=y ;;
+        *) CONFIG_RTNET_DRIVER_FCC_ENET=n ;;
     esac
-else
-  CONFIG_RTNET_FCC_ENET=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_FCC_ENET}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_FCC_ENET}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_FCC_ENET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_FCC_ENET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_FCC_ENET" = "yes"; then
-  CONFIG_RTNET_FCC_ENET_TRUE=
-  CONFIG_RTNET_FCC_ENET_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_FCC_ENET" = "y"; then
+  CONFIG_RTNET_DRIVER_FCC_ENET_TRUE=
+  CONFIG_RTNET_DRIVER_FCC_ENET_FALSE='#'
 else
-  CONFIG_RTNET_FCC_ENET_TRUE='#'
-  CONFIG_RTNET_FCC_ENET_FALSE=
+  CONFIG_RTNET_DRIVER_FCC_ENET_TRUE='#'
+  CONFIG_RTNET_DRIVER_FCC_ENET_FALSE=
 fi
 
 
@@ -21828,22 +20593,20 @@ echo $ECHO_N "checking whether to build scc enet driver... $ECHO_C" >&6
 if test "${enable_scc_enet+set}" = set; then
   enableval="$enable_scc_enet"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_SCC_ENET=yes ;;
-        *) CONFIG_RTNET_SCC_ENET=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_SCC_ENET=y ;;
+        *) CONFIG_RTNET_DRIVER_SCC_ENET=n ;;
     esac
-else
-  CONFIG_RTNET_SCC_ENET=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_SCC_ENET}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_SCC_ENET}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_SCC_ENET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_SCC_ENET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_SCC_ENET" = "yes"; then
-  CONFIG_RTNET_SCC_ENET_TRUE=
-  CONFIG_RTNET_SCC_ENET_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_SCC_ENET" = "y"; then
+  CONFIG_RTNET_DRIVER_SCC_ENET_TRUE=
+  CONFIG_RTNET_DRIVER_SCC_ENET_FALSE='#'
 else
-  CONFIG_RTNET_SCC_ENET_TRUE='#'
-  CONFIG_RTNET_SCC_ENET_FALSE=
+  CONFIG_RTNET_DRIVER_SCC_ENET_TRUE='#'
+  CONFIG_RTNET_DRIVER_SCC_ENET_FALSE=
 fi
 
 
@@ -21854,22 +20617,20 @@ echo $ECHO_N "checking whether to build fec enet driver... $ECHO_C" >&6
 if test "${enable_fec_enet+set}" = set; then
   enableval="$enable_fec_enet"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_FEC_ENET=yes ;;
-        *) CONFIG_RTNET_FEC_ENET=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_FEC_ENET=y ;;
+        *) CONFIG_RTNET_DRIVER_FEC_ENET=n ;;
     esac
-else
-  CONFIG_RTNET_FEC_ENET=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_FEC_ENET}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_FEC_ENET}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_FEC_ENET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_FEC_ENET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_FEC_ENET" = "yes"; then
-  CONFIG_RTNET_FEC_ENET_TRUE=
-  CONFIG_RTNET_FEC_ENET_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_FEC_ENET" = "y"; then
+  CONFIG_RTNET_DRIVER_FEC_ENET_TRUE=
+  CONFIG_RTNET_DRIVER_FEC_ENET_FALSE='#'
 else
-  CONFIG_RTNET_FEC_ENET_TRUE='#'
-  CONFIG_RTNET_FEC_ENET_FALSE=
+  CONFIG_RTNET_DRIVER_FEC_ENET_TRUE='#'
+  CONFIG_RTNET_DRIVER_FEC_ENET_FALSE=
 fi
 
 
@@ -21880,22 +20641,20 @@ echo $ECHO_N "checking whether to build MPC52xx fec driver... $ECHO_C" >&6
 if test "${enable_mpc52xx_fec+set}" = set; then
   enableval="$enable_mpc52xx_fec"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_MPC52XX_FEC=yes ;;
-        *) CONFIG_RTNET_MPC52XX_FEC=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_MPC52XX_FEC=y ;;
+        *) CONFIG_RTNET_DRIVER_MPC52XX_FEC=n ;;
     esac
-else
-  CONFIG_RTNET_MPC52XX_FEC=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_MPC52XX_FEC}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_MPC52XX_FEC}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_MPC52XX_FEC:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_MPC52XX_FEC:-n}" >&6
 
 
-if test "$CONFIG_RTNET_MPC52XX_FEC" = "yes"; then
-  CONFIG_RTNET_MPC52XX_FEC_TRUE=
-  CONFIG_RTNET_MPC52XX_FEC_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_MPC52XX_FEC" = "y"; then
+  CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE=
+  CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE='#'
 else
-  CONFIG_RTNET_MPC52XX_FEC_TRUE='#'
-  CONFIG_RTNET_MPC52XX_FEC_FALSE=
+  CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE='#'
+  CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE=
 fi
 
 
@@ -21906,22 +20665,20 @@ echo $ECHO_N "checking whether to build SMSC LAN91C111 driver... $ECHO_C" >&6
 if test "${enable_smc91111+set}" = set; then
   enableval="$enable_smc91111"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_SMC91111=yes ;;
-        *) CONFIG_RTNET_SMC91111=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_SMC91111=y ;;
+        *) CONFIG_RTNET_DRIVER_SMC91111=n ;;
     esac
-else
-  CONFIG_RTNET_SMC91111=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_SMC91111}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_SMC91111}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_SMC91111:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_SMC91111:-n}" >&6
 
 
-if test "$CONFIG_RTNET_SMC91111" = "yes"; then
-  CONFIG_RTNET_SMC91111_TRUE=
-  CONFIG_RTNET_SMC91111_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_SMC91111" = "y"; then
+  CONFIG_RTNET_DRIVER_SMC91111_TRUE=
+  CONFIG_RTNET_DRIVER_SMC91111_FALSE='#'
 else
-  CONFIG_RTNET_SMC91111_TRUE='#'
-  CONFIG_RTNET_SMC91111_FALSE=
+  CONFIG_RTNET_DRIVER_SMC91111_TRUE='#'
+  CONFIG_RTNET_DRIVER_SMC91111_FALSE=
 fi
 
 
@@ -21932,22 +20689,20 @@ echo $ECHO_N "checking whether to build Eth1394 driver... $ECHO_C" >&6
 if test "${enable_eth1394+set}" = set; then
   enableval="$enable_eth1394"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_ETH1394=yes ;;
-        *) CONFIG_RTNET_ETH1394=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_ETH1394=y ;;
+        *) CONFIG_RTNET_DRIVER_ETH1394=n ;;
     esac
-else
-  CONFIG_RTNET_ETH1394=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ETH1394}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_ETH1394}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_ETH1394:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_ETH1394:-n}" >&6
 
 
-if test "$CONFIG_RTNET_ETH1394" = "yes"; then
-  CONFIG_RTNET_ETH1394_TRUE=
-  CONFIG_RTNET_ETH1394_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_ETH1394" = "y"; then
+  CONFIG_RTNET_DRIVER_ETH1394_TRUE=
+  CONFIG_RTNET_DRIVER_ETH1394_FALSE='#'
 else
-  CONFIG_RTNET_ETH1394_TRUE='#'
-  CONFIG_RTNET_ETH1394_FALSE=
+  CONFIG_RTNET_DRIVER_ETH1394_TRUE='#'
+  CONFIG_RTNET_DRIVER_ETH1394_FALSE=
 fi
 
 
@@ -21958,23 +20713,46 @@ echo $ECHO_N "checking whether to build loopback driver... $ECHO_C" >&6
 if test "${enable_loopback+set}" = set; then
   enableval="$enable_loopback"
   case "$enableval" in
-        n | no) CONFIG_RTNET_LOOPBACK=no ;;
-        *) CONFIG_RTNET_LOOPBACK=yes ;;
+        y | yes) CONFIG_RTNET_DRIVER_LOOPBACK=y ;;
+        *) CONFIG_RTNET_DRIVER_LOOPBACK=n ;;
     esac
-else
-  CONFIG_RTNET_LOOPBACK=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_LOOPBACK}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_LOOPBACK}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_LOOPBACK:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_LOOPBACK:-n}" >&6
 
 
-if test "$CONFIG_RTNET_LOOPBACK" = "yes"; then
-  CONFIG_RTNET_LOOPBACK_TRUE=
-  CONFIG_RTNET_LOOPBACK_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_LOOPBACK" = "y"; then
+  CONFIG_RTNET_DRIVER_LOOPBACK_TRUE=
+  CONFIG_RTNET_DRIVER_LOOPBACK_FALSE='#'
 else
-  CONFIG_RTNET_LOOPBACK_TRUE='#'
-  CONFIG_RTNET_LOOPBACK_FALSE=
+  CONFIG_RTNET_DRIVER_LOOPBACK_TRUE='#'
+  CONFIG_RTNET_DRIVER_LOOPBACK_FALSE=
 fi
+
+
+
+echo "$as_me:$LINENO: checking whether to build 3Com 59x driver" >&5
+echo $ECHO_N "checking whether to build 3Com 59x driver... $ECHO_C" >&6
+# Check whether --enable-3c59x or --disable-3c59x was given.
+if test "${enable_3c59x+set}" = set; then
+  enableval="$enable_3c59x"
+  case "$enableval" in
+        y | yes) CONFIG_RTNET_DRIVER_3C59X=y ;;
+        *) CONFIG_RTNET_DRIVER_3C59X=n ;;
+    esac
+fi;
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_3C59X:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_3C59X:-n}" >&6
+
+
+if test "$CONFIG_RTNET_DRIVER_3C59X" = "y"; then
+  CONFIG_RTNET_DRIVER_3C59X_TRUE=
+  CONFIG_RTNET_DRIVER_3C59X_FALSE='#'
+else
+  CONFIG_RTNET_DRIVER_3C59X_TRUE='#'
+  CONFIG_RTNET_DRIVER_3C59X_FALSE=
+fi
+
 
 
 echo "$as_me:$LINENO: checking whether to build Realtek 8169 (Gigabit) driver" >&5
@@ -21983,26 +20761,22 @@ echo $ECHO_N "checking whether to build Realtek 8169 (Gigabit) driver... $ECHO_C
 if test "${enable_r8169+set}" = set; then
   enableval="$enable_r8169"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_R8169=yes ;;
-        *) CONFIG_RTNET_R8169=no ;;
+        y | yes) CONFIG_RTNET_DRIVER_R8169=y ;;
+        *) CONFIG_RTNET_DRIVER_R8169=n ;;
     esac
-else
-  CONFIG_RTNET_R8169=no
 fi;
-if test "$CONFIG_RTNET_ALLPCI" = "yes"; then
-    CONFIG_RTNET_R8169=yes
-fi
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_R8169}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_R8169}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_R8169:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRIVER_R8169:-n}" >&6
 
 
-if test "$CONFIG_RTNET_R8169" = "yes"; then
-  CONFIG_RTNET_R8169_TRUE=
-  CONFIG_RTNET_R8169_FALSE='#'
+if test "$CONFIG_RTNET_DRIVER_R8169" = "y"; then
+  CONFIG_RTNET_DRIVER_R8169_TRUE=
+  CONFIG_RTNET_DRIVER_R8169_FALSE='#'
 else
-  CONFIG_RTNET_R8169_TRUE='#'
-  CONFIG_RTNET_R8169_FALSE=
+  CONFIG_RTNET_DRIVER_R8169_TRUE='#'
+  CONFIG_RTNET_DRIVER_R8169_FALSE=
 fi
+
 
 
 
@@ -22012,17 +20786,15 @@ echo $ECHO_N "checking whether to build real-time IPv4 support... $ECHO_C" >&6
 if test "${enable_rtipv4+set}" = set; then
   enableval="$enable_rtipv4"
   case "$enableval" in
-        n | no) CONFIG_RTNET_RTIPV4=no ;;
-        *) CONFIG_RTNET_RTIPV4=yes ;;
+        y | yes) CONFIG_RTNET_RTIPV4=y ;;
+        *) CONFIG_RTNET_RTIPV4=n ;;
     esac
-else
-  CONFIG_RTNET_RTIPV4=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTIPV4}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTIPV4}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTIPV4:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTIPV4:-n}" >&6
 
 
-if test "$CONFIG_RTNET_RTIPV4" = "yes"; then
+if test "$CONFIG_RTNET_RTIPV4" = "y"; then
   CONFIG_RTNET_RTIPV4_TRUE=
   CONFIG_RTNET_RTIPV4_FALSE='#'
 else
@@ -22030,7 +20802,7 @@ else
   CONFIG_RTNET_RTIPV4_FALSE=
 fi
 
-if test "$CONFIG_RTNET_RTIPV4" = "yes"; then
+if test "$CONFIG_RTNET_RTIPV4" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_RTIPV4 1
@@ -22044,18 +20816,16 @@ echo $ECHO_N "checking whether to enable IP network routing... $ECHO_C" >&6
 if test "${enable_net_routing+set}" = set; then
   enableval="$enable_net_routing"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_NETWORK_ROUTING=yes ;;
-        *) CONFIG_RTNET_NETWORK_ROUTING=no ;;
+        y | yes) CONFIG_RTNET_RTIPV4_NETROUTING=y ;;
+        *) CONFIG_RTNET_RTIPV4_NETROUTING=n ;;
     esac
-else
-  CONFIG_RTNET_NETWORK_ROUTING=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_NETWORK_ROUTING}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_NETWORK_ROUTING}" >&6
-if test "$CONFIG_RTNET_NETWORK_ROUTING" = "yes"; then
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTIPV4_NETROUTING:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTIPV4_NETROUTING:-n}" >&6
+if test "$CONFIG_RTNET_RTIPV4_NETROUTING" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTNET_NETWORK_ROUTING 1
+#define CONFIG_RTNET_RTIPV4_NETROUTING 1
 _ACEOF
 
 fi
@@ -22066,18 +20836,16 @@ echo $ECHO_N "checking whether to enable IP router support... $ECHO_C" >&6
 if test "${enable_router+set}" = set; then
   enableval="$enable_router"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_ROUTER=yes ;;
-        *) CONFIG_RTNET_ROUTER=no ;;
+        y | yes) CONFIG_RTNET_RTIPV4_ROUTER=y ;;
+        *) CONFIG_RTNET_RTIPV4_ROUTER=n ;;
     esac
-else
-  CONFIG_RTNET_ROUTER=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ROUTER}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_ROUTER}" >&6
-if test "$CONFIG_RTNET_ROUTER" = "yes"; then
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTIPV4_ROUTER:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTIPV4_ROUTER:-n}" >&6
+if test "CONFIG_RTNET_RTIPV4_ROUTER" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTNET_ROUTER 1
+#define CONFIG_RTNET_RTIPV4_ROUTER 1
 _ACEOF
 
 fi
@@ -22090,17 +20858,15 @@ echo $ECHO_N "checking whether to build real-time packet socket support... $ECHO
 if test "${enable_rtpacket+set}" = set; then
   enableval="$enable_rtpacket"
   case "$enableval" in
-        n | no) CONFIG_RTNET_RTPACKET=no ;;
-        *) CONFIG_RTNET_RTPACKET=yes ;;
+        y | yes) CONFIG_RTNET_RTPACKET=y ;;
+        *) CONFIG_RTNET_RTPACKET=n ;;
     esac
-else
-  CONFIG_RTNET_RTPACKET=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTPACKET}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTPACKET}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTPACKET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTPACKET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_RTPACKET" = "yes"; then
+if test "$CONFIG_RTNET_RTPACKET" = "y"; then
   CONFIG_RTNET_RTPACKET_TRUE=
   CONFIG_RTNET_RTPACKET_FALSE='#'
 else
@@ -22117,17 +20883,15 @@ echo $ECHO_N "checking whether to build RTcfg... $ECHO_C" >&6
 if test "${enable_rtcfg+set}" = set; then
   enableval="$enable_rtcfg"
   case "$enableval" in
-        n | no) CONFIG_RTNET_RTCFG=no ;;
-        *) CONFIG_RTNET_RTCFG=yes ;;
+        y | yes) CONFIG_RTNET_RTCFG=y ;;
+        *) CONFIG_RTNET_RTCFG=n ;;
     esac
-else
-  CONFIG_RTNET_RTCFG=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCFG}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTCFG}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCFG:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTCFG:-n}" >&6
 
 
-if test "$CONFIG_RTNET_RTCFG" = "yes"; then
+if test "$CONFIG_RTNET_RTCFG" = "y"; then
   CONFIG_RTNET_RTCFG_TRUE=
   CONFIG_RTNET_RTCFG_FALSE='#'
 else
@@ -22142,15 +20906,13 @@ echo $ECHO_N "checking whether to enable RTcfg debug support... $ECHO_C" >&6
 if test "${enable_rtcfg_dbg+set}" = set; then
   enableval="$enable_rtcfg_dbg"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_RTCFG_DEBUG=yes ;;
-        *) CONFIG_RTNET_RTCFG_DEBUG=no ;;
+        y | yes) CONFIG_RTNET_RTCFG_DEBUG=y ;;
+        *) CONFIG_RTNET_RTCFG_DEBUG=n ;;
     esac
-else
-  CONFIG_RTNET_RTCFG_DEBUG=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCFG_DEBUG}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTCFG_DEBUG}" >&6
-if test "$CONFIG_RTNET_RTCFG_DEBUG" = "yes"; then
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCFG_DEBUG:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTCFG_DEBUG:-n}" >&6
+if test "$CONFIG_RTNET_RTCFG_DEBUG" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_RTCFG_DEBUG 1
@@ -22160,71 +20922,28 @@ fi
 
 
 
-echo "$as_me:$LINENO: checking whether to enable RTcap support" >&5
-echo $ECHO_N "checking whether to enable RTcap support... $ECHO_C" >&6
-# Check whether --enable-rtcap or --disable-rtcap was given.
-if test "${enable_rtcap+set}" = set; then
-  enableval="$enable_rtcap"
+echo "$as_me:$LINENO: checking whether to build RTmac" >&5
+echo $ECHO_N "checking whether to build RTmac... $ECHO_C" >&6
+# Check whether --enable-nomac or --disable-nomac was given.
+if test "${enable_nomac+set}" = set; then
+  enableval="$enable_nomac"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_RTCAP=yes ;;
-        *) CONFIG_RTNET_RTCAP=no ;;
+        y | yes) CONFIG_RTNET_RTMAC=y ;;
+        *) CONFIG_RTNET_RTMAC=n ;;
     esac
-else
-  CONFIG_RTNET_RTCAP=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTCAP}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTCAP}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTMAC:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTMAC:-n}" >&6
 
 
-if test "$CONFIG_RTNET_RTCAP" = "yes"; then
-  CONFIG_RTNET_RTCAP_TRUE=
-  CONFIG_RTNET_RTCAP_FALSE='#'
+if test "$CONFIG_RTNET_RTMAC" = "y"; then
+  CONFIG_RTNET_RTMAC_TRUE=
+  CONFIG_RTNET_RTMAC_FALSE='#'
 else
-  CONFIG_RTNET_RTCAP_TRUE='#'
-  CONFIG_RTNET_RTCAP_FALSE=
+  CONFIG_RTNET_RTMAC_TRUE='#'
+  CONFIG_RTNET_RTMAC_FALSE=
 fi
 
-if test "$CONFIG_RTNET_RTCAP" = "yes"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTNET_RTCAP 1
-_ACEOF
-
-fi
-
-
-
-echo "$as_me:$LINENO: checking whether to build rtnetproxy" >&5
-echo $ECHO_N "checking whether to build rtnetproxy... $ECHO_C" >&6
-# Check whether --enable-proxy or --disable-proxy was given.
-if test "${enable_proxy+set}" = set; then
-  enableval="$enable_proxy"
-  case "$enableval" in
-        y | yes) CONFIG_RTNET_PROXY=yes ;;
-        *) CONFIG_RTNET_PROXY=no ;;
-    esac
-else
-  CONFIG_RTNET_PROXY=no
-fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_PROXY}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_PROXY}" >&6
-
-
-if test "$CONFIG_RTNET_PROXY" = "yes"; then
-  CONFIG_RTNET_PROXY_TRUE=
-  CONFIG_RTNET_PROXY_FALSE='#'
-else
-  CONFIG_RTNET_PROXY_TRUE='#'
-  CONFIG_RTNET_PROXY_FALSE=
-fi
-
-if test "$CONFIG_RTNET_PROXY" = "yes"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTNET_PROXY 1
-_ACEOF
-
-fi
 
 
 
@@ -22234,17 +20953,15 @@ echo $ECHO_N "checking whether to build TDMA... $ECHO_C" >&6
 if test "${enable_tdma+set}" = set; then
   enableval="$enable_tdma"
   case "$enableval" in
-        n | no) CONFIG_RTNET_TDMA=no ;;
-        *) CONFIG_RTNET_TDMA=yes ;;
+        y | yes) CONFIG_RTNET_TDMA=y ;;
+        *) CONFIG_RTNET_TDMA=n ;;
     esac
-else
-  CONFIG_RTNET_TDMA=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_TDMA}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_TDMA}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_TDMA:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_TDMA:-n}" >&6
 
 
-if test "$CONFIG_RTNET_TDMA" = "yes"; then
+if test "$CONFIG_RTNET_TDMA" = "y"; then
   CONFIG_RTNET_TDMA_TRUE=
   CONFIG_RTNET_TDMA_FALSE='#'
 else
@@ -22259,15 +20976,13 @@ echo $ECHO_N "checking whether to enable TDMA master support... $ECHO_C" >&6
 if test "${enable_tdma_master+set}" = set; then
   enableval="$enable_tdma_master"
   case "$enableval" in
-        n | no) CONFIG_RTNET_TDMA_MASTER=no ;;
-        *) CONFIG_RTNET_TDMA_MASTER=yes ;;
+        y | yes) CONFIG_RTNET_TDMA_MASTER=y ;;
+        *) CONFIG_RTNET_TDMA_MASTER=n ;;
     esac
-else
-  CONFIG_RTNET_TDMA_MASTER=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_TDMA_MASTER}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_TDMA_MASTER}" >&6
-if test "$CONFIG_RTNET_TDMA_MASTER" = "yes"; then
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_TDMA_MASTER:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_TDMA_MASTER:-n}" >&6
+if test "$CONFIG_RTNET_TDMA_MASTER" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_TDMA_MASTER 1
@@ -22283,17 +20998,15 @@ echo $ECHO_N "checking whether to build NoMAC... $ECHO_C" >&6
 if test "${enable_nomac+set}" = set; then
   enableval="$enable_nomac"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_NOMAC=yes ;;
-        *) CONFIG_RTNET_NOMAC=no ;;
+        y | yes) CONFIG_RTNET_NOMAC=y ;;
+        *) CONFIG_RTNET_NOMAC=n ;;
     esac
-else
-  CONFIG_RTNET_NOMAC=no
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_NOMAC}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_NOMAC}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_NOMAC:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_NOMAC:-n}" >&6
 
 
-if test "$CONFIG_RTNET_NOMAC" = "yes"; then
+if test "$CONFIG_RTNET_NOMAC" = "y"; then
   CONFIG_RTNET_NOMAC_TRUE=
   CONFIG_RTNET_NOMAC_FALSE='#'
 else
@@ -22304,27 +21017,89 @@ fi
 
 
 
+echo "$as_me:$LINENO: checking whether to enable RTcap support" >&5
+echo $ECHO_N "checking whether to enable RTcap support... $ECHO_C" >&6
+# Check whether --enable-rtcap or --disable-rtcap was given.
+if test "${enable_rtcap+set}" = set; then
+  enableval="$enable_rtcap"
+  case "$enableval" in
+        y | yes) CONFIG_RTNET_ADDON_RTCAP=y ;;
+        *) CONFIG_RTNET_ADDON_RTCAP=n ;;
+    esac
+fi;
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ADDON_RTCAP:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_ADDON_RTCAP:-n}" >&6
+
+
+if test "$CONFIG_RTNET_ADDON_RTCAP" = "y"; then
+  CONFIG_RTNET_ADDON_RTCAP_TRUE=
+  CONFIG_RTNET_ADDON_RTCAP_FALSE='#'
+else
+  CONFIG_RTNET_ADDON_RTCAP_TRUE='#'
+  CONFIG_RTNET_ADDON_RTCAP_FALSE=
+fi
+
+if test "$CONFIG_RTNET_ADDON_RTCAP" = "y"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTNET_ADDON_RTCAP 1
+_ACEOF
+
+fi
+
+echo "$as_me:$LINENO: checking whether to build rtnetproxy" >&5
+echo $ECHO_N "checking whether to build rtnetproxy... $ECHO_C" >&6
+# Check whether --enable-proxy or --disable-proxy was given.
+if test "${enable_proxy+set}" = set; then
+  enableval="$enable_proxy"
+  case "$enableval" in
+        y | yes) CONFIG_RTNET_ADDON_PROXY=y ;;
+        *) CONFIG_RTNET_ADDON_PROXY=n ;;
+    esac
+fi;
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ADDON_PROXY:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_ADDON_PROXY:-n}" >&6
+
+
+if test "$CONFIG_RTNET_ADDON_PROXY" = "y"; then
+  CONFIG_RTNET_ADDON_PROXY_TRUE=
+  CONFIG_RTNET_ADDON_PROXY_FALSE='#'
+else
+  CONFIG_RTNET_ADDON_PROXY_TRUE='#'
+  CONFIG_RTNET_ADDON_PROXY_FALSE=
+fi
+
+if test "$CONFIG_RTNET_ADDON_PROXY" = "y"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTNET_ADDON_PROXY 1
+_ACEOF
+
+fi
+
+
+
 echo "$as_me:$LINENO: checking whether to build enclosed RTDM" >&5
 echo $ECHO_N "checking whether to build enclosed RTDM... $ECHO_C" >&6
 # Check whether --enable-enclosed-rtdm or --disable-enclosed-rtdm was given.
 if test "${enable_enclosed_rtdm+set}" = set; then
   enableval="$enable_enclosed_rtdm"
   case "$enableval" in
-        n | no) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=no ;;
-        *) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes ;;
+        n | no) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
+        *) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y ;;
     esac
 else
-  CONFIG_RTNET_ENCLOSED_RTAI_RTDM=yes
+  CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y
 fi;
 case "${CONFIG_RTNET_RTAI_VERSION}" in
     fusion-090)
-        CONFIG_RTNET_ENCLOSED_RTAI_RTDM=no ;;
+        CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
 esac
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ENCLOSED_RTAI_RTDM}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_ENCLOSED_RTAI_RTDM}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-n}" >&6
 
 
-if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
+if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "y"; then
   CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE=
   CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE='#'
 else
@@ -22332,7 +21107,7 @@ else
   CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE=
 fi
 
-if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "yes"; then
+if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "y"; then
               ac_config_links="$ac_config_links stack/include/rtdm.h:rtai_rtdm/rtdm.h"
 
               ac_config_links="$ac_config_links stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h"
@@ -22349,19 +21124,19 @@ echo $ECHO_N "checking whether to enable RTDM select... $ECHO_C" >&6
 if test "${enable_rtdm_select+set}" = set; then
   enableval="$enable_rtdm_select"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_RTDM_SELECT=yes ;;
-        *) CONFIG_RTNET_RTDM_SELECT=no ;;
+        y | yes) CONFIG_RTNET_RTDM_SELECT=y ;;
+        *) CONFIG_RTNET_RTDM_SELECT=n ;;
     esac
 else
-  CONFIG_RTNET_RTDM_SELECT=no
+  CONFIG_RTNET_RTDM_SELECT=n
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTDM_SELECT}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_RTDM_SELECT}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTDM_SELECT:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_RTDM_SELECT:-n}" >&6
 
 
 
 
-if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
+if test "$CONFIG_RTNET_RTDM_SELECT" = "y"; then
   CONFIG_RTNET_RTDM_SELECT_TRUE=
   CONFIG_RTNET_RTDM_SELECT_FALSE='#'
 else
@@ -22370,7 +21145,7 @@ else
 fi
 
 
-if test "$CONFIG_RTNET_RTDM_SELECT" = "yes"; then
+if test "$CONFIG_RTNET_RTDM_SELECT" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_RTDM_SELECT 1
@@ -22386,17 +21161,17 @@ echo $ECHO_N "checking whether to build examples... $ECHO_C" >&6
 if test "${enable_examples+set}" = set; then
   enableval="$enable_examples"
   case "$enableval" in
-        n | no) CONFIG_RTNET_EXAMPLES=no ;;
-        *) CONFIG_RTNET_EXAMPLES=yes ;;
+        n | no) CONFIG_RTNET_EXAMPLES=n ;;
+        *) CONFIG_RTNET_EXAMPLES=y ;;
     esac
 else
-  CONFIG_RTNET_EXAMPLES=yes
+  CONFIG_RTNET_EXAMPLES=y
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_EXAMPLES}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_EXAMPLES}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_EXAMPLES:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_EXAMPLES:-n}" >&6
 
 
-if test "$CONFIG_RTNET_EXAMPLES" = "yes"; then
+if test "$CONFIG_RTNET_EXAMPLES" = "y"; then
   CONFIG_RTNET_EXAMPLES_TRUE=
   CONFIG_RTNET_EXAMPLES_FALSE='#'
 else
@@ -22413,15 +21188,13 @@ echo $ECHO_N "checking whether to enable internal bug checks... $ECHO_C" >&6
 if test "${enable_checks+set}" = set; then
   enableval="$enable_checks"
   case "$enableval" in
-        n | no) CONFIG_RTNET_CHECKED=no ;;
-        *) CONFIG_RTNET_CHECKED=yes ;;
+        y | yes) CONFIG_RTNET_CHECKED=y ;;
+        *) CONFIG_RTNET_CHECKED=n ;;
     esac
-else
-  CONFIG_RTNET_CHECKED=yes
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_CHECKED}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_CHECKED}" >&6
-if test "$CONFIG_RTNET_CHECKED" = "yes"; then
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_CHECKED:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_CHECKED:-n}" >&6
+if test "$CONFIG_RTNET_CHECKED" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_CHECKED 1
@@ -22461,23 +21234,6 @@ _ACEOF
 
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
-        addons/examples/frag-ip \
-        addons/examples/raw-packets \
-        addons/examples/round-trip-time/client \
-        addons/examples/round-trip-time/server \
-        addons/examples/rtmac/event/collector \
-        addons/examples/rtmac/event/handler \
-        addons/examples/rtmac/netshm \
-        addons/examples/rtmac/netshm/kernel-demo \
-        addons/examples/rtmac/round-trip-time/client \
-        addons/examples/rtmac/round-trip-time/multi-client \
-        addons/examples/rtmac/round-trip-time/parport-client \
-        addons/examples/rtmac/round-trip-time/server \
-        addons/examples/select \
-        \
-        addons/rtcap \
-        addons/rtnetproxy \
-        \
         drivers/8139too \
         drivers/eepro100 \
         drivers/eth1394 \
@@ -22494,8 +21250,6 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/experimental/3c59x \
         drivers/experimental/r8169 \
         \
-        rtai_rtdm \
-        \
         stack \
         stack/packet \
         stack/ipv4 \
@@ -22503,11 +21257,19 @@ if test x$CONFIG_KBUILD = xy; then
         stack/rtmac \
         stack/rtmac/nomac \
         stack/rtmac/tdma \
+        \
+        addons/rtcap \
+        addons/rtnetproxy \
+        \
+        examples/rtai-fusion/native/kernel \
+        \
+        rtai_rtdm \
         ; do
                       ac_config_links="$ac_config_links ${DIR}/Makefile:${DIR}/Makefile.kbuild"
 
-        done
+    done
 fi
+
 
 
 
@@ -22521,7 +21283,8 @@ fi
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile addons/GNUmakefile addons/examples/GNUmakefile addons/examples/frag-ip/GNUmakefile addons/examples/fusion/GNUmakefile addons/examples/lxrt/GNUmakefile addons/examples/raw-packets/GNUmakefile addons/examples/round-trip-time/GNUmakefile addons/examples/round-trip-time/client/GNUmakefile addons/examples/round-trip-time/linux-client/GNUmakefile addons/examples/round-trip-time/server/GNUmakefile addons/examples/rtmac/GNUmakefile addons/examples/rtmac/event/GNUmakefile addons/examples/rtmac/event/collector/GNUmakefile addons/examples/rtmac/event/handler/GNUmakefile addons/examples/rtmac/netshm/GNUmakefile addons/examples/rtmac/netshm/kernel-demo/GNUmakefile addons/examples/rtmac/round-trip-time/GNUmakefile addons/examples/rtmac/round-trip-time/client/GNUmakefile addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile addons/examples/rtmac/round-trip-time/server/GNUmakefile addons/examples/select/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/eth1394/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/3c59x/GNUmakefile drivers/experimental/r8169/GNUmakefile rtai_rtdm/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf"
+                                                                                                                                                                                                                                                                                                                                                                                                                          ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/eth1394/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/3c59x/GNUmakefile drivers/experimental/r8169/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai-classic/GNUmakefile examples/rtai-fusion/GNUmakefile examples/rtai-fusion/native/GNUmakefile examples/rtai-fusion/native/kernel/GNUmakefile rtai_rtdm/GNUmakefile scripts/GNUmakefile"
+
 
 
 cat >confcache <<\_ACEOF
@@ -22650,10 +21413,17 @@ echo "$as_me: error: conditional \"CONFIG_NCURSES\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_FUSION_TRUE}" && test -z "${CONFIG_FUSION_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_FUSION\" was never defined.
+if test -z "${CONFIG_RTAI_CLASSIC_TRUE}" && test -z "${CONFIG_RTAI_CLASSIC_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTAI_CLASSIC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_FUSION\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTAI_CLASSIC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTAI_FUSION_TRUE}" && test -z "${CONFIG_RTAI_FUSION_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTAI_FUSION\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_RTAI_FUSION\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -22671,108 +21441,108 @@ echo "$as_me: error: conditional \"CONFIG_RTNET_LXRT\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_3C59X_TRUE}" && test -z "${CONFIG_RTNET_3C59X_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_3C59X\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_8139_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_8139_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_8139\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_3C59X\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_8139\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_8139_TRUE}" && test -z "${CONFIG_RTNET_8139_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_8139\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_EEPRO100_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_EEPRO100_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_EEPRO100\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_8139\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_EEPRO100\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_EEPRO100_TRUE}" && test -z "${CONFIG_RTNET_EEPRO100_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_EEPRO100\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_PCNET32_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_PCNET32_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_PCNET32\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_EEPRO100\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_PCNET32\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_PCNET32_TRUE}" && test -z "${CONFIG_RTNET_PCNET32_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_PCNET32\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_VIA_RHINE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_PCNET32\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_VIA_RHINE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_VIA_RHINE_TRUE}" && test -z "${CONFIG_RTNET_VIA_RHINE_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_VIA_RHINE\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_NATSEMI_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_NATSEMI_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_NATSEMI\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_VIA_RHINE\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_NATSEMI\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_NATSEMI_TRUE}" && test -z "${CONFIG_RTNET_NATSEMI_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_NATSEMI\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_TULIP_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_TULIP_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_TULIP\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_NATSEMI\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_TULIP\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_TULIP_TRUE}" && test -z "${CONFIG_RTNET_TULIP_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_TULIP\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_FCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_FCC_ENET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_FCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_TULIP\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_FCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_FCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_FCC_ENET_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_FCC_ENET\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_SCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_SCC_ENET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_SCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_FCC_ENET\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_SCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_SCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_SCC_ENET_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_SCC_ENET\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_FEC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_FEC_ENET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_FEC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_SCC_ENET\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_FEC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_FEC_ENET_TRUE}" && test -z "${CONFIG_RTNET_FEC_ENET_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_FEC_ENET\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_MPC52XX_FEC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_FEC_ENET\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_MPC52XX_FEC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_MPC52XX_FEC_TRUE}" && test -z "${CONFIG_RTNET_MPC52XX_FEC_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_MPC52XX_FEC\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_SMC91111_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_SMC91111_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_SMC91111\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_MPC52XX_FEC\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_SMC91111\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_SMC91111_TRUE}" && test -z "${CONFIG_RTNET_SMC91111_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_SMC91111\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_ETH1394_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_ETH1394_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_ETH1394\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_SMC91111\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_ETH1394\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_ETH1394_TRUE}" && test -z "${CONFIG_RTNET_ETH1394_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_ETH1394\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_LOOPBACK_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_LOOPBACK_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_LOOPBACK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_ETH1394\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_LOOPBACK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_LOOPBACK_TRUE}" && test -z "${CONFIG_RTNET_LOOPBACK_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_LOOPBACK\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_3C59X_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_3C59X_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_3C59X\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_LOOPBACK\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_3C59X\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_R8169_TRUE}" && test -z "${CONFIG_RTNET_R8169_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_R8169\" was never defined.
+if test -z "${CONFIG_RTNET_DRIVER_R8169_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_R8169_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_R8169\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_R8169\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_R8169\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -22797,17 +21567,10 @@ echo "$as_me: error: conditional \"CONFIG_RTNET_RTCFG\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_RTCAP_TRUE}" && test -z "${CONFIG_RTNET_RTCAP_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_RTCAP\" was never defined.
+if test -z "${CONFIG_RTNET_RTMAC_TRUE}" && test -z "${CONFIG_RTNET_RTMAC_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_RTMAC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_RTCAP\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test -z "${CONFIG_RTNET_PROXY_TRUE}" && test -z "${CONFIG_RTNET_PROXY_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_PROXY\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_PROXY\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_RTMAC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -22822,6 +21585,20 @@ if test -z "${CONFIG_RTNET_NOMAC_TRUE}" && test -z "${CONFIG_RTNET_NOMAC_FALSE}"
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_NOMAC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"CONFIG_RTNET_NOMAC\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTNET_ADDON_RTCAP_TRUE}" && test -z "${CONFIG_RTNET_ADDON_RTCAP_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_ADDON_RTCAP\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_RTNET_ADDON_RTCAP\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTNET_ADDON_PROXY_TRUE}" && test -z "${CONFIG_RTNET_ADDON_PROXY_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_ADDON_PROXY\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_RTNET_ADDON_PROXY\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -23295,30 +22072,6 @@ do
   # Handling of arguments.
   "GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
   "Documentation/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES Documentation/GNUmakefile" ;;
-  "addons/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/GNUmakefile" ;;
-  "addons/examples/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/GNUmakefile" ;;
-  "addons/examples/frag-ip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/frag-ip/GNUmakefile" ;;
-  "addons/examples/fusion/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/fusion/GNUmakefile" ;;
-  "addons/examples/lxrt/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/lxrt/GNUmakefile" ;;
-  "addons/examples/raw-packets/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/raw-packets/GNUmakefile" ;;
-  "addons/examples/round-trip-time/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/GNUmakefile" ;;
-  "addons/examples/round-trip-time/client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/client/GNUmakefile" ;;
-  "addons/examples/round-trip-time/linux-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/linux-client/GNUmakefile" ;;
-  "addons/examples/round-trip-time/server/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/round-trip-time/server/GNUmakefile" ;;
-  "addons/examples/rtmac/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/GNUmakefile" ;;
-  "addons/examples/rtmac/event/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/GNUmakefile" ;;
-  "addons/examples/rtmac/event/collector/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/collector/GNUmakefile" ;;
-  "addons/examples/rtmac/event/handler/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/event/handler/GNUmakefile" ;;
-  "addons/examples/rtmac/netshm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/netshm/GNUmakefile" ;;
-  "addons/examples/rtmac/netshm/kernel-demo/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/netshm/kernel-demo/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/client/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/multi-client/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/parport-client/GNUmakefile" ;;
-  "addons/examples/rtmac/round-trip-time/server/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/rtmac/round-trip-time/server/GNUmakefile" ;;
-  "addons/examples/select/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/examples/select/GNUmakefile" ;;
-  "addons/rtcap/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtcap/GNUmakefile" ;;
-  "addons/rtnetproxy/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtnetproxy/GNUmakefile" ;;
   "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
   "drivers/8139too/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/8139too/GNUmakefile" ;;
   "drivers/eepro100/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eepro100/GNUmakefile" ;;
@@ -23336,7 +22089,6 @@ do
   "drivers/experimental/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/GNUmakefile" ;;
   "drivers/experimental/3c59x/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/3c59x/GNUmakefile" ;;
   "drivers/experimental/r8169/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/r8169/GNUmakefile" ;;
-  "rtai_rtdm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES rtai_rtdm/GNUmakefile" ;;
   "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
   "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
   "stack/packet/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/packet/GNUmakefile" ;;
@@ -23348,6 +22100,17 @@ do
   "tools/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES tools/GNUmakefile" ;;
   "tools/rtnet" ) CONFIG_FILES="$CONFIG_FILES tools/rtnet" ;;
   "tools/rtnet.conf" ) CONFIG_FILES="$CONFIG_FILES tools/rtnet.conf" ;;
+  "addons/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/GNUmakefile" ;;
+  "addons/rtcap/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtcap/GNUmakefile" ;;
+  "addons/rtnetproxy/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtnetproxy/GNUmakefile" ;;
+  "examples/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/GNUmakefile" ;;
+  "examples/generic/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/generic/GNUmakefile" ;;
+  "examples/rtai-classic/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtai-classic/GNUmakefile" ;;
+  "examples/rtai-fusion/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtai-fusion/GNUmakefile" ;;
+  "examples/rtai-fusion/native/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtai-fusion/native/GNUmakefile" ;;
+  "examples/rtai-fusion/native/kernel/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtai-fusion/native/kernel/GNUmakefile" ;;
+  "rtai_rtdm/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES rtai_rtdm/GNUmakefile" ;;
+  "scripts/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES scripts/GNUmakefile" ;;
   "stack/include/rtdm.h" ) CONFIG_LINKS="$CONFIG_LINKS stack/include/rtdm.h:rtai_rtdm/rtdm.h" ;;
   "stack/include/rtdm_driver.h" ) CONFIG_LINKS="$CONFIG_LINKS stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h" ;;
   "${DIR}/Makefile" ) CONFIG_LINKS="$CONFIG_LINKS ${DIR}/Makefile:${DIR}/Makefile.kbuild" ;;
@@ -23513,9 +22276,10 @@ s,@LD@,$LD,;t t
 s,@CONFIG_NCURSES_TRUE@,$CONFIG_NCURSES_TRUE,;t t
 s,@CONFIG_NCURSES_FALSE@,$CONFIG_NCURSES_FALSE,;t t
 s,@NCURSES_LIBS@,$NCURSES_LIBS,;t t
-s,@LIBOBJS@,$LIBOBJS,;t t
-s,@CONFIG_FUSION_TRUE@,$CONFIG_FUSION_TRUE,;t t
-s,@CONFIG_FUSION_FALSE@,$CONFIG_FUSION_FALSE,;t t
+s,@CONFIG_RTAI_CLASSIC_TRUE@,$CONFIG_RTAI_CLASSIC_TRUE,;t t
+s,@CONFIG_RTAI_CLASSIC_FALSE@,$CONFIG_RTAI_CLASSIC_FALSE,;t t
+s,@CONFIG_RTAI_FUSION_TRUE@,$CONFIG_RTAI_FUSION_TRUE,;t t
+s,@CONFIG_RTAI_FUSION_FALSE@,$CONFIG_RTAI_FUSION_FALSE,;t t
 s,@CONFIG_KBUILD_TRUE@,$CONFIG_KBUILD_TRUE,;t t
 s,@CONFIG_KBUILD_FALSE@,$CONFIG_KBUILD_FALSE,;t t
 s,@RTNET_TARGET_ARCH@,$RTNET_TARGET_ARCH,;t t
@@ -23528,50 +22292,52 @@ s,@RTNET_KBUILD_DISTCLEAN@,$RTNET_KBUILD_DISTCLEAN,;t t
 s,@RTNET_MODULE_DIR@,$RTNET_MODULE_DIR,;t t
 s,@CONFIG_RTNET_LXRT_TRUE@,$CONFIG_RTNET_LXRT_TRUE,;t t
 s,@CONFIG_RTNET_LXRT_FALSE@,$CONFIG_RTNET_LXRT_FALSE,;t t
-s,@CONFIG_RTNET_3C59X_TRUE@,$CONFIG_RTNET_3C59X_TRUE,;t t
-s,@CONFIG_RTNET_3C59X_FALSE@,$CONFIG_RTNET_3C59X_FALSE,;t t
-s,@CONFIG_RTNET_8139_TRUE@,$CONFIG_RTNET_8139_TRUE,;t t
-s,@CONFIG_RTNET_8139_FALSE@,$CONFIG_RTNET_8139_FALSE,;t t
-s,@CONFIG_RTNET_EEPRO100_TRUE@,$CONFIG_RTNET_EEPRO100_TRUE,;t t
-s,@CONFIG_RTNET_EEPRO100_FALSE@,$CONFIG_RTNET_EEPRO100_FALSE,;t t
-s,@CONFIG_RTNET_PCNET32_TRUE@,$CONFIG_RTNET_PCNET32_TRUE,;t t
-s,@CONFIG_RTNET_PCNET32_FALSE@,$CONFIG_RTNET_PCNET32_FALSE,;t t
-s,@CONFIG_RTNET_VIA_RHINE_TRUE@,$CONFIG_RTNET_VIA_RHINE_TRUE,;t t
-s,@CONFIG_RTNET_VIA_RHINE_FALSE@,$CONFIG_RTNET_VIA_RHINE_FALSE,;t t
-s,@CONFIG_RTNET_NATSEMI_TRUE@,$CONFIG_RTNET_NATSEMI_TRUE,;t t
-s,@CONFIG_RTNET_NATSEMI_FALSE@,$CONFIG_RTNET_NATSEMI_FALSE,;t t
-s,@CONFIG_RTNET_TULIP_TRUE@,$CONFIG_RTNET_TULIP_TRUE,;t t
-s,@CONFIG_RTNET_TULIP_FALSE@,$CONFIG_RTNET_TULIP_FALSE,;t t
-s,@CONFIG_RTNET_FCC_ENET_TRUE@,$CONFIG_RTNET_FCC_ENET_TRUE,;t t
-s,@CONFIG_RTNET_FCC_ENET_FALSE@,$CONFIG_RTNET_FCC_ENET_FALSE,;t t
-s,@CONFIG_RTNET_SCC_ENET_TRUE@,$CONFIG_RTNET_SCC_ENET_TRUE,;t t
-s,@CONFIG_RTNET_SCC_ENET_FALSE@,$CONFIG_RTNET_SCC_ENET_FALSE,;t t
-s,@CONFIG_RTNET_FEC_ENET_TRUE@,$CONFIG_RTNET_FEC_ENET_TRUE,;t t
-s,@CONFIG_RTNET_FEC_ENET_FALSE@,$CONFIG_RTNET_FEC_ENET_FALSE,;t t
-s,@CONFIG_RTNET_MPC52XX_FEC_TRUE@,$CONFIG_RTNET_MPC52XX_FEC_TRUE,;t t
-s,@CONFIG_RTNET_MPC52XX_FEC_FALSE@,$CONFIG_RTNET_MPC52XX_FEC_FALSE,;t t
-s,@CONFIG_RTNET_SMC91111_TRUE@,$CONFIG_RTNET_SMC91111_TRUE,;t t
-s,@CONFIG_RTNET_SMC91111_FALSE@,$CONFIG_RTNET_SMC91111_FALSE,;t t
-s,@CONFIG_RTNET_ETH1394_TRUE@,$CONFIG_RTNET_ETH1394_TRUE,;t t
-s,@CONFIG_RTNET_ETH1394_FALSE@,$CONFIG_RTNET_ETH1394_FALSE,;t t
-s,@CONFIG_RTNET_LOOPBACK_TRUE@,$CONFIG_RTNET_LOOPBACK_TRUE,;t t
-s,@CONFIG_RTNET_LOOPBACK_FALSE@,$CONFIG_RTNET_LOOPBACK_FALSE,;t t
-s,@CONFIG_RTNET_R8169_TRUE@,$CONFIG_RTNET_R8169_TRUE,;t t
-s,@CONFIG_RTNET_R8169_FALSE@,$CONFIG_RTNET_R8169_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_8139_TRUE@,$CONFIG_RTNET_DRIVER_8139_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_8139_FALSE@,$CONFIG_RTNET_DRIVER_8139_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_EEPRO100_TRUE@,$CONFIG_RTNET_DRIVER_EEPRO100_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_EEPRO100_FALSE@,$CONFIG_RTNET_DRIVER_EEPRO100_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_PCNET32_TRUE@,$CONFIG_RTNET_DRIVER_PCNET32_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_PCNET32_FALSE@,$CONFIG_RTNET_DRIVER_PCNET32_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE@,$CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE@,$CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_NATSEMI_TRUE@,$CONFIG_RTNET_DRIVER_NATSEMI_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_NATSEMI_FALSE@,$CONFIG_RTNET_DRIVER_NATSEMI_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_TULIP_TRUE@,$CONFIG_RTNET_DRIVER_TULIP_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_TULIP_FALSE@,$CONFIG_RTNET_DRIVER_TULIP_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_FCC_ENET_TRUE@,$CONFIG_RTNET_DRIVER_FCC_ENET_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_FCC_ENET_FALSE@,$CONFIG_RTNET_DRIVER_FCC_ENET_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_SCC_ENET_TRUE@,$CONFIG_RTNET_DRIVER_SCC_ENET_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_SCC_ENET_FALSE@,$CONFIG_RTNET_DRIVER_SCC_ENET_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_FEC_ENET_TRUE@,$CONFIG_RTNET_DRIVER_FEC_ENET_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_FEC_ENET_FALSE@,$CONFIG_RTNET_DRIVER_FEC_ENET_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE@,$CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE@,$CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_SMC91111_TRUE@,$CONFIG_RTNET_DRIVER_SMC91111_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_SMC91111_FALSE@,$CONFIG_RTNET_DRIVER_SMC91111_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_ETH1394_TRUE@,$CONFIG_RTNET_DRIVER_ETH1394_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_ETH1394_FALSE@,$CONFIG_RTNET_DRIVER_ETH1394_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_LOOPBACK_TRUE@,$CONFIG_RTNET_DRIVER_LOOPBACK_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_LOOPBACK_FALSE@,$CONFIG_RTNET_DRIVER_LOOPBACK_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_3C59X_TRUE@,$CONFIG_RTNET_DRIVER_3C59X_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_3C59X_FALSE@,$CONFIG_RTNET_DRIVER_3C59X_FALSE,;t t
+s,@CONFIG_RTNET_DRIVER_R8169_TRUE@,$CONFIG_RTNET_DRIVER_R8169_TRUE,;t t
+s,@CONFIG_RTNET_DRIVER_R8169_FALSE@,$CONFIG_RTNET_DRIVER_R8169_FALSE,;t t
 s,@CONFIG_RTNET_RTIPV4_TRUE@,$CONFIG_RTNET_RTIPV4_TRUE,;t t
 s,@CONFIG_RTNET_RTIPV4_FALSE@,$CONFIG_RTNET_RTIPV4_FALSE,;t t
 s,@CONFIG_RTNET_RTPACKET_TRUE@,$CONFIG_RTNET_RTPACKET_TRUE,;t t
 s,@CONFIG_RTNET_RTPACKET_FALSE@,$CONFIG_RTNET_RTPACKET_FALSE,;t t
 s,@CONFIG_RTNET_RTCFG_TRUE@,$CONFIG_RTNET_RTCFG_TRUE,;t t
 s,@CONFIG_RTNET_RTCFG_FALSE@,$CONFIG_RTNET_RTCFG_FALSE,;t t
-s,@CONFIG_RTNET_RTCAP_TRUE@,$CONFIG_RTNET_RTCAP_TRUE,;t t
-s,@CONFIG_RTNET_RTCAP_FALSE@,$CONFIG_RTNET_RTCAP_FALSE,;t t
-s,@CONFIG_RTNET_PROXY_TRUE@,$CONFIG_RTNET_PROXY_TRUE,;t t
-s,@CONFIG_RTNET_PROXY_FALSE@,$CONFIG_RTNET_PROXY_FALSE,;t t
+s,@CONFIG_RTNET_RTMAC_TRUE@,$CONFIG_RTNET_RTMAC_TRUE,;t t
+s,@CONFIG_RTNET_RTMAC_FALSE@,$CONFIG_RTNET_RTMAC_FALSE,;t t
 s,@CONFIG_RTNET_TDMA_TRUE@,$CONFIG_RTNET_TDMA_TRUE,;t t
 s,@CONFIG_RTNET_TDMA_FALSE@,$CONFIG_RTNET_TDMA_FALSE,;t t
 s,@CONFIG_RTNET_NOMAC_TRUE@,$CONFIG_RTNET_NOMAC_TRUE,;t t
 s,@CONFIG_RTNET_NOMAC_FALSE@,$CONFIG_RTNET_NOMAC_FALSE,;t t
+s,@CONFIG_RTNET_ADDON_RTCAP_TRUE@,$CONFIG_RTNET_ADDON_RTCAP_TRUE,;t t
+s,@CONFIG_RTNET_ADDON_RTCAP_FALSE@,$CONFIG_RTNET_ADDON_RTCAP_FALSE,;t t
+s,@CONFIG_RTNET_ADDON_PROXY_TRUE@,$CONFIG_RTNET_ADDON_PROXY_TRUE,;t t
+s,@CONFIG_RTNET_ADDON_PROXY_FALSE@,$CONFIG_RTNET_ADDON_PROXY_FALSE,;t t
 s,@CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE@,$CONFIG_RTNET_ENCLOSED_RTAI_RTDM_TRUE,;t t
 s,@CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE@,$CONFIG_RTNET_ENCLOSED_RTAI_RTDM_FALSE,;t t
 s,@CONFIG_RTNET_RTDM_SELECT_TRUE@,$CONFIG_RTNET_RTDM_SELECT_TRUE,;t t
@@ -23582,6 +22348,7 @@ s,@RTAI_KMOD_CFLAGS@,$RTAI_KMOD_CFLAGS,;t t
 s,@RTAI_USER_CFLAGS@,$RTAI_USER_CFLAGS,;t t
 s,@RTAI_LIBRARIES@,$RTAI_LIBRARIES,;t t
 s,@RTFW_KMOD_CFLAGS@,$RTFW_KMOD_CFLAGS,;t t
+s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

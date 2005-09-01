@@ -51,7 +51,7 @@ unsigned int rtskb_pools_max=0;
 unsigned int rtskb_amount=0;
 unsigned int rtskb_amount_max=0;
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
 /* RTcap interface */
 rtos_spinlock_t rtcap_lock;
 void (*rtcap_handler)(struct rtskb *skb) = NULL;
@@ -192,7 +192,7 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     skb->pkt_type = PACKET_HOST;
     skb->xmit_stamp = NULL;
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
     skb->cap_flags = 0;
 #endif
 
@@ -207,7 +207,7 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
  */
 void kfree_rtskb(struct rtskb *skb)
 {
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
     unsigned long flags;
     struct rtskb  *comp_skb;
     struct rtskb  *next_skb;
@@ -218,7 +218,7 @@ void kfree_rtskb(struct rtskb *skb)
     RTNET_ASSERT(skb != NULL, return;);
     RTNET_ASSERT(skb->pool != NULL, return;);
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
     next_skb  = skb;
     chain_end = skb->chain_end;
 
@@ -253,14 +253,14 @@ void kfree_rtskb(struct rtskb *skb)
 
     } while (chain_end != skb);
 
-#else  /* CONFIG_RTNET_RTCAP */
+#else  /* CONFIG_RTNET_ADDON_RTCAP */
 
     rtskb_queue_tail(skb->pool, skb);
 #ifdef CONFIG_RTNET_CHECKED
     skb->pool->pool_balance += skb->chain_len;
 #endif
 
-#endif /* CONFIG_RTNET_RTCAP */
+#endif /* CONFIG_RTNET_ADDON_RTCAP */
 }
 
 
@@ -515,7 +515,7 @@ int rtskb_pools_init(void)
     if (rtskb_pool_init(&global_pool, global_rtskbs) < global_rtskbs)
         goto err_out2;
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
     rtos_spin_lock_init(&rtcap_lock);
 #endif
 
@@ -561,7 +561,7 @@ EXPORT_SYMBOL(rtskb_over_panic);
 EXPORT_SYMBOL(rtskb_under_panic);
 #endif
 
-#ifdef CONFIG_RTNET_RTCAP
+#ifdef CONFIG_RTNET_ADDON_RTCAP
 EXPORT_SYMBOL(rtcap_lock);
 EXPORT_SYMBOL(rtcap_handler);
 #endif

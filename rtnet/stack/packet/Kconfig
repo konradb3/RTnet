@@ -1,0 +1,3 @@
+config RTNET_RTPACKET
+    bool "Real-Time Packet Socket Support"
+    default y

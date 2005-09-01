@@ -1,0 +1,56 @@
+#
+# Automatically generated make config: don't edit
+# RTnet version: 0.9.0
+# Thu Sep  1 08:07:32 2005
+#
+CONFIG_RTNET_VERSION="0.9.0"
+CONFIG_RTAI_DIR="/usr/realtime"
+CONFIG_RTNET_INSTALLDIR="/usr/local/rtnet"
+# CONFIG_RTNET_CHECKED is not set
+
+#
+# Protocol Stack
+#
+CONFIG_RTNET_RTIPV4=y
+# CONFIG_RTNET_RTIPV4_NETROUTING is not set
+# CONFIG_RTNET_RTIPV4_ROUTER is not set
+CONFIG_RTNET_RTPACKET=y
+CONFIG_RTNET_RTMAC=y
+CONFIG_RTNET_TDMA=y
+CONFIG_RTNET_TDMA_MASTER=y
+# CONFIG_RTNET_NOMAC is not set
+CONFIG_RTNET_RTCFG=y
+# CONFIG_RTNET_RTCFG_DEBUG is not set
+
+#
+# Drivers
+#
+
+#
+# Common PCI Drivers
+#
+# CONFIG_RTNET_DRIVER_PCNET32 is not set
+# CONFIG_RTNET_DRIVER_TULIP is not set
+CONFIG_RTNET_DRIVER_EEPRO100=y
+# CONFIG_RTNET_DRIVER_NATSEMI is not set
+CONFIG_RTNET_DRIVER_8139=y
+# CONFIG_RTNET_DRIVER_VIA_RHINE is not set
+
+#
+# Misc Drivers
+#
+CONFIG_RTNET_DRIVER_LOOPBACK=y
+# CONFIG_RTNET_DRIVER_SMC91111 is not set
+# CONFIG_RTNET_DRIVER_ETH1394 is not set
+# CONFIG_RTNET_EXP_DRIVERS is not set
+
+#
+# Add-Ons
+#
+# CONFIG_RTNET_ADDON_RTCAP is not set
+# CONFIG_RTNET_ADDON_PROXY is not set
+
+#
+# Examples
+#
+# CONFIG_RTNET_EXAMPLES is not set

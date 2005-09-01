@@ -1,0 +1,16 @@
+noinst_PROGRAMS = \
+    linux_client \
+    linux_server
+
+AM_CFLAGS = \
+    -I$(top_srcdir)/stack/include \
+    -I$(top_builddir)/stack/include \
+    @RTAI_USER_CFLAGS@
+
+AM_LDFLAGS = \
+    -lpthread -lrtai -lrtdm \
+    -L@RTAI_LIBRARIES@
+
+all-local: \
+    linux_client \
+    linux_server

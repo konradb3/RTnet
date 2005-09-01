@@ -27,7 +27,7 @@
 
 extern int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt);
 
-#ifdef CONFIG_RTNET_PROXY
+#ifdef CONFIG_RTNET_ADDON_PROXY
 extern int rt_ip_register_fallback(int (*callback)(struct rtskb *skb));
 #endif
 

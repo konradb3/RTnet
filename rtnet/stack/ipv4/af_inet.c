@@ -161,7 +161,7 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = rt_ip_route_del_host(cmd.args.delhost.ip_addr);
             break;
 
-#ifdef CONFIG_RTNET_NETWORK_ROUTING
+#ifdef CONFIG_RTNET_RTIPV4_NETROUTING
         case IOC_RT_NET_ROUTE_ADD:
             ret = rt_ip_route_add_net(cmd.args.addnet.net_addr,
                                       cmd.args.addnet.net_mask,
@@ -172,7 +172,7 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = rt_ip_route_del_net(cmd.args.delnet.net_addr,
                                       cmd.args.delnet.net_mask);
             break;
-#endif /* CONFIG_RTNET_NETWORK_ROUTING */
+#endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
         case IOC_RT_PING:
             ret = rtpc_dispatch_call(ping_handler, cmd.args.ping.timeout, &cmd,
