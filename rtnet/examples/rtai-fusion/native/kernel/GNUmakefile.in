@@ -37,6 +37,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = frag-ip$(modext)
+@CONFIG_RTNET_RTPACKET_TRUE@am__append_2 = raw-packets$(modext)
 subdir = examples/rtai-fusion/native/kernel
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -269,9 +271,7 @@ libkernel_frag_ip_a_SOURCES = \
 libkernel_raw_packets_a_SOURCES = \
 	raw-packets.c
 
-OBJS = frag-ip$(modext) \
-	raw-packets$(modext)
-
+OBJS = $(am__append_1) $(am__append_2)
 EXTRA_DIST = Makefile.kbuild
 DISTCLEANFILES = Makefile
 all: all-am

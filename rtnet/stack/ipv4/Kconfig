@@ -1,13 +1,34 @@
 config RTNET_RTIPV4
     bool "Real-Time IPv4"
     default y
+    ---help---
+    Enables the real-time capable IPv4 support of RTnet. The protocol is
+    implemented as a separate module. Supplementing tools (rtroute,
+    rtping) and examples are provided as well. Moreover, RTcfg will
+    include IPv4 support when this option is switched on.
+
+    For further information see also Documentation/README.routing and
+    Documentation/README.ipfragmentation.
 
 config RTNET_RTIPV4_NETROUTING
     bool "IP Network Routing"
     depends on RTNET_RTIPV4
     default n
+    ---help---
+    Enables routing across IPv4 real-time networks. You will only require
+    this feature in complex networks, while switching it off for flat,
+    single-segment networks improves code size and the worst-case routing
+    decision delay.
+
+    See Documentation/README.routing for further information.
 
 config RTNET_RTIPV4_ROUTER
     bool "IP Router"
     depends on RTNET_RTIPV4
     default n
+    ---help---
+    When switched on, the RTnet station will be able to forward IPv4
+    packets that are not directed to the station itself. Typically used in
+    combination with CONFIG_RTNET_RTIPV4_NETROUTING.
+
+    See Documentation/README.routing for further information.

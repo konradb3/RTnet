@@ -15,8 +15,15 @@ libkernel_frag_ip_a_SOURCES = \
 libkernel_raw_packets_a_SOURCES = \
 	raw-packets.c
 
-OBJS = frag-ip$(modext) \
-	raw-packets$(modext)
+OBJS =
+
+if CONFIG_RTNET_RTIPV4
+OBJS += frag-ip$(modext)
+endif
+
+if CONFIG_RTNET_RTPACKET
+OBJS += raw-packets$(modext)
+endif
 
 frag-ip.o: libkernel_frag-ip.a
 	$(LD) --whole-archive $< -r -o $@

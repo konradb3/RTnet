@@ -39,6 +39,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = rtnet_ifs$(EXEEXT) frag-ip$(EXEEXT)
+@CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = rtnet_ifs
+@CONFIG_RTNET_RTPACKET_TRUE@am__append_2 = frag-ip
 subdir = examples/rtai-fusion/native
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -257,14 +259,15 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AM_CFLAGS = \
-    -I$(top_srcdir)/stack/include \
-    -I$(top_builddir)/stack/include \
-    @RTAI_USER_CFLAGS@
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include \
+	@RTAI_USER_CFLAGS@
 
 AM_LDFLAGS = \
-    -lpthread -lrtai -lrtdm \
-    -L@RTAI_LIBRARIES@
+	-lpthread -lrtai -lrtdm \
+	-L@RTAI_LIBRARIES@
 
+OBJS = $(am__append_1) $(am__append_2)
 SUBDIRS = kernel
 all: all-recursive
 
@@ -625,9 +628,7 @@ uninstall-info: uninstall-info-recursive
 	uninstall-info-am
 
 
-all-local: \
-    rtnet_ifs \
-    frag-ip
+all-local: $(OBJS)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

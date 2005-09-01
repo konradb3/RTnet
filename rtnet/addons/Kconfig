@@ -3,9 +3,27 @@ menu "Add-Ons"
 config RTNET_ADDON_RTCAP
     bool "Real-Time Capturing Support"
     default n
+    ---help---
+    This feature allows to capture real-time packets traversing the RTnet
+    stack. It can both be used to sniff passively on a network (in this
+    case you may want to enable the promisc mode of your real-time NIC via
+    rtifconfig) and to log the traffic the node receives and transmits
+    during normal operation. RTcap consists of additional hooks in the
+    RTnet stack and a separate module as interface to standard network
+    analysis tools like Ethereal.
+
+    For further information see Documentation/README.rtcap.
 
 config RTNET_ADDON_PROXY
     bool "IP protocol proxy (legacy)"
+    depends on RTNET_RTIPV4
     default n
+    ---help---
+    Enables a forward-to-Linux module for all IP protocols that are not
+    handled by the IPv4 implemenation of RTnet (e.g. TCP). Only use when
+    you know what you are doing - it can easily break your real-time
+    requirements!
+
+    See Documentation/README.rtnetproxy for further information.
 
 endmenu

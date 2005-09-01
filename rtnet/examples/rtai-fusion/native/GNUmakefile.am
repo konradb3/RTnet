@@ -1,18 +1,26 @@
 noinst_PROGRAMS = \
-    rtnet_ifs \
-    frag-ip
+	rtnet_ifs \
+	frag-ip
 
 AM_CFLAGS = \
-    -I$(top_srcdir)/stack/include \
-    -I$(top_builddir)/stack/include \
-    @RTAI_USER_CFLAGS@
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include \
+	@RTAI_USER_CFLAGS@
 
 AM_LDFLAGS = \
-    -lpthread -lrtai -lrtdm \
-    -L@RTAI_LIBRARIES@
+	-lpthread -lrtai -lrtdm \
+	-L@RTAI_LIBRARIES@
 
-all-local: \
-    rtnet_ifs \
-    frag-ip
+OBJS =
+
+if CONFIG_RTNET_RTIPV4
+OBJS += rtnet_ifs
+endif
+
+if CONFIG_RTNET_RTPACKET
+OBJS += frag-ip
+endif
+
+all-local: $(OBJS)
 
 SUBDIRS = kernel
