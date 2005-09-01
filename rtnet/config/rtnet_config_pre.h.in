@@ -12,14 +12,8 @@
 /* We build for fusion 0.9.x */
 #undef CONFIG_FUSION_090
 
-/* We build for rtai 3.0rx */
-#undef CONFIG_RTAI_30
-
-/* We build for rtai 3.1rx */
-#undef CONFIG_RTAI_31
-
-/* We build for rtai 3.2rx */
-#undef CONFIG_RTAI_32
+/* We build for rtai 3.x */
+#undef CONFIG_RTAI_3x
 
 /* rtnetproxy support */
 #undef CONFIG_RTNET_ADDON_PROXY

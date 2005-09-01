@@ -47,18 +47,6 @@ static inline void rt_arp_solicit(struct rtnet_device *rtdev, u32 target)
                 NULL, NULL, NULL);
 }
 
-static inline int rt_arp_table_lookup(struct dest_route *arp_entry, u32 ip)
-{
-    int result;
-
-
-    result = rt_ip_route_output(arp_entry, ip);
-    if (result == 0)
-        rtdev_dereference(arp_entry->rtdev);
-
-    return result;
-}
-
 void __init rt_arp_init(void);
 void rt_arp_release(void);
 

@@ -35,9 +35,8 @@
 typedef __s64   nanosecs_t;     /* used for time calculations and I/O */
 
 
-/* Support for RTAI 24.1.x and 3.x */
-#if defined(CONFIG_RTAI_24) || defined(CONFIG_RTAI_30) || \
-    defined(CONFIG_RTAI_31) || defined(CONFIG_RTAI_32)
+#if defined(CONFIG_RTAI_3x)
+/* Support for 3.x */
 # include <rtnet_sys_rtai.h>
 #elif defined(CONFIG_FUSION_090)
 /* Support for fusion 0.9.0 or better */

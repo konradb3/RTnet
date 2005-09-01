@@ -1081,7 +1081,7 @@ Optional Features:
   --enable-enclosed-rtdm  built enclosed RTDM module [default=yes]
   --enable-rtdm-select    enable select function for RTDM (experimental)
                           [default=no]
-  --enable-examples       build examples [default=yes]
+  --enable-examples       build examples [default=no]
   --enable-checks         enable internal bug checks [default=no]
 
 Optional Packages:
@@ -19646,27 +19646,11 @@ echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
 CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
 case "$CONFIG_RTNET_RTAI_3_VERSION" in
-    3.0*)
-        CONFIG_RTNET_RTAI_VERSION=30
+    magma)
+        CONFIG_RTNET_RTAI_VERSION=3x
 
 cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTAI_30 1
-_ACEOF
-
-        ;;
-    3.1*)
-        CONFIG_RTNET_RTAI_VERSION=31
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTAI_31 1
-_ACEOF
-
-        ;;
-    3.2*)
-        CONFIG_RTNET_RTAI_VERSION=32
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTAI_32 1
+#define CONFIG_RTAI_3x 1
 _ACEOF
 
         ;;
@@ -19725,7 +19709,7 @@ echo "${ECHO_T}${CONFIG_RTNET_RTAI_CONFIG_FILE}" >&6
 . ${CONFIG_RTNET_RTAI_CONFIG_FILE}
 
 case "$CONFIG_RTNET_RTAI_VERSION" in
-    30 | 31 | 32)   # ---> RTAI 3.x <---
+    3x) # ---> RTAI 3.x <---
 
         # check for semas, needed by rtnet
         echo "$as_me:$LINENO: checking for RTAI semaphores" >&5
@@ -19795,19 +19779,7 @@ esac
 echo "$as_me:$LINENO: checking for Linux source tree" >&5
 echo $ECHO_N "checking for Linux source tree... $ECHO_C" >&6
 RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-case "$CONFIG_RTNET_RTAI_3_VERSION" in
-    3.0 | 3.0r1 | 3.0r2)
-
-        eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
-        ;;
-    *)
-        RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-        ;;
-esac
+RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
 
 #source (load) the kernel configuration
 . ${RTAI_LINUX_DIR}/.config
@@ -19882,7 +19854,7 @@ fi
 
 # common stuff
 case "${CONFIG_RTNET_RTAI_VERSION}" in
-    30 | 31 | 32)
+    3x)
         RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
         CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
         ;;
@@ -19902,12 +19874,7 @@ esac
 
 if test "$CONFIG_KBUILD" = "y"; then
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30)
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
-            ;;
-        31 | 32)
+        3x)
             RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
             ;;
         fusion-090)
@@ -19921,7 +19888,7 @@ echo "$as_me: error: *** internal error" >&2;}
     esac
 else
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30 | 31 | 32)
+        3x)
             RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
         fusion-090)
@@ -20066,7 +20033,7 @@ else
         done;                                                               \
         "
         case "${CONFIG_RTNET_RTAI_VERSION}" in
-        31 | 32)
+        3x)
             if test -e $RTAI_LINUX_DIR/Module.symvers; then
                 mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
             fi
@@ -20105,14 +20072,71 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${RTAI_KMOD_CFLAGS}"
 # To prevent this, we must only check a single set of non-conflicting
 # headers, depending on the RTAI version which has been
 # identified. (rpm)
+
+
+
+for ac_header in rtdm/rtdm.h rtdm/rtdm_driver.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <linux/kernel.h>
+
+
+#include <$ac_header>
+_ACEOF
+rm -f Makefile
+cat >Makefile <<_ACEOF
+EXTRA_CFLAGS += ${CFLAGS}
+EXTRA_CFLAGS += ${CPPFLAGS}
+obj-m += conftest.o
+_ACEOF
+rm -f conftest.$bs_kmodext conftest.o
+if { (eval echo "$as_me:$LINENO: \"$bs_kcompile > /dev/null\"") >&5
+  (eval $bs_kcompile > /dev/null) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  eval "$as_ac_Header=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Header=no"
+fi
+rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile conftest.$ac_ext; rmdir .tmp_versions
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
+echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+done
+
+
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30)
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
-            ;;
-        31 | 32)
+        3x)
 
 
 
@@ -20176,66 +20200,7 @@ done
 
             ;;
         fusion-090)
-
-
-for ac_header in rtdm/rtdm.h rtdm/rtdm_driver.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <linux/kernel.h>
-
-
-#include <$ac_header>
-_ACEOF
-rm -f Makefile
-cat >Makefile <<_ACEOF
-EXTRA_CFLAGS += ${CFLAGS}
-EXTRA_CFLAGS += ${CPPFLAGS}
-obj-m += conftest.o
-_ACEOF
-rm -f conftest.$bs_kmodext conftest.o
-if { (eval echo "$as_me:$LINENO: \"$bs_kcompile > /dev/null\"") >&5
-  (eval $bs_kcompile > /dev/null) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile conftest.$ac_ext; rmdir .tmp_versions
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
-echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-done
-
+            # nothing further to do
             ;;
         *)
             { { echo "$as_me:$LINENO: error: *** internal error" >&5
@@ -20245,7 +20210,7 @@ echo "$as_me: error: *** internal error" >&2;}
     esac
 else                                    # building against linux-2.4
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30 | 31 | 32)   # mandatory RTAI-3 headers
+        3x)   # mandatory RTAI-3 headers
 
 
 for ac_header in rtai_sem.h rtai_malloc.h
@@ -20357,7 +20322,7 @@ echo "${ECHO_T}$RTNET_MODULE_DIR" >&6
 echo "$as_me:$LINENO: checking for RTAI 3.x LXRT enabled" >&5
 echo $ECHO_N "checking for RTAI 3.x LXRT enabled... $ECHO_C" >&6
 case "${CONFIG_RTNET_RTAI_VERSION}" in
-    30 | 31 | 32)
+    3x)
         case "${CONFIG_RTAI_SCHED_LXRT}" in
             y | m) CONFIG_RTNET_LXRT=y ;;
             *) CONFIG_RTNET_LXRT=n ;;
@@ -21092,7 +21057,7 @@ else
   CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y
 fi;
 case "${CONFIG_RTNET_RTAI_VERSION}" in
-    fusion-090)
+    3x | fusion-090)
         CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
 esac
 echo "$as_me:$LINENO: result: ${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-n}" >&5
@@ -21161,11 +21126,9 @@ echo $ECHO_N "checking whether to build examples... $ECHO_C" >&6
 if test "${enable_examples+set}" = set; then
   enableval="$enable_examples"
   case "$enableval" in
-        n | no) CONFIG_RTNET_EXAMPLES=n ;;
-        *) CONFIG_RTNET_EXAMPLES=y ;;
+        y | yes) CONFIG_RTNET_EXAMPLES=y ;;
+        *) CONFIG_RTNET_EXAMPLES=n ;;
     esac
-else
-  CONFIG_RTNET_EXAMPLES=y
 fi;
 echo "$as_me:$LINENO: result: ${CONFIG_RTNET_EXAMPLES:-n}" >&5
 echo "${ECHO_T}${CONFIG_RTNET_EXAMPLES:-n}" >&6
@@ -21273,13 +21236,17 @@ fi
 
 
 
-if test x$CONFIG_KBUILD = xy; then
-    mkdir -p symbols
-    rm -rf symbols/*
-    for FILE in `ls ${RTNET_RTAI_SYMBOLS}/*`; do
-        ${LN_S} ${FILE} symbols/$(basename ${FILE})
-    done
-fi
+case "${CONFIG_RTNET_RTAI_VERSION}" in
+    fusion-090)
+        if test x$CONFIG_KBUILD = xy; then
+            mkdir -p symbols
+            rm -rf symbols/*
+            for FILE in `ls ${RTNET_RTAI_SYMBOLS}/*`; do
+                ${LN_S} ${FILE} symbols/$(basename ${FILE})
+            done
+        fi
+        ;;
+esac
 
 
 

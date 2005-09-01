@@ -188,17 +188,9 @@ AC_MSG_CHECKING([for RTAI version])
 CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
 
 case "$CONFIG_RTNET_RTAI_3_VERSION" in
-    3.0*)
-        CONFIG_RTNET_RTAI_VERSION=30
-        AC_DEFINE(CONFIG_RTAI_30, 1, [We build for rtai 3.0rx])
-        ;;
-    3.1*)
-        CONFIG_RTNET_RTAI_VERSION=31
-        AC_DEFINE(CONFIG_RTAI_31, 1, [We build for rtai 3.1rx])
-        ;;
-    3.2*)
-        CONFIG_RTNET_RTAI_VERSION=32
-        AC_DEFINE(CONFIG_RTAI_32, 1, [We build for rtai 3.2rx])
+    magma)
+        CONFIG_RTNET_RTAI_VERSION=3x
+        AC_DEFINE(CONFIG_RTAI_3x, 1, [We build for rtai 3.x])
         ;;
     0.8.99-fusion | 0.9*-fusion)
         CONFIG_RTNET_RTAI_VERSION=fusion-090
@@ -226,7 +218,7 @@ AC_MSG_RESULT([${CONFIG_RTNET_RTAI_CONFIG_FILE}])
 . ${CONFIG_RTNET_RTAI_CONFIG_FILE}
 
 case "$CONFIG_RTNET_RTAI_VERSION" in
-    30 | 31 | 32)   # ---> RTAI 3.x <---
+    3x) # ---> RTAI 3.x <---
 
         # check for semas, needed by rtnet
         AC_MSG_CHECKING([for RTAI semaphores])
@@ -277,19 +269,7 @@ esac
 # get linux kernel tree and version
 AC_MSG_CHECKING([for Linux source tree])
 RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-case "$CONFIG_RTNET_RTAI_3_VERSION" in
-    3.0 | 3.0r1 | 3.0r2)
-
-        eval linux_`grep '^EXTRAVERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        eval linux_`grep '^PATCHLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        eval linux_`grep '^SUBLEVEL =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        eval linux_`grep '^VERSION =' $RTAI_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-        RTAI_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL.$linux_EXTRAVERSION"
-        ;;
-    *)
-        RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-        ;;
-esac
+RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
 
 #source (load) the kernel configuration
 . ${RTAI_LINUX_DIR}/.config
@@ -355,7 +335,7 @@ AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
 
 # common stuff
 case "${CONFIG_RTNET_RTAI_VERSION}" in
-    30 | 31 | 32)
+    3x)
         RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
         CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
         ;;
@@ -373,10 +353,7 @@ esac
 
 if test "$CONFIG_KBUILD" = "y"; then
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30)
-            AC_MSG_ERROR([*** internal error])
-            ;;
-        31 | 32)
+        3x)
             RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
             ;;
         fusion-090)
@@ -388,7 +365,7 @@ if test "$CONFIG_KBUILD" = "y"; then
     esac
 else
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30 | 31 | 32)
+        3x)
             RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
         fusion-090)
@@ -517,7 +494,7 @@ else
         "
     dnl === Hack to suppress undefined symbol warnings during MODPOST stage ===
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        31 | 32)
+        3x)
             if test -e $RTAI_LINUX_DIR/Module.symvers; then
                 mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
             fi
@@ -557,12 +534,17 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${RTAI_KMOD_CFLAGS}"
 # To prevent this, we must only check a single set of non-conflicting
 # headers, depending on the RTAI version which has been
 # identified. (rpm)
+
+BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
+    [],
+    [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
+    [
+#include <linux/kernel.h>
+    ])
+
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30)
-            AC_MSG_ERROR([*** internal error])
-            ;;
-        31 | 32)
+        3x)
             BS_CHECK_KHEADERS([rtai_sem.h rtai_malloc.h rtai_fifos.h],
                 [],
                 [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -571,12 +553,7 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
                 ])
             ;;
         fusion-090)
-            BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
-                [],
-                [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
-                [
-#include <linux/kernel.h>
-                ])
+            # nothing further to do
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
@@ -584,7 +561,7 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
     esac
 else                                    # building against linux-2.4
     case "${CONFIG_RTNET_RTAI_VERSION}" in
-        30 | 31 | 32)   # mandatory RTAI-3 headers
+        3x)   # mandatory RTAI-3 headers
             AC_CHECK_HEADERS([rtai_sem.h rtai_malloc.h],
             [],
             [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -627,7 +604,7 @@ dnl             check for LXRT
 dnl ======================================================================
 AC_MSG_CHECKING([for RTAI 3.x LXRT enabled])
 case "${CONFIG_RTNET_RTAI_VERSION}" in
-    30 | 31 | 32)
+    3x)
         case "${CONFIG_RTAI_SCHED_LXRT}" in
             y | m) CONFIG_RTNET_LXRT=y ;;
             *) CONFIG_RTNET_LXRT=n ;;
@@ -1016,7 +993,7 @@ AC_ARG_ENABLE(enclosed-rtdm,
     esac],
     [CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y])
 case "${CONFIG_RTNET_RTAI_VERSION}" in
-    fusion-090)
+    3x | fusion-090)
         CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
 esac
 AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-n}])
@@ -1060,12 +1037,11 @@ dnl ======================================================================
 
 AC_MSG_CHECKING([whether to build examples])
 AC_ARG_ENABLE(examples,
-    AS_HELP_STRING([--enable-examples], [build examples @<:@default=yes@:>@]),
+    AS_HELP_STRING([--enable-examples], [build examples @<:@default=no@:>@]),
     [case "$enableval" in
-        n | no) CONFIG_RTNET_EXAMPLES=n ;;
-        *) CONFIG_RTNET_EXAMPLES=y ;;
-    esac],
-    [CONFIG_RTNET_EXAMPLES=y])
+        y | yes) CONFIG_RTNET_EXAMPLES=y ;;
+        *) CONFIG_RTNET_EXAMPLES=n ;;
+    esac])
 AC_MSG_RESULT([${CONFIG_RTNET_EXAMPLES:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_EXAMPLES,[test "$CONFIG_RTNET_EXAMPLES" = "y"])
 
@@ -1195,13 +1171,17 @@ dnl ======================================================================
 dnl             create links to RTAI symbols
 dnl ======================================================================
 
-if test x$CONFIG_KBUILD = xy; then
-    mkdir -p symbols
-    rm -rf symbols/*
-    for FILE in `ls ${RTNET_RTAI_SYMBOLS}/*`; do
-        ${LN_S} ${FILE} symbols/$(basename ${FILE})
-    done
-fi
+case "${CONFIG_RTNET_RTAI_VERSION}" in
+    fusion-090)
+        if test x$CONFIG_KBUILD = xy; then
+            mkdir -p symbols
+            rm -rf symbols/*
+            for FILE in `ls ${RTNET_RTAI_SYMBOLS}/*`; do
+                ${LN_S} ${FILE} symbols/$(basename ${FILE})
+            done
+        fi
+        ;;
+esac
 
 
 dnl ======================================================================

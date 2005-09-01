@@ -249,15 +249,6 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-AM_CFLAGS = \
-    -I$(top_srcdir)/stack/include \
-    -I$(top_builddir)/stack/include \
-    @RTAI_USER_CFLAGS@
-
-AM_LDFLAGS = \
-    -lpthread -lrtai -lrtdm \
-    -L@RTAI_LIBRARIES@
-
 all: all-am
 
 .SUFFIXES:
