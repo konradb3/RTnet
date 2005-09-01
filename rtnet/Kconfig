@@ -5,16 +5,27 @@ config RTNET_VERSION
 mainmenu "RTnet configuration"
 
 config RTAI_DIR
-    string "RTAI/fusion Installation Path"
+    string "RTAI Installation Path"
     default "/usr/realtime"
+    ---help---
+    Path to an installed version of RTAI/fusion (RTAI/classic is currently
+    broken). Do not confuse with the source code directory of RTAI.
 
 config RTNET_INSTALLDIR
     string "Installation Path of RTnet"
     default "/usr/local/rtnet"
+    ---help---
+    Destination path where RTnet's binaries, configuration files, and
+    headers shall be installed.
 
 config RTNET_CHECKED
     bool "Internal Bug Checks"
     default n
+    ---help---
+    Switch on if you face crashes when RTnet is running or if you suspect
+    any other RTnet-related issues. This feature will add a few sanity
+    checks at critical points that will produce warnings on the kernel
+    console in case certain internal bugs are detected.
 
 source "stack/Kconfig"
 source "drivers/Kconfig"
