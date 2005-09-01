@@ -1,0 +1,26 @@
+SUBDIRS = lxdialog
+
+EXTRA_DIST= \
+	conf.c \
+	confdata.c \
+	expr.c \
+	expr.h \
+	gconf.c \
+	gconf.glade \
+	images.c \
+	kconfig_load.c \
+	kxgettext.c \
+	lex.zconf.c_shipped \
+	lkc.h \
+	lkc_proto.h \
+	Makefile.kconfig \
+	mconf.c \
+	menu.c \
+	qconf.cc \
+	qconf.h \
+	symbol.c \
+	util.c \
+	zconf.l \
+	zconf.tab.c_shipped \
+	zconf.tab.h_shipped \
+	zconf.y

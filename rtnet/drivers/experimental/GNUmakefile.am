@@ -9,3 +9,5 @@ OPTDIRS += r8169
 endif
 
 SUBDIRS = $(OPTDIRS)
+
+EXTRA_DIST = Kconfig

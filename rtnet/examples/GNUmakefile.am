@@ -9,3 +9,5 @@ OPTDIRS += rtai-fusion
 endif
 
 SUBDIRS = generic $(OPTDIRS)
+
+EXTRA_DIST = Kconfig

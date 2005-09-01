@@ -1,6 +1,4 @@
 noinst_PROGRAMS = \
-	linux_client \
-	linux_server \
 	rtnet_ifs \
 	simpleclient \
 	simpleserver
@@ -11,8 +9,6 @@ AM_CFLAGS = \
         @RTAI_USER_CFLAGS@
 
 all-local: \
-	linux_client \
-	linux_server \
 	rtnet_ifs \
 	simpleclient \
 	simpleserver

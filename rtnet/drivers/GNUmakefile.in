@@ -255,6 +255,7 @@ OPTDIRS = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_10) $(am__append_11) $(am__append_12) \
 	$(am__append_13)
 SUBDIRS = experimental $(OPTDIRS)
+EXTRA_DIST = Kconfig
 all: all-recursive
 
 .SUFFIXES:

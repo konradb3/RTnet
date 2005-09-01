@@ -9,3 +9,5 @@ OPTDIRS += rtnetproxy
 endif
 
 SUBDIRS = $(OPTDIRS)
+
+EXTRA_DIST = Kconfig

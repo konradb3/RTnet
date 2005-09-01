@@ -274,7 +274,7 @@ libkernel_rtcfg_a_SOURCES = \
 	rtcfg_proc.c
 
 OBJS = rtcfg$(modext)
-EXTRA_DIST = Makefile.kbuild
+EXTRA_DIST = Makefile.kbuild Kconfig
 DISTCLEANFILES = Makefile
 all: all-am
 

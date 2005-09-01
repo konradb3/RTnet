@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = linux_client.c linux_server.c rtnet_ifs.c simpleclient.c simpleserver.c
+SOURCES = rtnet_ifs.c simpleclient.c simpleserver.c
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -38,8 +38,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = linux_client$(EXEEXT) linux_server$(EXEEXT) \
-	rtnet_ifs$(EXEEXT) simpleclient$(EXEEXT) simpleserver$(EXEEXT)
+noinst_PROGRAMS = rtnet_ifs$(EXEEXT) simpleclient$(EXEEXT) \
+	simpleserver$(EXEEXT)
 subdir = examples/rtai-classic
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,12 +51,6 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-linux_client_SOURCES = linux_client.c
-linux_client_OBJECTS = linux_client.$(OBJEXT)
-linux_client_LDADD = $(LDADD)
-linux_server_SOURCES = linux_server.c
-linux_server_OBJECTS = linux_server.$(OBJEXT)
-linux_server_LDADD = $(LDADD)
 rtnet_ifs_SOURCES = rtnet_ifs.c
 rtnet_ifs_OBJECTS = rtnet_ifs.$(OBJEXT)
 rtnet_ifs_LDADD = $(LDADD)
@@ -77,10 +71,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = linux_client.c linux_server.c rtnet_ifs.c simpleclient.c \
-	simpleserver.c
-DIST_SOURCES = linux_client.c linux_server.c rtnet_ifs.c \
-	simpleclient.c simpleserver.c
+SOURCES = rtnet_ifs.c simpleclient.c simpleserver.c
+DIST_SOURCES = rtnet_ifs.c simpleclient.c simpleserver.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -306,12 +298,6 @@ clean-noinstPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-linux_client$(EXEEXT): $(linux_client_OBJECTS) $(linux_client_DEPENDENCIES) 
-	@rm -f linux_client$(EXEEXT)
-	$(LINK) $(linux_client_LDFLAGS) $(linux_client_OBJECTS) $(linux_client_LDADD) $(LIBS)
-linux_server$(EXEEXT): $(linux_server_OBJECTS) $(linux_server_DEPENDENCIES) 
-	@rm -f linux_server$(EXEEXT)
-	$(LINK) $(linux_server_LDFLAGS) $(linux_server_OBJECTS) $(linux_server_LDADD) $(LIBS)
 rtnet_ifs$(EXEEXT): $(rtnet_ifs_OBJECTS) $(rtnet_ifs_DEPENDENCIES) 
 	@rm -f rtnet_ifs$(EXEEXT)
 	$(LINK) $(rtnet_ifs_LDFLAGS) $(rtnet_ifs_OBJECTS) $(rtnet_ifs_LDADD) $(LIBS)
@@ -328,8 +314,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linux_client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linux_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_ifs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simpleclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simpleserver.Po@am__quote@
@@ -533,8 +517,6 @@ uninstall-am: uninstall-info-am
 
 
 all-local: \
-	linux_client \
-	linux_server \
 	rtnet_ifs \
 	simpleclient \
 	simpleserver

@@ -1258,6 +1258,8 @@ AC_CONFIG_FILES([ \
     rtai_rtdm/GNUmakefile \
     \
     scripts/GNUmakefile \
+    scripts/kconfig/GNUmakefile \
+    scripts/kconfig/lxdialog/GNUmakefile \
     ])
 
 dnl    examples/round-trip-time/GNUmakefile \

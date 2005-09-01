@@ -1,0 +1,12 @@
+EXTRA_DIST= \
+	BIG.FAT.WARNING \
+	checklist.c \
+	colors.h \
+	dialog.h \
+	inputbox.c \
+	lxdialog.c \
+	menubox.c \
+	msgbox.c \
+	textbox.c \
+	util.c \
+	yesno.c

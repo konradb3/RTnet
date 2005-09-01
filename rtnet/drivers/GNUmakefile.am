@@ -53,3 +53,5 @@ OPTDIRS += eth1394
 endif
 
 SUBDIRS = experimental $(OPTDIRS)
+
+EXTRA_DIST = Kconfig

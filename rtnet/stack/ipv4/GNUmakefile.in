@@ -274,7 +274,7 @@ libkernel_ipv4_a_SOURCES = \
 	ip_fragment.c
 
 OBJS = rtipv4$(modext)
-EXTRA_DIST = Makefile.kbuild
+EXTRA_DIST = Makefile.kbuild Kconfig
 DISTCLEANFILES = Makefile
 all: all-am
 

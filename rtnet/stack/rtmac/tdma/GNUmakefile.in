@@ -265,7 +265,7 @@ libkernel_tdma_a_SOURCES = \
 	tdma_worker.c
 
 OBJS = tdma$(modext)
-EXTRA_DIST = Makefile.kbuild
+EXTRA_DIST = Makefile.kbuild Kconfig
 DISTCLEANFILES = Makefile
 all: all-am
 

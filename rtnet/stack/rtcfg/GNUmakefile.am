@@ -40,7 +40,7 @@ clean-local: $(libkernel_rtcfg_a_SOURCES)
 distclean-local:
 	@RTNET_KBUILD_DISTCLEAN@
 
-EXTRA_DIST = Makefile.kbuild
+EXTRA_DIST = Makefile.kbuild Kconfig
 
 DISTCLEANFILES = Makefile
 

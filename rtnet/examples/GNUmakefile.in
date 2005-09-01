@@ -238,6 +238,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTDIRS = $(am__append_1) $(am__append_2)
 SUBDIRS = generic $(OPTDIRS)
+EXTRA_DIST = Kconfig
 all: all-recursive
 
 .SUFFIXES:
