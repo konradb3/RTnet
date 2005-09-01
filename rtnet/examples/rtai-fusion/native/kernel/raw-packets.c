@@ -128,7 +128,7 @@ int init_module(void)
 
     /* set destination address */
     memset(&dest_addr, 0, sizeof(struct sockaddr_ll));
-    dest_addr.sll_family   = PF_PACKET;
+    dest_addr.sll_family   = AF_PACKET;
     dest_addr.sll_protocol = htons(PROTOCOL);
     dest_addr.sll_ifindex  = local_if;
     dest_addr.sll_halen    = 6;
@@ -143,7 +143,7 @@ int init_module(void)
     printk("start timer: %d\n", start_timer);
 
     /* create rt-socket */
-    sock = rt_dev_socket(PF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
+    sock = rt_dev_socket(AF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
     if (sock < 0) {
         printk(" rt_dev_socket() = %d!\n", sock);
         return sock;
@@ -151,7 +151,7 @@ int init_module(void)
 
     /* bind the rt-socket to a port */
     memset(&local_addr, 0, sizeof(struct sockaddr_ll));
-    local_addr.sll_family   = PF_PACKET;
+    local_addr.sll_family   = AF_PACKET;
     local_addr.sll_protocol = htons(PROTOCOL);
     local_addr.sll_ifindex  = local_if;
     ret = rt_dev_bind(sock, (struct sockaddr *)&local_addr,
