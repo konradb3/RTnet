@@ -2,8 +2,20 @@ config RTNET_TDMA
     bool "TDMA discipline for RTmac"
     depends RTNET_RTMAC
     default y
+    ---help---
+    The Time Division Multiple Access discipline is the default RTmac
+    protocol for Ethernet networks. It consists of a master synchronising
+    the access of the slaves to the media by periodically issuing frames.
+    Backup masters can be set up to take over if the primary master fails.
+    TDMA also provides a global clock across all participants. The tdmacfg
+    tool can be used to configure a real-time NIC to use TDMA.
+
+    See Documenatation/README.rtmac for further details.
 
 config RTNET_TDMA_MASTER
     bool "TDMA master support"
     depends RTNET_TDMA
     default y
+    ---help---
+    Enables TDMA master and backup master support for the node. This can
+    be switched of to reduce the memory footprint of pure slave nodes.

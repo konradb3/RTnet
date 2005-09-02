@@ -3,5 +3,10 @@ menu "Examples"
 config RTNET_EXAMPLES
     bool "RTnet Application Examples"
     default n
+    ---help---
+    Compile various example applications for RTnet, depending on the RTAI
+    version you are building for. Note that these examples will not be
+    installed to the RTnet destination folder, the binaries will remain in
+    the build tree.
 
 endmenu
