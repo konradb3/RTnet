@@ -10,7 +10,8 @@ libkernel_eth1394_a_CPPFLAGS = \
 	@RTFW_KMOD_CFLAGS@
 
 libkernel_eth1394_a_SOURCES = \
-	rt_eth1394.c
+	rt_eth1394.c \
+	rt_eth1394.h
 
 OBJS = rt_eth1394$(modext)
 
