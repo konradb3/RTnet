@@ -980,55 +980,29 @@ if test "$CONFIG_RTNET_ADDON_PROXY" = "y"; then
 fi
 
 
-dnl ======================================================================
-dnl             Enclosed RTDM (RTAI/classic)
-dnl ======================================================================
-
-AC_MSG_CHECKING([whether to build enclosed RTDM])
-AC_ARG_ENABLE(enclosed-rtdm,
-    AS_HELP_STRING([--enable-enclosed-rtdm], [built enclosed RTDM module @<:@default=yes@:>@]),
-    [case "$enableval" in
-        n | no) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
-        *) CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y ;;
-    esac],
-    [CONFIG_RTNET_ENCLOSED_RTAI_RTDM=y])
-case "${CONFIG_RTNET_RTAI_VERSION}" in
-    3x | fusion-090)
-        CONFIG_RTNET_ENCLOSED_RTAI_RTDM=n ;;
-esac
-AC_MSG_RESULT([${CONFIG_RTNET_ENCLOSED_RTAI_RTDM:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_ENCLOSED_RTAI_RTDM,[test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "y"])
-if test "$CONFIG_RTNET_ENCLOSED_RTAI_RTDM" = "y"; then
-    AC_CONFIG_LINKS(stack/include/rtdm.h:rtai_rtdm/rtdm.h)
-    AC_CONFIG_LINKS(stack/include/rtdm_driver.h:rtai_rtdm/rtdm_driver.h)
-else
-    rm -f stack/include/rtdm.h stack/include/rtdm_driver.h
-fi
-
-
-dnl ======================================================================
-dnl             RTDM select (should become a compilation parameter someday)
-dnl ======================================================================
-
-AC_MSG_CHECKING([whether to enable RTDM select])
-AC_ARG_ENABLE(rtdm-select,
-    AS_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental) @<:@default=no@:>@]),
-    [case "$enableval" in
-        y | yes) CONFIG_RTNET_RTDM_SELECT=y ;;
-        *) CONFIG_RTNET_RTDM_SELECT=n ;;
-    esac],
-    [CONFIG_RTNET_RTDM_SELECT=n])
-AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT:-n}])
-
-dnl When RTDM select has matured, the example compilation should no longer
-dnl depend on the internal select support by RTnet. Instead, running the
-dnl example shall give an error.
-
-AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "y"])
-
-if test "$CONFIG_RTNET_RTDM_SELECT" = "y"; then
-    AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM select support])
-fi
+#dnl ======================================================================
+#dnl             RTDM select (disabled until RTDM actually supports this)
+#dnl ======================================================================
+#
+#AC_MSG_CHECKING([whether to enable RTDM select])
+#AC_ARG_ENABLE(rtdm-select,
+#    AS_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental) @<:@default=no@:>@]),
+#    [case "$enableval" in
+#        y | yes) CONFIG_RTNET_RTDM_SELECT=y ;;
+#        *) CONFIG_RTNET_RTDM_SELECT=n ;;
+#    esac],
+#    [CONFIG_RTNET_RTDM_SELECT=n])
+#AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT:-n}])
+#
+#dnl When RTDM select has matured, the example compilation should no longer
+#dnl depend on the internal select support by RTnet. Instead, running the
+#dnl example shall give an error.
+#
+#AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "y"])
+#
+#if test "$CONFIG_RTNET_RTDM_SELECT" = "y"; then
+#    AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM select support])
+#fi
 
 
 dnl ======================================================================
@@ -1147,8 +1121,6 @@ if test x$CONFIG_KBUILD = xy; then
         addons/rtnetproxy \
         \
         examples/rtai-fusion/native/kernel \
-        \
-        rtai_rtdm \
         ; do
             AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
     done
@@ -1234,8 +1206,6 @@ AC_CONFIG_FILES([ \
     examples/rtai-fusion/GNUmakefile \
     examples/rtai-fusion/native/GNUmakefile \
     examples/rtai-fusion/native/kernel/GNUmakefile \
-    \
-    rtai_rtdm/GNUmakefile \
     \
     scripts/GNUmakefile \
     scripts/kconfig/GNUmakefile \

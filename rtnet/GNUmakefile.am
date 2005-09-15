@@ -1,15 +1,10 @@
-RTAI_RTDM =
 OPTDIRS =
-
-if CONFIG_RTNET_ENCLOSED_RTAI_RTDM
-RTAI_RTDM += rtai_rtdm
-endif
 
 if CONFIG_RTNET_EXAMPLES
 OPTDIRS += examples
 endif
 
-SUBDIRS = $(RTAI_RTDM) stack drivers addons $(OPTDIRS) tools Documentation scripts
+SUBDIRS = stack drivers addons $(OPTDIRS) tools Documentation scripts
 
 EXTRA_DIST = makefile Kconfig
 

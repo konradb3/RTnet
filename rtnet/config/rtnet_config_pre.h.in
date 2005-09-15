@@ -39,9 +39,6 @@
 /* RTcfg debug */
 #undef CONFIG_RTNET_RTCFG_DEBUG
 
-/* RTDM select support */
-#undef CONFIG_RTNET_RTDM_SELECT
-
 /* Real-Time IPv4 support */
 #undef CONFIG_RTNET_RTIPV4
 
