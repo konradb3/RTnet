@@ -2,22 +2,22 @@ KCONFIG_DIR=./scripts/kconfig
 CC := gcc
 
 ifneq ($(MAKECMDGOALS),help)
-ifeq ($(srctree),)
+ifeq ($(rtnet_srctree),)
 ifneq ($(MAKEFILE_LIST),)
 # Since 3.80, we can find out which Makefile is currently processed,
 # and infere the location of the source tree using MAKEFILE_LIST.
-srctree := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+rtnet_srctree := $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 else
-ifeq ($(srctree),)
-srctree := $(shell test -d config && pwd)
-ifeq ($(srctree),)
-$(error Please specify the location of your source tree: make srctree=...)
+ifeq ($(rtnet_srctree),)
+rtnet_srctree := $(shell test -d config && pwd)
+ifeq ($(rtnet_srctree),)
+$(error Please specify the location of your source tree: make rtnet_srctree=...)
 endif
 endif
 endif
 endif
-build_alias := $(shell $(srctree)/config/autoconf/config.guess)
-host_alias := $(shell  $(srctree)/scripts/arch2host.sh $(ARCH) $(build_alias))
+build_alias := $(shell $(rtnet_srctree)/config/autoconf/config.guess)
+host_alias := $(shell  $(rtnet_srctree)/scripts/arch2host.sh $(ARCH) $(build_alias))
 override ARCH := $(shell echo $(host_alias)|cut -f1 -d-|sed -e s/^i.86/i386/ -e s/^powerpc/ppc/)
 endif
 
@@ -26,7 +26,7 @@ confgui = $(shell test $(TERM) = emacs && echo xconfig || echo menuconfig)
 forceconf = $(shell test -r .rtnet_config -a -r .cfok || echo $(confgui))
 endif
 
-override srctree := $(shell cd $(srctree) && pwd)
+override rtnet_srctree := $(shell cd $(rtnet_srctree) && pwd)
 
 all:: $(forceconf)
 	@/bin/true
@@ -54,7 +54,7 @@ config.status: .rtnet_config
 	eval `grep ^CONFIG_RTFIREWIRE_DIR $<`; \
 	test x$$CONFIG_RTFIREWIRE_DIR != x && confopts="--with-rtfw=$$CONFIG_RTFIREWIRE_DIR"; \
 	eval `grep ^CONFIG_RTNET_INSTALLDIR $<`; \
-	$(srctree)/configure \
+	$(rtnet_srctree)/configure \
 	CROSS_COMPILE=$(CROSS_COMPILE) \
 	CC=$(CROSS_COMPILE)$(CC) \
 	CXX=$(CROSS_COMPILE)$(CXX) \
@@ -80,33 +80,33 @@ config.status: .rtnet_config
 
 qconf: $(KCONFIG_DIR)
 	@$(MAKE) -C $(KCONFIG_DIR) \
-	-f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig xconfig \
-	srctree=$(srctree) ARCH=$(ARCH)
+	-f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig xconfig \
+	srctree=$(rtnet_srctree) ARCH=$(ARCH)
 
 gconf: $(KCONFIG_DIR)
 	@$(MAKE) -C $(KCONFIG_DIR) \
-	-f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig gconfig \
-	srctree=$(srctree) ARCH=$(ARCH)
+	-f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig gconfig \
+	srctree=$(rtnet_srctree) ARCH=$(ARCH)
 
 mconf: $(KCONFIG_DIR)
 	@$(MAKE) -C $(KCONFIG_DIR) \
-	-f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig menuconfig \
-	srctree=$(srctree) ARCH=$(ARCH)
+	-f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig menuconfig \
+	srctree=$(rtnet_srctree) ARCH=$(ARCH)
 
 conf: $(KCONFIG_DIR)
 	@$(MAKE) -C $(KCONFIG_DIR) \
-	-f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig config \
-	srctree=$(srctree) ARCH=$(ARCH)
+	-f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig config \
+	srctree=$(rtnet_srctree) ARCH=$(ARCH)
 
 oldconf: $(KCONFIG_DIR)
 	@$(MAKE) -C $(KCONFIG_DIR) \
-	-f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig oldconfig \
-	srctree=$(srctree) ARCH=$(ARCH)
+	-f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig oldconfig \
+	srctree=$(rtnet_srctree) ARCH=$(ARCH)
 
 defconfig: $(KCONFIG_DIR)
 	@$(MAKE) -C $(KCONFIG_DIR) \
-	-f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig defconfig \
-	srctree=$(srctree) ARCH=$(ARCH)
+	-f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig defconfig \
+	srctree=$(rtnet_srctree) ARCH=$(ARCH)
 
 $(KCONFIG_DIR):
 	@test -d $@ || mkdir -p $@
@@ -131,7 +131,7 @@ clean distclean:
 	$(MAKE) -C $(KCONFIG_DIR) -f Makefile.kconfig clean ; fi
 	if test -r GNUmakefile ; then \
 	$(MAKE) -f GNUmakefile $@ ; else \
-	$(MAKE) -C $(KCONFIG_DIR) -f $(srctree)/$(KCONFIG_DIR)/Makefile.kconfig clean ; \
+	$(MAKE) -C $(KCONFIG_DIR) -f $(rtnet_srctree)/$(KCONFIG_DIR)/Makefile.kconfig clean ; \
 	fi
 	@find . -name autom4te.cache | xargs rm -fr
 
