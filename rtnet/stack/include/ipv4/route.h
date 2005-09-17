@@ -52,9 +52,7 @@ int rt_ip_route_del_net(u32 addr, u32 mask);
 extern int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr);
 #endif /* CONFIG_RTNET_RTIPV4_ROUTER */
 
-#ifdef CONFIG_RTNET_ADDON_PROXY
 extern int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr);
-#endif /* CONFIG_RTNET_ADDON_PROXY */
 
 extern int __init rt_ip_routing_init(void);
 extern void rt_ip_routing_release(void);
