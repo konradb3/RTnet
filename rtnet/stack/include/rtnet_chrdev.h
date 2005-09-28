@@ -84,6 +84,8 @@ struct rtnet_core_cmd {
             __u32           broadcast_ip;
             unsigned int    set_dev_flags;
             unsigned int    clear_dev_flags;
+            unsigned short  dev_addr_type;
+            unsigned char   dev_addr[DEV_ADDR_LEN];
         } up;
 
         struct {

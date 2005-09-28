@@ -25,6 +25,7 @@
 #include <asm/uaccess.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
+#include <linux/if_arp.h>
 #include <linux/kmod.h>
 #include <linux/miscdevice.h>
 #include <linux/netdevice.h>
@@ -118,10 +119,18 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (down_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
-            set_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
-
             rtdev->flags |= cmd.args.up.set_dev_flags;
             rtdev->flags &= ~cmd.args.up.clear_dev_flags;
+
+            if (cmd.args.up.dev_addr_type != ARPHRD_VOID) {
+                if (cmd.args.up.dev_addr_type != rtdev->type) {
+                    ret = -EINVAL;
+                    goto up_out;
+                }
+                memcpy(rtdev->dev_addr, cmd.args.up.dev_addr, MAX_ADDR_LEN);
+            }
+
+            set_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
 
             ret = rtdev_open(rtdev);    /* also = 0 if dev already up */
 
@@ -135,8 +144,10 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                 }
 
                 up(&rtnet_devices_nrt_lock);
-            }
+            } else
+                clear_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
 
+          up_out:
             up(&rtdev->nrt_lock);
             break;
 

@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
 #include <net/if_arp.h>
+#include <netinet/ether.h>
 #include <netinet/in.h>
 
 #include <rtnet_chrdev.h>
@@ -48,7 +49,8 @@ void help(void)
 {
     fprintf(stderr, "Usage:\n"
         "\trtifconfig [-a] [<dev>]\n"
-        "\trtifconfig <dev> up [<addr> [netmask <mask>]] [[-]promisc]\n"
+        "\trtifconfig <dev> up [<addr> [netmask <mask>]] "
+            "[hw <HW> <address>] [[-]promisc]\n"
         "\trtifconfig <dev> down\n"
         );
 
@@ -148,10 +150,12 @@ void do_display(int print_flags)
 
 void do_up(int argc, char *argv[])
 {
-    int             ret;
-    int             i;
-    struct in_addr  addr;
-    __u32           ip_mask;
+    int                 ret;
+    int                 i;
+    struct in_addr      addr;
+    __u32               ip_mask;
+    struct ether_addr   hw_addr;
+
 
     if ((argc > 3) && (inet_aton(argv[3], &addr))) {
         i = 4;
@@ -174,9 +178,10 @@ void do_up(int argc, char *argv[])
     else
         ip_mask = 0x00FFFFFF;                           /* 255.255.255.0    */
 
-    /* default: don't change flags */
+    /* default: don't change flags, don't set dev_addr */
     cmd.args.up.set_dev_flags   = 0;
     cmd.args.up.clear_dev_flags = 0;
+    cmd.args.up.dev_addr_type   = 0xFFFF;
 
     /* parse optional parameters */
     for ( ; i < argc; i++) {
@@ -185,6 +190,12 @@ void do_up(int argc, char *argv[])
                 (!inet_aton(argv[i], &addr)))
                 help();
             ip_mask = addr.s_addr;
+        } else if (strcmp(argv[i], "hw ether") == 0) {
+            if ((++i >= argc) || (ether_aton_r(argv[i], &hw_addr) == NULL))
+                help();
+            memcpy(cmd.args.up.dev_addr, hw_addr.ether_addr_octet,
+                   sizeof(hw_addr.ether_addr_octet));
+            cmd.args.up.dev_addr_type = ARPHRD_ETHER;
         } else if (strcmp(argv[i], "promisc") == 0) {
             cmd.args.up.set_dev_flags   |= IFF_PROMISC;
             cmd.args.up.clear_dev_flags &= ~IFF_PROMISC;
