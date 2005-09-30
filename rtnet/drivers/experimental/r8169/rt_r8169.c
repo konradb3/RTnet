@@ -81,7 +81,7 @@ RTL8169_VERSION "2.2"	<2004/08/09>
 #include <rtnet_port.h>	/*** RTnet ***/
 
 #define RTL8169_VERSION "2.2-04"
-#define MODULENAME "RTL8169s/8110s"
+#define MODULENAME "rt_r8169"
 #define RTL8169_DRIVER_NAME   MODULENAME " RTnet Gigabit Ethernet driver " RTL8169_VERSION
 #define PFX MODULENAME ": "
 
