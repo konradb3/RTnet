@@ -38,9 +38,6 @@
 #include <rtdm/rtdm_driver.h>
 
 
-#define RT_SOCK_NONBLOCK    RTDM_USER_CONTEXT_FLAG
-
-
 struct rtsocket {
     unsigned short          protocol;
 

@@ -48,7 +48,9 @@ struct rtnet_callback {
 #define RTNET_RTIOC_TIMEOUT     _IOW(RTIOC_TYPE_NETWORK, 0x11, int64_t)
 #define RTNET_RTIOC_CALLBACK    _IOW(RTIOC_TYPE_NETWORK, 0x12, \
                                      struct rtnet_callback)
-#define RTNET_RTIOC_NONBLOCK    _IOW(RTIOC_TYPE_NETWORK, 0x13, unsigned int)
+/* RTNET_RTIOC_NONBLOCK         _IOW(RTIOC_TYPE_NETWORK, 0x13, unsigned int)
+ * This IOCTL is no longer supported (and it was buggy anyway).
+ * Use RTNET_RTIOC_TIMEOUT with any negative timeout value instead. */
 #define RTNET_RTIOC_EXTPOOL     _IOW(RTIOC_TYPE_NETWORK, 0x14, unsigned int)
 #define RTNET_RTIOC_SHRPOOL     _IOW(RTIOC_TYPE_NETWORK, 0x15, unsigned int)
 

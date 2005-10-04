@@ -273,8 +273,7 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *context,
 
 
     /* non-blocking receive? */
-    if (test_bit(RT_SOCK_NONBLOCK, &context->context_flags) ||
-        (msg_flags & MSG_DONTWAIT))
+    if (testbits(msg_flags, MSG_DONTWAIT))
         timeout = -1;
 
     ret = rtos_sem_timeddown(&sock->pending_sem, timeout);

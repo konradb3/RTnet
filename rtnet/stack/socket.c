@@ -164,13 +164,6 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context,
             rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
             break;
 
-        case RTNET_RTIOC_NONBLOCK:
-            if (*(unsigned int *)arg != 0)
-                set_bit(RT_SOCK_NONBLOCK, &context->context_flags);
-            else
-                clear_bit(RT_SOCK_NONBLOCK, &context->context_flags);
-            break;
-
         case RTNET_RTIOC_EXTPOOL:
             rtskbs = *(unsigned int *)arg;
 
