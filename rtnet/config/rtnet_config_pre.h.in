@@ -9,10 +9,7 @@
 /* we are building for powerpc */
 #undef CONFIG_ARCH_PPC
 
-/* We build for fusion 0.9.x */
-#undef CONFIG_FUSION_090
-
-/* We build for rtai 3.x */
+/* We build for RTAI 3.x */
 #undef CONFIG_RTAI_3x
 
 /* rtnetproxy support */
@@ -52,6 +49,9 @@
 #undef CONFIG_RTNET_TDMA_MASTER
 
 #ifdef __IN_RTNET__
+
+/* We build for Xenomai 2.x */
+#undef CONFIG_XENO_2x
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H

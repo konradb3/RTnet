@@ -1,8 +1,8 @@
 /***
  *
- *  examples/fusion/frag-ip.c
+ *  examples/xenomai/frag-ip.c
  *
- *  sends fragmented IP packets to another frag-ip instance - fusion version
+ *  sends fragmented IP packets to another frag-ip instance - Xenomai version
  *
  *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <rtai/task.h>
+#include <native/task.h>
 #include <rtnet.h>
 
 static char *dest_ip_s = "127.0.0.1";

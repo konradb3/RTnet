@@ -5,11 +5,11 @@ noinst_PROGRAMS = \
 AM_CFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
-	@RTAI_USER_CFLAGS@
+	@RTEXT_USER_CFLAGS@
 
 AM_LDFLAGS = \
-	-lpthread -lrtai -lrtdm \
-	-L@RTAI_LIBRARIES@
+	-lpthread -lnative -lrtdm \
+	-L@RTEXT_LIBRARIES@
 
 OBJS =
 

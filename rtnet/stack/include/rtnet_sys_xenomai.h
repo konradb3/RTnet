@@ -1,9 +1,9 @@
 /***
  *
- *  include/rtnet_sys_fusion.h
+ *  include/rtnet_sys_xenomai.h
  *
  *  RTnet - real-time networking subsystem
- *          RTOS abstraction layer - RTAI/fusion version
+ *          RTOS abstraction layer - Xenomai version
  *
  *  Copyright (C) 2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __RTNET_SYS_FUSION_H_
-#define __RTNET_SYS_FUSION_H_
+#ifndef __RTNET_SYS_XENOMAI_H_
+#define __RTNET_SYS_XENOMAI_H_
 
 #include <nucleus/pod.h>
 #include <rtdm/rtdm_driver.h>
@@ -188,4 +188,4 @@ static inline void rtos_irq_reacquire_lock(void)
 }
 
 
-#endif /* __RTNET_SYS_FUSION_H_ */
+#endif /* __RTNET_SYS_XENOMAI_H_ */

@@ -1,6 +1,6 @@
 /* rtnet_ifs.c
  *
- * Lists all local IP addresses and the interface flags - RTAI/fusion version
+ * Lists all local IP addresses and the interface flags - Xenomai version
  * 4/2005 by Jan Kiszka <jan.kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     struct ifreq flags_ifr;
     int i, ret;
 
-    printf("RTnet, interface lister for RTAI/fusion\n");
+    printf("RTnet, interface lister for Xenomai\n");
 
     /* Create new socket. */
     sockfd = rt_dev_socket(AF_INET, SOCK_DGRAM, 0);

@@ -14,7 +14,7 @@ noinst_HEADERS = \
 	rtnet_socket.h \
 	rtnet_sys.h \
 	rtnet_sys_rtai.h \
-	rtnet_sys_fusion.h \
+	rtnet_sys_xenomai.h \
 	rtskb.h \
 	stack_mgr.h \
 	\

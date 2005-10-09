@@ -120,16 +120,16 @@ AC_MSG_RESULT([$RTNET_KCONFIG_FILE ($kconfig_type)])
 
 
 dnl ======================================================================
-dnl             rtai sources
+dnl             RT-extension sources
 dnl ======================================================================
 
-AC_ARG_WITH(rtai,
-    AS_HELP_STRING([--with-rtai=RTAI], [installation path of RTAI 3.x or RTAI/fusion]),
+AC_ARG_WITH(rtext,
+    AS_HELP_STRING([--with-rtext=RT-EXTENSION], [installation path of RTAI or Xenomai]),
     [case "${withval}" in
         "" | y | ye | yes | n | no)
-            AC_MSG_ERROR([You must supply an argument to --with-rtai.]) ;;
+            AC_MSG_ERROR([You must supply an argument to --with-rtext.]) ;;
         *)
-            CONFIG_RTAI_DIR=${withval} ;;
+            CONFIG_RTEXT_DIR=${withval} ;;
     esac])
 
 
@@ -147,78 +147,133 @@ AC_ARG_WITH(rtfw,
 
 
 dnl ======================================================================
-dnl             try to find RTAI
+dnl             try to find RT-Extension
 dnl ======================================================================
 
-AC_MSG_CHECKING([for RTAI installation])
-RTAI_CONFIG="${CONFIG_RTAI_DIR}/bin/rtai-config"
+AC_MSG_CHECKING([for RT-extension installation])
+RTAI_CONFIG="${CONFIG_RTEXT_DIR}/bin/rtai-config"
 if test -x "${RTAI_CONFIG}"; then
-    RTAI_DIR="`cd ${CONFIG_RTAI_DIR} && pwd`"   # let the shell normalize the path
-    AC_MSG_RESULT([${RTAI_DIR}])
+    RTAI_DIR="`cd ${CONFIG_RTEXT_DIR} && pwd`"   # let the shell normalize the path
+    XENO_DIR=
+    AC_MSG_RESULT([${RTAI_DIR} (RTAI)])
 else
-    AC_MSG_ERROR([*** No RTAI found in $CONFIG_RTAI_DIR])
+    XENO_CONFIG="${CONFIG_RTEXT_DIR}/bin/xeno-config"
+    if test -x "${XENO_CONFIG}"; then
+        RTAI_DIR=
+        XENO_DIR="`cd ${CONFIG_RTEXT_DIR} && pwd`"   # let the shell normalize the path
+        AC_MSG_RESULT([${XENO_DIR} (Xenomai)])
+    else
+        AC_MSG_ERROR([*** No RT-extension found in $CONFIG_RTEXT_DIR])
+    fi
 fi
 
 #
-# from now we think we've found RTAI, so if we got en error
+# from now we think we've found some RT-extension, so if we got an error
 # it will be fatal, thus exit with AC_MSG_ERROR
 #
 
-#
-# check if rtai-3 is installed with DESTDIR
-# e.g.: 'make DESTDIR=/foo install'
-#
-AC_MSG_CHECKING([for RTAI DESTDIR])
-RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"                 # let the shell normalize the path
-if test "${RTNET_RTAI_PREFIX}" \!= "${RTAI_DIR}"; then
-    RTNET_RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTAI_PREFIX}$,,\` && pwd`"
-    export DESTDIR="${RTNET_RTAI_DESTDIR}"
+if test "$RTAI_DIR" \!= ""; then
+    #
+    # check if RTAI is installed with DESTDIR
+    # e.g.: 'make DESTDIR=/foo install'
+    #
+    AC_MSG_CHECKING([for RTAI DESTDIR])
+    RTNET_RTEXT_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"        # let the shell normalize the path
+    if test "${RTNET_RTEXT_PREFIX}" \!= "${RTAI_DIR}"; then
+        RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTEXT_PREFIX}$,,\` && pwd`"
+        export DESTDIR="${RTAI_DESTDIR}"
 
-    RTNET_RTAI_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"             # let the shell normalize the path
-    if test "${RTNET_RTAI_PREFIX}" = "${RTAI_DIR}"; then
-        AC_MSG_RESULT([${DESTDIR}])
+        RTNET_RTEXT_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"    # let the shell normalize the path
+        if test "${RTNET_RTEXT_PREFIX}" = "${RTAI_DIR}"; then
+            AC_MSG_RESULT([${DESTDIR}])
+        else
+            AC_MSG_ERROR([*** Cannot identify DESTDIR])
+        fi
     else
-        AC_MSG_ERROR([*** Cannot identify DESTDIR])
+        AC_MSG_RESULT([none])
     fi
+
+    AC_MSG_CHECKING([for RTAI version])
+    RTAI_VERSION="`${RTAI_CONFIG} --version`"
+
+    case "$RTAI_VERSION" in
+        magma)
+            CONFIG_RTNET_RTEXT_VERSION=rtai-3x
+            AC_DEFINE(CONFIG_RTAI_3x, 1, [We build for RTAI 3.x])
+            ;;
+        *)
+            AC_MSG_ERROR([*** Unsupported RTAI version $RTAI_VERSION in $RTAI_DIR])
+            ;;
+    esac
+    AC_MSG_RESULT([${RTAI_VERSION}])
+
+    AC_MSG_CHECKING([for RTAI config file])
+    RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${RTAI_VERSION}"
+    if test \! -f ${RTAI_CONFIG_FILE}; then
+        RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
+        if test \! -f $RTAI_CONFIG_FILE; then
+            AC_MSG_ERROR([*** RTAI configuration file not found])
+        fi
+    fi
+    AC_MSG_RESULT([${RTAI_CONFIG_FILE}])
+
+    # source (load) the rtai configuration
+    . ${RTAI_CONFIG_FILE}
+
+elif test "$XENO_DIR" \!= ""; then
+    #
+    # check if Xenomai is installed with DESTDIR
+    # e.g.: 'make DESTDIR=/foo install'
+    #
+    AC_MSG_CHECKING([for Xenomai DESTDIR])
+    RTNET_RTEXT_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"        # let the shell normalize the path
+    if test "${RTNET_RTEXT_PREFIX}" \!= "${XENO_DIR}"; then
+        XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${RTNET_RTEXT_PREFIX}$,,\` && pwd`"
+        export DESTDIR="${XENO_DESTDIR}"
+
+        RTNET_RTEXT_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"    # let the shell normalize the path
+        if test "${RTNET_RTEXT_PREFIX}" = "${XENO_DIR}"; then
+            AC_MSG_RESULT([${DESTDIR}])
+        else
+            AC_MSG_ERROR([*** Cannot identify DESTDIR])
+        fi
+    else
+        AC_MSG_RESULT([none])
+    fi
+
+    AC_MSG_CHECKING([for Xenomai version])
+    XENO_VERSION="`${XENO_CONFIG} --version`"
+
+    case "$XENO_VERSION" in
+        2.*)
+            CONFIG_RTNET_RTEXT_VERSION=xeno-2x
+            AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
+            ;;
+        *)
+            AC_MSG_ERROR([*** Unsupported Xenomai version $XENO_VERSION in $XENO_DIR])
+            ;;
+    esac
+    AC_MSG_RESULT([${XENO_VERSION}])
+
+    AC_MSG_CHECKING([for Xenomai config file])
+    XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
+    if test \! -f $XENO_CONFIG_FILE; then
+        AC_MSG_ERROR([*** Xenomai configuration file not found])
+    fi
+    AC_MSG_RESULT([${XENO_CONFIG_FILE}])
+
+    # source (load) the Xenomai configuration
+    . ${XENO_CONFIG_FILE}
+
 else
-    AC_MSG_RESULT([none])
+    AC_MSG_ERROR([*** internal error])
 fi
 
-AC_MSG_CHECKING([for RTAI version])
-CONFIG_RTNET_RTAI_3_VERSION="`${RTAI_CONFIG} --version`"
+AM_CONDITIONAL(CONFIG_RTAI,[test "$RTAI_DIR" \!= ""])
+AM_CONDITIONAL(CONFIG_XENO,[test "$XENO_DIR" \!= ""])
 
-case "$CONFIG_RTNET_RTAI_3_VERSION" in
-    magma)
-        CONFIG_RTNET_RTAI_VERSION=3x
-        AC_DEFINE(CONFIG_RTAI_3x, 1, [We build for rtai 3.x])
-        ;;
-    0.8.99-fusion | 0.9*-fusion)
-        CONFIG_RTNET_RTAI_VERSION=fusion-090
-        AC_DEFINE(CONFIG_FUSION_090, 1, [We build for fusion 0.9.x])
-        ;;
-    *)
-        AC_MSG_ERROR([*** Unsupported RTAI version $CONFIG_RTNET_RTAI_3_VERSION in $RTAI_DIR])
-        ;;
-esac
-AC_MSG_RESULT([${CONFIG_RTNET_RTAI_3_VERSION}])
-AM_CONDITIONAL(CONFIG_RTAI_CLASSIC,[test "$CONFIG_RTNET_RTAI_VERSION" = 3*])
-AM_CONDITIONAL(CONFIG_RTAI_FUSION,[test "$CONFIG_RTNET_RTAI_VERSION" = fusion-090])
-
-AC_MSG_CHECKING([for RTAI config file])
-CONFIG_RTNET_RTAI_CONFIG_FILE="${RTAI_DIR}/share/rtai/config-rtai-${CONFIG_RTNET_RTAI_3_VERSION}"
-if test \! -f ${CONFIG_RTNET_RTAI_CONFIG_FILE}; then
-    CONFIG_RTNET_RTAI_CONFIG_FILE="`${RTAI_CONFIG} --config`"
-    if test \! -f $CONFIG_RTNET_RTAI_CONFIG_FILE; then
-        AC_MSG_ERROR([*** RTAI configuration file not found])
-    fi
-fi
-AC_MSG_RESULT([${CONFIG_RTNET_RTAI_CONFIG_FILE}])
-
-# source (load) the rtai configuration
-. ${CONFIG_RTNET_RTAI_CONFIG_FILE}
-
-case "$CONFIG_RTNET_RTAI_VERSION" in
-    3x) # ---> RTAI 3.x <---
+case "$CONFIG_RTNET_RTEXT_VERSION" in
+    rtai-3x) # ---> RTAI 3.x <---
 
         # check for semas, needed by rtnet
         AC_MSG_CHECKING([for RTAI semaphores])
@@ -241,14 +296,19 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
             *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
         esac
 
+        # get linux kernel tree and version
+        AC_MSG_CHECKING([for Linux source tree])
+        RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
+        RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+
         ;;
 
-    fusion-090)     # ---> FUSION <---
+    xeno-2x) # ---> Xenomai 2.x <---
 
-        # check for native RTAI skin, needed by rtnet
-        AC_MSG_CHECKING([for RTAI RTDM skin])
-        case "${CONFIG_RTAI_SKIN_RTDM}" in
-            y) AC_MSG_RESULT([${CONFIG_RTAI_SKIN_RTDM}]) ;;
+        # check for RTDM skin, needed by RTnet
+        AC_MSG_CHECKING([for RTDM skin])
+        case "${CONFIG_XENO_SKIN_RTDM}" in
+            y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_RTDM}]) ;;
             *) AC_MSG_ERROR([*** Please enable RTDM skin]) ;;
         esac
 
@@ -259,6 +319,11 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
 #            *) AC_MSG_ERROR([*** Please enable pipes in RTAI]) ;;
 #        esac
 
+        # get linux kernel tree and version
+        AC_MSG_CHECKING([for Linux source tree])
+        RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
+        RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+
         ;;
 
     *)              # ---> oops <----
@@ -266,17 +331,12 @@ case "$CONFIG_RTNET_RTAI_VERSION" in
         ;;
 esac
 
-# get linux kernel tree and version
-AC_MSG_CHECKING([for Linux source tree])
-RTAI_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-RTAI_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-
 #source (load) the kernel configuration
-. ${RTAI_LINUX_DIR}/.config
+. ${RTEXT_LINUX_DIR}/.config
 
-AC_MSG_RESULT([$RTAI_LINUX_DIR (kernel ${RTAI_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
+AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
 
-dnl =========== end of RTAI detection ==================================
+dnl =========== end of RT-extension detection ============================
 
 
 dnl ======================================================================
@@ -299,28 +359,29 @@ dnl ======================================================================
 dnl             check linux version
 dnl ======================================================================
 
-case "${RTAI_LINUX_VERSION}" in
+case "${RTEXT_LINUX_VERSION}" in
     2.4.*)
-        RTAI_LINUX_VERSION_SUBLEVEL="`echo ${RTAI_LINUX_VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\).*/\1/'`"
-        if test ${RTAI_LINUX_VERSION_SUBLEVEL} -le 18; then
-            AC_MSG_ERROR([*** Unsupported kernel version $RTAI_LINUX_VERSION - please upgrade at least to 2.4.19])
+        RTEXT_LINUX_VERSION_SUBLEVEL=
+            "`echo ${RTEXT_LINUX_VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\).*/\1/'`"
+        if test ${RTEXT_LINUX_VERSION_SUBLEVEL} -le 18; then
+            AC_MSG_ERROR([*** Unsupported kernel version $RTEXT_LINUX_VERSION - please upgrade at least to 2.4.19])
         fi
         ;;
     2.6.*)
         ;;
     *)
-        AC_MSG_ERROR([*** Unsupported kernel version $RTAI_LINUX_VERSION])
+        AC_MSG_ERROR([*** Unsupported kernel version $RTEXT_LINUX_VERSION])
         ;;
 esac
 
 
 
 dnl ======================================================================
-dnl             import settings from RTAI
+dnl             import settings from RT-extensions
 dnl ======================================================================
 
 # kbuild (linux 2.6) or not
-case "${RTAI_LINUX_VERSION}" in
+case "${RTEXT_LINUX_VERSION}" in
     2.4.*)
         unset CONFIG_KBUILD
         ;;
@@ -334,16 +395,16 @@ esac
 AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
 
 # common stuff
-case "${CONFIG_RTNET_RTAI_VERSION}" in
-    3x)
-        RTAI_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
-        CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
+case "${CONFIG_RTNET_RTEXT_VERSION}" in
+    rtai-3x)
+        RTEXT_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
+        CONFIG_RTNET_RTEXT_ARCH="`${RTAI_CONFIG} --arch`"
         ;;
-    fusion-090)
-        RTAI_USER_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
-        CONFIG_RTNET_RTAI_ARCH="`${RTAI_CONFIG} --arch`"
-        RTAI_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
-        RTNET_RTAI_SYMBOLS="`${RTAI_CONFIG} --symbol-dir`"
+    xeno-2x)
+        RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
+        CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
+        RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
+        RTNET_RTEXT_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -352,23 +413,23 @@ esac
 
 
 if test "$CONFIG_KBUILD" = "y"; then
-    case "${CONFIG_RTNET_RTAI_VERSION}" in
-        3x)
-            RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        rtai-3x)
+            RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        fusion-090)
-            RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --fusion-cflags`"
+        xeno-2x)
+            RTEXT_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
             ;;
     esac
 else
-    case "${CONFIG_RTNET_RTAI_VERSION}" in
-        3x)
-            RTAI_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        rtai-3x)
+            RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        fusion-090)
+        xeno-2x)
             AC_MSG_ERROR([*** internal error])
             ;;
         *)
@@ -389,17 +450,17 @@ dnl ======================================================================
 dnl             architecture tests....
 dnl ======================================================================
 
-AC_MSG_CHECKING([for RTAI target arch])
-AC_MSG_RESULT([${CONFIG_RTNET_RTAI_ARCH}])
+AC_MSG_CHECKING([for RT-extension target arch])
+AC_MSG_RESULT([${CONFIG_RTNET_RTEXT_ARCH}])
 
 AC_MSG_CHECKING([for RTnet target arch])
 AC_MSG_RESULT([${RTNET_TARGET_ARCH}])
 
-if test x"${RTNET_TARGET_ARCH}" != x"${CONFIG_RTNET_RTAI_ARCH}"; then
-    AC_MSG_ERROR([*** RTAI and RTnet target architectures are not the same])
+if test x"${RTNET_TARGET_ARCH}" != x"${CONFIG_RTNET_RTEXT_ARCH}"; then
+    AC_MSG_ERROR([*** RT-extension and RTnet target architectures are not the same])
 fi
 
-case "${CONFIG_RTNET_RTAI_ARCH}" in
+case "${CONFIG_RTNET_RTEXT_ARCH}" in
     i386)
         AC_DEFINE(CONFIG_ARCH_I386, 1,[we are building for x86])
         ;;
@@ -463,13 +524,13 @@ else
                 \$(LN_S) \$\$src;                                           \
             fi;                                                             \
         done;                                                               \
-        \$(MAKE) -C $RTAI_LINUX_DIR                                         \
+        \$(MAKE) -C $RTEXT_LINUX_DIR                                        \
                 CROSS_COMPILE=\$(CROSS_COMPILE)                             \
                 ARCH=\$(RTNET_TARGET_ARCH)                                  \
                 M=\"\`pwd\`\"                                               \
                 V=\$(V)                                                     \
                 rtfw_dir=\"${RTNET_RTFW_PREFIX}\"                           \
-                rtai_dir=\"${RTNET_RTAI_PREFIX}\"                           \
+                rtext_dir=\"${RTNET_RTEXT_PREFIX}\"                         \
                 top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"                 \
                 top_builddir=\"\`cd \$(top_builddir) && pwd\`\"             \
                 srcdir=\"\`cd \$(srcdir) && pwd\`\"                         \
@@ -493,13 +554,13 @@ else
         done;                                                               \
         "
     dnl === Hack to suppress undefined symbol warnings during MODPOST stage ===
-    case "${CONFIG_RTNET_RTAI_VERSION}" in
-        3x)
-            if test -e $RTAI_LINUX_DIR/Module.symvers; then
-                mv $RTAI_LINUX_DIR/Module.symvers $RTAI_LINUX_DIR/Module.symvers.let_modpost_be_quiet
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        rtai-3x)
+            if test -e $RTEXT_LINUX_DIR/Module.symvers; then
+                mv $RTEXT_LINUX_DIR/Module.symvers $RTEXT_LINUX_DIR/Module.symvers.let_modpost_be_quiet
             fi
-            if test -e $RTAI_LINUX_DIR/vmlinux; then
-                mv $RTAI_LINUX_DIR/vmlinux $RTAI_LINUX_DIR/vmlinux.let_modpost_be_quiet
+            if test -e $RTEXT_LINUX_DIR/vmlinux; then
+                mv $RTEXT_LINUX_DIR/vmlinux $RTEXT_LINUX_DIR/vmlinux.let_modpost_be_quiet
             fi
             ;;
     esac
@@ -515,15 +576,15 @@ AC_SUBST(RTNET_KBUILD_CLEAN)
 AC_SUBST(RTNET_KBUILD_DISTCLEAN)
 
 bs_kmodext=$RTNET_MODULE_EXT
-bs_kcompile="make -C $RTAI_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
+bs_kcompile="make -C $RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
 
 
 dnl ======================================================================
-dnl             RTAI header checks
+dnl             header checks
 dnl ======================================================================
 
 ac_save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${ac_save_CPPFLAGS} ${RTAI_KMOD_CFLAGS}"
+CPPFLAGS="${ac_save_CPPFLAGS} ${RTEXT_KMOD_CFLAGS}"
 
 # Working around some Autoconf ugliness here: names of variables
 # stored into the cache are canonicalized, turning /'s into _'s. So if
@@ -543,8 +604,8 @@ BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
     ])
 
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
-    case "${CONFIG_RTNET_RTAI_VERSION}" in
-        3x)
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        rtai-3x)
             BS_CHECK_KHEADERS([rtai_sem.h rtai_malloc.h rtai_fifos.h],
                 [],
                 [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -552,7 +613,7 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
 #include <linux/kernel.h>
                 ])
             ;;
-        fusion-090)
+        xeno-2x)
             # nothing further to do
             ;;
         *)
@@ -560,8 +621,8 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
             ;;
     esac
 else                                    # building against linux-2.4
-    case "${CONFIG_RTNET_RTAI_VERSION}" in
-        3x)   # mandatory RTAI-3 headers
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        rtai-3x)    # mandatory RTAI-3 headers
             AC_CHECK_HEADERS([rtai_sem.h rtai_malloc.h],
             [],
             [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
@@ -569,7 +630,7 @@ else                                    # building against linux-2.4
 #include <linux/kernel.h>
             ])
             ;;
-        fusion-090)
+        xeno-2x)
             AC_MSG_ERROR([*** internal error])
             ;;
         *)
@@ -602,36 +663,36 @@ AC_SUBST(RTNET_MODULE_DIR)
 dnl ======================================================================
 dnl             check for LXRT
 dnl ======================================================================
-AC_MSG_CHECKING([for RTAI 3.x LXRT enabled])
-case "${CONFIG_RTNET_RTAI_VERSION}" in
+case "${CONFIG_RTNET_RTEXT_VERSION}" in
     3x)
+        AC_MSG_CHECKING([for RTAI 3.x LXRT enabled])
         case "${CONFIG_RTAI_SCHED_LXRT}" in
             y | m) CONFIG_RTNET_LXRT=y ;;
             *) CONFIG_RTNET_LXRT=n ;;
         esac
+        AC_MSG_RESULT([${CONFIG_RTNET_LXRT}])
+
+        AC_MSG_CHECKING([for CONFIG_REGPARM activated in Linux Kernel])
+        if test "${CONFIG_RTNET_LXRT}" = "y" -a "${CONFIG_REGPARM}" = "y"; then
+            AC_MSG_WARN([
+
+        *** LXRT interface for RTnet disabled ***
+        Please unset CONFIG_RTNET_LXRT for
+        ${RTEXT_LINUX_DIR}
+        and rebuild your kernel in order to build LXRT interface for RTNET
+
+        ])
+            CONFIG_RTNET_LXRT=n
+        else
+            AC_MSG_RESULT([${CONFIG_REGPARM:-n}])
+        fi
         ;;
-    fusion-090) CONFIG_RTNET_LXRT=n
+    xeno-2x) CONFIG_RTNET_LXRT=n
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
         ;;
 esac
-AC_MSG_RESULT([${CONFIG_RTNET_LXRT}])
-
-AC_MSG_CHECKING([for CONFIG_REGPARM activated in Linux Kernel])
-if test "${CONFIG_RTNET_LXRT}" = "y" -a "${CONFIG_REGPARM}" = "y"; then
-    AC_MSG_WARN([
-
-*** LXRT interface for RTnet disabled ***
-Please unset CONFIG_RTNET_LXRT for
-${RTAI_LINUX_DIR}
-and rebuild your kernel in order to build LXRT interface for RTNET
-
-])
-    CONFIG_RTNET_LXRT=n
-else
-    AC_MSG_RESULT([${CONFIG_REGPARM:-n}])
-fi
 
 AM_CONDITIONAL(CONFIG_RTNET_LXRT,[test "$CONFIG_RTNET_LXRT" = "y"])
 if test "$CONFIG_RTNET_LXRT" = "y"; then
@@ -1067,11 +1128,11 @@ dnl Autoconf-generated symbols have been listed.
 AH_BOTTOM([#endif /* __IN_RTNET__ */])
 
 
-RTAI_KMOD_CFLAGS="-D__IN_RTNET__ $RTAI_KMOD_CFLAGS"
-RTAI_USER_CFLAGS="-D__IN_RTNET__ $RTAI_USER_CFLAGS"
-AC_SUBST(RTAI_KMOD_CFLAGS)
-AC_SUBST(RTAI_USER_CFLAGS)
-AC_SUBST(RTAI_LIBRARIES)
+RTEXT_KMOD_CFLAGS="-D__IN_RTNET__ $RTEXT_KMOD_CFLAGS"
+RTEXT_USER_CFLAGS="-D__IN_RTNET__ $RTEXT_USER_CFLAGS"
+AC_SUBST(RTEXT_KMOD_CFLAGS)
+AC_SUBST(RTEXT_USER_CFLAGS)
+AC_SUBST(RTEXT_LIBRARIES)
 AC_SUBST(RTFW_KMOD_CFLAGS)
 
 
@@ -1120,7 +1181,7 @@ if test x$CONFIG_KBUILD = xy; then
         addons/rtcap \
         addons/rtnetproxy \
         \
-        examples/rtai-fusion/native/kernel \
+        examples/xenomai/native/kernel \
         ; do
             AC_CONFIG_LINKS(${DIR}/Makefile:${DIR}/Makefile.kbuild)
     done
@@ -1140,15 +1201,15 @@ dnl        addons/examples/select \
 
 
 dnl ======================================================================
-dnl             create links to RTAI symbols
+dnl             create links to Xenomai symbols
 dnl ======================================================================
 
-case "${CONFIG_RTNET_RTAI_VERSION}" in
-    fusion-090)
+case "${CONFIG_RTNET_RTEXT_VERSION}" in
+    xeno-2x)
         if test x$CONFIG_KBUILD = xy; then
             mkdir -p symbols
             rm -rf symbols/*
-            for FILE in `ls ${RTNET_RTAI_SYMBOLS}/*`; do
+            for FILE in `ls ${RTNET_RTEXT_SYMBOLS}/*`; do
                 ${LN_S} ${FILE} symbols/$(basename ${FILE})
             done
         fi
@@ -1202,10 +1263,10 @@ AC_CONFIG_FILES([ \
     \
     examples/GNUmakefile \
     examples/generic/GNUmakefile \
-    examples/rtai-classic/GNUmakefile \
-    examples/rtai-fusion/GNUmakefile \
-    examples/rtai-fusion/native/GNUmakefile \
-    examples/rtai-fusion/native/kernel/GNUmakefile \
+    examples/rtai/GNUmakefile \
+    examples/xenomai/GNUmakefile \
+    examples/xenomai/native/GNUmakefile \
+    examples/xenomai/native/kernel/GNUmakefile \
     \
     scripts/GNUmakefile \
     scripts/kconfig/GNUmakefile \

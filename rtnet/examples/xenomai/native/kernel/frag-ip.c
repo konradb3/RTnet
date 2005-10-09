@@ -1,8 +1,8 @@
 /***
  *
- *  examples/raw-packets/raw-packets.c
+ *  examples/frag_ip/frag_ip.c
  *
- *  sends Ethernet packets to another raw-packets instance
+ *  sends fragmented IP packets to another frag_ip instance
  *
  *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
  *
@@ -25,36 +25,40 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/net.h>
-#include <linux/if_packet.h>
+#include <linux/socket.h>
+#include <linux/in.h>
 
-#include <rtai/task.h>
+#include <native/task.h>
 #include <rtnet.h>
 
-static char *dest_mac_s = "FF:FF:FF:FF:FF:FF";
-static int local_if = 1;
+static char *dest_ip_s = "127.0.0.1";
+static unsigned int size = 65505;
+static unsigned int add_rtskbs = 75;
 static int start_timer = 0;
 
-MODULE_PARM(dest_mac_s, "s");
-MODULE_PARM(local_if, "i");
+MODULE_PARM(dest_ip_s, "s");
+MODULE_PARM(size, "i");
+MODULE_PARM(add_rtskbs, "i");
 MODULE_PARM(start_timer, "i");
-MODULE_PARM_DESC(dest_mac_s, "destination MAC address (XX:XX:XX:XX:XX:XX)");
-MODULE_PARM_DESC(local_if, "local interface for sending and receiving packets (1-n)");
+MODULE_PARM_DESC(dest_ip_s, "destination IP address");
+MODULE_PARM_DESC(size, "message size (0-65505)");
+MODULE_PARM_DESC(add_rtskbs, "number of additional rtskbs (default: 75)");
 MODULE_PARM_DESC(start_timer, "set to non-zero to start scheduling timer");
 
 MODULE_LICENSE("GPL");
-
-#define PROTOCOL    0x1234
 
 #define CYCLE       1000*1000*1000   /* 1 s */
 RT_TASK rt_xmit_task;
 RT_TASK rt_recv_task;
 
-static struct sockaddr_ll dest_addr;
+#define PORT        37000
+
+static struct sockaddr_in dest_addr;
 
 static int sock;
 
-static char buffer_out[] = "Hello, world! I'm sending Ethernet frames...";
-static char buffer_in[1500];
+static char buffer_out[64*1024];
+static char buffer_in[64*1024];
 
 
 
@@ -62,22 +66,25 @@ void send_msg(void *arg)
 {
     int ret;
     struct msghdr msg;
-    struct iovec iov;
+    struct iovec iov[2];
+    unsigned short msgsize = size;
 
 
-    while (1) {
-        iov.iov_base = buffer_out;
-        iov.iov_len  = sizeof(buffer_out);
+    while(1) {
+        iov[0].iov_base = &msgsize;
+        iov[0].iov_len  = sizeof(msgsize);
+        iov[1].iov_base = buffer_out;
+        iov[1].iov_len  = size;
 
         memset(&msg, 0, sizeof(msg));
         msg.msg_name    = &dest_addr;
         msg.msg_namelen = sizeof(dest_addr);
-        msg.msg_iov     = &iov;
-        msg.msg_iovlen  = 1;
+        msg.msg_iov     = iov;
+        msg.msg_iovlen  = 2;
 
-        printk("Sending message of %d bytes\n", sizeof(buffer_out));
+        printk("Sending message of %d+2 bytes\n", size);
         ret = rt_dev_sendmsg(sock, &msg, 0);
-        if (ret != (int)sizeof(buffer_out))
+        if (ret != (int)(sizeof(msgsize) + size))
             printk(" rt_dev_sendmsg() = %d!\n", ret);
 
         rt_task_wait_period();
@@ -90,30 +97,36 @@ void recv_msg(void *arg)
 {
     int ret;
     struct msghdr msg;
-    struct iovec iov;
-    struct sockaddr_ll addr;
+    struct iovec iov[2];
+    unsigned short msgsize = size;
+    struct sockaddr_in addr;
 
 
-    while (1) {
-        iov.iov_base = buffer_in;
-        iov.iov_len  = sizeof(buffer_in);
+    while(1) {
+        iov[0].iov_base = &msgsize;
+        iov[0].iov_len  = sizeof(msgsize);
+        iov[1].iov_base = buffer_in;
+        iov[1].iov_len  = size;
 
         memset(&msg, 0, sizeof(msg));
         msg.msg_name    = &addr;
         msg.msg_namelen = sizeof(addr);
-        msg.msg_iov     = &iov;
-        msg.msg_iovlen  = 1;
+        msg.msg_iov     = iov;
+        msg.msg_iovlen  = 2;
 
         ret = rt_dev_recvmsg(sock, &msg, 0);
         if (ret <= 0) {
             printk(" rt_dev_recvmsg() = %d\n", ret);
             return;
         } else {
-            printk("received packet from %02X:%02X:%02X:%02X:%02X:%02X, "
-                   "length: %d,\ncontent: \"%s\"\n",
-                   addr.sll_addr[0], addr.sll_addr[1], addr.sll_addr[2],
-                   addr.sll_addr[3], addr.sll_addr[4], addr.sll_addr[5],
-                   ret, buffer_in);
+            unsigned long ip = ntohl(addr.sin_addr.s_addr);
+
+            printk("received packet from %lu.%lu.%lu.%lu, length: %d+2, "
+                   "encoded length: %d,\n flags: %X, content %s\n", ip >> 24,
+                   (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF,
+                   ret-sizeof(msgsize), msgsize, msg.msg_flags,
+                   (memcmp(buffer_in, buffer_out, ret-sizeof(msgsize)) == 0) ?
+                       "ok" : "corrupted");
         }
     }
 }
@@ -123,44 +136,53 @@ void recv_msg(void *arg)
 int init_module(void)
 {
     int ret;
-    struct sockaddr_ll local_addr;
+    unsigned int i;
+    struct sockaddr_in local_addr;
+    unsigned long dest_ip = rt_inet_aton(dest_ip_s);
 
+    if (size > 65505)
+        size = 65505;
 
-    /* set destination address */
-    memset(&dest_addr, 0, sizeof(struct sockaddr_ll));
-    dest_addr.sll_family   = AF_PACKET;
-    dest_addr.sll_protocol = htons(PROTOCOL);
-    dest_addr.sll_ifindex  = local_if;
-    dest_addr.sll_halen    = 6;
+    printk("destination ip address %s=%08x\n", dest_ip_s,
+           (unsigned int)dest_ip);
+    printk("size %d\n", size);
+    printk("start timer %d\n", start_timer);
 
-    rt_eth_aton(dest_addr.sll_addr, dest_mac_s);
-
-    printk("destination mac address: %02X:%02X:%02X:%02X:%02X:%02X\n",
-           dest_addr.sll_addr[0], dest_addr.sll_addr[1],
-           dest_addr.sll_addr[2], dest_addr.sll_addr[3],
-           dest_addr.sll_addr[4], dest_addr.sll_addr[5]);
-    printk("local interface: %d\n", local_if);
-    printk("start timer: %d\n", start_timer);
+    /* fill output buffer with test pattern */
+    for (i = 0; i < sizeof(buffer_out); i++)
+        buffer_out[i] = i & 0xFF;
 
     /* create rt-socket */
-    sock = rt_dev_socket(AF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
+    sock = rt_dev_socket(AF_INET,SOCK_DGRAM,0);
     if (sock < 0) {
         printk(" rt_dev_socket() = %d!\n", sock);
         return sock;
     }
 
+    /* extend the socket pool */
+    ret = rt_dev_ioctl(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
+    if (ret != (int)add_rtskbs) {
+        printk(" rt_dev_ioctl(RT_IOC_SO_EXTPOOL) = %d\n", ret);
+        goto cleanup_sock;
+    }
+
     /* bind the rt-socket to a port */
-    memset(&local_addr, 0, sizeof(struct sockaddr_ll));
-    local_addr.sll_family   = AF_PACKET;
-    local_addr.sll_protocol = htons(PROTOCOL);
-    local_addr.sll_ifindex  = local_if;
+    memset(&local_addr, 0, sizeof(struct sockaddr_in));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_port = htons(PORT);
+    local_addr.sin_addr.s_addr = INADDR_ANY;
     ret = rt_dev_bind(sock, (struct sockaddr *)&local_addr,
-                      sizeof(struct sockaddr_ll));
+                      sizeof(struct sockaddr_in));
     if (ret < 0) {
         printk(" rt_dev_bind() = %d!\n", ret);
         goto cleanup_sock;
     }
 
+    /* set destination address */
+    memset(&dest_addr, 0, sizeof(struct sockaddr_in));
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(PORT);
+    dest_addr.sin_addr.s_addr = dest_ip;
 
     if (start_timer) {
         ret = rt_timer_start(TM_ONESHOT);
@@ -224,7 +246,7 @@ void cleanup_module(void)
 
     /* Important: First close the socket! */
     while (rt_dev_close(sock) == -EAGAIN) {
-        printk("raw-packets: Socket busy - waiting...\n");
+        printk("frag-ip: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }

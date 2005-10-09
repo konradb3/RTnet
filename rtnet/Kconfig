@@ -4,12 +4,13 @@ config RTNET_VERSION
 
 mainmenu "RTnet configuration"
 
-config RTAI_DIR
-    string "RTAI Installation Path"
+config RTEXT_DIR
+    string "Real-time Extension Installation Path"
     default "/usr/realtime"
     ---help---
-    Path to an installed version of RTAI/fusion (RTAI/classic is currently
-    broken). Do not confuse with the source code directory of RTAI.
+    Path to an installed version of the real-time Linux extension.
+    Xenomai and RTAI are supported (NOTE: RTAI is currently broken).
+    Do not confuse with the source code directory of the extension.
 
 config RTNET_INSTALLDIR
     string "Installation Path of RTnet"

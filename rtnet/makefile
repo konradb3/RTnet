@@ -50,7 +50,7 @@ reconfig:: config-script
 
 config.status: .rtnet_config
 	@test -r config.status && recf=yes || recf=no ; \
-	eval `grep ^CONFIG_RTAI_DIR $<`; \
+	eval `grep ^CONFIG_RTEXT_DIR $<`; \
 	eval `grep ^CONFIG_RTFIREWIRE_DIR $<`; \
 	test x$$CONFIG_RTFIREWIRE_DIR != x && confopts="--with-rtfw=$$CONFIG_RTFIREWIRE_DIR"; \
 	eval `grep ^CONFIG_RTNET_INSTALLDIR $<`; \
@@ -66,7 +66,7 @@ config.status: .rtnet_config
 	--build=$(build_alias) \
 	--host=$(host_alias) \
 	--with-kconfig-file=$< \
-	--with-rtai=$$CONFIG_RTAI_DIR \
+	--with-rtext=$$CONFIG_RTEXT_DIR \
 	--prefix=$$CONFIG_RTNET_INSTALLDIR \
 	$$confopts ; \
 	if test $$? = 0; then \

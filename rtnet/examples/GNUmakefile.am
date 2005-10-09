@@ -1,11 +1,11 @@
 OPTDIRS =
 
-if CONFIG_RTAI_CLASSIC
-OPTDIRS += rtai-classic
+if CONFIG_RTAI
+OPTDIRS += rtai
 endif
 
-if CONFIG_RTAI_FUSION
-OPTDIRS += rtai-fusion
+if CONFIG_XENO
+OPTDIRS += xenomai
 endif
 
 SUBDIRS = generic $(OPTDIRS)

@@ -1,5 +1,5 @@
 EXTRA_CFLAGS += \
-	-I$(rtai_dir)/include \
+	-I$(rtext_dir)/include \
 	-I$(rtfw_dir)/include \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \

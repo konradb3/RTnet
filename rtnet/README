@@ -12,8 +12,8 @@ What are the requirements?
 --------------------------
 - Linux kernel 2.6.x: 2.6.10 or better
   (Linux kernel 2.4.x: broken, yet unclear if it will get fixed anymore)
-- RTAI/fusion 0.9 or better
-  RTAI/classic 3.3 or better
+- Xenomai 2.0 or better
+  RTAI 3.3 or better
 - x86, PowerPC, or ARM platform
   (other platforms are lacking up-to-date RTAI support)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
@@ -47,8 +47,8 @@ How to test it?
 1. Shutdown the network device which shall become part of the RT-network and
    remove its driver module (this also means that it must not be compiled
    into the kernel!)
-2. Load required RTAI modules (fusion: rtai_hal, rtai_nucleus, rtai_rtdm,
-   classic: rtai_hal, rtai_ksched/rtai_lxrtm, rtai_sem, rtai_rtdm)
+2. Load required real-time modules (Xenomai: xeno_hal, xeno_nucleus,
+   xeno_rtdm, RTAI: rtai_hal, rtai_ksched/rtai_lxrtm, rtai_sem, rtai_rtdm)
 3. Load the driver layer module rtai_rtdm (currently, this comes with RTnet,
    see <PREFIX>/modules directory)
 4. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:

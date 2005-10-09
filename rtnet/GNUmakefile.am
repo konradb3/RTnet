@@ -10,6 +10,6 @@ EXTRA_DIST = makefile Kconfig
 
 reconfig xconfig gconfig mconfig menuconfig config oldconfig help:
 	@$(MAKE) -f $(srcdir)/makefile $@ \
-	srctree=$(srcdir) ARCH=@RTAI_HOST_STRING@ CROSS_COMPILE=@CROSS_COMPILE@
+	srctree=$(srcdir) ARCH=@RTNET_HOST_STRING@ CROSS_COMPILE=@CROSS_COMPILE@
 
 .PHONY: reconfig xconfig gconfig mconfig menuconfig config oldconfig help
