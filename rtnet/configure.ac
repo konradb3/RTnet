@@ -664,7 +664,7 @@ dnl ======================================================================
 dnl             check for LXRT
 dnl ======================================================================
 case "${CONFIG_RTNET_RTEXT_VERSION}" in
-    3x)
+    rtai-3x)
         AC_MSG_CHECKING([for RTAI 3.x LXRT enabled])
         case "${CONFIG_RTAI_SCHED_LXRT}" in
             y | m) CONFIG_RTNET_LXRT=y ;;
