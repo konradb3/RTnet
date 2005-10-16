@@ -245,7 +245,7 @@ elif test "$XENO_DIR" \!= ""; then
     XENO_VERSION="`${XENO_CONFIG} --version`"
 
     case "$XENO_VERSION" in
-        2.*)
+        1.9.9 | 2.*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-2x
             AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
             ;;

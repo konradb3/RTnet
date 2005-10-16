@@ -19719,7 +19719,7 @@ echo $ECHO_N "checking for Xenomai version... $ECHO_C" >&6
     XENO_VERSION="`${XENO_CONFIG} --version`"
 
     case "$XENO_VERSION" in
-        2.*)
+        1.9.9 | 2.*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-2x
 
 cat >>confdefs.h <<\_ACEOF
@@ -20396,7 +20396,7 @@ echo "${ECHO_T}$RTNET_MODULE_DIR" >&6
 
 
 case "${CONFIG_RTNET_RTEXT_VERSION}" in
-    3x)
+    rtai-3x)
         echo "$as_me:$LINENO: checking for RTAI 3.x LXRT enabled" >&5
 echo $ECHO_N "checking for RTAI 3.x LXRT enabled... $ECHO_C" >&6
         case "${CONFIG_RTAI_SCHED_LXRT}" in
