@@ -543,9 +543,9 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context,
         daddr = usin->sin_addr.s_addr;
         dport = usin->sin_port;
 
-        rtos_spin_lock_irqsave(&sock->param_lock, flags);
+        rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
     } else {
-        rtos_spin_lock_irqsave(&sock->param_lock, flags);
+        rtos_spin_lock_irqsave(&udp_socket_base_lock, flags);
 
         if (sock->prot.inet.state != TCP_ESTABLISHED)
             return -ENOTCONN;
@@ -556,7 +556,7 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context,
     saddr         = sock->prot.inet.saddr;
     ufh.uh.source = sock->prot.inet.sport;
 
-    rtos_spin_unlock_irqrestore(&sock->param_lock, flags);
+    rtos_spin_unlock_irqrestore(&udp_socket_base_lock, flags);
 
     if ((daddr | dport) == 0)
         return -EINVAL;
