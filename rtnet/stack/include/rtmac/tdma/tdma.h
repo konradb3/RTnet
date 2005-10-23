@@ -75,7 +75,8 @@ struct tdma_slot {
     unsigned int                phasing;
     unsigned int                mtu;
     unsigned int                size;
-    struct rtskb_prio_queue     queue;
+    struct rtskb_prio_queue     *queue;
+    struct rtskb_prio_queue     local_queue;
 };
 
 

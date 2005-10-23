@@ -4,8 +4,8 @@
  *  Configuration tool for the RTmac/TDMA discipline
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,7 +47,8 @@ void help(void)
         "\ttdmacfg <dev> slave [-c calibration_rounds] [-i max_slot_id]\n"
         "\ttdmacfg <dev> slot <id> [<offset> [-p <phasing>/<period>] "
             "[-s <size>]\n"
-        "\t         [-l calibration_log_file] [-t calibration_timeout]]\n"
+        "\t         [-j <joint_slot_id>] [-l calibration_log_file]\n"
+        "\t         [-t calibration_timeout]]\n"
         "\ttdmacfg <dev> detach\n");
 
     exit(1);
@@ -62,7 +63,7 @@ int getintopt(int argc, int pos, char *argv[], int min)
 
     if (pos >= argc)
         help();
-    if ((sscanf(argv[pos], "%u", &result) != 1) || (result < min)) {
+    if ((sscanf(argv[pos], "%i", &result) != 1) || (result < min)) {
         fprintf(stderr, "invalid parameter: %s %s\n", argv[pos-1], argv[pos]);
         exit(1);
     }
@@ -210,6 +211,7 @@ void do_slot(int argc, char *argv[])
         tdma_cfg.args.set_slot.phasing     = 0;
         tdma_cfg.args.set_slot.size        = 0;
         tdma_cfg.args.set_slot.cal_timeout = 0;
+        tdma_cfg.args.set_slot.joint_slot  = -1;
         tdma_cfg.args.set_slot.cal_results = NULL;
 
         for (i = 5; i < argc; i++) {
@@ -237,6 +239,9 @@ void do_slot(int argc, char *argv[])
                     getintopt(argc, ++i, argv, MIN_SLOT_SIZE);
             else if (strcmp(argv[i], "-t") == 0)
                 tdma_cfg.args.set_slot.cal_timeout =
+                    getintopt(argc, ++i, argv, 0);
+            else if (strcmp(argv[i], "-j") == 0)
+                tdma_cfg.args.set_slot.joint_slot =
                     getintopt(argc, ++i, argv, 0);
             else
                 help();

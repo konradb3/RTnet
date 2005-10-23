@@ -23,6 +23,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/delay.h>
 #include <asm/div64.h>
 #include <asm/uaccess.h>
 
@@ -63,8 +64,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     /* search at least 3 cycle periods for other masters */
     cycle_ms = cfg->args.master.cycle_period;
     do_div(cycle_ms, 1000000);
-    set_current_state(TASK_UNINTERRUPTIBLE);
-    schedule_timeout(1 + (3 * (unsigned int)cycle_ms * HZ)/1000);
+    msleep(3*cycle_ms);
 
     if (rtskb_pool_init(&tdma->cal_rtskb_pool,
                         cfg->args.master.max_cal_requests) !=
@@ -288,6 +288,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 {
     struct tdma_priv        *tdma;
     int                     id;
+    int                     jnt_id;
     struct tdma_slot        *slot, *old_slot;
     struct tdma_job         *job, *prev_job;
     struct tdma_request_cal req_cal;
@@ -311,6 +312,13 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     if (cfg->args.set_slot.size == 0)
         cfg->args.set_slot.size = rtdev->mtu;
     else if (cfg->args.set_slot.size > rtdev->mtu)
+        return -EINVAL;
+
+    jnt_id = cfg->args.set_slot.joint_slot;
+    if ((jnt_id >= 0) &&
+        ((jnt_id >= tdma->max_slot_id) ||
+         (tdma->slot_table[jnt_id] == 0) ||
+         (tdma->slot_table[jnt_id]->mtu != cfg->args.set_slot.size)))
         return -EINVAL;
 
     slot = (struct tdma_slot *)kmalloc(sizeof(struct tdma_slot), GFP_KERNEL);
@@ -349,8 +357,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
                 while (job->ref_count > 0) {
                     rtdm_lock_put_irqrestore(&tdma->lock, context);
-                    set_current_state(TASK_UNINTERRUPTIBLE);
-                    schedule_timeout(HZ/10); /* wait 100 ms */
+                    msleep(100);
                     rtdm_lock_get_irqsave(&tdma->lock, context);
                 }
             }
@@ -376,8 +383,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
             /* wait 2 cycle periods for the mode switch */
             cycle_ms = tdma->cycle_period;
             do_div(cycle_ms, 1000000);
-            set_current_state(TASK_UNINTERRUPTIBLE);
-            schedule_timeout(1 + (2 * (unsigned int)cycle_ms * HZ)/1000);
+            msleep(2*cycle_ms);
 
             /* catch the very unlikely case that the current master died
                while we just switched the mode */
@@ -398,7 +404,11 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     slot->mtu            = cfg->args.set_slot.size;
     slot->size           = cfg->args.set_slot.size + rtdev->hard_header_len;
     slot->offset         = cfg->args.set_slot.offset;
-    rtskb_prio_queue_init(&slot->queue);
+    slot->queue          = &slot->local_queue;
+    rtskb_prio_queue_init(&slot->local_queue);
+
+    if (jnt_id >= 0)    /* all other validation tests performed above */
+        slot->queue = tdma->slot_table[jnt_id]->queue;
 
     old_slot = tdma->slot_table[id];
     if ((id == DEFAULT_NRT_SLOT) &&
@@ -434,8 +444,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     if (job_list_revision != tdma->job_list_revision) {
         rtdm_lock_put_irqrestore(&tdma->lock, context);
 
-        set_current_state(TASK_UNINTERRUPTIBLE);
-        schedule_timeout(HZ/10); /* wait 100 ms */
+        msleep(100);
         goto restart;
     }
 
@@ -448,24 +457,54 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
         (tdma->slot_table[DEFAULT_NRT_SLOT] == old_slot))
         tdma->slot_table[DEFAULT_NRT_SLOT] = slot;
 
-    if (old_slot)
+    if (old_slot) {
         while (old_slot->head.ref_count > 0) {
             rtdm_lock_put_irqrestore(&tdma->lock, context);
-            set_current_state(TASK_UNINTERRUPTIBLE);
-            schedule_timeout(HZ/10); /* wait 100 ms */
+            msleep(100);
             rtdm_lock_get_irqsave(&tdma->lock, context);
         }
 
-    rtdm_lock_put_irqrestore(&tdma->lock, context);
+        rtdm_lock_put_irqrestore(&tdma->lock, context);
+
+        /* search for other slots linked to the old one */
+        for (jnt_id = 0; jnt_id < tdma->max_slot_id; jnt_id++)
+            if ((tdma->slot_table[jnt_id] != 0) &&
+                (tdma->slot_table[jnt_id]->queue == &old_slot->local_queue)) {
+                /* found a joint slot, move or detach it now */
+                rtdm_lock_get_irqsave(&tdma->lock, context);
+
+                while (tdma->slot_table[jnt_id]->head.ref_count > 0) {
+                    rtdm_lock_put_irqrestore(&tdma->lock, context);
+                    msleep(100);
+                    rtdm_lock_get_irqsave(&tdma->lock, context);
+                }
+
+                /* If the new slot size is larger, detach the other slot,
+                 * update it otherwise. */
+                if (slot->mtu > tdma->slot_table[jnt_id]->mtu)
+                    tdma->slot_table[jnt_id]->queue =
+                        &tdma->slot_table[jnt_id]->local_queue;
+                else {
+                    tdma->slot_table[jnt_id]->mtu   = slot->mtu;
+                    tdma->slot_table[jnt_id]->queue = slot->queue;
+                }
+
+                rtdm_lock_put_irqrestore(&tdma->lock, context);
+            }
+    } else
+        rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     rtmac_vnic_set_max_mtu(rtdev, cfg->args.set_slot.size);
 
     if (old_slot) {
-        /* Without any reference to the old job we can safely purge its queue
-           without lock protection.
-           NOTE: Reconfiguring a slot during runtime may lead to packet
-                 drops! */
-        while ((rtskb = __rtskb_prio_dequeue(&slot->queue)))
+        /* avoid that the formerly joint queue gets purged */
+        old_slot->queue = &old_slot->local_queue;
+
+        /* Without any reference to the old job and no joint slots we can
+         * safely purge its queue without lock protection.
+         * NOTE: Reconfiguring a slot during runtime may lead to packet
+         *       drops! */
+        while ((rtskb = __rtskb_prio_dequeue(old_slot->queue)))
             kfree_rtskb(rtskb);
 
         kfree(old_slot);
@@ -479,7 +518,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
 {
     struct rtskb        *rtskb;
-    unsigned int        id;
+    unsigned int        id, jnt_id;
     rtdm_lockctx_t      context;
 
 
@@ -503,16 +542,37 @@ int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
 
     while (slot->head.ref_count > 0) {
         rtdm_lock_put_irqrestore(&tdma->lock, context);
-        set_current_state(TASK_UNINTERRUPTIBLE);
-        schedule_timeout(HZ/10); /* wait 100 ms */
+        msleep(100);
         rtdm_lock_get_irqsave(&tdma->lock, context);
     }
 
     rtdm_lock_put_irqrestore(&tdma->lock, context);
 
+    /* search for other slots linked to this one */
+    for (jnt_id = 0; jnt_id < tdma->max_slot_id; jnt_id++)
+        if ((tdma->slot_table[jnt_id] != 0) &&
+            (tdma->slot_table[jnt_id]->queue == &slot->local_queue)) {
+            /* found a joint slot, detach it now under lock protection */
+            rtdm_lock_get_irqsave(&tdma->lock, context);
+
+            while (tdma->slot_table[jnt_id]->head.ref_count > 0) {
+                rtdm_lock_put_irqrestore(&tdma->lock, context);
+                msleep(100);
+                rtdm_lock_get_irqsave(&tdma->lock, context);
+            }
+            tdma->slot_table[jnt_id]->queue =
+                &tdma->slot_table[jnt_id]->local_queue;
+
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
+        }
+
+    /* avoid that the formerly joint queue gets purged */
+    slot->queue = &slot->local_queue;
+
     /* No need to protect the queue access here -
-       no one is referring to this job anymore (ref_count == 0). */
-    while ((rtskb = __rtskb_prio_dequeue(&slot->queue)))
+     * no one is referring to this job anymore
+     * (ref_count == 0, all joint slots detached). */
+    while ((rtskb = __rtskb_prio_dequeue(slot->queue)))
         kfree_rtskb(rtskb);
 
     kfree(slot);

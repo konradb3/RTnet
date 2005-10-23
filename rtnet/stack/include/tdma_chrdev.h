@@ -3,8 +3,8 @@
  *  include/tdma_chrdev.h
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ struct tdma_config {
             unsigned int    period;
             unsigned int    phasing;
             unsigned int    size;
+            int             joint_slot;
             unsigned int    cal_timeout;
             __u64           *cal_results;
         } set_slot;

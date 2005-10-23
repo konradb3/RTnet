@@ -54,7 +54,7 @@ void tdma_worker(void *arg)
                 (rtdm_task_sleep_until(tdma->current_cycle_start +
                         SLOT_JOB(job)->offset) == 0)) {
                 rtdm_lock_get_irqsave(&tdma->lock, context);
-                rtskb = __rtskb_prio_dequeue(&SLOT_JOB(job)->queue);
+                rtskb = __rtskb_prio_dequeue(SLOT_JOB(job)->queue);
                 if (!rtskb)
                     goto continue_in_lock;
                 rtdm_lock_put_irqrestore(&tdma->lock, context);

@@ -24,6 +24,7 @@
 
 #include <asm/div64.h>
 #include <asm/semaphore.h>
+#include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/module.h>
 
@@ -113,6 +114,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     struct tdma_priv    *entry;
     struct tdma_slot    *slot;
     int                 i;
+    int                 jnt_id;
     nanosecs_t          slot_offset;
     RTNET_PROC_PRINT_VARS(80);
 
@@ -120,7 +122,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     down(&tdma_nrt_lock);
 
     if (!RTNET_PROC_PRINT("Interface       "
-                          "Slots (id:offset:phasing/period:size)\n"))
+                          "Slots (id[->joint]:offset:phasing/period:size)\n"))
         goto done;
 
     list_for_each_entry(entry, &tdma_devices, list_entry) {
@@ -147,9 +149,25 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                      (entry->slot_table[DEFAULT_SLOT] == slot)))
                     continue;
 
+                if (slot->queue == &slot->local_queue) {
+                    if (!RTNET_PROC_PRINT("%d", i)) {
+                        up(&entry->rtdev->nrt_lock);
+                        goto done;
+                    }
+                } else
+                    for (jnt_id = 0; jnt_id <= entry->max_slot_id; jnt_id++)
+                        if (&entry->slot_table[jnt_id]->local_queue ==
+                            slot->queue) {
+                            if (!RTNET_PROC_PRINT("%d->%d", i, jnt_id)) {
+                                up(&entry->rtdev->nrt_lock);
+                                goto done;
+                            }
+                            break;
+                        }
+
                 slot_offset = slot->offset + 500;
                 do_div(slot_offset, 1000);
-                if (!RTNET_PROC_PRINT("%d:%ld:%d/%d:%d  ", i,
+                if (!RTNET_PROC_PRINT(":%ld:%d/%d:%d  ",
                         (unsigned long)slot_offset, slot->phasing + 1,
                         slot->period, slot->mtu)) {
                     up(&entry->rtdev->nrt_lock);
@@ -250,8 +268,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 
             while (job->ref_count > 0) {
                 rtdm_lock_put_irqrestore(&tdma->lock, context);
-                set_current_state(TASK_UNINTERRUPTIBLE);
-                schedule_timeout(HZ/10); /* wait 100 ms */
+                msleep(100);
                 rtdm_lock_get_irqsave(&tdma->lock, context);
             }
 

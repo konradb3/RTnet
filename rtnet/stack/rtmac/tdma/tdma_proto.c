@@ -152,7 +152,7 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
         goto err_out;
     }
 
-    __rtskb_prio_queue_tail(&slot->queue, rtskb);
+    __rtskb_prio_queue_tail(slot->queue, rtskb);
 
   err_out:
     rtdm_lock_put_irqrestore(&tdma->lock, context);
@@ -190,7 +190,7 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb)
         goto err_out;
     }
 
-    __rtskb_prio_queue_tail(&slot->queue, rtskb);
+    __rtskb_prio_queue_tail(slot->queue, rtskb);
 
   err_out:
     rtdm_lock_put_irqrestore(&tdma->lock, context);
