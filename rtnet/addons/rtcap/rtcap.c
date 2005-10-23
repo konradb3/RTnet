@@ -4,7 +4,7 @@
  *
  *  Real-Time Capturing Interface
  *
- *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ MODULE_PARM_DESC(rtcap_rtskbs, "Number of real-time socket buffers per "
 #define RTMAC_TAP_DEV       2
 #define XMIT_HOOK           4
 
-static rtos_nrt_signal_t    cap_signal;
+static rtdm_nrtsig_t        cap_signal;
 static struct rtskb_queue   cap_queue;
 static struct rtskb_queue   cap_pool;
 
@@ -84,7 +84,7 @@ void rtcap_rx_hook(struct rtskb *rtskb)
 
     rtskb->cap_flags |= RTSKB_CAP_SHARED;
 
-    rtos_nrt_pend_signal(&cap_signal);
+    rtdm_nrtsig_pend(&cap_signal);
 }
 
 
@@ -92,7 +92,7 @@ void rtcap_rx_hook(struct rtskb *rtskb)
 int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
 {
     struct tap_device_t *tap_dev = &tap_device[rtskb->rtdev->ifindex];
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
 
 
     if ((rtskb->cap_comp_skb = rtskb_dequeue(&cap_pool)) == 0) {
@@ -108,9 +108,9 @@ int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
     rtskb->cap_len   = rtskb->len;
     rtskb->cap_flags |= RTSKB_CAP_SHARED;
 
-    rtskb->time_stamp = rtos_get_time();
+    rtskb->time_stamp = rtdm_clock_read();
 
-    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    rtdm_lock_get_irqsave(&rtcap_lock, context);
 
     if (cap_queue.first == NULL)
         cap_queue.first = rtskb;
@@ -118,9 +118,9 @@ int rtcap_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
         cap_queue.last->cap_next = rtskb;
     cap_queue.last = rtskb;
 
-    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+    rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
-    rtos_nrt_pend_signal(&cap_signal);
+    rtdm_nrtsig_pend(&cap_signal);
 
     return tap_dev->orig_xmit(rtskb, rtdev);
 }
@@ -132,7 +132,7 @@ int rtcap_loopback_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
     struct tap_device_t *tap_dev = &tap_device[rtskb->rtdev->ifindex];
 
 
-    rtskb->time_stamp = rtos_get_time();
+    rtskb->time_stamp = rtdm_clock_read();
 
     return tap_dev->orig_xmit(rtskb, rtdev);
 }
@@ -141,18 +141,18 @@ int rtcap_loopback_xmit_hook(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
 void rtcap_kfree_rtskb(struct rtskb *rtskb)
 {
-    unsigned long flags;
-    struct rtskb  *comp_skb;
+    rtdm_lockctx_t  context;
+    struct rtskb    *comp_skb;
 
 
-    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    rtdm_lock_get_irqsave(&rtcap_lock, context);
 
     if (rtskb->cap_flags & RTSKB_CAP_SHARED) {
         rtskb->cap_flags &= ~RTSKB_CAP_SHARED;
 
         comp_skb = rtskb->cap_comp_skb;
 
-        rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+        rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
         rtskb_queue_tail(comp_skb->pool, comp_skb);
 #ifdef CONFIG_RTNET_CHECKED
@@ -162,7 +162,7 @@ void rtcap_kfree_rtskb(struct rtskb *rtskb)
         return;
     }
 
-    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+    rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
     rtskb->chain_end = rtskb;
     rtskb_queue_tail(rtskb->pool, rtskb);
@@ -173,7 +173,7 @@ void rtcap_kfree_rtskb(struct rtskb *rtskb)
 
 
 
-static void rtcap_signal_handler(void)
+static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig)
 {
     struct rtskb            *rtskb;
     struct sk_buff          *skb;
@@ -181,21 +181,21 @@ static void rtcap_signal_handler(void)
     struct net_device_stats *stats;
     int                     ifindex;
     int                     active;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
 
 
     while (1)
     {
-        rtos_spin_lock_irqsave(&rtcap_lock, flags);
+        rtdm_lock_get_irqsave(&rtcap_lock, context);
 
         if ((rtskb = cap_queue.first) == NULL) {
-            rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+            rtdm_lock_put_irqrestore(&rtcap_lock, context);
             break;
         }
 
         cap_queue.first = rtskb->cap_next;
 
-        rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+        rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
         ifindex = rtskb->rtdev->ifindex;
         active  = tap_device[ifindex].present;
@@ -219,14 +219,14 @@ static void rtcap_signal_handler(void)
             if (active & TAP_DEV) {
                 skb->dev      = &tap_device[ifindex].tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
-                rtos_ns_to_timeval(rtskb->time_stamp, &skb->stamp);
+                nano_to_timeval(rtskb->time_stamp, &skb->stamp);
 
                 rtmac_skb = NULL;
                 if ((rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) &&
                     (active & RTMAC_TAP_DEV)) {
                     rtmac_skb = skb_clone(skb, GFP_ATOMIC);
                     if (rtmac_skb != NULL)
-                        rtos_ns_to_timeval(rtskb->cap_rtmac_stamp,
+                        nano_to_timeval(rtskb->cap_rtmac_stamp,
                                            &rtmac_skb->stamp);
                 }
 
@@ -244,7 +244,7 @@ static void rtcap_signal_handler(void)
             } else if (rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) {
                 skb->dev      = &tap_device[ifindex].rtmac_tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
-                rtos_ns_to_timeval(rtskb->cap_rtmac_stamp, &skb->stamp);
+                nano_to_timeval(rtskb->cap_rtmac_stamp, &skb->stamp);
 
                 rtcap_kfree_rtskb(rtskb);
 
@@ -355,19 +355,18 @@ int __init rtcap_init(void)
     int                 ret;
     int                 devices = 0;
     int                 i;
-    unsigned long       flags;
 
 
     printk("RTcap: real-time capturing interface\n");
 
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        rtos_timer_start_oneshot();
+        rtos_timer_start();
 #endif
 
     rtskb_queue_init(&cap_queue);
 
-    ret = rtos_nrt_signal_init(&cap_signal, rtcap_signal_handler);
+    ret = rtdm_nrtsig_init(&cap_signal, rtcap_signal_handler);
     if (ret < 0)
         goto error1;
 
@@ -468,16 +467,15 @@ int __init rtcap_init(void)
         goto error2;
     }
 
-    /* register capturing handlers with RTnet core */
-    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    /* register capturing handlers with RTnet core
+     * (adding the handler need no locking) */
     rtcap_handler = rtcap_rx_hook;
-    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
 
     return 0;
 
   error2:
     cleanup_tap_devices();
-    rtos_nrt_signal_delete(&cap_signal);
+    rtdm_nrtsig_destroy(&cap_signal);
 
   error1:
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
@@ -492,7 +490,7 @@ int __init rtcap_init(void)
 
 void rtcap_cleanup(void)
 {
-    unsigned long flags;
+    rtdm_lockctx_t  context;
 
 
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
@@ -500,15 +498,16 @@ void rtcap_cleanup(void)
         rtos_timer_stop();
 #endif
 
-    rtos_nrt_signal_delete(&cap_signal);
+    rtdm_nrtsig_destroy(&cap_signal);
 
-    /* unregister capturing handlers */
-    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    /* unregister capturing handlers
+     * (take lock to avoid any unloading code before handler was left) */
+    rtdm_lock_get_irqsave(&rtcap_lock, context);
     rtcap_handler = NULL;
-    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+    rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
     /* empty queue (should be already empty) */
-    rtcap_signal_handler();
+    rtcap_signal_handler(0 /* we ignore it anyway */);
 
     cleanup_tap_devices();
 

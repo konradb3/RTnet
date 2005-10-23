@@ -114,7 +114,7 @@ int rtcfg_do_main_event(int ifindex, RTCFG_EVENT event_id, void* event_data)
     int main_state;
 
 
-    rtos_res_lock(&device[ifindex].dev_lock);
+    rtdm_mutex_lock(&device[ifindex].dev_mutex);
 
     main_state = device[ifindex].state;
 
@@ -148,11 +148,11 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
         case RTCFG_CMD_SERVER:
             INIT_LIST_HEAD(&rtcfg_dev->spec.srv.conn_list);
 
-            ret = rtos_task_init_periodic(&rtcfg_dev->timer_task, rtcfg_timer,
-                    (void *)ifindex, RTOS_LOWEST_RT_PRIORITY,
+            ret = rtdm_task_init(&rtcfg_dev->timer_task, "rtcfg-timer",
+                    rtcfg_timer, (void *)ifindex, RTDM_TASK_LOWEST_PRIORITY,
                     ((nanosecs_t)cmd_event->args.server.period) * 1000000);
             if (ret < 0) {
-                rtos_res_unlock(&rtcfg_dev->dev_lock);
+                rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
                 return ret;
             }
 
@@ -168,7 +168,7 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_SERVER_RUNNING);
 
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             break;
 
@@ -185,12 +185,12 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_CLIENT_0);
 
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             return -CALL_PENDING;
 
         default:
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
@@ -236,7 +236,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             else
                 rtcfg_queue_blocking_call(ifindex, call);
 
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             return -CALL_PENDING;
 
@@ -255,7 +255,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
                 rtcfg_send_ready(ifindex);
             }
 
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             return -CALL_PENDING;
 
@@ -280,7 +280,7 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
             return rtcfg_server_recv_simple_frame(ifindex, event_id, rtskb);
 
         default:
-            rtos_res_unlock(&device[ifindex].dev_lock);
+            rtdm_mutex_unlock(&device[ifindex].dev_mutex);
 
             RTCFG_DEBUG(1, "RTcfg: unknown event %s for rtdev %d in %s()\n",
                         rtcfg_event[event_id], ifindex, __FUNCTION__);
@@ -326,7 +326,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
         /* MAC address yet unknown -> use broadcast address */
         rtdev = rtdev_get_by_index(cmd_event->ifindex);
         if (rtdev == NULL) {
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
             return -ENODEV;
         }
         memcpy(new_conn->mac_addr, rtdev->broadcast, MAX_ADDR_LEN);
@@ -348,7 +348,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
             new_conn->stage2_file =
                 rtcfg_get_file(cmd_event->args.add.stage2_file->name);
             if (new_conn->stage2_file == NULL) {
-                rtos_res_unlock(&rtcfg_dev->dev_lock);
+                rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
                 return 1;
             }
         }
@@ -366,7 +366,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
              (memcmp(conn->mac_addr, new_conn->mac_addr,
                      MAX_ADDR_LEN) == 0))
            ) {
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             if ((new_conn->stage2_file) &&
                 (rtcfg_release_file(new_conn->stage2_file) == 0)) {
@@ -388,7 +388,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
     list_add_tail(&new_conn->entry, &rtcfg_dev->spec.srv.conn_list);
     rtcfg_dev->other_stations++;
 
-    rtos_res_unlock(&rtcfg_dev->dev_lock);
+    rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
     cmd_event->args.add.conn_buf    = NULL;
     cmd_event->args.add.stage1_data = NULL;
@@ -434,7 +434,7 @@ static int rtcfg_server_del(struct rtcfg_cmd *cmd_event)
                 (rtcfg_release_file(conn->stage2_file) == 0))
                 cmd_event->args.del.stage2_file = conn->stage2_file;
 
-            rtos_res_unlock(&rtcfg_dev->dev_lock);
+            rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
             cmd_event->args.del.conn_buf = conn;
 
@@ -442,7 +442,7 @@ static int rtcfg_server_del(struct rtcfg_cmd *cmd_event)
         }
     }
 
-    rtos_res_unlock(&rtcfg_dev->dev_lock);
+    rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
     return -ENOENT;
 }
@@ -474,7 +474,7 @@ static int rtcfg_server_detach(int ifindex, struct rtcfg_cmd *cmd_event)
             (rtcfg_release_file(conn->stage2_file) == 0))
             cmd_event->args.detach.stage2_file = conn->stage2_file;
 
-        rtos_res_unlock(&rtcfg_dev->dev_lock);
+        rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
         cmd_event->args.detach.conn_buf = conn;
 
@@ -483,13 +483,13 @@ static int rtcfg_server_detach(int ifindex, struct rtcfg_cmd *cmd_event)
 
     if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
         rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
-        rtos_task_delete(&rtcfg_dev->timer_task);
+        rtdm_task_destroy(&rtcfg_dev->timer_task);
     }
     rtcfg_reset_device(ifindex);
 
     rtcfg_next_main_state(ifindex, RTCFG_MAIN_OFF);
 
-    rtos_res_unlock(&rtcfg_dev->dev_lock);
+    rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
     return 0;
 }
@@ -508,7 +508,7 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_announce)) {
-        rtos_res_unlock(&rtcfg_dev->dev_lock);
+        rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
         RTCFG_DEBUG(1, "RTcfg: received invalid announce frame\n");
         return -EINVAL;
     }
@@ -554,7 +554,7 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
     }
 
 out:
-    rtos_res_unlock(&rtcfg_dev->dev_lock);
+    rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
     kfree_rtskb(rtskb);
     return 0;
@@ -570,7 +570,7 @@ static int rtcfg_server_recv_ack(int ifindex, struct rtskb *rtskb)
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_ack_cfg)) {
-        rtos_res_unlock(&rtcfg_dev->dev_lock);
+        rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
         RTCFG_DEBUG(1, "RTcfg: received invalid ack_cfg frame\n");
         return -EINVAL;
     }
@@ -588,7 +588,7 @@ static int rtcfg_server_recv_ack(int ifindex, struct rtskb *rtskb)
         break;
     }
 
-    rtos_res_unlock(&rtcfg_dev->dev_lock);
+    rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
     kfree_rtskb(rtskb);
     return 0;
@@ -617,7 +617,7 @@ static int rtcfg_server_recv_simple_frame(int ifindex, RTCFG_EVENT event_id,
         break;
     }
 
-    rtos_res_unlock(&rtcfg_dev->dev_lock);
+    rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
     kfree_rtskb(rtskb);
     return 0;
@@ -629,31 +629,31 @@ static int rtcfg_server_recv_simple_frame(int ifindex, RTCFG_EVENT event_id,
 
 void rtcfg_queue_blocking_call(int ifindex, struct rt_proc_call *call)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
 
 
-    rtos_spin_lock_irqsave(&rtcfg_dev->event_calls_lock, flags);
+    rtdm_lock_get_irqsave(&rtcfg_dev->event_calls_lock, context);
     list_add_tail(&call->list_entry, &rtcfg_dev->event_calls);
-    rtos_spin_unlock_irqrestore(&rtcfg_dev->event_calls_lock, flags);
+    rtdm_lock_put_irqrestore(&rtcfg_dev->event_calls_lock, context);
 }
 
 
 
 struct rt_proc_call *rtcfg_dequeue_blocking_call(int ifindex)
 {
-    unsigned long flags;
+    rtdm_lockctx_t      context;
     struct rt_proc_call *call;
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
 
 
-    rtos_spin_lock_irqsave(&rtcfg_dev->event_calls_lock, flags);
+    rtdm_lock_get_irqsave(&rtcfg_dev->event_calls_lock, context);
     if (!list_empty(&rtcfg_dev->event_calls)) {
         call = (struct rt_proc_call *)rtcfg_dev->event_calls.next;
         list_del(&call->list_entry);
     } else
         call = NULL;
-    rtos_spin_unlock_irqrestore(&rtcfg_dev->event_calls_lock, flags);
+    rtdm_lock_put_irqrestore(&rtcfg_dev->event_calls_lock, context);
 
     return call;
 }
@@ -709,10 +709,10 @@ void rtcfg_init_state_machines(void)
         rtcfg_dev = &device[i];
         rtcfg_dev->state = RTCFG_MAIN_OFF;
 
-        rtos_res_lock_init(&rtcfg_dev->dev_lock);
+        rtdm_mutex_init(&rtcfg_dev->dev_mutex);
 
         INIT_LIST_HEAD(&rtcfg_dev->event_calls);
-        rtos_spin_lock_init(&rtcfg_dev->event_calls_lock);
+        rtdm_lock_init(&rtcfg_dev->event_calls_lock);
     }
 }
 
@@ -733,7 +733,7 @@ void rtcfg_cleanup_state_machines(void)
 
         if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
             rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
-            rtos_task_wakeup(&rtcfg_dev->timer_task);
+            rtdm_task_unblock(&rtcfg_dev->timer_task);
 
             while (((volatile unsigned int)rtcfg_dev->flags) &
                    FLAG_TIMER_STARTED) {
@@ -742,10 +742,10 @@ void rtcfg_cleanup_state_machines(void)
                 schedule_timeout(HZ/10); /* wait 100 ms */
             }
 
-            rtos_task_delete(&rtcfg_dev->timer_task);
+            rtdm_task_destroy(&rtcfg_dev->timer_task);
         }
 
-        rtos_res_lock_delete(&rtcfg_dev->dev_lock);
+        rtdm_mutex_destroy(&rtcfg_dev->dev_mutex);
 
         if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
             list_for_each_safe(entry, tmp, &rtcfg_dev->spec.srv.conn_list) {

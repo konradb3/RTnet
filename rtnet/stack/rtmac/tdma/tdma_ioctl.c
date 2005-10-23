@@ -3,8 +3,8 @@
  *  rtmac/tdma/tdma_ioctl.c
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -107,12 +107,12 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
         if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags))
             printk("TDMA: warning, no primary master detected!\n");
         set_bit(TDMA_FLAG_CALIBRATED, &tdma->flags);
-        tdma->current_cycle_start = rtos_get_time();
+        tdma->current_cycle_start = rtdm_clock_read();
     }
 
     tdma->first_job = tdma->current_job = &tdma->sync_job;
 
-    rtos_event_signal(&tdma->worker_wakeup);
+    rtdm_event_signal(&tdma->worker_wakeup);
 
     set_bit(TDMA_FLAG_ATTACHED, &tdma->flags);
 
@@ -173,7 +173,7 @@ static int tdma_ioctl_slave(struct rtnet_device *rtdev,
 
     tdma->first_job = tdma->current_job = &tdma->sync_job;
 
-    rtos_event_signal(&tdma->worker_wakeup);
+    rtdm_event_signal(&tdma->worker_wakeup);
 
     set_bit(TDMA_FLAG_ATTACHED, &tdma->flags);
 
@@ -211,18 +211,18 @@ int start_calibration(struct rt_proc_call *call)
 {
     struct tdma_request_cal *req_cal;
     struct tdma_priv        *tdma;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
 
 
     req_cal = rtpc_get_priv(call, struct tdma_request_cal);
     tdma    = req_cal->tdma;
 
     /* there are no slots yet, simply add this job after first_job */
-    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    rtdm_lock_get_irqsave(&tdma->lock, context);
     tdma->calibration_call = call;
     tdma->job_list_revision++;
     list_add(&req_cal->head.entry, &tdma->first_job->entry);
-    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     return -CALL_PENDING;
 }
@@ -293,7 +293,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
     struct tdma_request_cal req_cal;
     struct rtskb            *rtskb;
     unsigned int            job_list_revision;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
     int                     ret;
 
 
@@ -340,7 +340,7 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
                                  cleanup_calibration);
         if (ret < 0) {
             /* kick out any pending calibration job before returning */
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
 
             job = list_entry(tdma->first_job->entry.next, struct tdma_job,
                              entry);
@@ -348,14 +348,14 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
                 __list_del(job->entry.prev, job->entry.next);
 
                 while (job->ref_count > 0) {
-                    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                    rtdm_lock_put_irqrestore(&tdma->lock, context);
                     set_current_state(TASK_UNINTERRUPTIBLE);
                     schedule_timeout(HZ/10); /* wait 100 ms */
-                    rtos_spin_lock_irqsave(&tdma->lock, flags);
+                    rtdm_lock_get_irqsave(&tdma->lock, context);
                 }
             }
 
-            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
 
             kfree(slot);
             return ret;
@@ -429,10 +429,10 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
         prev_job = list_entry(old_slot->head.entry.prev,
                               struct tdma_job, entry);
 
-    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    rtdm_lock_get_irqsave(&tdma->lock, context);
 
     if (job_list_revision != tdma->job_list_revision) {
-        rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+        rtdm_lock_put_irqrestore(&tdma->lock, context);
 
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(HZ/10); /* wait 100 ms */
@@ -450,13 +450,13 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
     if (old_slot)
         while (old_slot->head.ref_count > 0) {
-            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
             set_current_state(TASK_UNINTERRUPTIBLE);
             schedule_timeout(HZ/10); /* wait 100 ms */
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
         }
 
-    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     rtmac_vnic_set_max_mtu(rtdev, cfg->args.set_slot.size);
 
@@ -480,7 +480,7 @@ int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
 {
     struct rtskb        *rtskb;
     unsigned int        id;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
 
 
     if (!slot)
@@ -488,7 +488,7 @@ int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
 
     id = slot->head.id;
 
-    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    rtdm_lock_get_irqsave(&tdma->lock, context);
 
     __list_del(slot->head.entry.prev, slot->head.entry.next);
 
@@ -502,13 +502,13 @@ int tdma_cleanup_slot(struct tdma_priv *tdma, struct tdma_slot *slot)
     }
 
     while (slot->head.ref_count > 0) {
-        rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+        rtdm_lock_put_irqrestore(&tdma->lock, context);
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(HZ/10); /* wait 100 ms */
-        rtos_spin_lock_irqsave(&tdma->lock, flags);
+        rtdm_lock_get_irqsave(&tdma->lock, context);
     }
 
-    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     /* No need to protect the queue access here -
        no one is referring to this job anymore (ref_count == 0). */

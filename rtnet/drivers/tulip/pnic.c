@@ -41,7 +41,7 @@ void pnic_do_nway(/*RTnet*/struct rtnet_device *rtdev)
 			new_csr6 |= 0x00000200;
 		}
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: PNIC autonegotiated status %8.8x, %s.\n",
+			/*RTnet*/printk(KERN_DEBUG "%s: PNIC autonegotiated status %8.8x, %s.\n",
 				   rtdev->name, phy_reg, medianame[rtdev->if_port]);
 		if (tp->csr6 != new_csr6) {
 			tp->csr6 = new_csr6;
@@ -51,6 +51,7 @@ void pnic_do_nway(/*RTnet*/struct rtnet_device *rtdev)
 	}
 }
 
+#if 0
 void pnic_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 {
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
@@ -84,6 +85,7 @@ void pnic_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 		outl((inl(ioaddr + CSR7) & ~TPLnkPass) | TPLnkFail, ioaddr + CSR7);
 	}
 }
+#endif
 
 void pnic_timer(unsigned long data)
 {

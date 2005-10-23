@@ -46,12 +46,12 @@ struct rtsocket {
 
     struct rtskb_queue      incoming;
 
-    rtos_spinlock_t         param_lock;
+    rtdm_lock_t             param_lock;
 
     volatile unsigned int   priority;
     nanosecs_t              timeout;    /* receive timeout, 0 for infinite */
 
-    rtos_sem_t              pending_sem;
+    rtdm_sem_t              pending_sem;
 #ifdef CONFIG_RTNET_RTDM_SELECT
     wait_queue_primitive_t  *wakeup_select; /* for selecting calls - this
 					       SHOULD be the head of a wait

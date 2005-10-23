@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS CONFIG_RTAI_TRUE CONFIG_RTAI_FALSE CONFIG_XENO_TRUE CONFIG_XENO_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_KBUILD_DISTCLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_DRIVER_8139_TRUE CONFIG_RTNET_DRIVER_8139_FALSE CONFIG_RTNET_DRIVER_EEPRO100_TRUE CONFIG_RTNET_DRIVER_EEPRO100_FALSE CONFIG_RTNET_DRIVER_PCNET32_TRUE CONFIG_RTNET_DRIVER_PCNET32_FALSE CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE CONFIG_RTNET_DRIVER_NATSEMI_TRUE CONFIG_RTNET_DRIVER_NATSEMI_FALSE CONFIG_RTNET_DRIVER_TULIP_TRUE CONFIG_RTNET_DRIVER_TULIP_FALSE CONFIG_RTNET_DRIVER_FCC_ENET_TRUE CONFIG_RTNET_DRIVER_FCC_ENET_FALSE CONFIG_RTNET_DRIVER_SCC_ENET_TRUE CONFIG_RTNET_DRIVER_SCC_ENET_FALSE CONFIG_RTNET_DRIVER_FEC_ENET_TRUE CONFIG_RTNET_DRIVER_FEC_ENET_FALSE CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE CONFIG_RTNET_DRIVER_SMC91111_TRUE CONFIG_RTNET_DRIVER_SMC91111_FALSE CONFIG_RTNET_DRIVER_ETH1394_TRUE CONFIG_RTNET_DRIVER_ETH1394_FALSE CONFIG_RTNET_DRIVER_LOOPBACK_TRUE CONFIG_RTNET_DRIVER_LOOPBACK_FALSE CONFIG_RTNET_DRIVER_3C59X_TRUE CONFIG_RTNET_DRIVER_3C59X_FALSE CONFIG_RTNET_DRIVER_R8169_TRUE CONFIG_RTNET_DRIVER_R8169_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTMAC_TRUE CONFIG_RTNET_RTMAC_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ADDON_RTCAP_TRUE CONFIG_RTNET_ADDON_RTCAP_FALSE CONFIG_RTNET_ADDON_PROXY_TRUE CONFIG_RTNET_ADDON_PROXY_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTEXT_KMOD_CFLAGS RTEXT_USER_CFLAGS RTEXT_LIBRARIES RTFW_KMOD_CFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS CONFIG_RTAI_TRUE CONFIG_RTAI_FALSE CONFIG_XENO_TRUE CONFIG_XENO_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_KBUILD_DISTCLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_DRV_8139_TRUE CONFIG_RTNET_DRV_8139_FALSE CONFIG_RTNET_DRV_EEPRO100_TRUE CONFIG_RTNET_DRV_EEPRO100_FALSE CONFIG_RTNET_DRV_PCNET32_TRUE CONFIG_RTNET_DRV_PCNET32_FALSE CONFIG_RTNET_DRV_VIA_RHINE_TRUE CONFIG_RTNET_DRV_VIA_RHINE_FALSE CONFIG_RTNET_DRV_NATSEMI_TRUE CONFIG_RTNET_DRV_NATSEMI_FALSE CONFIG_RTNET_DRV_TULIP_TRUE CONFIG_RTNET_DRV_TULIP_FALSE CONFIG_RTNET_DRV_FCC_ENET_TRUE CONFIG_RTNET_DRV_FCC_ENET_FALSE CONFIG_RTNET_DRV_SCC_ENET_TRUE CONFIG_RTNET_DRV_SCC_ENET_FALSE CONFIG_RTNET_DRV_FEC_ENET_TRUE CONFIG_RTNET_DRV_FEC_ENET_FALSE CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE CONFIG_RTNET_DRV_SMC91111_TRUE CONFIG_RTNET_DRV_SMC91111_FALSE CONFIG_RTNET_DRV_ETH1394_TRUE CONFIG_RTNET_DRV_ETH1394_FALSE CONFIG_RTNET_DRV_LOOPBACK_TRUE CONFIG_RTNET_DRV_LOOPBACK_FALSE CONFIG_RTNET_DRV_3C59X_TRUE CONFIG_RTNET_DRV_3C59X_FALSE CONFIG_RTNET_DRV_R8169_TRUE CONFIG_RTNET_DRV_R8169_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTMAC_TRUE CONFIG_RTNET_RTMAC_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ADDON_RTCAP_TRUE CONFIG_RTNET_ADDON_RTCAP_FALSE CONFIG_RTNET_ADDON_PROXY_TRUE CONFIG_RTNET_ADDON_PROXY_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTEXT_KMOD_CFLAGS RTEXT_USER_CFLAGS RTEXT_LIBRARIES RTFW_KMOD_CFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1049,6 +1049,9 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-8139           build Realtek 8139 driver
   --enable-eepro100       build Intel EtherExpressPro/100 driver
+  --enable-eepro100-cmdtimeout
+                          Set EEPRO/100 command timeout
+  --enable-eepro100-dbg   enable EEPRO/100 debugging
   --enable-pcnet32        build AMD PCnet32 driver
   --enable-via-rhine      build VIA Rhine driver
   --enable-natsemi        build NatSemi driver
@@ -3784,7 +3787,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3787 "configure"' > conftest.$ac_ext
+  echo '#line 3790 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5363,7 +5366,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5366:" \
+echo "$as_me:5369:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6432,11 +6435,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6435: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6438: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6439: \$? = $ac_status" >&5
+   echo "$as_me:6442: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6687,11 +6690,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6690: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6693: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6694: \$? = $ac_status" >&5
+   echo "$as_me:6697: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6747,11 +6750,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6750: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6753: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6754: \$? = $ac_status" >&5
+   echo "$as_me:6757: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8947,7 +8950,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8950 "configure"
+#line 8953 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9045,7 +9048,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9048 "configure"
+#line 9051 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11265,11 +11268,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11268: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11271: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11272: \$? = $ac_status" >&5
+   echo "$as_me:11275: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -11325,11 +11328,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11328: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11331: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11332: \$? = $ac_status" >&5
+   echo "$as_me:11335: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12688,7 +12691,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12691 "configure"
+#line 12694 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12786,7 +12789,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12789 "configure"
+#line 12792 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13641,11 +13644,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13644: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13647: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13648: \$? = $ac_status" >&5
+   echo "$as_me:13651: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13701,11 +13704,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13704: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13707: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13708: \$? = $ac_status" >&5
+   echo "$as_me:13711: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15757,11 +15760,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15760: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15763: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15764: \$? = $ac_status" >&5
+   echo "$as_me:15767: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16012,11 +16015,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16015: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16018: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16019: \$? = $ac_status" >&5
+   echo "$as_me:16022: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -16072,11 +16075,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16075: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16078: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16079: \$? = $ac_status" >&5
+   echo "$as_me:16082: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18272,7 +18275,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18275 "configure"
+#line 18278 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18370,7 +18373,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18373 "configure"
+#line 18376 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20466,20 +20469,20 @@ echo $ECHO_N "checking whether to build Realtek 8139 driver... $ECHO_C" >&6
 if test "${enable_8139+set}" = set; then
   enableval="$enable_8139"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_8139=y ;;
-        *) CONFIG_RTNET_DRIVER_8139=n ;;
+        y | yes) CONFIG_RTNET_DRV_8139=y ;;
+        *) CONFIG_RTNET_DRV_8139=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_8139:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_8139:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_8139:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_8139:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_8139" = "y"; then
-  CONFIG_RTNET_DRIVER_8139_TRUE=
-  CONFIG_RTNET_DRIVER_8139_FALSE='#'
+if test "$CONFIG_RTNET_DRV_8139" = "y"; then
+  CONFIG_RTNET_DRV_8139_TRUE=
+  CONFIG_RTNET_DRV_8139_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_8139_TRUE='#'
-  CONFIG_RTNET_DRIVER_8139_FALSE=
+  CONFIG_RTNET_DRV_8139_TRUE='#'
+  CONFIG_RTNET_DRV_8139_FALSE=
 fi
 
 
@@ -20490,22 +20493,65 @@ echo $ECHO_N "checking whether to build Intel EtherExpressPro/100 driver... $ECH
 if test "${enable_eepro100+set}" = set; then
   enableval="$enable_eepro100"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_EEPRO100=y ;;
-        *) CONFIG_RTNET_DRIVER_EEPRO100=n ;;
+        y | yes) CONFIG_RTNET_DRV_EEPRO100=y ;;
+        *) CONFIG_RTNET_DRV_EEPRO100=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_EEPRO100:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_EEPRO100:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_EEPRO100:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_EEPRO100:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_EEPRO100" = "y"; then
-  CONFIG_RTNET_DRIVER_EEPRO100_TRUE=
-  CONFIG_RTNET_DRIVER_EEPRO100_FALSE='#'
+if test "$CONFIG_RTNET_DRV_EEPRO100" = "y"; then
+  CONFIG_RTNET_DRV_EEPRO100_TRUE=
+  CONFIG_RTNET_DRV_EEPRO100_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_EEPRO100_TRUE='#'
-  CONFIG_RTNET_DRIVER_EEPRO100_FALSE=
+  CONFIG_RTNET_DRV_EEPRO100_TRUE='#'
+  CONFIG_RTNET_DRV_EEPRO100_FALSE=
 fi
 
+
+echo "$as_me:$LINENO: checking EEPRO/100 Command Timeout" >&5
+echo $ECHO_N "checking EEPRO/100 Command Timeout... $ECHO_C" >&6
+# Check whether --enable-eepro100-cmdtimeout or --disable-eepro100-cmdtimeout was given.
+if test "${enable_eepro100_cmdtimeout+set}" = set; then
+  enableval="$enable_eepro100_cmdtimeout"
+  case "$enableval" in
+        [0-9]*) CONFIGRTNET_DRV_EEPRO100_CMDTIMEOUT=$enableval ;;
+        *) { { echo "$as_me:$LINENO: error: Bad argument to option: --enable-eepro100-cmdtimeout=<microseconds>" >&5
+echo "$as_me: error: Bad argument to option: --enable-eepro100-cmdtimeout=<microseconds>" >&2;}
+   { (exit 1); exit 1; }; } ;;
+    esac
+fi;
+if test x$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = x ; then
+    $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = 20
+fi
+echo "$as_me:$LINENO: result: $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT us" >&5
+echo "${ECHO_T}$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT us" >&6
+
+cat >>confdefs.h <<_ACEOF
+#define CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT
+_ACEOF
+
+
+echo "$as_me:$LINENO: checking whether to enble EEPRO/100 debugging" >&5
+echo $ECHO_N "checking whether to enble EEPRO/100 debugging... $ECHO_C" >&6
+# Check whether --enable-eepro100-dbg or --disable-eepro100-dbg was given.
+if test "${enable_eepro100_dbg+set}" = set; then
+  enableval="$enable_eepro100_dbg"
+  case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_EEPRO100_DBG=y ;;
+        *) CONFIG_RTNET_DRV_EEPRO100_DBG=n ;;
+    esac
+fi;
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_EEPRO100_DBG:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_EEPRO100_DBG:-n}" >&6
+if test "$CONFIG_RTNET_DRV_EEPRO100_DBG" = "y"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTNET_DRV_EEPRO100_DBG 1
+_ACEOF
+
+fi
 
 
 echo "$as_me:$LINENO: checking whether to build AMD PCnet32 driver" >&5
@@ -20514,20 +20560,20 @@ echo $ECHO_N "checking whether to build AMD PCnet32 driver... $ECHO_C" >&6
 if test "${enable_pcnet32+set}" = set; then
   enableval="$enable_pcnet32"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_PCNET32=y ;;
-        *) CONFIG_RTNET_DRIVER_PCNET32=n ;;
+        y | yes) CONFIG_RTNET_DRV_PCNET32=y ;;
+        *) CONFIG_RTNET_DRV_PCNET32=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_PCNET32:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_PCNET32:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_PCNET32:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_PCNET32:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_PCNET32" = "y"; then
-  CONFIG_RTNET_DRIVER_PCNET32_TRUE=
-  CONFIG_RTNET_DRIVER_PCNET32_FALSE='#'
+if test "$CONFIG_RTNET_DRV_PCNET32" = "y"; then
+  CONFIG_RTNET_DRV_PCNET32_TRUE=
+  CONFIG_RTNET_DRV_PCNET32_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_PCNET32_TRUE='#'
-  CONFIG_RTNET_DRIVER_PCNET32_FALSE=
+  CONFIG_RTNET_DRV_PCNET32_TRUE='#'
+  CONFIG_RTNET_DRV_PCNET32_FALSE=
 fi
 
 
@@ -20538,20 +20584,20 @@ echo $ECHO_N "checking whether to build VIA Rhine driver... $ECHO_C" >&6
 if test "${enable_via_rhine+set}" = set; then
   enableval="$enable_via_rhine"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_VIA_RHINE=y ;;
-        *) CONFIG_RTNET_DRIVER_VIA_RHINE=n ;;
+        y | yes) CONFIG_RTNET_DRV_VIA_RHINE=y ;;
+        *) CONFIG_RTNET_DRV_VIA_RHINE=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_VIA_RHINE:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_VIA_RHINE:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_VIA_RHINE:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_VIA_RHINE:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_VIA_RHINE" = "y"; then
-  CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE=
-  CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE='#'
+if test "$CONFIG_RTNET_DRV_VIA_RHINE" = "y"; then
+  CONFIG_RTNET_DRV_VIA_RHINE_TRUE=
+  CONFIG_RTNET_DRV_VIA_RHINE_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE='#'
-  CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE=
+  CONFIG_RTNET_DRV_VIA_RHINE_TRUE='#'
+  CONFIG_RTNET_DRV_VIA_RHINE_FALSE=
 fi
 
 
@@ -20562,20 +20608,20 @@ echo $ECHO_N "checking whether to build NatSemi driver... $ECHO_C" >&6
 if test "${enable_natsemi+set}" = set; then
   enableval="$enable_natsemi"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_NATSEMI=y ;;
-        *) CONFIG_RTNET_DRIVER_NATSEMI=n ;;
+        y | yes) CONFIG_RTNET_DRV_NATSEMI=y ;;
+        *) CONFIG_RTNET_DRV_NATSEMI=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_NATSEMI:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_NATSEMI:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_NATSEMI:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_NATSEMI:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_NATSEMI" = "y"; then
-  CONFIG_RTNET_DRIVER_NATSEMI_TRUE=
-  CONFIG_RTNET_DRIVER_NATSEMI_FALSE='#'
+if test "$CONFIG_RTNET_DRV_NATSEMI" = "y"; then
+  CONFIG_RTNET_DRV_NATSEMI_TRUE=
+  CONFIG_RTNET_DRV_NATSEMI_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_NATSEMI_TRUE='#'
-  CONFIG_RTNET_DRIVER_NATSEMI_FALSE=
+  CONFIG_RTNET_DRV_NATSEMI_TRUE='#'
+  CONFIG_RTNET_DRV_NATSEMI_FALSE=
 fi
 
 
@@ -20586,20 +20632,20 @@ echo $ECHO_N "checking whether to build tulip driver... $ECHO_C" >&6
 if test "${enable_tulip+set}" = set; then
   enableval="$enable_tulip"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_TULIP=y ;;
-        *) CONFIG_RTNET_DRIVER_TULIP=n ;;
+        y | yes) CONFIG_RTNET_DRV_TULIP=y ;;
+        *) CONFIG_RTNET_DRV_TULIP=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_TULIP:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_TULIP:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_TULIP:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_TULIP:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_TULIP" = "y"; then
-  CONFIG_RTNET_DRIVER_TULIP_TRUE=
-  CONFIG_RTNET_DRIVER_TULIP_FALSE='#'
+if test "$CONFIG_RTNET_DRV_TULIP" = "y"; then
+  CONFIG_RTNET_DRV_TULIP_TRUE=
+  CONFIG_RTNET_DRV_TULIP_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_TULIP_TRUE='#'
-  CONFIG_RTNET_DRIVER_TULIP_FALSE=
+  CONFIG_RTNET_DRV_TULIP_TRUE='#'
+  CONFIG_RTNET_DRV_TULIP_FALSE=
 fi
 
 
@@ -20610,20 +20656,20 @@ echo $ECHO_N "checking whether to build fcc enet driver... $ECHO_C" >&6
 if test "${enable_fcc_enet+set}" = set; then
   enableval="$enable_fcc_enet"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_FCC_ENET=y ;;
-        *) CONFIG_RTNET_DRIVER_FCC_ENET=n ;;
+        y | yes) CONFIG_RTNET_DRV_FCC_ENET=y ;;
+        *) CONFIG_RTNET_DRV_FCC_ENET=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_FCC_ENET:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_FCC_ENET:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_FCC_ENET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_FCC_ENET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_FCC_ENET" = "y"; then
-  CONFIG_RTNET_DRIVER_FCC_ENET_TRUE=
-  CONFIG_RTNET_DRIVER_FCC_ENET_FALSE='#'
+if test "$CONFIG_RTNET_DRV_FCC_ENET" = "y"; then
+  CONFIG_RTNET_DRV_FCC_ENET_TRUE=
+  CONFIG_RTNET_DRV_FCC_ENET_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_FCC_ENET_TRUE='#'
-  CONFIG_RTNET_DRIVER_FCC_ENET_FALSE=
+  CONFIG_RTNET_DRV_FCC_ENET_TRUE='#'
+  CONFIG_RTNET_DRV_FCC_ENET_FALSE=
 fi
 
 
@@ -20634,20 +20680,20 @@ echo $ECHO_N "checking whether to build scc enet driver... $ECHO_C" >&6
 if test "${enable_scc_enet+set}" = set; then
   enableval="$enable_scc_enet"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_SCC_ENET=y ;;
-        *) CONFIG_RTNET_DRIVER_SCC_ENET=n ;;
+        y | yes) CONFIG_RTNET_DRV_SCC_ENET=y ;;
+        *) CONFIG_RTNET_DRV_SCC_ENET=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_SCC_ENET:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_SCC_ENET:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_SCC_ENET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_SCC_ENET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_SCC_ENET" = "y"; then
-  CONFIG_RTNET_DRIVER_SCC_ENET_TRUE=
-  CONFIG_RTNET_DRIVER_SCC_ENET_FALSE='#'
+if test "$CONFIG_RTNET_DRV_SCC_ENET" = "y"; then
+  CONFIG_RTNET_DRV_SCC_ENET_TRUE=
+  CONFIG_RTNET_DRV_SCC_ENET_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_SCC_ENET_TRUE='#'
-  CONFIG_RTNET_DRIVER_SCC_ENET_FALSE=
+  CONFIG_RTNET_DRV_SCC_ENET_TRUE='#'
+  CONFIG_RTNET_DRV_SCC_ENET_FALSE=
 fi
 
 
@@ -20658,20 +20704,20 @@ echo $ECHO_N "checking whether to build fec enet driver... $ECHO_C" >&6
 if test "${enable_fec_enet+set}" = set; then
   enableval="$enable_fec_enet"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_FEC_ENET=y ;;
-        *) CONFIG_RTNET_DRIVER_FEC_ENET=n ;;
+        y | yes) CONFIG_RTNET_DRV_FEC_ENET=y ;;
+        *) CONFIG_RTNET_DRV_FEC_ENET=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_FEC_ENET:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_FEC_ENET:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_FEC_ENET:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_FEC_ENET:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_FEC_ENET" = "y"; then
-  CONFIG_RTNET_DRIVER_FEC_ENET_TRUE=
-  CONFIG_RTNET_DRIVER_FEC_ENET_FALSE='#'
+if test "$CONFIG_RTNET_DRV_FEC_ENET" = "y"; then
+  CONFIG_RTNET_DRV_FEC_ENET_TRUE=
+  CONFIG_RTNET_DRV_FEC_ENET_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_FEC_ENET_TRUE='#'
-  CONFIG_RTNET_DRIVER_FEC_ENET_FALSE=
+  CONFIG_RTNET_DRV_FEC_ENET_TRUE='#'
+  CONFIG_RTNET_DRV_FEC_ENET_FALSE=
 fi
 
 
@@ -20682,20 +20728,20 @@ echo $ECHO_N "checking whether to build MPC52xx fec driver... $ECHO_C" >&6
 if test "${enable_mpc52xx_fec+set}" = set; then
   enableval="$enable_mpc52xx_fec"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_MPC52XX_FEC=y ;;
-        *) CONFIG_RTNET_DRIVER_MPC52XX_FEC=n ;;
+        y | yes) CONFIG_RTNET_DRV_MPC52XX_FEC=y ;;
+        *) CONFIG_RTNET_DRV_MPC52XX_FEC=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_MPC52XX_FEC:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_MPC52XX_FEC:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_MPC52XX_FEC:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_MPC52XX_FEC:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_MPC52XX_FEC" = "y"; then
-  CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE=
-  CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE='#'
+if test "$CONFIG_RTNET_DRV_MPC52XX_FEC" = "y"; then
+  CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE=
+  CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE='#'
-  CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE=
+  CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE='#'
+  CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE=
 fi
 
 
@@ -20706,20 +20752,20 @@ echo $ECHO_N "checking whether to build SMSC LAN91C111 driver... $ECHO_C" >&6
 if test "${enable_smc91111+set}" = set; then
   enableval="$enable_smc91111"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_SMC91111=y ;;
-        *) CONFIG_RTNET_DRIVER_SMC91111=n ;;
+        y | yes) CONFIG_RTNET_DRV_SMC91111=y ;;
+        *) CONFIG_RTNET_DRV_SMC91111=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_SMC91111:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_SMC91111:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_SMC91111:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_SMC91111:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_SMC91111" = "y"; then
-  CONFIG_RTNET_DRIVER_SMC91111_TRUE=
-  CONFIG_RTNET_DRIVER_SMC91111_FALSE='#'
+if test "$CONFIG_RTNET_DRV_SMC91111" = "y"; then
+  CONFIG_RTNET_DRV_SMC91111_TRUE=
+  CONFIG_RTNET_DRV_SMC91111_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_SMC91111_TRUE='#'
-  CONFIG_RTNET_DRIVER_SMC91111_FALSE=
+  CONFIG_RTNET_DRV_SMC91111_TRUE='#'
+  CONFIG_RTNET_DRV_SMC91111_FALSE=
 fi
 
 
@@ -20730,20 +20776,20 @@ echo $ECHO_N "checking whether to build Eth1394 driver... $ECHO_C" >&6
 if test "${enable_eth1394+set}" = set; then
   enableval="$enable_eth1394"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_ETH1394=y ;;
-        *) CONFIG_RTNET_DRIVER_ETH1394=n ;;
+        y | yes) CONFIG_RTNET_DRV_ETH1394=y ;;
+        *) CONFIG_RTNET_DRV_ETH1394=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_ETH1394:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_ETH1394:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_ETH1394:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_ETH1394:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_ETH1394" = "y"; then
-  CONFIG_RTNET_DRIVER_ETH1394_TRUE=
-  CONFIG_RTNET_DRIVER_ETH1394_FALSE='#'
+if test "$CONFIG_RTNET_DRV_ETH1394" = "y"; then
+  CONFIG_RTNET_DRV_ETH1394_TRUE=
+  CONFIG_RTNET_DRV_ETH1394_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_ETH1394_TRUE='#'
-  CONFIG_RTNET_DRIVER_ETH1394_FALSE=
+  CONFIG_RTNET_DRV_ETH1394_TRUE='#'
+  CONFIG_RTNET_DRV_ETH1394_FALSE=
 fi
 
 
@@ -20754,20 +20800,20 @@ echo $ECHO_N "checking whether to build loopback driver... $ECHO_C" >&6
 if test "${enable_loopback+set}" = set; then
   enableval="$enable_loopback"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_LOOPBACK=y ;;
-        *) CONFIG_RTNET_DRIVER_LOOPBACK=n ;;
+        y | yes) CONFIG_RTNET_DRV_LOOPBACK=y ;;
+        *) CONFIG_RTNET_DRV_LOOPBACK=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_LOOPBACK:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_LOOPBACK:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_LOOPBACK:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_LOOPBACK:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_LOOPBACK" = "y"; then
-  CONFIG_RTNET_DRIVER_LOOPBACK_TRUE=
-  CONFIG_RTNET_DRIVER_LOOPBACK_FALSE='#'
+if test "$CONFIG_RTNET_DRV_LOOPBACK" = "y"; then
+  CONFIG_RTNET_DRV_LOOPBACK_TRUE=
+  CONFIG_RTNET_DRV_LOOPBACK_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_LOOPBACK_TRUE='#'
-  CONFIG_RTNET_DRIVER_LOOPBACK_FALSE=
+  CONFIG_RTNET_DRV_LOOPBACK_TRUE='#'
+  CONFIG_RTNET_DRV_LOOPBACK_FALSE=
 fi
 
 
@@ -20778,20 +20824,20 @@ echo $ECHO_N "checking whether to build 3Com 59x driver... $ECHO_C" >&6
 if test "${enable_3c59x+set}" = set; then
   enableval="$enable_3c59x"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_3C59X=y ;;
-        *) CONFIG_RTNET_DRIVER_3C59X=n ;;
+        y | yes) CONFIG_RTNET_DRV_3C59X=y ;;
+        *) CONFIG_RTNET_DRV_3C59X=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_3C59X:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_3C59X:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_3C59X:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_3C59X:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_3C59X" = "y"; then
-  CONFIG_RTNET_DRIVER_3C59X_TRUE=
-  CONFIG_RTNET_DRIVER_3C59X_FALSE='#'
+if test "$CONFIG_RTNET_DRV_3C59X" = "y"; then
+  CONFIG_RTNET_DRV_3C59X_TRUE=
+  CONFIG_RTNET_DRV_3C59X_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_3C59X_TRUE='#'
-  CONFIG_RTNET_DRIVER_3C59X_FALSE=
+  CONFIG_RTNET_DRV_3C59X_TRUE='#'
+  CONFIG_RTNET_DRV_3C59X_FALSE=
 fi
 
 
@@ -20802,20 +20848,20 @@ echo $ECHO_N "checking whether to build Realtek 8169 (Gigabit) driver... $ECHO_C
 if test "${enable_r8169+set}" = set; then
   enableval="$enable_r8169"
   case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_R8169=y ;;
-        *) CONFIG_RTNET_DRIVER_R8169=n ;;
+        y | yes) CONFIG_RTNET_DRV_R8169=y ;;
+        *) CONFIG_RTNET_DRV_R8169=n ;;
     esac
 fi;
-echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRIVER_R8169:-n}" >&5
-echo "${ECHO_T}${CONFIG_RTNET_DRIVER_R8169:-n}" >&6
+echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_R8169:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_R8169:-n}" >&6
 
 
-if test "$CONFIG_RTNET_DRIVER_R8169" = "y"; then
-  CONFIG_RTNET_DRIVER_R8169_TRUE=
-  CONFIG_RTNET_DRIVER_R8169_FALSE='#'
+if test "$CONFIG_RTNET_DRV_R8169" = "y"; then
+  CONFIG_RTNET_DRV_R8169_TRUE=
+  CONFIG_RTNET_DRV_R8169_FALSE='#'
 else
-  CONFIG_RTNET_DRIVER_R8169_TRUE='#'
-  CONFIG_RTNET_DRIVER_R8169_FALSE=
+  CONFIG_RTNET_DRV_R8169_TRUE='#'
+  CONFIG_RTNET_DRV_R8169_FALSE=
 fi
 
 
@@ -21431,108 +21477,108 @@ echo "$as_me: error: conditional \"CONFIG_RTNET_LXRT\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_8139_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_8139_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_8139\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_8139_TRUE}" && test -z "${CONFIG_RTNET_DRV_8139_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_8139\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_8139\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_8139\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_EEPRO100_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_EEPRO100_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_EEPRO100\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_EEPRO100_TRUE}" && test -z "${CONFIG_RTNET_DRV_EEPRO100_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_EEPRO100\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_EEPRO100\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_EEPRO100\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_PCNET32_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_PCNET32_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_PCNET32\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_PCNET32_TRUE}" && test -z "${CONFIG_RTNET_DRV_PCNET32_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_PCNET32\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_PCNET32\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_PCNET32\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_VIA_RHINE\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_VIA_RHINE_TRUE}" && test -z "${CONFIG_RTNET_DRV_VIA_RHINE_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_VIA_RHINE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_VIA_RHINE\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_VIA_RHINE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_NATSEMI_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_NATSEMI_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_NATSEMI\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_NATSEMI_TRUE}" && test -z "${CONFIG_RTNET_DRV_NATSEMI_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_NATSEMI\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_NATSEMI\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_NATSEMI\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_TULIP_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_TULIP_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_TULIP\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_TULIP_TRUE}" && test -z "${CONFIG_RTNET_DRV_TULIP_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_TULIP\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_TULIP\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_TULIP\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_FCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_FCC_ENET_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_FCC_ENET\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_FCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRV_FCC_ENET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_FCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_FCC_ENET\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_FCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_SCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_SCC_ENET_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_SCC_ENET\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_SCC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRV_SCC_ENET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_SCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_SCC_ENET\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_SCC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_FEC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_FEC_ENET_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_FEC_ENET\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_FEC_ENET_TRUE}" && test -z "${CONFIG_RTNET_DRV_FEC_ENET_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_FEC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_FEC_ENET\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_FEC_ENET\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_MPC52XX_FEC\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE}" && test -z "${CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_MPC52XX_FEC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_MPC52XX_FEC\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_MPC52XX_FEC\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_SMC91111_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_SMC91111_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_SMC91111\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_SMC91111_TRUE}" && test -z "${CONFIG_RTNET_DRV_SMC91111_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_SMC91111\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_SMC91111\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_SMC91111\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_ETH1394_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_ETH1394_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_ETH1394\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_ETH1394_TRUE}" && test -z "${CONFIG_RTNET_DRV_ETH1394_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_ETH1394\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_ETH1394\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_ETH1394\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_LOOPBACK_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_LOOPBACK_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_LOOPBACK\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_LOOPBACK_TRUE}" && test -z "${CONFIG_RTNET_DRV_LOOPBACK_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_LOOPBACK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_LOOPBACK\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_LOOPBACK\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_3C59X_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_3C59X_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_3C59X\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_3C59X_TRUE}" && test -z "${CONFIG_RTNET_DRV_3C59X_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_3C59X\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_3C59X\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_3C59X\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if test -z "${CONFIG_RTNET_DRIVER_R8169_TRUE}" && test -z "${CONFIG_RTNET_DRIVER_R8169_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRIVER_R8169\" was never defined.
+if test -z "${CONFIG_RTNET_DRV_R8169_TRUE}" && test -z "${CONFIG_RTNET_DRV_R8169_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_R8169\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"CONFIG_RTNET_DRIVER_R8169\" was never defined.
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_R8169\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -22267,36 +22313,36 @@ s,@RTNET_KBUILD_DISTCLEAN@,$RTNET_KBUILD_DISTCLEAN,;t t
 s,@RTNET_MODULE_DIR@,$RTNET_MODULE_DIR,;t t
 s,@CONFIG_RTNET_LXRT_TRUE@,$CONFIG_RTNET_LXRT_TRUE,;t t
 s,@CONFIG_RTNET_LXRT_FALSE@,$CONFIG_RTNET_LXRT_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_8139_TRUE@,$CONFIG_RTNET_DRIVER_8139_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_8139_FALSE@,$CONFIG_RTNET_DRIVER_8139_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_EEPRO100_TRUE@,$CONFIG_RTNET_DRIVER_EEPRO100_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_EEPRO100_FALSE@,$CONFIG_RTNET_DRIVER_EEPRO100_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_PCNET32_TRUE@,$CONFIG_RTNET_DRIVER_PCNET32_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_PCNET32_FALSE@,$CONFIG_RTNET_DRIVER_PCNET32_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE@,$CONFIG_RTNET_DRIVER_VIA_RHINE_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE@,$CONFIG_RTNET_DRIVER_VIA_RHINE_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_NATSEMI_TRUE@,$CONFIG_RTNET_DRIVER_NATSEMI_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_NATSEMI_FALSE@,$CONFIG_RTNET_DRIVER_NATSEMI_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_TULIP_TRUE@,$CONFIG_RTNET_DRIVER_TULIP_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_TULIP_FALSE@,$CONFIG_RTNET_DRIVER_TULIP_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_FCC_ENET_TRUE@,$CONFIG_RTNET_DRIVER_FCC_ENET_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_FCC_ENET_FALSE@,$CONFIG_RTNET_DRIVER_FCC_ENET_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_SCC_ENET_TRUE@,$CONFIG_RTNET_DRIVER_SCC_ENET_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_SCC_ENET_FALSE@,$CONFIG_RTNET_DRIVER_SCC_ENET_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_FEC_ENET_TRUE@,$CONFIG_RTNET_DRIVER_FEC_ENET_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_FEC_ENET_FALSE@,$CONFIG_RTNET_DRIVER_FEC_ENET_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE@,$CONFIG_RTNET_DRIVER_MPC52XX_FEC_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE@,$CONFIG_RTNET_DRIVER_MPC52XX_FEC_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_SMC91111_TRUE@,$CONFIG_RTNET_DRIVER_SMC91111_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_SMC91111_FALSE@,$CONFIG_RTNET_DRIVER_SMC91111_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_ETH1394_TRUE@,$CONFIG_RTNET_DRIVER_ETH1394_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_ETH1394_FALSE@,$CONFIG_RTNET_DRIVER_ETH1394_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_LOOPBACK_TRUE@,$CONFIG_RTNET_DRIVER_LOOPBACK_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_LOOPBACK_FALSE@,$CONFIG_RTNET_DRIVER_LOOPBACK_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_3C59X_TRUE@,$CONFIG_RTNET_DRIVER_3C59X_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_3C59X_FALSE@,$CONFIG_RTNET_DRIVER_3C59X_FALSE,;t t
-s,@CONFIG_RTNET_DRIVER_R8169_TRUE@,$CONFIG_RTNET_DRIVER_R8169_TRUE,;t t
-s,@CONFIG_RTNET_DRIVER_R8169_FALSE@,$CONFIG_RTNET_DRIVER_R8169_FALSE,;t t
+s,@CONFIG_RTNET_DRV_8139_TRUE@,$CONFIG_RTNET_DRV_8139_TRUE,;t t
+s,@CONFIG_RTNET_DRV_8139_FALSE@,$CONFIG_RTNET_DRV_8139_FALSE,;t t
+s,@CONFIG_RTNET_DRV_EEPRO100_TRUE@,$CONFIG_RTNET_DRV_EEPRO100_TRUE,;t t
+s,@CONFIG_RTNET_DRV_EEPRO100_FALSE@,$CONFIG_RTNET_DRV_EEPRO100_FALSE,;t t
+s,@CONFIG_RTNET_DRV_PCNET32_TRUE@,$CONFIG_RTNET_DRV_PCNET32_TRUE,;t t
+s,@CONFIG_RTNET_DRV_PCNET32_FALSE@,$CONFIG_RTNET_DRV_PCNET32_FALSE,;t t
+s,@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@,$CONFIG_RTNET_DRV_VIA_RHINE_TRUE,;t t
+s,@CONFIG_RTNET_DRV_VIA_RHINE_FALSE@,$CONFIG_RTNET_DRV_VIA_RHINE_FALSE,;t t
+s,@CONFIG_RTNET_DRV_NATSEMI_TRUE@,$CONFIG_RTNET_DRV_NATSEMI_TRUE,;t t
+s,@CONFIG_RTNET_DRV_NATSEMI_FALSE@,$CONFIG_RTNET_DRV_NATSEMI_FALSE,;t t
+s,@CONFIG_RTNET_DRV_TULIP_TRUE@,$CONFIG_RTNET_DRV_TULIP_TRUE,;t t
+s,@CONFIG_RTNET_DRV_TULIP_FALSE@,$CONFIG_RTNET_DRV_TULIP_FALSE,;t t
+s,@CONFIG_RTNET_DRV_FCC_ENET_TRUE@,$CONFIG_RTNET_DRV_FCC_ENET_TRUE,;t t
+s,@CONFIG_RTNET_DRV_FCC_ENET_FALSE@,$CONFIG_RTNET_DRV_FCC_ENET_FALSE,;t t
+s,@CONFIG_RTNET_DRV_SCC_ENET_TRUE@,$CONFIG_RTNET_DRV_SCC_ENET_TRUE,;t t
+s,@CONFIG_RTNET_DRV_SCC_ENET_FALSE@,$CONFIG_RTNET_DRV_SCC_ENET_FALSE,;t t
+s,@CONFIG_RTNET_DRV_FEC_ENET_TRUE@,$CONFIG_RTNET_DRV_FEC_ENET_TRUE,;t t
+s,@CONFIG_RTNET_DRV_FEC_ENET_FALSE@,$CONFIG_RTNET_DRV_FEC_ENET_FALSE,;t t
+s,@CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE@,$CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE,;t t
+s,@CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE@,$CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE,;t t
+s,@CONFIG_RTNET_DRV_SMC91111_TRUE@,$CONFIG_RTNET_DRV_SMC91111_TRUE,;t t
+s,@CONFIG_RTNET_DRV_SMC91111_FALSE@,$CONFIG_RTNET_DRV_SMC91111_FALSE,;t t
+s,@CONFIG_RTNET_DRV_ETH1394_TRUE@,$CONFIG_RTNET_DRV_ETH1394_TRUE,;t t
+s,@CONFIG_RTNET_DRV_ETH1394_FALSE@,$CONFIG_RTNET_DRV_ETH1394_FALSE,;t t
+s,@CONFIG_RTNET_DRV_LOOPBACK_TRUE@,$CONFIG_RTNET_DRV_LOOPBACK_TRUE,;t t
+s,@CONFIG_RTNET_DRV_LOOPBACK_FALSE@,$CONFIG_RTNET_DRV_LOOPBACK_FALSE,;t t
+s,@CONFIG_RTNET_DRV_3C59X_TRUE@,$CONFIG_RTNET_DRV_3C59X_TRUE,;t t
+s,@CONFIG_RTNET_DRV_3C59X_FALSE@,$CONFIG_RTNET_DRV_3C59X_FALSE,;t t
+s,@CONFIG_RTNET_DRV_R8169_TRUE@,$CONFIG_RTNET_DRV_R8169_TRUE,;t t
+s,@CONFIG_RTNET_DRV_R8169_FALSE@,$CONFIG_RTNET_DRV_R8169_FALSE,;t t
 s,@CONFIG_RTNET_RTIPV4_TRUE@,$CONFIG_RTNET_RTIPV4_TRUE,;t t
 s,@CONFIG_RTNET_RTIPV4_FALSE@,$CONFIG_RTNET_RTIPV4_FALSE,;t t
 s,@CONFIG_RTNET_RTPACKET_TRUE@,$CONFIG_RTNET_RTPACKET_TRUE,;t t

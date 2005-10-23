@@ -2,27 +2,50 @@ menu "Drivers"
 
 comment "Common PCI Drivers"
 
-config RTNET_DRIVER_PCNET32
+config RTNET_DRV_PCNET32
     bool "AMD PCnet32"
     default n
 
-config RTNET_DRIVER_TULIP
+
+config RTNET_DRV_TULIP
     bool "DEC Tulip"
     default n
 
-config RTNET_DRIVER_EEPRO100
+
+config RTNET_DRV_EEPRO100
     bool "Intel EtherExpress PRO/100"
     default y
 
-config RTNET_DRIVER_NATSEMI
+config RTNET_DRV_EEPRO100_CMDTIMEOUT
+    int "Command Timeout"
+    depends RTNET_DRV_EEPRO100
+    default 20
+    ---help---
+    Timeout in microseconds of transmission or configuration commands that
+    are issued in real-time contexts.
+
+config RTNET_DRV_EEPRO100_DBG
+    bool "Enable debugging and instrumentation"
+    depends RTNET_DRV_EEPRO100
+    default n
+    ---help---
+    This option switches on internal debugging code of the EEPRO/100 driver.
+    It also enables the collection of worst-case command delays in real-time
+    contexts in order to reduce the command timeout (which, effectively, will
+    also reduce the worst-case transmission latency).
+
+
+config RTNET_DRV_NATSEMI
     bool "NatSemi"
     default n
 
-config RTNET_DRIVER_8139
+
+config RTNET_DRV_8139
     bool "Realtek 8139"
     default y
 
-config RTNET_DRIVER_VIA_RHINE
+
+config RTNET_DRV_VIA_RHINE
     bool "VIA Rhine"
     default n
 
@@ -31,19 +54,22 @@ if ARCH = ppc
 
 comment "Embedded MPC Drivers"
 
-config RTNET_DRIVER_FCC_ENET
+config RTNET_DRV_FCC_ENET
     bool "MPC8260 FCC Ethernet"
     default n
 
-config RTNET_DRIVER_FEC_ENET
+
+config RTNET_DRV_FEC_ENET
     bool "MPC8xx FEC Ethernet"
     default n
 
-config RTNET_DRIVER_SCC_ENET
+
+config RTNET_DRV_SCC_ENET
     bool "MPC8xx SCC Ethernet"
     default n
 
-config RTNET_DRIVER_MPC52XX_FEC
+
+config RTNET_DRV_MPC52XX_FEC
     bool "MPC52xx FEC Ethernet"
     default n
 
@@ -52,21 +78,24 @@ endif
 
 comment "Misc Drivers"
 
-config RTNET_DRIVER_LOOPBACK
+config RTNET_DRV_LOOPBACK
     bool "Loopback"
     default y
 
-config RTNET_DRIVER_SMC91111
+
+config RTNET_DRV_SMC91111
     bool "SMSC LAN91C111"
     default n
 
-config RTNET_DRIVER_ETH1394
+
+config RTNET_DRV_ETH1394
     bool "Ethernet over 1394"
     default n
 
+
 config RTFIREWIRE_DIR
     string "Path of RT-FireWire Source Code"
-    depends on RTNET_DRIVER_ETH1394
+    depends on RTNET_DRV_ETH1394
     default "/usr/src/rt-firewire"
 
 

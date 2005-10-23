@@ -3,10 +3,10 @@
  *  ipv4/icmp.c
  *
  *  rtnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2002 Vinay Sridhara <vinaysridhara@yahoo.com>
- *                2003,2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2002       Vinay Sridhara <vinaysridhara@yahoo.com>
+ *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ struct rt_icmp_control
 
 
 
-static rtos_spinlock_t  echo_calls_lock;
+static rtdm_lock_t  echo_calls_lock = RTDM_LOCK_UNLOCKED;
 LIST_HEAD(echo_calls);
 
 /***
@@ -83,27 +83,27 @@ static struct rtsocket icmp_socket;
 
 void rt_icmp_queue_echo_request(struct rt_proc_call *call)
 {
-    unsigned long   flags;
+    rtdm_lockctx_t  context;
 
 
-    rtos_spin_lock_irqsave(&echo_calls_lock, flags);
+    rtdm_lock_get_irqsave(&echo_calls_lock, context);
     list_add_tail(&call->list_entry, &echo_calls);
-    rtos_spin_unlock_irqrestore(&echo_calls_lock, flags);
+    rtdm_lock_put_irqrestore(&echo_calls_lock, context);
 }
 
 
 
 void rt_icmp_cleanup_echo_requests(void)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct list_head    *entry = &echo_calls;
     struct list_head    *next;
 
 
-    rtos_spin_lock_irqsave(&echo_calls_lock, flags);
+    rtdm_lock_get_irqsave(&echo_calls_lock, context);
     entry = echo_calls.next;
     INIT_LIST_HEAD(&echo_calls);
-    rtos_spin_unlock_irqrestore(&echo_calls_lock, flags);
+    rtdm_lock_put_irqrestore(&echo_calls_lock, context);
 
     while (entry != &echo_calls) {
         next = entry->next;
@@ -130,8 +130,8 @@ static int rt_icmp_glue_reply_bits(const void *p, char *to,
                                    unsigned int offset, unsigned int fraglen)
 {
     struct icmp_bxm *icmp_param = (struct icmp_bxm *)p;
-    struct icmphdr *icmph;
-    unsigned long csum;
+    struct icmphdr  *icmph;
+    unsigned long   csum;
 
 
     /* TODO: add support for fragmented ICMP packets */
@@ -181,7 +181,7 @@ static void rt_icmp_send_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
     rtdev_dereference(rt.rtdev);
 
     RTNET_ASSERT(err == 0,
-                 rtos_print("RTnet: %s() error in xmit\n", __FUNCTION__););
+                 rtdm_printk("RTnet: %s() error in xmit\n", __FUNCTION__););
 }
 
 
@@ -191,20 +191,20 @@ static void rt_icmp_send_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
  */
 static void rt_icmp_echo_reply(struct rtskb *skb)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct rt_proc_call *call;
     struct ipv4_cmd     *cmd;
 
 
-    rtos_spin_lock_irqsave(&echo_calls_lock, flags);
+    rtdm_lock_get_irqsave(&echo_calls_lock, context);
 
     if (!list_empty(&echo_calls)) {
         call = (struct rt_proc_call *)echo_calls.next;
         list_del(&call->list_entry);
 
-        rtos_spin_unlock_irqrestore(&echo_calls_lock, flags);
+        rtdm_lock_put_irqrestore(&echo_calls_lock, context);
     } else {
-        rtos_spin_unlock_irqrestore(&echo_calls_lock, flags);
+        rtdm_lock_put_irqrestore(&echo_calls_lock, context);
         return;
     }
 
@@ -217,7 +217,8 @@ static void rt_icmp_echo_reply(struct rtskb *skb)
         (ntohs(skb->h.icmph->un.echo.sequence) == cmd->args.ping.sequence) &&
         skb->len == cmd->args.ping.msg_size) {
         if (skb->len >= sizeof(nanosecs_t))
-            cmd->args.ping.rtt = rtos_get_time() - *((nanosecs_t *)skb->data);
+            cmd->args.ping.rtt =
+                rtdm_clock_read() - *((nanosecs_t *)skb->data);
         rtpc_complete_call(call, sizeof(struct icmphdr) + skb->len);
     } else
         rtpc_complete_call(call, 0);
@@ -251,13 +252,13 @@ static int rt_icmp_glue_request_bits(const void *p, char *to,
                                      unsigned int offset, unsigned int fraglen)
 {
     struct icmp_bxm *icmp_param = (struct icmp_bxm *)p;
-    struct icmphdr *icmph;
-    unsigned long csum;
+    struct icmphdr  *icmph;
+    unsigned long   csum;
 
 
     /* TODO: add support for fragmented ICMP packets */
     RTNET_ASSERT(offset == 0,
-                 rtos_print("RTnet: %s() does not support fragmentation.\n",
+                 rtdm_printk("RTnet: %s() does not support fragmentation.\n",
                              __FUNCTION__);
                  return -1;);
 
@@ -335,7 +336,7 @@ int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
         for (pos = 0; pos < icmp_param.data_len; pos++)
             pattern_buf[pos] = pos & 0xFF;
 
-        icmp_param.head.timestamp = rtos_get_time();
+        icmp_param.head.timestamp = rtdm_clock_read();
     } else {
         icmp_param.head_len = sizeof(struct icmphdr) + msg_size;
         icmp_param.data_len = 0;
@@ -429,32 +430,33 @@ struct rtsocket *rt_icmp_dest_socket(struct rtskb *skb)
  */
 int rt_icmp_rcv(struct rtskb *skb)
 {
-    struct icmphdr *icmpHdr = skb->h.icmph;
-    unsigned int length = skb->len;
+    struct icmphdr  *icmpHdr = skb->h.icmph;
+    unsigned int    length   = skb->len;
+
 
     /* check header sanity and don't accept fragmented packets */
     if ((length < sizeof(struct icmphdr)) || (skb->next != NULL))
     {
-        rtos_print("RTnet: improper length in icmp packet\n");
+        rtdm_printk("RTnet: improper length in icmp packet\n");
         goto cleanup;
     }
 
     if (ip_compute_csum((unsigned char *)icmpHdr, length))
     {
-        rtos_print("RTnet: invalid checksum in icmp packet %d\n", length);
+        rtdm_printk("RTnet: invalid checksum in icmp packet %d\n", length);
         goto cleanup;
     }
 
     if (!rtskb_pull(skb, sizeof(struct icmphdr)))
     {
-        rtos_print("RTnet: pull failed %p\n", (skb->sk));
+        rtdm_printk("RTnet: pull failed %p\n", (skb->sk));
         goto cleanup;
     }
 
 
     if (icmpHdr->type > NR_ICMP_TYPES)
     {
-        rtos_print("RTnet: invalid icmp type\n");
+        rtdm_printk("RTnet: invalid icmp type\n");
         goto cleanup;
     }
 
@@ -473,7 +475,7 @@ int rt_icmp_rcv(struct rtskb *skb)
  */
 void rt_icmp_rcv_err(struct rtskb *skb)
 {
-    rtos_print("RTnet: rt_icmp_rcv err\n");
+    rtdm_printk("RTnet: rt_icmp_rcv err\n");
 }
 
 
@@ -498,8 +500,6 @@ void __init rt_icmp_init(void)
 {
     unsigned int skbs;
 
-
-    rtos_spin_lock_init(&echo_calls_lock);
 
     icmp_socket.protocol = IPPROTO_ICMP;
     icmp_socket.prot.inet.tos = 0;

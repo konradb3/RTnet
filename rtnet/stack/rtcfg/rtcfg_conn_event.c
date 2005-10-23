@@ -325,7 +325,7 @@ static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
     if (!conn->cfg_timeout)
         return;
 
-    if (rtos_get_time() >= conn->last_frame + conn->cfg_timeout) {
+    if (rtdm_clock_read() >= conn->last_frame + conn->cfg_timeout) {
         rtcfg_dev = &device[conn->ifindex];
 
         rtcfg_dev->stations_found--;
@@ -363,7 +363,7 @@ static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
     if (!timeout)
         return;
 
-    if (rtos_get_time() >= conn->last_frame + timeout) {
+    if (rtdm_clock_read() >= conn->last_frame + timeout) {
         rtcfg_dev = &device[conn->ifindex];
 
         rtcfg_dev->stations_found--;

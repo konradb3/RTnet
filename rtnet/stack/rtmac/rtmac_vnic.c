@@ -1,8 +1,8 @@
 /* rtmac_vnic.c
  *
  * rtmac - real-time networking media access control subsystem
- * Copyright (C) 2002 Marc Kleine-Budde <kleine-budde@gmx.de>,
- *               2003 Jan Kiszka <Jan.Kiszka@web.de>
+ * Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *               2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ static unsigned int vnic_rtskbs = DEFAULT_VNIC_RTSKBS;
 MODULE_PARM(vnic_rtskbs, "i");
 MODULE_PARM_DESC(vnic_rtskbs, "Number of realtime socket buffers per virtual NIC");
 
-static rtos_nrt_signal_t    vnic_signal;
+static rtdm_nrtsig_t        vnic_signal;
 static struct rtskb_queue   rx_queue;
 
 
@@ -57,14 +57,14 @@ int rtmac_vnic_rx(struct rtskb *rtskb, u16 type)
 
     rtdev_reference(rtskb->rtdev);
     rtskb_queue_tail(&rx_queue, rtskb);
-    rtos_nrt_pend_signal(&vnic_signal);
+    rtdm_nrtsig_pend(&vnic_signal);
 
     return 0;
 }
 
 
 
-static void rtmac_vnic_signal_handler(void)
+static void rtmac_vnic_signal_handler(rtdm_nrtsig_t nrtsig)
 {
     struct rtskb            *rtskb;
     struct sk_buff          *skb;
@@ -309,7 +309,7 @@ int __init rtmac_vnic_module_init(void)
 {
     rtskb_queue_init(&rx_queue);
 
-    return rtos_nrt_signal_init(&vnic_signal, rtmac_vnic_signal_handler);
+    return rtdm_nrtsig_init(&vnic_signal, rtmac_vnic_signal_handler);
 }
 
 
@@ -319,7 +319,7 @@ void rtmac_vnic_module_cleanup(void)
     struct rtskb *rtskb;
 
 
-    rtos_nrt_signal_delete(&vnic_signal);
+    rtdm_nrtsig_destroy(&vnic_signal);
 
     while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {
         rtdev_dereference(rtskb->rtdev);

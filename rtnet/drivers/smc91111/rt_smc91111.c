@@ -150,19 +150,19 @@ static unsigned int smc_portlist[] __initdata =
 //#define SMC_DEBUG 3 // Must be defined in makefile
 
 #if (SMC_DEBUG > 2 )
-#define PRINTK3(args...) rtos_print(args)
+#define PRINTK3(args...) rtdm_printk(args)
 #else
 #define PRINTK3(args...)
 #endif
 
 #if SMC_DEBUG > 1
-#define PRINTK2(args...) rtos_print(args)
+#define PRINTK2(args...) rtdm_printk(args)
 #else
 #define PRINTK2(args...)
 #endif
 
 #ifdef SMC_DEBUG
-#define PRINTK(args...) rtos_print(args)
+#define PRINTK(args...) rtdm_printk(args)
 #else
 #define PRINTK(args...)
 #endif
@@ -306,7 +306,7 @@ struct smc_local {
 #endif // CONFIG_SYSCTL
 
 	struct rtskb_queue skb_pool;
-	rtos_irq_t irq_handle;
+	rtdm_irq_t irq_handle;
 };
 
 
@@ -378,7 +378,7 @@ static void smc_phy_configure(struct rtnet_device* dev);
 /*
  . Handles the actual interrupt
 */
-static RTOS_IRQ_HANDLER_PROTO(smc_interrupt);
+static int smc_interrupt(rtdm_irq_t *irq_handle);
 /*
  . This is a separate procedure to handle the receipt of a packet, to
  . leave the interrupt code looking slightly cleaner
@@ -720,7 +720,7 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 	if ( lp->saved_skb) {
 		/* THIS SHOULD NEVER HAPPEN. */
 		lp->stats.tx_aborted_errors++;
-		rtos_print("%s: Bad Craziness - sent packet while busy.\n",
+		rtdm_printk("%s: Bad Craziness - sent packet while busy.\n",
 			dev->name);
 		return 1;
 	}
@@ -745,7 +745,7 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 	numPages >>= 8; // Divide by 256
 
 	if (numPages > 7 ) {
-		rtos_print("%s: Far too big packet error. \n", dev->name);
+		rtdm_printk("%s: Far too big packet error. \n", dev->name);
 		/* freeing the packet is a good thing here... but should
 		 . any packets of this size get down here?   */
 		kfree_rtskb(skb);
@@ -806,7 +806,7 @@ static int smc_wait_to_send_packet( struct rtskb * skb, struct rtnet_device * de
 		lp->saved_skb = NULL;
 		rtnetif_wake_queue(dev);
 
-		rtos_print("%s: ERROR: unable to allocate card memory for "
+		rtdm_printk("%s: ERROR: unable to allocate card memory for "
 			"packet transmission.\n", dev->name);
 		return 0;
 	}
@@ -842,7 +842,7 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 	word			length;
 	unsigned short		ioaddr;
 	byte			* buf;
-	unsigned long		flags;
+	rtdm_lockctx_t		context;
 	union {
 		nanosecs_t	ns;
 		char		buf[sizeof(nanosecs_t)];
@@ -863,7 +863,7 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 	packet_no = inb( ioaddr + AR_REG );
 	if ( packet_no & AR_FAILED ) {
 		/* or isn't there?  BAD CHIP! */
-		rtos_print(KERN_DEBUG "%s: Memory allocation failed. \n",
+		rtdm_printk(KERN_DEBUG "%s: Memory allocation failed. \n",
 			dev->name);
 		kfree_rtskb(skb);
 		lp->saved_skb = NULL;
@@ -881,7 +881,7 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 		dev->name, length);
 
 #if SMC_DEBUG > 2
-	rtos_print("Transmitting Packet\n");
+	rtdm_printk("Transmitting Packet\n");
 	print_packet( buf, length );
 #endif
 
@@ -919,11 +919,11 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 		outb( 0x20, ioaddr + DATA_REG); // Set odd bit in CONTROL BYTE
 	}
 
-	rtos_local_irqsave(flags);
+	rtdm_lock_irqsave(context);
 
 	/* get and patch time stamp just before the transmission */
 	if (skb->xmit_stamp) {
-		xmit_stamp.ns = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+		xmit_stamp.ns = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
 		/* point to the patch address */
 		outw(PTR_AUTOINC |
@@ -939,7 +939,7 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 	/* and let the chipset deal with it */
 	outw( MC_ENQUEUE , ioaddr + MMU_CMD_REG );
 
-	rtos_local_irqrestore(flags);
+	rtdm_lock_irqrestore(context);
 
 	PRINTK2("%s: Sent packet of length %d \n", dev->name, length);
 
@@ -1313,8 +1313,9 @@ static int __init smc_probe(struct rtnet_device *dev, int ioaddr )
 	rt_stack_connect(dev, &STACK_manager);
 
 	/* Grab the IRQ */
-    retval = rtos_irq_request(&((struct smc_local *)dev->priv)->irq_handle,
-                              dev->irq, &smc_interrupt, dev);
+    retval = rtdm_irq_request(&((struct smc_local *)dev->priv)->irq_handle,
+                              dev->irq, &smc_interrupt, 0,
+                              "rt_smx91111", dev);
     if (retval) {
        	  printk("%s: unable to get IRQ %d (irqval=%d).\n",
 		dev->name, dev->irq, retval);
@@ -1354,7 +1355,7 @@ static void print_packet( byte * buf, int length )
 	int remainder;
 	int lines;
 
-	rtos_print("Packet of length %d \n", length );
+	rtdm_printk("Packet of length %d \n", length );
 
 #if SMC_DEBUG > 3
 	lines = length / 16;
@@ -1368,18 +1369,18 @@ static void print_packet( byte * buf, int length )
 
 			a = *(buf ++ );
 			b = *(buf ++ );
-			rtos_print("%02x%02x ", a, b );
+			rtdm_printk("%02x%02x ", a, b );
 		}
-		rtos_print("\n");
+		rtdm_printk("\n");
 	}
 	for ( i = 0; i < remainder/2 ; i++ ) {
 		byte a, b;
 
 		a = *(buf ++ );
 		b = *(buf ++ );
-		rtos_print("%02x%02x ", a, b );
+		rtdm_printk("%02x%02x ", a, b );
 	}
-	rtos_print("\n");
+	rtdm_printk("\n");
 #endif
 #endif
 }
@@ -1435,7 +1436,7 @@ static int smc_open(struct rtnet_device *dev)
 	smc_phy_configure(dev);
 
 	smc_set_multicast_list(dev);
-	rtos_irq_enable(&lp->irq_handle);
+	rtdm_irq_enable(&lp->irq_handle);
 
 	/*
   		According to Becker, I have to set the hardware address
@@ -1507,7 +1508,7 @@ static inline void smc_rcv(struct rtnet_device *dev)
 	int 	packet_number;
 	word	status;
 	word	packet_length;
-	nanosecs_t time_stamp = rtos_get_time();
+	nanosecs_t time_stamp = rtdm_clock_read();
 	int		timeout;
 
 	PRINTK3("%s:smc_rcv\n", dev->name);
@@ -1553,7 +1554,7 @@ static inline void smc_rcv(struct rtnet_device *dev)
 		packet_length -= 4;
 
 		if ( skb == NULL ) {
-			rtos_print(KERN_NOTICE "%s: Low memory, packet dropped.\n",
+			rtdm_printk(KERN_NOTICE "%s: Low memory, packet dropped.\n",
 				dev->name);
 			lp->stats.rx_dropped++;
 			goto done;
@@ -1611,7 +1612,7 @@ static inline void smc_rcv(struct rtnet_device *dev)
 #endif // USE_32_BIT
 
 #if	SMC_DEBUG > 2
-		rtos_print("Receiving Packet\n");
+		rtdm_printk("Receiving Packet\n");
 		print_packet( data, packet_length );
 #endif
 
@@ -1631,9 +1632,9 @@ static inline void smc_rcv(struct rtnet_device *dev)
 
 	timeout = MMU_CMD_TIMEOUT;
 	while ( inw( ioaddr + MMU_CMD_REG ) & MC_BUSY ) {
-		rtos_busy_sleep(1000); // Wait until not busy
+		rtdm_task_busy_sleep(1000); // Wait until not busy
 		if (--timeout == 0) {
-			rtos_print("%s: ERROR: timeout while waiting on MMU.\n",
+			rtdm_printk("%s: ERROR: timeout while waiting on MMU.\n",
 				dev->name);
 			break;
 		}
@@ -1657,9 +1658,9 @@ done:
  .   and finally restore state.
  .
  ---------------------------------------------------------------------*/
-static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
+static int smc_interrupt(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device);
+	struct rtnet_device *dev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int ioaddr 		= dev->base_addr;
 	struct smc_local *lp 	= (struct smc_local *)dev->priv;
 
@@ -1678,7 +1679,7 @@ static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
 	PRINTK3("%s: SMC interrupt started \n", dev->name);
 
 /*	if (dev == NULL) {
-		rtos_print(KERN_WARNING "%s: irq %d for unknown device.\n",
+		rtdm_printk(KERN_WARNING "%s: irq %d for unknown device.\n",
 			dev->name, irq);
 		return;
 	}*/
@@ -1728,7 +1729,7 @@ static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
 				"%s: Receive Interrupt\n", dev->name);
 			smc_rcv(dev);
 		} else if (status & IM_TX_INT ) {
-			rtos_print(KERN_ERR "%s: TX ERROR!\n", dev->name);
+			rtdm_printk(KERN_ERR "%s: TX ERROR!\n", dev->name);
 			//smc_tx(dev);
 			// Acknowledge the interrupt
 			outb(IM_TX_INT, ioaddr + INT_REG );
@@ -1810,7 +1811,6 @@ static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
 
 	SMC_SELECT_BANK( saved_bank );
 
-	rtos_irq_end(&lp->irq_handle);
 	if (old_packet_cnt != lp->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
 
@@ -1818,7 +1818,7 @@ static RTOS_IRQ_HANDLER_PROTO(smc_interrupt)
 
 	//dev->interrupt = 0;
 	PRINTK3("%s: Interrupt done\n", dev->name);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
 
@@ -2059,7 +2059,7 @@ int init_module(void)
 		rt_rtdev_disconnect(devSMC91111);
 		release_region(devSMC91111->base_addr, SMC_IO_EXTENT);
 
-		rtos_irq_free(&((struct smc_local *)devSMC91111)->irq_handle);
+		rtdm_irq_free(&((struct smc_local *)devSMC91111)->irq_handle);
 		rtskb_pool_release(&((struct smc_local *)devSMC91111->priv)->skb_pool);
 
 		rtdev_free(devSMC91111);
@@ -2082,7 +2082,7 @@ void cleanup_module(void)
 	release_region(devSMC91111->base_addr, SMC_IO_EXTENT);
 
 	if (devSMC91111->priv) {
-		rtos_irq_free(&((struct smc_local *)devSMC91111->priv)->irq_handle);
+		rtdm_irq_free(&((struct smc_local *)devSMC91111->priv)->irq_handle);
 		rtskb_pool_release(&((struct smc_local *)devSMC91111->priv)->skb_pool);
 	}
 

@@ -37,8 +37,8 @@ MODULE_PARM(num_rtskbs, "i");
 MODULE_PARM_DESC(num_rtskbs, "Number of realtime socket buffers used by RTcfg");
 
 static struct rtskb_queue   rtcfg_pool;
-static rtos_task_t          rx_task;
-static rtos_event_t         rx_event;
+static rtdm_task_t          rx_task;
+static rtdm_event_t         rx_event;
 static struct rtskb_queue   rx_queue;
 
 
@@ -48,7 +48,7 @@ static int rtcfg_rx_handler(struct rtskb *rtskb, struct rtpacket_type *pt)
     if (rtskb_acquire(rtskb, &rtcfg_pool) == 0) {
         rtdev_reference(rtskb->rtdev);
         rtskb_queue_tail(&rx_queue, rtskb);
-        rtos_event_signal(&rx_event);
+        rtdm_event_signal(&rx_event);
     } else
         kfree_rtskb(rtskb);
 
@@ -64,7 +64,7 @@ static void rtcfg_rx_task(void *arg)
     struct rtnet_device   *rtdev;
 
 
-    while (rtos_event_wait(&rx_event) == 0)
+    while (rtdm_event_wait(&rx_event) == 0)
         while ((rtskb = rtskb_dequeue(&rx_queue))) {
             rtdev = rtskb->rtdev;
 
@@ -547,12 +547,12 @@ int __init rtcfg_init_frames(void)
         return -ENOMEM;
 
     rtskb_queue_init(&rx_queue);
-    rtos_event_init(&rx_event);
+    rtdm_event_init(&rx_event, 0);
 
-    ret = rtos_task_init(&rx_task, rtcfg_rx_task, 0,
-                         RTOS_LOWEST_RT_PRIORITY);
+    ret = rtdm_task_init(&rx_task, "rtcfg-rx", rtcfg_rx_task, 0,
+                         RTDM_TASK_LOWEST_PRIORITY, 0);
     if (ret < 0) {
-        rtos_event_delete(&rx_event);
+        rtdm_event_destroy(&rx_event);
         goto error1;
     }
 
@@ -563,8 +563,8 @@ int __init rtcfg_init_frames(void)
     return 0;
 
   error2:
-    rtos_event_delete(&rx_event);
-    rtos_task_delete(&rx_task);
+    rtdm_event_destroy(&rx_event);
+    rtdm_task_destroy(&rx_task);
 
   error1:
     rtskb_pool_release(&rtcfg_pool);
@@ -585,8 +585,8 @@ void rtcfg_cleanup_frames(void)
         schedule_timeout(1*HZ); /* wait a second */
     }
 
-    rtos_event_delete(&rx_event);
-    rtos_task_delete(&rx_task);
+    rtdm_event_destroy(&rx_event);
+    rtdm_task_destroy(&rx_task);
 
     while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {
         rtdev_dereference(rtskb->rtdev);

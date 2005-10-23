@@ -5,7 +5,7 @@
  *  rtnet - real-time networking subsystem
  *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
  *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004-2005  Jan Kiszka <jan.kiszka@web.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ int rt_inet_socket(struct rtdm_dev_context *context,
     if ((prot != NULL) && (prot->protocol == protocol))
         return prot->init_socket(context, user_info);
     else {
-        rtos_print("RTnet: protocol with id %d not found\n", protocol);
+        rtdm_printk("RTnet: protocol with id %d not found\n", protocol);
 
         return -ENOPROTOOPT;
     }

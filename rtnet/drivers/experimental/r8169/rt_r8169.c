@@ -100,10 +100,10 @@ RTL8169_VERSION "2.2"	<2004/08/09>
         	if(!(expr)) { printk( "Assertion failed! %s,%s,%s,line=%d\n", #expr,__FILE__,__FUNCTION__,__LINE__); }
 	/*** RTnet / <kk>: rt_assert must be used instead of assert() within interrupt context! ***/
 	#define rt_assert(expr) \
-        	if(!(expr)) { rtos_print( "Assertion failed! %s,%s,%s,line=%d\n", #expr,__FILE__,__FUNCTION__,__LINE__); }
+        	if(!(expr)) { rtdm_printk( "Assertion failed! %s,%s,%s,line=%d\n", #expr,__FILE__,__FUNCTION__,__LINE__); }
 	/*** RTnet / <kk>: RT_DBG_PRINT must be used instead of DBG_PRINT() within interrupt context! ***/
 	#define DBG_PRINT( fmt, args...)   printk("r8169: " fmt, ## args);
-	#define RT_DBG_PRINT( fmt, args...)   rtos_print("r8169: " fmt, ## args);
+	#define RT_DBG_PRINT( fmt, args...)   rtdm_printk("r8169: " fmt, ## args);
 #else
 	#define assert(expr) do {} while (0)
 	#define rt_assert(expr) do {} while (0)
@@ -393,7 +393,7 @@ struct rtl8169_private {
 	unsigned long ioaddr;                /* memory map physical address*/
 	struct pci_dev *pci_dev;                /* Index of PCI device  */
 	struct net_device_stats stats;          /* statistics of net device */
-	rtos_spinlock_t lock;                   /* spin lock flag */	/*** RTnet ***/
+	rtdm_lock_t lock;                       /* spin lock flag */	/*** RTnet ***/
 	int chipset;
 	int mcfg;
 	int pcfg;
@@ -436,7 +436,7 @@ struct rtl8169_private {
 
 	unsigned char   linkstatus;
 	struct rtskb_queue skb_pool;	/*** RTnet ***/
-	rtos_irq_t irq_handle;			/*** RTnet ***/
+	rtdm_irq_t irq_handle;			/*** RTnet ***/
 };
 
 
@@ -459,7 +459,7 @@ static void rtl8169_interrupt (int irq, void *dev_instance, struct pt_regs *regs
 static irqreturn_t rtl8169_interrupt (int irq, void *dev_instance, struct pt_regs *regs);
 #endif
  *** /RTnet ***/
-static RTOS_IRQ_HANDLER_PROTO(rtl8169_interrupt);
+static int rtl8169_interrupt(rtdm_irq_t *irq_handle);
 
 static void rtl8169_init_ring (struct rtnet_device *rtdev);
 static void rtl8169_hw_start (struct rtnet_device *rtdev);
@@ -912,7 +912,7 @@ static int __devinit rtl8169_init_one (struct pci_dev *pdev, const struct pci_de
 	}
 	/*** /RTnet ***/
 
-	rtos_spin_lock_init(&priv->lock);	/*** RTnet ***/
+	rtdm_lock_init(&priv->lock);	/*** RTnet ***/
 
 	/*** RTnet ***/
 	if (rt_register_rtnetdev(rtdev) > 0) {
@@ -1117,7 +1117,7 @@ static int rtl8169_open (struct rtnet_device *rtdev)
 
 	/*** RTnet ***/
 	rt_stack_connect(rtdev, &STACK_manager);
-	retval = rtos_irq_request(&priv->irq_handle, rtdev->irq, rtl8169_interrupt, rtdev);
+	retval = rtdm_irq_request(&priv->irq_handle, rtdev->irq, rtl8169_interrupt, 0, "rt_r8169", rtdev);
 	/*** /RTnet ***/
 
 	// retval = request_irq (dev->irq, rtl8169_interrupt, SA_SHIRQ, dev->name, dev);
@@ -1177,7 +1177,7 @@ static int rtl8169_open (struct rtnet_device *rtdev)
 	rtl8169_init_ring(rtdev);
 	rtl8169_hw_start(rtdev);
 
-	rtos_irq_enable(&priv->irq_handle);	/*** RTnet ***/
+	rtdm_irq_enable(&priv->irq_handle);	/*** RTnet ***/
 
 	// ------------------------------------------------------
 #if 0 /*** RTnet ***/
@@ -1505,10 +1505,10 @@ static int rtl8169_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
 	int entry = priv->cur_tx % NUM_TX_DESC;
 	// int buf_len = 60;
 	dma_addr_t txbuf_dma_addr;
-	unsigned long flags;	/*** RTnet ***/
+	rtdm_lockctx_t context;	/*** RTnet ***/
 	u32 status, len;		/* <kk> */
 
-	rtos_spin_lock_irqsave(&priv->lock, flags);	/*** RTnet ***/
+	rtdm_lock_get_irqsave(&priv->lock, context);	/*** RTnet ***/
 
 	status = le32_to_cpu(priv->TxDescArray[entry].status);
 
@@ -1521,7 +1521,7 @@ static int rtl8169_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
 			skb = rtskb_padto(skb, ETH_ZLEN);
 			if (skb == NULL) {
 				/* Error... */
-				rtos_print("%s: Error -- rtskb_padto returned NULL; out of memory?\n", rtdev->name);
+				rtdm_printk("%s: Error -- rtskb_padto returned NULL; out of memory?\n", rtdev->name);
 			}
 			len = ETH_ZLEN;
 		}
@@ -1574,14 +1574,14 @@ static int rtl8169_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
 		}
 
 		if( len > priv->tx_pkt_len ){
-			rtos_print("%s: Error -- Tx packet size(%d) > mtu(%d)+14\n", rtdev->name, len, rtdev->mtu);
+			rtdm_printk("%s: Error -- Tx packet size(%d) > mtu(%d)+14\n", rtdev->name, len, rtdev->mtu);
 			len = priv->tx_pkt_len;
 		}
 
 		/*** RTnet ***/
 		/* get and patch time stamp just before the transmission */
 		if (skb->xmit_stamp)
-			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+			*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 		/*** /RTnet ***/
 
 		if( entry != (NUM_TX_DESC-1) ){
@@ -1602,15 +1602,15 @@ static int rtl8169_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
 		priv->cur_tx++;
 	}//end of if( (priv->TxDescArray[entry].status & 0x80000000)==0 )
 
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);	/*** RTnet ***/
+	rtdm_lock_put_irqrestore(&priv->lock, context);	/*** RTnet ***/
 
 	if ( (priv->cur_tx - NUM_TX_DESC) == priv->dirty_tx ){
-		if (r8169_debug & DEBUG_RUN) rtos_print(KERN_DEBUG "%s: stopping rtnetif queue", __FUNCTION__);
+		if (r8169_debug & DEBUG_RUN) rtdm_printk(KERN_DEBUG "%s: stopping rtnetif queue", __FUNCTION__);
 		rtnetif_stop_queue (rtdev);
 	}
 	else{
 		if (rtnetif_queue_stopped (rtdev)){
-			if (r8169_debug & DEBUG_RUN) rtos_print(KERN_DEBUG "%s: waking rtnetif queue", __FUNCTION__);
+			if (r8169_debug & DEBUG_RUN) rtdm_printk(KERN_DEBUG "%s: waking rtnetif queue", __FUNCTION__);
 			rtnetif_wake_queue (rtdev);
 		}
 	}
@@ -1637,7 +1637,7 @@ static void rtl8169_tx_interrupt (struct rtnet_device *rtdev, struct rtl8169_pri
 	rt_assert (priv != NULL);
 	rt_assert (ioaddr != 0);
 
-	rtos_spin_lock(&priv->lock); /*** RTnet ***/
+	rtdm_lock_get(&priv->lock); /*** RTnet ***/
 
 	dirty_tx = priv->dirty_tx;
 	smp_rmb();	/*** <kk> ***/
@@ -1670,7 +1670,7 @@ static void rtl8169_tx_interrupt (struct rtnet_device *rtdev, struct rtl8169_pri
 			rtnetif_wake_queue (rtdev);
 	}
 
-	rtos_spin_unlock(&priv->lock); /*** RTnet ***/
+	rtdm_lock_put(&priv->lock); /*** RTnet ***/
 
 }
 
@@ -1709,21 +1709,21 @@ static void rtl8169_rx_interrupt (struct rtnet_device *rtdev, struct rtl8169_pri
 	    rxdesc_cnt++;
 
 	    if( le32_to_cpu(rxdesc->status) & RxRES ){
-			rtos_print(KERN_INFO "%s: Rx ERROR!!!\n", rtdev->name);
+			rtdm_printk(KERN_INFO "%s: Rx ERROR!!!\n", rtdev->name);
 			priv->stats.rx_errors++;
 			if ( le32_to_cpu(rxdesc->status) & (RxRWT|RxRUNT) )
 				priv->stats.rx_length_errors++;
 			if ( le32_to_cpu(rxdesc->status) & RxCRC)
 				/* in the rt_via-rhine.c there's a lock around the incrementation... we'll do that also here <kk> */
-				rtos_spin_lock(&priv->lock); /*** RTnet ***/
+				rtdm_lock_get(&priv->lock); /*** RTnet ***/
 				priv->stats.rx_crc_errors++;
-				rtos_spin_unlock(&priv->lock); /*** RTnet ***/
+				rtdm_lock_put(&priv->lock); /*** RTnet ***/
 	    }
 	    else{
 			pkt_size=(int)(le32_to_cpu(rxdesc->status) & 0x00001FFF)-4;
 
 			if( pkt_size > priv->rx_pkt_len ){
-				rtos_print("%s: Error -- Rx packet size(%d) > mtu(%d)+14\n", rtdev->name, pkt_size, rtdev->mtu);
+				rtdm_printk("%s: Error -- Rx packet size(%d) > mtu(%d)+14\n", rtdev->name, pkt_size, rtdev->mtu);
 				pkt_size = priv->rx_pkt_len;
 			}
 
@@ -1814,16 +1814,16 @@ static void rtl8169_interrupt (int irq, void *dev_instance, struct pt_regs *regs
 static irqreturn_t rtl8169_interrupt (int irq, void *dev_instance, struct pt_regs *regs)
 #endif
  *** /RTnet ***/
-static RTOS_IRQ_HANDLER_PROTO(rtl8169_interrupt)
+static int rtl8169_interrupt(rtdm_irq_t *irq_handle)
 {
 	/* struct net_device *dev = (struct net_device *) dev_instance; */	/*** RTnet ***/
-	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device); /*** RTnet ***/
+	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device); /*** RTnet ***/
 	struct rtl8169_private *priv = rtdev->priv;
 	int boguscnt = max_interrupt_work;
 	unsigned long ioaddr = priv->ioaddr;
 	int status = 0;
 	unsigned int old_packet_cnt = priv->stats.rx_packets; /*** RTnet ***/
-	nanosecs_t time_stamp = rtos_get_time(); /*** RTnet ***/
+	nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
 
 	int interrupt_handled = 0; /* IRQ_NONE */ /*** <kk> ***/
 
@@ -1858,16 +1858,16 @@ static RTOS_IRQ_HANDLER_PROTO(rtl8169_interrupt)
 
 		/*** RTnet / <kk> (Linux-2.6.12-Backport) ***/
 		if (unlikely(status & LinkChg)) {
-			unsigned long flags;
-			rtos_spin_lock_irqsave(&priv->lock, flags);
+			rtdm_lockctx_t context;
+			rtdm_lock_get_irqsave(&priv->lock, context);
 			if (RTL_R8(PHYstatus) & LinkStatus) {	/*** <kk> only supporting XMII, not yet TBI ***/
 				rtnetif_carrier_on(rtdev);
-				rtos_print(KERN_INFO PFX "%s: link up\n", rtdev->name);
+				rtdm_printk(KERN_INFO PFX "%s: link up\n", rtdev->name);
 			} else {
 				rtnetif_carrier_off(rtdev);
-				rtos_print(KERN_INFO PFX "%s: link down\n", rtdev->name);
+				rtdm_printk(KERN_INFO PFX "%s: link down\n", rtdev->name);
 			}
-			rtos_spin_unlock_irqrestore(&priv->lock, flags);
+			rtdm_lock_put_irqrestore(&priv->lock, context);
 		}
 
 		// Rx interrupt
@@ -1884,21 +1884,19 @@ static RTOS_IRQ_HANDLER_PROTO(rtl8169_interrupt)
 	} while (boguscnt > 0);
 
 	if (boguscnt <= 0) {
-		rtos_print(KERN_WARNING "%s: Too much work at interrupt!\n", rtdev->name);
+		rtdm_printk(KERN_WARNING "%s: Too much work at interrupt!\n", rtdev->name);
 		RTL_W16( IntrStatus, 0xffff);	/* Clear all interrupt sources */
 	}
 
 //out:
 
-	rtos_irq_end(&priv->irq_handle);
-
 	if (interrupt_handled == 1) {
 		if (old_packet_cnt != priv->stats.rx_packets)
 			rt_mark_stack_mgr(rtdev);
-		RTOS_IRQ_RETURN_HANDLED();
+		return RTDM_IRQ_ENABLE;
 	} else {
 		RT_DBG_PRINT("Leaving Interrupt unhandled\n");
-		RTOS_IRQ_RETURN_UNHANDLED();
+		return 0;
 	}
 }
 
@@ -1914,13 +1912,13 @@ static int rtl8169_close (struct rtnet_device *rtdev)
 	struct rtl8169_private *priv = rtdev->priv;
 	unsigned long ioaddr = priv->ioaddr;
 	int i;
-	unsigned long flags;	/*** RTnet, for rtos_spin_lock_irqsave ***/
+	rtdm_lockctx_t context;	/*** RTnet, for rtdm_lock_get_irqsave ***/
 
 	// -----------------------------------------
 	/* rtl8169_delete_timer( &(priv->r8169_timer) ); */	/*** RTnet ***/
 
 
-	rtos_spin_lock_irqsave (&priv->lock, flags);	/*** RTnet ***/
+	rtdm_lock_get_irqsave (&priv->lock, context);	/*** RTnet ***/
 
 	rtnetif_stop_queue (rtdev);		/*** RTnet / <kk>: moved behind spin_lock! ***/
 
@@ -1934,7 +1932,7 @@ static int rtl8169_close (struct rtnet_device *rtdev)
 	priv->stats.rx_missed_errors += RTL_R32(RxMissed);
 	RTL_W32( RxMissed, 0);
 
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);	/*** RTnet ***/
+	rtdm_lock_put_irqrestore(&priv->lock, context);	/*** RTnet ***/
 
 	/*** RTnet ***
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
@@ -1946,7 +1944,7 @@ static int rtl8169_close (struct rtnet_device *rtdev)
 
 	/*** RTnet ***/
 	free_irq (rtdev->irq, rtdev);
-	if ( (i=rtos_irq_free(&priv->irq_handle))<0 )
+	if ( (i=rtdm_irq_free(&priv->irq_handle))<0 )
 		return i;
 
 	rt_stack_disconnect(rtdev);
@@ -2028,7 +2026,7 @@ static void rtl8169_set_rx_mode (struct rtnet_device *rtdev)
 {
 	struct rtl8169_private *priv = rtdev->priv;
 	unsigned long ioaddr = priv->ioaddr;
-	unsigned long flags;
+	rtdm_lockctx_t context;
 	u32 mc_filter[2];	/* Multicast hash filter */
 	int i, rx_mode;
 	u32 tmp=0;
@@ -2063,7 +2061,7 @@ static void rtl8169_set_rx_mode (struct rtnet_device *rtdev)
 #endif		
 	}
 
-	rtos_spin_lock_irqsave(&priv->lock, flags);			/*** RTnet ***/
+	rtdm_lock_get_irqsave(&priv->lock, context);			/*** RTnet ***/
 
 	tmp = rtl8169_rx_config | rx_mode | (RTL_R32(RxConfig) & rtl_chip_info[priv->chipset].RxConfigMask);
 
@@ -2071,7 +2069,7 @@ static void rtl8169_set_rx_mode (struct rtnet_device *rtdev)
 	RTL_W32 ( MAR0 + 0, mc_filter[0]);
 	RTL_W32 ( MAR0 + 4, mc_filter[1]);
 
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);	/*** RTnet ***/
+	rtdm_lock_put_irqrestore(&priv->lock, context);	/*** RTnet ***/
 
 }//end of rtl8169_set_rx_mode (struct net_device *dev)
 
@@ -2199,7 +2197,7 @@ static void rtl8169_pcierr_interrupt(struct rtnet_device *rtdev)
 	pci_read_config_word(pdev, PCI_COMMAND, &pci_cmd);
 	pci_read_config_word(pdev, PCI_STATUS, &pci_status);
 
-	rtos_print(KERN_ERR PFX "%s: PCI error (cmd = 0x%04x, status = 0x%04x).\n",
+	rtdm_printk(KERN_ERR PFX "%s: PCI error (cmd = 0x%04x, status = 0x%04x).\n",
 	       rtdev->name, pci_cmd, pci_status);
 
 	/*
@@ -2220,7 +2218,7 @@ static void rtl8169_pcierr_interrupt(struct rtnet_device *rtdev)
 	/* The infamous DAC f*ckup only happens at boot time */
 	/*** <kk> ***
 	if ((priv->cp_cmd & PCIDAC) && !priv->dirty_rx && !priv->cur_rx) {
-		rtos_print(KERN_INFO PFX "%s: disabling PCI DAC.\n", rtdev->name);
+		rtdm_printk(KERN_INFO PFX "%s: disabling PCI DAC.\n", rtdev->name);
 		priv->cp_cmd &= ~PCIDAC;
 		RTL_W16(CPlusCmd, priv->cp_cmd);
 		rtdev->features &= ~NETIF_F_HIGHDMA;

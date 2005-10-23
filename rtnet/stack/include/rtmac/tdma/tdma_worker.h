@@ -3,8 +3,8 @@
  *  include/rtmac/tdma/tdma_worker.h
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include <rtnet_sys.h>
 
 
-#define DEF_WORKER_PRIO         RTOS_HIGHEST_RT_PRIORITY
+#define DEF_WORKER_PRIO         RTDM_TASK_HIGHEST_PRIORITY
 
 void tdma_worker(void *arg);
 

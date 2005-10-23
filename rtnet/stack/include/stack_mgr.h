@@ -66,12 +66,12 @@ extern void rtnetif_tx(struct rtnet_device *rtdev);
 
 static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 {
-    rtos_event_signal(rtdev->stack_event);
+    rtdm_event_signal(rtdev->stack_event);
 }
 
 
 extern struct list_head rt_packets[RTPACKET_HASH_TBL_SIZE];
-extern rtos_spinlock_t  rt_packets_lock;
+extern rtdm_lock_t      rt_packets_lock;
 
 
 #endif /* __KERNEL__ */

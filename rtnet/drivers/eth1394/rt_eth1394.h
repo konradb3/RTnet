@@ -63,7 +63,7 @@ enum eth1394_bc_states { ETHER1394_BC_CLOSED, ETHER1394_BC_OPENED,
 struct pdg_list {
 	struct list_head list;		/* partial datagram list per node */
 	unsigned int sz;		/* partial datagram list size per node	*/
-	rtos_spinlock_t lock;		/* partial datagram lock		*/
+	rtdm_lock_t lock;		/* partial datagram lock		*/
 };
 
 /* IP1394 headers */
@@ -216,7 +216,7 @@ struct eth1394_priv {
 	struct hpsb_host *host;		/* The card for this dev	 */
 	u16 maxpayload[NODE_SET];	/* Max payload per node		 */
 	unsigned char sspd[NODE_SET];	/* Max speed per node		 */
-	rtos_spinlock_t lock;		/* Private lock			 */
+	rtdm_lock_t lock;		/* Private lock			 */
 	int broadcast_channel;		/* Async stream Broadcast Channel */
 	enum eth1394_bc_states bc_state; /* broadcast channel state	 */
 	struct hpsb_iso	*iso;

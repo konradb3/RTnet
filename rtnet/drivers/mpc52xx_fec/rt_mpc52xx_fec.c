@@ -79,7 +79,7 @@ static unsigned int rx_pool_size =  0;
 MODULE_PARM(rx_pool_size, "i");
 MODULE_PARM_DESC(rx_pool_size, "Receive buffer pool size");
 
-#define printk(fmt,args...)	rtos_print (fmt ,##args)
+#define printk(fmt,args...)	rtdm_printk (fmt ,##args)
 
 extern int mpc5xxx_sdma_fec_rx_task_setup(int num_bufs, int maxbufsize);
 extern int mpc5xxx_sdma_fec_tx_task_setup(int num_bufs);
@@ -95,9 +95,9 @@ extern int mpc5xxx_sdma_load_task(u32 *task_start);
 #endif
 
 static struct rtnet_device *mpc5xxx_fec_dev;
-static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_fec_interrupt);
-static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt);
-static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_transmit_interrupt);
+static int mpc5xxx_fec_interrupt(rtdm_irq_t *irq_handle);
+static int mpc5xxx_sdma_receive_interrupt(rtdm_irq_t *irq_handle);
+static int mpc5xxx_sdma_transmit_interrupt(rtdm_irq_t *irq_handle);
 #ifdef ORIGINAL_VERSION
 static struct rtnet_device_stats *mpc5xxx_fec_get_stats(struct rtnet_device *);
 static void mpc5xxx_fec_set_multicast_list(struct rtnet_device *dev);
@@ -344,7 +344,7 @@ mii_queue(struct rtnet_device *dev, int regval, void (*func)(uint, struct rtnet_
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
-	unsigned long	flags;
+	rtdm_lockctx_t	context;
 	mii_list_t	*mip;
 	int		retval;
 
@@ -358,7 +358,7 @@ mii_queue(struct rtnet_device *dev, int regval, void (*func)(uint, struct rtnet_
 
 	retval = 0;
 
-	rtos_spin_lock_irqsave(&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 
 	if ((mip = mii_free) != NULL) {
 		mii_free = mip->mii_next;
@@ -376,7 +376,7 @@ mii_queue(struct rtnet_device *dev, int regval, void (*func)(uint, struct rtnet_
 	} else
 		retval = 1;
 
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	return retval;
 }
@@ -1086,12 +1086,12 @@ mpc5xxx_fec_hard_start_xmit(struct rtskb *skb, struct rtnet_device *dev)
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	int pad;
 	short length;
-	unsigned long	flags;
-	rtos_time_t	time;
+	rtdm_lockctx_t	context;
+
 
 #if MPC5xxx_FEC_DEBUG > 4
-	printk("mpc5xxx_fec_hard_start_xmit:\n");
-	printk("dev %08x, priv %08x, skb %08x\n",
+	rtdm_printk("mpc5xxx_fec_hard_start_xmit:\n");
+	rtdm_printk("dev %08x, priv %08x, skb %08x\n",
 			(u32)dev, (u32)priv, (u32)skb);
 #endif
 #if MPC5xxx_FEC_DEBUG > 0
@@ -1120,7 +1120,7 @@ mpc5xxx_fec_hard_start_xmit(struct rtskb *skb, struct rtnet_device *dev)
 	{
 		int i;
 		int *p;
-		printk("Outgoing data @%08x, length %08x:\n",
+		rtdm_printk("Outgoing data @%08x, length %08x:\n",
 			(u32)skb->data, length);
 		for (i=0; i<length; i+=16) {
 			p = (int *)((int)skb->data + i);
@@ -1134,7 +1134,7 @@ mpc5xxx_fec_hard_start_xmit(struct rtskb *skb, struct rtnet_device *dev)
 	fec_set_start_skb(&priv->t_queue, skb);
 	fec_set_start_data(&priv->t_queue, virt_to_phys((void *)skb->data));
 
-	rtos_spin_lock_irqsave(&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 #ifdef CONFIG_BESTCOMM_API
 	fec_set_start_status(&priv->t_queue, MPC5xxx_FEC_TBD_INIT | length);
 #else
@@ -1150,11 +1150,8 @@ mpc5xxx_fec_hard_start_xmit(struct rtskb *skb, struct rtnet_device *dev)
 
 
 	/* Get and patch time stamp just before the transmission */
-	if (skb->xmit_stamp) {
-		rtos_get_time(&time);
-		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-					       *skb->xmit_stamp);
-	}
+	if (skb->xmit_stamp)
+		*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
 	fec_next_start(&priv->t_queue);
 
@@ -1162,28 +1159,28 @@ mpc5xxx_fec_hard_start_xmit(struct rtskb *skb, struct rtnet_device *dev)
 		priv->tx_full = 1;
 	        rtnetif_stop_queue(dev);
 	}
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	return 0;
 }
 
 /* This handles SDMA transmit task interrupts
  */
-static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_transmit_interrupt)
+static int mpc5xxx_sdma_transmit_interrupt(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct rtnet_device *dev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 
-	rtos_spin_lock(&priv->lock);
+	rtdm_lock_get(&priv->lock);
 
 #if MPC5xxx_FEC_DEBUG > 4
-	printk("mpc5xxx_sdma_transmit_interrupt:\n");
+	rtdm_printk("mpc5xxx_sdma_transmit_interrupt:\n");
 #endif
 	while (!fec_queue_empty(&priv->t_queue) || priv->tx_full) {
 		if (fec_finish_status(&priv->t_queue) & MPC5xxx_FEC_TBD_TFD)
 			break;
 #if MPC5xxx_FEC_DEBUG > 4
-		printk("dev %08x, priv %08x\n", (u32)dev, (u32)priv);
+		rtdm_printk("dev %08x, priv %08x\n", (u32)dev, (u32)priv);
 #endif
 #if MPC5xxx_FEC_DEBUG > 0
 		if (fec_finish_data(&priv->t_queue) !=
@@ -1202,15 +1199,14 @@ static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_transmit_interrupt)
 	if (rtnetif_queue_stopped(dev) && !priv->tx_full)
 		rtnetif_wake_queue(dev);
 
-	rtos_spin_unlock(&priv->lock);
+	rtdm_lock_put(&priv->lock);
 
-	rtos_irq_end(&priv->t_irq_handle);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
-static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt)
+static int mpc5xxx_sdma_receive_interrupt(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct rtnet_device *dev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct rtskb *skb;
 	struct rtskb *nskb;
@@ -1219,12 +1215,11 @@ static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt)
 	u32 status;
 	int length;
 	int packets = 0;
-	rtos_time_t time_stamp;
+	nanosecs_t time_stamp = rtdm_clock_read();
 
-	rtos_get_time(&time_stamp);
 
 #if MPC5xxx_FEC_DEBUG > 4
-	printk("mpc5xxx_sdma_receive_interrupt:\n");
+	rtdm_printk("mpc5xxx_sdma_receive_interrupt:\n");
 #endif
 
 	for (;;) {
@@ -1291,7 +1286,7 @@ static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt)
 #endif
 			rtskb_trim(skb, length);
 			skb->protocol = rt_eth_type_trans(skb, dev);
-			memcpy(&skb->time_stamp, &time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = time_stamp;
 			rtnetif_rx(skb);
 			packets++;
 #ifdef ORIGINAL_CODE
@@ -1312,8 +1307,7 @@ static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_sdma_receive_interrupt)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(dev);
-	rtos_irq_end(&priv->r_irq_handle);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
 static void mpc5xxx_fec_reinit(struct rtnet_device *dev)
@@ -1405,15 +1399,15 @@ static void mpc5xxx_fec_reinit(struct rtnet_device *dev)
 	return;
 }
 
-static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_fec_interrupt)
+static int mpc5xxx_fec_interrupt(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *dev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct rtnet_device *dev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
 	struct mpc5xxx_fec *fec = priv->fec;
 	int ievent;
 
 #if MPC5xxx_FEC_DEBUG > 4
-	printk("mpc5xxx_fec_interrupt:\n");
+	rtdm_printk("mpc5xxx_fec_interrupt:\n");
 #endif
 
 	ievent = in_be32(&fec->ievent);
@@ -1436,8 +1430,7 @@ static RTOS_IRQ_HANDLER_PROTO(mpc5xxx_fec_interrupt)
 #endif /* CONFIG_RTNET_USE_MDIO */
 	}
 
-	rtos_irq_end(&priv->irq_handle);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
 static int
@@ -1827,7 +1820,7 @@ mpc5xxx_fec_init(void)
 	priv->fec = fec = (struct mpc5xxx_fec *)MPC5xxx_FEC;
 	priv->gpio = (struct mpc5xxx_gpio *)MPC5xxx_GPIO;
 	priv->sdma = (struct mpc5xxx_sdma *)MPC5xxx_SDMA;
-	rtos_spin_lock_init(&priv->lock);
+	rtdm_lock_init(&priv->lock);
 	rt_stack_connect(dev, &STACK_manager);
 
 	dev->open		= mpc5xxx_fec_open;
@@ -1847,16 +1840,16 @@ mpc5xxx_fec_init(void)
 	if (!rx_pool_size)
 		rx_pool_size = MPC5xxx_FEC_RBD_NUM * 2;
 	if (rtskb_pool_init(&priv->skb_pool, rx_pool_size) < rx_pool_size) {
-		rtos_irq_disable(&priv->irq_handle);
-		rtos_irq_free(&priv->irq_handle);
+		rtdm_irq_disable(&priv->irq_handle);
+		rtdm_irq_free(&priv->irq_handle);
 		rtskb_pool_release(&priv->skb_pool);
 		rtdev_free(dev);
 		return -ENOMEM;
 	}
 
 	if ((i = rt_register_rtnetdev(dev))) {
-		rtos_irq_disable(&priv->irq_handle);
-		rtos_irq_free(&priv->irq_handle);
+		rtdm_irq_disable(&priv->irq_handle);
+		rtdm_irq_free(&priv->irq_handle);
 		rtskb_pool_release(&priv->skb_pool);
 		rtdev_free(dev);
 		return i;
@@ -1903,32 +1896,32 @@ mpc5xxx_fec_init(void)
 	priv->r_irq = MPC5xxx_SDMA_IRQ_BASE + priv->r_tasknum;
 	priv->t_irq = MPC5xxx_SDMA_IRQ_BASE + priv->t_tasknum;
 
-	if ((i = rtos_irq_request(&priv->irq_handle, MPC5xxx_FEC_IRQ,
-				  mpc5xxx_fec_interrupt, dev))) {
+	if ((i = rtdm_irq_request(&priv->irq_handle, MPC5xxx_FEC_IRQ,
+				  mpc5xxx_fec_interrupt, 0, "rt_mpc52xx_fec", dev))) {
 		rtdev_free(dev);
 		printk(KERN_ERR "FEC interrupt allocation failed\n");
 		return i;
 	}
 	dev->irq = MPC5xxx_FEC_IRQ;
 
-	if ((i = rtos_irq_request(&priv->r_irq_handle, priv->r_irq,
-				  mpc5xxx_sdma_receive_interrupt, dev))) {
+	if ((i = rtdm_irq_request(&priv->r_irq_handle, priv->r_irq,
+				  mpc5xxx_sdma_receive_interrupt, 0, "rt_mpc52xx_fec-rx", dev))) {
 		rtdev_free(dev);
 		printk(KERN_ERR "FEC receive task interrupt allocation failed\n");
 		return i;
 	}
 
 
-	if ((i = rtos_irq_request(&priv->t_irq_handle, priv->t_irq,
-				  mpc5xxx_sdma_transmit_interrupt, dev))) {
+	if ((i = rtdm_irq_request(&priv->t_irq_handle, priv->t_irq,
+				  mpc5xxx_sdma_transmit_interrupt, 0, "rt_mpc52xx_fex-tx", dev))) {
 		rtdev_free(dev);
 		printk(KERN_ERR "FEC transmit task interrupt allocation failed\n");
 		return i;
 	}
 
-	rtos_irq_enable(&priv->irq_handle);
-	rtos_irq_enable(&priv->r_irq_handle);
-	rtos_irq_enable(&priv->t_irq_handle);
+	rtdm_irq_enable(&priv->irq_handle);
+	rtdm_irq_enable(&priv->r_irq_handle);
+	rtdm_irq_enable(&priv->t_irq_handle);
 
 #if MPC5xxx_FEC_DEBUG > 1
 	printk("fec_irq %d, r_irq %d, t_irq %d\n",
@@ -2008,12 +2001,12 @@ mpc5xxx_fec_uninit(void)
 	rt_unregister_rtnetdev(dev);
 	rt_rtdev_disconnect(dev);
 
-	rtos_irq_disable(&priv->irq_handle);
-	rtos_irq_disable(&priv->r_irq_handle);
-	rtos_irq_disable(&priv->t_irq_handle);
-	rtos_irq_free(&priv->irq_handle);
-	rtos_irq_free(&priv->r_irq_handle);
-	rtos_irq_free(&priv->t_irq_handle);
+	rtdm_irq_disable(&priv->irq_handle);
+	rtdm_irq_disable(&priv->r_irq_handle);
+	rtdm_irq_disable(&priv->t_irq_handle);
+	rtdm_irq_free(&priv->irq_handle);
+	rtdm_irq_free(&priv->r_irq_handle);
+	rtdm_irq_free(&priv->t_irq_handle);
 
 	rtskb_pool_release(&priv->skb_pool);
 	printk("%s: unloaded\n", dev->name);

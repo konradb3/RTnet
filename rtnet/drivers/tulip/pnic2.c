@@ -91,7 +91,7 @@ void pnic2_timer(unsigned long data)
 	int next_tick = 60*HZ;
 
 	if (tulip_debug > 3)
-		/*RTnet*/rtos_print(KERN_INFO"%s: PNIC2 negotiation status %8.8x.\n",
+		/*RTnet*/rtdm_printk(KERN_INFO"%s: PNIC2 negotiation status %8.8x.\n",
                     rtdev->name,inl(ioaddr + CSR12));
 
 	if (next_tick) {
@@ -130,7 +130,7 @@ void pnic2_start_nway(/*RTnet*/struct rtnet_device *rtdev)
         csr14 |= 0x00001184;
 
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_DEBUG "%s: Restarting PNIC2 autonegotiation, "
+		/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Restarting PNIC2 autonegotiation, "
                       "csr14=%8.8x.\n", rtdev->name, csr14);
 
         /* tell pnic2_lnk_change we are doing an nway negotiation */
@@ -142,7 +142,7 @@ void pnic2_start_nway(/*RTnet*/struct rtnet_device *rtdev)
 
 	tp->csr6 = inl(ioaddr + CSR6);
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_DEBUG "%s: On Entry to Nway, "
+		/*RTnet*/rtdm_printk(KERN_DEBUG "%s: On Entry to Nway, "
                       "csr6=%8.8x.\n", rtdev->name, tp->csr6);
 
         /* mask off any bits not to touch
@@ -175,7 +175,7 @@ void pnic2_start_nway(/*RTnet*/struct rtnet_device *rtdev)
 }
 
 
-
+#if 0
 void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 {
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
@@ -186,7 +186,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 	int csr12 = inl(ioaddr + CSR12);
 
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_INFO"%s: PNIC2 link status interrupt %8.8x, "
+		/*RTnet*/rtdm_printk(KERN_INFO"%s: PNIC2 link status interrupt %8.8x, "
                        " CSR5 %x, %8.8x.\n", rtdev->name, csr12,
                        csr5, inl(ioaddr + CSR14));
 
@@ -220,7 +220,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 			else if (negotiated & 0x0020)	rtdev->if_port = 0;
 			else {
 			     if (tulip_debug > 1)
-		                   /*RTnet*/rtos_print(KERN_INFO "%s: funny autonegotiate result "
+		                   /*RTnet*/rtdm_printk(KERN_INFO "%s: funny autonegotiate result "
                                         "csr12 %8.8x advertising %4.4x\n",
 			                 rtdev->name, csr12, tp->sym_advertise);
 			     tp->nwayset = 0;
@@ -236,7 +236,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 
 			if (tulip_debug > 1) {
 			       if (tp->nwayset)
-			             /*RTnet*/rtos_print(KERN_INFO "%s: Switching to %s based on link "
+			             /*RTnet*/rtdm_printk(KERN_INFO "%s: Switching to %s based on link "
 				    "negotiation %4.4x & %4.4x = %4.4x.\n",
 				     rtdev->name, medianame[rtdev->if_port],
                                      tp->sym_advertise, tp->lpar, negotiated);
@@ -275,7 +275,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 			outl(1, ioaddr + CSR13);
 
 			if (tulip_debug > 2)
-			        /*RTnet*/rtos_print(KERN_DEBUG "%s:  Setting CSR6 %8.8x/%x CSR12 "
+			        /*RTnet*/rtdm_printk(KERN_DEBUG "%s:  Setting CSR6 %8.8x/%x CSR12 "
                                       "%8.8x.\n", rtdev->name, tp->csr6,
                                       inl(ioaddr + CSR6), inl(ioaddr + CSR12));
 
@@ -287,7 +287,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
                         return;
 
 	        } else {
-	                /*RTnet*/rtos_print(KERN_INFO "%s: Autonegotiation failed, "
+	                /*RTnet*/rtdm_printk(KERN_INFO "%s: Autonegotiation failed, "
                                     "using %s, link beat status %4.4x.\n",
 				     rtdev->name, medianame[rtdev->if_port], csr12);
 
@@ -328,7 +328,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 		/* Link blew? Maybe restart NWay. */
 
 		if (tulip_debug > 2)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: Ugh! Link blew?\n", rtdev->name);
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Ugh! Link blew?\n", rtdev->name);
 
 		/*RTnet*/ //MUST_REMOVE_del_timer_sync(&tp->timer);
 		pnic2_start_nway(rtdev);
@@ -344,7 +344,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 	        /* we are at 100mb and a potential link change occurred */
 
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_INFO"%s: PNIC2 %s link beat %s.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: PNIC2 %s link beat %s.\n",
 				   rtdev->name, medianame[rtdev->if_port],
 				   (csr12 & 2) ? "failed" : "good");
 
@@ -369,7 +369,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 	        /* we are at 10mb and a potential link change occurred */
 
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_INFO"%s: PNIC2 %s link beat %s.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: PNIC2 %s link beat %s.\n",
 				   rtdev->name, medianame[rtdev->if_port],
 				   (csr12 & 4) ? "failed" : "good");
 
@@ -390,7 +390,7 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 
 
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_INFO"%s: PNIC2 Link Change Default?\n",rtdev->name);
+		/*RTnet*/rtdm_printk(KERN_INFO"%s: PNIC2 Link Change Default?\n",rtdev->name);
 
         /* if all else fails default to trying 10baseT-HD */
 	rtdev->if_port = 0;
@@ -407,4 +407,4 @@ void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 
 	tulip_restart_rxtx(tp);
 }
-
+#endif

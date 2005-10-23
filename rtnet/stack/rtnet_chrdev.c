@@ -107,7 +107,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
     struct list_head        *entry;
     struct rtdev_event_hook *hook;
     int                     ret;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
 
 
     ret = copy_from_user(&cmd, (void *)arg, sizeof(cmd));
@@ -156,17 +156,17 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                 return -ERESTARTSYS;
 
             /* spin lock required for sync with routing code */
-            rtos_spin_lock_irqsave(&rtdev->rtdev_lock, flags);
+            rtdm_lock_get_irqsave(&rtdev->rtdev_lock, context);
 
             if (test_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags)) {
-                rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
+                rtdm_lock_put_irqrestore(&rtdev->rtdev_lock, context);
 
                 up(&rtdev->nrt_lock);
                 return -EBUSY;
             }
             clear_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
 
-            rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
+            rtdm_lock_put_irqrestore(&rtdev->rtdev_lock, context);
 
             ret = 0;
             if (rtdev->mac_detach != NULL)

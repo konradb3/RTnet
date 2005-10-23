@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ void rtcfg_timer(int ifindex)
 
 
     while (!(rtcfg_dev->flags & FLAG_TIMER_SHUTDOWN)) {
-        rtos_res_lock(&rtcfg_dev->dev_lock);
+        rtdm_mutex_lock(&rtcfg_dev->dev_mutex);
 
         if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
             index = 0;
@@ -79,9 +79,9 @@ void rtcfg_timer(int ifindex)
         } else if (rtcfg_dev->state == RTCFG_MAIN_CLIENT_READY)
             rtcfg_send_heartbeat(ifindex);
 
-        rtos_res_unlock(&rtcfg_dev->dev_lock);
+        rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 
-        rtos_task_wait_period(&rtcfg_dev->timer_task);
+        rtdm_task_wait_period();
     }
 
     rtcfg_dev->flags &= ~FLAG_TIMER_STARTED;

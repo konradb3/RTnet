@@ -27,6 +27,12 @@
 /* Compiler */
 #undef CONFIG_RTNET_COMPILER
 
+/* EEPRO/100 command timeout */
+#undef CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT
+
+/* EEPRO/100 debugging */
+#undef CONFIG_RTNET_DRV_EEPRO100_DBG
+
 /* Host system alias */
 #undef CONFIG_RTNET_HOST_STRING
 

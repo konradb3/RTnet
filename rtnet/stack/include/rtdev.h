@@ -101,10 +101,10 @@ struct rtnet_device {
     __u32               broadcast_ip; /* broadcast IP in network order */
 
     int                 rxqueue_len;
-    rtos_event_t        *stack_event;
+    rtdm_event_t        *stack_event;
 
-    rtos_res_lock_t     xmit_lock;  /* protects xmit routine        */
-    rtos_spinlock_t     rtdev_lock; /* management lock              */
+    rtdm_mutex_t        xmit_mutex; /* protects xmit routine        */
+    rtdm_lock_t         rtdev_lock; /* management lock              */
     struct semaphore    nrt_lock;   /* non-real-time locking        */
 
     unsigned int        add_rtskbs; /* additionally allocated global rtskbs */

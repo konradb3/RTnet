@@ -3,6 +3,7 @@
  *  stack/stack_mgr.c - Stack-Manager
  *
  *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +34,7 @@ MODULE_PARM_DESC(stack_mgr_prio, "Priority of the stack manager task");
 static struct rtskb_queue rxqueue;
 
 struct list_head    rt_packets[RTPACKET_HASH_TBL_SIZE];
-rtos_spinlock_t     rt_packets_lock = RTOS_SPIN_LOCK_UNLOCKED;
+rtdm_lock_t         rt_packets_lock = RTDM_LOCK_UNLOCKED;
 
 
 
@@ -46,7 +47,7 @@ int rtdev_add_pack(struct rtpacket_type *pt)
     struct rtpacket_type    *pt_entry;
     int                     hash;
     int                     ret = 0;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
 
 
     if (pt->type == htons(ETH_P_ALL))
@@ -57,7 +58,7 @@ int rtdev_add_pack(struct rtpacket_type *pt)
 
     hash = ntohs(pt->type) & RTPACKET_HASH_KEY_MASK;
 
-    rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+    rtdm_lock_get_irqsave(&rt_packets_lock, context);
 
     list_for_each_entry(pt_entry, &rt_packets[hash], list_entry) {
         if (unlikely(pt_entry->type == pt->type)) {
@@ -68,7 +69,7 @@ int rtdev_add_pack(struct rtpacket_type *pt)
     list_add_tail(&pt->list_entry, &rt_packets[hash]);
 
   unlock_out:
-    rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
     return ret;
 }
@@ -81,7 +82,7 @@ int rtdev_add_pack(struct rtpacket_type *pt)
  */
 int rtdev_remove_pack(struct rtpacket_type *pt)
 {
-    unsigned long   flags;
+    rtdm_lockctx_t  context;
     int             ret = 0;
 
 
@@ -90,14 +91,14 @@ int rtdev_remove_pack(struct rtpacket_type *pt)
     if (pt->type == htons(ETH_P_ALL))
         return -EINVAL;
 
-    rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+    rtdm_lock_get_irqsave(&rt_packets_lock, context);
 
     if (pt->refcount > 0)
         ret = -EAGAIN;
     else
         list_del(&pt->list_entry);
 
-    rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
     return ret;
 }
@@ -121,15 +122,15 @@ void rtnetif_rx(struct rtskb *skb)
     rtdev = skb->rtdev;
     rtdev_reference(rtdev);
 
-    rtos_spin_lock(&rxqueue.lock);
+    rtdm_lock_get(&rxqueue.lock);
     if (rtdev->rxqueue_len < DROPPING_RTSKB) {
         rtdev->rxqueue_len++;
         __rtskb_queue_tail(&rxqueue, skb);
-        rtos_spin_unlock(&rxqueue.lock);
+        rtdm_lock_put(&rxqueue.lock);
     }
     else {
-        rtos_spin_unlock(&rxqueue.lock);
-        rtos_print("RTnet: dropping packet in %s()\n", __FUNCTION__);
+        rtdm_lock_put(&rxqueue.lock);
+        rtdm_printk("RTnet: dropping packet in %s()\n", __FUNCTION__);
         kfree_rtskb(skb);
     }
 }
@@ -154,28 +155,28 @@ void rtnetif_tx(struct rtnet_device *rtdev)
  */
 static void stackmgr_task(void *arg)
 {
-    rtos_event_t            *mgr_event = &((struct rtnet_mgr *)arg)->event;
+    rtdm_event_t            *mgr_event = &((struct rtnet_mgr *)arg)->event;
     struct rtskb            *skb;
     unsigned short          hash;
     struct rtpacket_type    *pt_entry;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
     struct rtnet_device     *rtdev;
 
 
-    rtos_print("RTnet: stack-mgr started\n");
-    while (rtos_event_wait(mgr_event) == 0)
+    rtdm_printk("RTnet: stack-mgr started\n");
+    while (rtdm_event_wait(mgr_event) == 0)
         while (1) {
           next_packet:
-            rtos_spin_lock_irqsave(&rxqueue.lock, flags);
+            rtdm_lock_get_irqsave(&rxqueue.lock, context);
 
             skb = __rtskb_dequeue(&rxqueue);
             if (!skb) {
-                rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+                rtdm_lock_put_irqrestore(&rxqueue.lock, context);
                 break;
             }
             rtdev = skb->rtdev;
             rtdev->rxqueue_len--;
-            rtos_spin_unlock_irqrestore(&rxqueue.lock, flags);
+            rtdm_lock_put_irqrestore(&rxqueue.lock, context);
 
             rtcap_report_incoming(skb);
 
@@ -183,28 +184,28 @@ static void stackmgr_task(void *arg)
 
             hash = ntohs(skb->protocol) & RTPACKET_HASH_KEY_MASK;
 
-            rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+            rtdm_lock_get_irqsave(&rt_packets_lock, context);
 
             list_for_each_entry(pt_entry, &rt_packets[hash], list_entry)
                 if (pt_entry->type == skb->protocol) {
                     pt_entry->refcount++;
-                    rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+                    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
                     pt_entry->handler(skb, pt_entry);
 
-                    rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+                    rtdm_lock_get_irqsave(&rt_packets_lock, context);
                     pt_entry->refcount--;
-                    rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+                    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
                     rtdev_dereference(rtdev);
                     goto next_packet;
                 }
 
-            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+            rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
             /* don't warn if running in promiscuous mode (RTcap...?) */
             if ((rtdev->flags & IFF_PROMISC) == 0)
-                rtos_print("RTnet: unknown layer-3 protocol\n");
+                rtdm_printk("RTnet: unknown layer-3 protocol\n");
 
             kfree_rtskb(skb);
             rtdev_dereference(rtdev);
@@ -244,9 +245,10 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
     for (i = 0; i < RTPACKET_HASH_TBL_SIZE; i++)
         INIT_LIST_HEAD(&rt_packets[i]);
 
-    rtos_event_init(&mgr->event);
+    rtdm_event_init(&mgr->event, 0);
 
-    return rtos_task_init(&mgr->task, stackmgr_task, mgr, stack_mgr_prio);
+    return rtdm_task_init(&mgr->task, "rtnet-stack", stackmgr_task, mgr,
+                          stack_mgr_prio, 0);
 }
 
 
@@ -256,8 +258,8 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
  */
 void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
 {
-    rtos_event_delete(&mgr->event);
-    rtos_task_delete(&mgr->task);
+    rtdm_event_destroy(&mgr->event);
+    rtdm_task_destroy(&mgr->task);
 }
 
 

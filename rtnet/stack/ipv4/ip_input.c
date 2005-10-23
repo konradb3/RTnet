@@ -2,8 +2,8 @@
  *
  *  ipv4/ip_input.c - process incoming IP packets
  *
- *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -105,12 +105,12 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
         if (ip_fallback_handler) {
             ret = ip_fallback_handler(skb);
             if (ret) {
-                rtos_print("RTnet: fallback handler failed\n");
+                rtdm_printk("RTnet: fallback handler failed\n");
             }
             return ret;
         }
 #endif /* CONFIG_RTNET_ADDON_PROXY */
-        rtos_print("RTnet: no protocol found\n");
+        rtdm_printk("RTnet: no protocol found\n");
         kfree_rtskb(skb);
         ret = 0;
     }

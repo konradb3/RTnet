@@ -837,10 +837,10 @@ struct vortex_private {
 	u16 deferred;						/* Resend these interrupts when we
 										 * bale from the ISR */
 	u16 io_size;						/* Size of PCI region (for release_region) */
-	rtos_spinlock_t lock;				/* Serialise access to device & its vortex_private */
+	rtdm_lock_t lock;					/* Serialise access to device & its vortex_private */
 	spinlock_t mdio_lock;				/* Serialise access to mdio hardware */
 	u32 power_state[16];
-	rtos_irq_t irq_handle;
+	rtdm_irq_t irq_handle;
 };
 
 /* The action to take with a media selection timer tick.
@@ -889,8 +889,8 @@ static int vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
 static int boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
-static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt);
-static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt);
+static int vortex_interrupt(rtdm_irq_t *irq_handle);
+static int boomerang_interrupt(rtdm_irq_t *irq_handle);
 static int vortex_close(struct rtnet_device *rtdev);
 static void dump_tx_ring(struct rtnet_device *rtdev);
 
@@ -1155,7 +1155,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 		}
 	}
 
-	rtos_spin_lock_init(&vp->lock);
+	rtdm_lock_init(&vp->lock);
 	spin_lock_init(&vp->mdio_lock);
 	vp->pdev = pdev;
 
@@ -1456,13 +1456,13 @@ issue_and_wait(struct rtnet_device *rtdev, int cmd)
 	for (i = 0; i < 100000; i++) {
 		if (!(inw(rtdev->base_addr + EL3_STATUS) & CmdInProgress)) {
 			if (vortex_debug > 1)
-				rtos_print(KERN_INFO "%s: command 0x%04x took %d usecs\n",
+				rtdm_printk(KERN_INFO "%s: command 0x%04x took %d usecs\n",
 					   rtdev->name, cmd, i * 10);
 			return;
 		}
 		udelay(10);
 	}
-	rtos_print(KERN_ERR "%s: command 0x%04x did not complete! Status=0x%x\n",
+	rtdm_printk(KERN_ERR "%s: command 0x%04x did not complete! Status=0x%x\n",
 			   rtdev->name, cmd, inw(rtdev->base_addr + EL3_STATUS));
 }
 
@@ -1483,13 +1483,13 @@ rt_issue_and_wait(struct rtnet_device *rtdev, int cmd)
 	for (i = 0; i < 100000; i++) {
 		if (!(inw(dev->base_addr + EL3_STATUS) & CmdInProgress)) {
 			if (vortex_debug > 1)
-				rtos_print(KERN_INFO "%s: command 0x%04x took %d usecs\n",
+				rtdm_printk(KERN_INFO "%s: command 0x%04x took %d usecs\n",
 					   dev->name, cmd, i * 10);
 			return;
 		}
 		rt_busy_sleep(10000);
 	}
-	rtos_print(KERN_ERR "%s: command 0x%04x did not complete! Status=0x%x\n",
+	rtdm_printk(KERN_ERR "%s: command 0x%04x did not complete! Status=0x%x\n",
 			   dev->name, cmd, inw(dev->base_addr + EL3_STATUS));
 }
 #endif
@@ -1716,14 +1716,14 @@ vortex_rt_up(struct rtnet_device *rtdev)
 	config = inl(ioaddr + Wn3_Config);
 
 	if (vp->media_override != 7) {
-		rtos_print(KERN_INFO "%s: Media override to transceiver %d (%s).\n",
+		rtdm_printk(KERN_INFO "%s: Media override to transceiver %d (%s).\n",
 			   dev->name, vp->media_override,
 			   media_tbl[vp->media_override].name);
 		dev->if_port = vp->media_override;
 	} else if (vp->autoselect) {
 		if (vp->has_nway) {
 			if (vortex_debug > 1)
-				rtos_print(KERN_INFO "%s: using NWAY device table, not %d\n",
+				rtdm_printk(KERN_INFO "%s: using NWAY device table, not %d\n",
 								dev->name, dev->if_port);
 			dev->if_port = XCVR_NWAY;
 		} else {
@@ -1732,13 +1732,13 @@ vortex_rt_up(struct rtnet_device *rtdev)
 			while (! (vp->available_media & media_tbl[dev->if_port].mask))
 				dev->if_port = media_tbl[dev->if_port].next;
 			if (vortex_debug > 1)
-				rtos_print(KERN_INFO "%s: first available media type: %s\n",
+				rtdm_printk(KERN_INFO "%s: first available media type: %s\n",
 					dev->name, media_tbl[dev->if_port].name);
 		}
 	} else {
 		dev->if_port = vp->default_media;
 		if (vortex_debug > 1)
-			rtos_print(KERN_INFO "%s: using default media %s\n",
+			rtdm_printk(KERN_INFO "%s: using default media %s\n",
 				dev->name, media_tbl[dev->if_port].name);
 	}
 
@@ -1753,13 +1753,13 @@ vortex_rt_up(struct rtnet_device *rtdev)
 	// *** RTnet *** vp->rx_oom_timer.function = rx_oom_timer;
 
 	if (vortex_debug > 1)
-		rtos_print(KERN_DEBUG "%s: Initial media type %s.\n",
+		rtdm_printk(KERN_DEBUG "%s: Initial media type %s.\n",
 			   dev->name, media_tbl[dev->if_port].name);
 
 	vp->full_duplex = vp->force_fd;
 	config = BFINS(config, dev->if_port, 20, 4);
 	if (vortex_debug > 6)
-		rtos_print(KERN_DEBUG "vortex_rt_up(): writing 0x%x to InternalConfig\n", config);
+		rtdm_printk(KERN_DEBUG "vortex_rt_up(): writing 0x%x to InternalConfig\n", config);
 	outl(config, ioaddr + Wn3_Config);
 
 	if (dev->if_port == XCVR_MII || dev->if_port == XCVR_NWAY) {
@@ -1775,7 +1775,7 @@ vortex_rt_up(struct rtnet_device *rtdev)
 			vp->full_duplex = 1;
 		vp->partner_flow_ctrl = ((mii_reg5 & 0x0400) != 0);
 		if (vortex_debug > 1)
-			rtos_print(KERN_INFO "%s: MII #%d status %4.4x, link partner capability %4.4x,"
+			rtdm_printk(KERN_INFO "%s: MII #%d status %4.4x, link partner capability %4.4x,"
 				   " info1 %04x, setting %s-duplex.\n",
 					dev->name, vp->phys[0],
 					mii_reg1, mii_reg5,
@@ -1790,7 +1790,7 @@ vortex_rt_up(struct rtnet_device *rtdev)
 			ioaddr + Wn3_MAC_Ctrl);
 
 	if (vortex_debug > 1) {
-		rtos_print(KERN_DEBUG "%s: vortex_rt_up() InternalConfig %8.8x.\n",
+		rtdm_printk(KERN_DEBUG "%s: vortex_rt_up() InternalConfig %8.8x.\n",
 			dev->name, config);
 	}
 
@@ -1804,7 +1804,7 @@ vortex_rt_up(struct rtnet_device *rtdev)
 
 	if (vortex_debug > 1) {
 		EL3WINDOW(4);
-		rtos_print(KERN_DEBUG "%s: vortex_rt_up() irq %d media status %4.4x.\n",
+		rtdm_printk(KERN_DEBUG "%s: vortex_rt_up() irq %d media status %4.4x.\n",
 			   dev->name, dev->irq, inw(ioaddr + Wn4_Media));
 	}
 
@@ -1906,13 +1906,13 @@ vortex_open(struct rtnet_device *rtdev)
 	// *** RTnet ***
 	rt_stack_connect(rtdev, &STACK_manager);
 
-	if ((retval = rtos_irq_request(&vp->irq_handle, rtdev->irq,
+	if ((retval = rtdm_irq_request(&vp->irq_handle, rtdev->irq,
 				(vp->full_bus_master_rx ? boomerang_interrupt : vortex_interrupt),
-				rtdev))) {
+				0, "rt_3c59x", rtdev))) {
 		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", rtdev->name, rtdev->irq);
 		goto out;
 	}
-	rtos_irq_enable(&vp->irq_handle);
+	rtdm_irq_enable(&vp->irq_handle);
 	// *** RTnet ***
 
 	if (vp->full_bus_master_rx) { /* Boomerang bus master. */
@@ -1956,7 +1956,7 @@ vortex_open(struct rtnet_device *rtdev)
 out_free_irq:
 
 	// *** RTnet ***
-    if ( (i=rtos_irq_free(&vp->irq_handle))<0 )
+    if ( (i=rtdm_irq_free(&vp->irq_handle))<0 )
         return i;
 	rt_stack_disconnect(rtdev);
 	// *** RTnet ***
@@ -2164,7 +2164,7 @@ vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
     int packets=0;
 
 	if (vortex_debug > 2) {
-		rtos_print(KERN_ERR "%s: vortex_error(), status=0x%x\n", rtdev->name, status);
+		rtdm_printk(KERN_ERR "%s: vortex_error(), status=0x%x\n", rtdev->name, status);
 	}
 
 	if (status & TxComplete) {			/* Really "TxError" for us. */
@@ -2172,10 +2172,10 @@ vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
 		/* Presumably a tx-timeout. We must merely re-enable. */
 		if (vortex_debug > 2
 			|| (tx_status != 0x88 && vortex_debug > 0)) {
-			rtos_print(KERN_ERR "%s: Transmit error, Tx status register %2.2x.\n",
+			rtdm_printk(KERN_ERR "%s: Transmit error, Tx status register %2.2x.\n",
 				   rtdev->name, tx_status);
 			if (tx_status == 0x82) {
-				rtos_print(KERN_ERR "Probably a duplex mismatch.  See "
+				rtdm_printk(KERN_ERR "Probably a duplex mismatch.  See "
 						"Documentation/networking/vortex.txt\n");
 			}
 			dump_tx_ring(rtdev);
@@ -2200,13 +2200,13 @@ vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
 	if (status & StatsFull) {			/* Empty statistics. */
 		static int DoneDidThat;
 		if (vortex_debug > 4)
-			rtos_print(KERN_DEBUG "%s: Updating stats.\n", rtdev->name);
+			rtdm_printk(KERN_DEBUG "%s: Updating stats.\n", rtdev->name);
 		// *** RTnet *** update_stats(ioaddr, dev);
 		/* HACK: Disable statistics as an interrupt source. */
 		/* This occurs when we have the wrong media type! */
 		if (DoneDidThat == 0  &&
 			inw(ioaddr + EL3_STATUS) & StatsFull) {
-			rtos_print(KERN_WARNING "%s: Updating statistics failed, disabling "
+			rtdm_printk(KERN_WARNING "%s: Updating statistics failed, disabling "
 				   "stats as an interrupt source.\n", rtdev->name);
 			EL3WINDOW(5);
 			outw(SetIntrEnb | (inw(ioaddr + 10) & ~StatsFull), ioaddr + EL3_CMD);
@@ -2223,7 +2223,7 @@ vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
 		u16 fifo_diag;
 		EL3WINDOW(4);
 		fifo_diag = inw(ioaddr + Wn4_FIFODiag);
-		rtos_print(KERN_ERR "%s: Host error, FIFO diagnostic register %4.4x.\n",
+		rtdm_printk(KERN_ERR "%s: Host error, FIFO diagnostic register %4.4x.\n",
 			   rtdev->name, fifo_diag);
 		/* Adapter failure requires Tx/Rx reset and reinit. */
 		if (vp->full_bus_master_tx) {
@@ -2231,7 +2231,7 @@ vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
 			/* 0x80000000 PCI master abort. */
 			/* 0x40000000 PCI target abort. */
 			if (vortex_debug)
-				rtos_print(KERN_ERR "%s: PCI bus error, bus status %8.8x\n", rtdev->name, bus_status);
+				rtdm_printk(KERN_ERR "%s: PCI bus error, bus status %8.8x\n", rtdev->name, bus_status);
 
 			/* In this case, blow the card away */
 			vortex_down(rtdev);
@@ -2262,7 +2262,7 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
-	unsigned long flags;
+	rtdm_lockctx_t context;
 
 	/* Put out the doubleword header... */
 	outl(skb->len, ioaddr + TX_FIFO);
@@ -2275,16 +2275,16 @@ vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		outw(len, ioaddr + Wn7_MasterLen);
 		vp->tx_skb = skb;
 
-		rtos_local_irqsave(flags);
+		rtdm_lock_irqsave(context);
 		if (unlikely(skb->xmit_stamp != NULL))
-			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
+			*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() +
 				*skb->xmit_stamp);
 		outw(StartDMADown, ioaddr + EL3_CMD);
-		rtos_local_irqrestore(flags);
+		rtdm_lock_irqrestore(context);
 
 		/* rtnetif_wake_queue() will be called at the DMADone interrupt. */
 	} else {
-		rtos_print("rt_3x59x: UNSUPPORTED CODE PATH (device is lacking DMA support)!\n");
+		rtdm_printk("rt_3x59x: UNSUPPORTED CODE PATH (device is lacking DMA support)!\n");
 		/* ... and the packet rounded to a doubleword. */
 		outsl(ioaddr + TX_FIFO, skb->data, (skb->len + 3) >> 2);
 		dev_kfree_rtskb (skb);
@@ -2330,18 +2330,18 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Calculate the next Tx descriptor entry. */
 	int entry = vp->cur_tx % TX_RING_SIZE;
 	struct boom_tx_desc *prev_entry = &vp->tx_ring[(vp->cur_tx-1) % TX_RING_SIZE];
-	unsigned long flags;
+	rtdm_lockctx_t context;
 
 	if (vortex_debug > 6) {
-		rtos_print(KERN_DEBUG "boomerang_start_xmit()\n");
+		rtdm_printk(KERN_DEBUG "boomerang_start_xmit()\n");
 		if (vortex_debug > 3)
-			rtos_print(KERN_DEBUG "%s: Trying to send a packet, Tx index %d.\n",
+			rtdm_printk(KERN_DEBUG "%s: Trying to send a packet, Tx index %d.\n",
 				   rtdev->name, vp->cur_tx);
 	}
 
 	if (vp->cur_tx - vp->dirty_tx >= TX_RING_SIZE) {
 		if (vortex_debug > 0)
-			rtos_print(KERN_WARNING "%s: BUG! Tx Ring full, refusing to send buffer.\n",
+			rtdm_printk(KERN_WARNING "%s: BUG! Tx Ring full, refusing to send buffer.\n",
 				   rtdev->name);
 		rtnetif_stop_queue(rtdev);
 		return 1;
@@ -2361,7 +2361,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 //            int j;
 //            for (j=0; j<skb->len; j++)
 //            {
-//                rtos_print("%02x ", skb->data[j]);
+//                rtdm_printk("%02x ", skb->data[j]);
 //            }
 
         }
@@ -2397,16 +2397,16 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 #endif
 
 	// *** RTnet ***
-	rtos_irq_disable(&vp->irq_handle);
-	rtos_spin_lock(&vp->lock);
+	rtdm_irq_disable(&vp->irq_handle);
+	rtdm_lock_get(&vp->lock);
 	// *** RTnet ***
 
 	/* Wait for the stall to complete. */
 	issue_and_wait(rtdev, DownStall);
 
-	rtos_local_irqsave(flags);
+	rtdm_lock_irqsave(context);
 	if (unlikely(skb->xmit_stamp != NULL))
-		*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+		*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
 	prev_entry->next = cpu_to_le32(vp->tx_ring_dma + entry * sizeof(struct boom_tx_desc));
 	if (inl(ioaddr + DownListPtr) == 0) {
@@ -2426,8 +2426,8 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 #endif
 	}
 	outw(DownUnstall, ioaddr + EL3_CMD);
-	rtos_spin_unlock_irqrestore(&vp->lock, flags);
-	rtos_irq_enable(&vp->irq_handle);
+	rtdm_lock_put_irqrestore(&vp->lock, context);
+	rtdm_irq_enable(&vp->irq_handle);
 	//rtdev->trans_start = jiffies;
 	return 0;
 }
@@ -2440,11 +2440,11 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
  * full_bus_master_tx == 0 && full_bus_master_rx == 0
  */
 
-static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
+static int vortex_interrupt(rtdm_irq_t *irq_handle)
 {
 	// *** RTnet ***
-	nanosecs_t time_stamp = rtos_get_time();
-	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);
+	nanosecs_t time_stamp = rtdm_clock_read();
+	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
 	// *** RTnet ***
 
@@ -2454,7 +2454,7 @@ static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 	int work_done = max_interrupt_work;
 
 	ioaddr = rtdev->base_addr;
-	rtos_spin_lock(&vp->lock);
+	rtdm_lock_get(&vp->lock);
 
 	status = inw(ioaddr + EL3_STATUS);
 
@@ -2473,19 +2473,19 @@ static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 		goto handler_exit;
 
 	if (vortex_debug > 4)
-		rtos_print(KERN_DEBUG "%s: interrupt, status %4.4x, latency %d ticks.\n",
+		rtdm_printk(KERN_DEBUG "%s: interrupt, status %4.4x, latency %d ticks.\n",
 			   rtdev->name, status, inb(ioaddr + Timer));
 
 	do {
 		if (vortex_debug > 5)
-				rtos_print(KERN_DEBUG "%s: In interrupt loop, status %4.4x.\n",
+				rtdm_printk(KERN_DEBUG "%s: In interrupt loop, status %4.4x.\n",
 					   rtdev->name, status);
 		if (status & RxComplete)
 			vortex_rx(rtdev, &packets, &time_stamp);
 
 		if (status & TxAvailable) {
 			if (vortex_debug > 5)
-				rtos_print(KERN_DEBUG "	TX room bit was handled.\n");
+				rtdm_printk(KERN_DEBUG "	TX room bit was handled.\n");
 			/* There's room in the FIFO for a full-sized packet. */
 			outw(AckIntr | TxAvailable, ioaddr + EL3_CMD);
 			rtnetif_wake_queue (rtdev);
@@ -2517,7 +2517,7 @@ static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 		}
 
 		if (--work_done < 0) {
-			rtos_print(KERN_WARNING "%s: Too much work in interrupt, status "
+			rtdm_printk(KERN_WARNING "%s: Too much work in interrupt, status "
 				   "%4.4x.\n", rtdev->name, status);
 			/* Disable all pending interrupts. */
 			do {
@@ -2535,15 +2535,14 @@ static RTOS_IRQ_HANDLER_PROTO(vortex_interrupt)
 	} while ((status = inw(ioaddr + EL3_STATUS)) & (IntLatch | RxComplete));
 
 	if (vortex_debug > 4)
-		rtos_print(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
+		rtdm_printk(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
-	rtos_irq_end(&vp->irq_handle);
-	rtos_spin_unlock(&vp->lock);
+	rtdm_lock_put(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 
-    RTOS_IRQ_RETURN_HANDLED();
+    return RTDM_IRQ_ENABLE;
 }
 
 /*
@@ -2551,11 +2550,11 @@ handler_exit:
  * full_bus_master_tx == 1 && full_bus_master_rx == 1
  */
 
-static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
+static int boomerang_interrupt(rtdm_irq_t *irq_handle)
 {
 	// *** RTnet ***
-	nanosecs_t time_stamp = rtos_get_time();
-	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);
+	nanosecs_t time_stamp = rtdm_clock_read();
+	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
 	// *** RTnet ***
 
@@ -2570,19 +2569,19 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 	 * It seems dopey to put the spinlock this early, but we could race against vortex_tx_timeout
 	 * and boomerang_start_xmit
 	 */
-	rtos_spin_lock(&vp->lock);
+	rtdm_lock_get(&vp->lock);
 
 	status = inw(ioaddr + EL3_STATUS);
 
 	if (vortex_debug > 6)
-		rtos_print(KERN_DEBUG "boomerang_interrupt. status=0x%4x\n", status);
+		rtdm_printk(KERN_DEBUG "boomerang_interrupt. status=0x%4x\n", status);
 
 	if ((status & IntLatch) == 0)
 		goto handler_exit;		/* No interrupt: shared IRQs can cause this */
 
 	if (status == 0xffff) {		/* h/w no longer present (hotplug)? */
 		if (vortex_debug > 1)
-			rtos_print(KERN_DEBUG "boomerang_interrupt(1): status = 0xffff\n");
+			rtdm_printk(KERN_DEBUG "boomerang_interrupt(1): status = 0xffff\n");
 		goto handler_exit;
 	}
 
@@ -2592,16 +2591,16 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 	}
 
 	if (vortex_debug > 4)
-		rtos_print(KERN_DEBUG "%s: interrupt, status %4.4x, latency %d ticks.\n",
+		rtdm_printk(KERN_DEBUG "%s: interrupt, status %4.4x, latency %d ticks.\n",
 			   rtdev->name, status, inb(ioaddr + Timer));
 	do {
 		if (vortex_debug > 5)
-				rtos_print(KERN_DEBUG "%s: In interrupt loop, status %4.4x.\n",
+				rtdm_printk(KERN_DEBUG "%s: In interrupt loop, status %4.4x.\n",
 					   rtdev->name, status);
 		if (status & UpComplete) {
 			outw(AckIntr | UpComplete, ioaddr + EL3_CMD);
 			if (vortex_debug > 5)
-				rtos_print(KERN_DEBUG "boomerang_interrupt->boomerang_rx\n");
+				rtdm_printk(KERN_DEBUG "boomerang_interrupt->boomerang_rx\n");
 			boomerang_rx(rtdev, &packets, &time_stamp);
 		}
 
@@ -2636,7 +2635,7 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 					dev_kfree_rtskb(skb);
 					vp->tx_skbuff[entry] = 0;
 				} else {
-					rtos_print(KERN_DEBUG "boomerang_interrupt: no skb!\n");
+					rtdm_printk(KERN_DEBUG "boomerang_interrupt: no skb!\n");
 				}
 				/* vp->stats.tx_packets++;  Counted below. */
 				dirty_tx++;
@@ -2644,7 +2643,7 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 			vp->dirty_tx = dirty_tx;
 			if (vp->cur_tx - dirty_tx <= TX_RING_SIZE - 1) {
 				if (vortex_debug > 6)
-					rtos_print(KERN_DEBUG "boomerang_interrupt: wake queue\n");
+					rtdm_printk(KERN_DEBUG "boomerang_interrupt: wake queue\n");
 				rtnetif_wake_queue (rtdev);
 			}
 		}
@@ -2654,7 +2653,7 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 			vortex_error(rtdev, status, &time_stamp);
 
 		if (--work_done < 0) {
-			rtos_print(KERN_WARNING "%s: Too much work in interrupt, status "
+			rtdm_printk(KERN_WARNING "%s: Too much work in interrupt, status "
 				   "%4.4x.\n", rtdev->name, status);
 			/* Disable all pending interrupts. */
 			do {
@@ -2675,15 +2674,14 @@ static RTOS_IRQ_HANDLER_PROTO(boomerang_interrupt)
 	} while ((status = inw(ioaddr + EL3_STATUS)) & IntLatch);
 
 	if (vortex_debug > 4)
-		rtos_print(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
+		rtdm_printk(KERN_DEBUG "%s: exiting interrupt, status %4.4x.\n",
 			   rtdev->name, status);
 handler_exit:
-	rtos_irq_end(&vp->irq_handle);
-	rtos_spin_unlock(&vp->lock);
+	rtdm_lock_put(&vp->lock);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 
-    RTOS_IRQ_RETURN_HANDLED();
+    return RTDM_IRQ_ENABLE;
 }
 
 static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
@@ -2770,7 +2768,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 
 
 	if (vortex_debug > 5)
-		rtos_print(KERN_DEBUG "boomerang_rx(): status %4.4x\n", inw(ioaddr+EL3_STATUS));
+		rtdm_printk(KERN_DEBUG "boomerang_rx(): status %4.4x\n", inw(ioaddr+EL3_STATUS));
 
 	while ((rx_status = le32_to_cpu(vp->rx_ring[entry].status)) & RxDComplete){
 		if (--rx_work_limit < 0)
@@ -2778,7 +2776,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 		if (rx_status & RxDError) { /* Error, update stats. */
 			unsigned char rx_error = rx_status >> 16;
 			if (vortex_debug > 2)
-				rtos_print(KERN_DEBUG " Rx error: status %2.2x.\n", rx_error);
+				rtdm_printk(KERN_DEBUG " Rx error: status %2.2x.\n", rx_error);
 			vp->stats.rx_errors++;
 			if (rx_error & 0x01)  vp->stats.rx_over_errors++;
 			if (rx_error & 0x02)  vp->stats.rx_length_errors++;
@@ -2792,7 +2790,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 			dma_addr_t dma = le32_to_cpu(vp->rx_ring[entry].addr);
 
 			if (vortex_debug > 4)
-				rtos_print(KERN_DEBUG "Receiving packet size %d status %4.4x.\n",
+				rtdm_printk(KERN_DEBUG "Receiving packet size %d status %4.4x.\n",
 					   pkt_len, rx_status);
 
 			/* Check if the packet is long enough to just accept without
@@ -2846,7 +2844,7 @@ boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 			if (skb == NULL) {
 				static unsigned long last_jif;
 				if ((jiffies - last_jif) > 10 * HZ) {
-					rtos_print(KERN_WARNING "%s: memory shortage\n", rtdev->name);
+					rtdm_printk(KERN_WARNING "%s: memory shortage\n", rtdev->name);
 					last_jif = jiffies;
 				}
 				if ((vp->cur_rx - vp->dirty_rx) == RX_RING_SIZE)
@@ -2959,7 +2957,7 @@ vortex_close(struct rtnet_device *rtdev)
 #endif
 
 	// *** RTnet ***
-	if ( (i=rtos_irq_free(&vp->irq_handle))<0 )
+	if ( (i=rtdm_irq_free(&vp->irq_handle))<0 )
 		return i;
 
 	rt_stack_disconnect(rtdev);
@@ -3012,16 +3010,16 @@ dump_tx_ring(struct rtnet_device *rtdev)
 			int i;
 			int stalled = inl(ioaddr + PktStatus) & 0x04;	/* Possible racy. But it's only debug stuff */
 
-			rtos_print(KERN_ERR "  Flags; bus-master %d, dirty %d(%d) current %d(%d)\n",
+			rtdm_printk(KERN_ERR "  Flags; bus-master %d, dirty %d(%d) current %d(%d)\n",
 					vp->full_bus_master_tx,
 					vp->dirty_tx, vp->dirty_tx % TX_RING_SIZE,
 					vp->cur_tx, vp->cur_tx % TX_RING_SIZE);
-			rtos_print(KERN_ERR "  Transmit list %8.8x vs. %p.\n",
+			rtdm_printk(KERN_ERR "  Transmit list %8.8x vs. %p.\n",
 				   inl(ioaddr + DownListPtr),
 				   &vp->tx_ring[vp->dirty_tx % TX_RING_SIZE]);
 			issue_and_wait(rtdev, DownStall);
 			for (i = 0; i < TX_RING_SIZE; i++) {
-				rtos_print(KERN_ERR "  %d: @%p  length %8.8x status %8.8x\n", i,
+				rtdm_printk(KERN_ERR "  %d: @%p  length %8.8x status %8.8x\n", i,
 					   &vp->tx_ring[i],
 #if DO_ZEROCOPY
 					   le32_to_cpu(vp->tx_ring[i].frag[0].length),

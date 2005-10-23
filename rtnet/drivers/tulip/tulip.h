@@ -356,7 +356,7 @@ struct tulip_private {
 	struct net_device_stats stats;
 	struct timer_list timer;	/* Media selection timer. */
 	u32 mc_filter[2];
-	/*RTnet*/rtos_spinlock_t lock;
+	/*RTnet*/rtdm_lock_t lock;
 	spinlock_t mii_lock;
 	unsigned int cur_rx, cur_tx;	/* The next free ring entry */
 	unsigned int dirty_rx, dirty_tx;	/* The ring entries to be free()ed. */
@@ -392,7 +392,7 @@ struct tulip_private {
 	unsigned long nir;
 	unsigned long base_addr;
 	int pad0, pad1;		/* Used for 8-byte alignment */
-	rtos_irq_t irq_handle;
+	rtdm_irq_t irq_handle;
 };
 
 
@@ -425,7 +425,7 @@ int tulip_read_eeprom(long ioaddr, int location, int addr_len);
 /* interrupt.c */
 extern unsigned int tulip_max_interrupt_work;
 extern int tulip_rx_copybreak;
-RTOS_IRQ_HANDLER_PROTO(tulip_interrupt);
+int tulip_interrupt(rtdm_irq_t *irq_handle);
 int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev);
 
 /* media.c */
@@ -495,7 +495,7 @@ static inline void tulip_stop_rxtx(struct tulip_private *tp)
 static inline void tulip_restart_rxtx(struct tulip_private *tp)
 {
 	tulip_stop_rxtx(tp);
-	rtos_busy_sleep(5000);
+	udelay(5);
 	tulip_start_rxtx(tp);
 }
 

@@ -3,8 +3,8 @@
  *  rtmac/tdma/tdma_module.c
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -183,17 +183,18 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     tdma->magic        = TDMA_MAGIC;
     tdma->rtdev        = rtdev;
 
-    rtos_spin_lock_init(&tdma->lock);
+    rtdm_lock_init(&tdma->lock);
 
-    rtos_event_init(&tdma->worker_wakeup);
-    rtos_event_init(&tdma->xmit_event);
-    rtos_event_init(&tdma->sync_event);
+    rtdm_event_init(&tdma->worker_wakeup, 0);
+    rtdm_event_init(&tdma->xmit_event, 0);
+    rtdm_event_init(&tdma->sync_event, 0);
 
     ret = tdma_dev_init(rtdev, tdma);
     if (ret < 0)
         goto err_out1;
 
-    ret = rtos_task_init(&tdma->worker_task, tdma_worker, tdma, DEF_WORKER_PRIO);
+    ret = rtdm_task_init(&tdma->worker_task, "rtnet-tdma", tdma_worker, tdma,
+                         DEF_WORKER_PRIO, 0);
     if (ret != 0)
         goto err_out2;
 
@@ -212,9 +213,9 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     tdma_dev_release(tdma);
 
   err_out1:
-    rtos_event_delete(&tdma->sync_event);
-    rtos_event_delete(&tdma->xmit_event);
-    rtos_event_delete(&tdma->worker_wakeup);
+    rtdm_event_destroy(&tdma->sync_event);
+    rtdm_event_destroy(&tdma->xmit_event);
+    rtdm_event_destroy(&tdma->worker_wakeup);
 
     return ret;
 }
@@ -225,15 +226,15 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
     struct tdma_priv    *tdma = (struct tdma_priv *)priv;
     struct tdma_job     *job;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     int                 ret;
 
 
     set_bit(TDMA_FLAG_SHUTDOWN, &tdma->flags);
 
-    rtos_event_delete(&tdma->sync_event);
-    rtos_event_delete(&tdma->xmit_event);
-    rtos_event_delete(&tdma->worker_wakeup);
+    rtdm_event_destroy(&tdma->sync_event);
+    rtdm_event_destroy(&tdma->xmit_event);
+    rtdm_event_destroy(&tdma->worker_wakeup);
 
     ret =  tdma_dev_release(tdma);
     if (ret < 0)
@@ -243,24 +244,24 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
         if (job->id >= 0)
             tdma_cleanup_slot(tdma, SLOT_JOB(job));
         else if (job->id == XMIT_RPL_CAL) {
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
 
             __list_del(job->entry.prev, job->entry.next);
 
             while (job->ref_count > 0) {
-                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                rtdm_lock_put_irqrestore(&tdma->lock, context);
                 set_current_state(TASK_UNINTERRUPTIBLE);
                 schedule_timeout(HZ/10); /* wait 100 ms */
-                rtos_spin_lock_irqsave(&tdma->lock, flags);
+                rtdm_lock_get_irqsave(&tdma->lock, context);
             }
 
             kfree_rtskb(REPLY_CAL_JOB(job)->reply_rtskb);
 
-            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
         }
     }
 
-    rtos_task_delete(&tdma->worker_task);
+    rtdm_task_destroy(&tdma->worker_task);
 
     if (tdma->slot_table)
         kfree(tdma->slot_table);
@@ -333,7 +334,7 @@ int __init tdma_init(void)
 
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        rtos_timer_start_oneshot();
+        rtos_timer_start();
 #endif
 
     return 0;

@@ -3,8 +3,8 @@
  *  rtmac/tdma/tdma_proto.c
  *
  *  RTmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
     return;
 
   err_out:
-    /*ERROR*/rtos_print("TDMA: Failed to transmit sync frame!\n");
+    /*ERROR*/rtdm_printk("TDMA: Failed to transmit sync frame!\n");
     return;
 }
 
@@ -118,8 +118,8 @@ int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u32 reply_cycle,
     return 0;
 
   err_out:
-    /*ERROR*/rtos_print("TDMA: Failed to transmit request calibration "
-                        "frame!\n");
+    /*ERROR*/rtdm_printk("TDMA: Failed to transmit request calibration "
+                         "frame!\n");
     return ret;
 }
 
@@ -128,7 +128,7 @@ int tdma_xmit_request_cal_frame(struct tdma_priv *tdma, u32 reply_cycle,
 int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 {
     struct tdma_priv    *tdma;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct tdma_slot    *slot;
     int                 ret = 0;
 
@@ -137,7 +137,7 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
     rtcap_mark_rtmac_enqueue(rtskb);
 
-    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    rtdm_lock_get_irqsave(&tdma->lock, context);
 
     slot = tdma->slot_table[(rtskb->priority & RTSKB_CHANNEL_MASK) >>
                             RTSKB_CHANNEL_SHIFT];
@@ -155,7 +155,7 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
     __rtskb_prio_queue_tail(&slot->queue, rtskb);
 
   err_out:
-    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     return ret;
 }
@@ -165,7 +165,7 @@ int tdma_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 int tdma_nrt_packet_tx(struct rtskb *rtskb)
 {
     struct tdma_priv    *tdma;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct tdma_slot    *slot;
     int                 ret = 0;
 
@@ -176,7 +176,7 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb)
 
     rtskb->priority = RTSKB_PRIO_VALUE(QUEUE_MIN_PRIO, DEFAULT_NRT_SLOT);
 
-    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    rtdm_lock_get_irqsave(&tdma->lock, context);
 
     slot = tdma->slot_table[DEFAULT_NRT_SLOT];
 
@@ -193,7 +193,7 @@ int tdma_nrt_packet_tx(struct rtskb *rtskb)
     __rtskb_prio_queue_tail(&slot->queue, rtskb);
 
   err_out:
-    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     return ret;
 }
@@ -209,7 +209,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
     nanosecs_t              clock_offset;
     struct rt_proc_call     *call;
     struct tdma_request_cal *req_cal_job;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
 #ifdef CONFIG_RTNET_TDMA_MASTER
     struct rtskb            *reply_rtskb;
     struct rtnet_device     *rtdev;
@@ -238,11 +238,11 @@ int tdma_packet_rx(struct rtskb *rtskb)
             cycle_start = be64_to_cpu(SYNC_FRM(head)->sched_xmit_stamp) -
                     clock_offset;
 
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
             tdma->current_cycle       = ntohl(SYNC_FRM(head)->cycle_no);
             tdma->current_cycle_start = cycle_start;
             tdma->clock_offset        = clock_offset;
-            rtos_spin_unlock_irqrestore(&tdma->lock,flags);
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
 
             /* note: Ethernet-specific! */
             memcpy(tdma->master_hw_addr, rtskb->mac.ethernet->h_source,
@@ -250,7 +250,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
 
             set_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags);
 
-            rtos_event_broadcast(&tdma->sync_event);
+            rtdm_event_pulse(&tdma->sync_event);
             break;
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
@@ -268,8 +268,8 @@ int tdma_packet_rx(struct rtskb *rtskb)
                                       sizeof(struct tdma_frm_rpl_cal) + 15,
                                       &tdma->cal_rtskb_pool);
             if (unlikely(!reply_rtskb)) {
-                /*ERROR*/rtos_print("TDMA: Too many calibration requests "
-                                    "pending!\n");
+                /*ERROR*/rtdm_printk("TDMA: Too many calibration requests "
+                                     "pending!\n");
                 break;
             }
 
@@ -311,7 +311,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             rpl_cal_job->reply_offset   =
                     be64_to_cpu(REQ_CAL_FRM(head)->reply_slot_offset);
 
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
 
             job = tdma->current_job;
             while (1) {
@@ -327,7 +327,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             list_add(&rpl_cal_job->head.entry, &job->entry);
             tdma->job_list_revision++;
 
-            rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
 
             break;
 #endif
@@ -342,11 +342,11 @@ int tdma_packet_rx(struct rtskb *rtskb)
                      be64_to_cpu(RPL_CAL_FRM(head)->reception_stamp));
             delay = (delay + 1) >> 1;
 
-            rtos_spin_lock_irqsave(&tdma->lock, flags);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
 
             call = tdma->calibration_call;
             if (call == NULL) {
-                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                rtdm_lock_put_irqrestore(&tdma->lock, context);
                 break;
             }
             req_cal_job = rtpc_get_priv(call, struct tdma_request_cal);
@@ -357,12 +357,12 @@ int tdma_packet_rx(struct rtskb *rtskb)
                 tdma->job_list_revision++;
                 list_add(&req_cal_job->head.entry, &tdma->first_job->entry);
 
-                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                rtdm_lock_put_irqrestore(&tdma->lock, context);
 
             } else {
                 tdma->calibration_call = NULL;
 
-                rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+                rtdm_lock_put_irqrestore(&tdma->lock, context);
 
                 rtpc_complete_call(call, 0);
             }
@@ -370,7 +370,7 @@ int tdma_packet_rx(struct rtskb *rtskb)
             break;
 
         default:
-            /*ERROR*/rtos_print("TDMA: Unknown frame %d!\n", ntohs(head->id));
+            /*ERROR*/rtdm_printk("TDMA: Unknown frame %d!\n", ntohs(head->id));
     }
 
   kfree_out:
@@ -383,14 +383,14 @@ int tdma_packet_rx(struct rtskb *rtskb)
 unsigned int tdma_get_mtu(struct rtnet_device *rtdev, unsigned int priority)
 {
     struct tdma_priv    *tdma;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct tdma_slot    *slot;
     unsigned int        mtu;
 
 
     tdma = (struct tdma_priv *)rtdev->mac_priv->disc_priv;
 
-    rtos_spin_lock_irqsave(&tdma->lock, flags);
+    rtdm_lock_get_irqsave(&tdma->lock, context);
 
     slot = tdma->slot_table[(priority & RTSKB_CHANNEL_MASK) >>
                             RTSKB_CHANNEL_SHIFT];
@@ -403,7 +403,7 @@ unsigned int tdma_get_mtu(struct rtnet_device *rtdev, unsigned int priority)
     mtu = slot->mtu;
 
   out:
-    rtos_spin_unlock_irqrestore(&tdma->lock, flags);
+    rtdm_lock_put_irqrestore(&tdma->lock, context);
 
     return mtu;
 }

@@ -1,7 +1,8 @@
-This list was created when porting the pcnet32 driver to RTnet. It is
-absolutely unsorted. Some points may not apply to every driver, some may have
-to be added for others. It is recommended to take a look at pcnet32-rt.c if a
-step remains unclear.
+This list was created when porting the pcnet32 driver to RTnet and was
+extended and revised afterwards. It is absolutely unsorted. Some points may
+not apply to every driver, some may have to be added for others. It is
+recommended to take a look at pcnet32-rt.c or other existing drivers if some
+steps remain unclear.
 
 IMPORTANT: Check if the critical paths of the driver (xmit function, interrupt
 handler) are free of any unbounded or unacceptable long delays, e.g. caused by
@@ -24,7 +25,7 @@ waiting on hardware events.
 3. add the following fields to private data:
 
     struct rtskb_queue skb_pool;
-    rtos_irq_t irq_handle;
+    rtdm_irq_t irq_handle;
 
 
 4. initialize skb pool in probe or init function:
@@ -53,7 +54,7 @@ waiting on hardware events.
 
 10. add to the close function replacing the free_irq call:
 
-    if ( (i=rtos_irq_free(&<priv>->irq_handle))<0 )
+    if ( (i=rtdm_irq_free(&<priv>->irq_handle))<0 )
         return i;
 
     rt_stack_disconnect(dev);
@@ -83,19 +84,19 @@ waiting on hardware events.
 
       /* if operation may take several microseconds: */
 
-      rtos_irq_disable(&<priv>->irq_handle);
-      rtos_spin_lock(&<priv>->lock);
+      rtdm_irq_disable(&<priv>->irq_handle);
+      rtdm_lock_get(&<priv>->lock);
       ...
-      rtos_spin_unlock(&<priv>->lock);
-      rtos_irq_enable(&<priv>->irq_handle);
+      rtdm_lock_put(&<priv>->lock);
+      rtdm_irq_enable(&<priv>->irq_handle);
 
       /* if only a few operations are required: */
 
-      unsigned long flags;
+      rtdm_lockctx_t context;
       ...
-      rtos_spin_lock_irqsave(&<priv>->lock, flags);
+      rtdm_lock_get_irqsave(&<priv>->lock, context);
       ...
-      rtos_spin_unlock_irqrestore(&<priv>->lock, flags);
+      rtdm_lock_put_irqrestore(&<priv>->lock, context);
 
 17.2. add the following code right before the code which triggers the physical
       transmission (take care if data has to be transfered manually, i.e.
@@ -103,25 +104,25 @@ waiting on hardware events.
 
       /* get and patch time stamp just before the transmission */
       if (skb->xmit_stamp)
-          *skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+          *skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
 17.3. make the code above and the transmission triggering atomical by switching
       off all interrupts:
 
-      unsigned long flags;
+      rtdm_lockctx_t context;
       ...
-      rtos_local_irqsave(flags);
+      rtdm_lock_irqsave(context);
       <patch time stamp>
       <trigger transmission>
-      rtos_local_irqrestore(flags);
+      rtdm_lock_irqrestore(context);
 
       /* or combined with the spinlock: */
 
-      rtos_spin_lock_irqsave(&<priv>->lock, flags);
+      rtdm_lock_irqsave(&<priv>->lock, context);
       <prepare transmission>
       <patch time stamp>
       <trigger transmission>
-      rtos_spin_unlock_irqrestore(&<priv>->lock, flags);
+      rtdm_lock_irqrestore(&<priv>->lock, context);
 
       NOTE: Some hardware may require the driver to calculate the frame
       checksum, thus making a patching of the frame effectively impossible. In
@@ -133,19 +134,21 @@ waiting on hardware events.
 
 18. modify interrupt handler:
 
-    static RTOS_IRQ_HANDLER_PROTO(XXX_interrupt)
+    static int XXX_interrupt(rtdm_irq_t *irq_handle)
     {
-        struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device);
+        struct rtnet_device *dev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
         ...
 
     Also adapt the prototype of the interrupt handler accordingly if provided.
 
 
-19. replace spin_[un]lock with rtos_spin_[un]lock within the interrupt handler
+19. replace spin_lock/spin_unlock with rtdm_lock_get/rtdm_lock_put within the
+    interrupt handler
 
 
 20. replace printk in xmit function, interrupt handler, and any function called
-    within this context with rtos_print
+    within this context with rtdm_printk. Where avoidable, disable output in
+    critical functions (i.e. when interrupts are off) completely.
 
 
 21. replace dev_kfree_skb[_XXX] with dev_kfree_rtskb
@@ -165,7 +168,8 @@ waiting on hardware events.
 23. replace request_irq in open function with the following lines:
 
     rt_stack_connect(dev, &STACK_manager);
-    retval = rtos_irq_request(&<priv>->irq_handle, dev->irq, XXX_interrupt, dev);
+    retval = rtdm_irq_request(&<priv>->irq_handle, dev->irq, XXX_interrupt, 0,
+                              NULL /* or driver name */, dev);
     if (retval)
         return retval;
 
@@ -185,12 +189,12 @@ waiting on hardware events.
         return -ENODEV;
 
 
-27. call rtos_get_time within receive interrupt and set time_stamp field of skb accordingly
+27. call rtdm_clock_read within receive interrupt and set time_stamp field of skb accordingly
 
 
 28. add the following line to the open function (as soon as the IRQ is allowed to occur):
 
-    rtos_irq_enable(&<priv>->irq_handle);
+    rtdm_irq_enable(&<priv>->irq_handle);
 
 
 29. initialize new unsigned int old_packet_cnt with <priv>->stats.rx_packets at
@@ -199,8 +203,7 @@ waiting on hardware events.
 
 30. add to the end of the interrupt handler:
 
-    rtos_irq_end(irq);
-    rtos_spin_unlock(&<priv>->lock); /* if locking is not done in interrupt main function */
+    rtdm_lock_put(&<priv>->lock); /* if locking is not done in interrupt main function */
     if (old_packet_cnt != <priv>->stats.rx_packets)
         rt_mark_stack_mgr(dev);
 
@@ -208,7 +211,7 @@ waiting on hardware events.
 31. disable any timer setup and delete calls
 
 
-32. uncomment un-required(!) MII related assignments and functions
+32. uncomment not required(!) MII related assignments and functions
 
 
 33. uncomment any other unused functions
@@ -230,17 +233,18 @@ waiting on hardware events.
     and check if they are used appropriately
 
 
-39. rename type of lock field in private data from spinlock_t to rtos_spinlock_t
+39. rename type of lock field in private data from spinlock_t to rtdm_lock_t
 
 
-40. replace spin_lock_init(&<priv>->lock) with rtos_spin_lock_init(&<priv>->lock)
+40. replace spin_lock_init(&<priv>->lock) with rtdm_lock_init(&<priv>->lock)
 
 
 41. rtskb structure does not contain a data_len field => set any occurrence to zero
 
 
-42. return from interrupt handler only by using either RTOS_IRQ_RETURN_HANDLED or
-    RTOS_IRQ_RETURN_UNHANDLED dependent on if the IRQ was handled or not
+42. return from interrupt handler only by providing RTDM_IRQ_ENABLE or 0 as
+    return value, depending if the IRQ was handled (=> RTDM_IRQ_ENABLE) or
+    not (=> 0)
 
 
 XX. check the critical paths in xmit function and interrupt handler for delays

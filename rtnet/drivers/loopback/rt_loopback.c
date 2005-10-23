@@ -72,13 +72,13 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
     unsigned short          hash;
     struct rtpacket_type    *pt_entry;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
 
 
     /* write transmission stamp - in case any protocol ever gets the idea to
        ask the lookback device for this service... */
     if (skb->xmit_stamp)
-        *skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+        *skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
     /* make sure that critical fields are re-intialised */
     skb->chain_end = skb;
@@ -93,27 +93,27 @@ static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
     hash = ntohs(skb->protocol) & RTPACKET_HASH_KEY_MASK;
 
-    rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+    rtdm_lock_get_irqsave(&rt_packets_lock, context);
 
     list_for_each_entry(pt_entry, &rt_packets[hash], list_entry)
         if (pt_entry->type == skb->protocol) {
             pt_entry->refcount++;
-            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+            rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
             pt_entry->handler(skb, pt_entry);
 
-            rtos_spin_lock_irqsave(&rt_packets_lock, flags);
+            rtdm_lock_get_irqsave(&rt_packets_lock, context);
             pt_entry->refcount--;
-            rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+            rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
             goto out;
         }
 
-    rtos_spin_unlock_irqrestore(&rt_packets_lock, flags);
+    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
     /* don't warn if running in promiscuous mode (RTcap...?) */
     if ((rtdev->flags & IFF_PROMISC) == 0)
-        rtos_print("RTnet: unknown layer-3 protocol\n");
+        rtdm_printk("RTnet: unknown layer-3 protocol\n");
 
     kfree_rtskb(skb);
 

@@ -319,9 +319,9 @@ struct mpc5xxx_fec_priv {
 	int t_tasknum;
 	int r_irq;
 	int t_irq;
-	rtos_irq_t irq_handle;
-	rtos_irq_t r_irq_handle;
-	rtos_irq_t t_irq_handle;
+	rtdm_irq_t irq_handle;
+	rtdm_irq_t r_irq_handle;
+	rtdm_irq_t t_irq_handle;
 	u32 last_transmit_time;
 	u32 last_receive_time;
 	struct mpc5xxx_fec *fec;
@@ -333,7 +333,7 @@ struct mpc5xxx_fec_priv {
 	struct rtskb_queue skb_pool;
 	struct fec_queue t_queue;
 	struct rtskb *tskb[MPC5xxx_FEC_TBD_NUM];
-	rtos_spinlock_t lock;
+	rtdm_lock_t lock;
 	unsigned long open_time;
 	struct net_device_stats stats;
 #ifdef CONFIG_RTNET_USE_MDIO

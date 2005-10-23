@@ -518,7 +518,7 @@ struct netdev_private {
 	struct pci_dev *pdev;
 	struct net_device_stats stats;
 	struct timer_list timer;	/* Media monitoring timer. */
-	rtos_spinlock_t lock;
+	rtdm_lock_t lock;
 
 	/* Frequently used values: keep some adjacent for cache effect. */
 	int chip_id, drv_flags;
@@ -540,7 +540,7 @@ struct netdev_private {
 	unsigned int mii_if_force_media; /*** RTnet, support for older kernels (e.g. 2.4.19) ***/
 
 	struct rtskb_queue skb_pool; /*** RTnet ***/
-	rtos_irq_t irq_handle;
+	rtdm_irq_t irq_handle;
 };
 
 /*** RTnet ***/
@@ -551,7 +551,7 @@ static void via_rhine_check_duplex(struct rtnet_device *dev);
 /*static void via_rhine_timer(unsigned long data);
 static void via_rhine_tx_timeout(struct net_device *dev);*/
 static int  via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev);
-static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt);
+static int via_rhine_interrupt(rtdm_irq_t *irq_handle);
 static void via_rhine_tx(struct rtnet_device *dev);
 static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp);
 static void via_rhine_error(struct rtnet_device *dev, int intr_status);
@@ -781,7 +781,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	dev->irq = pdev->irq;
 
 	np = dev->priv;
-	rtos_spin_lock_init (&np->lock);
+	rtdm_lock_init (&np->lock);
 	np->chip_id = chip_id;
 	np->drv_flags = via_rhine_chip_info[chip_id].drv_flags;
 	np->pdev = pdev;
@@ -1173,7 +1173,8 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rtos_irq_request(&np->irq_handle, dev->irq, via_rhine_interrupt, dev);
+	i = rtdm_irq_request(&np->irq_handle, dev->irq, via_rhine_interrupt, 0,
+	                     "rt_via-rhine", dev);
 /*** RTnet ***/
 	if (i) {
 		RTNET_MOD_DEC_USE_COUNT;
@@ -1202,7 +1203,7 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
 /*** RTnet ***/
-	rtos_irq_enable(&np->irq_handle);
+	rtdm_irq_enable(&np->irq_handle);
 
 	/* Set the timer to check for link beat. */
 #if 0
@@ -1325,7 +1326,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	unsigned entry;
 	u32 intr_status;
 /*** RTnet ***/
-	unsigned long flags;
+	rtdm_lockctx_t context;
 /*** RTnet ***/
 
 	/* Caution: the write order is important here, set the field
@@ -1357,9 +1358,9 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 /*** RTnet ***/
 		/* get and patch time stamp just before the transmission */
 		if (skb->xmit_stamp) {
-			rtos_spin_lock_irqsave(&np->lock, flags);
+			rtdm_lock_get_irqsave(&np->lock, context);
 
-			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
+			*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() +
 				*skb->xmit_stamp);
 
 			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
@@ -1367,7 +1368,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 			 /* no need to block the interrupts during copy */
 			rtskb_copy_and_csum_dev(skb, np->tx_buf[entry]);
 
-			rtos_spin_lock_irqsave(&np->lock, flags);
+			rtdm_lock_get_irqsave(&np->lock, context);
 		}
 /*** RTnet ***/
 
@@ -1380,11 +1381,11 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 		np->tx_ring[entry].addr = cpu_to_le32(np->tx_skbuff_dma[entry]);
 
 /*** RTnet ***/
-		rtos_spin_lock_irqsave(&np->lock, flags);
+		rtdm_lock_get_irqsave(&np->lock, context);
 
 		/* get and patch time stamp just before the transmission */
 		if (skb->xmit_stamp)
-			*skb->xmit_stamp = cpu_to_be64(rtos_get_time() +
+			*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() +
 				*skb->xmit_stamp);
 /*** RTnet ***/
 	}
@@ -1416,11 +1417,11 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	/*dev->trans_start = jiffies; *** RTnet ***/
 
 /*** RTnet ***/
-	rtos_spin_unlock_irqrestore(&np->lock, flags);
+	rtdm_lock_put_irqrestore(&np->lock, context);
 /*** RTnet ***/
 
 	if (debug > 4) {
-		rtos_print(KERN_DEBUG "%s: Transmit frame #%d queued in slot %d.\n", /*** RTnet ***/
+		rtdm_printk(KERN_DEBUG "%s: Transmit frame #%d queued in slot %d.\n", /*** RTnet ***/
 			   dev->name, np->cur_tx-1, entry);
 	}
 	return 0;
@@ -1428,10 +1429,11 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt) /*** RTnet ***/
+static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 {
-	nanosecs_t time_stamp = rtos_get_time(); /*** RTnet ***/
-	struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device); /*** RTnet ***/
+	nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
+	struct rtnet_device *dev =
+	    rtdm_irq_get_arg(irq_handle, struct rtnet_device); /*** RTnet ***/
 	long ioaddr;
 	u32 intr_status;
 	int boguscnt = max_interrupt_work;
@@ -1448,7 +1450,7 @@ static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt) /*** RTnet ***/
 		IOSYNC;
 
 		if (debug > 4)
-			rtos_print(KERN_DEBUG "%s: Interrupt, status %8.8x.\n", /*** RTnet ***/
+			rtdm_printk(KERN_DEBUG "%s: Interrupt, status %8.8x.\n", /*** RTnet ***/
 				   dev->name, intr_status);
 
 		if (intr_status & (IntrRxDone | IntrRxErr | IntrRxDropped |
@@ -1458,14 +1460,14 @@ static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt) /*** RTnet ***/
 		if (intr_status & (IntrTxErrSummary | IntrTxDone)) {
 			if (intr_status & IntrTxErrSummary) {
 /*** RTnet ***/
-				rtos_print(KERN_ERR "%s: via_rhine_interrupt(), Transmissions error\n", dev->name);
+				rtdm_printk(KERN_ERR "%s: via_rhine_interrupt(), Transmissions error\n", dev->name);
 #if 0
 				int cnt = 20;
 				/* Avoid scavenging before Tx engine turned off */
 				while ((readw(ioaddr+ChipCmd) & CmdTxOn) && --cnt)
 					udelay(5);
 				if (debug > 2 && !cnt)
-					rtos_print(KERN_WARNING "%s: via_rhine_interrupt() " /*** RTnet ***/
+					rtdm_printk(KERN_WARNING "%s: via_rhine_interrupt() " /*** RTnet ***/
 						   "Tx engine still on.\n",
 						   dev->name);
 #endif
@@ -1481,7 +1483,7 @@ static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt) /*** RTnet ***/
 			via_rhine_error(dev, intr_status);
 
 		if (--boguscnt < 0) {
-			rtos_print(KERN_WARNING "%s: Too much work at interrupt, " /*** RTnet ***/
+			rtdm_printk(KERN_WARNING "%s: Too much work at interrupt, " /*** RTnet ***/
 				   "status=%#8.8x.\n",
 				   dev->name, intr_status);
 			break;
@@ -1489,14 +1491,13 @@ static RTOS_IRQ_HANDLER_PROTO(via_rhine_interrupt) /*** RTnet ***/
 	}
 
 	if (debug > 3)
-		rtos_print(KERN_DEBUG "%s: exiting interrupt, status=%8.8x.\n", /*** RTnet ***/
+		rtdm_printk(KERN_DEBUG "%s: exiting interrupt, status=%8.8x.\n", /*** RTnet ***/
 			   dev->name, readw(ioaddr + IntrStatus));
 
 /*** RTnet ***/
-	rtos_irq_end(&np->irq_handle);
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
 /* This routine is logically part of the interrupt handler, but isolated
@@ -1506,19 +1507,19 @@ static void via_rhine_tx(struct rtnet_device *dev) /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
 	int txstatus = 0, entry = np->dirty_tx % TX_RING_SIZE;
 
-	rtos_spin_lock (&np->lock); /*** RTnet ***/
+	rtdm_lock_get(&np->lock); /*** RTnet ***/
 
 	/* find and cleanup dirty tx descriptors */
 	while (np->dirty_tx != np->cur_tx) {
 		txstatus = le32_to_cpu(np->tx_ring[entry].tx_status);
 		if (debug > 6)
-			rtos_print(KERN_DEBUG " Tx scavenge %d status %8.8x.\n", /*** RTnet ***/
+			rtdm_printk(KERN_DEBUG " Tx scavenge %d status %8.8x.\n", /*** RTnet ***/
 				   entry, txstatus);
 		if (txstatus & DescOwn)
 			break;
 		if (txstatus & 0x8000) {
 			if (debug > 1)
-				rtos_print(KERN_DEBUG "%s: Transmit error, Tx status %8.8x.\n", /*** RTnet ***/
+				rtdm_printk(KERN_DEBUG "%s: Transmit error, Tx status %8.8x.\n", /*** RTnet ***/
 					   dev->name, txstatus);
 			np->stats.tx_errors++;
 			if (txstatus & 0x0400) np->stats.tx_carrier_errors++;
@@ -1538,7 +1539,7 @@ static void via_rhine_tx(struct rtnet_device *dev) /*** RTnet ***/
 			else
 				np->stats.collisions += txstatus & 0x0F;
 			if (debug > 6)
-				rtos_print(KERN_DEBUG "collisions: %1.1x:%1.1x\n", /*** RTnet ***/
+				rtdm_printk(KERN_DEBUG "collisions: %1.1x:%1.1x\n", /*** RTnet ***/
 					(txstatus >> 3) & 0xF,
 					txstatus & 0xF);
 			np->stats.tx_bytes += np->tx_skbuff[entry]->len;
@@ -1557,7 +1558,7 @@ static void via_rhine_tx(struct rtnet_device *dev) /*** RTnet ***/
 	if ((np->cur_tx - np->dirty_tx) < TX_QUEUE_LEN - 4)
 		rtnetif_wake_queue (dev); /*** RTnet ***/
 
-	rtos_spin_unlock (&np->lock); /*** RTnet ***/
+	rtdm_lock_put(&np->lock); /*** RTnet ***/
 }
 
 /* This routine is logically part of the interrupt handler, but isolated
@@ -1569,7 +1570,7 @@ static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** 
 	int boguscnt = np->dirty_rx + RX_RING_SIZE - np->cur_rx;
 
 	if (debug > 4) {
-		rtos_print(KERN_DEBUG "%s: via_rhine_rx(), entry %d status %8.8x.\n", /*** RTnet ***/
+		rtdm_printk(KERN_DEBUG "%s: via_rhine_rx(), entry %d status %8.8x.\n", /*** RTnet ***/
 			   dev->name, entry, le32_to_cpu(np->rx_head_desc->rx_status));
 	}
 
@@ -1580,22 +1581,22 @@ static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** 
 		int data_size = desc_status >> 16;
 
 		if (debug > 4)
-			rtos_print(KERN_DEBUG "  via_rhine_rx() status is %8.8x.\n", /*** RTnet ***/
+			rtdm_printk(KERN_DEBUG "  via_rhine_rx() status is %8.8x.\n", /*** RTnet ***/
 				   desc_status);
 		if (--boguscnt < 0)
 			break;
 		if ( (desc_status & (RxWholePkt | RxErr)) !=  RxWholePkt) {
 			if ((desc_status & RxWholePkt) !=  RxWholePkt) {
-				rtos_print(KERN_WARNING "%s: Oversized Ethernet frame spanned " /*** RTnet ***/
+				rtdm_printk(KERN_WARNING "%s: Oversized Ethernet frame spanned " /*** RTnet ***/
 					   "multiple buffers, entry %#x length %d status %8.8x!\n",
 					   dev->name, entry, data_size, desc_status);
-				rtos_print(KERN_WARNING "%s: Oversized Ethernet frame %p vs %p.\n", /*** RTnet ***/
+				rtdm_printk(KERN_WARNING "%s: Oversized Ethernet frame %p vs %p.\n", /*** RTnet ***/
 					   dev->name, np->rx_head_desc, &np->rx_ring[entry]);
 				np->stats.rx_length_errors++;
 			} else if (desc_status & RxErr) {
 				/* There was a error. */
 				if (debug > 2)
-					rtos_print(KERN_DEBUG "  via_rhine_rx() Rx error was %8.8x.\n", /*** RTnet ***/
+					rtdm_printk(KERN_DEBUG "  via_rhine_rx() Rx error was %8.8x.\n", /*** RTnet ***/
 						   desc_status);
 				np->stats.rx_errors++;
 				if (desc_status & 0x0030) np->stats.rx_length_errors++;
@@ -1603,9 +1604,9 @@ static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** 
 				if (desc_status & 0x0004) np->stats.rx_frame_errors++;
 				if (desc_status & 0x0002) {
 					/* this can also be updated outside the interrupt handler */
-					rtos_spin_lock (&np->lock); /*** RTnet ***/
+					rtdm_lock_get(&np->lock); /*** RTnet ***/
 					np->stats.rx_crc_errors++;
-					rtos_spin_unlock (&np->lock); /*** RTnet ***/
+					rtdm_lock_put(&np->lock); /*** RTnet ***/
 				}
 			}
 		} else {
@@ -1640,7 +1641,7 @@ static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** 
 /*** RTnet ***/
 				skb = np->rx_skbuff[entry];
 				if (skb == NULL) {
-					rtos_print(KERN_ERR "%s: Inconsistent Rx descriptor chain.\n", /*** RTnet ***/
+					rtdm_printk(KERN_ERR "%s: Inconsistent Rx descriptor chain.\n", /*** RTnet ***/
 						   dev->name);
 					break;
 				}
@@ -1720,7 +1721,7 @@ static void via_rhine_restart_tx(struct rtnet_device *dev) { /*** RTnet ***/
 	else {
 		/* This should never happen */
 		if (debug > 1)
-			rtos_print(KERN_WARNING "%s: via_rhine_restart_tx() " /*** RTnet ***/
+			rtdm_printk(KERN_WARNING "%s: via_rhine_restart_tx() " /*** RTnet ***/
 				   "Another error occured %8.8x.\n",
 				   dev->name, intr_status);
 	}
@@ -1732,7 +1733,7 @@ static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTne
 	struct netdev_private *np = dev->priv;
 	long ioaddr = dev->base_addr;
 
-	rtos_spin_lock (&np->lock); /*** RTnet ***/
+	rtdm_lock_get(&np->lock); /*** RTnet ***/
 
 	if (intr_status & (IntrLinkChange)) {
 		if (readb(ioaddr + MIIStatus) & 0x02) {
@@ -1742,7 +1743,7 @@ static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTne
 		} else
 			via_rhine_check_duplex(dev);
 		if (debug)
-			rtos_print(KERN_ERR "%s: MII status changed: Autonegotiation " /*** RTnet ***/
+			rtdm_printk(KERN_ERR "%s: MII status changed: Autonegotiation " /*** RTnet ***/
 				   "advertising %4.4x  partner %4.4x.\n", dev->name,
 			   mdio_read(dev, np->phys[0], MII_ADVERTISE),
 			   mdio_read(dev, np->phys[0], MII_LPA));
@@ -1754,20 +1755,20 @@ static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTne
 	}
 	if (intr_status & IntrTxAborted) {
 		if (debug > 1)
-			rtos_print(KERN_INFO "%s: Abort %8.8x, frame dropped.\n", /*** RTnet ***/
+			rtdm_printk(KERN_INFO "%s: Abort %8.8x, frame dropped.\n", /*** RTnet ***/
 				   dev->name, intr_status);
 	}
 	if (intr_status & IntrTxUnderrun) {
 		if (np->tx_thresh < 0xE0)
 			writeb(np->tx_thresh += 0x20, ioaddr + TxConfig);
 		if (debug > 1)
-			rtos_print(KERN_INFO "%s: Transmitter underrun, Tx " /*** RTnet ***/
+			rtdm_printk(KERN_INFO "%s: Transmitter underrun, Tx " /*** RTnet ***/
 				   "threshold now %2.2x.\n",
 				   dev->name, np->tx_thresh);
 	}
 	if (intr_status & IntrTxDescRace) {
 		if (debug > 2)
-			rtos_print(KERN_INFO "%s: Tx descriptor write-back race.\n", /*** RTnet ***/
+			rtdm_printk(KERN_INFO "%s: Tx descriptor write-back race.\n", /*** RTnet ***/
 				   dev->name);
 	}
 	if ((intr_status & IntrTxError) && ~( IntrTxAborted | IntrTxUnderrun |
@@ -1776,7 +1777,7 @@ static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTne
 			writeb(np->tx_thresh += 0x20, ioaddr + TxConfig);
 		}
 		if (debug > 1)
-			rtos_print(KERN_INFO "%s: Unspecified error. Tx " /*** RTnet ***/
+			rtdm_printk(KERN_INFO "%s: Unspecified error. Tx " /*** RTnet ***/
 				"threshold now %2.2x.\n",
 				dev->name, np->tx_thresh);
 	}
@@ -1788,11 +1789,11 @@ static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTne
  						 IntrTxError | IntrTxAborted | IntrNormalSummary |
 						 IntrTxDescRace )) {
 		if (debug > 1)
-			rtos_print(KERN_ERR "%s: Something Wicked happened! %8.8x.\n", /*** RTnet ***/
+			rtdm_printk(KERN_ERR "%s: Something Wicked happened! %8.8x.\n", /*** RTnet ***/
 				   dev->name, intr_status);
 	}
 
-	rtos_spin_unlock (&np->lock); /*** RTnet ***/
+	rtdm_lock_put(&np->lock); /*** RTnet ***/
 }
 
 /*** RTnet ***
@@ -1962,18 +1963,18 @@ static int via_rhine_close(struct rtnet_device *dev) /*** RTnet ***/
 	long ioaddr = dev->base_addr;
 	struct netdev_private *np = dev->priv;
 	int i; /*** RTnet ***/
-	unsigned long flags;
+	rtdm_lockctx_t context;
 
 /*** RTnet ***
 	del_timer_sync(&np->timer);
  *** RTnet ***/
 
-	rtos_spin_lock_irqsave(&np->lock, flags); /*** RTnet ***/
+	rtdm_lock_get_irqsave(&np->lock, context); /*** RTnet ***/
 
 	rtnetif_stop_queue(dev); /*** RTnet ***/
 
 	if (debug > 1)
-		rtos_print(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n", /*** RTnet ***/
+		rtdm_printk(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n", /*** RTnet ***/
 			   dev->name, readw(ioaddr + ChipCmd));
 
 	/* Switch to loopback mode to avoid hardware races. */
@@ -1985,10 +1986,10 @@ static int via_rhine_close(struct rtnet_device *dev) /*** RTnet ***/
 	/* Stop the chip's Tx and Rx processes. */
 	writew(CmdStop, ioaddr + ChipCmd);
 
-	rtos_spin_unlock_irqrestore(&np->lock, flags); /*** RTnet ***/
+	rtdm_lock_put_irqrestore(&np->lock, context); /*** RTnet ***/
 
 /*** RTnet ***/
-	if ( (i=rtos_irq_free(&np->irq_handle))<0 )
+	if ( (i=rtdm_irq_free(&np->irq_handle))<0 )
 		return i;
 
 	rt_stack_disconnect(dev);

@@ -503,8 +503,9 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 
 	RTNET_MOD_INC_USE_COUNT;
 
-	if ((retval = /*RTnet*/rtos_irq_request(&tp->irq_handle, rtdev->irq,
-	                                        tulip_interrupt, rtdev))) {
+	if ((retval = /*RTnet*/rtdm_irq_request(&tp->irq_handle, rtdev->irq,
+	                                        tulip_interrupt, 0, "rt_tulip",
+	                                        rtdev))) {
 		printk("%s: Unable to install ISR for IRQ %d\n",
 			  rtdev->name,rtdev->irq);
 		RTNET_MOD_DEC_USE_COUNT;
@@ -517,7 +518,7 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 
 	tulip_up (rtdev);
 
-	rtos_irq_enable(&tp->irq_handle);
+	rtdm_irq_enable(&tp->irq_handle);
 
 	rtnetif_start_queue (rtdev);
 
@@ -696,16 +697,17 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	u32 flag;
 	dma_addr_t mapping;
 	/*RTnet*/
-	unsigned long flags;
+	rtdm_lockctx_t context;
 
-	rtos_spin_lock_irqsave(&tp->lock, flags);
+
+	rtdm_lock_get_irqsave(&tp->lock, context);
 
 	/* TODO: move to rtdev_xmit, use queue */
 	if (rtnetif_queue_stopped(rtdev)) {
 		dev_kfree_rtskb(skb);
 		tp->stats.tx_dropped++;
 
-		rtos_spin_unlock_irqrestore(&tp->lock, flags);
+		rtdm_lock_put_irqrestore(&tp->lock, context);
 		return 0;
 	}
 	/*RTnet*/
@@ -739,7 +741,7 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	/*RTnet*/
 	/* get and patch time stamp just before the transmission */
 	if (skb->xmit_stamp)
-		*skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+		*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 	/*RTnet*/
 
 	wmb();
@@ -750,7 +752,7 @@ tulip_start_xmit(struct /*RTnet*/rtskb *skb, /*RTnet*/struct rtnet_device *rtdev
 	outl(0, rtdev->base_addr + CSR1);
 
 	/*RTnet*/
-	rtos_spin_unlock_irqrestore(&tp->lock, flags);
+	rtdm_lock_put_irqrestore(&tp->lock, context);
 	/*RTnet*/
 
 	return 0;
@@ -799,8 +801,8 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 
 	/*RTnet*/ //MUST_REMOVE_del_timer_sync (&tp->timer);
 
-	rtos_irq_disable(&tp->irq_handle);
-	rtos_spin_lock(&tp->lock); /* sync with IRQ handler on other cpu -JK- */
+	rtdm_irq_disable(&tp->irq_handle);
+	rtdm_lock_get(&tp->lock); /* sync with IRQ handler on other cpu -JK- */
 
 	/* Disable interrupts by clearing the interrupt mask. */
 	outl (0x00000000, ioaddr + CSR7);
@@ -821,7 +823,7 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 	if (inl (ioaddr + CSR6) != 0xffffffff)
 		tp->stats.rx_missed_errors += inl (ioaddr + CSR8) & 0xffff;
 
-	rtos_spin_unlock(&tp->lock);
+	rtdm_lock_put(&tp->lock);
 
 	init_timer(&tp->timer);
 	tp->timer.data = (unsigned long)rtdev;
@@ -848,7 +850,7 @@ static int tulip_close (/*RTnet*/struct rtnet_device *rtdev)
 		printk(KERN_DEBUG "%s: Shutting down ethercard, status was %2.2x.\n",
 			rtdev->name, inl (ioaddr + CSR5));
 
-	rtos_irq_free(&tp->irq_handle);
+	rtdm_irq_free(&tp->irq_handle);
 
 	/* Free all the skbuffs in the Rx queue. */
 	for (i = 0; i < RX_RING_SIZE; i++) {
@@ -1480,7 +1482,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	tp->base_addr = ioaddr;
 	tp->revision = chip_rev;
 	tp->csr0 = csr0;
-	rtos_spin_lock_init(&tp->lock);
+	rtdm_lock_init(&tp->lock);
 	spin_lock_init(&tp->mii_lock);
 	init_timer(&tp->timer);
 	tp->timer.data = (unsigned long)rtdev;
@@ -1735,12 +1737,15 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 		printk("%c%2.2X", i ? ':' : ' ', rtdev->dev_addr[i]);
 	printk(", IRQ %d.\n", irq);
 
-        if (tp->chip_id == PNIC2)
+/*RTnet
+	if (tp->chip_id == PNIC2)
 		tp->link_change = pnic2_lnk_change;
 	else if ((tp->flags & HAS_NWAY)  || tp->chip_id == DC21041)
 		tp->link_change = t21142_lnk_change;
 	else if (tp->flags & HAS_PNICNWAY)
 		tp->link_change = pnic_lnk_change;
+ *RTnet*/
+ tp->link_change = NULL;
 
 	/* Reset the xcvr interface and turn on heartbeat. */
 	switch (chip_idx) {

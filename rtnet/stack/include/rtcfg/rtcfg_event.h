@@ -60,10 +60,10 @@ struct rtcfg_device {
     u32                             other_stations;
     u32                             stations_found;
     u32                             stations_ready;
-    rtos_res_lock_t                 dev_lock;
+    rtdm_mutex_t                    dev_mutex;
     struct list_head                event_calls;
-    rtos_spinlock_t                 event_calls_lock;
-    rtos_task_t                     timer_task;
+    rtdm_lock_t                     event_calls_lock;
+    rtdm_task_t                     timer_task;
     unsigned int                    flags;
     unsigned int                    burstrate;
 #ifdef CONFIG_PROC_FS

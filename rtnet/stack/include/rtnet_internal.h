@@ -36,7 +36,7 @@
 #define RTNET_ASSERT(expr, func) \
     if (!(expr)) \
     { \
-        rtos_print("Assertion failed! %s:%s:%d %s\n", \
+        rtdm_printk("Assertion failed! %s:%s:%d %s\n", \
         __FILE__, __FUNCTION__, __LINE__, (#expr)); \
         func \
     }
@@ -47,7 +47,7 @@
 /* some configurables */
 
 #define RTNET_DEF_STACK_PRIORITY \
-    RTOS_HIGHEST_RT_PRIORITY + RTOS_LOWER_PRIORITY
+    RTDM_TASK_HIGHEST_PRIORITY + RTDM_TASK_LOWER_PRIORITY
 /*#define RTNET_RTDEV_PRIORITY        5*/
 #define DROPPING_RTSKB              20
 
@@ -61,9 +61,9 @@ struct rtnet_device;
 
 
 struct rtnet_mgr {
-    rtos_task_t     task;
+    rtdm_task_t     task;
 /*    MBX     mbx;*/
-    rtos_event_t    event;
+    rtdm_event_t    event;
 };
 
 

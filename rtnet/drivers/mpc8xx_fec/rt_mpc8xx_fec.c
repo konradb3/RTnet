@@ -81,10 +81,10 @@ MODULE_PARM(rx_pool_size, "i");
 MODULE_PARM_DESC(rx_pool_size, "Receive buffer pool size");
 
 
-#define printk(fmt,args...)	rtos_print ("RTnet: " fmt ,##args)
+#define printk(fmt,args...)	rtdm_printk ("RTnet: " fmt ,##args)
 
 #if 0
-#define RT_DEBUG(fmt,args...)	rtos_print (fmt ,##args)
+#define RT_DEBUG(fmt,args...)	rtdm_printk (fmt ,##args)
 #else
 #define RT_DEBUG(fmt,args...)
 #endif
@@ -198,8 +198,8 @@ struct fec_enet_private {
 
 	struct	net_device_stats stats;
 	uint	tx_full;
-	rtos_spinlock_t lock;
-	rtos_irq_t irq_handle;
+	rtdm_lock_t lock;
+	rtdm_irq_t irq_handle;
 
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 	uint	phy_id;
@@ -226,8 +226,8 @@ struct fec_enet_private {
 static int  fec_enet_open(struct rtnet_device *rtev);
 static int  fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void fec_enet_tx(struct rtnet_device *rtdev);
-static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt);
+static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static int fec_enet_interrupt(rtdm_irq_t *irq_handle);
 static int  fec_enet_close(struct rtnet_device *dev);
 static void fec_restart(struct rtnet_device *rtdev, int duplex);
 static void fec_stop(struct rtnet_device *rtdev);
@@ -333,8 +333,8 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	struct fec_enet_private *fep;
 	volatile fec_t	*fecp;
 	volatile cbd_t	*bdp;
-	unsigned long	flags;
-	rtos_time_t	time;
+	rtdm_lockctx_t	context;
+
 
 	RT_DEBUG(__FUNCTION__": ...\n");
 
@@ -354,7 +354,7 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		/* Ooops.  All transmit buffers are full.  Bail out.
 		 * This should not happen, since dev->tbusy should be set.
 		 */
-		printk("%s: tx queue full!.\n", rtdev->name);
+		rtdm_printk("%s: tx queue full!.\n", rtdev->name);
 		return 1;
 	}
 #endif
@@ -376,18 +376,15 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	fep->skb_cur = (fep->skb_cur+1) & TX_RING_MOD_MASK;
 
 #if 0
-	rtos_irq_disable(&fep->irq_handle);
-	rtos_spin_lock(&fep->lock);
+	rtdm_irq_disable(&fep->irq_handle);
+	rtdm_lock_get(&fep->lock);
 #else
-	rtos_spin_lock_irqsave(&fep->lock, flags);
+	rtdm_lock_get_irqsave(&fep->lock, context);
 #endif
 
 	/* Get and patch time stamp just before the transmission */
-	if (skb->xmit_stamp) {
-		rtos_get_time(&time);
-		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-					       *skb->xmit_stamp);
-	}
+	if (skb->xmit_stamp)
+		*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 	
 	/* Push the data cache so the CPM does not get stale memory
 	 * data.
@@ -423,10 +420,10 @@ fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	fep->cur_tx = (cbd_t *)bdp;
 
 #if 0
-	rtos_spin_unlock(&fep->lock);
-	rtos_irq_enable(&fep->irq_handle);
+	rtdm_lock_put(&fep->lock);
+	rtdm_irq_enable(&fep->irq_handle);
 #else
-	rtos_spin_unlock_irqrestore(&fep->lock, flags);
+	rtdm_lock_put_irqrestore(&fep->lock, context);
 #endif
 
 	return 0;
@@ -488,16 +485,15 @@ fec_timeout(struct net_device *dev)
 /* The interrupt handler.
  * This is called from the MPC core interrupt.
  */
-static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt)
+static int fec_enet_interrupt(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct	fec_enet_private *fep = rtdev->priv;
 	int packets = 0;
 	volatile fec_t	*fecp;
 	uint	int_events;
-	rtos_time_t time_stamp;
+	nanosecs_t time_stamp = rtdm_clock_read();
 
-	rtos_get_time(&time_stamp);
 
 	fecp = (volatile fec_t*)rtdev->base_addr;
 
@@ -507,7 +503,7 @@ static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt)
 		fecp->fec_ievent = int_events;
 		if ((int_events & (FEC_ENET_HBERR | FEC_ENET_BABR |
 				   FEC_ENET_BABT | FEC_ENET_EBERR)) != 0) {
-			printk("FEC ERROR %x\n", int_events);
+			rtdm_printk("FEC ERROR %x\n", int_events);
 		}
 
 		/* Handle receive event in its own function.
@@ -528,7 +524,7 @@ static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt)
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 			fec_enet_mii(dev);
 #else
-		printk("%s[%d] %s: unexpected FEC_ENET_MII event\n",
+		rtdm_printk("%s[%d] %s: unexpected FEC_ENET_MII event\n",
 			__FILE__,__LINE__,__FUNCTION__);
 #endif	/* CONFIG_RTAI_RTNET_USE_MDIO */
 		}
@@ -537,8 +533,7 @@ static RTOS_IRQ_HANDLER_PROTO(fec_enet_interrupt)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_end(&fep->irq_handle);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
 
@@ -548,7 +543,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
 	struct rtskb *skb;
 	struct	fec_enet_private *fep = rtdev->priv;
 	volatile cbd_t	*bdp;
-	rtos_spin_lock(&fep->lock);
+	rtdm_lock_get(&fep->lock);
 	bdp = fep->dirty_tx;
 
 	while ((bdp->cbd_sc&BD_ENET_TX_READY) == 0) {
@@ -576,7 +571,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
 
 #ifndef final_version
 		if (bdp->cbd_sc & BD_ENET_TX_READY)
-			printk("HEY! Enet xmit interrupt and TX_READY.\n");
+			rtdm_printk("HEY! Enet xmit interrupt and TX_READY.\n");
 #endif
 		/* Deferred means some collisions occurred during transmit,
 		 * but we eventually sent the packet OK.
@@ -587,7 +582,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
 		/* Free the sk buffer associated with this last transmit.
 		 */
 #if 0
-		printk("TXI: %x %x %x\n", bdp, skb, fep->skb_dirty);
+		rtdm_printk("TXI: %x %x %x\n", bdp, skb, fep->skb_dirty);
 #endif
 		dev_kfree_rtskb(skb);
 		fep->tx_skbuff[fep->skb_dirty] = NULL;
@@ -610,7 +605,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
 		}
 	}
 	fep->dirty_tx = (cbd_t *)bdp;
-	rtos_spin_unlock(&fep->lock);
+	rtdm_lock_put(&fep->lock);
 }
 
 
@@ -620,7 +615,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
  * effectively tossing the packet.
  */
 static void
-fec_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp)
+fec_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
 {
 	struct	fec_enet_private *fep;
 	volatile fec_t	*fecp;
@@ -644,7 +639,7 @@ while (!(bdp->cbd_sc & BD_ENET_RX_EMPTY)) {
 	 * the last indicator should be set.
 	 */
 	if ((bdp->cbd_sc & BD_ENET_RX_LAST) == 0)
-		printk("FEC ENET: rcv is not +last\n");
+		rtdm_printk("FEC ENET: rcv is not +last\n");
 #endif
 
 	/* Check for errors. */
@@ -688,14 +683,14 @@ while (!(bdp->cbd_sc & BD_ENET_RX_EMPTY)) {
 	skb = dev_alloc_rtskb(pkt_len-4, &fep->skb_pool);
 
 	if (skb == NULL) {
-		printk("%s: Memory squeeze, dropping packet.\n", rtdev->name);
+		rtdm_printk("%s: Memory squeeze, dropping packet.\n", rtdev->name);
 		fep->stats.rx_dropped++;
 	} else {
 		skb->rtdev = rtdev;
 		rtskb_put(skb,pkt_len-4); /* Make room */
 		memcpy(skb->data, data, pkt_len-4);
 		skb->protocol=rt_eth_type_trans(skb,rtdev);
-		memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+		skb->time_stamp = *time_stamp;
 		rtnetif_rx(skb);
 		(*packets)++;
 	}
@@ -2052,7 +2047,7 @@ int __init fec_enet_init(void)
 		}
 	}
 
-	rtos_spin_lock_init(&fep->lock);
+	rtdm_lock_init(&fep->lock);
 
 	/* Set the last buffer to wrap.
 	*/
@@ -2062,13 +2057,13 @@ int __init fec_enet_init(void)
 	/* Install our interrupt handler.
 	*/
 	rt_stack_connect(rtdev, &STACK_manager);
-	if ((i = rtos_irq_request(&fep->irq_handle, FEC_INTERRUPT,
-				  fec_enet_interrupt, rtdev))) {
+	if ((i = rtdm_irq_request(&fep->irq_handle, FEC_INTERRUPT,
+				  fec_enet_interrupt, 0, "rt_mpc8xx_fec", rtdev))) {
 		printk(KERN_ERR "Couldn't request IRQ %d\n", rtdev->irq);
 		rtdev_free(rtdev);
 		return i;
 	}
-	rtos_irq_enable(&fep->irq_handle);
+	rtdm_irq_enable(&fep->irq_handle);
 
 	rtdev->base_addr = (unsigned long)fecp;
 
@@ -2113,16 +2108,16 @@ int __init fec_enet_init(void)
 	if (!rx_pool_size)
 		rx_pool_size = RX_RING_SIZE * 2;
 	if (rtskb_pool_init(&fep->skb_pool, rx_pool_size) < rx_pool_size) {
-		rtos_irq_disable(&fep->irq_handle);
-		rtos_irq_free(&fep->irq_handle);
+		rtdm_irq_disable(&fep->irq_handle);
+		rtdm_irq_free(&fep->irq_handle);
 		rtskb_pool_release(&fep->skb_pool);
 		rtdev_free(rtdev);
 		return -ENOMEM;
 	}
 
 	if ((i = rt_register_rtnetdev(rtdev))) {
-		rtos_irq_disable(&fep->irq_handle);
-		rtos_irq_free(&fep->irq_handle);
+		rtdm_irq_disable(&fep->irq_handle);
+		rtdm_irq_free(&fep->irq_handle);
 		rtskb_pool_release(&fep->skb_pool);
 		rtdev_free(rtdev);
 		return i;
@@ -2427,8 +2422,8 @@ static void __exit fec_enet_cleanup(void)
 	struct fec_enet_private *fep = rtdev->priv;
 
 	if (rtdev) {
-		rtos_irq_disable(&fep->irq_handle);
-		rtos_irq_free(&fep->irq_handle);
+		rtdm_irq_disable(&fep->irq_handle);
+		rtdm_irq_free(&fep->irq_handle);
 
 		consistent_free(fep->rx_bd_base);
 

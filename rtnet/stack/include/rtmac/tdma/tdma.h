@@ -118,10 +118,10 @@ struct tdma_priv {
                                           ) & (ALIGN_RTOS_TASK-1))
                                          ) & (ALIGN_RTOS_TASK-1)];
 #endif
-    rtos_task_t                 worker_task;
-    rtos_event_t                worker_wakeup;
-    rtos_event_t                xmit_event;
-    rtos_event_t                sync_event;
+    rtdm_task_t                 worker_task;
+    rtdm_event_t                worker_wakeup;
+    rtdm_event_t                xmit_event;
+    rtdm_event_t                sync_event;
 
     unsigned long               flags;
     unsigned int                cal_rounds;
@@ -141,7 +141,7 @@ struct tdma_priv {
     struct rt_proc_call         *calibration_call;
     unsigned char               master_hw_addr[MAX_ADDR_LEN];
 
-    rtos_spinlock_t             lock;
+    rtdm_lock_t                 lock;
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
     struct rtskb_queue          cal_rtskb_pool;
@@ -159,10 +159,10 @@ extern struct rtmac_disc        tdma_disc;
 
 #define print_jobs()            do { \
     struct tdma_job *entry; \
-    rtos_print("%s:%d - ", __FUNCTION__, __LINE__); \
+    rtdm_printk("%s:%d - ", __FUNCTION__, __LINE__); \
     list_for_each_entry(entry, &tdma->first_job->entry, entry) \
-        rtos_print("%d ", entry->id); \
-    rtos_print("\n"); \
+        rtdm_printk("%d ", entry->id); \
+    rtdm_printk("\n"); \
 } while (0)
 
 #endif /* __TDMA_H_ */

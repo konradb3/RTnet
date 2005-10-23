@@ -51,7 +51,7 @@ int __init rtcfg_init(void)
 
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
     if (start_timer)
-        rtos_timer_start_oneshot();
+        rtos_timer_start();
 #endif
 
     ret = rtcfg_init_ioctls();

@@ -230,7 +230,7 @@ struct rtskb {
 struct rtskb_queue {
     struct rtskb        *first;
     struct rtskb        *last;
-    rtos_spinlock_t     lock;
+    rtdm_lock_t         lock;
 #ifdef CONFIG_RTNET_CHECKED
     int                 pool_balance;
 #endif
@@ -240,7 +240,7 @@ struct rtskb_queue {
 #define QUEUE_MIN_PRIO          31
 
 struct rtskb_prio_queue {
-    rtos_spinlock_t     lock;
+    rtdm_lock_t         lock;
     unsigned long       usage;  /* bit array encoding non-empty sub-queues */
     struct rtskb_queue  queue[QUEUE_MIN_PRIO+1];
 };
@@ -289,7 +289,7 @@ extern void kfree_rtskb(struct rtskb *skb);
  */
 static inline void rtskb_queue_init(struct rtskb_queue *queue)
 {
-    rtos_spin_lock_init(&queue->lock);
+    rtdm_lock_init(&queue->lock);
     queue->first = NULL;
     queue->last  = NULL;
 }
@@ -301,7 +301,7 @@ static inline void rtskb_queue_init(struct rtskb_queue *queue)
 static inline void rtskb_prio_queue_init(struct rtskb_prio_queue *prioqueue)
 {
     memset(prioqueue, 0, sizeof(struct rtskb_prio_queue));
-    rtos_spin_lock_init(&prioqueue->lock);
+    rtdm_lock_init(&prioqueue->lock);
 }
 
 /***
@@ -346,11 +346,11 @@ static inline void __rtskb_queue_head(struct rtskb_queue *queue,
  */
 static inline void rtskb_queue_head(struct rtskb_queue *queue, struct rtskb *skb)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
 
-    rtos_spin_lock_irqsave(&queue->lock, flags);
+    rtdm_lock_get_irqsave(&queue->lock, context);
     __rtskb_queue_head(queue, skb);
-    rtos_spin_unlock_irqrestore(&queue->lock, flags);
+    rtdm_lock_put_irqrestore(&queue->lock, context);
 }
 
 /***
@@ -379,11 +379,11 @@ static inline void __rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
 static inline void rtskb_prio_queue_head(struct rtskb_prio_queue *prioqueue,
                                          struct rtskb *skb)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
 
-    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
+    rtdm_lock_get_irqsave(&prioqueue->lock, context);
     __rtskb_prio_queue_head(prioqueue, skb);
-    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
+    rtdm_lock_put_irqrestore(&prioqueue->lock, context);
 }
 
 /***
@@ -413,11 +413,11 @@ static inline void __rtskb_queue_tail(struct rtskb_queue *queue,
 static inline void rtskb_queue_tail(struct rtskb_queue *queue,
                                     struct rtskb *skb)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
 
-    rtos_spin_lock_irqsave(&queue->lock, flags);
+    rtdm_lock_get_irqsave(&queue->lock, context);
     __rtskb_queue_tail(queue, skb);
-    rtos_spin_unlock_irqrestore(&queue->lock, flags);
+    rtdm_lock_put_irqrestore(&queue->lock, context);
 }
 
 /***
@@ -446,11 +446,11 @@ static inline void __rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
 static inline void rtskb_prio_queue_tail(struct rtskb_prio_queue *prioqueue,
                                          struct rtskb *skb)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
 
-    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
+    rtdm_lock_get_irqsave(&prioqueue->lock, context);
     __rtskb_prio_queue_tail(prioqueue, skb);
-    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
+    rtdm_lock_put_irqrestore(&prioqueue->lock, context);
 }
 
 /***
@@ -475,12 +475,12 @@ static inline struct rtskb *__rtskb_dequeue(struct rtskb_queue *queue)
  */
 static inline struct rtskb *rtskb_dequeue(struct rtskb_queue *queue)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
     struct rtskb *result;
 
-    rtos_spin_lock_irqsave(&queue->lock, flags);
+    rtdm_lock_get_irqsave(&queue->lock, context);
     result = __rtskb_dequeue(queue);
-    rtos_spin_unlock_irqrestore(&queue->lock, flags);
+    rtdm_lock_put_irqrestore(&queue->lock, context);
 
     return result;
 }
@@ -516,12 +516,12 @@ static inline struct rtskb *
 static inline struct rtskb *
     rtskb_prio_dequeue(struct rtskb_prio_queue *prioqueue)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
     struct rtskb *result;
 
-    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
+    rtdm_lock_get_irqsave(&prioqueue->lock, context);
     result = __rtskb_prio_dequeue(prioqueue);
-    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
+    rtdm_lock_put_irqrestore(&prioqueue->lock, context);
 
     return result;
 }
@@ -552,12 +552,12 @@ static inline struct rtskb *__rtskb_dequeue_chain(struct rtskb_queue *queue)
  */
 static inline struct rtskb *rtskb_dequeue_chain(struct rtskb_queue *queue)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
     struct rtskb *result;
 
-    rtos_spin_lock_irqsave(&queue->lock, flags);
+    rtdm_lock_get_irqsave(&queue->lock, context);
     result = __rtskb_dequeue_chain(queue);
-    rtos_spin_unlock_irqrestore(&queue->lock, flags);
+    rtdm_lock_put_irqrestore(&queue->lock, context);
 
     return result;
 }
@@ -570,12 +570,12 @@ static inline struct rtskb *rtskb_dequeue_chain(struct rtskb_queue *queue)
 static inline
     struct rtskb *rtskb_prio_dequeue_chain(struct rtskb_prio_queue *prioqueue)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
     int prio;
     struct rtskb *result = NULL;
     struct rtskb_queue *sub_queue;
 
-    rtos_spin_lock_irqsave(&prioqueue->lock, flags);
+    rtdm_lock_get_irqsave(&prioqueue->lock, context);
     if (prioqueue->usage) {
         prio      = ffz(~prioqueue->usage);
         sub_queue = &prioqueue->queue[prio];
@@ -583,7 +583,7 @@ static inline
         if (rtskb_queue_empty(sub_queue))
             __change_bit(prio, &prioqueue->usage);
     }
-    rtos_spin_unlock_irqrestore(&prioqueue->lock, flags);
+    rtdm_lock_put_irqrestore(&prioqueue->lock, context);
 
     return result;
 }
@@ -697,13 +697,13 @@ extern void __rtskb_pool_release_rt(struct rtskb_queue *pool);
 #define rtskb_pool_release(pool)                            \
     do {                                                    \
         RTNET_ASSERT((pool)->pool_balance == 0,             \
-                     rtos_print("pool: %p\n", (pool)););    \
+                     rtdm_printk("pool: %p\n", (pool)););   \
         __rtskb_pool_release((pool));                       \
     } while (0)
 #define rtskb_pool_release_rt(pool)                         \
     do {                                                    \
         RTNET_ASSERT((pool)->pool_balance == 0,             \
-                     rtos_print("pool: %p\n", (pool)););    \
+                     rtdm_printk("pool: %p\n", (pool)););   \
         __rtskb_pool_release_rt((pool));                    \
     } while (0)
 #else
@@ -732,7 +732,7 @@ extern void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to);
 
 #ifdef CONFIG_RTNET_ADDON_RTCAP
 
-extern rtos_spinlock_t rtcap_lock;
+extern rtdm_lock_t rtcap_lock;
 extern void (*rtcap_handler)(struct rtskb *skb);
 
 static inline void rtcap_mark_incoming(struct rtskb *skb)
@@ -743,21 +743,21 @@ static inline void rtcap_mark_incoming(struct rtskb *skb)
 
 static inline void rtcap_report_incoming(struct rtskb *skb)
 {
-    unsigned long flags;
+    rtdm_lockctx_t context;
 
 
-    rtos_spin_lock_irqsave(&rtcap_lock, flags);
+    rtdm_lock_get_irqsave(&rtcap_lock, context);
     if (rtcap_handler != NULL)
         rtcap_handler(skb);
 
-    rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+    rtdm_lock_put_irqrestore(&rtcap_lock, context);
 }
 
 static inline void rtcap_mark_rtmac_enqueue(struct rtskb *skb)
 {
     /* rtskb start and length are probably not valid yet */
     skb->cap_flags |= RTSKB_CAP_RTMAC_STAMP;
-    skb->cap_rtmac_stamp = rtos_get_time();
+    skb->cap_rtmac_stamp = rtdm_clock_read();
 }
 
 #else /* ifndef CONFIG_RTNET_ADDON_RTCAP */

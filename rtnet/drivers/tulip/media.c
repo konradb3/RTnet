@@ -189,7 +189,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 		switch (mleaf->type) {
 		case 0:					/* 21140 non-MII xcvr. */
 			if (tulip_debug > 1)
-				/*RTnet*/rtos_print(KERN_DEBUG "%s: Using a 21140 non-MII transceiver"
+				/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Using a 21140 non-MII transceiver"
 					   " with control setting %2.2x.\n",
 					   rtdev->name, p[1]);
 			rtdev->if_port = p[0];
@@ -212,13 +212,13 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 				struct medialeaf *rleaf = &mtable->mleaf[mtable->has_reset];
 				unsigned char *rst = rleaf->leafdata;
 				if (tulip_debug > 1)
-					/*RTnet*/rtos_print(KERN_DEBUG "%s: Resetting the transceiver.\n",
+					/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Resetting the transceiver.\n",
 						   rtdev->name);
 				for (i = 0; i < rst[0]; i++)
 					outl(get_u16(rst + 1 + (i<<1)) << 16, ioaddr + CSR15);
 			}
 			if (tulip_debug > 1)
-				/*RTnet*/rtos_print(KERN_DEBUG "%s: 21143 non-MII %s transceiver control "
+				/*RTnet*/rtdm_printk(KERN_DEBUG "%s: 21143 non-MII %s transceiver control "
 					   "%4.4x/%4.4x.\n",
 					   rtdev->name, medianame[rtdev->if_port], setup[0], setup[1]);
 			if (p[0] & 0x40) {	/* SIA (CSR13-15) setup values are provided. */
@@ -247,7 +247,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 				if (startup) outl(csr13val, ioaddr + CSR13);
 			}
 			if (tulip_debug > 1)
-				/*RTnet*/rtos_print(KERN_DEBUG "%s:  Setting CSR15 to %8.8x/%8.8x.\n",
+				/*RTnet*/rtdm_printk(KERN_DEBUG "%s:  Setting CSR15 to %8.8x/%8.8x.\n",
 					   rtdev->name, csr15dir, csr15val);
 			if (mleaf->type == 4)
 				new_csr6 = 0x82020000 | ((setup[2] & 0x71) << 18);
@@ -292,7 +292,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 				if (tp->mii_advertise == 0)
 					tp->mii_advertise = tp->advertising[phy_num];
 				if (tulip_debug > 1)
-					/*RTnet*/rtos_print(KERN_DEBUG "%s:  Advertising %4.4x on MII %d.\n",
+					/*RTnet*/rtdm_printk(KERN_DEBUG "%s:  Advertising %4.4x on MII %d.\n",
 					       rtdev->name, tp->mii_advertise, tp->phys[phy_num]);
 				tulip_mdio_write(rtdev, tp->phys[phy_num], 4, tp->mii_advertise);
 			}
@@ -310,7 +310,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 				struct medialeaf *rleaf = &mtable->mleaf[mtable->has_reset];
 				unsigned char *rst = rleaf->leafdata;
 				if (tulip_debug > 1)
-					/*RTnet*/rtos_print(KERN_DEBUG "%s: Resetting the transceiver.\n",
+					/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Resetting the transceiver.\n",
 						   rtdev->name);
 				for (i = 0; i < rst[0]; i++)
 					outl(get_u16(rst + 1 + (i<<1)) << 16, ioaddr + CSR15);
@@ -319,18 +319,18 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 			break;
 		}
 		default:
-			/*RTnet*/rtos_print(KERN_DEBUG "%s:  Invalid media table selection %d.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s:  Invalid media table selection %d.\n",
 					   rtdev->name, mleaf->type);
 			new_csr6 = 0x020E0000;
 		}
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: Using media type %s, CSR12 is %2.2x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Using media type %s, CSR12 is %2.2x.\n",
 				   rtdev->name, medianame[rtdev->if_port],
 				   inl(ioaddr + CSR12) & 0xff);
 	} else if (tp->chip_id == DC21041) {
 		int port = rtdev->if_port <= 4 ? rtdev->if_port : 0;
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: 21041 using media %s, CSR12 is %4.4x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: 21041 using media %s, CSR12 is %4.4x.\n",
 				   rtdev->name, medianame[port == 3 ? 12: port],
 				   inl(ioaddr + CSR12));
 		outl(0x00000000, ioaddr + CSR13); /* Reset the serial interface */
@@ -342,7 +342,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 		if (startup && ! tp->medialock)
 			rtdev->if_port = tp->mii_cnt ? 11 : 0;
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: PNIC PHY status is %3.3x, media %s.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: PNIC PHY status is %3.3x, media %s.\n",
 				   rtdev->name, inl(ioaddr + 0xB8), medianame[rtdev->if_port]);
 		if (tp->mii_cnt) {
 			new_csr6 = 0x810C0000;
@@ -368,7 +368,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 		/* Turn on the xcvr interface. */
 		int csr12 = inl(ioaddr + CSR12);
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: 21040 media type is %s, CSR12 is %2.2x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: 21040 media type is %s, CSR12 is %2.2x.\n",
 				   rtdev->name, medianame[rtdev->if_port], csr12);
 		if (tulip_media_cap[rtdev->if_port] & MediaAlwaysFD)
 			tp->full_duplex = 1;
@@ -394,7 +394,7 @@ void tulip_select_media(struct rtnet_device *rtdev, int startup)
 		} else
 			new_csr6 = 0x03860000;
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: No media description table, assuming "
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: No media description table, assuming "
 				   "%s transceiver, CSR12 %2.2x.\n",
 				   rtdev->name, medianame[rtdev->if_port],
 				   inl(ioaddr + CSR12));
@@ -418,7 +418,7 @@ int tulip_check_duplex(struct rtnet_device *rtdev)
 	bmsr = tulip_mdio_read(rtdev, tp->phys[0], MII_BMSR);
 	lpa = tulip_mdio_read(rtdev, tp->phys[0], MII_LPA);
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_INFO "%s: MII status %4.4x, Link partner report "
+		/*RTnet*/rtdm_printk(KERN_INFO "%s: MII status %4.4x, Link partner report "
 			   "%4.4x.\n", rtdev->name, bmsr, lpa);
 	if (bmsr == 0xffff)
 		return -2;
@@ -426,7 +426,7 @@ int tulip_check_duplex(struct rtnet_device *rtdev)
 		int new_bmsr = tulip_mdio_read(rtdev, tp->phys[0], MII_BMSR);
 		if ((new_bmsr & BMSR_LSTATUS) == 0) {
 			if (tulip_debug  > 1)
-				/*RTnet*/rtos_print(KERN_INFO "%s: No link beat on the MII interface,"
+				/*RTnet*/rtdm_printk(KERN_INFO "%s: No link beat on the MII interface,"
 					   " status %4.4x.\n", rtdev->name, new_bmsr);
 			return -1;
 		}
@@ -446,7 +446,7 @@ int tulip_check_duplex(struct rtnet_device *rtdev)
 		tulip_restart_rxtx(tp);
 
 		if (tulip_debug > 0)
-			/*RTnet*/rtos_print(KERN_INFO "%s: Setting %s-duplex based on MII"
+			/*RTnet*/rtdm_printk(KERN_INFO "%s: Setting %s-duplex based on MII"
 				   "#%d link partner capability of %4.4x.\n",
 				   rtdev->name, tp->full_duplex ? "full" : "half",
 				   tp->phys[0], lpa);
@@ -504,13 +504,13 @@ void __devinit tulip_find_mii (struct rtnet_device *rtdev, int board_idx)
 
 		tp->phys[phy_idx++] = phy;
 
-		/*RTnet*/rtos_print(KERN_INFO "tulip%d:  MII transceiver #%d "
+		/*RTnet*/rtdm_printk(KERN_INFO "tulip%d:  MII transceiver #%d "
 			"config %4.4x status %4.4x advertising %4.4x.\n",
 			board_idx, phy, mii_reg0, mii_status, mii_advert);
 
 		/* Fixup for DLink with miswired PHY. */
 		if (mii_advert != to_advert) {
-			/*RTnet*/rtos_print(KERN_DEBUG "tulip%d:  Advertising %4.4x on PHY %d,"
+			/*RTnet*/rtdm_printk(KERN_DEBUG "tulip%d:  Advertising %4.4x on PHY %d,"
 				" previously advertising %4.4x.\n",
 				board_idx, to_advert, phy, mii_advert);
 			tulip_mdio_write (rtdev, phy, 4, to_advert);
@@ -557,7 +557,7 @@ void __devinit tulip_find_mii (struct rtnet_device *rtdev, int board_idx)
 	}
 	tp->mii_cnt = phy_idx;
 	if (tp->mtable && tp->mtable->has_mii && phy_idx == 0) {
-		/*RTnet*/rtos_print(KERN_INFO "tulip%d: ***WARNING***: No MII transceiver found!\n",
+		/*RTnet*/rtdm_printk(KERN_INFO "tulip%d: ***WARNING***: No MII transceiver found!\n",
 			board_idx);
 		tp->phys[0] = 1;
 	}

@@ -3,8 +3,8 @@
  *  rtmac/rtmac_proto.c
  *
  *  rtmac - real-time networking media access control subsystem
- *  Copyright (C) 2002       Marc Kleine-Budde <kleine-budde@gmx.de>,
- *                2003, 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>,
+ *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,8 +39,8 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
     if (disc == NULL) {
 #if 0 /* switch this warning off until we control error message output */
-        /*ERROR*/rtos_print("RTmac: received RTmac packet on unattached "
-                            "device %s\n", skb->rtdev->name);
+        /*ERROR*/rtdm_printk("RTmac: received RTmac packet on unattached "
+                             "device %s\n", skb->rtdev->name);
 #endif
         goto error;
     }
@@ -49,8 +49,8 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
     rtskb_pull(skb, sizeof(struct rtmac_hdr));
 
     if (hdr->ver != RTMAC_VERSION) {
-        rtos_print("RTmac: received unsupported RTmac protocol version on "
-                   "device %s\n", skb->rtdev->name);
+        rtdm_printk("RTmac: received unsupported RTmac protocol version on "
+                    "device %s\n", skb->rtdev->name);
         goto error;
     }
 
@@ -77,7 +77,7 @@ struct rtpacket_type rtmac_packet_type = {
 void rtmac_proto_release(void)
 {
     while (rtdev_remove_pack(&rtmac_packet_type) == -EAGAIN) {
-        rtos_print("RTmac: waiting for protocol unregistration\n");
+        rtdm_printk("RTmac: waiting for protocol unregistration\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
     }

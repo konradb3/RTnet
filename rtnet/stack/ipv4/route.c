@@ -2,7 +2,7 @@
  *
  *  ipv4/route.c - real-time routing
  *
- *  Copyright (C) 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  Rewritten version of the original route by David Schleef and Ulrich Marx
  *
@@ -65,7 +65,7 @@ static struct host_route    host_routes[HOST_ROUTES];
 static struct host_route    *free_host_route;
 static int                  allocated_host_routes;
 static struct host_route    *host_table[HOST_HASH_TBL_SIZE];
-static rtos_spinlock_t      host_table_lock;
+static rtdm_lock_t          host_table_lock = RTDM_LOCK_UNLOCKED;
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 static struct net_route     net_routes[NET_ROUTES];
@@ -73,7 +73,7 @@ static struct net_route     *free_net_route;
 static int                  allocated_net_routes;
 static struct net_route     *net_table[NET_HASH_TBL_SIZE + 1];
 static unsigned int         net_hash_key_shift = NET_HASH_KEY_SHIFT;
-static rtos_spinlock_t      net_table_lock;
+static rtdm_lock_t          net_table_lock = RTDM_LOCK_UNLOCKED;
 
 MODULE_PARM(net_hash_key_shift, "i");
 MODULE_PARM_DESC(net_hash_key_shift, "destination right shift for "
@@ -131,7 +131,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
     unsigned int        key;
     unsigned int        index;
     unsigned int        i;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     int                 res;
     RTNET_PROC_PRINT_VARS_EX(80);
 
@@ -142,7 +142,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
     for (key = 0; key < HOST_HASH_TBL_SIZE; key++) {
         index = 0;
         while (1) {
-            rtos_spin_lock_irqsave(&host_table_lock, flags);
+            rtdm_lock_get_irqsave(&host_table_lock, context);
 
             entry_ptr = host_table[key];
 
@@ -150,7 +150,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
                 entry_ptr = entry_ptr->next;
 
             if (entry_ptr == NULL) {
-                rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+                rtdm_lock_put_irqrestore(&host_table_lock, context);
                 break;
             }
 
@@ -158,7 +158,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
                    sizeof(struct dest_route));
             rtdev_reference(dest_host.rtdev);
 
-            rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+            rtdm_lock_put_irqrestore(&host_table_lock, context);
 
             res = RTNET_PROC_PRINT_EX("%02X\t%u.%u.%u.%-3u\t"
                     "%02X:%02X:%02X:%02X:%02X:%02X\t%s\n",
@@ -192,7 +192,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
     unsigned int        key;
     unsigned int        index;
     unsigned int        i;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     RTNET_PROC_PRINT_VARS_EX(80);
 
 
@@ -202,7 +202,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
     for (key = 0; key < NET_HASH_TBL_SIZE + 1; key++) {
         index = 0;
         while (1) {
-            rtos_spin_lock_irqsave(&net_table_lock, flags);
+            rtdm_lock_get_irqsave(&net_table_lock, context);
 
             entry_ptr = net_table[key];
 
@@ -210,7 +210,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
                 entry_ptr = entry_ptr->next;
 
             if (entry_ptr == NULL) {
-                rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+                rtdm_lock_put_irqrestore(&net_table_lock, context);
                 break;
             }
 
@@ -218,7 +218,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
             dest_net_mask = entry_ptr->dest_net_mask;
             gw_ip         = entry_ptr->gw_ip;
 
-            rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+            rtdm_lock_put_irqrestore(&net_table_lock, context);
 
             if (key < NET_HASH_TBL_SIZE) {
                 if (!RTNET_PROC_PRINT_EX("%02X\t%u.%u.%u.%-3u\t%u.%u.%u.%-3u"
@@ -317,18 +317,18 @@ static void rt_route_proc_unregister(void)
  */
 static inline struct host_route *rt_alloc_host_route(void)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct host_route   *rt;
 
 
-    rtos_spin_lock_irqsave(&host_table_lock, flags);
+    rtdm_lock_get_irqsave(&host_table_lock, context);
 
     if ((rt = free_host_route) != NULL) {
         free_host_route = rt->next;
         allocated_host_routes++;
     }
 
-    rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+    rtdm_lock_put_irqrestore(&host_table_lock, context);
 
     return rt;
 }
@@ -355,21 +355,21 @@ static inline void rt_free_host_route(struct host_route *rt)
 int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
                          struct rtnet_device *rtdev)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct host_route   *new_route;
     struct host_route   *rt;
     unsigned int        key;
 
 
-    rtos_spin_lock_irqsave(&rtdev->rtdev_lock, flags);
+    rtdm_lock_get_irqsave(&rtdev->rtdev_lock, context);
 
     if ((!test_bit(PRIV_FLAG_UP, &rtdev->priv_flags) ||
         test_and_set_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags))) {
-        rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
+        rtdm_lock_put_irqrestore(&rtdev->rtdev_lock, context);
         return -EBUSY;
     }
 
-    rtos_spin_unlock_irqrestore(&rtdev->rtdev_lock, flags);
+    rtdm_lock_put_irqrestore(&rtdev->rtdev_lock, context);
 
     if ((new_route = rt_alloc_host_route()) != NULL) {
         new_route->dest_host.ip    = addr;
@@ -379,7 +379,7 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
 
     key = ntohl(addr) & HOST_HASH_KEY_MASK;
 
-    rtos_spin_lock_irqsave(&host_table_lock, flags);
+    rtdm_lock_get_irqsave(&host_table_lock, context);
 
     rt = host_table[key];
     while (rt != NULL) {
@@ -390,7 +390,7 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
             if (new_route)
                 rt_free_host_route(new_route);
 
-            rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+            rtdm_lock_put_irqrestore(&host_table_lock, context);
 
             goto out;
         }
@@ -402,11 +402,11 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
         new_route->next = host_table[key];
         host_table[key] = new_route;
 
-        rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+        rtdm_lock_put_irqrestore(&host_table_lock, context);
     } else {
-        rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+        rtdm_lock_put_irqrestore(&host_table_lock, context);
 
-        /*ERRMSG*/rtos_print("RTnet: no more host routes available\n");
+        /*ERRMSG*/rtdm_printk("RTnet: no more host routes available\n");
     }
 
   out:
@@ -422,7 +422,7 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
  */
 int rt_ip_route_del_host(u32 addr)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct host_route   *rt;
     struct host_route   **last_ptr;
     unsigned int        key;
@@ -431,7 +431,7 @@ int rt_ip_route_del_host(u32 addr)
     key = ntohl(addr) & HOST_HASH_KEY_MASK;
     last_ptr = &host_table[key];
 
-    rtos_spin_lock_irqsave(&host_table_lock, flags);
+    rtdm_lock_get_irqsave(&host_table_lock, context);
 
     rt = host_table[key];
     while (rt != NULL) {
@@ -440,7 +440,7 @@ int rt_ip_route_del_host(u32 addr)
 
             rt_free_host_route(rt);
 
-            rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+            rtdm_lock_put_irqrestore(&host_table_lock, context);
 
             return 0;
         }
@@ -449,7 +449,7 @@ int rt_ip_route_del_host(u32 addr)
         rt = rt->next;
     }
 
-    rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+    rtdm_lock_put_irqrestore(&host_table_lock, context);
 
     return -ENOENT;
 }
@@ -461,7 +461,7 @@ int rt_ip_route_del_host(u32 addr)
  */
 void rt_ip_route_del_all(struct rtnet_device *rtdev)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct host_route   *host_rt;
     struct host_route   **last_host_ptr;
     unsigned int        key;
@@ -472,7 +472,7 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
       host_start_over:
         last_host_ptr = &host_table[key];
 
-        rtos_spin_lock_irqsave(&host_table_lock, flags);
+        rtdm_lock_get_irqsave(&host_table_lock, context);
 
         host_rt = host_table[key];
         while (host_rt != NULL) {
@@ -481,7 +481,7 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
 
                 rt_free_host_route(host_rt);
 
-                rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+                rtdm_lock_put_irqrestore(&host_table_lock, context);
 
                 goto host_start_over;
             }
@@ -490,7 +490,7 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
             host_rt = host_rt->next;
         }
 
-        rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+        rtdm_lock_put_irqrestore(&host_table_lock, context);
     }
 
     if ((ip = rtdev->local_ip) != 0)
@@ -505,18 +505,18 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
  */
 static inline struct net_route *rt_alloc_net_route(void)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct net_route    *rt;
 
 
-    rtos_spin_lock_irqsave(&net_table_lock, flags);
+    rtdm_lock_get_irqsave(&net_table_lock, context);
 
     if ((rt = free_net_route) != NULL) {
         free_net_route = rt->next;
         allocated_net_routes++;
     }
 
-    rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+    rtdm_lock_put_irqrestore(&net_table_lock, context);
 
     return rt;
 }
@@ -542,7 +542,7 @@ static inline void rt_free_net_route(struct net_route *rt)
  */
 int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct net_route    *new_route;
     struct net_route    *rt;
     struct net_route    **last_ptr;
@@ -565,7 +565,7 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
         key = NET_HASH_TBL_SIZE;
     last_ptr = &net_table[key];
 
-    rtos_spin_lock_irqsave(&net_table_lock, flags);
+    rtdm_lock_get_irqsave(&net_table_lock, context);
 
     rt = net_table[key];
     while (rt != NULL) {
@@ -575,7 +575,7 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
             if (new_route)
                 rt_free_net_route(new_route);
 
-            rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+            rtdm_lock_put_irqrestore(&net_table_lock, context);
 
             return 0;
         }
@@ -588,11 +588,11 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
         new_route->next = *last_ptr;
         *last_ptr       = new_route;
 
-        rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+        rtdm_lock_put_irqrestore(&net_table_lock, context);
     } else {
-        rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+        rtdm_lock_put_irqrestore(&net_table_lock, context);
 
-        /*ERRMSG*/rtos_print("RTnet: no more network routes available\n");
+        /*ERRMSG*/rtdm_printk("RTnet: no more network routes available\n");
     }
 
     return 0;
@@ -605,7 +605,7 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
  */
 int rt_ip_route_del_net(u32 addr, u32 mask)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct net_route    *rt;
     struct net_route    **last_ptr;
     unsigned int        key;
@@ -621,7 +621,7 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
         key = NET_HASH_TBL_SIZE;
     last_ptr = &net_table[key];
 
-    rtos_spin_lock_irqsave(&net_table_lock, flags);
+    rtdm_lock_get_irqsave(&net_table_lock, context);
 
     rt = net_table[key];
     while (rt != NULL) {
@@ -630,7 +630,7 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
 
             rt_free_net_route(rt);
 
-            rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+            rtdm_lock_put_irqrestore(&net_table_lock, context);
 
             return 0;
         }
@@ -639,7 +639,7 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
         rt = rt->next;
     }
 
-    rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+    rtdm_lock_put_irqrestore(&net_table_lock, context);
 
     return -ENOENT;
 }
@@ -654,7 +654,7 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
  */
 int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 {
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct host_route   *host_rt;
     unsigned int        key;
 
@@ -672,7 +672,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 #endif /* !CONFIG_RTNET_RTIPV4_NETROUTING */
     key = ntohl(daddr) & HOST_HASH_KEY_MASK;
 
-    rtos_spin_lock_irqsave(&host_table_lock, flags);
+    rtdm_lock_get_irqsave(&host_table_lock, context);
 
     host_rt = host_table[key];
     while (host_rt != NULL) {
@@ -682,7 +682,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
             rt_buf->rtdev = host_rt->dest_host.rtdev;
             rtdev_reference(rt_buf->rtdev);
 
-            rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+            rtdm_lock_put_irqrestore(&host_table_lock, context);
 
             rt_buf->ip = DADDR;
 
@@ -692,21 +692,21 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
         host_rt = host_rt->next;
     }
 
-    rtos_spin_unlock_irqrestore(&host_table_lock, flags);
+    rtdm_lock_put_irqrestore(&host_table_lock, context);
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     if (lookup_gw) {
         lookup_gw = 0;
         key = (ntohl(daddr) >> net_hash_key_shift) & NET_HASH_KEY_MASK;
 
-        rtos_spin_lock_irqsave(&net_table_lock, flags);
+        rtdm_lock_get_irqsave(&net_table_lock, context);
 
         net_rt = net_table[key];
         while (net_rt != NULL) {
             if (net_rt->dest_net_ip == (daddr & net_rt->dest_net_mask)) {
                 daddr = net_rt->gw_ip;
 
-                rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+                rtdm_lock_put_irqrestore(&net_table_lock, context);
 
                 /* start over, now using the gateway ip as destination */
                 goto restart;
@@ -715,17 +715,17 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
             net_rt = net_rt->next;
         }
 
-        rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+        rtdm_lock_put_irqrestore(&net_table_lock, context);
 
         /* last try: no hash key */
-        rtos_spin_lock_irqsave(&net_table_lock, flags);
+        rtdm_lock_get_irqsave(&net_table_lock, context);
 
         net_rt = net_table[NET_HASH_TBL_SIZE];
         while (net_rt != NULL) {
             if (net_rt->dest_net_ip == (daddr & net_rt->dest_net_mask)) {
                 daddr = net_rt->gw_ip;
 
-                rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+                rtdm_lock_put_irqrestore(&net_table_lock, context);
 
                 /* start over, now using the gateway ip as destination */
                 goto restart;
@@ -734,11 +734,11 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
             net_rt = net_rt->next;
         }
 
-        rtos_spin_unlock_irqrestore(&net_table_lock, flags);
+        rtdm_lock_put_irqrestore(&net_table_lock, context);
     }
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
-    /*ERRMSG*/rtos_print("RTnet: host %u.%u.%u.%u unreachable\n", NIPQUAD(daddr));
+    /*ERRMSG*/rtdm_printk("RTnet: host %u.%u.%u.%u unreachable\n", NIPQUAD(daddr));
     return -EHOSTUNREACH;
 }
 
@@ -756,13 +756,13 @@ int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr)
         return 0;
 
     if (rtskb_acquire(rtskb, &global_pool) != 0) {
-        /*ERRMSG*/rtos_print("RTnet: router overloaded, dropping packet\n");
+        /*ERRMSG*/rtdm_printk("RTnet: router overloaded, dropping packet\n");
         goto error;
     }
 
     if (rt_ip_route_output(&dest, daddr) < 0) {
-        /*ERRMSG*/rtos_print("RTnet: unable to forward packet from %u.%u.%u.%u\n",
-                             NIPQUAD(rtskb->nh.iph->saddr));
+        /*ERRMSG*/rtdm_printk("RTnet: unable to forward packet from %u.%u.%u.%u\n",
+                              NIPQUAD(rtskb->nh.iph->saddr));
         goto error;
     }
 
@@ -798,14 +798,10 @@ int __init rt_ip_routing_init(void)
         host_routes[i].next = &host_routes[i+1];
     free_host_route = &host_routes[0];
 
-    rtos_spin_lock_init(&host_table_lock);
-
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     for (i = 0; i < NET_ROUTES-2; i++)
         net_routes[i].next = &net_routes[i+1];
     free_net_route = &net_routes[0];
-
-    rtos_spin_lock_init(&net_table_lock);
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
 #ifdef CONFIG_PROC_FS

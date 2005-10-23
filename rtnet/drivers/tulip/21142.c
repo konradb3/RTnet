@@ -39,7 +39,7 @@ void t21142_timer(unsigned long data)
 	int new_csr6 = 0;
 
 	if (tulip_debug > 2)
-		/*RTnet*/rtos_print(KERN_INFO"%s: 21143 negotiation status %8.8x, %s.\n",
+		/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 negotiation status %8.8x, %s.\n",
 			   rtdev->name, csr12, medianame[rtdev->if_port]);
 	if (tulip_media_cap[rtdev->if_port] & MediaIsMII) {
 		tulip_check_duplex(dev);
@@ -47,14 +47,14 @@ void t21142_timer(unsigned long data)
 	} else if (tp->nwayset) {
 		/* Don't screw up a negotiated session! */
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_INFO"%s: Using NWay-set %s media, csr12 %8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: Using NWay-set %s media, csr12 %8.8x.\n",
 				   rtdev->name, medianame[rtdev->if_port], csr12);
 	} else if (tp->medialock) {
 			;
 	} else if (rtdev->if_port == 3) {
 		if (csr12 & 2) {	/* No 100mbps link beat, revert to 10mbps. */
 			if (tulip_debug > 1)
-				/*RTnet*/rtos_print(KERN_INFO"%s: No 21143 100baseTx link beat, %8.8x, "
+				/*RTnet*/rtdm_printk(KERN_INFO"%s: No 21143 100baseTx link beat, %8.8x, "
 					   "trying NWay.\n", rtdev->name, csr12);
 			t21142_start_nway(dev);
 			next_tick = 3*HZ;
@@ -62,7 +62,7 @@ void t21142_timer(unsigned long data)
 	} else if ((csr12 & 0x7000) != 0x5000) {
 		/* Negotiation failed.  Search media types. */
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_INFO"%s: 21143 negotiation failed, status %8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 negotiation failed, status %8.8x.\n",
 				   rtdev->name, csr12);
 		if (!(csr12 & 4)) {		/* 10mbps link beat good. */
 			new_csr6 = 0x82420000;
@@ -81,7 +81,7 @@ void t21142_timer(unsigned long data)
 			outl(1, ioaddr + CSR13);
 		}
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_INFO"%s: Testing new 21143 media %s.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: Testing new 21143 media %s.\n",
 				   rtdev->name, medianame[rtdev->if_port]);
 		if (new_csr6 != (tp->csr6 & ~0x00D5)) {
 			tp->csr6 &= 0x00D5;
@@ -111,7 +111,7 @@ void t21142_start_nway(/*RTnet*/struct rtnet_device *rtdev)
 	tp->nway = tp->mediasense = 1;
 	tp->nwayset = tp->lpar = 0;
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_DEBUG "%s: Restarting 21143 autonegotiation, csr14=%8.8x.\n",
+		/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Restarting 21143 autonegotiation, csr14=%8.8x.\n",
 			   rtdev->name, csr14);
 	outl(0x0001, ioaddr + CSR13);
 	udelay(100);
@@ -127,7 +127,7 @@ void t21142_start_nway(/*RTnet*/struct rtnet_device *rtdev)
 }
 
 
-
+#if 0
 void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 {
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
@@ -135,7 +135,7 @@ void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 	int csr12 = inl(ioaddr + CSR12);
 
 	if (tulip_debug > 1)
-		/*RTnet*/rtos_print(KERN_INFO"%s: 21143 link status interrupt %8.8x, CSR5 %x, "
+		/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 link status interrupt %8.8x, CSR5 %x, "
 			   "%8.8x.\n", rtdev->name, csr12, csr5, inl(ioaddr + CSR14));
 
 	/* If NWay finished and we have a negotiated partner capability. */
@@ -157,12 +157,12 @@ void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 
 		if (tulip_debug > 1) {
 			if (tp->nwayset)
-				/*RTnet*/rtos_print(KERN_INFO "%s: Switching to %s based on link "
+				/*RTnet*/rtdm_printk(KERN_INFO "%s: Switching to %s based on link "
 					   "negotiation %4.4x & %4.4x = %4.4x.\n",
 					   rtdev->name, medianame[rtdev->if_port], tp->sym_advertise,
 					   tp->lpar, negotiated);
 			else
-				/*RTnet*/rtos_print(KERN_INFO "%s: Autonegotiation failed, using %s,"
+				/*RTnet*/rtdm_printk(KERN_INFO "%s: Autonegotiation failed, using %s,"
 					   " link beat status %4.4x.\n",
 					   rtdev->name, medianame[rtdev->if_port], csr12);
 		}
@@ -187,12 +187,12 @@ void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 #if 0							/* Restart shouldn't be needed. */
 		outl(tp->csr6 | RxOn, ioaddr + CSR6);
 		if (tulip_debug > 2)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s:  Restarting Tx and Rx, CSR5 is %8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s:  Restarting Tx and Rx, CSR5 is %8.8x.\n",
 				   rtdev->name, inl(ioaddr + CSR5));
 #endif
 		tulip_start_rxtx(tp);
 		if (tulip_debug > 2)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s:  Setting CSR6 %8.8x/%x CSR12 %8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s:  Setting CSR6 %8.8x/%x CSR12 %8.8x.\n",
 				   rtdev->name, tp->csr6, inl(ioaddr + CSR6),
 				   inl(ioaddr + CSR12));
 	} else if ((tp->nwayset  &&  (csr5 & 0x08000000)
@@ -206,7 +206,7 @@ void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 		/*RTnet*/ //MUST_REMOVE_add_timer(&tp->timer);
 	} else if (rtdev->if_port == 3  ||  rtdev->if_port == 5) {
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_INFO"%s: 21143 %s link beat %s.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 %s link beat %s.\n",
 				   rtdev->name, medianame[rtdev->if_port],
 				   (csr12 & 2) ? "failed" : "good");
 		if ((csr12 & 2)  &&  ! tp->medialock) {
@@ -218,20 +218,20 @@ void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 			outl(inl(ioaddr + CSR14) & ~0x080, ioaddr + CSR14);
 	} else if (rtdev->if_port == 0  ||  rtdev->if_port == 4) {
 		if ((csr12 & 4) == 0)
-			/*RTnet*/rtos_print(KERN_INFO"%s: 21143 10baseT link beat good.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 10baseT link beat good.\n",
 				   rtdev->name);
 	} else if (!(csr12 & 4)) {		/* 10mbps link beat good. */
 		if (tulip_debug)
-			/*RTnet*/rtos_print(KERN_INFO"%s: 21143 10mbps sensed media.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 10mbps sensed media.\n",
 				   rtdev->name);
 		rtdev->if_port = 0;
 	} else if (tp->nwayset) {
 		if (tulip_debug)
-			/*RTnet*/rtos_print(KERN_INFO"%s: 21143 using NWay-set %s, csr6 %8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 using NWay-set %s, csr6 %8.8x.\n",
 				   rtdev->name, medianame[rtdev->if_port], tp->csr6);
 	} else {		/* 100mbps link beat good. */
 		if (tulip_debug)
-			/*RTnet*/rtos_print(KERN_INFO"%s: 21143 100baseTx sensed media.\n",
+			/*RTnet*/rtdm_printk(KERN_INFO"%s: 21143 100baseTx sensed media.\n",
 				   rtdev->name);
 		rtdev->if_port = 3;
 		tp->csr6 = 0x838E0000 | (tp->csr6 & 0x20ff);
@@ -240,5 +240,5 @@ void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5)
 		tulip_restart_rxtx(tp);
 	}
 }
-
+#endif
 

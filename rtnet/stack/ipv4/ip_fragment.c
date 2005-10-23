@@ -1,8 +1,8 @@
 /* ip_fragment.c
  *
- * Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- * Extended 2003 by Mathias Koehrer <mathias_koehrer@yahoo.de>
- * and Jan Kiszka <jan.kiszka@web.de>
+ * Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *               2003      Mathias Koehrer <mathias_koehrer@yahoo.de>
+ *               2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ static struct ip_collector collector[COLLECTOR_COUNT];
 static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
 {
     int                 i;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct ip_collector *p_coll;
     struct iphdr        *iph = skb->nh.iph;
 
@@ -76,7 +76,7 @@ static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
      */
     for (i = 0; i < COLLECTOR_COUNT; i++) {
         p_coll = &collector[i];
-        rtos_spin_lock_irqsave(&p_coll->frags.lock, flags);
+        rtdm_lock_get_irqsave(&p_coll->frags.lock, context);
 
         if (!p_coll->in_use) {
             p_coll->in_use        = 1;
@@ -89,15 +89,15 @@ static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
             p_coll->protocol      = iph->protocol;
             p_coll->sock          = sock;
 
-            rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+            rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
 
             return;
         }
 
-        rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+        rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
     }
 
-    rtos_print("RTnet: IP fragmentation - no collector available\n");
+    rtdm_printk("RTnet: IP fragmentation - no collector available\n");
     kfree_rtskb(skb);
 }
 
@@ -110,7 +110,7 @@ static void alloc_collector(struct rtskb *skb, struct rtsocket *sock)
 static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, int more_frags)
 {
     int                 i;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct ip_collector *p_coll;
     struct iphdr        *iph = skb->nh.iph;
     struct rtskb        *first_skb;
@@ -120,7 +120,7 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
     for (i = 0; i < COLLECTOR_COUNT; i++)
     {
         p_coll = &collector[i];
-        rtos_spin_lock_irqsave(&p_coll->frags.lock, flags);
+        rtdm_lock_get_irqsave(&p_coll->frags.lock, context);
 
         if (p_coll->in_use  &&
             (iph->saddr    == p_coll->saddr) &&
@@ -135,12 +135,12 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
                 /* We have to drop this fragment => clean up the whole chain */
                 p_coll->in_use = 0;
 
-                rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+                rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
 
 #ifdef FRAG_DBG
-                rtos_print("RTnet: Compensation pool empty - IP fragments "
-                           "dropped (saddr:%x, daddr:%x)\n",
-                           iph->saddr, iph->daddr);
+                rtdm_printk("RTnet: Compensation pool empty - IP fragments "
+                            "dropped (saddr:%x, daddr:%x)\n",
+                            iph->saddr, iph->daddr);
 #endif
 
                 kfree_rtskb(first_skb);
@@ -165,7 +165,7 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
                 p_coll->in_use = 0;
                 skb = first_skb;
 
-                rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+                rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
                 break; /* leave the for loop */
             }
 
@@ -174,20 +174,20 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
             if (!more_frags) {
                 p_coll->in_use = 0;
 
-                rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+                rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
                 return first_skb;
             } else {
-                rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+                rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
                 return NULL;
             }
         }
 
-        rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+        rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
     }
 
 #ifdef FRAG_DBG
-    rtos_print("RTnet: Unordered IP fragment (saddr:%x, daddr:%x)"
-               " - dropped\n", iph->saddr, iph->daddr);
+    rtdm_printk("RTnet: Unordered IP fragment (saddr:%x, daddr:%x)"
+                " - dropped\n", iph->saddr, iph->daddr);
 #endif
 
     kfree_rtskb(skb);
@@ -203,14 +203,14 @@ static struct rtskb *add_to_collector(struct rtskb *skb, unsigned int offset, in
 void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
 {
     int                 i;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct ip_collector *p_coll;
 
 
     for (i = 0; i < COLLECTOR_COUNT; i++)
     {
         p_coll = &collector[i];
-        rtos_spin_lock_irqsave(&p_coll->frags.lock, flags);
+        rtdm_lock_get_irqsave(&p_coll->frags.lock, context);
 
         if ((p_coll->in_use) && (p_coll->sock == sock))
         {
@@ -218,7 +218,7 @@ void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
             kfree_rtskb(p_coll->frags.first);
         }
 
-        rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+        rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
     }
 }
 
@@ -230,14 +230,14 @@ void rt_ip_frag_invalidate_socket(struct rtsocket *sock)
 static void cleanup_all_collectors(void)
 {
     int                 i;
-    unsigned long       flags;
+    rtdm_lockctx_t      context;
     struct ip_collector *p_coll;
 
 
     for (i = 0; i < COLLECTOR_COUNT; i++)
     {
         p_coll = &collector[i];
-        rtos_spin_lock_irqsave(&p_coll->frags.lock, flags);
+        rtdm_lock_get_irqsave(&p_coll->frags.lock, context);
 
         if (p_coll->in_use)
         {
@@ -245,7 +245,7 @@ static void cleanup_all_collectors(void)
             kfree_rtskb(p_coll->frags.first);
         }
 
-        rtos_spin_unlock_irqrestore(&p_coll->frags.lock, flags);
+        rtdm_lock_put_irqrestore(&p_coll->frags.lock, context);
     }
 }
 
@@ -258,11 +258,11 @@ static void cleanup_all_collectors(void)
  * */
 struct rtskb *rt_ip_defrag(struct rtskb *skb, struct rtinet_protocol *ipprot)
 {
-    unsigned int more_frags;
-    unsigned int offset;
+    unsigned int    more_frags;
+    unsigned int    offset;
     struct rtsocket *sock;
-    struct iphdr *iph = skb->nh.iph;
-    int ret;
+    struct iphdr    *iph = skb->nh.iph;
+    int             ret;
 
 
     /* Parse the IP header */
@@ -309,11 +309,12 @@ int __init rt_ip_fragment_init(void)
 {
     int i;
 
+
     /* Probably not needed (static variable...) */
     memset(collector, 0, sizeof(collector));
 
     for (i = 0; i < COLLECTOR_COUNT; i++)
-        rtos_spin_lock_init(&collector[i].frags.lock);
+        rtdm_lock_init(&collector[i].frags.lock);
 
     return 0;
 }

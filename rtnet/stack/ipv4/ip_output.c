@@ -2,8 +2,8 @@
  *
  *  ipv4/ip_output.c - prepare outgoing IP packets
  *
- *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003, 2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@
 #include <ipv4/route.h>
 
 
-static rtos_spinlock_t  rt_ip_id_lock  = RTOS_SPIN_LOCK_UNLOCKED;
-static u16              rt_ip_id_count = 0;
+static rtdm_lock_t  rt_ip_id_lock  = RTDM_LOCK_UNLOCKED;
+static u16          rt_ip_id_count = 0;
 
 /***
  *  Slow path for fragmented packets
@@ -47,12 +47,11 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
     struct rtskb    *skb;
     struct rtskb    *next_skb;
     struct          iphdr *iph;
-
     struct          rtnet_device *rtdev = rt->rtdev;
     unsigned int    fragdatalen;
     unsigned int    offset = 0;
     u16             msg_rt_ip_id;
-    unsigned long   flags;
+    rtdm_lockctx_t  context;
     unsigned int    rtskb_size;
     int             hh_len = (rtdev->hard_header_len + 15) & ~15;
 
@@ -62,9 +61,9 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
     fragdatalen  = ((mtu - FRAGHEADERLEN) & ~7);
 
     /* Store id in local variable */
-    rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);
+    rtdm_lock_get_irqsave(&rt_ip_id_lock, context);
     msg_rt_ip_id = rt_ip_id_count++;
-    rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
+    rtdm_lock_put_irqrestore(&rt_ip_id_lock, context);
 
     rtskb_size = mtu + hh_len + 15;
 
@@ -171,7 +170,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     struct iphdr            *iph;
     int                     hh_len;
     u16                     msg_rt_ip_id;
-    unsigned long           flags;
+    rtdm_lockctx_t          context;
     struct  rtnet_device    *rtdev = rt->rtdev;
     unsigned int            mtu = rtdev->get_mtu(rtdev, sk->priority);
 
@@ -188,9 +187,9 @@ int rt_ip_build_xmit(struct rtsocket *sk,
                                      rt, msg_flags, mtu);
 
     /* Store id in local variable */
-    rtos_spin_lock_irqsave(&rt_ip_id_lock, flags);
+    rtdm_lock_get_irqsave(&rt_ip_id_lock, context);
     msg_rt_ip_id = rt_ip_id_count++;
-    rtos_spin_unlock_irqrestore(&rt_ip_id_lock, flags);
+    rtdm_lock_put_irqrestore(&rt_ip_id_lock, context);
 
     hh_len = (rtdev->hard_header_len+15)&~15;
 

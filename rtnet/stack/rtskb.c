@@ -2,8 +2,8 @@
  *
  *  stack/rtskb.c - rtskb implementation for rtnet
  *
- *  Copyright (C) 2002 Ulrich Marx <marx@fet.uni-hannover.de>,
- *                2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2002      Ulrich Marx <marx@fet.uni-hannover.de>,
+ *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of version 2 of the GNU General Public License as
@@ -53,7 +53,7 @@ unsigned int rtskb_amount_max=0;
 
 #ifdef CONFIG_RTNET_ADDON_RTCAP
 /* RTcap interface */
-rtos_spinlock_t rtcap_lock;
+rtdm_lock_t rtcap_lock;
 void (*rtcap_handler)(struct rtskb *skb) = NULL;
 #endif
 
@@ -132,8 +132,8 @@ void rtskb_over_panic(struct rtskb *skb, int sz, void *here)
         name=skb->rtdev->name;
     else
         name="<NULL>";
-    rtos_print("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here, skb->len,
-               sz, name);
+    rtdm_printk("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here,
+                skb->len, sz, name);
 }
 
 
@@ -154,8 +154,8 @@ void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
     else
         name="<NULL>";
 
-    rtos_print("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here,
-               skb->len, sz, name);
+    rtdm_printk("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here,
+                skb->len, sz, name);
 }
 #endif /* CONFIG_RTNET_CHECKED */
 
@@ -208,10 +208,10 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
 void kfree_rtskb(struct rtskb *skb)
 {
 #ifdef CONFIG_RTNET_ADDON_RTCAP
-    unsigned long flags;
-    struct rtskb  *comp_skb;
-    struct rtskb  *next_skb;
-    struct rtskb  *chain_end;
+    rtdm_lockctx_t  context;
+    struct rtskb    *comp_skb;
+    struct rtskb    *next_skb;
+    struct rtskb    *chain_end;
 #endif
 
 
@@ -226,7 +226,7 @@ void kfree_rtskb(struct rtskb *skb)
         skb      = next_skb;
         next_skb = skb->next;
 
-        rtos_spin_lock_irqsave(&rtcap_lock, flags);
+        rtdm_lock_get_irqsave(&rtcap_lock, context);
 
         if (skb->cap_flags & RTSKB_CAP_SHARED) {
             skb->cap_flags &= ~RTSKB_CAP_SHARED;
@@ -234,7 +234,7 @@ void kfree_rtskb(struct rtskb *skb)
             comp_skb  = skb->cap_comp_skb;
             skb->pool = xchg(&comp_skb->pool, skb->pool);
 
-            rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+            rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
             rtskb_queue_tail(comp_skb->pool, comp_skb);
 #ifdef CONFIG_RTNET_CHECKED
@@ -242,7 +242,7 @@ void kfree_rtskb(struct rtskb *skb)
 #endif
         }
         else {
-            rtos_spin_unlock_irqrestore(&rtcap_lock, flags);
+            rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
             skb->chain_end = skb;
             rtskb_queue_tail(skb->pool, skb);
@@ -364,6 +364,7 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
     unsigned int i;
     struct rtskb *skb;
 
+
     RTNET_ASSERT(pool != NULL, return -EINVAL;);
 
     for (i = 0; i < add_rtskbs; i++) {
@@ -401,13 +402,14 @@ unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
     unsigned int i;
     struct rtskb *skb;
 
+
     RTNET_ASSERT(pool != NULL, return -EINVAL;);
 
     for (i = 0; i < add_rtskbs; i++) {
         /* get rtskb from rtskb cache */
         if (!(skb = rtskb_dequeue(&rtskb_cache))) {
-            rtos_print("RTnet: rtskb allocation from real-time cache "
-                       "failed\n");
+            rtdm_printk("RTnet: rtskb allocation from real-time cache "
+                        "failed\n");
             break;
         }
 
@@ -430,8 +432,9 @@ unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
 unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
                                unsigned int rem_rtskbs)
 {
-    unsigned int i;
-    struct rtskb *skb;
+    unsigned int    i;
+    struct rtskb    *skb;
+
 
     for (i = 0; i < rem_rtskbs; i++) {
         if ((skb = rtskb_dequeue(pool)) == NULL)
@@ -449,8 +452,9 @@ unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
 unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
                                   unsigned int rem_rtskbs)
 {
-    unsigned int i;
-    struct rtskb *skb;
+    unsigned int    i;
+    struct rtskb    *skb;
+
 
     for (i = 0; i < rem_rtskbs; i++) {
         if ((skb = rtskb_dequeue(pool)) == NULL)
@@ -469,9 +473,8 @@ unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
 /* Note: acquires only the first skb of a chain! */
 int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
 {
-    struct rtskb *comp_rtskb;
+    struct rtskb *comp_rtskb = rtskb_dequeue(comp_pool);
 
-    comp_rtskb = rtskb_dequeue(comp_pool);
 
     if (!comp_rtskb)
         return -ENOMEM;
@@ -516,7 +519,7 @@ int rtskb_pools_init(void)
         goto err_out2;
 
 #ifdef CONFIG_RTNET_ADDON_RTCAP
-    rtos_spin_lock_init(&rtcap_lock);
+    rtdm_lock_init(&rtcap_lock);
 #endif
 
     return 0;

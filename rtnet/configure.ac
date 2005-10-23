@@ -708,165 +708,191 @@ AC_MSG_CHECKING([whether to build Realtek 8139 driver])
 AC_ARG_ENABLE(8139,
     AS_HELP_STRING([--enable-8139], [build Realtek 8139 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_8139=y ;;
-        *) CONFIG_RTNET_DRIVER_8139=n ;;
+        y | yes) CONFIG_RTNET_DRV_8139=y ;;
+        *) CONFIG_RTNET_DRV_8139=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_8139:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_8139,[test "$CONFIG_RTNET_DRIVER_8139" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_8139:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_8139,[test "$CONFIG_RTNET_DRV_8139" = "y"])
 
 
 AC_MSG_CHECKING([whether to build Intel EtherExpressPro/100 driver])
 AC_ARG_ENABLE(eepro100,
     AS_HELP_STRING([--enable-eepro100], [build Intel EtherExpressPro/100 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_EEPRO100=y ;;
-        *) CONFIG_RTNET_DRIVER_EEPRO100=n ;;
+        y | yes) CONFIG_RTNET_DRV_EEPRO100=y ;;
+        *) CONFIG_RTNET_DRV_EEPRO100=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_EEPRO100:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_EEPRO100,[test "$CONFIG_RTNET_DRIVER_EEPRO100" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_EEPRO100:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_EEPRO100,[test "$CONFIG_RTNET_DRV_EEPRO100" = "y"])
+
+AC_MSG_CHECKING([EEPRO/100 Command Timeout])
+AC_ARG_ENABLE(eepro100-cmdtimeout,
+    AS_HELP_STRING([--enable-eepro100-cmdtimeout], [Set EEPRO/100 command timeout]),
+    [case "$enableval" in
+        [[0-9]]*) CONFIGRTNET_DRV_EEPRO100_CMDTIMEOUT=$enableval ;;
+        *) AC_MSG_ERROR([Bad argument to option: --enable-eepro100-cmdtimeout=<microseconds>]) ;;
+    esac])
+if test x$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = x ; then
+    $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = 20
+fi
+AC_MSG_RESULT($CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT us)
+AC_DEFINE_UNQUOTED(CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT,
+    $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT, [EEPRO/100 command timeout])
+
+AC_MSG_CHECKING([whether to enble EEPRO/100 debugging])
+AC_ARG_ENABLE(eepro100-dbg,
+    AS_HELP_STRING([--enable-eepro100-dbg], [enable EEPRO/100 debugging]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_EEPRO100_DBG=y ;;
+        *) CONFIG_RTNET_DRV_EEPRO100_DBG=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_EEPRO100_DBG:-n}])
+if test "$CONFIG_RTNET_DRV_EEPRO100_DBG" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_DRV_EEPRO100_DBG, 1, [EEPRO/100 debugging])
+fi
 
 
 AC_MSG_CHECKING([whether to build AMD PCnet32 driver])
 AC_ARG_ENABLE(pcnet32,
     AS_HELP_STRING([--enable-pcnet32], [build AMD PCnet32 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_PCNET32=y ;;
-        *) CONFIG_RTNET_DRIVER_PCNET32=n ;;
+        y | yes) CONFIG_RTNET_DRV_PCNET32=y ;;
+        *) CONFIG_RTNET_DRV_PCNET32=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_PCNET32:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_PCNET32,[test "$CONFIG_RTNET_DRIVER_PCNET32" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_PCNET32:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_PCNET32,[test "$CONFIG_RTNET_DRV_PCNET32" = "y"])
 
 
 AC_MSG_CHECKING([whether to build VIA Rhine driver])
 AC_ARG_ENABLE(via-rhine,
     AS_HELP_STRING([--enable-via-rhine], [build VIA Rhine driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_VIA_RHINE=y ;;
-        *) CONFIG_RTNET_DRIVER_VIA_RHINE=n ;;
+        y | yes) CONFIG_RTNET_DRV_VIA_RHINE=y ;;
+        *) CONFIG_RTNET_DRV_VIA_RHINE=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_VIA_RHINE:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_VIA_RHINE,[test "$CONFIG_RTNET_DRIVER_VIA_RHINE" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_VIA_RHINE:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_VIA_RHINE,[test "$CONFIG_RTNET_DRV_VIA_RHINE" = "y"])
 
 
 AC_MSG_CHECKING([whether to build NatSemi driver])
 AC_ARG_ENABLE(natsemi,
     AS_HELP_STRING([--enable-natsemi], [build NatSemi driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_NATSEMI=y ;;
-        *) CONFIG_RTNET_DRIVER_NATSEMI=n ;;
+        y | yes) CONFIG_RTNET_DRV_NATSEMI=y ;;
+        *) CONFIG_RTNET_DRV_NATSEMI=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_NATSEMI:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_NATSEMI,[test "$CONFIG_RTNET_DRIVER_NATSEMI" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_NATSEMI:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_NATSEMI,[test "$CONFIG_RTNET_DRV_NATSEMI" = "y"])
 
 
 AC_MSG_CHECKING([whether to build tulip driver])
 AC_ARG_ENABLE(tulip,
     AS_HELP_STRING([--enable-tulip], [build tulip driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_TULIP=y ;;
-        *) CONFIG_RTNET_DRIVER_TULIP=n ;;
+        y | yes) CONFIG_RTNET_DRV_TULIP=y ;;
+        *) CONFIG_RTNET_DRV_TULIP=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_TULIP:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_TULIP,[test "$CONFIG_RTNET_DRIVER_TULIP" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_TULIP:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_TULIP,[test "$CONFIG_RTNET_DRV_TULIP" = "y"])
 
 
 AC_MSG_CHECKING([whether to build fcc enet driver])
 AC_ARG_ENABLE(fcc-enet,
     AS_HELP_STRING([--enable-fcc-enet], [build fcc enet driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_FCC_ENET=y ;;
-        *) CONFIG_RTNET_DRIVER_FCC_ENET=n ;;
+        y | yes) CONFIG_RTNET_DRV_FCC_ENET=y ;;
+        *) CONFIG_RTNET_DRV_FCC_ENET=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_FCC_ENET:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_FCC_ENET,[test "$CONFIG_RTNET_DRIVER_FCC_ENET" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_FCC_ENET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_FCC_ENET,[test "$CONFIG_RTNET_DRV_FCC_ENET" = "y"])
 
 
 AC_MSG_CHECKING([whether to build scc enet driver])
 AC_ARG_ENABLE(scc-enet,
     AS_HELP_STRING([--enable-scc-enet], [build scc enet driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_SCC_ENET=y ;;
-        *) CONFIG_RTNET_DRIVER_SCC_ENET=n ;;
+        y | yes) CONFIG_RTNET_DRV_SCC_ENET=y ;;
+        *) CONFIG_RTNET_DRV_SCC_ENET=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_SCC_ENET:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_SCC_ENET,[test "$CONFIG_RTNET_DRIVER_SCC_ENET" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_SCC_ENET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_SCC_ENET,[test "$CONFIG_RTNET_DRV_SCC_ENET" = "y"])
 
 
 AC_MSG_CHECKING([whether to build fec enet driver])
 AC_ARG_ENABLE(fec-enet,
     AS_HELP_STRING([--enable-fec-enet], [build fec enet driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_FEC_ENET=y ;;
-        *) CONFIG_RTNET_DRIVER_FEC_ENET=n ;;
+        y | yes) CONFIG_RTNET_DRV_FEC_ENET=y ;;
+        *) CONFIG_RTNET_DRV_FEC_ENET=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_FEC_ENET:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_FEC_ENET,[test "$CONFIG_RTNET_DRIVER_FEC_ENET" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_FEC_ENET:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_FEC_ENET,[test "$CONFIG_RTNET_DRV_FEC_ENET" = "y"])
 
 
 AC_MSG_CHECKING([whether to build MPC52xx fec driver])
 AC_ARG_ENABLE(mpc52xx-fec,
     AS_HELP_STRING([--enable-mpc52xx-fec], [build MPC52xx fec driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_MPC52XX_FEC=y ;;
-        *) CONFIG_RTNET_DRIVER_MPC52XX_FEC=n ;;
+        y | yes) CONFIG_RTNET_DRV_MPC52XX_FEC=y ;;
+        *) CONFIG_RTNET_DRV_MPC52XX_FEC=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_MPC52XX_FEC:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_MPC52XX_FEC,[test "$CONFIG_RTNET_DRIVER_MPC52XX_FEC" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_MPC52XX_FEC:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_MPC52XX_FEC,[test "$CONFIG_RTNET_DRV_MPC52XX_FEC" = "y"])
 
 
 AC_MSG_CHECKING([whether to build SMSC LAN91C111 driver])
 AC_ARG_ENABLE(smc91111,
     AS_HELP_STRING([--enable-smc91111], [build SMSC LAN91C111 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_SMC91111=y ;;
-        *) CONFIG_RTNET_DRIVER_SMC91111=n ;;
+        y | yes) CONFIG_RTNET_DRV_SMC91111=y ;;
+        *) CONFIG_RTNET_DRV_SMC91111=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_SMC91111:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_SMC91111,[test "$CONFIG_RTNET_DRIVER_SMC91111" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_SMC91111:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_SMC91111,[test "$CONFIG_RTNET_DRV_SMC91111" = "y"])
 
 
 AC_MSG_CHECKING([whether to build Eth1394 driver])
 AC_ARG_ENABLE(eth1394,
     AS_HELP_STRING([--enable-eth1394], [build Eth1394 driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_ETH1394=y ;;
-        *) CONFIG_RTNET_DRIVER_ETH1394=n ;;
+        y | yes) CONFIG_RTNET_DRV_ETH1394=y ;;
+        *) CONFIG_RTNET_DRV_ETH1394=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_ETH1394:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_ETH1394,[test "$CONFIG_RTNET_DRIVER_ETH1394" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_ETH1394:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_ETH1394,[test "$CONFIG_RTNET_DRV_ETH1394" = "y"])
 
 
 AC_MSG_CHECKING([whether to build loopback driver])
 AC_ARG_ENABLE(loopback,
     AS_HELP_STRING([--enable-loopback], [build loopback driver @<:@default=yes@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_LOOPBACK=y ;;
-        *) CONFIG_RTNET_DRIVER_LOOPBACK=n ;;
+        y | yes) CONFIG_RTNET_DRV_LOOPBACK=y ;;
+        *) CONFIG_RTNET_DRV_LOOPBACK=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_LOOPBACK:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_LOOPBACK,[test "$CONFIG_RTNET_DRIVER_LOOPBACK" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_LOOPBACK:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_LOOPBACK,[test "$CONFIG_RTNET_DRV_LOOPBACK" = "y"])
 
 
 AC_MSG_CHECKING([whether to build 3Com 59x driver])
 AC_ARG_ENABLE(3c59x,
     AS_HELP_STRING([--enable-3c59x], [build 3Com 59x driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_3C59X=y ;;
-        *) CONFIG_RTNET_DRIVER_3C59X=n ;;
+        y | yes) CONFIG_RTNET_DRV_3C59X=y ;;
+        *) CONFIG_RTNET_DRV_3C59X=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_3C59X:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_3C59X,[test "$CONFIG_RTNET_DRIVER_3C59X" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_3C59X:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_3C59X,[test "$CONFIG_RTNET_DRV_3C59X" = "y"])
 
 
 AC_MSG_CHECKING([whether to build Realtek 8169 (Gigabit) driver])
 AC_ARG_ENABLE(r8169,
     AS_HELP_STRING([--enable-r8169], [build Realtek 8169 (Gigabit) driver]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_DRIVER_R8169=y ;;
-        *) CONFIG_RTNET_DRIVER_R8169=n ;;
+        y | yes) CONFIG_RTNET_DRV_R8169=y ;;
+        *) CONFIG_RTNET_DRV_R8169=n ;;
     esac])
-AC_MSG_RESULT([${CONFIG_RTNET_DRIVER_R8169:-n}])
-AM_CONDITIONAL(CONFIG_RTNET_DRIVER_R8169,[test "$CONFIG_RTNET_DRIVER_R8169" = "y"])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_R8169:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_R8169,[test "$CONFIG_RTNET_DRV_R8169" = "y"])
 
 
 dnl ======================================================================

@@ -323,7 +323,7 @@ struct pcnet32_private {
     dma_addr_t		tx_dma_addr[TX_RING_SIZE];
     dma_addr_t		rx_dma_addr[RX_RING_SIZE];
     struct pcnet32_access a;
-    rtos_spinlock_t	lock;		/* Guard lock */
+    rtdm_lock_t	lock;		/* Guard lock */
     unsigned int	cur_rx, cur_tx;	/* The next free ring entry */
     unsigned int	dirty_rx, dirty_tx; /* The ring entries to be free()ed. */
     struct net_device_stats stats;
@@ -335,7 +335,7 @@ struct pcnet32_private {
 	mii:1;				/* mii port available */
     struct rtnet_device	*next; /*** RTnet ***/
     struct mii_if_info mii_if;
-    rtos_irq_t irq_handle;
+    rtdm_irq_t irq_handle;
 };
 
 static void pcnet32_probe_vlbus(void);
@@ -347,7 +347,7 @@ static int  pcnet32_init_ring(struct rtnet_device *);
 static int  pcnet32_start_xmit(struct rtskb *, struct rtnet_device *);
 static int  pcnet32_rx(struct rtnet_device *, nanosecs_t *time_stamp);
 //static void pcnet32_tx_timeout (struct net_device *dev);
-static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt);
+static int pcnet32_interrupt(rtdm_irq_t *irq_handle);
 static int  pcnet32_close(struct rtnet_device *);
 //static struct net_device_stats *pcnet32_get_stats(struct net_device *);
 //static void pcnet32_set_multicast_list(struct net_device *);
@@ -735,7 +735,7 @@ pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
     lp->dma_addr = lp_dma_addr;
     lp->pci_dev = pdev;
 
-    rtos_spin_lock_init(&lp->lock);
+    rtdm_lock_init(&lp->lock);
 
     dev->priv = lp;
     lp->name = chipname;
@@ -871,11 +871,12 @@ pcnet32_open(struct rtnet_device *dev) /*** RTnet ***/
 
     rt_stack_connect(dev, &STACK_manager);
 
-    i = rtos_irq_request(&lp->irq_handle, dev->irq, pcnet32_interrupt, dev);
+    i = rtdm_irq_request(&lp->irq_handle, dev->irq, pcnet32_interrupt, 0,
+                         "rt_pcnet32", dev);
     if (i)
         return i;
 
-    rtos_irq_enable(&lp->irq_handle);
+    rtdm_irq_enable(&lp->irq_handle);
 /*** RTnet ***/
 
     /* Check for a valid station address */
@@ -1131,15 +1132,15 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
     unsigned long ioaddr = dev->base_addr;
     u16 status;
     int entry;
-    unsigned long flags;
+    rtdm_lockctx_t context;
 
     if (pcnet32_debug > 3) {
-	rtos_print(KERN_DEBUG "%s: pcnet32_start_xmit() called, csr0 %4.4x.\n",
+	rtdm_printk(KERN_DEBUG "%s: pcnet32_start_xmit() called, csr0 %4.4x.\n",
 	       dev->name, lp->a.read_csr(ioaddr, 0));
     }
 
 /*** RTnet ***/
-    rtos_spin_lock_irqsave(&lp->lock, flags);
+    rtdm_lock_get_irqsave(&lp->lock, context);
 /*** RTnet ***/
 
     /* Default status -- will not enable Successful-TxDone
@@ -1178,7 +1179,7 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 /*** RTnet ***/
     /* get and patch time stamp just before the transmission */
     if (skb->xmit_stamp)
-        *skb->xmit_stamp = cpu_to_be64(rtos_get_time() + *skb->xmit_stamp);
+        *skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 /*** RTnet ***/
 
     wmb();
@@ -1199,16 +1200,17 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 	rtnetif_stop_queue(dev); /*** RTnet ***/
     }
 /*** RTnet ***/
-    rtos_spin_unlock_irqrestore(&lp->lock, flags);
+    rtdm_lock_put_irqrestore(&lp->lock, context);
 /*** RTnet ***/
     return 0;
 }
 
 /* The PCNET32 interrupt handler. */
-static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
+static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 {
-    nanosecs_t time_stamp = rtos_get_time(); /*** RTnet ***/
-    struct rtnet_device *dev = RTOS_IRQ_GET_ARG(struct rtnet_device); /*** RTnet ***/
+    nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
+    struct rtnet_device *dev =
+        rtdm_irq_get_arg(irq_handle, struct rtnet_device); /*** RTnet ***/
     struct pcnet32_private *lp;
     unsigned long ioaddr;
     u16 csr0,rap;
@@ -1218,7 +1220,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 
 /*** RTnet ***
     if (!dev) {
-	rtos_print (KERN_DEBUG "%s(): irq %d for unknown device\n",
+	rtdm_printk (KERN_DEBUG "%s(): irq %d for unknown device\n",
 		__FUNCTION__, irq);
 	return;
     }
@@ -1228,7 +1230,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
     lp = dev->priv;
     old_packet_cnt = lp->stats.rx_packets; /*** RTnet ***/
 
-    rtos_spin_lock(&lp->lock); /*** RTnet ***/
+    rtdm_lock_get(&lp->lock); /*** RTnet ***/
 
     rap = lp->a.read_rap(ioaddr);
     while ((csr0 = lp->a.read_csr (ioaddr, 0)) & 0x8600 && --boguscnt >= 0) {
@@ -1238,7 +1240,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 	must_restart = 0;
 
 	if (pcnet32_debug > 5)
-	    rtos_print(KERN_DEBUG "%s: interrupt  csr0=%#2.2x new csr=%#2.2x.\n",
+	    rtdm_printk(KERN_DEBUG "%s: interrupt  csr0=%#2.2x new csr=%#2.2x.\n",
 		   dev->name, csr0, lp->a.read_csr (ioaddr, 0));
 
 	if (csr0 & 0x0400)		/* Rx interrupt */
@@ -1268,7 +1270,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 			lp->stats.tx_fifo_errors++;
 			/* Ackk!  On FIFO errors the Tx unit is turned off! */
 			/* Remove this verbosity later! */
-			rtos_print(KERN_ERR "%s: Tx FIFO error! CSR0=%4.4x\n",
+			rtdm_printk(KERN_ERR "%s: Tx FIFO error! CSR0=%4.4x\n",
 			       dev->name, csr0);
 			must_restart = 1;
 		    }
@@ -1278,7 +1280,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 			if (! lp->dxsuflo) {  /* If controller doesn't recover ... */
 			    /* Ackk!  On FIFO errors the Tx unit is turned off! */
 			    /* Remove this verbosity later! */
-			    rtos_print(KERN_ERR "%s: Tx FIFO error! CSR0=%4.4x\n",
+			    rtdm_printk(KERN_ERR "%s: Tx FIFO error! CSR0=%4.4x\n",
 				   dev->name, csr0);
 			    must_restart = 1;
 			}
@@ -1302,7 +1304,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 	    }
 
 	    if (lp->cur_tx - dirty_tx >= TX_RING_SIZE) {
-		rtos_print(KERN_ERR "%s: out-of-sync dirty pointer, %d vs. %d, full=%d.\n",
+		rtdm_printk(KERN_ERR "%s: out-of-sync dirty pointer, %d vs. %d, full=%d.\n",
 			dev->name, dirty_tx, lp->cur_tx, lp->tx_full);
 		dirty_tx += TX_RING_SIZE;
 	    }
@@ -1333,7 +1335,7 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
 	    lp->stats.rx_errors++; /* Missed a Rx frame. */
 	}
 	if (csr0 & 0x0800) {
-	    rtos_print(KERN_ERR "%s: Bus master arbitration failure, status %4.4x.\n",
+	    rtdm_printk(KERN_ERR "%s: Bus master arbitration failure, status %4.4x.\n",
 		   dev->name, csr0);
 	    /* unlike for the lance, there is no restart needed */
 	}
@@ -1354,17 +1356,16 @@ static RTOS_IRQ_HANDLER_PROTO(pcnet32_interrupt) /*** RTnet ***/
     lp->a.write_rap (ioaddr,rap);
 
     if (pcnet32_debug > 4)
-	rtos_print(KERN_DEBUG "%s: exiting interrupt, csr0=%#4.4x.\n",
+	rtdm_printk(KERN_DEBUG "%s: exiting interrupt, csr0=%#4.4x.\n",
 	       dev->name, lp->a.read_csr (ioaddr, 0));
 
 /*** RTnet ***/
-    rtos_irq_end(&lp->irq_handle);
-    rtos_spin_unlock(&lp->lock);
+    rtdm_lock_put(&lp->lock);
 
     if (old_packet_cnt != lp->stats.rx_packets)
         rt_mark_stack_mgr(dev);
 
-    RTOS_IRQ_RETURN_HANDLED();
+    return RTDM_IRQ_ENABLE;
 /*** RTnet ***/
 }
 
@@ -1398,7 +1399,7 @@ pcnet32_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** RTnet ***/
 	    struct rtskb *skb; /*** RTnet ***/
 
 	    if(pkt_len < 60) {
-		rtos_print(KERN_ERR "%s: Runt packet!\n",dev->name);
+		rtdm_printk(KERN_ERR "%s: Runt packet!\n",dev->name);
 		lp->stats.rx_errors++;
 	    } else {
 /*** RTnet ***/
@@ -1428,7 +1429,7 @@ pcnet32_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** RTnet ***/
 
 		if (skb == NULL) {
                     int i;
-		    rtos_print(KERN_ERR "%s: Memory squeeze, deferring packet.\n", dev->name);
+		    rtdm_printk(KERN_ERR "%s: Memory squeeze, deferring packet.\n", dev->name);
 		    for (i = 0; i < RX_RING_SIZE; i++)
 			if ((short)le16_to_cpu(lp->rx_ring[(entry+i) & RX_RING_MOD_MASK].status) < 0)
 			    break;
@@ -1497,7 +1498,7 @@ pcnet32_close(struct rtnet_device *dev) /*** RTnet ***/
     lp->a.write_bcr (ioaddr, 20, 4);
 
 /*** RTnet ***/
-    if ( (i=rtos_irq_free(&lp->irq_handle))<0 )
+    if ( (i=rtdm_irq_free(&lp->irq_handle))<0 )
         return i;
 
     rt_stack_disconnect(dev);

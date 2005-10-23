@@ -32,6 +32,8 @@
 #include <asm/uaccess.h>
 #include <net/arp.h>
 
+#define rtos_spinlock_t rtdm_lock_t
+
 #include <rt_eth1394.h>
 
 #include <rtnet_port.h>
@@ -47,21 +49,21 @@
 
 
 #define ETH1394_PRINT_G(level, fmt, args...) \
-	rtos_print(level "%s: " fmt, driver_name, ## args)
+	rtdm_printk(level "%s: " fmt, driver_name, ## args)
 
 #define ETH1394_PRINT(level, dev_name, fmt, args...) \
-	rtos_print(level "%s: %s: " fmt, driver_name, dev_name, ## args)
+	rtdm_printk(level "%s: %s: " fmt, driver_name, dev_name, ## args)
 
 //#define ETH1394_DEBUG 1
 
 #ifdef ETH1394_DEBUG
 #define DEBUGP(fmt, args...) \
-	rtos_print(KERN_ERR "%s:%s[%d]: " fmt "\n", driver_name, __FUNCTION__, __LINE__, ## args)
+	rtdm_printk(KERN_ERR "%s:%s[%d]: " fmt "\n", driver_name, __FUNCTION__, __LINE__, ## args)
 #else
 #define DEBUGP(fmt, args...)
 #endif
 	
-#define TRACE() rtos_print(KERN_ERR "%s:%s[%d] ---- TRACE\n", driver_name, __FUNCTION__, __LINE__)
+#define TRACE() rtdm_printk(KERN_ERR "%s:%s[%d] ---- TRACE\n", driver_name, __FUNCTION__, __LINE__)
 
 /* Change this to IEEE1394_SPEED_S100 to make testing easier */
 #define ETH1394_SPEED_DEF	0x03 /*IEEE1394_SPEED_MAX*/
@@ -231,7 +233,7 @@ static int eth1394_init_bc(struct rtnet_device *dev)
 static int eth1394_open (struct rtnet_device *dev)
 {
 	struct eth1394_priv *priv = (struct eth1394_priv *)dev->priv;
-	unsigned long flags;
+	rtdm_lockctx_t context;
 	int ret;
 
 	/* Something bad happened, don't even try */
@@ -239,9 +241,9 @@ static int eth1394_open (struct rtnet_device *dev)
 	{
 		return -EAGAIN;
 	}
-	rtos_spin_lock_irqsave(&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	ret = eth1394_init_bc(dev);
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	if (ret)
 		return ret;
@@ -309,14 +311,14 @@ static inline void eth1394_register_limits(int nodeid, u16 maxpayload,
 
 static void eth1394_reset_priv (struct rtnet_device *dev, int set_mtu)
 {
-	unsigned long flags;
+	rtdm_lockctx_t context;
 	int i;
 	struct eth1394_priv *priv = (struct eth1394_priv *)dev->priv;
 	struct hpsb_host *host = priv->host;
 	int phy_id = NODEID_TO_NODE(host->node_id);
 	u16 maxpayload = 1 << (host->csr.max_rec + 1);
 
-	rtos_spin_lock_irqsave (&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	/* Clear the speed/payload/offset tables */
 	memset (priv->maxpayload, 0, sizeof (priv->maxpayload));
 	memset (priv->sspd, 0, sizeof (priv->sspd));
@@ -342,12 +344,12 @@ static void eth1394_reset_priv (struct rtnet_device *dev, int set_mtu)
 		*(u16*)dev->broadcast =  LOCAL_BUS | ALL_NODES;
 	}
 
-	rtos_spin_unlock_irqrestore (&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	for (i = 0; i < ALL_NODES; i++) {
 		struct list_head *lh, *n;
 
-		rtos_spin_lock_irqsave(&priv->pdg[i].lock, flags);
+		rtdm_lock_get_irqsave(&priv->pdg[i].lock, context);
 		if (!set_mtu) {
 			list_for_each_safe(lh, n, &priv->pdg[i].list) {
 				//~ purge_partial_datagram(lh);
@@ -355,7 +357,7 @@ static void eth1394_reset_priv (struct rtnet_device *dev, int set_mtu)
 		}
 		INIT_LIST_HEAD(&(priv->pdg[i].list));
 		priv->pdg[i].sz = 0;
-		rtos_spin_unlock_irqrestore(&priv->pdg[i].lock, flags);
+		rtdm_lock_put_irqrestore(&priv->pdg[i].lock, context);
 	}
 	
 }
@@ -408,11 +410,11 @@ static void eth1394_add_host (struct hpsb_host *host)
 
 	}
 	
-	rtos_spin_lock_init(&priv->lock);
+	rtdm_lock_init(&priv->lock);
 	priv->host = host;
 
 	for (i = 0; i < ALL_NODES; i++) {
-                rtos_spin_lock_init(&priv->pdg[i].lock);
+                rtdm_lock_init(&priv->pdg[i].lock);
 		INIT_LIST_HEAD(&priv->pdg[i].list);
 		priv->pdg[i].sz = 0;
 	}
@@ -579,7 +581,7 @@ static int eth1394_rebuild_header(struct rtskb *skb)
  		return arp_find((unsigned char*)&eth->h_dest, skb);
 #endif	
 	default:
-		rtos_print(KERN_DEBUG
+		rtdm_printk(KERN_DEBUG
 		       "%s: unable to resolve type %X addresses.\n", 
 		       dev->name, (int)eth->h_proto);
 		break;
@@ -685,7 +687,7 @@ static inline u16 eth1394_parse_encap(struct rtskb *skb,
 	 * use of some of the fields, since they tell us a little bit
 	 * about the sending machine.  */
 	if (ether_type == __constant_htons (ETH_P_ARP)) {
-		unsigned long flags;
+		rtdm_lockctx_t context;
 		struct eth1394_arp *arp1394 = 
 				(struct eth1394_arp*)((u8 *)skb->data);
 		struct arphdr *arp = 
@@ -705,11 +707,11 @@ static inline u16 eth1394_parse_encap(struct rtskb *skb,
 
 
 		/* Update our speed/payload/fifo_offset table */
-		rtos_spin_lock_irqsave (&priv->lock, flags);
+		rtdm_lock_get_irqsave(&priv->lock, context);
 		eth1394_register_limits(NODEID_TO_NODE(srcid), maxpayload,
 					  arp1394->sspd,
 						priv);
-		rtos_spin_unlock_irqrestore (&priv->lock, flags);
+		rtdm_lock_put_irqrestore(&priv->lock, context);
 
 		/* Now that we're done with the 1394 specific stuff, we'll
 		 * need to alter some of the data.  Believe it or not, all
@@ -918,13 +920,13 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 				  char *buf, int len, nanosecs_t time_stamp)
 {
 	struct rtskb *skb;
-	unsigned long flags;
+	rtdm_lockctx_t context;
 	struct eth1394_priv *priv;
 	union eth1394_hdr *hdr = (union eth1394_hdr *)buf;
 	u16 ether_type = 0;  /* initialized to clear warning */
 	int hdr_len;
 	
-	//~ nanosecs_t time_stamp = rtos_get_time();
+	//~ nanosecs_t time_stamp = rtdm_clock_read();
 
 	priv = (struct eth1394_priv *)dev->priv;
 
@@ -986,7 +988,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 			dg_size = hdr->sf.dg_size + 1;
 			fg_off = hdr->sf.fg_off;
 		}
-		rtos_spin_lock_irqsave(&pdg->lock, flags);
+		rtdm_lock_get_irqsave(&pdg->lock, context);
 
 		pdgl = &(pdg->list);
 		lh = find_partial_datagram(pdgl, dgl);
@@ -1002,7 +1004,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 						      buf + hdr_len, fg_off,
 						      fg_len);
 			if (retval < 0) {
-				rtos_spin_unlock_irqrestore(&pdg->lock, flags);
+				rtdm_lock_put_irqrestore(&pdg->lock, context);
 				goto bad_proto;
 			}
 			pdg->sz++;
@@ -1022,7 +1024,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 							      fg_off, fg_len);
 				if (retval < 0) {
 					pdg->sz--;
-					rtos_spin_unlock_irqrestore(&pdg->lock, flags);
+					rtdm_lock_put_irqrestore(&pdg->lock, context);
 					goto bad_proto;
 				}
 			} else {
@@ -1035,7 +1037,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 					 * datagram now. */
 					purge_partial_datagram(lh);
 					pdg->sz--;
-					rtos_spin_unlock_irqrestore(&pdg->lock, flags);
+					rtdm_lock_put_irqrestore(&pdg->lock, context);
 					goto bad_proto;
 				}
 			} /* fragment overlap */
@@ -1053,11 +1055,11 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 			//skb = skb_get(pd->skb);
 			skb = pd->skb;
 			purge_partial_datagram(lh);
-			rtos_spin_unlock_irqrestore(&pdg->lock, flags);
+			rtdm_lock_put_irqrestore(&pdg->lock, context);
 		} else {
 			/* Datagram is not complete, we're done for the
 			 * moment. */
-			rtos_spin_unlock_irqrestore(&pdg->lock, flags);
+			rtdm_lock_put_irqrestore(&pdg->lock, context);
 			return 0;
 		}
 	} /* unframgented datagram or fragmented one */
@@ -1074,7 +1076,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 					      ether_type);
 
 
-	rtos_spin_lock_irqsave(&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	if (!skb->protocol) {
 		DEBUG_PRINT("pointer to %s(%s)%d\n",__FILE__,__FUNCTION__,__LINE__);
 		priv->stats.rx_errors++;
@@ -1100,7 +1102,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 bad_proto:
 	if (rtnetif_queue_stopped(dev))
 		rtnetif_wake_queue(dev);
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	//dev->last_rx = jiffies;
 
@@ -1176,7 +1178,7 @@ static void eth1394_iso(struct hpsb_iso *iso, void *arg)
 			continue;
 		}
 		eth1394_data_handler(dev, source_id, LOCAL_BUS | ALL_NODES,
-				       buf, len, rtos_get_time());
+				       buf, len, rtdm_clock_read());
 	}
 
 	hpsb_iso_recv_release_packets(iso, i);
@@ -1417,10 +1419,10 @@ static inline void eth1394_dg_complete(struct packet_task *ptask, int fail)
 	struct rtskb *skb = ptask->skb;
 	struct rtnet_device *dev = skb->rtdev;
 	struct eth1394_priv *priv = (struct eth1394_priv *)dev->priv;
-        unsigned long flags;
+	rtdm_lockctx_t context;
 		
 	/* Statistics */
-	rtos_spin_lock_irqsave(&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	if (fail) {
 		priv->stats.tx_dropped++;
 		priv->stats.tx_errors++;
@@ -1428,7 +1430,7 @@ static inline void eth1394_dg_complete(struct packet_task *ptask, int fail)
 		priv->stats.tx_bytes += skb->len;
 		priv->stats.tx_packets++;
 	}
-	rtos_spin_unlock_irqrestore(&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	//dev_kfree_skb_any(skb);
 	kfree_rtskb(skb);
@@ -1478,7 +1480,7 @@ static int eth1394_tx (struct rtskb *skb, struct rtnet_device *dev)
 	struct ethhdr *eth;
 	struct eth1394_priv *priv = (struct eth1394_priv *)dev->priv;
 	int proto;
-	unsigned long flags;
+	rtdm_lockctx_t context;
 	nodeid_t dest_node;
 	eth1394_tx_type tx_type;
 	int ret = 0;
@@ -1499,19 +1501,19 @@ static int eth1394_tx (struct rtskb *skb, struct rtnet_device *dev)
 	if(ptask == NULL)
 		return -EBUSY;
 	
-	rtos_spin_lock_irqsave (&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	if (priv->bc_state == ETHER1394_BC_CLOSED) {
 		ETH1394_PRINT(KERN_ERR, dev->name,
 			      "Cannot send packet, no broadcast channel available.\n");
 		ret = -EAGAIN;
-		rtos_spin_unlock_irqrestore (&priv->lock, flags);
+		rtdm_lock_put_irqrestore(&priv->lock, context);
 		goto fail;
 	}
 	if ((ret = eth1394_init_bc(dev))) {
-		rtos_spin_unlock_irqrestore (&priv->lock, flags);
+		rtdm_lock_put_irqrestore(&priv->lock, context);
 		goto fail;
 	}
-	rtos_spin_unlock_irqrestore (&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 	//if ((skb = skb_share_check (skb, kmflags)) == NULL) {
 	//	ret = -ENOMEM;
 	//	goto fail;
@@ -1565,11 +1567,11 @@ static int eth1394_tx (struct rtskb *skb, struct rtnet_device *dev)
 
 	dg_size = skb->len;
 
-	rtos_spin_lock_irqsave (&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	dgl = priv->dgl[NODEID_TO_NODE(dest_node)];
 	if (max_payload < dg_size + hdr_type_len[ETH1394_HDR_LF_UF])
 		priv->dgl[NODEID_TO_NODE(dest_node)]++;
-	rtos_spin_unlock_irqrestore (&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	ptask->hdr.words.word1 = 0;
 	ptask->hdr.words.word2 = 0;
@@ -1628,10 +1630,10 @@ fail:
 	if (skb != NULL)
 		dev_kfree_rtskb(skb);
 
-	rtos_spin_lock_irqsave (&priv->lock, flags);
+	rtdm_lock_get_irqsave(&priv->lock, context);
 	priv->stats.tx_dropped++;
 	priv->stats.tx_errors++;
-	rtos_spin_unlock_irqrestore (&priv->lock, flags);
+	rtdm_lock_put_irqrestore(&priv->lock, context);
 
 	if (rtnetif_queue_stopped(dev))
 		rtnetif_wake_queue(dev);

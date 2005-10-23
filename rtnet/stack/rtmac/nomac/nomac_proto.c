@@ -30,8 +30,8 @@
 
 
 static struct rtskb_queue   nrt_rtskb_queue;
-static rtos_task_t          wrapper_task;
-static rtos_event_t         wakeup_sem;
+static rtdm_task_t          wrapper_task;
+static rtdm_event_t         wakeup_sem;
 static int                  shutdown;
 
 
@@ -46,9 +46,9 @@ int nomac_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
     rtcap_mark_rtmac_enqueue(rtskb);
 
     /* no MAC: we simply transmit the packet under xmit_lock */
-    rtos_res_lock(&rtdev->xmit_lock);
+    rtdm_mutex_lock(&rtdev->xmit_mutex);
     ret = rtmac_xmit(rtskb);
-    rtos_res_unlock(&rtdev->xmit_lock);
+    rtdm_mutex_unlock(&rtdev->xmit_mutex);
 
     return ret;
 }
@@ -68,17 +68,17 @@ int nomac_nrt_packet_tx(struct rtskb *rtskb)
 
     /* note: this routine may be called both in rt and non-rt context
      *       => detect and wrap the context if necessary */
-    if (!rtos_in_rt_context()) {
+    if (!rtdm_in_rt_context()) {
         rtskb_queue_tail(&nrt_rtskb_queue, rtskb);
-        rtos_event_signal(&wakeup_sem);
+        rtdm_event_signal(&wakeup_sem);
         return 0;
     } else {
         rtdev = rtskb->rtdev;
 
         /* no MAC: we simply transmit the packet under xmit_lock */
-        rtos_res_lock(&rtdev->xmit_lock);
+        rtdm_mutex_lock(&rtdev->xmit_mutex);
         ret = rtmac_xmit(rtskb);
-        rtos_res_unlock(&rtdev->xmit_lock);
+        rtdm_mutex_unlock(&rtdev->xmit_mutex);
 
         return ret;
     }
@@ -97,11 +97,11 @@ void nrt_xmit_task(void *arg)
             rtdev = rtskb->rtdev;
 
             /* no MAC: we simply transmit the packet under xmit_lock */
-            rtos_res_lock(&rtdev->xmit_lock);
+            rtdm_mutex_lock(&rtdev->xmit_mutex);
             rtmac_xmit(rtskb);
-            rtos_res_unlock(&rtdev->xmit_lock);
+            rtdm_mutex_unlock(&rtdev->xmit_mutex);
         }
-        rtos_event_wait(&wakeup_sem);
+        rtdm_event_wait(&wakeup_sem);
     }
 }
 
@@ -123,12 +123,12 @@ int __init nomac_proto_init(void)
 
 
     rtskb_queue_init(&nrt_rtskb_queue);
-    rtos_event_init(&wakeup_sem);
+    rtdm_event_init(&wakeup_sem, 0);
 
-    ret = rtos_task_init(&wrapper_task, nrt_xmit_task, 0,
-                         RTOS_LOWEST_RT_PRIORITY);
+    ret = rtdm_task_init(&wrapper_task, "rtnet-nomac", nrt_xmit_task, 0,
+                         RTDM_TASK_LOWEST_PRIORITY, 0);
     if (ret < 0) {
-        rtos_event_delete(&wakeup_sem);
+        rtdm_event_destroy(&wakeup_sem);
         return ret;
     }
 
@@ -140,6 +140,6 @@ int __init nomac_proto_init(void)
 void nomac_proto_cleanup(void)
 {
     shutdown = 1;
-    rtos_event_delete(&wakeup_sem);
-    rtos_task_delete(&wrapper_task);
+    rtdm_event_destroy(&wakeup_sem);
+    rtdm_task_destroy(&wrapper_task);
 }

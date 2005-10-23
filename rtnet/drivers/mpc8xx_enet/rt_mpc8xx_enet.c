@@ -69,10 +69,10 @@ static unsigned int rtnet_scc = 1; /* SCC1 */
 MODULE_PARM(rtnet_scc, "i");
 MODULE_PARM_DESC(rtnet_scc, "SCCx port for RTnet, x=1..3 (default=1)");
 
-#define printk(fmt,args...)	rtos_print ("RTnet: " fmt ,##args)
+#define printk(fmt,args...)	rtdm_printk ("RTnet: " fmt ,##args)
 
 #if 0
-#define RT_DEBUG(fmt,args...)	rtos_print (fmt ,##args)
+#define RT_DEBUG(fmt,args...)	rtdm_printk (fmt ,##args)
 #else
 #define RT_DEBUG(fmt,args...)
 #endif
@@ -166,14 +166,14 @@ struct scc_enet_private {
 	unsigned char *rx_vaddr[RX_RING_SIZE];
 	struct	net_device_stats stats;
 	uint	tx_full;
-	rtos_spinlock_t lock;
-	rtos_irq_t irq_handle;
+	rtdm_lock_t lock;
+	rtdm_irq_t irq_handle;
 };
 
 static int scc_enet_open(struct rtnet_device *rtdev);
 static int scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
-static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, rtos_time_t *time_stamp);
-static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt);
+static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static int scc_enet_interrupt(rtdm_irq_t *irq_handle);
 static int scc_enet_close(struct rtnet_device *rtdev);
 
 #ifdef ORIGINAL_VERSION
@@ -213,8 +213,8 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 {
 	struct scc_enet_private *cep = (struct scc_enet_private *)rtdev->priv;
 	volatile cbd_t	*bdp;
-	unsigned long flags;
-	rtos_time_t time;
+	rtdm_lockctx_t context;
+
 
 	RT_DEBUG(__FUNCTION__": ...\n");
 
@@ -226,7 +226,7 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		/* Ooops.  All transmit buffers are full.  Bail out.
 		 * This should not happen, since cep->tx_busy should be set.
 		 */
-		printk("%s: tx queue full!.\n", rtdev->name);
+		rtdm_printk("%s: tx queue full!.\n", rtdev->name);
 		return 1;
 	}
 #endif
@@ -257,18 +257,15 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
 	// *** RTnet ***
 #if 0
-	rtos_irq_disable(&cep->irq_handle);
-	rtos_spin_lock(&cep->lock);
+	rtdm_irq_disable(&cep->irq_handle);
+	rtdm_lock_get(&cep->lock);
 #else
-	rtos_spin_lock_irqsave(&cep->lock, flags);
+	rtdm_lock_get_irqsave(&cep->lock, context);
 #endif
 
 	/* Get and patch time stamp just before the transmission */
-	if (skb->xmit_stamp) {
-		rtos_get_time(&time);
-		*skb->xmit_stamp = cpu_to_be64(rtos_time_to_nanosecs(&time) +
-					       *skb->xmit_stamp);
-	}
+	if (skb->xmit_stamp)
+		*skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
 	/* Push the data cache so the CPM does not get stale memory
 	 * data.
@@ -301,10 +298,10 @@ scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	// *** RTnet ***
 #if 0
-	rtos_spin_unlock(&cep->lock);
-	rtos_irq_enable(&cep->irq_handle);
+	rtdm_lock_put(&cep->lock);
+	rtdm_irq_enable(&cep->irq_handle);
 #else
-	rtos_spin_unlock_irqrestore(&cep->lock, flags);
+	rtdm_lock_put_irqrestore(&cep->lock, context);
 #endif
 
 	return 0;
@@ -347,17 +344,16 @@ scc_enet_timeout(struct net_device *dev)
 /* The interrupt handler.
  * This is called from the CPM handler, not the MPC core interrupt.
  */
-static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt)
+static int scc_enet_interrupt(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *rtdev = (struct rtnet_device *)RTOS_IRQ_GET_ARG();
+	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
 	struct	scc_enet_private *cep;
 	volatile cbd_t	*bdp;
 	ushort	int_events;
 	int	must_restart;
-	rtos_time_t time_stamp;
+	nanosecs_t time_stamp = rtdm_clock_read();
 
-	rtos_get_time(&time_stamp);
 
 	cep = (struct scc_enet_private *)rtdev->priv;
 
@@ -385,7 +381,7 @@ static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt)
 	/* Transmit OK, or non-fatal error.  Update the buffer descriptors.
 	*/
 	if (int_events & (SCCE_ENET_TXE | SCCE_ENET_TXB)) {
-	    rtos_spin_lock(&cep->lock);
+	    rtdm_lock_get(&cep->lock);
 	    bdp = cep->dirty_tx;
 	    while ((bdp->cbd_sc&BD_ENET_TX_READY)==0) {
 		RT_DEBUG(__FUNCTION__": Tx ok\n");
@@ -468,7 +464,7 @@ static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt)
 		    mk_cr_cmd(CPM_CR_ENET, CPM_CR_RESTART_TX) | CPM_CR_FLG;
 		while (cp->cp_cpcr & CPM_CR_FLG);
 	    }
-	    rtos_spin_unlock(&cep->lock);
+	    rtdm_lock_put(&cep->lock);
 	}
 
 	/* Check for receive busy, i.e. packets coming but no place to
@@ -477,13 +473,12 @@ static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt)
 	 */
 	if (int_events & SCCE_ENET_BSY) {
 		cep->stats.rx_dropped++;
-		printk("CPM ENET: BSY can't happen.\n");
+		rtdm_printk("CPM ENET: BSY can't happen.\n");
 	}
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	rtos_irq_end(&cep->irq_handle);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
 
 /* During a receive, the cur_rx points to the current incoming buffer.
@@ -492,7 +487,7 @@ static RTOS_IRQ_HANDLER_PROTO(scc_enet_interrupt)
  * effectively tossing the packet.
  */
 static int
-scc_enet_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
+scc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
 {
 	struct	scc_enet_private *cep;
 	volatile cbd_t	*bdp;
@@ -565,7 +560,7 @@ scc_enet_rx(struct rtnet_device *rtdev, int* packets, rtos_time_t *time_stamp)
 			       (unsigned char *)__va(bdp->cbd_bufaddr),
 			       pkt_len-4);
 			skb->protocol=rt_eth_type_trans(skb,rtdev);
-			memcpy(&skb->time_stamp, time_stamp, sizeof(rtos_time_t));
+			skb->time_stamp = *time_stamp;
 			rtnetif_rx(skb);
 			(*packets)++;
 		}
@@ -760,7 +755,7 @@ int __init scc_enet_init(void)
 	rtdev->vers = RTDEV_VERS_2_0;
 
 	cep = (struct scc_enet_private *)rtdev->priv;
-	rtos_spin_lock_init(&cep->lock);
+	rtdm_lock_init(&cep->lock);
 
 	/* Get pointer to SCC area in parameter RAM.
 	*/
@@ -977,13 +972,13 @@ int __init scc_enet_init(void)
 	*/
 	rtdev->irq = CPM_IRQ_OFFSET + CPMVEC_ENET;
 	rt_stack_connect(rtdev, &STACK_manager);
-	if ((i = rtos_irq_request(&cep->irq_handle, rtdev->irq, 
-				  scc_enet_interrupt, rtdev))) {
+	if ((i = rtdm_irq_request(&cep->irq_handle, rtdev->irq,
+				  scc_enet_interrupt, 0, "rt_mpc8xx_enet", rtdev))) {
 		printk(KERN_ERR "Couldn't request IRQ %d\n", rtdev->irq);
 		rtdev_free(rtdev);
 		return i;
 	}
-	rtos_irq_enable(&cep->irq_handle);
+	rtdm_irq_enable(&cep->irq_handle);
 	
 
 	/* Set GSMR_H to enable all normal operating modes.
@@ -1055,8 +1050,8 @@ int __init scc_enet_init(void)
 	if (!rx_pool_size)
 		rx_pool_size = RX_RING_SIZE * 2;
 	if (rtskb_pool_init(&cep->skb_pool, rx_pool_size) < rx_pool_size) {
-		rtos_irq_disable(&cep->irq_handle);
-		rtos_irq_free(&cep->irq_handle);
+		rtdm_irq_disable(&cep->irq_handle);
+		rtdm_irq_free(&cep->irq_handle);
 		rtskb_pool_release(&cep->skb_pool);
 		rtdev_free(rtdev);
 		return -ENOMEM;
@@ -1064,8 +1059,8 @@ int __init scc_enet_init(void)
 
 	if ((i = rt_register_rtnetdev(rtdev))) {
 		printk(KERN_ERR "Couldn't register rtdev\n");
-		rtos_irq_disable(&cep->irq_handle);
-		rtos_irq_free(&cep->irq_handle);
+		rtdm_irq_disable(&cep->irq_handle);
+		rtdm_irq_free(&cep->irq_handle);
 		rtskb_pool_release(&cep->skb_pool);
 		rtdev_free(rtdev);
 		return i;
@@ -1091,8 +1086,8 @@ static void __exit scc_enet_cleanup(void)
 	volatile scc_enet_t *ep;
 
 	if (rtdev) {
-		rtos_irq_disable(&cep->irq_handle);
-		rtos_irq_free(&cep->irq_handle);
+		rtdm_irq_disable(&cep->irq_handle);
+		rtdm_irq_free(&cep->irq_handle);
 
 		ep = (scc_enet_t *)(&cp->cp_dparam[PROFF_ENET]);
 		m8xx_cpm_dpfree(ep->sen_genscc.scc_rbase);

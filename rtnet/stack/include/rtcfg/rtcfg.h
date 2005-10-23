@@ -4,7 +4,7 @@
  *
  *  Real-Time Configuration Distribution Protocol
  *
- *  Copyright (C) 2003 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ extern int rtcfg_debug;
 /* use 0 for production, 1 for verification, >2 for debug */
 #define RTCFG_DEFAULT_DEBUG_LEVEL    10
 
-#define RTCFG_DEBUG(n, args...) (rtcfg_debug >= (n)) ? (rtos_print(args)) : 0
+#define RTCFG_DEBUG(n, args...) (rtcfg_debug >= (n)) ? (rtdm_printk(args)) : 0
 #else
 #define RTCFG_DEBUG(n, args...)
 #endif /* CONFIG_RTCFG_DEBUG */

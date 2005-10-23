@@ -109,14 +109,14 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 	int received = 0;
 
 	if (tulip_debug > 4)
-		/*RTnet*/rtos_print(KERN_DEBUG " In tulip_rx(), entry %d %8.8x.\n", entry,
+		/*RTnet*/rtdm_printk(KERN_DEBUG " In tulip_rx(), entry %d %8.8x.\n", entry,
 			   tp->rx_ring[entry].status);
 	/* If we own the next entry, it is a new packet. Send it up. */
 	while ( ! (tp->rx_ring[entry].status & cpu_to_le32(DescOwned))) {
 		s32 status = le32_to_cpu(tp->rx_ring[entry].status);
 
 		if (tulip_debug > 5)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: In tulip_rx(), entry %d %8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: In tulip_rx(), entry %d %8.8x.\n",
 				   rtdev->name, entry, status);
 		if (--rx_work_limit < 0)
 			break;
@@ -125,7 +125,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 				/* Ingore earlier buffers. */
 				if ((status & 0xffff) != 0x7fff) {
 					if (tulip_debug > 1)
-						/*RTnet*/rtos_print(KERN_WARNING "%s: Oversized Ethernet frame "
+						/*RTnet*/rtdm_printk(KERN_WARNING "%s: Oversized Ethernet frame "
 							   "spanned multiple buffers, status %8.8x!\n",
 							   rtdev->name, status);
 					tp->stats.rx_length_errors++;
@@ -133,7 +133,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 			} else if (status & RxDescFatalErr) {
 				/* There was a fatal error. */
 				if (tulip_debug > 2)
-					/*RTnet*/rtos_print(KERN_DEBUG "%s: Receive error, Rx status %8.8x.\n",
+					/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Receive error, Rx status %8.8x.\n",
 						   rtdev->name, status);
 				tp->stats.rx_errors++; /* end of a packet.*/
 				if (status & 0x0890) tp->stats.rx_length_errors++;
@@ -148,7 +148,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 
 #ifndef final_version
 			if (pkt_len > 1518) {
-				/*RTnet*/rtos_print(KERN_WARNING "%s: Bogus packet size of %d (%#x).\n",
+				/*RTnet*/rtdm_printk(KERN_WARNING "%s: Bogus packet size of %d (%#x).\n",
 					   rtdev->name, pkt_len, pkt_len);
 				pkt_len = 1518;
 				tp->stats.rx_length_errors++;
@@ -185,7 +185,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 #ifndef final_version
 				if (tp->rx_buffers[entry].mapping !=
 				    le32_to_cpu(tp->rx_ring[entry].buffer1)) {
-					/*RTnet*/rtos_print(KERN_ERR "%s: Internal fault: The skbuff addresses "
+					/*RTnet*/rtdm_printk(KERN_ERR "%s: Internal fault: The skbuff addresses "
 					       "do not match in tulip_rx: %08x vs. %08x ? / %p.\n",
 					       rtdev->name,
 					       le32_to_cpu(tp->rx_ring[entry].buffer1),
@@ -215,10 +215,11 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 
 /* The interrupt handler does all of the Rx thread work and cleans up
    after the Tx thread. */
-RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
+int tulip_interrupt(rtdm_irq_t *irq_handle)
 {
-	nanosecs_t time_stamp = rtos_get_time();/*RTnet*/
-	struct rtnet_device *rtdev = RTOS_IRQ_GET_ARG(struct rtnet_device);/*RTnet*/
+	nanosecs_t time_stamp = rtdm_clock_read();/*RTnet*/
+	struct rtnet_device *rtdev =
+	    rtdm_irq_get_arg(irq_handle, struct rtnet_device);/*RTnet*/
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
 	unsigned int csr5;
@@ -236,8 +237,8 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 	csr5 = inl(ioaddr + CSR5);
 
 	if ((csr5 & (NormalIntr|AbnormalIntr)) == 0) {
-		rtos_print("%s: unexpected IRQ!\n",rtdev->name);
-		RTOS_IRQ_RETURN_UNHANDLED();
+		rtdm_printk("%s: unexpected IRQ!\n",rtdev->name);
+		return 0;
 	}
 
 	tp->nir++;
@@ -247,7 +248,7 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 		outl(csr5 & 0x0001ffff, ioaddr + CSR5);
 
 		if (tulip_debug > 4)
-			/*RTnet*/rtos_print(KERN_DEBUG "%s: interrupt  csr5=%#8.8x new csr5=%#8.8x.\n",
+			/*RTnet*/rtdm_printk(KERN_DEBUG "%s: interrupt  csr5=%#8.8x new csr5=%#8.8x.\n",
 				   rtdev->name, csr5, inl(rtdev->base_addr + CSR5));
 
 		if (csr5 & (RxIntr | RxNoBuf)) {
@@ -258,7 +259,7 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 		if (csr5 & (TxNoBuf | TxDied | TxIntr | TimerInt)) {
 			unsigned int dirty_tx;
 
-			rtos_spin_lock(&tp->lock);
+			rtdm_lock_get(&tp->lock);
 
 			for (dirty_tx = tp->dirty_tx; tp->cur_tx - dirty_tx > 0;
 				 dirty_tx++) {
@@ -283,7 +284,7 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 					/* There was an major error, log it. */
 #ifndef final_version
 					if (tulip_debug > 1)
-						/*RTnet*/rtos_print(KERN_DEBUG "%s: Transmit error, Tx status %8.8x.\n",
+						/*RTnet*/rtdm_printk(KERN_DEBUG "%s: Transmit error, Tx status %8.8x.\n",
 							   rtdev->name, status);
 #endif
 					tp->stats.tx_errors++;
@@ -314,7 +315,7 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 
 #ifndef final_version
 			if (tp->cur_tx - dirty_tx > TX_RING_SIZE) {
-				/*RTnet*/rtos_print(KERN_ERR "%s: Out-of-sync dirty pointer, %d vs. %d.\n",
+				/*RTnet*/rtdm_printk(KERN_ERR "%s: Out-of-sync dirty pointer, %d vs. %d.\n",
 					   rtdev->name, dirty_tx, tp->cur_tx);
 				dirty_tx += TX_RING_SIZE;
 			}
@@ -326,12 +327,12 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 			tp->dirty_tx = dirty_tx;
 			if (csr5 & TxDied) {
 				if (tulip_debug > 2)
-					/*RTnet*/rtos_print(KERN_WARNING "%s: The transmitter stopped."
+					/*RTnet*/rtdm_printk(KERN_WARNING "%s: The transmitter stopped."
 						   "  CSR5 is %x, CSR6 %x, new CSR6 %x.\n",
 						   rtdev->name, csr5, inl(ioaddr + CSR6), tp->csr6);
 				tulip_restart_rxtx(tp);
 			}
-			rtos_spin_unlock(&tp->lock);
+			rtdm_lock_put(&tp->lock);
 		}
 
 		/* Log errors. */
@@ -380,11 +381,12 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 				 * to the 21142/3 docs that is).
 				 *   -- rmk
 				 */
-				/*RTnet*/rtos_print(KERN_ERR "%s: (%lu) System Error occured (%d)\n",
+				/*RTnet*/rtdm_printk(KERN_ERR "%s: (%lu) System Error occured (%d)\n",
 					rtdev->name, tp->nir, error);
 			}
 #endif /*RTnet*/
-			/*RTnet*/rtos_print(KERN_ERR "%s: Error detected, device may not work any more!\n", rtdev->name);
+			/*RTnet*/rtdm_printk(KERN_ERR "%s: Error detected, "
+			    "device may not work any more (csr5=%08x)!\n", rtdev->name, csr5);
 			/* Clear all error sources, included undocumented ones! */
 			outl(0x0800f7ba, ioaddr + CSR5);
 			oi++;
@@ -392,7 +394,7 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 		if (csr5 & TimerInt) {
 
 			if (tulip_debug > 2)
-				/*RTnet*/rtos_print(KERN_ERR "%s: Re-enabling interrupts, %8.8x.\n",
+				/*RTnet*/rtdm_printk(KERN_ERR "%s: Re-enabling interrupts, %8.8x.\n",
 					   rtdev->name, csr5);
 			outl(tulip_tbl[tp->chip_id].valid_intrs, ioaddr + CSR7);
 			tp->ttimer = 0;
@@ -400,7 +402,7 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 		}
 		if (tx > maxtx || rx > maxrx || oi > maxoi) {
 			if (tulip_debug > 1)
-				/*RTnet*/rtos_print(KERN_WARNING "%s: Too much work during an interrupt, "
+				/*RTnet*/rtdm_printk(KERN_WARNING "%s: Too much work during an interrupt, "
 					   "csr5=0x%8.8x. (%lu) (%d,%d,%d)\n", rtdev->name, csr5, tp->nir, tx, rx, oi);
 
                        /* Acknowledge all interrupt sources. */
@@ -433,14 +435,14 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 	entry = tp->dirty_rx % RX_RING_SIZE;
 	if (tp->rx_buffers[entry].skb == NULL) {
 		if (tulip_debug > 1)
-			/*RTnet*/rtos_print(KERN_WARNING "%s: in rx suspend mode: (%lu) (tp->cur_rx = %u, ttimer = %d, rx = %d) go/stay in suspend mode\n", rtdev->name, tp->nir, tp->cur_rx, tp->ttimer, rx);
+			/*RTnet*/rtdm_printk(KERN_WARNING "%s: in rx suspend mode: (%lu) (tp->cur_rx = %u, ttimer = %d, rx = %d) go/stay in suspend mode\n", rtdev->name, tp->nir, tp->cur_rx, tp->ttimer, rx);
 		if (tp->chip_id == LC82C168) {
 			outl(0x00, ioaddr + CSR7);
 			/*RTnet*/ //MUST_REMOVE_mod_timer(&tp->timer, RUN_AT(HZ/50));
 		} else {
 			if (tp->ttimer == 0 || (inl(ioaddr + CSR11) & 0xffff) == 0) {
 				if (tulip_debug > 1)
-					/*RTnet*/rtos_print(KERN_WARNING "%s: in rx suspend mode: (%lu) set timer\n", rtdev->name, tp->nir);
+					/*RTnet*/rtdm_printk(KERN_WARNING "%s: in rx suspend mode: (%lu) set timer\n", rtdev->name, tp->nir);
 				outl(tulip_tbl[tp->chip_id].valid_intrs | TimerInt,
 					ioaddr + CSR7);
 				outl(TimerInt, ioaddr + CSR5);
@@ -455,10 +457,9 @@ RTOS_IRQ_HANDLER_PROTO(tulip_interrupt)
 	}
 
 	if (tulip_debug > 4)
-		/*RTnet*/rtos_print(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
+		/*RTnet*/rtdm_printk(KERN_DEBUG "%s: exiting interrupt, csr5=%#4.4x.\n",
 			   rtdev->name, inl(ioaddr + CSR5));
-	rtos_irq_end(&tp->irq_handle);
 	if (rx)
 		rt_mark_stack_mgr(rtdev);
-	RTOS_IRQ_RETURN_HANDLED();
+	return RTDM_IRQ_ENABLE;
 }
