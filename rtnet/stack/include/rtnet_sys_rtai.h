@@ -44,6 +44,7 @@
 #define rthal_local_irq_restore(flags) \
     hard_restore_flags(flags)
 #undef SLEEP
+#undef PRINTK
 
 
 
