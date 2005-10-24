@@ -11,9 +11,9 @@ modules and real-time user space processes.
 What are the requirements?
 --------------------------
 - Linux kernel 2.6.x: 2.6.10 or better
-  (Linux kernel 2.4.x: broken, yet unclear if it will get fixed anymore)
+  Linux kernel 2.4.x: RTAI 3.3 only, barely tested
 - Xenomai 2.0 or better
-  RTAI 3.3 or better
+  RTAI 3.3 or better, barely tested
 - x86, PowerPC, or ARM platform
   (other platforms are lacking up-to-date RTAI support)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
@@ -92,6 +92,7 @@ Yuchen Zhang                            - Ethernet-over-FireWire support
 <yuchen623-at-gmail.com>
 Klaus Keppler                           - RTL8169 gigabit driver
 <klaus.keppler-at-informatik.stud.uni-erlangen.de>
+Bill Vareka <bvareka-at-amsuper.com>    - Joint-slot TDMA extension
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some

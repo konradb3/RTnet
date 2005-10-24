@@ -29,6 +29,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include <rtai_lxrt.h>
 #include <rtnet.h>
 
 static struct sockaddr_in local_addr;
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
     memset(&local_addr, 0, sizeof(struct sockaddr_in));
     memset(&server_addr, 0, sizeof(struct sockaddr_in));
 
-    printf("RTnet, simpleclient for NEWLXRT\n");
+    printf("RTnet, simpleclient for LXRT\n");
 
     /* Check arguments and set addresses. */
     if (argc == 4) {
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
     /* Create new socket. */
-    sockfd = socket_rt(AF_INET, SOCK_DGRAM, 0);
+    sockfd = rt_dev_socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
 
         printf("Error opening socket: %d\n", sockfd);
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
     /* Initialize a real time buddy. */
     lxrtnettsk = rt_task_init(4800, 1, 0, 0);
     if (NULL == lxrtnettsk) {
-        close_rt(sockfd);
+        rt_dev_close(sockfd);
         printf("CANNOT INIT MASTER TASK\n");
         exit(1);
     }
@@ -88,22 +89,22 @@ int main(int argc, char *argv[]) {
     rt_make_hard_real_time();
 
     /* Bind socket to local address specified as parameter. */
-    ret = bind_rt(sockfd, (struct sockaddr *) &local_addr,
-                  sizeof(struct sockaddr_in));
+    ret = rt_dev_bind(sockfd, (struct sockaddr *) &local_addr,
+                      sizeof(struct sockaddr_in));
 
     /* Specify destination address for socket; needed for rt_socket_send(). */
-    connect_rt(sockfd, (struct sockaddr *) &server_addr,
-               sizeof(struct sockaddr_in));
+    rt_dev_connect(sockfd, (struct sockaddr *) &server_addr,
+                   sizeof(struct sockaddr_in));
 
     /* Send a message. */
-    send_rt(sockfd, msg, sizeof(msg), 0);
+    rt_dev_send(sockfd, msg, sizeof(msg), 0);
 
     /* Switch over to soft realtime mode. */
     rt_make_soft_real_time();
 
     /* Close socket.
      * Note: call must be in soft-mode because socket was created as non-rt! */
-    close_rt(sockfd);
+    rt_dev_close(sockfd);
 
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);

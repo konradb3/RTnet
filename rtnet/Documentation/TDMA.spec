@@ -1,7 +1,7 @@
                      TDMA Media Access Control Discipline
                      ====================================
 
-                                Revision: 2.1
+                                Revision: 2.1a
 
 
 This document describes the second generation of a TDMA-based (Time Division
@@ -560,26 +560,31 @@ calibration will be performed when the first slot is added. The largest used
 slot ID is tunable by providing <max_slot_id> or will be limited to 7 if this
 parameter is omitted.
 
-tdmacfg <dev> slot <id> [<offset> [-p <phasing>/<period>] [-s <size>]]
-        [-l calibration_log_file] [-t calibration_timeout]
+tdmacfg <dev> slot <id> [<offset> [-p <phasing>/<period>] [-s <size>]
+        [-j joint_slot] [-l calibration_log_file] [-t calibration_timeout]]
 
 Adds, reconfigures, or removes a time slot for outgoing data on a started TDMA
 master or slave. <id> is used to distinguish between multiple slots. See above
 slot ID table for predefined values. If <offset> is given, the time slot is
 added or modified to send data with the specified offset in microseconds
 relative to the scheduled cycle start, if omitted, the slot is removed from
-the station's configuration. By default, a slot will be used in every cycle.
-By providing <phasing> and <period>, the slot will only be occupied in every
-<phasing>-th of <period> cycles. By assigning e.g. 1/2 to one and 2/2 to
-another slot, the usage of the physical time slot will alternate between both
-slot owners. The <size> parameter limits the maximum payload size in bytes
-which can be transmitted within this slot. If no <size> parameter is provided,
-the maximum size the hardware supports is applied. The addition of the
-station's first slot will trigger the clock calibration process. To store the
-results of each calibration handshake, a <calibration_log_file> can be
-provided. By default, this command will not terminate until the calibration is
-completed. The <calibration_timeout> parameter can be used to specify an upper
-time limit.
+the station's configuration.
+
+By default, a slot will be used in every cycle. When providing <phasing> and
+<period>, the slot will only be occupied in every <phasing>-th of <period>
+cycles. By assigning e.g. 1/2 to one and 2/2 to another slot, the usage of the
+physical time slot will alternate between both slot owners. The <size>
+parameter limits the maximum payload size in bytes which can be transmitted
+within this slot. If no <size> parameter is provided, the maximum size the
+hardware supports is applied. To share the same output queue among several
+slots, secondary slots can be attached to a primary <joint_slot>. The slot
+sizes must match for this purpose.
+
+The addition of the station's first slot will trigger the clock calibration
+process. To store the results of each calibration handshake, a
+<calibration_log_file> can be provided. By default, this command will not
+terminate until the calibration is completed. The <calibration_timeout>
+parameter can be used to specify an upper time limit.
 
 tdmacfg <dev> detach
 
@@ -588,4 +593,4 @@ the write access to the device is uncoordinated again and may interfere with
 remaining real-time network participants.
 
 
-2004, Jan Kiszka <jan.kiszka-at-web.de>
+2004, 2005, Jan Kiszka <jan.kiszka-at-web.de>

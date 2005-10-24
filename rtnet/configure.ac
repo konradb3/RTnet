@@ -298,8 +298,8 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
 
         # get linux kernel tree and version
         AC_MSG_CHECKING([for Linux source tree])
-        RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
-        RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+        RTEXT_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
+        RTEXT_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
 
         ;;
 
@@ -361,8 +361,7 @@ dnl ======================================================================
 
 case "${RTEXT_LINUX_VERSION}" in
     2.4.*)
-        RTEXT_LINUX_VERSION_SUBLEVEL=
-            "`echo ${RTEXT_LINUX_VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\).*/\1/'`"
+        RTEXT_LINUX_VERSION_SUBLEVEL="`echo ${RTEXT_LINUX_VERSION}|sed -e 's/[[[:digit:]]]*\.[[[:digit:]]]*\.\([[[:digit:]]]*\).*/\1/'`"
         if test ${RTEXT_LINUX_VERSION_SUBLEVEL} -le 18; then
             AC_MSG_ERROR([*** Unsupported kernel version $RTEXT_LINUX_VERSION - please upgrade at least to 2.4.19])
         fi
@@ -399,12 +398,13 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
     rtai-3x)
         RTEXT_USER_CFLAGS="`${RTAI_CONFIG} --lxrt-cflags`"
         CONFIG_RTNET_RTEXT_ARCH="`${RTAI_CONFIG} --arch`"
+        RTEXT_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
         ;;
     xeno-2x)
         RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
         CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
         RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
-        RTNET_RTEXT_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
+        RTEXT_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -596,14 +596,14 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${RTEXT_KMOD_CFLAGS}"
 # headers, depending on the RTAI version which has been
 # identified. (rpm)
 
-BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
-    [],
-    [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
-    [
-#include <linux/kernel.h>
-    ])
-
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
+    BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
+        [],
+        [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
+        [
+#include <linux/kernel.h>
+        ])
+
     case "${CONFIG_RTNET_RTEXT_VERSION}" in
         rtai-3x)
             BS_CHECK_KHEADERS([rtai_sem.h rtai_malloc.h rtai_fifos.h],
@@ -621,6 +621,13 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
             ;;
     esac
 else                                    # building against linux-2.4
+    AC_CHECK_HEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
+        [],
+        [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
+        [
+#include <linux/kernel.h>
+        ])
+
     case "${CONFIG_RTNET_RTEXT_VERSION}" in
         rtai-3x)    # mandatory RTAI-3 headers
             AC_CHECK_HEADERS([rtai_sem.h rtai_malloc.h],
@@ -729,7 +736,7 @@ AC_MSG_CHECKING([EEPRO/100 Command Timeout])
 AC_ARG_ENABLE(eepro100-cmdtimeout,
     AS_HELP_STRING([--enable-eepro100-cmdtimeout], [Set EEPRO/100 command timeout]),
     [case "$enableval" in
-        [[0-9]]*) CONFIGRTNET_DRV_EEPRO100_CMDTIMEOUT=$enableval ;;
+        [[:digit:]]*) CONFIGRTNET_DRV_EEPRO100_CMDTIMEOUT=$enableval ;;
         *) AC_MSG_ERROR([Bad argument to option: --enable-eepro100-cmdtimeout=<microseconds>]) ;;
     esac])
 if test x$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = x ; then
@@ -1166,9 +1173,9 @@ dnl ======================================================================
 dnl             generate RTDM version define
 dnl ======================================================================
 
-MAJOR=`echo ${VERSION} | sed -e 's/\([[0-9]]*\)\.[[0-9]]*\.[[0-9]]*/\1/'`
-MINOR=`echo ${VERSION} | sed -e 's/[[0-9]]*\.\([[0-9]]*\)\.[[0-9]]*/\1/'`
-PATCH=`echo ${VERSION} | sed -e 's/[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)/\1/'`
+MAJOR=`echo ${VERSION} | sed -e 's/\([[[:digit:]]]*\)\.[[[:digit:]]]*\.[[[:digit:]]]*/\1/'`
+MINOR=`echo ${VERSION} | sed -e 's/[[[:digit:]]]*\.\([[[:digit:]]]*\)\.[[[:digit:]]]*/\1/'`
+PATCH=`echo ${VERSION} | sed -e 's/[[[:digit:]]]*\.[[[:digit:]]]*\.\([[[:digit:]]]*\)/\1/'`
 AC_DEFINE_UNQUOTED(RTNET_RTDM_VER,
     [RTDM_DRIVER_VER($MAJOR, $MINOR, $PATCH)],
     [RTDM Driver Version])
@@ -1235,7 +1242,7 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
         if test x$CONFIG_KBUILD = xy; then
             mkdir -p symbols
             rm -rf symbols/*
-            for FILE in `ls ${RTNET_RTEXT_SYMBOLS}/*`; do
+            for FILE in `ls ${RTEXT_SYMBOLS}/*`; do
                 ${LN_S} ${FILE} symbols/$(basename ${FILE})
             done
         fi
