@@ -345,9 +345,9 @@ dnl ======================================================================
 #
 # the presence of ieee1394.h is a good indication for RT-FireWire
 #
-AC_MSG_CHECKING([for RT-FireWire source])
-IEEE1394_H="${CONFIG_RTFIREWIRE_DIR}/include/ieee1394.h"
-if test -f ${IEEE1394_H}; then
+AC_MSG_CHECKING([for RT-FireWire installation])
+RTFW_SYMBOLS="${CONFIG_RTFIREWIRE_DIR}/symbols"
+if test -d ${RTFW_SYMBOLS}; then
     RTNET_RTFW_PREFIX="`echo ${CONFIG_RTFIREWIRE_DIR} | sed -e s,[/]*$,,`"  # strip trailing slashes
     AC_MSG_RESULT([${RTNET_RTFW_PREFIX}])
 else
@@ -443,7 +443,7 @@ dnl ======================================================================
 dnl            import RT-FireWire includes
 dnl ======================================================================
 
-RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/include"
+RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/build/include -I${RTNET_RTFW_PREFIX}/source/include"
 
 
 dnl ======================================================================
@@ -1234,20 +1234,25 @@ dnl        addons/examples/select \
 
 
 dnl ======================================================================
-dnl             create links to Xenomai symbols
+dnl             create links to Xenomai and RT-FireWire symbols
 dnl ======================================================================
 
-case "${CONFIG_RTNET_RTEXT_VERSION}" in
-    xeno-2x)
-        if test x$CONFIG_KBUILD = xy; then
+if test x$CONFIG_KBUILD = xy; then
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        xeno-2x)
             mkdir -p symbols
             rm -rf symbols/*
             for FILE in `ls ${RTEXT_SYMBOLS}/*`; do
                 ${LN_S} ${FILE} symbols/$(basename ${FILE})
             done
-        fi
-        ;;
-esac
+            if test -d ${RTFW_SYMBOLS}; then
+                for FILE in `ls ${RTFW_SYMBOLS}/*`; do
+                    ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                done
+            fi
+            ;;
+    esac
+fi
 
 
 dnl ======================================================================

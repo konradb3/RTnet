@@ -20155,10 +20155,10 @@ echo "${ECHO_T}$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP
 #
 # the presence of ieee1394.h is a good indication for RT-FireWire
 #
-echo "$as_me:$LINENO: checking for RT-FireWire source" >&5
-echo $ECHO_N "checking for RT-FireWire source... $ECHO_C" >&6
-IEEE1394_H="${CONFIG_RTFIREWIRE_DIR}/include/ieee1394.h"
-if test -f ${IEEE1394_H}; then
+echo "$as_me:$LINENO: checking for RT-FireWire installation" >&5
+echo $ECHO_N "checking for RT-FireWire installation... $ECHO_C" >&6
+RTFW_SYMBOLS="${CONFIG_RTFIREWIRE_DIR}/symbols"
+if test -d ${RTFW_SYMBOLS}; then
     RTNET_RTFW_PREFIX="`echo ${CONFIG_RTFIREWIRE_DIR} | sed -e s,/*$,,`"  # strip trailing slashes
     echo "$as_me:$LINENO: result: ${RTNET_RTFW_PREFIX}" >&5
 echo "${ECHO_T}${RTNET_RTFW_PREFIX}" >&6
@@ -20270,7 +20270,7 @@ fi
 
 
 
-RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/include"
+RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/build/include -I${RTNET_RTFW_PREFIX}/source/include"
 
 
 
@@ -21659,17 +21659,22 @@ fi
 
 
 
-case "${CONFIG_RTNET_RTEXT_VERSION}" in
-    xeno-2x)
-        if test x$CONFIG_KBUILD = xy; then
+if test x$CONFIG_KBUILD = xy; then
+    case "${CONFIG_RTNET_RTEXT_VERSION}" in
+        xeno-2x)
             mkdir -p symbols
             rm -rf symbols/*
             for FILE in `ls ${RTEXT_SYMBOLS}/*`; do
                 ${LN_S} ${FILE} symbols/$(basename ${FILE})
             done
-        fi
-        ;;
-esac
+            if test -d ${RTFW_SYMBOLS}; then
+                for FILE in `ls ${RTFW_SYMBOLS}/*`; do
+                    ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                done
+            fi
+            ;;
+    esac
+fi
 
 
 

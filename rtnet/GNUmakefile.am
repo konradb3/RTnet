@@ -12,4 +12,12 @@ reconfig xconfig gconfig mconfig menuconfig config oldconfig help:
 	@$(MAKE) -f $(srcdir)/makefile $@ \
 	srctree=$(srcdir) ARCH=@RTNET_HOST_STRING@ CROSS_COMPILE=@CROSS_COMPILE@
 
+install-data-local:
+	rm -f $(DESTDIR)$(prefix)/build
+	$(LN_S) @abs_top_builddir@ $(DESTDIR)$(prefix)/build
+	rm -f $(DESTDIR)$(prefix)/source
+	$(LN_S) @abs_srcdir@ $(DESTDIR)$(prefix)/source
+	rm -f $(DESTDIR)$(prefix)/symbols
+	$(LN_S) @abs_top_builddir@/symbols $(DESTDIR)$(prefix)/symbols
+
 .PHONY: reconfig xconfig gconfig mconfig menuconfig config oldconfig help

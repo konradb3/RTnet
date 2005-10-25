@@ -640,7 +640,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am:
+install-data-am: install-data-local
 
 install-exec-am:
 
@@ -679,18 +679,27 @@ uninstall-info: uninstall-info-recursive
 	distclean-generic distclean-hdr distclean-libtool \
 	distclean-recursive distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	maintainer-clean-recursive mostlyclean mostlyclean-generic \
-	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am uninstall-info-am
+	install install-am install-data install-data-am \
+	install-data-local install-exec install-exec-am install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic maintainer-clean-recursive \
+	mostlyclean mostlyclean-generic mostlyclean-libtool \
+	mostlyclean-recursive pdf pdf-am ps ps-am tags tags-recursive \
+	uninstall uninstall-am uninstall-info-am
 
 
 reconfig xconfig gconfig mconfig menuconfig config oldconfig help:
 	@$(MAKE) -f $(srcdir)/makefile $@ \
 	srctree=$(srcdir) ARCH=@RTNET_HOST_STRING@ CROSS_COMPILE=@CROSS_COMPILE@
+
+install-data-local:
+	rm -f $(DESTDIR)$(prefix)/build
+	$(LN_S) @abs_top_builddir@ $(DESTDIR)$(prefix)/build
+	rm -f $(DESTDIR)$(prefix)/source
+	$(LN_S) @abs_srcdir@ $(DESTDIR)$(prefix)/source
+	rm -f $(DESTDIR)$(prefix)/symbols
+	$(LN_S) @abs_top_builddir@/symbols $(DESTDIR)$(prefix)/symbols
 
 .PHONY: reconfig xconfig gconfig mconfig menuconfig config oldconfig help
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
