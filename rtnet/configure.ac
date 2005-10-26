@@ -120,7 +120,7 @@ AC_MSG_RESULT([$RTNET_KCONFIG_FILE ($kconfig_type)])
 
 
 dnl ======================================================================
-dnl             RT-extension sources
+dnl             RT-extension installation
 dnl ======================================================================
 
 AC_ARG_WITH(rtext,
@@ -134,10 +134,10 @@ AC_ARG_WITH(rtext,
 
 
 dnl ======================================================================
-dnl             RT-FireWire sources
+dnl             RT-FireWire installation
 dnl ======================================================================
 AC_ARG_WITH(rtfw,
-    AS_HELP_STRING([--with-rtfw=RTFW], [path of RT-FireWire source code]),
+    AS_HELP_STRING([--with-rtfw=RTFW], [installation path of RT-FireWire]),
     [case "${withval}" in
         "" | y | ye | yes | n | no)
             AC_MSG_ERROR([You must supply an argument to --with-rtfw.]) ;;
@@ -343,7 +343,7 @@ dnl ======================================================================
 dnl =========== try to find rt-firewire ==================================
 dnl ======================================================================
 #
-# the presence of ieee1394.h is a good indication for RT-FireWire
+# the presence of the symbols directory is a good indication for RT-FireWire
 #
 AC_MSG_CHECKING([for RT-FireWire installation])
 RTFW_SYMBOLS="${CONFIG_RTFIREWIRE_DIR}/symbols"
@@ -443,7 +443,7 @@ dnl ======================================================================
 dnl            import RT-FireWire includes
 dnl ======================================================================
 
-RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/build/include -I${RTNET_RTFW_PREFIX}/source/include"
+RTFW_KMOD_CFLAGS="-I${RTNET_RTFW_PREFIX}/include"
 
 
 dnl ======================================================================

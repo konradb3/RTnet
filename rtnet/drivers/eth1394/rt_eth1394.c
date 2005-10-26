@@ -961,7 +961,6 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 		memcpy(rtskb_put(skb, len - hdr_len), buf + hdr_len, len - hdr_len);
 		ether_type = hdr->uf.ether_type;
 	} else {
-		DEBUGP("a datagram fragment has been received\n");
 		/* A datagram fragment has been received, now the fun begins. */
 		struct list_head *pdgl, *lh;
 		struct partial_datagram *pd;
@@ -973,6 +972,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 		int sid = NODEID_TO_NODE(srcid);
                 struct pdg_list *pdg = &(priv->pdg[sid]);
 
+		DEBUGP("a datagram fragment has been received\n");
 		hdr->words.word3 = ntohs(hdr->words.word3);
 		/* The 4th header word is reserved so no need to do ntohs() */
 
@@ -1113,6 +1113,7 @@ bad_proto:
 static int eth1394_write(struct hpsb_host *host, struct hpsb_packet *packet, unsigned int length)
 {
 	struct host_info *hi = hpsb_get_hostinfo(&eth1394_highlevel, host);
+	int ret;
 
 	if (hi == NULL) {
 		ETH1394_PRINT_G(KERN_ERR, "Could not find net device for host %s\n",
@@ -1121,7 +1122,7 @@ static int eth1394_write(struct hpsb_host *host, struct hpsb_packet *packet, uns
 	}
 
 	//we need to parse the packet now
-	int ret = eth1394_data_handler(hi->dev, packet->header[1]>>16, //source id
+	ret = eth1394_data_handler(hi->dev, packet->header[1]>>16, //source id
 							 packet->header[0]>>16, //dest id
 							 (char *)packet->data, //data 
 							packet->data_size, packet->time_stamp);
