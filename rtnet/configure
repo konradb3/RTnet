@@ -20864,8 +20864,8 @@ else
 fi
 
 
-echo "$as_me:$LINENO: checking EEPRO/100 Command Timeout" >&5
-echo $ECHO_N "checking EEPRO/100 Command Timeout... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for EEPRO/100 Command Timeout" >&5
+echo $ECHO_N "checking for EEPRO/100 Command Timeout... $ECHO_C" >&6
 # Check whether --enable-eepro100-cmdtimeout or --disable-eepro100-cmdtimeout was given.
 if test "${enable_eepro100_cmdtimeout+set}" = set; then
   enableval="$enable_eepro100_cmdtimeout"
@@ -21669,7 +21669,9 @@ if test x$CONFIG_KBUILD = xy; then
             done
             if test -d ${RTFW_SYMBOLS}; then
                 for FILE in `ls ${RTFW_SYMBOLS}/*`; do
-                    ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                    if test \! -e symbols/$(basename ${FILE}); then
+                        ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                    fi
                 done
             fi
             ;;

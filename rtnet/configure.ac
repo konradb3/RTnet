@@ -732,7 +732,7 @@ AC_ARG_ENABLE(eepro100,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_EEPRO100:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_EEPRO100,[test "$CONFIG_RTNET_DRV_EEPRO100" = "y"])
 
-AC_MSG_CHECKING([EEPRO/100 Command Timeout])
+AC_MSG_CHECKING([for EEPRO/100 Command Timeout])
 AC_ARG_ENABLE(eepro100-cmdtimeout,
     AS_HELP_STRING([--enable-eepro100-cmdtimeout], [Set EEPRO/100 command timeout]),
     [case "$enableval" in
@@ -1247,7 +1247,9 @@ if test x$CONFIG_KBUILD = xy; then
             done
             if test -d ${RTFW_SYMBOLS}; then
                 for FILE in `ls ${RTFW_SYMBOLS}/*`; do
-                    ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                    if test \! -e symbols/$(basename ${FILE}); then
+                        ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                    fi
                 done
             fi
             ;;
