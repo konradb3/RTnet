@@ -6,7 +6,7 @@ endif
 
 SUBDIRS = stack drivers addons $(OPTDIRS) tools Documentation scripts
 
-EXTRA_DIST = makefile Kconfig
+EXTRA_DIST = makefile Kconfig defconfig
 
 reconfig xconfig gconfig mconfig menuconfig config oldconfig help:
 	@$(MAKE) -f $(srcdir)/makefile $@ \

@@ -253,7 +253,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTDIRS = $(am__append_1)
 SUBDIRS = stack drivers addons $(OPTDIRS) tools Documentation scripts
-EXTRA_DIST = makefile Kconfig
+EXTRA_DIST = makefile Kconfig defconfig
 all: all-recursive
 
 .SUFFIXES:
