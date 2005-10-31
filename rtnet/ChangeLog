@@ -1,3 +1,24 @@
+0.9.0
+- ported over new, generic RTDM layer
+- added interactive configuration ("make menuconfig") with additional
+  fine-tuning switches
+- integrated Ethernet-over-1394 support
+- added Gigabit Ethernet driver for Realtek 8169
+- added support for joint TDMA slots
+- modularised RT-IPv4 and packet socket support
+- revised examples (some still broken)
+- removed old TDMA-V1 support
+- removed RTNET_RTIOC_NONBLOCK in favour of negative value for
+  RTNET_RTIOC_TIMEOUT
+- added support for overriding NIC hardware address
+- added tunable stack manager priority
+- linked module symbols of Xenomai and RT-FireWire into build process
+- fixed various bugs
+  * TDMA discipline cleanup
+  * locking in rt_udp_sendmsg (only relevant for SMP)
+  * rtdev cleanup
+  * gcc4 warnings
+
 0.8.3
 - added support for fusion 0.8.0..0.8.3
 - added experimental MPC 52xxx FEC driver

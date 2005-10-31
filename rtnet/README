@@ -3,9 +3,17 @@
 
 What is it?
 -----------
-RTnet is real-time network protocol stack for RTAI (hard real-time Linux
-extension). It provides a standard socket API to be used with RTAI kernel
-modules and real-time user space processes.
+RTnet is an Open Soure hard real-time network protocol stack for Xenomai and
+RTAI (real-time Linux extensions). It makes use of standard Ethernet hardware
+and supports several popular card chip sets, including Gigabit Ethernet.
+Moreover, Ethernet-over-1394 support is available based on the RT-FireWire
+protocol stack.
+
+RTnet implements UDP/IP, ICMP and ARP in a deterministic way. It provides a
+POSIX socket API to real-time user space processes and kernel modules. Access
+to nondeterministic media is managed by the pluggable RTmac layer and the
+actual control discipline. As default for Ethernet, a TDMA-based discipline
+is provided.
 
 
 What are the requirements?
@@ -15,23 +23,25 @@ What are the requirements?
 - Xenomai 2.0 or better
   RTAI 3.3 or better, barely tested
 - x86, PowerPC, or ARM platform
-  (other platforms are lacking up-to-date RTAI support)
+  (other platforms are lacking up-to-date RTAI or Xenomai support)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
   AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x, RTL8169 network adapter,
   MPC8260 FCC, MPC8xx SCC/FEC, or MPC5200 on-chip controllers, SMSC LAN91C111
   embedded controller
+- For Ethernet-over-FireWire see rtfirewire.berlios.de
 
 
 How to install it?
 ------------------
-1. Install and test a suitable RTAI version (see www.rtai.org)
+1. Install and test a suitable real-time Linux version
 2. cd to a preferred directory (e.g. /usr/src)
 3. tar xvjf <PATH-TO-RTNET-ARCHIVE>/rtnet-X.X.X.tar.bz2
 4. cd rtnet
 5. make menuconfig (run "make help" for further information)
-   Set at least the RTAI installation path and the path RTnet is to be
-   installed to (called <PREFIX> from now on). You could also check other
-   options if they fit your requirements. Help is available for each feature.
+   Set at least the real-time extension installation path and the path RTnet
+   is to be installed to (called <PREFIX> from now on). You could also check
+   other options if they fit your requirements. Help is available for each
+   feature.
 6. make
 7. make install
    This will create the directories <PREFIX>/sbin with all configuration tools,
@@ -49,12 +59,10 @@ How to test it?
    into the kernel!)
 2. Load required real-time modules (Xenomai: xeno_hal, xeno_nucleus,
    xeno_rtdm, RTAI: rtai_hal, rtai_ksched/rtai_lxrtm, rtai_sem, rtai_rtdm)
-3. Load the driver layer module rtai_rtdm (currently, this comes with RTnet,
-   see <PREFIX>/modules directory)
-4. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:
+3. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:
    RT_DRIVER, IPADDR, TDMA_MODE, TDMA_SLAVES.
-5. Run <PREFIX>/sbin/rtnet start
-6. Run rtping <remote-host> or load an application module
+4. Run <PREFIX>/sbin/rtnet start
+5. Run rtping <remote-host> or load an application module
    (like addons/examples/round_trip_time/run)
 
 
@@ -92,7 +100,7 @@ Yuchen Zhang                            - Ethernet-over-FireWire support
 <yuchen623-at-gmail.com>
 Klaus Keppler                           - RTL8169 gigabit driver
 <klaus.keppler-at-informatik.stud.uni-erlangen.de>
-Bill Vareka <bvareka-at-amsuper.com>    - Joint-slot TDMA extension
+Bill Vareka <bvareka-at-amsuper.com>    - Joint-slots TDMA extension
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
