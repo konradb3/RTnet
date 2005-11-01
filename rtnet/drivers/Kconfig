@@ -93,7 +93,7 @@ config RTNET_DRV_ETH1394
     default n
 
 
-config RTFIREWIRE_DIR
+config RTNET_RTFIREWIRE_DIR
     string "Path of RT-FireWire Source Code"
     depends on RTNET_DRV_ETH1394
     default "/usr/local/rt-firewire"

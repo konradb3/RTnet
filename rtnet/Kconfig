@@ -4,7 +4,7 @@ config RTNET_VERSION
 
 mainmenu "RTnet configuration"
 
-config RTEXT_DIR
+config RTNET_RTEXT_DIR
     string "Real-time Extension Installation Path"
     default "/usr/realtime"
     ---help---
