@@ -140,7 +140,7 @@ start_master() {
         # master:
         # [ip 1.2.3.4]
         # cycle <cycle_in_us>
-        # slot <id> <offset_in_us> [<phasing>/<period> [<size>]]
+        # slot <id> <offset_in_us> [<phasing>/<period> [<size> [<joint_slot_id>]]]
         # slot ...
         #
         # slave:
@@ -171,7 +171,7 @@ start_master() {
             exit 1
         fi
 
-        while read ARG1 ARG2 ARG3 ARG4 ARG5; do
+        while read ARG1 ARG2 ARG3 ARG4 ARG5 ARG6; do
             case "$ARG1" in
                 "master:")
                     submit_cfg
@@ -207,6 +207,9 @@ start_master() {
                     fi
                     if [ ! "$ARG5" = "" ]; then
                         TDMA_SLOTS="$TDMA_SLOTS -s $ARG5"
+                    fi
+                    if [ ! "$ARG6" = "" ]; then
+                        TDMA_SLOTS="$TDMA_SLOTS -j $ARG6"
                     fi
                     TDMA_SLOTS="$TDMA_SLOTS;"
                     ;;
