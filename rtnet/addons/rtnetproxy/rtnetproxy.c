@@ -377,7 +377,12 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
     skb->ip_summed = CHECKSUM_UNNECESSARY;
     skb->pkt_type = PACKET_HOST;  /* Extremely important! Why?!? */
 
-    nano_to_timeval(rtskb->time_stamp, &skb->stamp);
+    /* the rtskb stamp is useless (different clock), get new one */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+    __net_timestamp(skb);
+#else
+    do_gettimeofday(&skb->stamp);
+#endif
 
     dev->last_rx = jiffies;
     stats->rx_bytes+=skb->len;

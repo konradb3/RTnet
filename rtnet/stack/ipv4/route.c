@@ -64,14 +64,14 @@ struct net_route {
 static struct host_route    host_routes[HOST_ROUTES];
 static struct host_route    *free_host_route;
 static int                  allocated_host_routes;
-static struct host_route    *host_table[HOST_HASH_TBL_SIZE];
+static struct host_route    *host_hash_tbl[HOST_HASH_TBL_SIZE];
 static rtdm_lock_t          host_table_lock = RTDM_LOCK_UNLOCKED;
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 static struct net_route     net_routes[NET_ROUTES];
 static struct net_route     *free_net_route;
 static int                  allocated_net_routes;
-static struct net_route     *net_table[NET_HASH_TBL_SIZE + 1];
+static struct net_route     *net_hash_tbl[NET_HASH_TBL_SIZE + 1];
 static unsigned int         net_hash_key_shift = NET_HASH_KEY_SHIFT;
 static rtdm_lock_t          net_table_lock = RTDM_LOCK_UNLOCKED;
 
@@ -144,7 +144,7 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
         while (1) {
             rtdm_lock_get_irqsave(&host_table_lock, context);
 
-            entry_ptr = host_table[key];
+            entry_ptr = host_hash_tbl[key];
 
             for (i = 0; (i < index) && (entry_ptr != NULL); i++)
                 entry_ptr = entry_ptr->next;
@@ -204,7 +204,7 @@ static int rt_net_route_read_proc(char *buf, char **start, off_t offset,
         while (1) {
             rtdm_lock_get_irqsave(&net_table_lock, context);
 
-            entry_ptr = net_table[key];
+            entry_ptr = net_hash_tbl[key];
 
             for (i = 0; (i < index) && (entry_ptr != NULL); i++)
                 entry_ptr = entry_ptr->next;
@@ -381,7 +381,7 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
 
     rtdm_lock_get_irqsave(&host_table_lock, context);
 
-    rt = host_table[key];
+    rt = host_hash_tbl[key];
     while (rt != NULL) {
         if (rt->dest_host.ip == addr) {
             rt->dest_host.rtdev = rtdev;
@@ -399,8 +399,8 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
     }
 
     if (new_route) {
-        new_route->next = host_table[key];
-        host_table[key] = new_route;
+        new_route->next    = host_hash_tbl[key];
+        host_hash_tbl[key] = new_route;
 
         rtdm_lock_put_irqrestore(&host_table_lock, context);
     } else {
@@ -429,11 +429,11 @@ int rt_ip_route_del_host(u32 addr)
 
 
     key = ntohl(addr) & HOST_HASH_KEY_MASK;
-    last_ptr = &host_table[key];
+    last_ptr = &host_hash_tbl[key];
 
     rtdm_lock_get_irqsave(&host_table_lock, context);
 
-    rt = host_table[key];
+    rt = host_hash_tbl[key];
     while (rt != NULL) {
         if (rt->dest_host.ip == addr) {
             *last_ptr = rt->next;
@@ -470,11 +470,11 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
 
     for (key = 0; key < HOST_HASH_TBL_SIZE; key++) {
       host_start_over:
-        last_host_ptr = &host_table[key];
+        last_host_ptr = &host_hash_tbl[key];
 
         rtdm_lock_get_irqsave(&host_table_lock, context);
 
-        host_rt = host_table[key];
+        host_rt = host_hash_tbl[key];
         while (host_rt != NULL) {
             if (host_rt->dest_host.rtdev == rtdev) {
                 *last_host_ptr = host_rt->next;
@@ -563,11 +563,11 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
         key = (ntohl(addr) >> net_hash_key_shift) & NET_HASH_KEY_MASK;
     else
         key = NET_HASH_TBL_SIZE;
-    last_ptr = &net_table[key];
+    last_ptr = &net_hash_tbl[key];
 
     rtdm_lock_get_irqsave(&net_table_lock, context);
 
-    rt = net_table[key];
+    rt = net_hash_tbl[key];
     while (rt != NULL) {
         if ((rt->dest_net_ip == addr) && (rt->dest_net_mask == mask)) {
             rt->gw_ip = gw_addr;
@@ -619,11 +619,11 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
         key = (ntohl(addr) >> net_hash_key_shift) & NET_HASH_KEY_MASK;
     else
         key = NET_HASH_TBL_SIZE;
-    last_ptr = &net_table[key];
+    last_ptr = &net_hash_tbl[key];
 
     rtdm_lock_get_irqsave(&net_table_lock, context);
 
-    rt = net_table[key];
+    rt = net_hash_tbl[key];
     while (rt != NULL) {
         if ((rt->dest_net_ip == addr) && (rt->dest_net_mask == mask)) {
             *last_ptr = rt->next;
@@ -674,7 +674,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
     rtdm_lock_get_irqsave(&host_table_lock, context);
 
-    host_rt = host_table[key];
+    host_rt = host_hash_tbl[key];
     while (host_rt != NULL) {
         if (host_rt->dest_host.ip == daddr) {
             memcpy(rt_buf->dev_addr, &host_rt->dest_host.dev_addr,
@@ -701,7 +701,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
         rtdm_lock_get_irqsave(&net_table_lock, context);
 
-        net_rt = net_table[key];
+        net_rt = net_hash_tbl[key];
         while (net_rt != NULL) {
             if (net_rt->dest_net_ip == (daddr & net_rt->dest_net_mask)) {
                 daddr = net_rt->gw_ip;
@@ -720,7 +720,7 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
         /* last try: no hash key */
         rtdm_lock_get_irqsave(&net_table_lock, context);
 
-        net_rt = net_table[NET_HASH_TBL_SIZE];
+        net_rt = net_hash_tbl[NET_HASH_TBL_SIZE];
         while (net_rt != NULL) {
             if (net_rt->dest_net_ip == (daddr & net_rt->dest_net_mask)) {
                 daddr = net_rt->gw_ip;

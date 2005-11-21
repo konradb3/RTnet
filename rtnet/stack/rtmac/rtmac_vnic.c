@@ -85,7 +85,11 @@ static void rtmac_vnic_signal_handler(rtdm_nrtsig_t nrtsig)
         skb = dev_alloc_skb(hdrlen + rtskb->len + 2);
         if (skb) {
             /* the rtskb stamp is useless (different clock), get new one */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+            __net_timestamp(skb);
+#else
             do_gettimeofday(&skb->stamp);
+#endif
 
             skb_reserve(skb, 2); /* Align IP on 16 byte boundaries */
 

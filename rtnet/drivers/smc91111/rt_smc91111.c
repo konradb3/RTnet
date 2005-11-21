@@ -149,13 +149,13 @@ static unsigned int smc_portlist[] __initdata =
 */
 //#define SMC_DEBUG 3 // Must be defined in makefile
 
-#if (SMC_DEBUG > 2 )
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2)
 #define PRINTK3(args...) rtdm_printk(args)
 #else
 #define PRINTK3(args...)
 #endif
 
-#if SMC_DEBUG > 1
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 1)
 #define PRINTK2(args...) rtdm_printk(args)
 #else
 #define PRINTK2(args...)
@@ -412,7 +412,7 @@ static int smc_probe(struct rtnet_device *dev, int ioaddr);
 /*
  . A rather simple routine to print out a packet for debugging purposes.
 */
-#if SMC_DEBUG > 2
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2)
 static void print_packet( byte *, int );
 #endif
 
@@ -880,7 +880,7 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
    	PRINTK3("%s: Trying to xmit packet of length %x\n",
 		dev->name, length);
 
-#if SMC_DEBUG > 2
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2)
 	rtdm_printk("Transmitting Packet\n");
 	print_packet( buf, length );
 #endif
@@ -1347,7 +1347,7 @@ err_out:
 	return retval;
 }
 
-#if SMC_DEBUG > 2
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2)
 static void print_packet( byte * buf, int length )
 {
 #if 1
@@ -1611,7 +1611,7 @@ static inline void smc_rcv(struct rtnet_device *dev)
 
 #endif // USE_32_BIT
 
-#if	SMC_DEBUG > 2
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2)
 		rtdm_printk("Receiving Packet\n");
 		print_packet( data, packet_length );
 #endif
@@ -3221,7 +3221,7 @@ static void smc_sysctl_unregister(struct rtnet_device *dev)
 
 //---PHY CONTROL AND CONFIGURATION-----------------------------------------
 
-#if (SMC_DEBUG > 2 )
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2 )
 
 /*------------------------------------------------------------
  . Debugging function for viewing MII Management serial bitstream
@@ -3377,7 +3377,7 @@ static word smc_read_phy_register(int ioaddr, byte phyaddr, byte phyreg)
 			phydata |= 0x0001;
 		}
 
-#if (SMC_DEBUG > 2 )
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2 )
 	printk("smc_read_phy_register(): phyaddr=%x,phyreg=%x,phydata=%x\n",
 		phyaddr, phyreg, phydata);
 	smc_dump_mii_stream(bits, sizeof bits);
@@ -3492,7 +3492,7 @@ static void smc_write_phy_register(int ioaddr,
 	// Restore original bank select
 	SMC_SELECT_BANK( oldBank );
 
-#if (SMC_DEBUG > 2 )
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 2 )
 	printk("smc_write_phy_register(): phyaddr=%x,phyreg=%x,phydata=%x\n",
 		phyaddr, phyreg, phydata);
 	smc_dump_mii_stream(bits, sizeof bits);
@@ -3854,7 +3854,7 @@ static void smc_phy_interrupt(struct net_device* dev)
 	if (phy18 == lp->lastPhy18)
 		break;
 
-#if (SMC_DEBUG > 1 )
+#if defined(SMC_DEBUG) && (SMC_DEBUG > 1 )
 
 	PRINTK2("%s:     phy18=0x%x\n", dev->name, phy18);
 	PRINTK2("%s: lastPhy18=0x%x\n", dev->name, lp->lastPhy18);

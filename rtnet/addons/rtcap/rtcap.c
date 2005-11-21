@@ -182,6 +182,9 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig)
     int                     ifindex;
     int                     active;
     rtdm_lockctx_t          context;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+    struct timeval          tv;
+#endif
 
 
     while (1)
@@ -219,15 +222,28 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig)
             if (active & TAP_DEV) {
                 skb->dev      = &tap_device[ifindex].tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+                nano_to_timeval(rtskb->time_stamp, &tv);
+                skb_set_timestamp(skb, &tv);
+#else
                 nano_to_timeval(rtskb->time_stamp, &skb->stamp);
+#endif
 
                 rtmac_skb = NULL;
                 if ((rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) &&
                     (active & RTMAC_TAP_DEV)) {
                     rtmac_skb = skb_clone(skb, GFP_ATOMIC);
                     if (rtmac_skb != NULL)
+                    {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+                        nano_to_timeval(rtskb->cap_rtmac_stamp, &tv);
+                        skb_set_timestamp(rtmac_skb, &tv);
+#else
                         nano_to_timeval(rtskb->cap_rtmac_stamp,
-                                           &rtmac_skb->stamp);
+                                        &rtmac_skb->stamp);
+#endif
+                    }
                 }
 
                 rtcap_kfree_rtskb(rtskb);
@@ -244,7 +260,13 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig)
             } else if (rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) {
                 skb->dev      = &tap_device[ifindex].rtmac_tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,14)
+                nano_to_timeval(rtskb->cap_rtmac_stamp, &tv);
+                skb_set_timestamp(skb, &tv);
+#else
                 nano_to_timeval(rtskb->cap_rtmac_stamp, &skb->stamp);
+#endif
 
                 rtcap_kfree_rtskb(rtskb);
 
