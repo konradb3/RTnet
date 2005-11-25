@@ -142,7 +142,7 @@ AC_ARG_WITH(rtfw,
         "" | y | ye | yes | n | no)
             AC_MSG_ERROR([You must supply an argument to --with-rtfw.]) ;;
         *)
-            CONFIG_RTFIREWIRE_DIR=${withval} ;;
+            CONFIG_RTNET_RTFIREWIRE_DIR=${withval} ;;
     esac])
 
 
@@ -220,6 +220,11 @@ if test "$RTAI_DIR" \!= ""; then
     # source (load) the rtai configuration
     . ${RTAI_CONFIG_FILE}
 
+    # get linux kernel tree and version
+    AC_MSG_CHECKING([for Linux source tree])
+    RTEXT_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
+    RTEXT_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+
 elif test "$XENO_DIR" \!= ""; then
     #
     # check if Xenomai is installed with DESTDIR
@@ -245,29 +250,64 @@ elif test "$XENO_DIR" \!= ""; then
     XENO_VERSION="`${XENO_CONFIG} --version`"
 
     case "$XENO_VERSION" in
-        1.9.9 | 2.*)
-            CONFIG_RTNET_RTEXT_VERSION=xeno-2x
+        1.9.9 | 2.0*)
+            CONFIG_RTNET_RTEXT_VERSION=xeno-20x
             AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
+            AC_MSG_RESULT([${XENO_VERSION}])
+
+            AC_MSG_CHECKING([for Xenomai config file])
+            XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
+            if test \! -f $XENO_CONFIG_FILE; then
+                AC_MSG_ERROR([*** Xenomai configuration file not found])
+            fi
+            AC_MSG_RESULT([${XENO_CONFIG_FILE}])
+
+            # source (load) the Xenomai configuration
+            . ${XENO_CONFIG_FILE}
+
+            # get linux kernel tree and version
+            AC_MSG_CHECKING([for Linux source tree])
+            RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
+            RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+
+            ;;
+        2.1*)
+            CONFIG_RTNET_RTEXT_VERSION=xeno-21x
+            AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
+            AC_MSG_RESULT([${XENO_VERSION}])
+
+            AC_ARG_WITH(linux,
+                AS_HELP_STRING([--with-linux=LINUX], [real-time extended Linux kernel]),
+                [case "${withval}" in
+                    "" | y | ye | yes | n | no)
+                        AC_MSG_ERROR([You must supply an argument to --with-linux.]) ;;
+                    *)
+                        CONFIG_RTNET_LINUX_DIR=${withval} ;;
+                esac])
+
+            # get linux kernel tree and version
+            AC_MSG_CHECKING([for Linux source tree])
+            RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
+            eval linux_`grep '^EXTRAVERSION =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            eval linux_`grep '^PATCHLEVEL =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            eval linux_`grep '^SUBLEVEL =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            eval linux_`grep '^VERSION =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
+            RTEXT_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL$linux_EXTRAVERSION"
+
             ;;
         *)
             AC_MSG_ERROR([*** Unsupported Xenomai version $XENO_VERSION in $XENO_DIR])
             ;;
     esac
-    AC_MSG_RESULT([${XENO_VERSION}])
-
-    AC_MSG_CHECKING([for Xenomai config file])
-    XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
-    if test \! -f $XENO_CONFIG_FILE; then
-        AC_MSG_ERROR([*** Xenomai configuration file not found])
-    fi
-    AC_MSG_RESULT([${XENO_CONFIG_FILE}])
-
-    # source (load) the Xenomai configuration
-    . ${XENO_CONFIG_FILE}
 
 else
     AC_MSG_ERROR([*** internal error])
 fi
+
+#source (load) the kernel configuration
+. ${RTEXT_LINUX_DIR}/.config
+
+AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
 
 AM_CONDITIONAL(CONFIG_RTAI,[test "$RTAI_DIR" \!= ""])
 AM_CONDITIONAL(CONFIG_XENO,[test "$XENO_DIR" \!= ""])
@@ -296,14 +336,9 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
             *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
         esac
 
-        # get linux kernel tree and version
-        AC_MSG_CHECKING([for Linux source tree])
-        RTEXT_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
-        RTEXT_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
-
         ;;
 
-    xeno-2x) # ---> Xenomai 2.x <---
+    xeno-20x | xeno-21x) # ---> Xenomai 2.x <---
 
         # check for RTDM skin, needed by RTnet
         AC_MSG_CHECKING([for RTDM skin])
@@ -319,22 +354,12 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
 #            *) AC_MSG_ERROR([*** Please enable pipes in RTAI]) ;;
 #        esac
 
-        # get linux kernel tree and version
-        AC_MSG_CHECKING([for Linux source tree])
-        RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
-        RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
-
         ;;
 
     *)              # ---> oops <----
         AC_MSG_ERROR([*** internal error])
         ;;
 esac
-
-#source (load) the kernel configuration
-. ${RTEXT_LINUX_DIR}/.config
-
-AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
 
 dnl =========== end of RT-extension detection ============================
 
@@ -346,9 +371,9 @@ dnl ======================================================================
 # the presence of the symbols directory is a good indication for RT-FireWire
 #
 AC_MSG_CHECKING([for RT-FireWire installation])
-RTFW_SYMBOLS="${CONFIG_RTFIREWIRE_DIR}/symbols"
+RTFW_SYMBOLS="${CONFIG_RTNET_RTFIREWIRE_DIR}/symbols"
 if test -d ${RTFW_SYMBOLS}; then
-    RTNET_RTFW_PREFIX="`echo ${CONFIG_RTFIREWIRE_DIR} | sed -e s,[/]*$,,`"  # strip trailing slashes
+    RTNET_RTFW_PREFIX="`echo ${CONFIG_RTNET_RTFIREWIRE_DIR} | sed -e s,[/]*$,,`"  # strip trailing slashes
     AC_MSG_RESULT([${RTNET_RTFW_PREFIX}])
 else
     AC_MSG_RESULT([none])
@@ -400,11 +425,16 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
         CONFIG_RTNET_RTEXT_ARCH="`${RTAI_CONFIG} --arch`"
         RTEXT_LIBRARIES="`${RTAI_CONFIG} --library-dir`"
         ;;
-    xeno-2x)
+    xeno-20x)
         RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
         CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
         RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
         RTEXT_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
+        ;;
+    xeno-21x)
+        RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
+        CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
+        RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -417,8 +447,11 @@ if test "$CONFIG_KBUILD" = "y"; then
         rtai-3x)
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        xeno-2x)
+        xeno-20x)
             RTEXT_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
+            ;;
+        xeno-21x)
+            RTEXT_KMOD_CFLAGS="-I ${RTEXT_LINUX_DIR}/include/xenomai"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
@@ -429,7 +462,7 @@ else
         rtai-3x)
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        xeno-2x)
+        xeno-20x | xeno-21x)
             AC_MSG_ERROR([*** internal error])
             ;;
         *)
@@ -613,7 +646,7 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
 #include <linux/kernel.h>
                 ])
             ;;
-        xeno-2x)
+        xeno-20x | xeno-21x)
             # nothing further to do
             ;;
         *)
@@ -637,7 +670,7 @@ else                                    # building against linux-2.4
 #include <linux/kernel.h>
             ])
             ;;
-        xeno-2x)
+        xeno-20x | xeno-21x)
             AC_MSG_ERROR([*** internal error])
             ;;
         *)
@@ -694,7 +727,7 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
             AC_MSG_RESULT([${CONFIG_REGPARM:-n}])
         fi
         ;;
-    xeno-2x) CONFIG_RTNET_LXRT=n
+    xeno-20x | xeno-21x) CONFIG_RTNET_LXRT=n
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -1239,12 +1272,23 @@ dnl ======================================================================
 
 if test x$CONFIG_KBUILD = xy; then
     case "${CONFIG_RTNET_RTEXT_VERSION}" in
-        xeno-2x)
+        xeno-20x)
             mkdir -p symbols
             rm -rf symbols/*
             for FILE in `ls ${RTEXT_SYMBOLS}/*`; do
                 ${LN_S} ${FILE} symbols/$(basename ${FILE})
             done
+            if test -d ${RTFW_SYMBOLS}; then
+                for FILE in `ls ${RTFW_SYMBOLS}/*`; do
+                    if test \! -e symbols/$(basename ${FILE}); then
+                        ${LN_S} ${FILE} symbols/$(basename ${FILE})
+                    fi
+                done
+            fi
+            ;;
+        xeno-21x)
+            mkdir -p symbols
+            rm -rf symbols/*
             if test -d ${RTFW_SYMBOLS}; then
                 for FILE in `ls ${RTFW_SYMBOLS}/*`; do
                     if test \! -e symbols/$(basename ${FILE}); then

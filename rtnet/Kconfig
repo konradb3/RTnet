@@ -12,6 +12,16 @@ config RTNET_RTEXT_DIR
     Xenomai and RTAI are supported (NOTE: RTAI is currently broken).
     Do not confuse with the source code directory of the extension.
 
+config RTNET_LINUX_DIR
+    string "Real-time extended Linux kernel (since Xenomai 2.1)
+    default "/lib/modules/`uname -r`/build"
+    ---help---
+    Path to a Linux kernel source tree which has been extended by
+    Xenomai with a real-time subsystem. Since Xenomai 2.1 (or better)
+    strictly separates the kernelspace from the userspace source tree,
+    there is no longer a direct link between the CONFIG_RTNET_RTEXT_DIR
+    and CONFIG_RTNET_LINUX_DIR.
+
 config RTNET_INSTALLDIR
     string "Installation Path of RTnet"
     default "/usr/local/rtnet"
