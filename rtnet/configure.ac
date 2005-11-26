@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.9.0],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.9.1],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -124,12 +124,14 @@ dnl             RT-extension installation
 dnl ======================================================================
 
 AC_ARG_WITH(rtext,
-    AS_HELP_STRING([--with-rtext=RT-EXTENSION], [installation path of RTAI or Xenomai]),
+    AS_HELP_STRING([--with-rtext=RT-EXTENSION], [installation path of RTAI or Xenomai 2.0.x]),
     [case "${withval}" in
         "" | y | ye | yes | n | no)
             AC_MSG_ERROR([You must supply an argument to --with-rtext.]) ;;
         *)
-            CONFIG_RTNET_RTEXT_DIR=${withval} ;;
+            CONFIG_RTNET_RTEXT_DIR=${withval}
+            CONFIG_RTNET_RTEXT_CLASSIC=y
+            ;;
     esac])
 
 
@@ -188,6 +190,15 @@ else
     if test \! -f ${RTEXT_LINUX_DIR}/include/xenomai/nucleus/version.h; then
         AC_MSG_ERROR([*** RT-extended kernel not found in $RTEXT_LINUX_DIR])
     fi
+
+    AC_ARG_WITH(rtext-config,
+        AS_HELP_STRING([--with-rtext-config=CONFIG-PATH], [path of the RT-extension's config tool]),
+        [case "${withval}" in
+            "" | y | ye | yes | n | no)
+                AC_MSG_ERROR([You must supply an argument to --with-rtext-config.]) ;;
+            *)
+                CONFIG_RTNET_RTEXT_CONFIG_PATH=${withval} ;;
+        esac])
 
     XENO_CONFIG=${CONFIG_RTNET_RTEXT_CONFIG_PATH}
     if test "${XENO_CONFIG}" = ""; then

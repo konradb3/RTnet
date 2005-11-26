@@ -1,10 +1,20 @@
 #
 # Automatically generated make config: don't edit
-# RTnet version: 0.9.0
-# Tue Nov  1 08:06:23 2005
+# RTnet version: 0.9.1
+# Sat Nov 26 20:41:15 2005
 #
-CONFIG_RTNET_VERSION="0.9.0"
-CONFIG_RTNET_RTEXT_DIR="/usr/realtime"
+CONFIG_RTNET_VERSION="0.9.1"
+
+#
+# Real-Time Extension
+#
+# CONFIG_RTNET_RTEXT_CLASSIC is not set
+CONFIG_RTNET_RTEXT_INKERNEL=y
+CONFIG_RTNET_LINUX_DIR="/lib/modules/`uname -r`/build"
+
+#
+# RTnet Parameters
+#
 CONFIG_RTNET_INSTALLDIR="/usr/local/rtnet"
 # CONFIG_RTNET_CHECKED is not set
 

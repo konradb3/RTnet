@@ -52,10 +52,9 @@ oldconfig: conf
 	@./conf -o $(srctree)/Kconfig
 
 defconfig: conf
-	rm -f defconfig
-	touch defconfig
-	./conf -D defconfig $(srctree)/Kconfig
-	rm defconfig
+	rm -f $(srctree)/defconfig
+	touch $(srctree)/defconfig
+	./conf -D $(srctree)/defconfig $(srctree)/Kconfig
 
 qconf: .qtinst
 	$(MAKE) -f $(srcdir)/Makefile.kconfig qbuild srctree=$(srctree) ARCH=$(ARCH)
