@@ -129,7 +129,7 @@ AC_ARG_WITH(rtext,
         "" | y | ye | yes | n | no)
             AC_MSG_ERROR([You must supply an argument to --with-rtext.]) ;;
         *)
-            CONFIG_RTEXT_DIR=${withval} ;;
+            CONFIG_RTNET_RTEXT_DIR=${withval} ;;
     esac])
 
 
@@ -147,24 +147,60 @@ AC_ARG_WITH(rtfw,
 
 
 dnl ======================================================================
-dnl             try to find RT-Extension
+dnl             try to find RT-extension / RT-extended kernel
 dnl ======================================================================
 
-AC_MSG_CHECKING([for RT-extension installation])
-RTAI_CONFIG="${CONFIG_RTEXT_DIR}/bin/rtai-config"
-if test -x "${RTAI_CONFIG}"; then
-    RTAI_DIR="`cd ${CONFIG_RTEXT_DIR} && pwd`"   # let the shell normalize the path
-    XENO_DIR=
-    AC_MSG_RESULT([${RTAI_DIR} (RTAI)])
-else
-    XENO_CONFIG="${CONFIG_RTEXT_DIR}/bin/xeno-config"
-    if test -x "${XENO_CONFIG}"; then
-        RTAI_DIR=
-        XENO_DIR="`cd ${CONFIG_RTEXT_DIR} && pwd`"   # let the shell normalize the path
-        AC_MSG_RESULT([${XENO_DIR} (Xenomai)])
+AC_MSG_CHECKING([for RT-extension])
+
+if test "${CONFIG_RTNET_RTEXT_CLASSIC}" = "y"; then
+    RTAI_CONFIG="${CONFIG_RTNET_RTEXT_DIR}/bin/rtai-config"
+    if test -x "${RTAI_CONFIG}"; then
+        RTAI_DIR="`cd ${CONFIG_RTNET_RTEXT_DIR} && pwd`"   # let the shell normalize the path
+        XENO_DIR=""
+        AC_MSG_RESULT([${RTAI_DIR} (RTAI)])
     else
-        AC_MSG_ERROR([*** No RT-extension found in $CONFIG_RTEXT_DIR])
+        XENO_CONFIG="${CONFIG_RTNET_RTEXT_DIR}/bin/xeno-config"
+        if test -x "${XENO_CONFIG}"; then
+            RTAI_DIR=""
+            XENO_DIR="`cd ${CONFIG_RTNET_RTEXT_DIR} && pwd`"   # let the shell normalize the path
+            AC_MSG_RESULT([${XENO_DIR} (Xenomai 2.0.x)])
+        else
+            AC_MSG_ERROR([*** No RT-extension found in $CONFIG_RTNET_RTEXT_DIR])
+        fi
     fi
+else
+    RTAI_DIR=""
+    XENO_DIR=""
+
+    AC_ARG_WITH(linux,
+        AS_HELP_STRING([--with-linux=LINUX], [real-time extended Linux kernel]),
+        [case "${withval}" in
+            "" | y | ye | yes | n | no)
+                AC_MSG_ERROR([You must supply an argument to --with-linux.]) ;;
+            *)
+                CONFIG_RTNET_LINUX_DIR=${withval} ;;
+        esac])
+
+    # get linux kernel tree and version
+    RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
+    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $RTEXT_LINUX_DIR/include/linux/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
+
+    if test \! -f ${RTEXT_LINUX_DIR}/include/xenomai/nucleus/version.h; then
+        AC_MSG_ERROR([*** RT-extended kernel not found in $RTEXT_LINUX_DIR])
+    fi
+
+    XENO_CONFIG=${CONFIG_RTNET_RTEXT_CONFIG_PATH}
+    if test "${XENO_CONFIG}" = ""; then
+        XENO_CONFIG=`which xeno-config 2>/dev/null`
+        if test "${XENO_CONFIG}" = "" && test "${CONFIG_RTNET_EXAMPLES}" \!= "y"; then
+            XENO_CONFIG="/bin/true"
+        fi
+    fi
+    if test "${XENO_CONFIG}" = "" || test \! -x ${XENO_CONFIG}; then
+        AC_MSG_ERROR([*** Xenomai configuration tool not found: ${XENO_CONFIG}])
+    fi
+
+    AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP} + Xenomai)])
 fi
 
 #
@@ -172,27 +208,10 @@ fi
 # it will be fatal, thus exit with AC_MSG_ERROR
 #
 
+XENO_VERSION=""
+RTAI_VERSION=""
+
 if test "$RTAI_DIR" \!= ""; then
-    #
-    # check if RTAI is installed with DESTDIR
-    # e.g.: 'make DESTDIR=/foo install'
-    #
-    AC_MSG_CHECKING([for RTAI DESTDIR])
-    RTNET_RTEXT_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"        # let the shell normalize the path
-    if test "${RTNET_RTEXT_PREFIX}" \!= "${RTAI_DIR}"; then
-        RTAI_DESTDIR="`cd \`echo ${RTAI_DIR} | sed -e s,${RTNET_RTEXT_PREFIX}$,,\` && pwd`"
-        export DESTDIR="${RTAI_DESTDIR}"
-
-        RTNET_RTEXT_PREFIX="`cd \`${RTAI_CONFIG} --prefix\` && pwd`"    # let the shell normalize the path
-        if test "${RTNET_RTEXT_PREFIX}" = "${RTAI_DIR}"; then
-            AC_MSG_RESULT([${DESTDIR}])
-        else
-            AC_MSG_ERROR([*** Cannot identify DESTDIR])
-        fi
-    else
-        AC_MSG_RESULT([none])
-    fi
-
     AC_MSG_CHECKING([for RTAI version])
     RTAI_VERSION="`${RTAI_CONFIG} --version`"
 
@@ -224,28 +243,9 @@ if test "$RTAI_DIR" \!= ""; then
     AC_MSG_CHECKING([for Linux source tree])
     RTEXT_LINUX_DIR="`${RTAI_CONFIG} --linux-dir`"
     RTEXT_LINUX_VERSION="`${RTAI_CONFIG} --linux-version`"
+    AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
 
 elif test "$XENO_DIR" \!= ""; then
-    #
-    # check if Xenomai is installed with DESTDIR
-    # e.g.: 'make DESTDIR=/foo install'
-    #
-    AC_MSG_CHECKING([for Xenomai DESTDIR])
-    RTNET_RTEXT_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"        # let the shell normalize the path
-    if test "${RTNET_RTEXT_PREFIX}" \!= "${XENO_DIR}"; then
-        XENO_DESTDIR="`cd \`echo ${XENO_DIR} | sed -e s,${RTNET_RTEXT_PREFIX}$,,\` && pwd`"
-        export DESTDIR="${XENO_DESTDIR}"
-
-        RTNET_RTEXT_PREFIX="`cd \`${XENO_CONFIG} --prefix\` && pwd`"    # let the shell normalize the path
-        if test "${RTNET_RTEXT_PREFIX}" = "${XENO_DIR}"; then
-            AC_MSG_RESULT([${DESTDIR}])
-        else
-            AC_MSG_ERROR([*** Cannot identify DESTDIR])
-        fi
-    else
-        AC_MSG_RESULT([none])
-    fi
-
     AC_MSG_CHECKING([for Xenomai version])
     XENO_VERSION="`${XENO_CONFIG} --version`"
 
@@ -254,63 +254,50 @@ elif test "$XENO_DIR" \!= ""; then
             CONFIG_RTNET_RTEXT_VERSION=xeno-20x
             AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])
-
-            AC_MSG_CHECKING([for Xenomai config file])
-            XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
-            if test \! -f $XENO_CONFIG_FILE; then
-                AC_MSG_ERROR([*** Xenomai configuration file not found])
-            fi
-            AC_MSG_RESULT([${XENO_CONFIG_FILE}])
-
-            # source (load) the Xenomai configuration
-            . ${XENO_CONFIG_FILE}
-
-            # get linux kernel tree and version
-            AC_MSG_CHECKING([for Linux source tree])
-            RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
-            RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
-
-            ;;
-        2.1*)
-            CONFIG_RTNET_RTEXT_VERSION=xeno-21x
-            AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
-            AC_MSG_RESULT([${XENO_VERSION}])
-
-            AC_ARG_WITH(linux,
-                AS_HELP_STRING([--with-linux=LINUX], [real-time extended Linux kernel]),
-                [case "${withval}" in
-                    "" | y | ye | yes | n | no)
-                        AC_MSG_ERROR([You must supply an argument to --with-linux.]) ;;
-                    *)
-                        CONFIG_RTNET_LINUX_DIR=${withval} ;;
-                esac])
-
-            # get linux kernel tree and version
-            AC_MSG_CHECKING([for Linux source tree])
-            RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
-            eval linux_`grep '^EXTRAVERSION =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^PATCHLEVEL =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^SUBLEVEL =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            eval linux_`grep '^VERSION =' $RTEXT_LINUX_DIR/Makefile | sed -e 's, ,,g'`
-            RTEXT_LINUX_VERSION="$linux_VERSION.$linux_PATCHLEVEL.$linux_SUBLEVEL$linux_EXTRAVERSION"
-
             ;;
         *)
             AC_MSG_ERROR([*** Unsupported Xenomai version $XENO_VERSION in $XENO_DIR])
             ;;
     esac
 
+    AC_MSG_CHECKING([for Xenomai config file])
+    XENO_CONFIG_FILE="`${XENO_CONFIG} --config`"
+    if test \! -f $XENO_CONFIG_FILE; then
+        AC_MSG_ERROR([*** Xenomai configuration file not found])
+    fi
+    AC_MSG_RESULT([${XENO_CONFIG_FILE}])
+
+    # source (load) the Xenomai configuration
+    . ${XENO_CONFIG_FILE}
+
+    # get linux kernel tree and version
+    AC_MSG_CHECKING([for Linux source tree])
+    RTEXT_LINUX_DIR="`${XENO_CONFIG} --linux-dir`"
+    RTEXT_LINUX_VERSION="`${XENO_CONFIG} --linux-version`"
+    AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
+
 else
-    AC_MSG_ERROR([*** internal error])
+    AC_MSG_CHECKING([for Xenomai version])
+    XENO_VERSION=`grep "#define XENO_VERSION_STRING" $RTEXT_LINUX_DIR/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
+
+    case "$XENO_VERSION" in
+        2.1*)
+            CONFIG_RTNET_RTEXT_VERSION=xeno-21x
+            AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
+            AC_MSG_RESULT([${XENO_VERSION}])
+            ;;
+        *)
+            AC_MSG_ERROR([*** Unsupported Xenomai version $XENO_VERSION in $RTEXT_LINUX_DIR])
+            ;;
+    esac
+
 fi
 
 #source (load) the kernel configuration
 . ${RTEXT_LINUX_DIR}/.config
 
-AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP})])
-
-AM_CONDITIONAL(CONFIG_RTAI,[test "$RTAI_DIR" \!= ""])
-AM_CONDITIONAL(CONFIG_XENO,[test "$XENO_DIR" \!= ""])
+AM_CONDITIONAL(CONFIG_RTAI,[test "$RTAI_VERSION" \!= ""])
+AM_CONDITIONAL(CONFIG_XENO,[test "$XENO_VERSION" \!= ""])
 
 case "$CONFIG_RTNET_RTEXT_VERSION" in
     rtai-3x) # ---> RTAI 3.x <---
@@ -433,8 +420,12 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
         ;;
     xeno-21x)
         RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
-        CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
         RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
+        if test "`eval echo \\$$wanted_kernel_arch`" \!= ""; then
+            CONFIG_RTNET_RTEXT_ARCH="${RTNET_TARGET_ARCH}"
+        else
+            CONFIG_RTNET_RTEXT_ARCH="<something else>"
+        fi
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -451,7 +442,7 @@ if test "$CONFIG_KBUILD" = "y"; then
             RTEXT_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
             ;;
         xeno-21x)
-            RTEXT_KMOD_CFLAGS="-I ${RTEXT_LINUX_DIR}/include/xenomai"
+            RTEXT_KMOD_CFLAGS="-I${RTEXT_LINUX_DIR}/include/xenomai"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
@@ -562,8 +553,7 @@ else
                 ARCH=\$(RTNET_TARGET_ARCH)                                  \
                 M=\"\`pwd\`\"                                               \
                 V=\$(V)                                                     \
-                rtfw_dir=\"${RTNET_RTFW_PREFIX}\"                           \
-                rtext_dir=\"${RTNET_RTEXT_PREFIX}\"                         \
+                rtext_kmod_cflags=\"\$(RTEXT_KMOD_CFLAGS)\"                 \
                 top_srcdir=\"\`cd \$(top_srcdir) && pwd\`\"                 \
                 top_builddir=\"\`cd \$(top_builddir) && pwd\`\"             \
                 srcdir=\"\`cd \$(srcdir) && pwd\`\"                         \
@@ -632,7 +622,7 @@ CPPFLAGS="${ac_save_CPPFLAGS} ${RTEXT_KMOD_CFLAGS}"
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
     BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
         [],
-        [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
+        [AC_MSG_ERROR([*** header not found or working, please check RT-extension installation])],
         [
 #include <linux/kernel.h>
         ])
@@ -656,7 +646,7 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
 else                                    # building against linux-2.4
     AC_CHECK_HEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
         [],
-        [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
+        [AC_MSG_ERROR([*** header not found or working, please check RT-extension installation])],
         [
 #include <linux/kernel.h>
         ])
@@ -1195,7 +1185,6 @@ AH_BOTTOM([#endif /* __IN_RTNET__ */])
 
 
 RTEXT_KMOD_CFLAGS="-D__IN_RTNET__ $RTEXT_KMOD_CFLAGS"
-RTEXT_USER_CFLAGS="-D__IN_RTNET__ $RTEXT_USER_CFLAGS"
 AC_SUBST(RTEXT_KMOD_CFLAGS)
 AC_SUBST(RTEXT_USER_CFLAGS)
 AC_SUBST(RTEXT_LIBRARIES)

@@ -240,13 +240,13 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
-modext = @RTNET_MODULE_EXT@
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
 EXTRA_LIBRARIES = libkernel_natsemi.a
 libkernel_natsemi_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include \
-	@RTEXT_KMOD_CFLAGS@
+	-I$(top_builddir)/stack/include
 
 libkernel_natsemi_a_SOURCES = \
 	rt_natsemi.c
@@ -517,7 +517,7 @@ rt_natsemi.o: libkernel_natsemi.a
 
 rt_natsemi.ko: @RTNET_KBUILD_ENV@
 rt_natsemi.ko: $(libkernel_natsemi_a_SOURCES) FORCE
-	@RTNET_KBUILD_CMD@
+	$(RTNET_KBUILD_CMD)
 
 all-local: $(OBJS)
 
@@ -526,10 +526,10 @@ install-exec-local: $(OBJS)
 	$(INSTALL_DATA) $^ $(moduledir)
 
 clean-local: $(libkernel_natsemi_a_SOURCES)
-	@RTNET_KBUILD_CLEAN@
+	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:
-	@RTNET_KBUILD_DISTCLEAN@
+	$(RTNET_KBUILD_DISTCLEAN)
 
 .PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

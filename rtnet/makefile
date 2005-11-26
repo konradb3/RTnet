@@ -64,7 +64,6 @@ config.status: .rtnet_config
 	--build=$(build_alias) \
 	--host=$(host_alias) \
 	--with-kconfig-file=$< \
-	--with-rtext=$$CONFIG_RTNET_RTEXT_DIR \
 	--prefix=$$CONFIG_RTNET_INSTALLDIR; \
 	if test $$? = 0; then \
 	   touch .cfok ; \

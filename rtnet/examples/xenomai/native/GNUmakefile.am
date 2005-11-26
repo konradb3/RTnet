@@ -3,13 +3,13 @@ noinst_PROGRAMS = \
 	frag-ip
 
 AM_CFLAGS = \
+	$(RTEXT_USER_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include \
-	@RTEXT_USER_CFLAGS@
+	-I$(top_builddir)/stack/include
 
 AM_LDFLAGS = \
 	-lpthread -lnative -lrtdm \
-	-L@RTEXT_LIBRARIES@
+	-L$(RTEXT_LIBRARIES)
 
 OBJS =
 

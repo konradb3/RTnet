@@ -1,13 +1,14 @@
-moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
-modext = @RTNET_MODULE_EXT@
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
+
+RTEXT_KMOD_CFLAGS += @RTFW_KMOD_CFLAGS@
 
 EXTRA_LIBRARIES = libkernel_eth1394.a
 
 libkernel_eth1394_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include \
-	@RTEXT_KMOD_CFLAGS@ \
-	@RTFW_KMOD_CFLAGS@
+	-I$(top_builddir)/stack/include
 
 libkernel_eth1394_a_SOURCES = \
 	rt_eth1394.c \
@@ -20,7 +21,7 @@ rt_eth1394.o: libkernel_eth1394.a
 
 rt_eth1394.ko: @RTNET_KBUILD_ENV@
 rt_eth1394.ko: $(libkernel_eth1394_a_SOURCES) FORCE
-	@RTNET_KBUILD_CMD@
+	$(RTNET_KBUILD_CMD)
 
 all-local: $(OBJS)
 
@@ -29,10 +30,10 @@ install-exec-local: $(OBJS)
 	$(INSTALL_DATA) $^ $(moduledir)
 
 clean-local: $(libkernel_eth1394_a_SOURCES)
-	@RTNET_KBUILD_CLEAN@
+	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:
-	@RTNET_KBUILD_DISTCLEAN@
+	$(RTNET_KBUILD_DISTCLEAN)
 
 EXTRA_DIST = Makefile.kbuild
 

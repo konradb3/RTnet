@@ -9,4 +9,14 @@ config RTNET_EXAMPLES
     installed to the RTnet destination folder, the binaries will remain in
     the build tree.
 
+config RTNET_RTEXT_CONFIG_PATH
+    string "Real-time Extension Installation Path"
+    default ""
+    depends RTNET_RTEXT_INKERNEL && RTNET_EXAMPLES
+    ---help---
+    Path to an installed version of the real-time Linux extension. This
+    is only required if the required configuration tool is not reachable
+    via standard $PATH. Do not confuse with the source code directory of
+    the extension.
+
 endmenu

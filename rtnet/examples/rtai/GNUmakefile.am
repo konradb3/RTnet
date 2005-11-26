@@ -4,13 +4,13 @@ noinst_PROGRAMS = \
 	simpleserver
 
 AM_CFLAGS = \
+	$(RTEXT_USER_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include \
-	@RTEXT_USER_CFLAGS@
+	-I$(top_builddir)/stack/include
 
 AM_LDFLAGS = \
 	-lpthread -llxrt \
-	-L@RTEXT_LIBRARIES@
+	-L$(RTEXT_LIBRARIES)
 
 all-local: \
 	rtnet_ifs \

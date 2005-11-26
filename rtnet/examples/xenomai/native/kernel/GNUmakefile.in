@@ -249,15 +249,15 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-moduledir = $(DESTDIR)@RTNET_MODULE_DIR@
-modext = @RTNET_MODULE_EXT@
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
 EXTRA_LIBRARIES = libkernel_frag-ip.a \
 	libkernel_raw-packets.a
 
 libkernel_frag_ip_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include \
-	@RTEXT_KMOD_CFLAGS@
+	-I$(top_builddir)/stack/include
 
 libkernel_frag_ip_a_SOURCES = \
 	frag-ip.c
@@ -536,14 +536,14 @@ frag-ip.o: libkernel_frag-ip.a
 
 frag-ip.ko: @RTNET_KBUILD_ENV@
 frag-ip.ko: $(libkernel_frag_ip_a_SOURCES) FORCE
-	@RTNET_KBUILD_CMD@
+	$(RTNET_KBUILD_CMD)
 
 raw-packets.o: libkernel_raw-packets.a
 	$(LD) --whole-archive $< -r -o $@
 
 raw-packets.ko: @RTNET_KBUILD_ENV@
 raw-packets.ko: $(libkernel_raw_packets_a_SOURCES) FORCE
-	@RTNET_KBUILD_CMD@
+	$(RTNET_KBUILD_CMD)
 
 all-local: $(OBJS)
 
@@ -552,10 +552,10 @@ all-local: $(OBJS)
 #	$(INSTALL_DATA) $^ $(moduledir)
 
 clean-local: $(libkernel_frag_ip_a_SOURCES) $(libkernel_raw_packets_a_SOURCES)
-	@RTNET_KBUILD_CLEAN@
+	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:
-	@RTNET_KBUILD_DISTCLEAN@
+	$(RTNET_KBUILD_DISTCLEAN)
 
 .PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
