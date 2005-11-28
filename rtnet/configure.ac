@@ -185,7 +185,7 @@ else
 
     # get linux kernel tree and version
     RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
-    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $RTEXT_LINUX_DIR/include/linux/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
+    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $RTEXT_LINUX_DIR/include/linux/version.h 2>/dev/null | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     if test \! -f ${RTEXT_LINUX_DIR}/include/xenomai/nucleus/version.h; then
         AC_MSG_ERROR([*** RT-extended kernel not found in $RTEXT_LINUX_DIR])
@@ -313,26 +313,19 @@ AM_CONDITIONAL(CONFIG_XENO,[test "$XENO_VERSION" \!= ""])
 case "$CONFIG_RTNET_RTEXT_VERSION" in
     rtai-3x) # ---> RTAI 3.x <---
 
-        # check for semas, needed by rtnet
-        AC_MSG_CHECKING([for RTAI semaphores])
-        case "${CONFIG_RTAI_SEM}" in
-            y | m) AC_MSG_RESULT([${CONFIG_RTAI_SEM}]) ;;
-            *) AC_MSG_ERROR([*** Please enable semaphores in RTAI]) ;;
-        esac
-
-        # check for RT malloc, needed by rtnet
-        AC_MSG_CHECKING([for RTAI malloc])
-        case "${CONFIG_RTAI_MALLOC}" in
-            y | m) AC_MSG_RESULT([${CONFIG_RTAI_MALLOC}]) ;;
-            *) AC_MSG_ERROR([*** Please enable real-time malloc in RTAI]) ;;
+        # check for RTDM skin, needed by RTnet
+        AC_MSG_CHECKING([for RTDM skin])
+        case "${CONFIG_RTAI_SKIN_RTDM}" in
+            y | m) AC_MSG_RESULT([${CONFIG_RTAI_SKIN_RTDM}]) ;;
+            *) AC_MSG_ERROR([*** Please enable RTDM skin]) ;;
         esac
 
         # check for fifos, needed by rtnet-examples
-        AC_MSG_CHECKING([for RTAI fifos])
-        case "${CONFIG_RTAI_FIFOS}" in
-            y | m) AC_MSG_RESULT([${CONFIG_RTAI_FIFOS}]) ;;
-            *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
-        esac
+#        AC_MSG_CHECKING([for RTAI fifos])
+#        case "${CONFIG_RTAI_FIFOS}" in
+#            y | m) AC_MSG_RESULT([${CONFIG_RTAI_FIFOS}]) ;;
+#            *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
+#        esac
 
         ;;
 
@@ -341,7 +334,7 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
         # check for RTDM skin, needed by RTnet
         AC_MSG_CHECKING([for RTDM skin])
         case "${CONFIG_XENO_SKIN_RTDM}" in
-            y) AC_MSG_RESULT([${CONFIG_XENO_SKIN_RTDM}]) ;;
+            y | m) AC_MSG_RESULT([${CONFIG_XENO_SKIN_RTDM}]) ;;
             *) AC_MSG_ERROR([*** Please enable RTDM skin]) ;;
         esac
 

@@ -824,6 +824,7 @@ static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
 		tp->stats.rx_missed_errors += inl (ioaddr + CSR8) & 0xffff;
 
 	rtdm_lock_put(&tp->lock);
+	rtdm_irq_enable(&tp->irq_handle);
 
 	init_timer(&tp->timer);
 	tp->timer.data = (unsigned long)rtdev;

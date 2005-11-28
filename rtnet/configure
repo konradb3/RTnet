@@ -19932,7 +19932,7 @@ fi;
 
     # get linux kernel tree and version
     RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
-    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $RTEXT_LINUX_DIR/include/linux/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
+    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $RTEXT_LINUX_DIR/include/linux/version.h 2>/dev/null | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     if test \! -f ${RTEXT_LINUX_DIR}/include/xenomai/nucleus/version.h; then
         { { echo "$as_me:$LINENO: error: *** RT-extended kernel not found in $RTEXT_LINUX_DIR" >&5
@@ -20124,38 +20124,23 @@ fi
 case "$CONFIG_RTNET_RTEXT_VERSION" in
     rtai-3x) # ---> RTAI 3.x <---
 
-        # check for semas, needed by rtnet
-        echo "$as_me:$LINENO: checking for RTAI semaphores" >&5
-echo $ECHO_N "checking for RTAI semaphores... $ECHO_C" >&6
-        case "${CONFIG_RTAI_SEM}" in
-            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SEM}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_SEM}" >&6 ;;
-            *) { { echo "$as_me:$LINENO: error: *** Please enable semaphores in RTAI" >&5
-echo "$as_me: error: *** Please enable semaphores in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-        esac
-
-        # check for RT malloc, needed by rtnet
-        echo "$as_me:$LINENO: checking for RTAI malloc" >&5
-echo $ECHO_N "checking for RTAI malloc... $ECHO_C" >&6
-        case "${CONFIG_RTAI_MALLOC}" in
-            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_MALLOC}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_MALLOC}" >&6 ;;
-            *) { { echo "$as_me:$LINENO: error: *** Please enable real-time malloc in RTAI" >&5
-echo "$as_me: error: *** Please enable real-time malloc in RTAI" >&2;}
+        # check for RTDM skin, needed by RTnet
+        echo "$as_me:$LINENO: checking for RTDM skin" >&5
+echo $ECHO_N "checking for RTDM skin... $ECHO_C" >&6
+        case "${CONFIG_RTAI_SKIN_RTDM}" in
+            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SKIN_RTDM}" >&5
+echo "${ECHO_T}${CONFIG_RTAI_SKIN_RTDM}" >&6 ;;
+            *) { { echo "$as_me:$LINENO: error: *** Please enable RTDM skin" >&5
+echo "$as_me: error: *** Please enable RTDM skin" >&2;}
    { (exit 1); exit 1; }; } ;;
         esac
 
         # check for fifos, needed by rtnet-examples
-        echo "$as_me:$LINENO: checking for RTAI fifos" >&5
-echo $ECHO_N "checking for RTAI fifos... $ECHO_C" >&6
-        case "${CONFIG_RTAI_FIFOS}" in
-            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_FIFOS}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_FIFOS}" >&6 ;;
-            *) { { echo "$as_me:$LINENO: error: *** Please enable fifos in RTAI" >&5
-echo "$as_me: error: *** Please enable fifos in RTAI" >&2;}
-   { (exit 1); exit 1; }; } ;;
-        esac
+#        AC_MSG_CHECKING([for RTAI fifos])
+#        case "${CONFIG_RTAI_FIFOS}" in
+#            y | m) AC_MSG_RESULT([${CONFIG_RTAI_FIFOS}]) ;;
+#            *) AC_MSG_ERROR([*** Please enable fifos in RTAI]) ;;
+#        esac
 
         ;;
 
@@ -20165,7 +20150,7 @@ echo "$as_me: error: *** Please enable fifos in RTAI" >&2;}
         echo "$as_me:$LINENO: checking for RTDM skin" >&5
 echo $ECHO_N "checking for RTDM skin... $ECHO_C" >&6
         case "${CONFIG_XENO_SKIN_RTDM}" in
-            y) echo "$as_me:$LINENO: result: ${CONFIG_XENO_SKIN_RTDM}" >&5
+            y | m) echo "$as_me:$LINENO: result: ${CONFIG_XENO_SKIN_RTDM}" >&5
 echo "${ECHO_T}${CONFIG_XENO_SKIN_RTDM}" >&6 ;;
             *) { { echo "$as_me:$LINENO: error: *** Please enable RTDM skin" >&5
 echo "$as_me: error: *** Please enable RTDM skin" >&2;}
