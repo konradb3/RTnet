@@ -379,7 +379,7 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
 
         skb->chain_end = skb;
         skb->pool = pool;
-        skb->buf_start = ((char *)skb) + ALIGN_RTSKB_STRUCT_LEN;
+        skb->buf_start = ((unsigned char *)skb) + ALIGN_RTSKB_STRUCT_LEN;
 #ifdef CONFIG_RTNET_CHECKED
         skb->buf_end = skb->buf_start + SKB_DATA_ALIGN(RTSKB_SIZE) - 1;
 #endif

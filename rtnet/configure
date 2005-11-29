@@ -20290,10 +20290,8 @@ else
         rtai-3x)
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        xeno-20x | xeno-21x)
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
+        xeno-21x)
+            RTEXT_KMOD_CFLAGS="-D__KERNEL__ -DMODULE -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include -Wall -Wstrict-prototypes -fomit-frame-pointer -fno-strict-aliasing -pipe -O2 -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
             ;;
         *)
             { { echo "$as_me:$LINENO: error: *** internal error" >&5
@@ -20459,7 +20457,7 @@ bs_kcompile="make -C $RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CROSS_COMPILE=$CRO
 
 
 ac_save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${ac_save_CPPFLAGS} ${RTEXT_KMOD_CFLAGS}"
+CPPFLAGS="${ac_save_CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include ${RTEXT_KMOD_CFLAGS}"
 
 # Working around some Autoconf ugliness here: names of variables
 # stored into the cache are canonicalized, turning /'s into _'s. So if
@@ -20607,6 +20605,8 @@ echo "$as_me: error: *** internal error" >&2;}
             ;;
     esac
 else                                    # building against linux-2.4
+    CPPFLAGS="${CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
+
 
 
 for ac_header in rtdm/rtdm.h rtdm/rtdm_driver.h
@@ -20747,10 +20747,8 @@ fi
 done
 
             ;;
-        xeno-20x | xeno-21x)
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
+        xeno-21x)
+            # nothing to do
             ;;
         *)
             { { echo "$as_me:$LINENO: error: *** internal error" >&5

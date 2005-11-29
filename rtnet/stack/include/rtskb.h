@@ -650,7 +650,7 @@ static inline unsigned char *rtskb_push(struct rtskb *skb, unsigned int len)
     return skb->data;
 }
 
-static inline char *__rtskb_pull(struct rtskb *skb, unsigned int len)
+static inline unsigned char *__rtskb_pull(struct rtskb *skb, unsigned int len)
 {
     skb->len-=len;
     if (skb->len < 0)

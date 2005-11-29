@@ -457,8 +457,8 @@ else
         rtai-3x)
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        xeno-20x | xeno-21x)
-            AC_MSG_ERROR([*** internal error])
+        xeno-21x)
+            RTEXT_KMOD_CFLAGS="-D__KERNEL__ -DMODULE -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include -Wall -Wstrict-prototypes -fomit-frame-pointer -fno-strict-aliasing -pipe -O2 -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
@@ -611,7 +611,7 @@ dnl             header checks
 dnl ======================================================================
 
 ac_save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${ac_save_CPPFLAGS} ${RTEXT_KMOD_CFLAGS}"
+CPPFLAGS="${ac_save_CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include ${RTEXT_KMOD_CFLAGS}"
 
 # Working around some Autoconf ugliness here: names of variables
 # stored into the cache are canonicalized, turning /'s into _'s. So if
@@ -648,6 +648,8 @@ if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
             ;;
     esac
 else                                    # building against linux-2.4
+    CPPFLAGS="${CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
+
     AC_CHECK_HEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
         [],
         [AC_MSG_ERROR([*** header not found or working, please check RT-extension installation])],
@@ -664,8 +666,8 @@ else                                    # building against linux-2.4
 #include <linux/kernel.h>
             ])
             ;;
-        xeno-20x | xeno-21x)
-            AC_MSG_ERROR([*** internal error])
+        xeno-21x)
+            # nothing to do
             ;;
         *)
             AC_MSG_ERROR([*** internal error])

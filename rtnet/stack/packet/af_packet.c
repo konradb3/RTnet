@@ -462,7 +462,7 @@ module_exit(rt_packet_proto_release);
  * Utilities                                              *
  **********************************************************/
 
-static int hex2int(char hex_char)
+static int hex2int(unsigned char hex_char)
 {
     if ((hex_char >= '0') && (hex_char <= '9'))
         return hex_char - '0';
@@ -476,7 +476,7 @@ static int hex2int(char hex_char)
 
 
 
-int rt_eth_aton(char *addr_buf, const char *mac)
+int rt_eth_aton(unsigned char *addr_buf, const char *mac)
 {
     int i = 0;
     int nibble;

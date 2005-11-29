@@ -74,7 +74,7 @@ int getintopt(int argc, int pos, char *argv[], int min)
 
 
 void write_calibration_log(char *log_filename, unsigned int rounds,
-                           __u64 *cal_results)
+                           uint64_t *cal_results)
 {
     char    str_buf[32];
     int     log_file;
@@ -118,7 +118,7 @@ void do_master(int argc, char *argv[])
         fprintf(stderr, "invalid cycle period: %s\n", argv[3]);
         exit(1);
     }
-    tdma_cfg.args.master.cycle_period = ((__u64)r) * 1000;
+    tdma_cfg.args.master.cycle_period = ((uint64_t)r) * 1000;
 
     tdma_cfg.args.master.backup_sync_offset = 0;
     tdma_cfg.args.master.cal_rounds         = 100;
@@ -205,7 +205,7 @@ void do_slot(int argc, char *argv[])
             fprintf(stderr, "invalid slot offset: %s\n", argv[4]);
             exit(1);
         }
-        tdma_cfg.args.set_slot.offset = ((__u64)r) * 1000;
+        tdma_cfg.args.set_slot.offset = ((uint64_t)r) * 1000;
 
         tdma_cfg.args.set_slot.period      = 1;
         tdma_cfg.args.set_slot.phasing     = 0;
@@ -253,7 +253,7 @@ void do_slot(int argc, char *argv[])
             result_size = ioctl(f, TDMA_IOC_CAL_RESULT_SIZE, &tdma_cfg);
             if (result_size > 0) {
                 tdma_cfg.args.set_slot.cal_results =
-                    (__u64 *)malloc(result_size * sizeof(__u64));
+                    (uint64_t *)malloc(result_size * sizeof(uint64_t));
                 if (!tdma_cfg.args.set_slot.cal_results) {
                     fprintf(stderr, "insufficient memory\n");
                     exit(1);

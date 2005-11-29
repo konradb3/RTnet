@@ -99,7 +99,7 @@ struct rtnet_callback {
 unsigned long rt_inet_aton(const char *ip);
 
 /* provided by rt_packet */
-int rt_eth_aton(char *addr_buf, const char *mac);
+int rt_eth_aton(unsigned char *addr_buf, const char *mac);
 
 #endif  /* __KERNEL__ */
 

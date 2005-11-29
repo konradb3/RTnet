@@ -32,7 +32,7 @@
 #include <linux/types.h>
 
 
-typedef __s64   nanosecs_t;     /* used for time calculations and I/O */
+typedef __u64   nanosecs_t;     /* used for time calculations and I/O */
 
 
 #if defined(CONFIG_RTAI_3x)

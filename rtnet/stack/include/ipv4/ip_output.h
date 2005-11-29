@@ -32,7 +32,7 @@
 
 
 extern int rt_ip_build_xmit(struct rtsocket *sk,
-    int getfrag (const void *, char *, unsigned int, unsigned int),
+    int getfrag (const void *, unsigned char *, unsigned int, unsigned int),
     const void *frag, unsigned length, struct dest_route *rt, int flags);
 
 extern void __init rt_ip_init(void);

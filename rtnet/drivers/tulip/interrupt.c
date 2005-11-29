@@ -179,8 +179,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
 			} else { 	/* Pass up the skb already on the Rx ring. */
 #endif /*RTnet*/
 			{
-				char *temp = /*RTnet*/rtskb_put(skb = tp->rx_buffers[entry].skb,
-						     pkt_len);
+				unsigned char *temp = /*RTnet*/rtskb_put(skb = tp->rx_buffers[entry].skb, pkt_len);
 
 #ifndef final_version
 				if (tp->rx_buffers[entry].mapping !=

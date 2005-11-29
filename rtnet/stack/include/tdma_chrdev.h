@@ -25,6 +25,8 @@
 #ifndef __TDMA_CHRDEV_H_
 #define __TDMA_CHRDEV_H_
 
+#include <inttypes.h>
+
 #include <rtnet_chrdev.h>
 
 
@@ -36,8 +38,8 @@ struct tdma_config {
 
     union {
         struct {
-            __u64           cycle_period;
-            __u64           backup_sync_offset;
+            uint64_t        cycle_period;
+            uint64_t        backup_sync_offset;
             unsigned int    cal_rounds;
             unsigned int    max_cal_requests;
             unsigned int    max_slot_id;
@@ -50,13 +52,13 @@ struct tdma_config {
 
         struct {
             int             id;
-            __u64           offset;
+            uint64_t        offset;
             unsigned int    period;
             unsigned int    phasing;
             unsigned int    size;
             int             joint_slot;
             unsigned int    cal_timeout;
-            __u64           *cal_results;
+            uint64_t        *cal_results;
         } set_slot;
 
         struct {

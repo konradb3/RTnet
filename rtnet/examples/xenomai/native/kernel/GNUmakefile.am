@@ -1,8 +1,8 @@
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
 
-EXTRA_LIBRARIES = libkernel_frag-ip.a \
-	libkernel_raw-packets.a
+EXTRA_LIBRARIES = libkernel_frag_ip.a \
+	libkernel_raw_packets.a
 
 libkernel_frag_ip_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
@@ -11,6 +11,11 @@ libkernel_frag_ip_a_CPPFLAGS = \
 
 libkernel_frag_ip_a_SOURCES = \
 	frag-ip.c
+
+libkernel_raw_packets_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
 libkernel_raw_packets_a_SOURCES = \
 	raw-packets.c
@@ -25,14 +30,14 @@ if CONFIG_RTNET_RTPACKET
 OBJS += raw-packets$(modext)
 endif
 
-frag-ip.o: libkernel_frag-ip.a
+frag-ip.o: libkernel_frag_ip.a
 	$(LD) --whole-archive $< -r -o $@
 
 frag-ip.ko: @RTNET_KBUILD_ENV@
 frag-ip.ko: $(libkernel_frag_ip_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
-raw-packets.o: libkernel_raw-packets.a
+raw-packets.o: libkernel_raw_packets.a
 	$(LD) --whole-archive $< -r -o $@
 
 raw-packets.ko: @RTNET_KBUILD_ENV@

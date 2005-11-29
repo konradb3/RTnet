@@ -55,7 +55,8 @@ am_libkernel_frag_ip_a_OBJECTS =  \
 libkernel_frag_ip_a_OBJECTS = $(am_libkernel_frag_ip_a_OBJECTS)
 libkernel_raw_packets_a_AR = $(AR) $(ARFLAGS)
 libkernel_raw_packets_a_LIBADD =
-am_libkernel_raw_packets_a_OBJECTS = raw-packets.$(OBJEXT)
+am_libkernel_raw_packets_a_OBJECTS =  \
+	libkernel_raw_packets_a-raw-packets.$(OBJEXT)
 libkernel_raw_packets_a_OBJECTS =  \
 	$(am_libkernel_raw_packets_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
@@ -251,8 +252,8 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
-EXTRA_LIBRARIES = libkernel_frag-ip.a \
-	libkernel_raw-packets.a
+EXTRA_LIBRARIES = libkernel_frag_ip.a \
+	libkernel_raw_packets.a
 
 libkernel_frag_ip_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
@@ -261,6 +262,11 @@ libkernel_frag_ip_a_CPPFLAGS = \
 
 libkernel_frag_ip_a_SOURCES = \
 	frag-ip.c
+
+libkernel_raw_packets_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
 libkernel_raw_packets_a_SOURCES = \
 	raw-packets.c
@@ -301,14 +307,14 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-libkernel_frag-ip.a: $(libkernel_frag_ip_a_OBJECTS) $(libkernel_frag_ip_a_DEPENDENCIES) 
-	-rm -f libkernel_frag-ip.a
-	$(libkernel_frag_ip_a_AR) libkernel_frag-ip.a $(libkernel_frag_ip_a_OBJECTS) $(libkernel_frag_ip_a_LIBADD)
-	$(RANLIB) libkernel_frag-ip.a
-libkernel_raw-packets.a: $(libkernel_raw_packets_a_OBJECTS) $(libkernel_raw_packets_a_DEPENDENCIES) 
-	-rm -f libkernel_raw-packets.a
-	$(libkernel_raw_packets_a_AR) libkernel_raw-packets.a $(libkernel_raw_packets_a_OBJECTS) $(libkernel_raw_packets_a_LIBADD)
-	$(RANLIB) libkernel_raw-packets.a
+libkernel_frag_ip.a: $(libkernel_frag_ip_a_OBJECTS) $(libkernel_frag_ip_a_DEPENDENCIES) 
+	-rm -f libkernel_frag_ip.a
+	$(libkernel_frag_ip_a_AR) libkernel_frag_ip.a $(libkernel_frag_ip_a_OBJECTS) $(libkernel_frag_ip_a_LIBADD)
+	$(RANLIB) libkernel_frag_ip.a
+libkernel_raw_packets.a: $(libkernel_raw_packets_a_OBJECTS) $(libkernel_raw_packets_a_DEPENDENCIES) 
+	-rm -f libkernel_raw_packets.a
+	$(libkernel_raw_packets_a_AR) libkernel_raw_packets.a $(libkernel_raw_packets_a_OBJECTS) $(libkernel_raw_packets_a_LIBADD)
+	$(RANLIB) libkernel_raw_packets.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -317,7 +323,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_frag_ip_a-frag-ip.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw-packets.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -353,6 +359,20 @@ libkernel_frag_ip_a-frag-ip.obj: frag-ip.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='frag-ip.c' object='libkernel_frag_ip_a-frag-ip.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_frag_ip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_frag_ip_a-frag-ip.obj `if test -f 'frag-ip.c'; then $(CYGPATH_W) 'frag-ip.c'; else $(CYGPATH_W) '$(srcdir)/frag-ip.c'; fi`
+
+libkernel_raw_packets_a-raw-packets.o: raw-packets.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_raw_packets_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_raw_packets_a-raw-packets.o -MD -MP -MF "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Tpo" -c -o libkernel_raw_packets_a-raw-packets.o `test -f 'raw-packets.c' || echo '$(srcdir)/'`raw-packets.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Tpo" "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Po"; else rm -f "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='raw-packets.c' object='libkernel_raw_packets_a-raw-packets.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_raw_packets_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_raw_packets_a-raw-packets.o `test -f 'raw-packets.c' || echo '$(srcdir)/'`raw-packets.c
+
+libkernel_raw_packets_a-raw-packets.obj: raw-packets.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_raw_packets_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_raw_packets_a-raw-packets.obj -MD -MP -MF "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Tpo" -c -o libkernel_raw_packets_a-raw-packets.obj `if test -f 'raw-packets.c'; then $(CYGPATH_W) 'raw-packets.c'; else $(CYGPATH_W) '$(srcdir)/raw-packets.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Tpo" "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Po"; else rm -f "$(DEPDIR)/libkernel_raw_packets_a-raw-packets.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='raw-packets.c' object='libkernel_raw_packets_a-raw-packets.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_raw_packets_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_raw_packets_a-raw-packets.obj `if test -f 'raw-packets.c'; then $(CYGPATH_W) 'raw-packets.c'; else $(CYGPATH_W) '$(srcdir)/raw-packets.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -531,14 +551,14 @@ uninstall-am: uninstall-info-am
 	uninstall-am uninstall-info-am
 
 
-frag-ip.o: libkernel_frag-ip.a
+frag-ip.o: libkernel_frag_ip.a
 	$(LD) --whole-archive $< -r -o $@
 
 frag-ip.ko: @RTNET_KBUILD_ENV@
 frag-ip.ko: $(libkernel_frag_ip_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
-raw-packets.o: libkernel_raw-packets.a
+raw-packets.o: libkernel_raw_packets.a
 	$(LD) --whole-archive $< -r -o $@
 
 raw-packets.ko: @RTNET_KBUILD_ENV@

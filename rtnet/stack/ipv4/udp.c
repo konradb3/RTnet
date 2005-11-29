@@ -469,7 +469,8 @@ struct udpfakehdr
 /***
  *
  */
-static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned int fraglen)
+static int rt_udp_getfrag(const void *p, unsigned char *to,
+                          unsigned int offset, unsigned int fraglen)
 {
     struct udpfakehdr *ufh = (struct udpfakehdr *)p;
     int i;
@@ -487,7 +488,8 @@ static int rt_udp_getfrag(const void *p, char *to, unsigned int offset, unsigned
                                   fraglen - sizeof(struct udphdr));
 
         /* Checksum of the udp header: */
-        ufh->wcheck = csum_partial((char *)ufh, sizeof(struct udphdr), ufh->wcheck);
+        ufh->wcheck = csum_partial((unsigned char *)ufh,
+                                   sizeof(struct udphdr), ufh->wcheck);
 
         ufh->uh.check = csum_tcpudp_magic(ufh->saddr, ufh->daddr, ntohs(ufh->uh.len),
                                           IPPROTO_UDP, ufh->wcheck);

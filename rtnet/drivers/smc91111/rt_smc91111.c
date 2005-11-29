@@ -447,7 +447,7 @@ static int smc_findirq( int ioaddr );
   values given it by the higher level routines
 */
 static void smc_setmulticast( int ioaddr, int count, struct dev_mc_list *  );
-static int crc32( char *, int );
+static int crc32( unsigned char *, int );
 
 /* Routines to Read and Write the PHY Registers across the
    MII Management Interface
@@ -665,7 +665,7 @@ static void smc_setmulticast( int ioaddr, int count, struct dev_mc_list * addrs 
   Finds the CRC32 of a set of bytes.
   Again, from Peter Cammaert's code.
 */
-static int crc32( char * s, int length ) {
+static int crc32( unsigned char * s, int length ) {
 	/* indices */
 	int perByte;
 	int perBit;

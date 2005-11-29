@@ -126,7 +126,7 @@ static void rt_icmp_discard(struct rtskb *skb)
 
 
 
-static int rt_icmp_glue_reply_bits(const void *p, char *to,
+static int rt_icmp_glue_reply_bits(const void *p, unsigned char *to,
                                    unsigned int offset, unsigned int fraglen)
 {
     struct icmp_bxm *icmp_param = (struct icmp_bxm *)p;
@@ -248,7 +248,7 @@ static void rt_icmp_echo_request(struct rtskb *skb)
 
 
 
-static int rt_icmp_glue_request_bits(const void *p, char *to,
+static int rt_icmp_glue_request_bits(const void *p, unsigned char *to,
                                      unsigned int offset, unsigned int fraglen)
 {
     struct icmp_bxm *icmp_param = (struct icmp_bxm *)p;
