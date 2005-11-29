@@ -1504,11 +1504,7 @@ vortex_up(struct rtnet_device *rtdev)
 
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 		pci_restore_state(vp->pdev, vp->power_state);
-#else
-		pci_restore_state(vp->pdev);
-#endif
 	}
 
 	/* Before initializing select the active media port. */
@@ -2918,11 +2914,7 @@ vortex_down(struct rtnet_device *rtdev)
 		outl(0, ioaddr + DownListPtr);
 
 	if (vp->pdev && vp->enable_wol) {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 		pci_save_state(vp->pdev, vp->power_state);
-#else
-		pci_save_state(vp->pdev);
-#endif
 		acpi_set_WOL(rtdev);
 	}
 }
@@ -3333,11 +3325,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
 		if (vp->pm_state_valid)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 			pci_restore_state(vp->pdev, vp->power_state);
-#else
-			pci_restore_state(vp->pdev);
-#endif
 	}
 
 	pci_free_consistent(pdev,

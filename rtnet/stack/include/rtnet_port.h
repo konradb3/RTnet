@@ -31,6 +31,16 @@
 #include <ethernet/eth.h>
 
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+# define pci_dma_sync_single_for_device pci_dma_sync_single
+# define pci_dma_sync_single_for_cpu    pci_dma_sync_single
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
+# define pci_restore_state(a, b)        pci_restore_state(a)
+# define pci_save_state(a, b)           pci_save_state(a)
+#endif
+
 static inline void rtnetif_start_queue(struct rtnet_device *rtdev)
 {
     clear_bit(__LINK_STATE_XOFF, &rtdev->state);
