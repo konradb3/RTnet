@@ -25,7 +25,9 @@
 #ifndef __TDMA_CHRDEV_H_
 #define __TDMA_CHRDEV_H_
 
-#include <inttypes.h>
+#ifndef __KERNEL__
+# include <inttypes.h>
+#endif
 
 #include <rtnet_chrdev.h>
 
