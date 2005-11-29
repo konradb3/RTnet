@@ -1504,7 +1504,7 @@ vortex_up(struct rtnet_device *rtdev)
 
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
-		pci_restore_state(vp->pdev, vp->power_state);
+		compat_pci_restore_state(vp->pdev, vp->power_state);
 	}
 
 	/* Before initializing select the active media port. */
@@ -2914,7 +2914,7 @@ vortex_down(struct rtnet_device *rtdev)
 		outl(0, ioaddr + DownListPtr);
 
 	if (vp->pdev && vp->enable_wol) {
-		pci_save_state(vp->pdev, vp->power_state);
+		compat_pci_save_state(vp->pdev, vp->power_state);
 		acpi_set_WOL(rtdev);
 	}
 }
@@ -3325,7 +3325,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 	if (vp->pdev && vp->enable_wol) {
 		pci_set_power_state(vp->pdev, 0);	/* Go active */
 		if (vp->pm_state_valid)
-			pci_restore_state(vp->pdev, vp->power_state);
+			compat_pci_restore_state(vp->pdev, vp->power_state);
 	}
 
 	pci_free_consistent(pdev,

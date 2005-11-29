@@ -2409,11 +2409,7 @@ static int smc_sysctl_handler(ctl_table *ctl, int write, struct file * filp,
 	val = *valp;
 
 	// Perform the generic integer operation
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8)
 	if ((ret = proc_dointvec(ctl, write, filp, buffer, lenp, ppos)) != 0)
-#else
-	if ((ret = proc_dointvec(ctl, write, filp, buffer, lenp)) != 0)
-#endif
 		return(ret);
 
 	// Write changes out to the registers
