@@ -92,7 +92,7 @@ static int ping_handler(struct rt_proc_call *call)
     err = rt_icmp_send_echo(cmd->args.ping.ip_addr, cmd->args.ping.id,
                             cmd->args.ping.sequence, cmd->args.ping.msg_size);
     if (err < 0) {
-        rt_icmp_cleanup_echo_requests();
+        rt_icmp_dequeue_echo_request(call);
         return err;
     }
 
@@ -179,8 +179,9 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
                                      sizeof(cmd), ping_complete_handler, NULL);
             if (ret >= 0) {
                 if (copy_to_user((void *)arg, &cmd, sizeof(cmd)) != 0)
-                    return -EFAULT;
-            } else
+                    ret = -EFAULT;
+            }
+            if (ret < 0)
                 rt_icmp_cleanup_echo_requests();
             break;
 

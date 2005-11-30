@@ -233,6 +233,9 @@ void rtnet_rtpc_complete_call(struct rt_proc_call *call, int result)
 
 void rtnet_rtpc_complete_call_nrt(struct rt_proc_call *call, int result)
 {
+    RTNET_ASSERT(!rtdm_in_rt_context(),
+                 rtnet_rtpc_complete_call(call, result); return;);
+
     call->processed = 1;
     wake_up(&call->call_wq);
 

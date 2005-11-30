@@ -93,10 +93,22 @@ void rt_icmp_queue_echo_request(struct rt_proc_call *call)
 
 
 
+void rt_icmp_dequeue_echo_request(struct rt_proc_call *call)
+{
+    rtdm_lockctx_t  context;
+
+
+    rtdm_lock_get_irqsave(&echo_calls_lock, context);
+    list_del(&call->list_entry);
+    rtdm_lock_put_irqrestore(&echo_calls_lock, context);
+}
+
+
+
 void rt_icmp_cleanup_echo_requests(void)
 {
     rtdm_lockctx_t      context;
-    struct list_head    *entry = &echo_calls;
+    struct list_head    *entry;
     struct list_head    *next;
 
 

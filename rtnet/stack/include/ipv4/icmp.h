@@ -3,9 +3,9 @@
  *  ipv4/icmp.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 1999,2000 Zentropic Computing, LLC
- *                2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2004 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
+ *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
+ *                2004, 2005 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,12 +39,13 @@
 #define ICMP_REPLY_POOL_SIZE    8
 
 
-extern void rt_icmp_queue_echo_request(struct rt_proc_call *call);
-extern void rt_icmp_cleanup_echo_requests(void);
-extern int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size);
+void rt_icmp_queue_echo_request(struct rt_proc_call *call);
+void rt_icmp_dequeue_echo_request(struct rt_proc_call *call);
+void rt_icmp_cleanup_echo_requests(void);
+int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size);
 
-extern void __init rt_icmp_init(void);
-extern void rt_icmp_release(void);
+void __init rt_icmp_init(void);
+void rt_icmp_release(void);
 
 
 #endif  /* __RTNET_ICMP_H_ */
