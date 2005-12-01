@@ -21666,8 +21666,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/smc91111 \
         drivers/tulip \
         drivers/via-rhine \
-        drivers/experimental/3c59x \
-        drivers/experimental/r8169 \
+        drivers/experimental \
         \
         stack \
         stack/packet \
@@ -21677,8 +21676,7 @@ if test x$CONFIG_KBUILD = xy; then
         stack/rtmac/nomac \
         stack/rtmac/tdma \
         \
-        addons/rtcap \
-        addons/rtnetproxy \
+        addons \
         \
         examples/xenomai/native/kernel \
         ; do
@@ -21722,7 +21720,7 @@ fi
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                    ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/eth1394/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/3c59x/GNUmakefile drivers/experimental/r8169/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile addons/rtcap/GNUmakefile addons/rtnetproxy/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
+                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/eth1394/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
 
 
 
@@ -22512,8 +22510,6 @@ do
   "drivers/tulip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
   "drivers/via-rhine/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/via-rhine/GNUmakefile" ;;
   "drivers/experimental/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/GNUmakefile" ;;
-  "drivers/experimental/3c59x/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/3c59x/GNUmakefile" ;;
-  "drivers/experimental/r8169/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/r8169/GNUmakefile" ;;
   "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
   "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
   "stack/packet/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/packet/GNUmakefile" ;;
@@ -22526,8 +22522,6 @@ do
   "tools/rtnet" ) CONFIG_FILES="$CONFIG_FILES tools/rtnet" ;;
   "tools/rtnet.conf" ) CONFIG_FILES="$CONFIG_FILES tools/rtnet.conf" ;;
   "addons/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/GNUmakefile" ;;
-  "addons/rtcap/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtcap/GNUmakefile" ;;
-  "addons/rtnetproxy/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES addons/rtnetproxy/GNUmakefile" ;;
   "examples/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/GNUmakefile" ;;
   "examples/generic/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/generic/GNUmakefile" ;;
   "examples/rtai/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES examples/rtai/GNUmakefile" ;;

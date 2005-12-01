@@ -1228,8 +1228,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/smc91111 \
         drivers/tulip \
         drivers/via-rhine \
-        drivers/experimental/3c59x \
-        drivers/experimental/r8169 \
+        drivers/experimental \
         \
         stack \
         stack/packet \
@@ -1239,8 +1238,7 @@ if test x$CONFIG_KBUILD = xy; then
         stack/rtmac/nomac \
         stack/rtmac/tdma \
         \
-        addons/rtcap \
-        addons/rtnetproxy \
+        addons \
         \
         examples/xenomai/native/kernel \
         ; do
@@ -1320,8 +1318,6 @@ AC_CONFIG_FILES([ \
     drivers/tulip/GNUmakefile \
     drivers/via-rhine/GNUmakefile \
     drivers/experimental/GNUmakefile \
-    drivers/experimental/3c59x/GNUmakefile \
-    drivers/experimental/r8169/GNUmakefile \
     \
     stack/GNUmakefile \
     stack/include/GNUmakefile \
@@ -1337,8 +1333,6 @@ AC_CONFIG_FILES([ \
     tools/rtnet.conf \
     \
     addons/GNUmakefile \
-    addons/rtcap/GNUmakefile \
-    addons/rtnetproxy/GNUmakefile \
     \
     examples/GNUmakefile \
     examples/generic/GNUmakefile \
