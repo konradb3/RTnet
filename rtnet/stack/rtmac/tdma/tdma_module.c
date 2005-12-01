@@ -278,7 +278,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
         }
     }
 
-    rtdm_task_destroy(&tdma->worker_task);
+    rtdm_task_join_nrt(&tdma->worker_task, 100);
 
     if (tdma->slot_table)
         kfree(tdma->slot_table);

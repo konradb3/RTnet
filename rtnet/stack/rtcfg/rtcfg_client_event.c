@@ -552,7 +552,8 @@ static void rtcfg_client_detach(int ifindex, struct rt_proc_call *call)
     }
 
     if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
-        rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
+        /* It's safe to kill the task, it either waits for dev_mutex or the
+           next period. */
         rtdm_task_destroy(&rtcfg_dev->timer_task);
     }
     rtcfg_reset_device(ifindex);

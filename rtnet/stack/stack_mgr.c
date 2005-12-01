@@ -163,7 +163,6 @@ static void stackmgr_task(void *arg)
     struct rtnet_device     *rtdev;
 
 
-    rtdm_printk("RTnet: stack-mgr started\n");
     while (rtdm_event_wait(mgr_event) == 0)
         while (1) {
           next_packet:
@@ -259,7 +258,7 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
 {
     rtdm_event_destroy(&mgr->event);
-    rtdm_task_destroy(&mgr->task);
+    rtdm_task_join_nrt(&mgr->task, 100);
 }
 
 

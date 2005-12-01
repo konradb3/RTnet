@@ -482,7 +482,8 @@ static int rtcfg_server_detach(int ifindex, struct rtcfg_cmd *cmd_event)
     }
 
     if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
-        rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
+        /* It's safe to kill the task, it either waits for dev_mutex or the
+           next period. */
         rtdm_task_destroy(&rtcfg_dev->timer_task);
     }
     rtcfg_reset_device(ifindex);
@@ -734,15 +735,7 @@ void rtcfg_cleanup_state_machines(void)
         if (rtcfg_dev->flags & FLAG_TIMER_STARTED) {
             rtcfg_dev->flags |= FLAG_TIMER_SHUTDOWN;
             rtdm_task_unblock(&rtcfg_dev->timer_task);
-
-            while (((volatile unsigned int)rtcfg_dev->flags) &
-                   FLAG_TIMER_STARTED) {
-                RTCFG_DEBUG(3, "RTcfg: waiting for timer shutdown\n");
-                set_current_state(TASK_UNINTERRUPTIBLE);
-                schedule_timeout(HZ/10); /* wait 100 ms */
-            }
-
-            rtdm_task_destroy(&rtcfg_dev->timer_task);
+            rtdm_task_join_nrt(&rtcfg_dev->timer_task, 100);
         }
 
         rtdm_mutex_destroy(&rtcfg_dev->dev_mutex);

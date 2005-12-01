@@ -274,7 +274,7 @@ int __init rtpc_init(void)
 void rtpc_cleanup(void)
 {
     rtdm_event_destroy(&dispatch_event);
-    rtdm_task_destroy(&dispatch_task);
+    rtdm_task_join_nrt(&dispatch_task, 100);
     rtdm_nrtsig_destroy(&rtpc_nrt_signal);
 }
 
