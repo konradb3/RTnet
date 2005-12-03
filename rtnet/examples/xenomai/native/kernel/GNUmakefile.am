@@ -5,13 +5,18 @@ EXTRA_LIBRARIES = \
 	libkernel_frag_ip.a \
 	libkernel_raw_packets.a
 
-AM_CPPFLAGS = \
+libkernel_frag_ip_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
 libkernel_frag_ip_a_SOURCES = \
 	frag-ip.c
+
+libkernel_raw_packets_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
 libkernel_raw_packets_a_SOURCES = \
 	raw-packets.c

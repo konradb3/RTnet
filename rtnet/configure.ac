@@ -29,6 +29,7 @@ AC_DEFINE_UNQUOTED(CONFIG_RTNET_BUILD_STRING, "$build", [Build system alias])
 RTNET_BUILD_STRING="$build"
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_HOST_STRING, "$host", [Host system alias])
 RTNET_HOST_STRING="$host"
+AC_SUBST(RTNET_HOST_STRING)
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_COMPILER, "`$CC -v 2>&1 | tail -n 1`" , [Compiler])
 
 AM_INIT_AUTOMAKE([foreign no-exeext dist-bzip2 no-dist-gzip])
@@ -207,7 +208,7 @@ else
             XENO_CONFIG="/bin/true"
         fi
     fi
-    if test "${XENO_CONFIG}" = "" || test \! -x ${XENO_CONFIG}; then
+    if test "${XENO_CONFIG}" = "" || test \! -x ${XENO_CONFIG} || test \! -f ${XENO_CONFIG}; then
         AC_MSG_ERROR([*** Xenomai configuration tool not found: ${XENO_CONFIG}])
     fi
 

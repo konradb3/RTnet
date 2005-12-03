@@ -466,7 +466,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS CONFIG_RTAI_TRUE CONFIG_RTAI_FALSE CONFIG_XENO_TRUE CONFIG_XENO_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_KBUILD_DISTCLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_DRV_8139_TRUE CONFIG_RTNET_DRV_8139_FALSE CONFIG_RTNET_DRV_EEPRO100_TRUE CONFIG_RTNET_DRV_EEPRO100_FALSE CONFIG_RTNET_DRV_PCNET32_TRUE CONFIG_RTNET_DRV_PCNET32_FALSE CONFIG_RTNET_DRV_VIA_RHINE_TRUE CONFIG_RTNET_DRV_VIA_RHINE_FALSE CONFIG_RTNET_DRV_NATSEMI_TRUE CONFIG_RTNET_DRV_NATSEMI_FALSE CONFIG_RTNET_DRV_TULIP_TRUE CONFIG_RTNET_DRV_TULIP_FALSE CONFIG_RTNET_DRV_FCC_ENET_TRUE CONFIG_RTNET_DRV_FCC_ENET_FALSE CONFIG_RTNET_DRV_SCC_ENET_TRUE CONFIG_RTNET_DRV_SCC_ENET_FALSE CONFIG_RTNET_DRV_FEC_ENET_TRUE CONFIG_RTNET_DRV_FEC_ENET_FALSE CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE CONFIG_RTNET_DRV_SMC91111_TRUE CONFIG_RTNET_DRV_SMC91111_FALSE CONFIG_RTNET_DRV_ETH1394_TRUE CONFIG_RTNET_DRV_ETH1394_FALSE CONFIG_RTNET_DRV_LOOPBACK_TRUE CONFIG_RTNET_DRV_LOOPBACK_FALSE CONFIG_RTNET_DRV_3C59X_TRUE CONFIG_RTNET_DRV_3C59X_FALSE CONFIG_RTNET_DRV_R8169_TRUE CONFIG_RTNET_DRV_R8169_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTMAC_TRUE CONFIG_RTNET_RTMAC_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ADDON_RTCAP_TRUE CONFIG_RTNET_ADDON_RTCAP_FALSE CONFIG_RTNET_ADDON_PROXY_TRUE CONFIG_RTNET_ADDON_PROXY_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTEXT_KMOD_CFLAGS RTEXT_USER_CFLAGS RTEXT_LIBRARIES RTFW_KMOD_CFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT RTNET_HOST_STRING CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT EGREP LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB CPP CXX CXXFLAGS ac_ct_CXX CXXDEPMODE am__fastdepCXX_TRUE am__fastdepCXX_FALSE CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL CCAS CCASFLAGS LD CONFIG_NCURSES_TRUE CONFIG_NCURSES_FALSE NCURSES_LIBS CONFIG_RTAI_TRUE CONFIG_RTAI_FALSE CONFIG_XENO_TRUE CONFIG_XENO_FALSE CONFIG_KBUILD_TRUE CONFIG_KBUILD_FALSE RTNET_TARGET_ARCH CROSS_COMPILE RTNET_MODULE_EXT RTNET_KBUILD_ENV RTNET_KBUILD_CMD RTNET_KBUILD_CLEAN RTNET_KBUILD_DISTCLEAN RTNET_MODULE_DIR CONFIG_RTNET_LXRT_TRUE CONFIG_RTNET_LXRT_FALSE CONFIG_RTNET_DRV_8139_TRUE CONFIG_RTNET_DRV_8139_FALSE CONFIG_RTNET_DRV_EEPRO100_TRUE CONFIG_RTNET_DRV_EEPRO100_FALSE CONFIG_RTNET_DRV_PCNET32_TRUE CONFIG_RTNET_DRV_PCNET32_FALSE CONFIG_RTNET_DRV_VIA_RHINE_TRUE CONFIG_RTNET_DRV_VIA_RHINE_FALSE CONFIG_RTNET_DRV_NATSEMI_TRUE CONFIG_RTNET_DRV_NATSEMI_FALSE CONFIG_RTNET_DRV_TULIP_TRUE CONFIG_RTNET_DRV_TULIP_FALSE CONFIG_RTNET_DRV_FCC_ENET_TRUE CONFIG_RTNET_DRV_FCC_ENET_FALSE CONFIG_RTNET_DRV_SCC_ENET_TRUE CONFIG_RTNET_DRV_SCC_ENET_FALSE CONFIG_RTNET_DRV_FEC_ENET_TRUE CONFIG_RTNET_DRV_FEC_ENET_FALSE CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE CONFIG_RTNET_DRV_SMC91111_TRUE CONFIG_RTNET_DRV_SMC91111_FALSE CONFIG_RTNET_DRV_ETH1394_TRUE CONFIG_RTNET_DRV_ETH1394_FALSE CONFIG_RTNET_DRV_LOOPBACK_TRUE CONFIG_RTNET_DRV_LOOPBACK_FALSE CONFIG_RTNET_DRV_3C59X_TRUE CONFIG_RTNET_DRV_3C59X_FALSE CONFIG_RTNET_DRV_R8169_TRUE CONFIG_RTNET_DRV_R8169_FALSE CONFIG_RTNET_RTIPV4_TRUE CONFIG_RTNET_RTIPV4_FALSE CONFIG_RTNET_RTPACKET_TRUE CONFIG_RTNET_RTPACKET_FALSE CONFIG_RTNET_RTCFG_TRUE CONFIG_RTNET_RTCFG_FALSE CONFIG_RTNET_RTMAC_TRUE CONFIG_RTNET_RTMAC_FALSE CONFIG_RTNET_TDMA_TRUE CONFIG_RTNET_TDMA_FALSE CONFIG_RTNET_NOMAC_TRUE CONFIG_RTNET_NOMAC_FALSE CONFIG_RTNET_ADDON_RTCAP_TRUE CONFIG_RTNET_ADDON_RTCAP_FALSE CONFIG_RTNET_ADDON_PROXY_TRUE CONFIG_RTNET_ADDON_PROXY_FALSE CONFIG_RTNET_EXAMPLES_TRUE CONFIG_RTNET_EXAMPLES_FALSE RTEXT_KMOD_CFLAGS RTEXT_USER_CFLAGS RTEXT_LIBRARIES RTFW_KMOD_CFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2702,6 +2702,7 @@ _ACEOF
 
 RTNET_HOST_STRING="$host"
 
+
 cat >>confdefs.h <<_ACEOF
 #define CONFIG_RTNET_COMPILER "`$CC -v 2>&1 | tail -n 1`"
 _ACEOF
@@ -3790,7 +3791,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3793 "configure"' > conftest.$ac_ext
+  echo '#line 3794 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5369,7 +5370,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5372:" \
+echo "$as_me:5373:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6467,11 +6468,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6470: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6471: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6474: \$? = $ac_status" >&5
+   echo "$as_me:6475: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6729,11 +6730,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6732: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6733: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6736: \$? = $ac_status" >&5
+   echo "$as_me:6737: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6791,11 +6792,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6794: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6795: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6798: \$? = $ac_status" >&5
+   echo "$as_me:6799: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9031,7 +9032,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9034 "configure"
+#line 9035 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9129,7 +9130,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9132 "configure"
+#line 9133 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11377,11 +11378,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11380: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11381: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11384: \$? = $ac_status" >&5
+   echo "$as_me:11385: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -11439,11 +11440,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11442: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11443: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11446: \$? = $ac_status" >&5
+   echo "$as_me:11447: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12808,7 +12809,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12811 "configure"
+#line 12812 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12906,7 +12907,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12909 "configure"
+#line 12910 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13791,11 +13792,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13794: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13795: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13798: \$? = $ac_status" >&5
+   echo "$as_me:13799: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13853,11 +13854,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13856: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13857: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13860: \$? = $ac_status" >&5
+   echo "$as_me:13861: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15975,11 +15976,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15978: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15979: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15982: \$? = $ac_status" >&5
+   echo "$as_me:15983: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -16237,11 +16238,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16240: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16241: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16244: \$? = $ac_status" >&5
+   echo "$as_me:16245: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -16299,11 +16300,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16302: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16303: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16306: \$? = $ac_status" >&5
+   echo "$as_me:16307: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18539,7 +18540,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18542 "configure"
+#line 18543 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18637,7 +18638,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18640 "configure"
+#line 18641 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19961,7 +19962,7 @@ fi;
             XENO_CONFIG="/bin/true"
         fi
     fi
-    if test "${XENO_CONFIG}" = "" || test \! -x ${XENO_CONFIG}; then
+    if test "${XENO_CONFIG}" = "" || test \! -x ${XENO_CONFIG} || test \! -f ${XENO_CONFIG}; then
         { { echo "$as_me:$LINENO: error: *** Xenomai configuration tool not found: ${XENO_CONFIG}" >&5
 echo "$as_me: error: *** Xenomai configuration tool not found: ${XENO_CONFIG}" >&2;}
    { (exit 1); exit 1; }; }
@@ -22638,6 +22639,7 @@ s,@CPPFLAGS@,$CPPFLAGS,;t t
 s,@ac_ct_CC@,$ac_ct_CC,;t t
 s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
+s,@RTNET_HOST_STRING@,$RTNET_HOST_STRING,;t t
 s,@CYGPATH_W@,$CYGPATH_W,;t t
 s,@PACKAGE@,$PACKAGE,;t t
 s,@VERSION@,$VERSION,;t t
