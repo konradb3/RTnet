@@ -24,11 +24,15 @@ OBJS = rt_tulip$(modext)
 rt_tulip.o: libkernel_tulip.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_tulip.ko: @RTNET_KBUILD_ENV@
-rt_tulip.ko: $(libkernel_tulip_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
+all-local: all-local$(modext)
 
-all-local: $(OBJS)
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: @RTNET_KBUILD_ENV@
+all-local.ko: $(libkernel_tulip_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)

@@ -50,11 +50,12 @@ CONFIG_CLEAN_FILES =
 ARFLAGS = cru
 libkernel_rtcap_a_AR = $(AR) $(ARFLAGS)
 libkernel_rtcap_a_LIBADD =
-am_libkernel_rtcap_a_OBJECTS = rtcap.$(OBJEXT)
+am_libkernel_rtcap_a_OBJECTS = libkernel_rtcap_a-rtcap.$(OBJEXT)
 libkernel_rtcap_a_OBJECTS = $(am_libkernel_rtcap_a_OBJECTS)
 libkernel_rtnetproxy_a_AR = $(AR) $(ARFLAGS)
 libkernel_rtnetproxy_a_LIBADD =
-am_libkernel_rtnetproxy_a_OBJECTS = rtnetproxy.$(OBJEXT)
+am_libkernel_rtnetproxy_a_OBJECTS =  \
+	libkernel_rtnetproxy_a-rtnetproxy.$(OBJEXT)
 libkernel_rtnetproxy_a_OBJECTS = $(am_libkernel_rtnetproxy_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
@@ -254,13 +255,18 @@ EXTRA_LIBRARIES = \
 	libkernel_rtnetproxy.a \
 	libkernel_rtcap.a
 
-AM_CPPFLAGS = \
+libkernel_rtcap_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
 libkernel_rtcap_a_SOURCES = \
 	rtcap.c
+
+libkernel_rtnetproxy_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
 libkernel_rtnetproxy_a_SOURCES = \
 	rtnetproxy.c
@@ -316,8 +322,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcap.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnetproxy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtcap_a-rtcap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -339,6 +345,34 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_rtcap_a-rtcap.o: rtcap.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtcap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtcap_a-rtcap.o -MD -MP -MF "$(DEPDIR)/libkernel_rtcap_a-rtcap.Tpo" -c -o libkernel_rtcap_a-rtcap.o `test -f 'rtcap.c' || echo '$(srcdir)/'`rtcap.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtcap_a-rtcap.Tpo" "$(DEPDIR)/libkernel_rtcap_a-rtcap.Po"; else rm -f "$(DEPDIR)/libkernel_rtcap_a-rtcap.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtcap.c' object='libkernel_rtcap_a-rtcap.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtcap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtcap_a-rtcap.o `test -f 'rtcap.c' || echo '$(srcdir)/'`rtcap.c
+
+libkernel_rtcap_a-rtcap.obj: rtcap.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtcap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtcap_a-rtcap.obj -MD -MP -MF "$(DEPDIR)/libkernel_rtcap_a-rtcap.Tpo" -c -o libkernel_rtcap_a-rtcap.obj `if test -f 'rtcap.c'; then $(CYGPATH_W) 'rtcap.c'; else $(CYGPATH_W) '$(srcdir)/rtcap.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtcap_a-rtcap.Tpo" "$(DEPDIR)/libkernel_rtcap_a-rtcap.Po"; else rm -f "$(DEPDIR)/libkernel_rtcap_a-rtcap.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtcap.c' object='libkernel_rtcap_a-rtcap.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtcap_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtcap_a-rtcap.obj `if test -f 'rtcap.c'; then $(CYGPATH_W) 'rtcap.c'; else $(CYGPATH_W) '$(srcdir)/rtcap.c'; fi`
+
+libkernel_rtnetproxy_a-rtnetproxy.o: rtnetproxy.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnetproxy_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtnetproxy_a-rtnetproxy.o -MD -MP -MF "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Tpo" -c -o libkernel_rtnetproxy_a-rtnetproxy.o `test -f 'rtnetproxy.c' || echo '$(srcdir)/'`rtnetproxy.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Tpo" "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Po"; else rm -f "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtnetproxy.c' object='libkernel_rtnetproxy_a-rtnetproxy.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnetproxy_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtnetproxy_a-rtnetproxy.o `test -f 'rtnetproxy.c' || echo '$(srcdir)/'`rtnetproxy.c
+
+libkernel_rtnetproxy_a-rtnetproxy.obj: rtnetproxy.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnetproxy_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rtnetproxy_a-rtnetproxy.obj -MD -MP -MF "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Tpo" -c -o libkernel_rtnetproxy_a-rtnetproxy.obj `if test -f 'rtnetproxy.c'; then $(CYGPATH_W) 'rtnetproxy.c'; else $(CYGPATH_W) '$(srcdir)/rtnetproxy.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Tpo" "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Po"; else rm -f "$(DEPDIR)/libkernel_rtnetproxy_a-rtnetproxy.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rtnetproxy.c' object='libkernel_rtnetproxy_a-rtnetproxy.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rtnetproxy_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rtnetproxy_a-rtnetproxy.obj `if test -f 'rtnetproxy.c'; then $(CYGPATH_W) 'rtnetproxy.c'; else $(CYGPATH_W) '$(srcdir)/rtnetproxy.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -520,18 +554,17 @@ uninstall-am: uninstall-info-am
 rtcap.o: libkernel_rtcap.a
 	$(LD) --whole-archive $< -r -o $@
 
-rtcap.ko: @RTNET_KBUILD_ENV@
-rtcap.ko: $(libkernel_rtcap_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
-
 rtnetproxy.o: libkernel_rtnetproxy.a
 	$(LD) --whole-archive $< -r -o $@
 
-rtnetproxy.ko: @RTNET_KBUILD_ENV@
-rtnetproxy.ko: $(libkernel_rtnetproxy_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
+all-local: all-local$(modext)
 
-all-local: $(OBJS)
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)

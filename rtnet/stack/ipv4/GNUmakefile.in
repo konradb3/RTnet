@@ -667,11 +667,15 @@ uninstall-am: uninstall-info-am
 rtipv4.o: libkernel_ipv4.a
 	$(LD) --whole-archive $< -r -o $@
 
-rtipv4.ko: @RTNET_KBUILD_ENV@
-rtipv4.ko: $(libkernel_ipv4_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
+all-local: all-local$(modext)
 
-all-local: $(OBJS)
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: @RTNET_KBUILD_ENV@
+all-local.ko: $(libkernel_ipv4_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)

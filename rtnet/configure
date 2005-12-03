@@ -20411,7 +20411,8 @@ else
                 top_builddir=\"\`cd \$(top_builddir) && pwd\`\"             \
                 srcdir=\"\`cd \$(srcdir) && pwd\`\"                         \
                 build_objs='\$(call src2obj,c,\$^)'                         \
-                build_target='\$(basename \$@)'                             \
+                build_targets=\"\`for tgt in \${OBJS}; do basename \$\$tgt  \
+                    | sed -e's/\.ko/\.o /' | tr -d '\n'; done\`\"           \
                 MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"        \
                 modules                                                     \
                 "
@@ -21654,19 +21655,9 @@ _ACEOF
 
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
-        drivers/8139too \
-        drivers/eepro100 \
-        drivers/eth1394 \
-        drivers/loopback \
+        drivers \
         drivers/mpc52xx_fec \
-        drivers/mpc8260_fcc_enet \
-        drivers/mpc8xx_enet \
-        drivers/mpc8xx_fec \
-        drivers/natsemi \
-        drivers/pcnet32 \
-        drivers/smc91111 \
         drivers/tulip \
-        drivers/via-rhine \
         drivers/experimental \
         \
         stack \
@@ -21721,7 +21712,7 @@ fi
 
 
 
-                                                                                                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/8139too/GNUmakefile drivers/eepro100/GNUmakefile drivers/eth1394/GNUmakefile drivers/loopback/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/mpc8260_fcc_enet/GNUmakefile drivers/mpc8xx_enet/GNUmakefile drivers/mpc8xx_fec/GNUmakefile drivers/natsemi/GNUmakefile drivers/pcnet32/GNUmakefile drivers/smc91111/GNUmakefile drivers/tulip/GNUmakefile drivers/via-rhine/GNUmakefile drivers/experimental/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
+                                                                                                                                                                                                                                                                              ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/experimental/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
 
 
 
@@ -22497,19 +22488,8 @@ do
   "GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
   "Documentation/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES Documentation/GNUmakefile" ;;
   "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
-  "drivers/8139too/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/8139too/GNUmakefile" ;;
-  "drivers/eepro100/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eepro100/GNUmakefile" ;;
-  "drivers/eth1394/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/eth1394/GNUmakefile" ;;
-  "drivers/loopback/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/loopback/GNUmakefile" ;;
   "drivers/mpc52xx_fec/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc52xx_fec/GNUmakefile" ;;
-  "drivers/mpc8260_fcc_enet/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc8260_fcc_enet/GNUmakefile" ;;
-  "drivers/mpc8xx_enet/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc8xx_enet/GNUmakefile" ;;
-  "drivers/mpc8xx_fec/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc8xx_fec/GNUmakefile" ;;
-  "drivers/natsemi/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/natsemi/GNUmakefile" ;;
-  "drivers/pcnet32/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/pcnet32/GNUmakefile" ;;
-  "drivers/smc91111/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/smc91111/GNUmakefile" ;;
   "drivers/tulip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
-  "drivers/via-rhine/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/via-rhine/GNUmakefile" ;;
   "drivers/experimental/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/GNUmakefile" ;;
   "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
   "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;

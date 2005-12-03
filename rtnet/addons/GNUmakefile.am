@@ -5,13 +5,18 @@ EXTRA_LIBRARIES = \
 	libkernel_rtnetproxy.a \
 	libkernel_rtcap.a
 
-AM_CPPFLAGS = \
+libkernel_rtcap_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
 libkernel_rtcap_a_SOURCES = \
 	rtcap.c
+
+libkernel_rtnetproxy_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
 libkernel_rtnetproxy_a_SOURCES = \
 	rtnetproxy.c
@@ -29,18 +34,17 @@ endif
 rtcap.o: libkernel_rtcap.a
 	$(LD) --whole-archive $< -r -o $@
 
-rtcap.ko: @RTNET_KBUILD_ENV@
-rtcap.ko: $(libkernel_rtcap_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
-
 rtnetproxy.o: libkernel_rtnetproxy.a
 	$(LD) --whole-archive $< -r -o $@
 
-rtnetproxy.ko: @RTNET_KBUILD_ENV@
-rtnetproxy.ko: $(libkernel_rtnetproxy_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
+all-local: all-local$(modext)
 
-all-local: $(OBJS)
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)

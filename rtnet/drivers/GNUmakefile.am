@@ -1,41 +1,5 @@
 OPTDIRS =
 
-if CONFIG_RTNET_DRV_8139
-OPTDIRS += 8139too
-endif
-
-if CONFIG_RTNET_DRV_EEPRO100
-OPTDIRS += eepro100
-endif
-
-if CONFIG_RTNET_DRV_PCNET32
-OPTDIRS += pcnet32
-endif
-
-if CONFIG_RTNET_DRV_VIA_RHINE
-OPTDIRS += via-rhine
-endif
-
-if CONFIG_RTNET_DRV_NATSEMI
-OPTDIRS += natsemi
-endif
-
-if CONFIG_RTNET_DRV_LOOPBACK
-OPTDIRS += loopback
-endif
-
-if CONFIG_RTNET_DRV_FCC_ENET
-OPTDIRS += mpc8260_fcc_enet
-endif
-
-if CONFIG_RTNET_DRV_SCC_ENET
-OPTDIRS += mpc8xx_enet
-endif
-
-if CONFIG_RTNET_DRV_FEC_ENET
-OPTDIRS += mpc8xx_fec
-endif
-
 if CONFIG_RTNET_DRV_MPC52XX_FEC
 OPTDIRS += mpc52xx_fec
 endif
@@ -44,14 +8,237 @@ if CONFIG_RTNET_DRV_TULIP
 OPTDIRS += tulip
 endif
 
-if CONFIG_RTNET_DRV_SMC91111
-OPTDIRS += smc91111
+SUBDIRS = experimental $(OPTDIRS)
+
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
+
+EXTRA_LIBRARIES = \
+	libkernel_8139too.a \
+	libkernel_eepro100.a \
+	libkernel_eth1394.a \
+	libkernel_loopback.a \
+	libkernel_mpc8260_fcc_enet.a \
+	libkernel_mpc8xx_enet.a \
+	libkernel_mpc8xx_fec.a \
+	libkernel_natsemi.a \
+	libkernel_pcnet32.a \
+	libkernel_smc91111.a \
+	libkernel_via-rhine.a
+
+#RTEXT_KMOD_CFLAGS += @RTFW_KMOD_CFLAGS@
+
+#AM_CPPFLAGS = \
+libkernel_8139too_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_8139too_a_SOURCES = \
+	rt_8139too.c
+
+libkernel_eepro100_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_eepro100_a_SOURCES = \
+	rt_eepro100.c
+
+libkernel_eth1394_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_eth1394_a_SOURCES = \
+	rt_eth1394.c \
+	rt_eth1394.h
+
+libkernel_loopback_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_loopback_a_SOURCES = \
+	rt_loopback.c
+
+libkernel_mpc8260_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_mpc8260_fcc_enet_a_SOURCES = \
+	rt_mpc8260_fcc_enet.c
+
+libkernel_mpc8xx_enet_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_mpc8xx_enet_a_SOURCES = \
+	rt_mpc8xx_enet.c
+
+libkernel_mpc8xx_fec_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_mpc8xx_fec_a_SOURCES = \
+	rt_mpc8xx_fec.c
+
+libkernel_natsemi_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_natsemi_a_SOURCES = \
+	rt_natsemi.c
+
+libkernel_pcnet32_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_pcnet32_a_SOURCES = \
+	rt_pcnet32.c
+
+libkernel_smc91111_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_smc91111_a_SOURCES = \
+	rt_smc91111.c \
+	rt_smc91111.h
+
+libkernel_via_rhine_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_via_rhine_a_SOURCES = \
+	rt_via-rhine.c
+
+OBJS =
+
+if CONFIG_RTNET_DRV_8139
+OBJS += rt_8139too$(modext)
+endif
+
+if CONFIG_RTNET_DRV_EEPRO100
+OBJS += rt_eepro100$(modext)
 endif
 
 if CONFIG_RTNET_DRV_ETH1394
-OPTDIRS += eth1394
+OBJS += rt_eth1394$(modext)
 endif
 
-SUBDIRS = experimental $(OPTDIRS)
+if CONFIG_RTNET_DRV_LOOPBACK
+OBJS += rt_loopback$(modext)
+endif
 
-EXTRA_DIST = Kconfig
+if CONFIG_RTNET_DRV_FCC_ENET
+OBJS += rt_mpc8260_fcc_enet$(modext)
+endif
+
+if CONFIG_RTNET_DRV_SCC_ENET
+OBJS += rt_mpc8xx_enet$(modext)
+endif
+
+if CONFIG_RTNET_DRV_FEC_ENET
+OBJS += rt_mpc8xx_fec$(modext)
+endif
+
+if CONFIG_RTNET_DRV_NATSEMI
+OBJS += rt_natsemi$(modext)
+endif
+
+if CONFIG_RTNET_DRV_PCNET32
+OBJS += rt_pcnet32$(modext)
+endif
+
+if CONFIG_RTNET_DRV_SMC91111
+OBJS += rt_smc91111$(modext)
+endif
+
+if CONFIG_RTNET_DRV_VIA_RHINE
+OBJS += rt_via-rhine$(modext)
+endif
+
+rt_8139too.o: libkernel_8139too.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_eepro100.o: libkernel_eepro100.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_eth1394.o: libkernel_eth1394.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_loopback.o: libkernel_loopback.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_mpc8260_fcc_enet.o: libkernel_mpc8260_fcc_enet.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_mpc8xx_enet.o: libkernel_mpc8xx_enet.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_mpc8xx_fec.o: libkernel_mpc8xx_fec.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_natsemi.o: libkernel_natsemi.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_pcnet32.o: libkernel_pcnet32.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_smc91111.o: libkernel_smc91111.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_via-rhine.o: libkernel_via-rhine.a
+	$(LD) --whole-archive $< -r -o $@
+
+all-local: all-local$(modext)
+
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_8139too_a_SOURCES) \
+		$(libkernel_eepro100_a_SOURCES) \
+		$(libkernel_eth1394_a_SOURCES) \
+		$(libkernel_loopback_a_SOURCES) \
+		$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
+		$(libkernel_mpc8xx_enet_a_SOURCES) \
+		$(libkernel_mpc8xx_fec_a_SOURCES) \
+		$(libkernel_natsemi_a_SOURCES) \
+		$(libkernel_pcnet32_a_SOURCES) \
+		$(libkernel_smc91111_a_SOURCES) \
+		$(libkernel_via_rhine_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_8139too_a_SOURCES) \
+		$(libkernel_eepro100_a_SOURCES) \
+		$(libkernel_eth1394_a_SOURCES) \
+		$(libkernel_loopback_a_SOURCES) \
+		$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
+		$(libkernel_mpc8xx_enet_a_SOURCES) \
+		$(libkernel_mpc8xx_fec_a_SOURCES) \
+		$(libkernel_natsemi_a_SOURCES) \
+		$(libkernel_pcnet32_a_SOURCES) \
+		$(libkernel_smc91111_a_SOURCES) \
+		$(libkernel_via_rhine_a_SOURCES)
+	$(RTNET_KBUILD_CLEAN)
+
+distclean-local:
+	$(RTNET_KBUILD_DISTCLEAN)
+
+EXTRA_DIST = Kconfig Makefile.kbuild
+
+DISTCLEANFILES = Makefile
+
+.PHONY: FORCE

@@ -552,18 +552,17 @@ uninstall-am: uninstall-info-am
 rt_3c59x.o: libkernel_3c59x.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_3c59x.ko: @RTNET_KBUILD_ENV@
-rt_3c59x.ko: $(libkernel_3c59x_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
-
 rt_r8169.o: libkernel_r8169.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_r8169.ko: @RTNET_KBUILD_ENV@
-rt_r8169.ko: $(libkernel_r8169_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
+all-local: all-local$(modext)
 
-all-local: $(OBJS)
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_3c59x_a_SOURCES) $(libkernel_r8169_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)

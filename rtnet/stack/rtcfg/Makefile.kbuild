@@ -4,7 +4,7 @@ EXTRA_CFLAGS += \
 	-I$(top_builddir)/stack/include \
 	-I$(srcdir)
 
-obj-m += $(build_target).o
+obj-m += $(build_targets)
 
 rtcfg-objs := $(build_objs)
 

@@ -16,11 +16,14 @@ OBJS = rt_mpc52xx_fec$(modext)
 rt_mpc52xx_fec.o: libkernel_mpc52xx_fec.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_mpc52xx_fec.ko: @RTNET_KBUILD_ENV@
-rt_mpc52xx_fec.ko: $(libkernel_mpc52xx_fec_a_SOURCES) FORCE
-	$(RTNET_KBUILD_CMD)
+all-local: all-local$(modext)
 
-all-local: $(OBJS)
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_mpc52xx_fec_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)

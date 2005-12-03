@@ -563,7 +563,8 @@ else
                 top_builddir=\"\`cd \$(top_builddir) && pwd\`\"             \
                 srcdir=\"\`cd \$(srcdir) && pwd\`\"                         \
                 build_objs='\$(call src2obj,c,\$^)'                         \
-                build_target='\$(basename \$@)'                             \
+                build_targets=\"\`for tgt in \${OBJS}; do basename \$\$tgt  \
+                    | sed -e's/\.ko/\.o /' | tr -d '\n'; done\`\"           \
                 MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"        \
                 modules                                                     \
                 "
@@ -1216,19 +1217,9 @@ dnl ======================================================================
 
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
-        drivers/8139too \
-        drivers/eepro100 \
-        drivers/eth1394 \
-        drivers/loopback \
+        drivers \
         drivers/mpc52xx_fec \
-        drivers/mpc8260_fcc_enet \
-        drivers/mpc8xx_enet \
-        drivers/mpc8xx_fec \
-        drivers/natsemi \
-        drivers/pcnet32 \
-        drivers/smc91111 \
         drivers/tulip \
-        drivers/via-rhine \
         drivers/experimental \
         \
         stack \
@@ -1305,19 +1296,8 @@ AC_CONFIG_FILES([ \
     Documentation/GNUmakefile \
     \
     drivers/GNUmakefile \
-    drivers/8139too/GNUmakefile \
-    drivers/eepro100/GNUmakefile \
-    drivers/eth1394/GNUmakefile \
-    drivers/loopback/GNUmakefile \
     drivers/mpc52xx_fec/GNUmakefile \
-    drivers/mpc8260_fcc_enet/GNUmakefile \
-    drivers/mpc8xx_enet/GNUmakefile \
-    drivers/mpc8xx_fec/GNUmakefile \
-    drivers/natsemi/GNUmakefile \
-    drivers/pcnet32/GNUmakefile \
-    drivers/smc91111/GNUmakefile \
     drivers/tulip/GNUmakefile \
-    drivers/via-rhine/GNUmakefile \
     drivers/experimental/GNUmakefile \
     \
     stack/GNUmakefile \
