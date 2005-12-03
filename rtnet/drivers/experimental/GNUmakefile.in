@@ -50,7 +50,7 @@ CONFIG_CLEAN_FILES =
 ARFLAGS = cru
 libkernel_3c59x_a_AR = $(AR) $(ARFLAGS)
 libkernel_3c59x_a_LIBADD =
-am_libkernel_3c59x_a_OBJECTS = rt_3c59x.$(OBJEXT)
+am_libkernel_3c59x_a_OBJECTS = libkernel_3c59x_a-rt_3c59x.$(OBJEXT)
 libkernel_3c59x_a_OBJECTS = $(am_libkernel_3c59x_a_OBJECTS)
 libkernel_r8169_a_AR = $(AR) $(ARFLAGS)
 libkernel_r8169_a_LIBADD =
@@ -253,7 +253,7 @@ EXTRA_LIBRARIES = \
 	libkernel_3c59x.a \
 	libkernel_r8169.a
 
-libkernel_3x59x_a_CPPFLAGS = \
+libkernel_3c59x_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
@@ -320,8 +320,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_r8169_a-rt_r8169.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rt_3c59x.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -343,6 +343,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_3c59x_a-rt_3c59x.o: rt_3c59x.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_3c59x_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_3c59x_a-rt_3c59x.o -MD -MP -MF "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Tpo" -c -o libkernel_3c59x_a-rt_3c59x.o `test -f 'rt_3c59x.c' || echo '$(srcdir)/'`rt_3c59x.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Tpo" "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Po"; else rm -f "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_3c59x.c' object='libkernel_3c59x_a-rt_3c59x.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_3c59x_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_3c59x_a-rt_3c59x.o `test -f 'rt_3c59x.c' || echo '$(srcdir)/'`rt_3c59x.c
+
+libkernel_3c59x_a-rt_3c59x.obj: rt_3c59x.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_3c59x_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_3c59x_a-rt_3c59x.obj -MD -MP -MF "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Tpo" -c -o libkernel_3c59x_a-rt_3c59x.obj `if test -f 'rt_3c59x.c'; then $(CYGPATH_W) 'rt_3c59x.c'; else $(CYGPATH_W) '$(srcdir)/rt_3c59x.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Tpo" "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Po"; else rm -f "$(DEPDIR)/libkernel_3c59x_a-rt_3c59x.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_3c59x.c' object='libkernel_3c59x_a-rt_3c59x.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_3c59x_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_3c59x_a-rt_3c59x.obj `if test -f 'rt_3c59x.c'; then $(CYGPATH_W) 'rt_3c59x.c'; else $(CYGPATH_W) '$(srcdir)/rt_3c59x.c'; fi`
 
 libkernel_r8169_a-rt_r8169.o: rt_r8169.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_r8169_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_r8169_a-rt_r8169.o -MD -MP -MF "$(DEPDIR)/libkernel_r8169_a-rt_r8169.Tpo" -c -o libkernel_r8169_a-rt_r8169.o `test -f 'rt_r8169.c' || echo '$(srcdir)/'`rt_r8169.c; \

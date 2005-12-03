@@ -5,7 +5,7 @@ EXTRA_LIBRARIES = \
 	libkernel_3c59x.a \
 	libkernel_r8169.a
 
-libkernel_3x59x_a_CPPFLAGS = \
+libkernel_3c59x_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
