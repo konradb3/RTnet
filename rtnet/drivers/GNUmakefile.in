@@ -61,7 +61,8 @@ CONFIG_CLEAN_FILES =
 ARFLAGS = cru
 libkernel_8139too_a_AR = $(AR) $(ARFLAGS)
 libkernel_8139too_a_LIBADD =
-am_libkernel_8139too_a_OBJECTS = rt_8139too.$(OBJEXT)
+am_libkernel_8139too_a_OBJECTS =  \
+	libkernel_8139too_a-rt_8139too.$(OBJEXT)
 libkernel_8139too_a_OBJECTS = $(am_libkernel_8139too_a_OBJECTS)
 libkernel_eepro100_a_AR = $(AR) $(ARFLAGS)
 libkernel_eepro100_a_LIBADD =
@@ -345,14 +346,11 @@ EXTRA_LIBRARIES = \
 	libkernel_smc91111.a \
 	libkernel_via-rhine.a
 
+libkernel_8139too_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
-#RTEXT_KMOD_CFLAGS += @RTFW_KMOD_CFLAGS@
-
-#AM_CPPFLAGS = \
-#libkernel_8139too_a_CPPFLAGS = \
-#	$(RTEXT_KMOD_CFLAGS) \
-#	-I$(top_srcdir)/stack/include \
-#	-I$(top_builddir)/stack/include
 libkernel_8139too_a_SOURCES = \
 	rt_8139too.c
 
@@ -528,6 +526,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_8139too_a-rt_8139too.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_loopback_a-rt_loopback.Po@am__quote@
@@ -537,7 +536,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_pcnet32_a-rt_pcnet32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rt_8139too.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rt_mpc8260_fcc_enet.Po@am__quote@
 
 .c.o:
@@ -560,6 +558,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_8139too_a-rt_8139too.o: rt_8139too.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_8139too_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_8139too_a-rt_8139too.o -MD -MP -MF "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Tpo" -c -o libkernel_8139too_a-rt_8139too.o `test -f 'rt_8139too.c' || echo '$(srcdir)/'`rt_8139too.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Tpo" "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Po"; else rm -f "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_8139too.c' object='libkernel_8139too_a-rt_8139too.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_8139too_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_8139too_a-rt_8139too.o `test -f 'rt_8139too.c' || echo '$(srcdir)/'`rt_8139too.c
+
+libkernel_8139too_a-rt_8139too.obj: rt_8139too.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_8139too_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_8139too_a-rt_8139too.obj -MD -MP -MF "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Tpo" -c -o libkernel_8139too_a-rt_8139too.obj `if test -f 'rt_8139too.c'; then $(CYGPATH_W) 'rt_8139too.c'; else $(CYGPATH_W) '$(srcdir)/rt_8139too.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Tpo" "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Po"; else rm -f "$(DEPDIR)/libkernel_8139too_a-rt_8139too.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_8139too.c' object='libkernel_8139too_a-rt_8139too.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_8139too_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_8139too_a-rt_8139too.obj `if test -f 'rt_8139too.c'; then $(CYGPATH_W) 'rt_8139too.c'; else $(CYGPATH_W) '$(srcdir)/rt_8139too.c'; fi`
 
 libkernel_eepro100_a-rt_eepro100.o: rt_eepro100.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eepro100_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_eepro100_a-rt_eepro100.o -MD -MP -MF "$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Tpo" -c -o libkernel_eepro100_a-rt_eepro100.o `test -f 'rt_eepro100.c' || echo '$(srcdir)/'`rt_eepro100.c; \

@@ -26,9 +26,6 @@ EXTRA_LIBRARIES = \
 	libkernel_smc91111.a \
 	libkernel_via-rhine.a
 
-#RTEXT_KMOD_CFLAGS += @RTFW_KMOD_CFLAGS@
-
-#AM_CPPFLAGS = \
 libkernel_8139too_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
