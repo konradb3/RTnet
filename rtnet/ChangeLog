@@ -1,5 +1,5 @@
 0.9.1
-- support for Xenomai upcoming 2.1
+- support for upcoming Xenomai 2.1
 - flattened directory structure and sped-up 2.6 building
 - fixed kernel 2.6.14 related compilation issues
 - re-enabled kernel 2.4 support
