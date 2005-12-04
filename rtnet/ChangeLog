@@ -1,3 +1,14 @@
+0.9.1
+- support for Xenomai upcoming 2.1
+- flattened directory structure and sped-up 2.6 building
+- fixed kernel 2.6.14 related compilation issues
+- re-enabled kernel 2.4 support
+- joint slot support for tdma.conf
+- fixed raw-packet example
+- fixed kernel task cleanup issues of some core modules
+- re-enable IRQ line on rt_tulip down
+- fixed cleanup bug in rtping kernel code
+
 0.9.0
 - ported over new, generic RTDM layer
 - added interactive configuration ("make menuconfig") with additional

@@ -29,23 +29,9 @@
 #include <rtdm/rtdm_driver.h>
 
 
-/* not yet moved to RTAI's RTDM version */
-#ifndef RTDM_TASK_RAISE_PRIORITY
-# define RTDM_TASK_RAISE_PRIORITY   (+1)
-# define RTDM_TASK_LOWER_PRIORITY   (-1)
-#endif
-
-/* workarounds for various shortcomings in RTAI's RTDM port */
-#define FUSION_LOW_PRIO             RT_SCHED_LOWEST_PRIORITY
-#define FUSION_HIGH_PRIO            RT_SCHED_HIGHEST_PRIORITY
-#define rthal_spin_lock             rt_spin_lock
-#define rthal_spin_unlock           rt_spin_unlock
-#define rthal_local_irq_save(flags) hard_save_flags_and_cli(flags)
-#define rthal_local_irq_restore(flags) \
-    hard_restore_flags(flags)
+/* workarounds for namespace pollution of RTAI */
 #undef SLEEP
 #undef PRINTK
-
 
 
 static inline void nano_to_timeval(__u64 time, struct timeval *tval)
