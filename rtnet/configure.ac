@@ -316,8 +316,8 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
 
         # check for RTDM skin, needed by RTnet
         AC_MSG_CHECKING([for RTDM skin])
-        case "${CONFIG_RTAI_SKIN_RTDM}" in
-            y | m) AC_MSG_RESULT([${CONFIG_RTAI_SKIN_RTDM}]) ;;
+        case "${CONFIG_RTAI_RTDM}" in
+            y | m) AC_MSG_RESULT([${CONFIG_RTAI_RTDM}]) ;;
             *) AC_MSG_ERROR([*** Please enable RTDM skin]) ;;
         esac
 

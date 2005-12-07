@@ -20128,9 +20128,9 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
         # check for RTDM skin, needed by RTnet
         echo "$as_me:$LINENO: checking for RTDM skin" >&5
 echo $ECHO_N "checking for RTDM skin... $ECHO_C" >&6
-        case "${CONFIG_RTAI_SKIN_RTDM}" in
-            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_SKIN_RTDM}" >&5
-echo "${ECHO_T}${CONFIG_RTAI_SKIN_RTDM}" >&6 ;;
+        case "${CONFIG_RTAI_RTDM}" in
+            y | m) echo "$as_me:$LINENO: result: ${CONFIG_RTAI_RTDM}" >&5
+echo "${ECHO_T}${CONFIG_RTAI_RTDM}" >&6 ;;
             *) { { echo "$as_me:$LINENO: error: *** Please enable RTDM skin" >&5
 echo "$as_me: error: *** Please enable RTDM skin" >&2;}
    { (exit 1); exit 1; }; } ;;
