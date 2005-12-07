@@ -228,7 +228,7 @@ if test "$RTAI_DIR" \!= ""; then
     RTAI_VERSION="`${RTAI_CONFIG} --version`"
 
     case "$RTAI_VERSION" in
-        magma)
+        magma | 3.3)
             CONFIG_RTNET_RTEXT_VERSION=rtai-3x
             AC_DEFINE(CONFIG_RTAI_3x, 1, [We build for RTAI 3.x])
             ;;
