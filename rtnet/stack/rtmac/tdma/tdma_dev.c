@@ -63,12 +63,28 @@ static int tdma_dev_close(struct rtdm_dev_context *context,
 }
 
 
+static int wait_on_sync(struct tdma_dev_ctx *tdma_ctx,
+                        rtdm_event_t *sync_event)
+{
+    int ret;
+
+
+    RTDM_EXECUTE_ATOMICALLY(
+        tdma_ctx->cycle_waiter = rtdm_task_current();
+        ret = rtdm_event_wait(sync_event);
+        tdma_ctx->cycle_waiter = NULL;
+    );
+    return ret;
+}
+
+
 static int tdma_dev_ioctl(struct rtdm_dev_context *context,
                           rtdm_user_info_t *user_info, int request, void *arg)
 {
     struct tdma_dev_ctx *ctx = (struct tdma_dev_ctx *)context->dev_private;
     struct tdma_priv    *tdma;
     nanosecs_t          offset;
+    unsigned int        type;
     rtdm_lockctx_t      lock_ctx;
     int                 ret;
 
@@ -99,13 +115,39 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
                 ((int)arg != TDMA_WAIT_ON_SYNC))
                 return -EINVAL;
 
-            RTDM_EXECUTE_ATOMICALLY(
-                ctx->cycle_waiter = rtdm_task_current();
-                ret = rtdm_event_wait(&tdma->sync_event);
-                ctx->cycle_waiter = NULL;
-            );
+            return wait_on_sync(ctx, &tdma->sync_event);
 
-            return ret;
+        case RTMAC_RTIOC_WAITONCYCLE_EX:
+            if (!rtdm_in_rt_context())
+                return -EACCES;
+
+            if (user_info) {
+                if (!rtdm_rw_user_ok(user_info, arg,
+                                     sizeof(struct rtmac_waitinfo)) ||
+                    rtdm_copy_from_user(user_info, &type, arg,
+                                        sizeof(unsigned int)))
+                    return -EFAULT;
+            } else
+                type = ((struct rtmac_waitinfo *)arg)->type;
+
+            if ((type != RTMAC_WAIT_ON_DEFAULT) &&
+                (type != TDMA_WAIT_ON_SYNC))
+                return -EINVAL;
+
+            ret = wait_on_sync(ctx, &tdma->sync_event);
+            if (ret)
+                return ret;
+
+            if (user_info) {
+                if (rtdm_copy_to_user(user_info, &tdma->current_cycle,
+                        &((struct rtmac_waitinfo *)arg)->cycle_no,
+                        sizeof(unsigned long)))
+                    return -EFAULT;
+            } else
+                ((struct rtmac_waitinfo *)arg)->cycle_no =
+                    tdma->current_cycle;
+
+            return 0;
 
         default:
             return -ENOTTY;

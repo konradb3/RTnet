@@ -3,7 +3,7 @@
  *  include/rtmac.h
  *
  *  rtmac - real-time networking media access control subsystem
- *  Copyright (C) 2004 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2004, 2005 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,21 +28,34 @@
 
 
 /* sub-classes: RTDM_CLASS_RTMAC */
-#define RTDM_SUBCLASS_TDMA      0
-#define RTDM_SUBCLASS_UNMANAGED 1
+#define RTDM_SUBCLASS_TDMA          0
+#define RTDM_SUBCLASS_UNMANAGED     1
 
-#define RTIOC_TYPE_RTMAC        RTDM_CLASS_RTMAC
-    
-/* RTmac Discipline IOCTLs */
-#define RTMAC_RTIOC_TIMEOFFSET  _IOR(RTIOC_TYPE_RTMAC, 0x00, __s64)
-#define RTMAC_RTIOC_WAITONCYCLE _IOW(RTIOC_TYPE_RTMAC, 0x01, int)
+#define RTIOC_TYPE_RTMAC            RTDM_CLASS_RTMAC
+
 
 /* Common Cycle Types */
-#define RTMAC_WAIT_ON_DEFAULT   0x00
-#define RTMAC_WAIT_ON_XMIT      0x01
+#define RTMAC_WAIT_ON_DEFAULT       0x00
+#define RTMAC_WAIT_ON_XMIT          0x01
 
 /* TDMA-specific Cycle Types */
-#define TDMA_WAIT_ON_SYNC       0x10
-#define TDMA_WAIT_ON_SOF        TDMA_WAIT_ON_SYNC /* legacy support */
+#define TDMA_WAIT_ON_SYNC           0x10
+#define TDMA_WAIT_ON_SOF            TDMA_WAIT_ON_SYNC /* legacy support */
+
+
+/* RTMAC_RTIOC_WAITONCYCLE_EX control and status data */
+struct rtmac_waitinfo {
+    unsigned int    type;
+    size_t          ext_size;
+    unsigned long   cycle_no;
+    char            ext[0];
+};
+
+
+/* RTmac Discipline IOCTLs */
+#define RTMAC_RTIOC_TIMEOFFSET      _IOR(RTIOC_TYPE_RTMAC, 0x00, __s64)
+#define RTMAC_RTIOC_WAITONCYCLE     _IOW(RTIOC_TYPE_RTMAC, 0x01, unsigned int)
+#define RTMAC_RTIOC_WAITONCYCLE_EX  _IOWR(RTIOC_TYPE_RTMAC, 0x02, \
+                                          struct rtmac_waitinfo)
 
 #endif /* __RTMAC_H_ */
