@@ -37,8 +37,8 @@ MODULE_LICENSE("GPL");
  */
 int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 {
-    struct rtsocket *sock = (struct rtsocket *)(((u8 *)pt) -
-                                ((u8 *)&((struct rtsocket *)0)->prot.packet));
+    struct rtsocket *sock   = container_of(pt, struct rtsocket,
+                                           prot.packet.packet_type);
     int             ifindex = sock->prot.packet.ifindex;
     void            (*callback_func)(struct rtdm_dev_context *, void *);
     void            *callback_arg;

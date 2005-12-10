@@ -188,4 +188,11 @@ static inline void RTNET_MOD_DEC_USE_COUNT_EX(struct module *module)
                           prefetch(pos->member.next))
 #endif
 
+
+#ifndef container_of
+#define container_of(ptr, type, member) ({                      \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
+#endif
+
 #endif /* __RTNET_INTERNAL_H_ */

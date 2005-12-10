@@ -73,8 +73,8 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
     int                 ret;
 
 
-    tdma = (struct tdma_priv *)((char *)context->device -
-        (char *)&((struct tdma_priv *)0)->api_device);
+    tdma = container_of((struct rtdm_device *)context->device,
+                        struct tdma_priv, api_device);
 
     switch (request) {
         case RTMAC_RTIOC_TIMEOFFSET:

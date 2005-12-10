@@ -43,8 +43,8 @@ static int nomac_dev_ioctl(struct rtdm_dev_context *context,
     struct nomac_priv   *nomac;
 
 
-    nomac = (struct nomac_priv *)((char *)context->device -
-        (char *)&((struct nomac_priv *)0)->api_device);
+    nomac = container_of((struct rtdm_device *)context->device,
+                         struct nomac_priv, api_device);
 
     switch (request) {
         case RTMAC_RTIOC_TIMEOFFSET:
