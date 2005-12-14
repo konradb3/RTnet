@@ -568,7 +568,7 @@ all-local.ko: $(libkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES) FOR
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
-	$(INSTALL_DATA) $^ $(moduledir)
+	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
 clean-local: $(ibkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)

@@ -218,7 +218,7 @@ all-local.ko: $(libkernel_8139too_a_SOURCES) \
 
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
-	$(INSTALL_DATA) $^ $(moduledir)
+	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
 clean-local: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_eepro100_a_SOURCES) \
