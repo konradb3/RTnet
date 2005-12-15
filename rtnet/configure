@@ -19986,7 +19986,7 @@ echo $ECHO_N "checking for RTAI version... $ECHO_C" >&6
     RTAI_VERSION="`${RTAI_CONFIG} --version`"
 
     case "$RTAI_VERSION" in
-        magma | 3.3)
+        magma | 3.3*)
             CONFIG_RTNET_RTEXT_VERSION=rtai-3x
 
 cat >>confdefs.h <<\_ACEOF
