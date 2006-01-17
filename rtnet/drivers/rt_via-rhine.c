@@ -234,12 +234,12 @@ static char shortname[] = DRV_NAME;
 #undef writeb
 #undef writew
 #undef writel
-#define readb inb
-#define readw inw
-#define readl inl
-#define writeb outb
-#define writew outw
-#define writel outl
+#define readb(addr) inb((unsigned long)(addr))
+#define readw(addr) inw((unsigned long)(addr))
+#define readl(addr) inl((unsigned long)(addr))
+#define writeb(val,addr) outb((val),(unsigned long)(addr))
+#define writew(val,addr) outw((val),(unsigned long)(addr))
+#define writel(val,addr) outl((val),(unsigned long)(addr))
 #endif
 
 MODULE_AUTHOR("Jan Kiszka");
@@ -392,7 +392,7 @@ enum chip_capability_flags {
 #define RHINE_IOTYPE (PCI_USES_IO  | PCI_USES_MASTER | PCI_ADDR0)
 #endif
 /* Beware of PCI posted writes */
-#define IOSYNC	do { readb(dev->base_addr + StationAddr); } while (0)
+#define IOSYNC	do { readb((void *)dev->base_addr + StationAddr); } while (0)
 
 /* directly indexed by enum via_rhine_chips, above */
 static struct via_rhine_chip_info via_rhine_chip_info[] __devinitdata =
@@ -563,7 +563,7 @@ static int  via_rhine_close(struct rtnet_device *dev);
 
 static inline u32 get_intr_status(struct rtnet_device *dev) /*** RTnet ***/
 {
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	struct netdev_private *np = dev->priv;
 	u32 intr_status;
 
@@ -576,7 +576,7 @@ static inline u32 get_intr_status(struct rtnet_device *dev) /*** RTnet ***/
 
 static void wait_for_reset(struct rtnet_device *dev, int chip_id, char *name) /*** RTnet ***/
 {
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int boguscnt = 20;
 
 	IOSYNC;
@@ -634,7 +634,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	int i, option;
 	int chip_id = (int) ent->driver_data;
 	static int card_idx = -1;
-	long ioaddr;
+	void *ioaddr;
 	long memaddr;
 	unsigned int io_size;
 	int pci_flags;
@@ -675,7 +675,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 		goto err_out;
 	}
 
-	ioaddr = pci_resource_start (pdev, 0);
+	ioaddr = (void *)pci_resource_start (pdev, 0);
 	memaddr = pci_resource_start (pdev, 1);
 
 	if (pci_flags & PCI_USES_MASTER)
@@ -697,10 +697,10 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 		goto err_out_free_netdev;
 
 #ifdef USE_MEM
-	ioaddr0 = ioaddr;
+	ioaddr0 = (long)ioaddr;
 	enable_mmio(ioaddr0, chip_id);
 
-	ioaddr = (long) ioremap (memaddr, io_size);
+	ioaddr = ioremap (memaddr, io_size);
 	if (!ioaddr) {
 		printk (KERN_ERR "ioremap failed for device %s, region 0x%X @ 0x%lX\n",
 				pci_name(pdev), io_size, memaddr);
@@ -742,7 +742,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	/* Reset the chip to erase previous misconfiguration. */
 	writew(CmdReset, ioaddr + ChipCmd);
 
-	dev->base_addr = ioaddr;
+	dev->base_addr = (long)ioaddr;
 	wait_for_reset(dev, chip_id, shortname);
 
 	/* Reload the station address from the EEPROM. */
@@ -843,7 +843,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 
 	printk(KERN_INFO "%s: %s at 0x%lx, ",
 		   dev->name, via_rhine_chip_info[chip_id].name,
-		   (pci_flags & PCI_USES_IO) ? ioaddr : memaddr);
+		   (pci_flags & PCI_USES_IO) ? (long)ioaddr : memaddr);
 
 	for (i = 0; i < 5; i++)
 			printk("%2.2x:", dev->dev_addr[i]);
@@ -1067,7 +1067,7 @@ static void free_tbufs(struct rtnet_device* dev) /*** RTnet ***/
 static void init_registers(struct rtnet_device *dev) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int i;
 
 	for (i = 0; i < 6; i++)
@@ -1113,7 +1113,7 @@ static void init_registers(struct rtnet_device *dev) /*** RTnet ***/
 
 static int mdio_read(struct rtnet_device *dev, int phy_id, int regnum) /*** RTnet ***/
 {
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int boguscnt = 1024;
 
 	/* Wait for a previous command to complete. */
@@ -1132,7 +1132,7 @@ static int mdio_read(struct rtnet_device *dev, int phy_id, int regnum) /*** RTne
 static void mdio_write(struct rtnet_device *dev, int phy_id, int regnum, int value) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int boguscnt = 1024;
 
 	if (phy_id == np->phys[0]) {
@@ -1163,7 +1163,7 @@ static void mdio_write(struct rtnet_device *dev, int phy_id, int regnum, int val
 static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int i;
 
 	RTNET_MOD_INC_USE_COUNT;
@@ -1221,7 +1221,7 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 static void via_rhine_check_duplex(struct rtnet_device *dev) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int mii_lpa = mdio_read(dev, np->phys[0], MII_LPA);
 	int negotiated = mii_lpa & np->mii_if.advertising;
 	int duplex;
@@ -1250,7 +1250,7 @@ static void via_rhine_timer(unsigned long data)
 {
 	struct net_device *dev = (struct net_device *)data;
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int next_tick = 10*HZ;
 	int mii_status;
 
@@ -1283,7 +1283,7 @@ static void via_rhine_timer(unsigned long data)
 static void via_rhine_tx_timeout (struct net_device *dev)
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 
 	printk (KERN_WARNING "%s: Transmit timed out, status %4.4x, PHY status "
 		"%4.4x, resetting...\n",
@@ -1407,7 +1407,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	 */
 	intr_status = get_intr_status(dev);
 	if ((intr_status & IntrTxErrSummary) == 0) {
-		writew(CmdTxDemand | np->chip_cmd, dev->base_addr + ChipCmd);
+		writew(CmdTxDemand | np->chip_cmd, (void *)dev->base_addr + ChipCmd);
 	}
 	IOSYNC;
 
@@ -1445,8 +1445,8 @@ static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 	while ((intr_status = get_intr_status(dev))) {
 		/* Acknowledge all of the current interrupt sources ASAP. */
 		if (intr_status & IntrTxDescRace)
-			writeb(0x08, ioaddr + IntrStatus2);
-		writew(intr_status & 0xffff, ioaddr + IntrStatus);
+			writeb(0x08, (void *)ioaddr + IntrStatus2);
+		writew(intr_status & 0xffff, (void *)ioaddr + IntrStatus);
 		IOSYNC;
 
 		if (debug > 4)
@@ -1492,7 +1492,7 @@ static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 
 	if (debug > 3)
 		rtdm_printk(KERN_DEBUG "%s: exiting interrupt, status=%8.8x.\n", /*** RTnet ***/
-			   dev->name, readw(ioaddr + IntrStatus));
+			   dev->name, readw((void *)ioaddr + IntrStatus));
 
 /*** RTnet ***/
 	if (old_packet_cnt != np->stats.rx_packets)
@@ -1682,15 +1682,15 @@ static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** 
 	}
 
 	/* Pre-emptively restart Rx engine. */
-	writew(readw(dev->base_addr + ChipCmd) | CmdRxOn | CmdRxDemand,
-		   dev->base_addr + ChipCmd);
+	writew(readw((void *)dev->base_addr + ChipCmd) | CmdRxOn | CmdRxDemand,
+		   (void *)dev->base_addr + ChipCmd);
 }
 
 /* Clears the "tally counters" for CRC errors and missed frames(?).
    It has been reported that some chips need a write of 0 to clear
    these, for others the counters are set to 1 when written to and
    instead cleared when read. So we clear them both ways ... */
-static inline void clear_tally_counters(const long ioaddr)
+static inline void clear_tally_counters(void *ioaddr)
 {
 	writel(0, ioaddr + RxMissed);
 	readw(ioaddr + RxCRCErrs);
@@ -1699,7 +1699,7 @@ static inline void clear_tally_counters(const long ioaddr)
 
 static void via_rhine_restart_tx(struct rtnet_device *dev) { /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	int entry = np->dirty_tx % TX_RING_SIZE;
 	u32 intr_status;
 
@@ -1731,7 +1731,7 @@ static void via_rhine_restart_tx(struct rtnet_device *dev) { /*** RTnet ***/
 static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 
 	rtdm_lock_get(&np->lock); /*** RTnet ***/
 
@@ -1816,7 +1816,7 @@ static struct net_device_stats *via_rhine_get_stats(struct net_device *dev)
 static void via_rhine_set_rx_mode(struct rtnet_device *dev) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
+	void *ioaddr = (void *)dev->base_addr;
 	u32 mc_filter[2];			/* Multicast hash filter */
 	u8 rx_mode;					/* Note: 0x02=accept runt, 0x01=accept errs */
 
@@ -1824,13 +1824,13 @@ static void via_rhine_set_rx_mode(struct rtnet_device *dev) /*** RTnet ***/
 		/* Unconditionally log net taps. */
 		printk(KERN_NOTICE "%s: Promiscuous mode enabled.\n", dev->name);
 		rx_mode = 0x1C;
-		writel(0xffffffff, ioaddr + MulticastFilter0);
-		writel(0xffffffff, ioaddr + MulticastFilter1);
+		writel(0xffffffff, (void *)ioaddr + MulticastFilter0);
+		writel(0xffffffff, (void *)ioaddr + MulticastFilter1);
 	} else if ((dev->mc_count > multicast_filter_limit)
 			   ||  (dev->flags & IFF_ALLMULTI)) {
 		/* Too many to match, or accept all multicasts. */
-		writel(0xffffffff, ioaddr + MulticastFilter0);
-		writel(0xffffffff, ioaddr + MulticastFilter1);
+		writel(0xffffffff, (void *)ioaddr + MulticastFilter0);
+		writel(0xffffffff, (void *)ioaddr + MulticastFilter1);
 		rx_mode = 0x0C;
 	} else {
 		struct dev_mc_list *mclist;
@@ -1842,11 +1842,11 @@ static void via_rhine_set_rx_mode(struct rtnet_device *dev) /*** RTnet ***/
 
 			mc_filter[bit_nr >> 5] |= cpu_to_le32(1 << (bit_nr & 31));
 		}
-		writel(mc_filter[0], ioaddr + MulticastFilter0);
-		writel(mc_filter[1], ioaddr + MulticastFilter1);
+		writel(mc_filter[0], (void *)ioaddr + MulticastFilter0);
+		writel(mc_filter[1], (void *)ioaddr + MulticastFilter1);
 		rx_mode = 0x0C;
 	}
-	writeb(np->rx_thresh | rx_mode, ioaddr + RxConfig);
+	writeb(np->rx_thresh | rx_mode, (void *)ioaddr + RxConfig);
 }
 
 /*** RTnet ***/
@@ -1975,16 +1975,16 @@ static int via_rhine_close(struct rtnet_device *dev) /*** RTnet ***/
 
 	if (debug > 1)
 		rtdm_printk(KERN_DEBUG "%s: Shutting down ethercard, status was %4.4x.\n", /*** RTnet ***/
-			   dev->name, readw(ioaddr + ChipCmd));
+			   dev->name, readw((void *)ioaddr + ChipCmd));
 
 	/* Switch to loopback mode to avoid hardware races. */
-	writeb(np->tx_thresh | 0x02, ioaddr + TxConfig);
+	writeb(np->tx_thresh | 0x02, (void *)ioaddr + TxConfig);
 
 	/* Disable interrupts by clearing the interrupt mask. */
-	writew(0x0000, ioaddr + IntrEnable);
+	writew(0x0000, (void *)ioaddr + IntrEnable);
 
 	/* Stop the chip's Tx and Rx processes. */
-	writew(CmdStop, ioaddr + ChipCmd);
+	writew(CmdStop, (void *)ioaddr + ChipCmd);
 
 	rtdm_lock_put_irqrestore(&np->lock, context); /*** RTnet ***/
 
