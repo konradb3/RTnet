@@ -459,7 +459,13 @@ else
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
         xeno-21x)
-            RTEXT_KMOD_CFLAGS="-D__KERNEL__ -DMODULE -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include -Wall -Wstrict-prototypes -fomit-frame-pointer -fno-strict-aliasing -pipe -O2 -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
+	    # Kernel cflags capturing trick from RTAI 
+	    kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CC=$CC | grep '^RTEXT_KMOD_CFLAGS='`
+	    eval $kmod_cflags
+	    if test "$RTEXT_KMOD_CFLAGS" = ""; then
+	        AC_MSG_ERROR([Unable to retrieve compilation flags for kernel modules out of $RTEXT_LINUX_DIR/Makefile])
+	    fi	 
+	    RTEXT_KMOD_CFLAGS="$RTEXT_KMOD_CFLAGS -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
@@ -771,7 +777,7 @@ AC_ARG_ENABLE(eepro100-cmdtimeout,
         *) AC_MSG_ERROR([Bad argument to option: --enable-eepro100-cmdtimeout=<microseconds>]) ;;
     esac])
 if test x$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = x ; then
-    $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = 20
+    CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT=20
 fi
 AC_MSG_RESULT($CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT us)
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT,

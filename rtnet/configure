@@ -20292,7 +20292,15 @@ else
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
         xeno-21x)
-            RTEXT_KMOD_CFLAGS="-D__KERNEL__ -DMODULE -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include -Wall -Wstrict-prototypes -fomit-frame-pointer -fno-strict-aliasing -pipe -O2 -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
+	    # Kernel cflags capturing trick from RTAI
+	    kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CC=$CC | grep '^RTEXT_KMOD_CFLAGS='`
+	    eval $kmod_cflags
+	    if test "$RTEXT_KMOD_CFLAGS" = ""; then
+	        { { echo "$as_me:$LINENO: error: Unable to retrieve compilation flags for kernel modules out of $RTEXT_LINUX_DIR/Makefile" >&5
+echo "$as_me: error: Unable to retrieve compilation flags for kernel modules out of $RTEXT_LINUX_DIR/Makefile" >&2;}
+   { (exit 1); exit 1; }; }
+	    fi
+	    RTEXT_KMOD_CFLAGS="$RTEXT_KMOD_CFLAGS -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
             ;;
         *)
             { { echo "$as_me:$LINENO: error: *** internal error" >&5
@@ -20911,7 +20919,7 @@ echo "$as_me: error: Bad argument to option: --enable-eepro100-cmdtimeout=<micro
     esac
 fi;
 if test x$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = x ; then
-    $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = 20
+    CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT=20
 fi
 echo "$as_me:$LINENO: result: $CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT us" >&5
 echo "${ECHO_T}$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT us" >&6
