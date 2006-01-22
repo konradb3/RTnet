@@ -69,10 +69,8 @@ static unsigned int rtnet_scc = 1; /* SCC1 */
 MODULE_PARM(rtnet_scc, "i");
 MODULE_PARM_DESC(rtnet_scc, "SCCx port for RTnet, x=1..3 (default=1)");
 
-#define printk(fmt,args...)	rtdm_printk ("RTnet: " fmt ,##args)
-
 #if 0
-#define RT_DEBUG(fmt,args...)	rtdm_printk (fmt ,##args)
+#define RT_DEBUG(fmt,args...)	printk (fmt ,##args)
 #else
 #define RT_DEBUG(fmt,args...)
 #endif
@@ -198,7 +196,7 @@ static int CPMVEC_ENET;
 static int
 scc_enet_open(struct rtnet_device *rtdev)
 {
-        MOD_INC_USE_COUNT;
+        RTNET_MOD_INC_USE_COUNT;
 
 	/* I should reset the ring buffers here, but I don't yet know
 	 * a simple way to do that.
@@ -514,7 +512,7 @@ scc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
 	 */
 	if ((bdp->cbd_sc & (BD_ENET_RX_FIRST | BD_ENET_RX_LAST)) !=
 		(BD_ENET_RX_FIRST | BD_ENET_RX_LAST))
-			printk("CPM ENET: rcv is not first+last\n");
+			rtdm_printk("CPM ENET: rcv is not first+last\n");
 #endif
 
 	/* Frame too long or too short.
@@ -550,14 +548,14 @@ scc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
 		 */
 		skb = dev_alloc_rtskb(pkt_len-4, &cep->skb_pool);
 		if (skb == NULL) {
-			printk("%s: Memory squeeze, dropping packet.\n", rtdev->name);
+			rtdm_printk("%s: Memory squeeze, dropping packet.\n", rtdev->name);
 			cep->stats.rx_dropped++;
 		}
 		else {
 			skb->rtdev = rtdev;
 			rtskb_put(skb,pkt_len-4); /* Make room */
 			memcpy(skb->data,
-			       (unsigned char *)__va(bdp->cbd_bufaddr),
+			       cep->rx_vaddr[bdp - cep->rx_bd_base],
 			       pkt_len-4);
 			skb->protocol=rt_eth_type_trans(skb,rtdev);
 			skb->time_stamp = *time_stamp;
@@ -594,7 +592,7 @@ scc_enet_close(struct rtnet_device *rtdev)
 	*/
 	rtnetif_stop_queue(rtdev);
 
-	MOD_DEC_USE_COUNT;
+	RTNET_MOD_DEC_USE_COUNT;
 
 	return 0;
 }
@@ -738,7 +736,7 @@ int __init scc_enet_init(void)
 		CPMVEC_ENET = CPMVEC_SCC1;
 		break;
 	default:
-		printk(KERN_ERR "enet: SCC%d doesn't exit (check rtnet_scc)\n");
+		printk(KERN_ERR "enet: SCC%d doesn't exit (check rtnet_scc)\n", rtnet_scc);
 		return -1;
 	}
 

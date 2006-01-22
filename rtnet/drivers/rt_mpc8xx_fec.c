@@ -80,9 +80,6 @@ static unsigned int rx_pool_size =  0;
 MODULE_PARM(rx_pool_size, "i");
 MODULE_PARM_DESC(rx_pool_size, "Receive buffer pool size");
 
-
-#define printk(fmt,args...)	rtdm_printk ("RTnet: " fmt ,##args)
-
 #if 0
 #define RT_DEBUG(fmt,args...)	rtdm_printk (fmt ,##args)
 #else
@@ -488,7 +485,6 @@ fec_timeout(struct net_device *dev)
 static int fec_enet_interrupt(rtdm_irq_t *irq_handle)
 {
 	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
-	struct	fec_enet_private *fep = rtdev->priv;
 	int packets = 0;
 	volatile fec_t	*fecp;
 	uint	int_events;
@@ -1604,7 +1600,7 @@ fec_enet_open(struct rtnet_device *rtdev)
 		}
 
 #if defined(CONFIG_IP_PNP)
-        printk("%s: Waiting for the link to be up...\n", rtdev->name);
+        rtdm_printk("%s: Waiting for the link to be up...\n", rtdev->name);
 
         while(fep->link == 0 || ((((volatile fec_t*)rtdev->base_addr)->fec_ecntrl & FEC_ECNTRL_ETHER_EN) == 0))
         {

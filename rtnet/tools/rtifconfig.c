@@ -36,6 +36,11 @@
 
 #include <rtnet_chrdev.h>
 
+/* Some old toolchains don't ARPHRD_IEEE1394 defined */
+#ifndef ARPHRD_IEEE1394
+#define ARPHRD_IEEE1394 24
+#endif
+
 
 #define PRINT_FLAG_ALL          1
 #define PRINT_FLAG_INACTIVE     2

@@ -61,7 +61,7 @@ libkernel_loopback_a_CPPFLAGS = \
 libkernel_loopback_a_SOURCES = \
 	rt_loopback.c
 
-libkernel_mpc8260_a_CPPFLAGS = \
+libkernel_mpc8260_fcc_enet_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include

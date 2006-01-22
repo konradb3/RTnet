@@ -82,7 +82,7 @@ libkernel_loopback_a_OBJECTS = $(am_libkernel_loopback_a_OBJECTS)
 libkernel_mpc8260_fcc_enet_a_AR = $(AR) $(ARFLAGS)
 libkernel_mpc8260_fcc_enet_a_LIBADD =
 am_libkernel_mpc8260_fcc_enet_a_OBJECTS =  \
-	rt_mpc8260_fcc_enet.$(OBJEXT)
+	libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.$(OBJEXT)
 libkernel_mpc8260_fcc_enet_a_OBJECTS =  \
 	$(am_libkernel_mpc8260_fcc_enet_a_OBJECTS)
 libkernel_mpc8xx_enet_a_AR = $(AR) $(ARFLAGS)
@@ -379,7 +379,7 @@ libkernel_loopback_a_CPPFLAGS = \
 libkernel_loopback_a_SOURCES = \
 	rt_loopback.c
 
-libkernel_mpc8260_a_CPPFLAGS = \
+libkernel_mpc8260_fcc_enet_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
@@ -530,13 +530,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_loopback_a-rt_loopback.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8xx_enet_a-rt_mpc8xx_enet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8xx_fec_a-rt_mpc8xx_fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_natsemi_a-rt_natsemi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_pcnet32_a-rt_pcnet32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_smc91111_a-rt_smc91111.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_via_rhine_a-rt_via-rhine.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rt_mpc8260_fcc_enet.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -614,6 +614,20 @@ libkernel_loopback_a-rt_loopback.obj: rt_loopback.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_loopback.c' object='libkernel_loopback_a-rt_loopback.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_loopback_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_loopback_a-rt_loopback.obj `if test -f 'rt_loopback.c'; then $(CYGPATH_W) 'rt_loopback.c'; else $(CYGPATH_W) '$(srcdir)/rt_loopback.c'; fi`
+
+libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o: rt_mpc8260_fcc_enet.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_mpc8260_fcc_enet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o -MD -MP -MF "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo" -c -o libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o `test -f 'rt_mpc8260_fcc_enet.c' || echo '$(srcdir)/'`rt_mpc8260_fcc_enet.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo" "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Po"; else rm -f "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_mpc8260_fcc_enet.c' object='libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_mpc8260_fcc_enet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o `test -f 'rt_mpc8260_fcc_enet.c' || echo '$(srcdir)/'`rt_mpc8260_fcc_enet.c
+
+libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.obj: rt_mpc8260_fcc_enet.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_mpc8260_fcc_enet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.obj -MD -MP -MF "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo" -c -o libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.obj `if test -f 'rt_mpc8260_fcc_enet.c'; then $(CYGPATH_W) 'rt_mpc8260_fcc_enet.c'; else $(CYGPATH_W) '$(srcdir)/rt_mpc8260_fcc_enet.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo" "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Po"; else rm -f "$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_mpc8260_fcc_enet.c' object='libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_mpc8260_fcc_enet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.obj `if test -f 'rt_mpc8260_fcc_enet.c'; then $(CYGPATH_W) 'rt_mpc8260_fcc_enet.c'; else $(CYGPATH_W) '$(srcdir)/rt_mpc8260_fcc_enet.c'; fi`
 
 libkernel_mpc8xx_enet_a-rt_mpc8xx_enet.o: rt_mpc8xx_enet.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_mpc8xx_enet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_mpc8xx_enet_a-rt_mpc8xx_enet.o -MD -MP -MF "$(DEPDIR)/libkernel_mpc8xx_enet_a-rt_mpc8xx_enet.Tpo" -c -o libkernel_mpc8xx_enet_a-rt_mpc8xx_enet.o `test -f 'rt_mpc8xx_enet.c' || echo '$(srcdir)/'`rt_mpc8xx_enet.c; \

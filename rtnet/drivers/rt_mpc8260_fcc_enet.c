@@ -65,9 +65,6 @@ static unsigned int rtnet_fcc = 1;
 MODULE_PARM(rtnet_fcc, "i");
 MODULE_PARM_DESC(rtnet_fcc, "FCCx port for RTnet (default=1)");
 
-
-#define printk(fmt,args...)	rtdm_printk ("RTnet: " fmt ,##args)
-
 #if 0
 #define RT_DEBUG(fmt,args...)	rtdm_printk (fmt ,##args)
 #else
@@ -741,7 +738,7 @@ for (;;) {
 	 */
 	if ((bdp->cbd_sc & (BD_ENET_RX_FIRST | BD_ENET_RX_LAST)) !=
 		(BD_ENET_RX_FIRST | BD_ENET_RX_LAST))
-			printk("CPM ENET: rcv is not first+last\n");
+			rtdm_printk("CPM ENET: rcv is not first+last\n");
 #endif
 
 	/* Frame too long or too short. */
@@ -771,7 +768,7 @@ for (;;) {
 		skb = dev_alloc_rtskb(pkt_len, &cep->skb_pool);
 
 		if (skb == NULL) {
-			printk("%s: Memory squeeze, dropping packet.\n", rtdev->name);
+			rtdm_printk("%s: Memory squeeze, dropping packet.\n", rtdev->name);
 			cep->stats.rx_dropped++;
 		}
 		else {
