@@ -224,9 +224,9 @@ static char shortname[] = DRV_NAME;
 
 /* This driver was written to use PCI memory space, however most versions
    of the Rhine only work correctly with I/O space accesses. */
-#ifdef CONFIG_VIA_RHINE_MMIO
+/*#ifdef CONFIG_VIA_RHINE_MMIO
 #define USE_MEM
-#else
+#else*/
 #define USE_IO
 #undef readb
 #undef readw
@@ -240,7 +240,7 @@ static char shortname[] = DRV_NAME;
 #define writeb(val,addr) outb((val),(unsigned long)(addr))
 #define writew(val,addr) outw((val),(unsigned long)(addr))
 #define writel(val,addr) outl((val),(unsigned long)(addr))
-#endif
+/*#endif*/
 
 MODULE_AUTHOR("Jan Kiszka");
 MODULE_DESCRIPTION("RTnet VIA Rhine PCI Fast Ethernet driver");
@@ -747,7 +747,7 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 
 	/* Reload the station address from the EEPROM. */
 #ifdef USE_IO
-	reload_eeprom(ioaddr);
+	reload_eeprom((long)ioaddr);
 #else
 	reload_eeprom(ioaddr0);
 	/* Reloading from eeprom overwrites cfgA-D, so we must re-enable MMIO.
