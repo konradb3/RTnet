@@ -652,10 +652,11 @@ static inline unsigned char *rtskb_push(struct rtskb *skb, unsigned int len)
 
 static inline unsigned char *__rtskb_pull(struct rtskb *skb, unsigned int len)
 {
-    skb->len-=len;
-    if (skb->len < 0)
-        BUG();
-    return skb->data+=len;
+    skb->len -= len;
+
+    RTNET_ASSERT(skb->len < 0, return NULL;);
+
+    return skb->data += len;
 }
 
 static inline unsigned char *rtskb_pull(struct rtskb *skb, unsigned int len)
@@ -663,7 +664,9 @@ static inline unsigned char *rtskb_pull(struct rtskb *skb, unsigned int len)
     if (len > skb->len)
         return NULL;
 
-    return __rtskb_pull(skb,len);
+    skb->len -= len;
+
+    return skb->data += len;
 }
 
 static inline void rtskb_trim(struct rtskb *skb, unsigned int len)
