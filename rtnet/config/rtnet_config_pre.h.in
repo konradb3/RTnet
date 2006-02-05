@@ -57,7 +57,10 @@
 #ifdef __IN_RTNET__
 
 /* We build for Xenomai 2.x */
-#undef CONFIG_XENO_2x
+#undef CONFIG_XENO_2_0x
+
+/* We build for Xenomai 2.x */
+#undef CONFIG_XENO_2_1x
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H

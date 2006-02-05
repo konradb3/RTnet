@@ -32,14 +32,11 @@
 
 static char *dest_mac_s = "FF:FF:FF:FF:FF:FF";
 static int local_if = 1;
-static int start_timer = 0;
 
 MODULE_PARM(dest_mac_s, "s");
 MODULE_PARM(local_if, "i");
-MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(dest_mac_s, "destination MAC address (XX:XX:XX:XX:XX:XX)");
 MODULE_PARM_DESC(local_if, "local interface for sending and receiving packets (1-n)");
-MODULE_PARM_DESC(start_timer, "set to non-zero to start scheduling timer");
 
 MODULE_LICENSE("GPL");
 
@@ -140,7 +137,6 @@ int init_module(void)
            dest_addr.sll_addr[2], dest_addr.sll_addr[3],
            dest_addr.sll_addr[4], dest_addr.sll_addr[5]);
     printk("local interface: %d\n", local_if);
-    printk("start timer: %d\n", start_timer);
 
     /* create rt-socket */
     sock = rt_dev_socket(AF_PACKET, SOCK_DGRAM, htons(PROTOCOL));
@@ -161,14 +157,9 @@ int init_module(void)
         goto cleanup_sock;
     }
 
-
-    if (start_timer) {
-        ret = rt_timer_start(TM_ONESHOT);
-        if (ret != 0) {
-            printk(" rt_timer_start = %d!\n", ret);
-            goto cleanup_sock;
-        }
-    }
+    /* You may have to start the system timer manually
+     * on older Xenomai versions (2.0.x):
+     * rt_timer_start(TM_ONESHOT); */
 
     ret = rt_task_create(&rt_recv_task, "recv_task", 0, 9, 0);
     if (ret != 0) {
@@ -219,8 +210,8 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    if (start_timer)
-        rt_timer_stop();
+    /* In case you started it in this module, see comment above.
+     * rt_timer_stop(); */
 
     /* Important: First close the socket! */
     while (rt_dev_close(sock) == -EAGAIN) {

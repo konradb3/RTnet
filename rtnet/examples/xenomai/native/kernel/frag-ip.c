@@ -34,16 +34,13 @@
 static char *dest_ip_s = "127.0.0.1";
 static unsigned int size = 65505;
 static unsigned int add_rtskbs = 75;
-static int start_timer = 0;
 
 MODULE_PARM(dest_ip_s, "s");
 MODULE_PARM(size, "i");
 MODULE_PARM(add_rtskbs, "i");
-MODULE_PARM(start_timer, "i");
 MODULE_PARM_DESC(dest_ip_s, "destination IP address");
 MODULE_PARM_DESC(size, "message size (0-65505)");
 MODULE_PARM_DESC(add_rtskbs, "number of additional rtskbs (default: 75)");
-MODULE_PARM_DESC(start_timer, "set to non-zero to start scheduling timer");
 
 MODULE_LICENSE("GPL");
 
@@ -146,7 +143,6 @@ int init_module(void)
     printk("destination ip address %s=%08x\n", dest_ip_s,
            (unsigned int)dest_ip);
     printk("size %d\n", size);
-    printk("start timer %d\n", start_timer);
 
     /* fill output buffer with test pattern */
     for (i = 0; i < sizeof(buffer_out); i++)
@@ -184,13 +180,9 @@ int init_module(void)
     dest_addr.sin_port = htons(PORT);
     dest_addr.sin_addr.s_addr = dest_ip;
 
-    if (start_timer) {
-        ret = rt_timer_start(TM_ONESHOT);
-        if (ret != 0) {
-            printk(" rt_timer_start = %d!\n", ret);
-            goto cleanup_sock;
-        }
-    }
+    /* You may have to start the system timer manually
+     * on older Xenomai versions (2.0.x):
+     * rt_timer_start(TM_ONESHOT); */
 
     ret = rt_task_create(&rt_recv_task, "recv_task", 0, 9, 0);
     if (ret != 0) {
@@ -241,8 +233,8 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-    if (start_timer)
-        rt_timer_stop();
+    /* In case you started it in this module, see comment above.
+     * rt_timer_stop(); */
 
     /* Important: First close the socket! */
     while (rt_dev_close(sock) == -EAGAIN) {

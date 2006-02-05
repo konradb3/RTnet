@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.9.1],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],[0.9.2],[rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -264,7 +264,7 @@ elif test "$XENO_DIR" \!= ""; then
     case "$XENO_VERSION" in
         1.9.9 | 2.0*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-20x
-            AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
+            AC_DEFINE(CONFIG_XENO_2_0x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])
             ;;
         *)
@@ -295,7 +295,7 @@ else
     case "$XENO_VERSION" in
         2.1*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-21x
-            AC_DEFINE(CONFIG_XENO_2x, 1, [We build for Xenomai 2.x])
+            AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])
             ;;
         *)

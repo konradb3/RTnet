@@ -45,6 +45,8 @@ static inline void nano_to_timeval(__u64 time, struct timeval *tval)
 }
 
 
+#ifdef CONFIG_XENO_2_0x
+
 #define CONFIG_RTOS_STARTSTOP_TIMER 1
 
 static inline int rtos_timer_start(void)
@@ -56,6 +58,8 @@ static inline void rtos_timer_stop(void)
 {
     xnpod_stop_timer();
 }
+
+#endif /* CONFIG_XENO_2_0x */
 
 
 static inline void rtos_irq_release_lock(void)

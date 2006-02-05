@@ -38,7 +38,7 @@ typedef __u64   nanosecs_t;     /* used for time calculations and I/O */
 #if defined(CONFIG_RTAI_3x)
 /* Support for 3.x */
 # include <rtnet_sys_rtai.h>
-#elif defined(CONFIG_XENO_2x)
+#elif defined(CONFIG_XENO_2_0x) || defined(CONFIG_XENO_2_1x)
 /* Support for Xenomai 2.0 or better */
 # include <rtnet_sys_xenomai.h>
 #endif

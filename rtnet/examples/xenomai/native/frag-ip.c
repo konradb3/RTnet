@@ -39,8 +39,6 @@ static char *dest_ip_s = "127.0.0.1";
 static unsigned int size = 65505;
 static unsigned int add_rtskbs = 75;
 
-static int start_timer = 0;
-
 #define CYCLE       1000*1000*1000   /* 1 s */
 RT_TASK rt_xmit_task;
 RT_TASK rt_recv_task;
@@ -143,17 +141,13 @@ int main(int argc, char *argv[])
 
 
     while (1) {
-        switch (getopt(argc, argv, "d:s:t")) {
+        switch (getopt(argc, argv, "d:s:")) {
             case 'd':
                 dest_ip_s = optarg;
                 break;
 
             case 's':
                 size = atoi(optarg);
-                break;
-
-            case 't':
-                start_timer = 1;
                 break;
 
             case -1:
@@ -178,7 +172,6 @@ int main(int argc, char *argv[])
 
     printf("destination ip address %s=%08x\n", dest_ip_s, dest_ip.s_addr);
     printf("size %d\n", size);
-    printf("start timer %d\n", start_timer);
 
     /* fill output buffer with test pattern */
     for (i = 0; i < sizeof(buffer_out); i++)
@@ -218,9 +211,9 @@ int main(int argc, char *argv[])
     dest_addr.sin_port = htons(PORT);
     dest_addr.sin_addr = dest_ip;
 
-    if (start_timer) {
-        rt_timer_start(TM_ONESHOT);
-    }
+    /* You may have to start the system timer manually
+     * on older Xenomai versions (2.0.x):
+     * rt_timer_start(TM_ONESHOT); */
 
     ret = rt_task_create(&rt_recv_task, "Receiver", 0, 10, 0);
     if (ret != 0) {
@@ -242,8 +235,8 @@ int main(int argc, char *argv[])
 
     pause();
 
-    if (start_timer)
-        rt_timer_stop();
+    /* In case you started it in this program, see comment above.
+     * rt_timer_stop(); */
 
     /* Important: First close the socket! */
     while (rt_dev_close(sock) == -EAGAIN) {
