@@ -50,6 +50,7 @@ void help(void)
         "\trtroute add <addr> <hwaddr> dev <dev>\n"
         "\trtroute add <addr> netmask <mask> gw <gw-addr>\n"
         "\trtroute del <addr> [netmask <mask>]\n"
+        "\trtroute -f <host-routes-file>\n"
         );
 
     exit(1);
@@ -163,6 +164,101 @@ void route_add(int argc, char *argv[])
 
 
 
+void invalid_line_format(int line, char *file)
+{
+    fprintf(stderr, "error on line %u of file %s, expected file format:\n"
+            "# comment\n"
+            "<addr> <hwaddr> <dev>\n"
+            "...\n", line, file);
+}
+
+
+
+void route_listadd(char *name)
+{
+    FILE                *fp;
+    int                 line = 0;
+    int                 argc = 0;
+    int                 ret;
+    struct ether_addr   dev_addr;
+    char                buf[100];
+    char                *sp;
+    char                *args[4];
+    const char          space[] = " \t";
+
+
+    /*** try to open file ***/
+    fp = fopen(name, "r");
+    if (!fp) {
+        ret = errno;
+        fprintf(stderr, "opening file %s", name);
+        perror(NULL);
+        exit(1);
+    }
+
+    /*** fill buffer from file and add route ***/
+    while (fgets(buf, sizeof(buf), fp)) {
+        line++;
+
+        /* find newline char and make it end of string */
+        sp = strchr(buf, '\n');
+        if (sp)
+            *sp = '\0';
+
+        /* ignore comments and empty lines */
+        if ((buf[0] == '#') || (buf[0] == '\0'))
+            continue;
+
+        /* split string into tokens */
+        argc = 0;
+        args[argc] = strtok(buf, space);
+        do
+            args[++argc] = strtok(NULL, space);
+        while ((argc < 4) && args[argc]);
+
+        /* wrong number of arguments? */
+        if (argc != 3) {
+            invalid_line_format(line, name);
+            continue;
+        }
+
+        /*** check data ***/
+
+        /* check MAC */
+        if (ether_aton_r(args[1], &dev_addr) == NULL) {
+            invalid_line_format(line, name);
+            continue;
+        }
+
+        /* check IP */
+        if (!inet_aton(args[0], &addr)) {
+            invalid_line_format(line, name);
+            continue;
+        }
+
+        /*** turn it all into a cmd for rtnet and execute ***/
+        cmd.args.addhost.ip_addr = addr.s_addr;
+        memcpy(cmd.args.addhost.dev_addr, dev_addr.ether_addr_octet,
+               sizeof(dev_addr.ether_addr_octet));
+
+        /* use device <dev> */
+        strncpy(cmd.head.if_name, args[2], IFNAMSIZ);
+
+        ret = ioctl(f, IOC_RT_HOST_ROUTE_ADD, &cmd);
+
+        if (ret < 0) {
+            perror("ioctl");
+            exit(1);
+        }
+
+    }
+    fclose(fp);
+
+    exit(0);
+}
+
+
+
 void route_delete(int argc, char *argv[])
 {
     int ret;
@@ -217,7 +313,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /* second argument is always an IP address */
+    /* add host routes from file? */
+    if (strcmp(argv[1], "-f") == 0)
+        route_listadd(argv[2]);
+
+    /* second argument is now always an IP address */
     if (!inet_aton(argv[2], &addr))
         help();
 
