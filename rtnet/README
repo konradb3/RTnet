@@ -1,4 +1,4 @@
-                             RTnet Version 0.9.1
+                             RTnet Version 0.9.2
                              ===================
 
 What is it?
@@ -57,8 +57,8 @@ How to test it?
 1. Shutdown the network device which shall become part of the RT-network and
    remove its driver module (this also means that it must not be compiled
    into the kernel!)
-2. Load required real-time modules (Xenomai: xeno_hal, xeno_nucleus,
-   xeno_rtdm, RTAI: rtai_hal, rtai_ksched/rtai_lxrtm, rtai_sem, rtai_rtdm)
+2. Load required real-time modules (modular Xenomai: xeno_hal, xeno_nucleus,
+   xeno_rtdm, RTAI: rtai_hal, rtai_ksched/rtai_lxrt, rtai_sem, rtai_rtdm)
 3. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:
    RT_DRIVER, IPADDR, TDMA_MODE, TDMA_SLAVES.
 4. Run <PREFIX>/sbin/rtnet start
@@ -75,6 +75,20 @@ Special notes
 
   Otherwise, rtai_rtdm will refuse to load. Don't forget to recompile and
   install the modified kernel.
+
+- Starting the RTnet core manually (without RTmac):
+  1. Load required componentes of the real-time Linux extension (see above)
+  2. Load RTnet modules: rtnet (core), rtipv4 (IPv4 protocol + API), rtpacket
+     (packet protocol + API), rt_loopback (rtlo loopback driver), rt_XXX
+     (real-time NIC driver)
+  3. Configure real-time NICs: rtifconfig rtethX up <IP>,
+     rtifconfig rtlo up 127.0.0.1
+  4. Add host routes to target nodes, either explicitly:
+     rtroute add <target IP> <target hw-address> dev <local NIC>
+     Or trigger an ARP handshake:
+     rtroute solicit <target IP> dev <local NIC>
+  5. Don't forget that on RTAI and on Xenomai 2.0.x the system timer has to be
+     started by someone (in typical RTnet setups this is done by loading RTcfg).
 
 
 Contributors
