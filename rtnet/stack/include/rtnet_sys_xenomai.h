@@ -45,6 +45,11 @@ static inline void nano_to_timeval(__u64 time, struct timeval *tval)
 }
 
 
+#if RTDM_API_VER < 4
+# define RTDM_IRQ_HANDLED           RTDM_IRQ_ENABLE
+#endif /* RTDM_API_VER < 4 */
+
+
 #ifdef CONFIG_XENO_2_0x
 
 #define CONFIG_RTOS_STARTSTOP_TIMER 1

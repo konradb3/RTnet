@@ -1758,7 +1758,7 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle)
 	clear_bit(0, (void*)&sp->in_interrupt);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry)

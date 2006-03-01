@@ -1725,7 +1725,7 @@ static int rtl8139_interrupt(rtdm_irq_t *irq_handle)
                 rtnetif_err_tx(rtdev);
         }
 
-        return RTDM_IRQ_ENABLE;
+        return RTDM_IRQ_HANDLED;
 }
 
 
