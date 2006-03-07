@@ -1497,7 +1497,7 @@ static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 /*** RTnet ***/
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 /* This routine is logically part of the interrupt handler, but isolated
