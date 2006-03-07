@@ -31,6 +31,8 @@
 #include <native/task.h>
 #include <rtnet.h>
 
+#include <rtnet_config.h>   /* required for rt_task_wait_period() changes */
+
 static char *dest_ip_s = "127.0.0.1";
 static unsigned int size = 65505;
 static unsigned int add_rtskbs = 75;
@@ -84,7 +86,11 @@ void send_msg(void *arg)
         if (ret != (int)(sizeof(msgsize) + size))
             printk(" rt_dev_sendmsg() = %d!\n", ret);
 
-        rt_task_wait_period();
+#ifdef CONFIG_XENO_2_0x /* imported via rtnet_config.h */
+        rt_task_wait_period(); /* old signature */
+#else /* Xenomai 2.1 and later */
+        rt_task_wait_period(NULL);
+#endif /* CONFIG_XENO_2_0x */
     }
 }
 
