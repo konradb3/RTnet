@@ -70,25 +70,43 @@ struct rtnet_callback {
 #define SOCK_XMIT_PARAMS(priority, channel) ((priority) | ((channel) << 16))
 
 
-/* function name wrappers */
-#define socket_rt               rt_dev_socket
-#define open_rt                 rt_dev_open
-#define close_rt                rt_dev_close
-#define ioctl_rt                rt_dev_ioctl
-#define bind_rt                 rt_dev_bind
-#define connect_rt              rt_dev_connect
-#define listen_rt               rt_dev_listen
-#define accept_rt               rt_dev_accept
-#define recv_rt                 rt_dev_recv
-#define recvfrom_rt             rt_dev_recvfrom
-#define recvmsg_rt              rt_dev_recvmsg
-#define send_rt                 rt_dev_send
-#define sendto_rt               rt_dev_sendto
-#define sendmsg_rt              rt_dev_sendmsg
-#define getsockopt_rt           rt_dev_getsockopt
-#define setsockopt_rt           rt_dev_setsockopt
-#define getsockname_rt          rt_dev_getsockname
-#define getpeername_rt          rt_dev_getpeername
+/* legacy function name wrappers */
+#define open_rt(path, oflag, ...)                           \
+    rt_dev_open(path, oflag)
+#define socket_rt(protocol_family, socket_type, protocol)   \
+    rt_dev_socket(protocol_family, socket_type, protocol)
+#define close_rt(fd)                                        \
+    rt_dev_close(fd)
+#define ioctl_rt(fd, request, ...)                          \
+    rt_dev_ioctl(fd, request, __VA_ARGS__)
+#define recvmsg_rt(fd, msg, flags)                          \
+    rt_dev_recvmsg(fd, msg, flags)
+#define sendmsg_rt(fd, msg, flags)                          \
+    rt_dev_sendmsg(fd, msg, flags)
+#define bind_rt(fd, my_addr, addrlen)                       \
+    rt_dev_bind(fd, my_addr, addrlen)
+#define connect_rt(fd, serv_addr, addrlen)                  \
+    rt_dev_connect(fd, serv_addr, addrlen)
+#define listen_rt(fd, backlog)                              \
+    rt_dev_listen(fd, backlog)
+#define accept_rt(fd, addr, addrlen)                        \
+    rt_dev_accept(fd, addr, addrlen)
+#define recv_rt(fd, buf, len, flags)                        \
+    rt_dev_recv(fd, buf, len, flags)
+#define recvfrom_rt(fd, buf, len, flags, from, fromlen)     \
+    rt_dev_recvfrom(fd, buf, len, flags, from, fromlen)
+#define send_rt(fd, buf, len, flags)                        \
+    rt_dev_send(fd, buf, len, flags)
+#define sendto_rt(fd, buf, len, flags, to, tolen)           \
+    rt_dev_sendto(fd, buf, len, flags, to, tolen)
+#define getsockopt_rt(fd, optname, optval, optlen)          \
+    rt_dev_getsockopt(fd, optname, optval, optlen)
+#define setsockopt_rt(fd, optname, optval, optlen)          \
+    rt_dev_setsockopt(fd, optname, optval, optlen)
+#define getsockname_rt(fd, name, namelen)                   \
+    rt_dev_getsockname(fd, name, namelen)
+#define getpeername_rt(fd, name, namelen)                   \
+    rt_dev_getpeername(fd, name, namelen)
 
 
 #ifdef __KERNEL__
