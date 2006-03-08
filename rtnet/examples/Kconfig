@@ -10,13 +10,12 @@ config RTNET_EXAMPLES
     the build tree.
 
 config RTNET_RTEXT_CONFIG_PATH
-    string "Real-time Extension Installation Path"
+    string "Real-time Extension Config-Tool Path"
     default ""
     depends RTNET_RTEXT_INKERNEL && RTNET_EXAMPLES
     ---help---
-    Path to an installed version of the real-time Linux extension. This
-    is only required if the required configuration tool is not reachable
-    via standard $PATH. Do not confuse with the source code directory of
-    the extension.
+    Path to the configuration tool of the installed real-time Linux
+    extension. This is only required if the configuration tool is not
+    reachable via standard $PATH.
 
 endmenu
