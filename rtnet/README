@@ -106,7 +106,7 @@ Mathias Koehrer                         - 3c59x-rt, rtnetproxy, testing,
 Vinay Sridhara                          - ICMP support
 <vinaysridhara-at-yahoo.com>
 Erwin Rol <erwin-at-muffin.org>         - Ethereal plugin, rtnetproxy
-Wolfgang Grandegger                     - MPC drivers
+Wolfgang Grandegger                     - MPC drivers, testing
 <wg-at-denx.de>
 Erik Buit                               - NatSemi driver
 <e.buit-at-student.utwente.nl>
@@ -114,7 +114,9 @@ Yuchen Zhang                            - Ethernet-over-FireWire support
 <yuchen623-at-gmail.com>
 Klaus Keppler                           - RTL8169 gigabit driver
 <klaus.keppler-at-informatik.stud.uni-erlangen.de>
-Bill Vareka <bvareka-at-amsuper.com>    - Joint-slots TDMA extension
+Bill Vareka <bvareka-at-amsuper.com>    - joint-slots TDMA extension
+Fabian Koch <fabian.koch-at-de.abb.com> - various improvements of the
+                                          configuration interfaces and tools
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
