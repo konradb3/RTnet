@@ -1365,7 +1365,7 @@ static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
     if (old_packet_cnt != lp->stats.rx_packets)
         rt_mark_stack_mgr(dev);
 
-    return RTDM_IRQ_ENABLE;
+    return RTDM_IRQ_HANDLED;
 /*** RTnet ***/
 }
 

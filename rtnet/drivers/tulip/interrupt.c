@@ -237,7 +237,7 @@ int tulip_interrupt(rtdm_irq_t *irq_handle)
 
 	if ((csr5 & (NormalIntr|AbnormalIntr)) == 0) {
 		rtdm_printk("%s: unexpected IRQ!\n",rtdev->name);
-		return 0;
+		return RTDM_IRQ_NONE;
 	}
 
 	tp->nir++;
@@ -460,5 +460,5 @@ int tulip_interrupt(rtdm_irq_t *irq_handle)
 			   rtdev->name, inl(ioaddr + CSR5));
 	if (rx)
 		rt_mark_stack_mgr(rtdev);
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }

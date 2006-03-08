@@ -1818,7 +1818,7 @@ static int smc_interrupt(rtdm_irq_t *irq_handle)
 
 	//dev->interrupt = 0;
 	PRINTK3("%s: Interrupt done\n", dev->name);
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 

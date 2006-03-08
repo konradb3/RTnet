@@ -2538,7 +2538,7 @@ handler_exit:
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 
-    return RTDM_IRQ_ENABLE;
+    return RTDM_IRQ_HANDLED;
 }
 
 /*
@@ -2677,7 +2677,7 @@ handler_exit:
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
 
-    return RTDM_IRQ_ENABLE;
+    return RTDM_IRQ_HANDLED;
 }
 
 static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)

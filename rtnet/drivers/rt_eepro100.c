@@ -1463,12 +1463,13 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	/* Check if there are enough space. */
 	if ((int)(sp->cur_tx - sp->dirty_tx) >= TX_QUEUE_LIMIT) {
 		// *** RTnet ***
-		rtdm_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", rtdev->name);
 		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
 		rtdm_lock_put(&sp->lock);
 		rtdm_irq_enable(&sp->irq_handle);
+
+		rtdm_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", rtdev->name);
 		// *** RTnet ***
 
 		return 1;

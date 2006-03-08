@@ -1825,7 +1825,7 @@ static int rtl8169_interrupt(rtdm_irq_t *irq_handle)
 	unsigned int old_packet_cnt = priv->stats.rx_packets; /*** RTnet ***/
 	nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
 
-	int interrupt_handled = 0; /* IRQ_NONE */ /*** <kk> ***/
+	int interrupt_handled = RTDM_IRQ_NONE; /*** <kk> ***/
 
 	do {
 		status = RTL_R16(IntrStatus);	/* read interrupt status */
@@ -1835,7 +1835,7 @@ static int rtl8169_interrupt(rtdm_irq_t *irq_handle)
 		}
 
 
-		interrupt_handled = 1; /* IRQ_HANDLED */
+		interrupt_handled = RTDM_IRQ_HANDLED;
 
 /*		if (unlikely(!rtnetif_running(rtdev))) {
 			rtl8169_asic_down(ioaddr);
@@ -1890,14 +1890,9 @@ static int rtl8169_interrupt(rtdm_irq_t *irq_handle)
 
 //out:
 
-	if (interrupt_handled == 1) {
-		if (old_packet_cnt != priv->stats.rx_packets)
-			rt_mark_stack_mgr(rtdev);
-		return RTDM_IRQ_ENABLE;
-	} else {
-		RT_DBG_PRINT("Leaving Interrupt unhandled\n");
-		return 0;
-	}
+	if (old_packet_cnt != priv->stats.rx_packets)
+		rt_mark_stack_mgr(rtdev);
+	return interrupt_handled;
 }
 
 
