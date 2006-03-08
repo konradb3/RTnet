@@ -46,6 +46,9 @@ static inline void nano_to_timeval(__u64 time, struct timeval *tval)
 
 
 #if RTDM_API_VER < 4
+# define RTDM_IRQTYPE_SHARED        0
+# define RTDM_IRQTYPE_EDGE          0
+# define RTDM_IRQ_NONE              0
 # define RTDM_IRQ_HANDLED           RTDM_IRQ_ENABLE
 #endif /* RTDM_API_VER < 4 */
 
