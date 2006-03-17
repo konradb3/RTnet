@@ -48,11 +48,12 @@ void tdma_worker(void *arg)
         if (job->id == WAIT_ON_SYNC)
             rtdm_event_wait(&tdma->sync_event);
         else if (job->id >= 0) {
-            if (((SLOT_JOB(job)->period == 1) ||
-                 (tdma->current_cycle % SLOT_JOB(job)->period ==
-                        SLOT_JOB(job)->phasing)) &&
-                (rtdm_task_sleep_until(tdma->current_cycle_start +
-                        SLOT_JOB(job)->offset) == 0)) {
+            if ((SLOT_JOB(job)->period == 1) ||
+                (tdma->current_cycle % SLOT_JOB(job)->period ==
+                        SLOT_JOB(job)->phasing)) {
+                /* wait for slot begin, then send one pending packet */
+                rtdm_task_sleep_until(tdma->current_cycle_start +
+                                      SLOT_JOB(job)->offset);
                 rtdm_lock_get_irqsave(&tdma->lock, context);
                 rtskb = __rtskb_prio_dequeue(SLOT_JOB(job)->queue);
                 if (!rtskb)
@@ -65,21 +66,22 @@ void tdma_worker(void *arg)
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
         } else if (job->id == XMIT_SYNC) {
-            if (rtdm_task_sleep_until(tdma->current_cycle_start +
-                    tdma->cycle_period) == 0) {
-                rtdm_lock_get_irqsave(&tdma->lock, context);
-                tdma->current_cycle++;
-                tdma->current_cycle_start += tdma->cycle_period;
-                rtdm_lock_put_irqrestore(&tdma->lock, context);
+            /* wait for beginning of next cycle, then send sync */
+            rtdm_task_sleep_until(tdma->current_cycle_start +
+                                  tdma->cycle_period);
+            rtdm_lock_get_irqsave(&tdma->lock, context);
+            tdma->current_cycle++;
+            tdma->current_cycle_start += tdma->cycle_period;
+            rtdm_lock_put_irqrestore(&tdma->lock, context);
 
-                tdma_xmit_sync_frame(tdma);
-            }
-            /* else: skip entry for this cycle */
+            tdma_xmit_sync_frame(tdma);
 
         } else if (job->id == BACKUP_SYNC) {
+            /* wait for backup slot */
             rtdm_task_sleep_until(tdma->current_cycle_start +
                     tdma->backup_sync_inc);
 
+            /* take over sync transmission if all earlier masters failed */
             if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
                 rtdm_lock_get_irqsave(&tdma->lock, context);
                 tdma->current_cycle++;
@@ -111,10 +113,9 @@ void tdma_worker(void *arg)
 
                 rtdm_lock_put_irqrestore(&tdma->lock, context);
 
-                ret = rtdm_task_sleep_until(tdma->current_cycle_start +
-                                            REQUEST_CAL_JOB(job)->offset);
-                if (ret == 0)
-                    ret = tdma_xmit_request_cal_frame(tdma,
+                rtdm_task_sleep_until(tdma->current_cycle_start +
+                                      REQUEST_CAL_JOB(job)->offset);
+                ret = tdma_xmit_request_cal_frame(tdma,
                         tdma->current_cycle + REQUEST_CAL_JOB(job)->period,
                         REQUEST_CAL_JOB(job)->offset_ns);
 
@@ -148,10 +149,10 @@ void tdma_worker(void *arg)
 
                 rtdm_lock_put_irqrestore(&tdma->lock, context);
 
-                if ((REPLY_CAL_JOB(job)->reply_cycle ==
-                        tdma->current_cycle) &&
-                    (rtdm_task_sleep_until(tdma->current_cycle_start +
-                        REPLY_CAL_JOB(job)->reply_offset) == 0)) {
+                if (REPLY_CAL_JOB(job)->reply_cycle == tdma->current_cycle) {
+                    /* send reply in the assigned slot */
+                    rtdm_task_sleep_until(tdma->current_cycle_start +
+                                          REPLY_CAL_JOB(job)->reply_offset);
                     rtmac_xmit(REPLY_CAL_JOB(job)->reply_rtskb);
                 } else {
                     /* cleanup if cycle already passed */
