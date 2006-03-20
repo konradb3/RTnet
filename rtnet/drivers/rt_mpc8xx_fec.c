@@ -529,7 +529,7 @@ static int fec_enet_interrupt(rtdm_irq_t *irq_handle)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 

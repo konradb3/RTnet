@@ -1201,7 +1201,7 @@ static int mpc5xxx_sdma_transmit_interrupt(rtdm_irq_t *irq_handle)
 
 	rtdm_lock_put(&priv->lock);
 
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 static int mpc5xxx_sdma_receive_interrupt(rtdm_irq_t *irq_handle)
@@ -1307,7 +1307,7 @@ static int mpc5xxx_sdma_receive_interrupt(rtdm_irq_t *irq_handle)
 
 	if (packets > 0)
 		rt_mark_stack_mgr(dev);
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 static void mpc5xxx_fec_reinit(struct rtnet_device *dev)
@@ -1430,7 +1430,7 @@ static int mpc5xxx_fec_interrupt(rtdm_irq_t *irq_handle)
 #endif /* CONFIG_RTNET_USE_MDIO */
 	}
 
-	return RTDM_IRQ_ENABLE;
+	return RTDM_IRQ_HANDLED;
 }
 
 static int
