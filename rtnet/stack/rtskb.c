@@ -127,13 +127,8 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
  */
 void rtskb_over_panic(struct rtskb *skb, int sz, void *here)
 {
-    char *name;
-    if ( skb->rtdev )
-        name=skb->rtdev->name;
-    else
-        name="<NULL>";
     rtdm_printk("RTnet: rtskb_put :over: %p:%d put:%d dev:%s\n", here,
-                skb->len, sz, name);
+                skb->len, sz, (skb->rtdev) ? skb->rtdev->name : "<NULL>");
 }
 
 
@@ -148,14 +143,8 @@ void rtskb_over_panic(struct rtskb *skb, int sz, void *here)
  */
 void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
 {
-    char *name = "";
-    if ( skb->rtdev )
-        name=skb->rtdev->name;
-    else
-        name="<NULL>";
-
     rtdm_printk("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here,
-                skb->len, sz, name);
+                skb->len, sz, (skb->rtdev) ? skb->rtdev->name : "<NULL>");
 }
 #endif /* CONFIG_RTNET_CHECKED */
 
