@@ -293,7 +293,7 @@ else
     XENO_VERSION=`grep "#define XENO_VERSION_STRING" $RTEXT_LINUX_DIR/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     case "$XENO_VERSION" in
-        2.1*)
+        2.1* | 2.2*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-21x
             AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])

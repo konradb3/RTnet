@@ -20079,7 +20079,7 @@ echo $ECHO_N "checking for Xenomai version... $ECHO_C" >&6
     XENO_VERSION=`grep "#define XENO_VERSION_STRING" $RTEXT_LINUX_DIR/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     case "$XENO_VERSION" in
-        2.1*)
+        2.1* | 2.2*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-21x
 
 cat >>confdefs.h <<\_ACEOF

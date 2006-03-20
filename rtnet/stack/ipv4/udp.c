@@ -25,6 +25,7 @@
 #include <linux/module.h>
 #include <linux/socket.h>
 #include <linux/in.h>
+#include <linux/ip.h>
 #include <linux/udp.h>
 #include <linux/tcp.h>
 #include <net/checksum.h>
