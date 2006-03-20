@@ -242,9 +242,8 @@ waiting on hardware events.
 41. rtskb structure does not contain a data_len field => set any occurrence to zero
 
 
-42. return from interrupt handler only by providing RTDM_IRQ_ENABLE or 0 as
-    return value, depending if the IRQ was handled (=> RTDM_IRQ_ENABLE) or
-    not (=> 0)
+42. return from interrupt handler only by providing RTDM_IRQ_HANDLED or RTDM_IRQ_NONE as
+    return values, depending if the IRQ was handled or not
 
 
 XX. check the critical paths in xmit function and interrupt handler for delays
