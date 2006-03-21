@@ -68,7 +68,7 @@ static int multicast_filter_limit = 64;
    e.g. "options=16" for FD, "options=32" for 100mbps-only. */
 static int full_duplex[] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static int options[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-static int __attribute__((unused)) debug = -1;	/* The debug level */
+static int debug = -1;	/* The debug level */
 
 /* A few values that may be tweaked. */
 /* The ring sizes should be a power of two for efficiency. */
@@ -184,7 +184,7 @@ static inline int null_set_power_state(struct pci_dev *dev, int state)
 #ifdef CONFIG_RTNET_DRV_EEPRO100_DBG
 static int speedo_debug = 1;
 #else
-#define speedo_debug 1
+#define speedo_debug 0
 #endif
 
 /*
@@ -2465,7 +2465,9 @@ static int __init eepro100_init_module(void)
 		printk(KERN_INFO "eepro100.c: Debug level is %d.\n", debug);
 	if (debug >= 0)
 		speedo_debug = debug;
-#endif
+#else  /* !RTNET_DRV_EEPRO100_DBG */
+	debug = speedo_debug; /* touch debug variable */
+#endif /* RTNET_DRV_EEPRO100_DBG */
 
 	return pci_module_init(&eepro100_driver);
 }
