@@ -243,7 +243,7 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
 int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
     struct tdma_priv    *tdma = (struct tdma_priv *)priv;
-    struct tdma_job     *job;
+    struct tdma_job     *job, *tmp;
     rtdm_lockctx_t      context;
     int                 ret;
 
@@ -254,11 +254,11 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     rtdm_event_destroy(&tdma->xmit_event);
     rtdm_event_destroy(&tdma->worker_wakeup);
 
-    ret =  tdma_dev_release(tdma);
+    ret = tdma_dev_release(tdma);
     if (ret < 0)
         return ret;
 
-    list_for_each_entry(job, &tdma->first_job->entry, entry) {
+    list_for_each_entry_safe(job, tmp, &tdma->first_job->entry, entry) {
         if (job->id >= 0)
             tdma_cleanup_slot(tdma, SLOT_JOB(job));
         else if (job->id == XMIT_RPL_CAL) {
