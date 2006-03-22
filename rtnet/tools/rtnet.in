@@ -7,17 +7,24 @@ prefix="@prefix@"
 RTNETCFG="@sysconfdir@/rtnet.conf"
 
 
+debug_func() {
+    echo "$*"
+    eval $*
+}
+
 usage() {
     cat << EOF
 Usage:
-    $0 [-cf <config-file>] {start|stop}
+    $0 [-cf <config-file>] [-v] {start|stop}
         Start or stop station according to configuration file
 
-    $0 [-cf <config-file>] master <slave_ip1> [<slave_ip2> ...]
+    $0 [-cf <config-file>] [-v] master <slave_ip1> [<slave_ip2> ...]
         Start station as master for given list of slaves
 
-    $0 [-cf <config-file>] capture
+    $0 [-cf <config-file>] [-v] capture
         Start only passive realtime capturing
+
+    The additional switch -v enables verbose output.
 EOF
 }
 
@@ -237,6 +244,14 @@ if [ -r $RTNETCFG ]; then
 else
     echo "Could not read $RTNETCFG"
     exit 1
+fi
+
+if [ "$1" = "-v" ]; then
+    echo "Turning on verbose mode"
+    RTIFCONFIG="debug_func $RTIFCONFIG"
+    RTCFG="debug_func $RTCFG"
+    TDMACFG="debug_func $TDMACFG"
+    shift 1
 fi
 
 NETMASK_OPT=
