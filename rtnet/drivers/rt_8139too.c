@@ -1388,8 +1388,8 @@ static void rtl8139_tx_interrupt (struct rtnet_device *rtdev,
                 /* Note: TxCarrierLost is always asserted at 100mbps. */
                 if (txstatus & (TxOutOfWindow | TxAborted)) {
                         /* There was an major error, log it. */
-                        printk ("%s: Transmit error, Tx status %8.8x.\n",
-                                 rtdev->name, txstatus);
+                        rtdm_printk("%s: Transmit error, Tx status %8.8x.\n",
+                                    rtdev->name, txstatus);
                         tp->stats.tx_errors++;
                         if (txstatus & TxAborted) {
                                 tp->stats.tx_aborted_errors++;
@@ -1435,13 +1435,15 @@ static void rtl8139_tx_interrupt (struct rtnet_device *rtdev,
 static void rtl8139_rx_err
 (u32 rx_status, struct rtnet_device *rtdev, struct rtl8139_private *tp, void *ioaddr)
 {
-        u8 tmp8;
+/*        u8 tmp8;
 #ifndef CONFIG_8139_NEW_RX_RESET
         int tmp_work;
-#endif
+#endif */
 
-        printk ("%s: Ethernet frame had errors, status %8.8x.\n",
-                 rtdev->name, rx_status);
+        /* RTnet-TODO: We really need an error manager to handle such issues... */
+        rtdm_printk("%s: FATAL - Ethernet frame had errors, status %8.8x.\n",
+                    rtdev->name, rx_status);
+#if 0
         tp->stats.rx_errors++;
         if (!(rx_status & RxStatusOK)) {
                 if (rx_status & RxTooLong) {
@@ -1510,6 +1512,7 @@ static void rtl8139_rx_err
 
         /* A.C.: Reset the multicast list. */
         __set_rx_mode (rtdev);
+#endif
 #endif
 }
 
@@ -1793,13 +1796,15 @@ static void __set_rx_mode (struct rtnet_device *rtdev)
         int i, rx_mode;
         u32 tmp;
 
-        printk ("%s:   rtl8139_set_rx_mode(%4.4x) done -- Rx config %8.8lx.\n",
+#ifdef DEBUG
+        rtdm_printk ("%s:   rtl8139_set_rx_mode(%4.4x) done -- Rx config %8.8lx.\n",
                         rtdev->name, rtdev->flags, RTL_R32 (RxConfig));
+#endif
 
         /* Note: do not reorder, GCC is clever about common statements. */
         if (rtdev->flags & IFF_PROMISC) {
                 /* Unconditionally log net taps. */
-                printk (KERN_NOTICE "%s: Promiscuous mode enabled.\n", rtdev->name);
+                /*printk (KERN_NOTICE "%s: Promiscuous mode enabled.\n", rtdev->name);*/
                 rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys | AcceptAllPhys;
                 mc_filter[1] = mc_filter[0] = 0xffffffff;
         } else if ((rtdev->mc_count > multicast_filter_limit) || (rtdev->flags & IFF_ALLMULTI)) {
