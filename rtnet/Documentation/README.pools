@@ -23,7 +23,7 @@ how they can be extended or shrunk.
 
 Default Size:   16
 Resizable:      module parameter "socket_rtskbs"
-Runtime Resize: rt_socket_setsockopt()
+Runtime Resize: [rt_dev_]setsockopt()
 Initialization: real-time / non real-time (see text)
 
 Every socket gets an own rtskb pool upon creation. This pool is used for
@@ -32,11 +32,11 @@ it and when a packet is prepared for transmission. The initial pool size can be
 set with "socket_rtskbs".
 
 During runtime the pool can be extended (RT_SO_EXTPOOL) or shrunk
-(RT_SO_SHRPOOL) using the rt_socket_setsockopt() function. When a socket is to
+(RT_SO_SHRPOOL) using the [rt_dev_]setsockopt() function. When a socket is to
 be created within a real-time context (e.g. a kernel RT-task), the buffers are
 allocated from the real-time rtskb cache (see below) instead of using a Linux
 system call. When a real-time-created socket is closed again, the buffers
-return to that cache. Note that a rt_socket_close() call can fail if not all
+return to that cache. Note that a [rt_dev_]close() call can fail if not all
 buffers have yet return to the socket pool. In this case, be patient and retry
 later. :)
 
@@ -110,9 +110,9 @@ Resizable:      module parameter "rtskb_cache_size"
 Runtime Resize: -
 Initialization: non real-time
 
-The is not an actual pool used for sending or receiving packets. When a socket
-pool has to be created within a real-time context, the required rtskbs are
-taken from this cache. Upon closing such a socket, the rtskbs are return to the
+This is not an actual pool used for sending or receiving packets. When a socket
+pool has to be created within real-time context, the required rtskbs are taken
+from this cache. Upon closing such a socket, the rtskbs are return to the
 cache.
 
 
@@ -126,7 +126,7 @@ All module parameters at a glance:
   rtnet      | rtskb_cache_size | 0
   rtmac      | vnic_rtskbs      | 32
   rtnetproxy | proxy_rtskbs     | 32
-  8139too-rt | rx_pool_size     | 16
+  rt_8139too | rx_pool_size     | 16
 
 A statistic of the currently allocated pools is available through the /proc
 interface of RTnet (/proc/rtnet/rtskb).
