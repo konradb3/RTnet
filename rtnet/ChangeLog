@@ -1,3 +1,18 @@
+0.9.2
+- added support for RTDM API revision 4
+- finalised Xenomai 2.1 support
+- finalised RTAI 3.3 support (but 3.3+CVS recommended due to RTDM bug)
+- support for kernel up to 2.6.16
+- rtroute support for reading host routes from file
+- RTMAC_RTIOC_WAITONCYCLE_EX: support for reporting cycle number
+- removed debug messages from init and error paths of rt_8139too
+- updated rt_8139too according to Linux driver
+- reduce verbosity of rt_eepro100 in non-debugging mode
+- added verbosity switch to rtnet script
+- fixed TDMA discipline detach
+- several build system fixes, including MPC issues
+- support for parallel build (make -j)
+
 0.9.1
 - support for upcoming Xenomai 2.1
 - flattened directory structure and sped-up 2.6 building
