@@ -50,7 +50,6 @@ reconfig:: config-script
 
 config.status: .rtnet_config
 	@test -r config.status && recf=yes || recf=no ; \
-	eval `grep ^CONFIG_RTNET_RTEXT_DIR $<`; \
 	eval `grep ^CONFIG_RTNET_INSTALLDIR $<`; \
 	$(rtnet_srctree)/configure \
 	CROSS_COMPILE=$(CROSS_COMPILE) \
