@@ -62,7 +62,7 @@ init_rtnet() {
 submit_cfg() {
     case "$STATION_TYPE" in
         master)
-            $RTIFCONFIG rteth0 up $STATION_IP $NETMASK_OPT
+            $RTIFCONFIG rteth0 up $STATION_IP
 
             $TDMACFG rteth0 master $TDMA_CYCLE
             /bin/sh -c "TDMACFG=$TDMACFG;$TDMA_SLOTS"
@@ -81,7 +81,7 @@ submit_cfg() {
                 RTCFG_CLIENT="$STATION_MAC"
             fi
 
-            ADD_STAGE1_CMDS="ifconfig vnic0 up $STATION_IP $NETMASK_OPT"
+            ADD_STAGE1_CMDS="ifconfig vnic0 up $STATION_IP"
 
             echo "$TDMA_SLOTS$ADD_STAGE1_CMDS" | \
                 $RTCFG rteth0 add $RTCFG_CLIENT -stage1 -
