@@ -18,10 +18,10 @@ is provided.
 
 What are the requirements?
 --------------------------
-- Linux kernel 2.6.x: 2.6.10 or better
-  Linux kernel 2.4.x: RTAI 3.3 only, barely tested
+- Linux kernel 2.6.x: tested up to 2.6.16
+  Linux kernel 2.4.x: tested up to 2.4.32
 - Xenomai 2.0 or better
-  RTAI 3.3 or better, barely tested
+  RTAI 3.3 or better
 - x86, PowerPC, or ARM platform
   (other platforms are lacking up-to-date RTAI or Xenomai support)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
