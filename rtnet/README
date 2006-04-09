@@ -115,7 +115,7 @@ Yuchen Zhang                            - Ethernet-over-FireWire support
 Klaus Keppler                           - RTL8169 gigabit driver
 <klaus.keppler-at-informatik.stud.uni-erlangen.de>
 Bill Vareka <bvareka-at-amsuper.com>    - joint-slots TDMA extension
-Fabian Koch <fabian.koch-at-de.abb.com> - various improvements of the
+Fabian Koch <me-at-tabascoeye.de>       - various improvements of the
                                           configuration interfaces and tools
 
 Acknowledgements:
