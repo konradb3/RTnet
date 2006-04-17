@@ -181,7 +181,7 @@ else
             "" | y | ye | yes | n | no)
                 AC_MSG_ERROR([You must supply an argument to --with-linux.]) ;;
             *)
-                CONFIG_RTNET_LINUX_DIR=${withval} ;;
+                CONFIG_RTNET_LINUX_DIR="`cd ${withval} && pwd`" ;;  # let the shell normalize the path
         esac])
 
     # get linux kernel tree and version

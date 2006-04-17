@@ -19927,7 +19927,7 @@ if test "${with_linux+set}" = set; then
 echo "$as_me: error: You must supply an argument to --with-linux." >&2;}
    { (exit 1); exit 1; }; } ;;
             *)
-                CONFIG_RTNET_LINUX_DIR=${withval} ;;
+                CONFIG_RTNET_LINUX_DIR="`cd ${withval} && pwd`" ;;  # let the shell normalize the path
         esac
 fi;
 
