@@ -6,7 +6,7 @@ echo -n cleaning up .
 (
     if test -d config/autoconf; then
 	cd config/autoconf
-	for FILE in compile config.guess config.sub depcomp install-sh ltmain.sh missing mkinstalldirs; do
+	for FILE in compile config.guess config.sub depcomp install-sh ltmain.sh missing mkinstalldirs .version; do
 	    if test -f $FILE; then
 		rm -f $FILE
 	    fi
@@ -39,6 +39,8 @@ echo ' done'
 if test x"${1}" = x"clean"; then
     exit
 fi
+
+cat -n Kconfig | grep "     3" | sed -e 's/[^d]*default \"\([^\"]*\)\"/\1/' > config/autoconf/.version
 
 aclocal-1.9 -I config/m4
 libtoolize --force --copy

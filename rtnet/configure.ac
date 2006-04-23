@@ -3,7 +3,9 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([RTnet],[0.9.2],[rtnet-users@lists.sourceforge.net])
+AC_INIT([RTnet],
+        m4_normalize(m4_include(config/autoconf/.version)),
+        [rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -773,7 +775,7 @@ AC_MSG_CHECKING([for EEPRO/100 Command Timeout])
 AC_ARG_ENABLE(eepro100-cmdtimeout,
     AS_HELP_STRING([--enable-eepro100-cmdtimeout], [Set EEPRO/100 command timeout]),
     [case "$enableval" in
-        [[:digit:]]*) CONFIGRTNET_DRV_EEPRO100_CMDTIMEOUT=$enableval ;;
+        [[[:digit:]]]*) CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT=$enableval ;;
         *) AC_MSG_ERROR([Bad argument to option: --enable-eepro100-cmdtimeout=<microseconds>]) ;;
     esac])
 if test x$CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT = x ; then
