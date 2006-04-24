@@ -51,6 +51,9 @@
 /* Router */
 #undef CONFIG_RTNET_RTIPV4_ROUTER
 
+/* RX-FIFO size */
+#undef CONFIG_RTNET_RX_FIFO_SIZE
+
 /* TDMA master support */
 #undef CONFIG_RTNET_TDMA_MASTER
 

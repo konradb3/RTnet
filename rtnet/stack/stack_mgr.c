@@ -23,6 +23,7 @@
 
 #include <rtdev.h>
 #include <rtnet_internal.h>
+#include <rtskb_fifo.h>
 #include <stack_mgr.h>
 
 
@@ -31,7 +32,7 @@ MODULE_PARM(stack_mgr_prio, "i");
 MODULE_PARM_DESC(stack_mgr_prio, "Priority of the stack manager task");
 
 
-static struct rtskb_queue rxqueue;
+static DECLARE_RTSKB_FIFO(rx, CONFIG_RTNET_RX_FIFO_SIZE);
 
 struct list_head    rt_packets[RTPACKET_HASH_TBL_SIZE];
 rtdm_lock_t         rt_packets_lock = RTDM_LOCK_UNLOCKED;
@@ -122,14 +123,7 @@ void rtnetif_rx(struct rtskb *skb)
     rtdev = skb->rtdev;
     rtdev_reference(rtdev);
 
-    rtdm_lock_get(&rxqueue.lock);
-    if (rtdev->rxqueue_len < DROPPING_RTSKB) {
-        rtdev->rxqueue_len++;
-        __rtskb_queue_tail(&rxqueue, skb);
-        rtdm_lock_put(&rxqueue.lock);
-    }
-    else {
-        rtdm_lock_put(&rxqueue.lock);
+    if (unlikely(rtskb_fifo_insert_inirq(&rx.fifo, skb) < 0)) {
         rtdm_printk("RTnet: dropping packet in %s()\n", __FUNCTION__);
         kfree_rtskb(skb);
     }
@@ -166,16 +160,12 @@ static void stackmgr_task(void *arg)
     while (rtdm_event_wait(mgr_event) == 0)
         while (1) {
           next_packet:
-            rtdm_lock_get_irqsave(&rxqueue.lock, context);
-
-            skb = __rtskb_dequeue(&rxqueue);
-            if (!skb) {
-                rtdm_lock_put_irqrestore(&rxqueue.lock, context);
+            /* we are the only reader => no locking required */
+            skb = __rtskb_fifo_remove(&rx.fifo);
+            if (!skb)
                 break;
-            }
+
             rtdev = skb->rtdev;
-            rtdev->rxqueue_len--;
-            rtdm_lock_put_irqrestore(&rxqueue.lock, context);
 
             rtcap_report_incoming(skb);
 
@@ -239,7 +229,7 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
     int i;
 
 
-    rtskb_queue_init(&rxqueue);
+    rtskb_fifo_init(&rx.fifo, CONFIG_RTNET_RX_FIFO_SIZE);
 
     for (i = 0; i < RTPACKET_HASH_TBL_SIZE; i++)
         INIT_LIST_HEAD(&rt_packets[i]);

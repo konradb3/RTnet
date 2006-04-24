@@ -1,5 +1,13 @@
 menu "Protocol Stack"
 
+config RTNET_RX_FIFO_SIZE
+    int "Size of central RX-FIFO"
+    default 32
+    ---help---
+    Size of FIFO between NICs and stack manager task. Must be power
+    of two! Effectively, only CONFIG_RTNET_RX_FIFO_SIZE-1 slots will
+    be usable.
+
 source "stack/ipv4/Kconfig"
 source "stack/packet/Kconfig"
 source "stack/rtmac/Kconfig"

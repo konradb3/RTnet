@@ -100,7 +100,6 @@ struct rtnet_device {
     __u32               local_ip;   /* IP address in network order  */
     __u32               broadcast_ip; /* broadcast IP in network order */
 
-    int                 rxqueue_len;
     rtdm_event_t        *stack_event;
 
     rtdm_mutex_t        xmit_mutex; /* protects xmit routine        */

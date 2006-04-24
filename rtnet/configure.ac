@@ -942,6 +942,25 @@ AM_CONDITIONAL(CONFIG_RTNET_DRV_R8169,[test "$CONFIG_RTNET_DRV_R8169" = "y"])
 
 
 dnl ======================================================================
+dnl             Stack parameters
+dnl ======================================================================
+
+AC_MSG_CHECKING([for RX-FIFO size])
+AC_ARG_ENABLE(rxfifosize,
+    AS_HELP_STRING([--with-rxfifosize], [Set RX-FIFO size]),
+    [case "$enableval" in
+        [[[:digit:]]]*) CONFIG_RTNET_RX_FIFO_SIZE=$enableval ;;
+        *) AC_MSG_ERROR([Bad argument to option: --enable-rxfifosize=<slots>]) ;;
+    esac])
+if test x$CONFIG_RTNET_RX_FIFO_SIZE = x ; then
+    CONFIG_RTNET_RX_FIFO_SIZE=32
+fi
+AC_MSG_RESULT($CONFIG_RTNET_RX_FIFO_SIZE)
+AC_DEFINE_UNQUOTED(CONFIG_RTNET_RX_FIFO_SIZE,
+    $CONFIG_RTNET_RX_FIFO_SIZE, [RX-FIFO size])
+
+
+dnl ======================================================================
 dnl             Real-Time IPv4
 dnl ======================================================================
 

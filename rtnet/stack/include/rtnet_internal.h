@@ -49,7 +49,6 @@
 #define RTNET_DEF_STACK_PRIORITY \
     RTDM_TASK_HIGHEST_PRIORITY + RTDM_TASK_LOWER_PRIORITY
 /*#define RTNET_RTDEV_PRIORITY        5*/
-#define DROPPING_RTSKB              20
 
 
 struct rtnet_device;
