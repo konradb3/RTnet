@@ -1,9 +1,9 @@
 #
 # Automatically generated make config: don't edit
-# RTnet version: 0.9.2
-# Fri Mar 31 12:45:13 2006
+# RTnet version: 0.9.3
+# Thu May  4 00:35:50 2006
 #
-CONFIG_RTNET_VERSION="0.9.2"
+CONFIG_RTNET_VERSION="0.9.3"
 
 #
 # Real-Time Extension
@@ -20,6 +20,16 @@ CONFIG_RTNET_INSTALLDIR="/usr/local/rtnet"
 
 #
 # Protocol Stack
+#
+
+#
+# Stack parameters
+#
+CONFIG_RTNET_RX_FIFO_SIZE=32
+# CONFIG_RTNET_RTWLAN is not set
+
+#
+# Protocols
 #
 CONFIG_RTNET_RTIPV4=y
 # CONFIG_RTNET_RTIPV4_NETROUTING is not set
