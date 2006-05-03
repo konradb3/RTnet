@@ -19,13 +19,13 @@ OPTPROGS += tdmacfg
 OPTCONF += tdma.conf
 endif
 
-sbin_PROGRAMS = rtifconfig $(OPTPROGS)
+sbin_PROGRAMS = rtifconfig rtiwconfig $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
-all-local: rtifconfig rtroute rtping $(OPTPROGS)
+all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
 
 install-exec-local: rtnet $(OPTSCRIPTS)
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)

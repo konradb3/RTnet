@@ -136,6 +136,9 @@ struct rtnet_device {
     /* MTU hook, managed by the stack core and RTmac */
     unsigned int        (*get_mtu)(struct rtnet_device *rtdev,
                                    unsigned int priority);
+
+    int                 (*do_ioctl)(struct rtnet_device *rtdev, 
+				    unsigned int request, void * cmd);
 };
 
 

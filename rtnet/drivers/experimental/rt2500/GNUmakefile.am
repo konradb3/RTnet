@@ -1,0 +1,55 @@
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
+
+EXTRA_LIBRARIES = \
+	libkernel_rt2x00core.a \
+	libkernel_rt2500pci.a
+
+libkernel_rt2x00core_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_rt2x00core_a_SOURCES = \
+	rt_rt2x00core.c
+
+libkernel_rt2500pci_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_rt2500pci_a_SOURCES = \
+	rt_rt2500pci.c
+
+OBJS = rt_rt2x00core$(modext) rt_rt2500pci$(modext)
+
+rt_rt2x00core.o: libkernel_rt2x00core.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_rt2500pci.o: libkernel_rt2500pci.a
+	$(LD) --whole-archive $< -r -o $@
+
+all-local: all-local$(modext)
+
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_rt2x00core_a_SOURCES) $(libkernel_rt2500pci_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_rt2500pci_a_SOURCES) $(libkernel_rt2x00core_a_SOURCES)
+	$(RTNET_KBUILD_CLEAN)
+
+distclean-local:
+	$(RTNET_KBUILD_DISTCLEAN)
+
+EXTRA_DIST = Makefile.kbuild Kconfig
+
+DISTCLEANFILES = Makefile
+
+.PHONY: FORCE

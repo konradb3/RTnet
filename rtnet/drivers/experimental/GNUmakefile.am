@@ -31,6 +31,12 @@ if CONFIG_RTNET_DRV_R8169
 OBJS += rt_r8169$(modext)
 endif
 
+OPTDIRS =
+
+if CONFIG_RTNET_DRV_RT2500
+OPTDIRS += rt2500
+endif
+
 rt_3c59x.o: libkernel_3c59x.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -55,6 +61,8 @@ clean-local: $(libkernel_3c59x_a_SOURCES) $(libkernel_r8169_a_SOURCES)
 
 distclean-local:
 	$(RTNET_KBUILD_DISTCLEAN)
+
+SUBDIRS = $(OPTDIRS)
 
 EXTRA_DIST = Kconfig Makefile.kbuild
 

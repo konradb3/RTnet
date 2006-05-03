@@ -40,6 +40,10 @@ libkernel_rtnet_a_SOURCES = \
 	stack_mgr.c\
 	eth.c
 
+if CONFIG_RTNET_RTWLAN
+libkernel_rtnet_a_SOURCES += rtwlan.c
+endif
+
 OBJS = rtnet$(modext)
 
 rtnet.o: libkernel_rtnet.a

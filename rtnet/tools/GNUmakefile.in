@@ -41,7 +41,8 @@ host_triplet = @host@
 @CONFIG_RTNET_NOMAC_TRUE@am__append_3 = nomaccfg
 @CONFIG_RTNET_TDMA_TRUE@am__append_4 = tdmacfg
 @CONFIG_RTNET_TDMA_TRUE@am__append_5 = tdma.conf
-sbin_PROGRAMS = rtifconfig$(EXEEXT) $(am__EXEEXT_5)
+sbin_PROGRAMS = rtifconfig$(EXEEXT) rtiwconfig$(EXEEXT) \
+	$(am__EXEEXT_5)
 subdir = tools
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
 	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
@@ -73,6 +74,9 @@ rtcfg_LDADD = $(LDADD)
 rtifconfig_SOURCES = rtifconfig.c
 rtifconfig_OBJECTS = rtifconfig.$(OBJEXT)
 rtifconfig_LDADD = $(LDADD)
+rtiwconfig_SOURCES = rtiwconfig.c
+rtiwconfig_OBJECTS = rtiwconfig.$(OBJEXT)
+rtiwconfig_LDADD = $(LDADD)
 rtping_SOURCES = rtping.c
 rtping_OBJECTS = rtping.$(OBJEXT)
 rtping_LDADD = $(LDADD)
@@ -93,9 +97,10 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c tdmacfg.c
-DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtping.c rtroute.c \
-	tdmacfg.c
+SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtiwconfig.c rtping.c \
+	rtroute.c tdmacfg.c
+DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtiwconfig.c rtping.c \
+	rtroute.c tdmacfg.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -145,6 +150,8 @@ CONFIG_RTNET_DRV_PCNET32_FALSE = @CONFIG_RTNET_DRV_PCNET32_FALSE@
 CONFIG_RTNET_DRV_PCNET32_TRUE = @CONFIG_RTNET_DRV_PCNET32_TRUE@
 CONFIG_RTNET_DRV_R8169_FALSE = @CONFIG_RTNET_DRV_R8169_FALSE@
 CONFIG_RTNET_DRV_R8169_TRUE = @CONFIG_RTNET_DRV_R8169_TRUE@
+CONFIG_RTNET_DRV_RT2500_FALSE = @CONFIG_RTNET_DRV_RT2500_FALSE@
+CONFIG_RTNET_DRV_RT2500_TRUE = @CONFIG_RTNET_DRV_RT2500_TRUE@
 CONFIG_RTNET_DRV_SCC_ENET_FALSE = @CONFIG_RTNET_DRV_SCC_ENET_FALSE@
 CONFIG_RTNET_DRV_SCC_ENET_TRUE = @CONFIG_RTNET_DRV_SCC_ENET_TRUE@
 CONFIG_RTNET_DRV_SMC91111_FALSE = @CONFIG_RTNET_DRV_SMC91111_FALSE@
@@ -167,6 +174,8 @@ CONFIG_RTNET_RTMAC_FALSE = @CONFIG_RTNET_RTMAC_FALSE@
 CONFIG_RTNET_RTMAC_TRUE = @CONFIG_RTNET_RTMAC_TRUE@
 CONFIG_RTNET_RTPACKET_FALSE = @CONFIG_RTNET_RTPACKET_FALSE@
 CONFIG_RTNET_RTPACKET_TRUE = @CONFIG_RTNET_RTPACKET_TRUE@
+CONFIG_RTNET_RTWLAN_FALSE = @CONFIG_RTNET_RTWLAN_FALSE@
+CONFIG_RTNET_RTWLAN_TRUE = @CONFIG_RTNET_RTWLAN_TRUE@
 CONFIG_RTNET_TDMA_FALSE = @CONFIG_RTNET_TDMA_FALSE@
 CONFIG_RTNET_TDMA_TRUE = @CONFIG_RTNET_TDMA_TRUE@
 CONFIG_XENO_FALSE = @CONFIG_XENO_FALSE@
@@ -356,6 +365,9 @@ rtcfg$(EXEEXT): $(rtcfg_OBJECTS) $(rtcfg_DEPENDENCIES)
 rtifconfig$(EXEEXT): $(rtifconfig_OBJECTS) $(rtifconfig_DEPENDENCIES) 
 	@rm -f rtifconfig$(EXEEXT)
 	$(LINK) $(rtifconfig_LDFLAGS) $(rtifconfig_OBJECTS) $(rtifconfig_LDADD) $(LIBS)
+rtiwconfig$(EXEEXT): $(rtiwconfig_OBJECTS) $(rtiwconfig_DEPENDENCIES) 
+	@rm -f rtiwconfig$(EXEEXT)
+	$(LINK) $(rtiwconfig_LDFLAGS) $(rtiwconfig_OBJECTS) $(rtiwconfig_LDADD) $(LIBS)
 rtping$(EXEEXT): $(rtping_OBJECTS) $(rtping_DEPENDENCIES) 
 	@rm -f rtping$(EXEEXT)
 	$(LINK) $(rtping_LDFLAGS) $(rtping_OBJECTS) $(rtping_LDADD) $(LIBS)
@@ -375,6 +387,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nomaccfg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtcfg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtifconfig.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtiwconfig.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtping.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtroute.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tdmacfg.Po@am__quote@
@@ -582,7 +595,7 @@ uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 	uninstall-sbinPROGRAMS
 
 
-all-local: rtifconfig rtroute rtping $(OPTPROGS)
+all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
 
 install-exec-local: rtnet $(OPTSCRIPTS)
 	$(mkinstalldirs) $(DESTDIR)$(sbindir)

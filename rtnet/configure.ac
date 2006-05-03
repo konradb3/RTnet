@@ -940,6 +940,16 @@ AC_ARG_ENABLE(r8169,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_R8169:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_R8169,[test "$CONFIG_RTNET_DRV_R8169" = "y"])
 
+AC_MSG_CHECKING([whether to build Ralink 2500 WLAN driver])
+AC_ARG_ENABLE(rt2500,
+    AS_HELP_STRING([--enable-rt2500], [build Ralink 2500 WLAN driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_RT2500=y ;;
+        *) CONFIG_RTNET_DRV_RT2500=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_RT2500:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_RT2500,[test "$CONFIG_RTNET_DRV_RT2500" = "y"])
+
 
 dnl ======================================================================
 dnl             Stack parameters
@@ -958,6 +968,19 @@ fi
 AC_MSG_RESULT($CONFIG_RTNET_RX_FIFO_SIZE)
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_RX_FIFO_SIZE,
     $CONFIG_RTNET_RX_FIFO_SIZE, [RX-FIFO size])
+
+AC_MSG_CHECKING([whether to build real-time WLAN support])
+AC_ARG_ENABLE(rtwlan,
+    AS_HELP_STRING([--enable-rtwlan], [enable real-time WLAN support @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_RTWLANy ;;
+        *) CONFIG_RTNET_RTWLAN=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTWLAN:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTWLAN,[test "$CONFIG_RTNET_RTWLAN" = "y"])
+if test "$CONFIG_RTNET_RTWLAN" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_RTWLAN,1,[Real-Time WLAN support])
+fi
 
 
 dnl ======================================================================
@@ -1248,6 +1271,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/mpc52xx_fec \
         drivers/tulip \
         drivers/experimental \
+        drivers/experimental/rt2500 \
         \
         stack \
         stack/packet \
@@ -1326,6 +1350,7 @@ AC_CONFIG_FILES([ \
     drivers/mpc52xx_fec/GNUmakefile \
     drivers/tulip/GNUmakefile \
     drivers/experimental/GNUmakefile \
+    drivers/experimental/rt2500/GNUmakefile \
     \
     stack/GNUmakefile \
     stack/include/GNUmakefile \

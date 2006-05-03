@@ -3,7 +3,7 @@
  *  stack/rtnet_module.c - module framework, proc file system
  *
  *  Copyright (C) 2002      Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2006 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include <rtnet_internal.h>
 #include <rtnet_rtpc.h>
 #include <stack_mgr.h>
+#include <rtwlan.h>
 
 MODULE_LICENSE("GPL");
 
@@ -221,11 +222,17 @@ int __init rtnet_init(void)
 
     rtnet_chrdev_init();
 
-    if ((err = rtpc_init()) != 0)
+    if ((err = rtwlan_init()) != 0)
         goto err_out5;
+
+    if ((err = rtpc_init()) != 0)
+        goto err_out6;
 
     return 0;
 
+
+err_out6:
+    rtwlan_exit();
 
 err_out5:
     rtnet_chrdev_release();
@@ -250,9 +257,11 @@ err_out1:
 /**
  *  rtnet_release()
  */
-void rtnet_release(void)
+void __exit rtnet_release(void)
 {
     rtpc_cleanup();
+
+    rtwlan_exit();
 
     rtnet_chrdev_release();
 

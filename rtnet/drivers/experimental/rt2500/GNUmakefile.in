@@ -19,7 +19,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ..
+top_builddir = ../../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -35,7 +35,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = Documentation
+subdir = drivers/experimental/rt2500
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
@@ -46,8 +46,34 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
-SOURCES =
-DIST_SOURCES =
+ARFLAGS = cru
+libkernel_rt2500pci_a_AR = $(AR) $(ARFLAGS)
+libkernel_rt2500pci_a_LIBADD =
+am_libkernel_rt2500pci_a_OBJECTS =  \
+	libkernel_rt2500pci_a-rt_rt2500pci.$(OBJEXT)
+libkernel_rt2500pci_a_OBJECTS = $(am_libkernel_rt2500pci_a_OBJECTS)
+libkernel_rt2x00core_a_AR = $(AR) $(ARFLAGS)
+libkernel_rt2x00core_a_LIBADD =
+am_libkernel_rt2x00core_a_OBJECTS =  \
+	libkernel_rt2x00core_a-rt_rt2x00core.$(OBJEXT)
+libkernel_rt2x00core_a_OBJECTS = $(am_libkernel_rt2x00core_a_OBJECTS)
+DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
+depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
+am__depfiles_maybe = depfiles
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+SOURCES = $(libkernel_rt2500pci_a_SOURCES) \
+	$(libkernel_rt2x00core_a_SOURCES)
+DIST_SOURCES = $(libkernel_rt2500pci_a_SOURCES) \
+	$(libkernel_rt2x00core_a_SOURCES)
+ETAGS = etags
+CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -227,23 +253,35 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-EXTRA_DIST = \
-	README.drvporting \
-	README.ipfragmentation \
-	README.pools \
-	README.routing \
-	README.rtcap \
-	README.rtcfg \
-	README.rtmac \
-	README.rtnetproxy \
-	RTcfg.spec \
-	RTmac.spec \
-	RTnet.oxy \
-	TDMA.spec
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
+EXTRA_LIBRARIES = \
+	libkernel_rt2x00core.a \
+	libkernel_rt2500pci.a
 
+libkernel_rt2x00core_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_rt2x00core_a_SOURCES = \
+	rt_rt2x00core.c
+
+libkernel_rt2500pci_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_rt2500pci_a_SOURCES = \
+	rt_rt2500pci.c
+
+OBJS = rt_rt2x00core$(modext) rt_rt2500pci$(modext)
+EXTRA_DIST = Makefile.kbuild Kconfig
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -253,9 +291,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  Documentation/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  drivers/experimental/rt2500/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  Documentation/GNUmakefile
+	  $(AUTOMAKE) --foreign  drivers/experimental/rt2500/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -273,6 +311,72 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+libkernel_rt2500pci.a: $(libkernel_rt2500pci_a_OBJECTS) $(libkernel_rt2500pci_a_DEPENDENCIES) 
+	-rm -f libkernel_rt2500pci.a
+	$(libkernel_rt2500pci_a_AR) libkernel_rt2500pci.a $(libkernel_rt2500pci_a_OBJECTS) $(libkernel_rt2500pci_a_LIBADD)
+	$(RANLIB) libkernel_rt2500pci.a
+libkernel_rt2x00core.a: $(libkernel_rt2x00core_a_OBJECTS) $(libkernel_rt2x00core_a_DEPENDENCIES) 
+	-rm -f libkernel_rt2x00core.a
+	$(libkernel_rt2x00core_a_AR) libkernel_rt2x00core.a $(libkernel_rt2x00core_a_OBJECTS) $(libkernel_rt2x00core_a_LIBADD)
+	$(RANLIB) libkernel_rt2x00core.a
+
+mostlyclean-compile:
+	-rm -f *.$(OBJEXT)
+
+distclean-compile:
+	-rm -f *.tab.c
+
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Po@am__quote@
+
+.c.o:
+@am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(COMPILE) -c $<
+
+.c.obj:
+@am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ `$(CYGPATH_W) '$<'`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_rt2500pci_a-rt_rt2500pci.o: rt_rt2500pci.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2500pci_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rt2500pci_a-rt_rt2500pci.o -MD -MP -MF "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Tpo" -c -o libkernel_rt2500pci_a-rt_rt2500pci.o `test -f 'rt_rt2500pci.c' || echo '$(srcdir)/'`rt_rt2500pci.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Tpo" "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Po"; else rm -f "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_rt2500pci.c' object='libkernel_rt2500pci_a-rt_rt2500pci.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2500pci_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rt2500pci_a-rt_rt2500pci.o `test -f 'rt_rt2500pci.c' || echo '$(srcdir)/'`rt_rt2500pci.c
+
+libkernel_rt2500pci_a-rt_rt2500pci.obj: rt_rt2500pci.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2500pci_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rt2500pci_a-rt_rt2500pci.obj -MD -MP -MF "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Tpo" -c -o libkernel_rt2500pci_a-rt_rt2500pci.obj `if test -f 'rt_rt2500pci.c'; then $(CYGPATH_W) 'rt_rt2500pci.c'; else $(CYGPATH_W) '$(srcdir)/rt_rt2500pci.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Tpo" "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Po"; else rm -f "$(DEPDIR)/libkernel_rt2500pci_a-rt_rt2500pci.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_rt2500pci.c' object='libkernel_rt2500pci_a-rt_rt2500pci.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2500pci_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rt2500pci_a-rt_rt2500pci.obj `if test -f 'rt_rt2500pci.c'; then $(CYGPATH_W) 'rt_rt2500pci.c'; else $(CYGPATH_W) '$(srcdir)/rt_rt2500pci.c'; fi`
+
+libkernel_rt2x00core_a-rt_rt2x00core.o: rt_rt2x00core.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2x00core_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rt2x00core_a-rt_rt2x00core.o -MD -MP -MF "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Tpo" -c -o libkernel_rt2x00core_a-rt_rt2x00core.o `test -f 'rt_rt2x00core.c' || echo '$(srcdir)/'`rt_rt2x00core.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Tpo" "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Po"; else rm -f "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_rt2x00core.c' object='libkernel_rt2x00core_a-rt_rt2x00core.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2x00core_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rt2x00core_a-rt_rt2x00core.o `test -f 'rt_rt2x00core.c' || echo '$(srcdir)/'`rt_rt2x00core.c
+
+libkernel_rt2x00core_a-rt_rt2x00core.obj: rt_rt2x00core.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2x00core_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_rt2x00core_a-rt_rt2x00core.obj -MD -MP -MF "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Tpo" -c -o libkernel_rt2x00core_a-rt_rt2x00core.obj `if test -f 'rt_rt2x00core.c'; then $(CYGPATH_W) 'rt_rt2x00core.c'; else $(CYGPATH_W) '$(srcdir)/rt_rt2x00core.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Tpo" "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Po"; else rm -f "$(DEPDIR)/libkernel_rt2x00core_a-rt_rt2x00core.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_rt2x00core.c' object='libkernel_rt2x00core_a-rt_rt2x00core.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_rt2x00core_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_rt2x00core_a-rt_rt2x00core.obj `if test -f 'rt_rt2x00core.c'; then $(CYGPATH_W) 'rt_rt2x00core.c'; else $(CYGPATH_W) '$(srcdir)/rt_rt2x00core.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -283,12 +387,54 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
+
+ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	mkid -fID $$unique
 tags: TAGS
-TAGS:
 
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	if test -z "$(ETAGS_ARGS)$$tags$$unique"; then :; else \
+	  test -n "$$unique" || unique=$$empty_fix; \
+	  $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	    $$tags $$unique; \
+	fi
 ctags: CTAGS
-CTAGS:
+CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	test -z "$(CTAGS_ARGS)$$tags$$unique" \
+	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
+	     $$tags $$unique
 
+GTAGS:
+	here=`$(am__cd) $(top_builddir) && pwd` \
+	  && cd $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) $$here
+
+distclean-tags:
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
@@ -319,7 +465,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile
+all-am: GNUmakefile all-local
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -341,17 +487,20 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
+	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
-distclean-am: clean-am distclean-generic distclean-libtool
+distclean-am: clean-am distclean-compile distclean-generic \
+	distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -365,7 +514,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am:
+install-exec-am: install-exec-local
 
 install-info: install-info-am
 
@@ -374,12 +523,14 @@ install-man:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
+	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-generic mostlyclean-libtool
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -391,16 +542,45 @@ ps-am:
 
 uninstall-am: uninstall-info-am
 
-.PHONY: all all-am check check-am clean clean-generic clean-libtool \
-	distclean distclean-generic distclean-libtool distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am \
-	uninstall-info-am
+.PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
+	clean-generic clean-libtool clean-local ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-local distclean-tags distdir dvi dvi-am html html-am \
+	info info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
+
+rt_rt2x00core.o: libkernel_rt2x00core.a
+	$(LD) --whole-archive $< -r -o $@
+
+rt_rt2500pci.o: libkernel_rt2500pci.a
+	$(LD) --whole-archive $< -r -o $@
+
+all-local: all-local$(modext)
+
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: $(libkernel_rt2x00core_a_SOURCES) $(libkernel_rt2500pci_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_rt2500pci_a_SOURCES) $(libkernel_rt2x00core_a_SOURCES)
+	$(RTNET_KBUILD_CLEAN)
+
+distclean-local:
+	$(RTNET_KBUILD_DISTCLEAN)
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
