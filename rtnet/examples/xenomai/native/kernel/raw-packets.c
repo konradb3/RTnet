@@ -35,8 +35,12 @@
 static char *dest_mac_s = "FF:FF:FF:FF:FF:FF";
 static int local_if = 1;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
+module_param(dest_mac_s, charp, 0);
+#else /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10) */
 MODULE_PARM(dest_mac_s, "s");
-MODULE_PARM(local_if, "i");
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10) */
+module_param(local_if, int, 0);
 MODULE_PARM_DESC(dest_mac_s, "destination MAC address (XX:XX:XX:XX:XX:XX)");
 MODULE_PARM_DESC(local_if, "local interface for sending and receiving packets (1-n)");
 

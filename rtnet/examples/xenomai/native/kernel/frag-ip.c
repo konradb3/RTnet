@@ -37,9 +37,13 @@ static char *dest_ip_s = "127.0.0.1";
 static unsigned int size = 65505;
 static unsigned int add_rtskbs = 75;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
+module_param(dest_ip_s, charp, 0);
+#else /* LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10) */
 MODULE_PARM(dest_ip_s, "s");
-MODULE_PARM(size, "i");
-MODULE_PARM(add_rtskbs, "i");
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10) */
+module_param(size, uint, 0);
+module_param(add_rtskbs, uint, 0);
 MODULE_PARM_DESC(dest_ip_s, "destination IP address");
 MODULE_PARM_DESC(size, "message size (0-65505)");
 MODULE_PARM_DESC(add_rtskbs, "number of additional rtskbs (default: 75)");
