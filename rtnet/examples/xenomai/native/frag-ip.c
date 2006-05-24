@@ -37,9 +37,9 @@
 
 #include <rtnet_config.h>   /* required for rt_task_wait_period() changes */
 
-static char *dest_ip_s = "127.0.0.1";
-static unsigned int size = 65505;
-static unsigned int add_rtskbs = 75;
+char *dest_ip_s = "127.0.0.1";
+unsigned int size = 65505;
+unsigned int add_rtskbs = 75;
 
 #define CYCLE       1000*1000*1000   /* 1 s */
 RT_TASK rt_xmit_task;
@@ -47,12 +47,12 @@ RT_TASK rt_recv_task;
 
 #define PORT        37000
 
-static struct sockaddr_in dest_addr;
+struct sockaddr_in dest_addr;
 
-static int sock;
+int sock;
 
-static char buffer_out[64*1024];
-static char buffer_in[64*1024];
+char buffer_out[64*1024];
+char buffer_in[64*1024];
 
 
 void xmit_msg(void *arg)
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
                 goto end_of_opt;
 
             default:
-                printf("usage: %s -d <dest_ip> -s <size> -t\n", argv[0]);
+                printf("usage: %s [-d <dest_ip>] [-s <size>]\n", argv[0]);
                 return 0;
         }
     }

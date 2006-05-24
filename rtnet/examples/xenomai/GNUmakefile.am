@@ -1,1 +1,1 @@
-SUBDIRS = native
+SUBDIRS = native posix

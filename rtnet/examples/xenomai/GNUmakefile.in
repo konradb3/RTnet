@@ -193,6 +193,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+XNPOSIX_USER_CFLAGS = @XNPOSIX_USER_CFLAGS@
+XNPOSIX_USER_LDFLAGS = @XNPOSIX_USER_LDFLAGS@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -236,7 +238,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = native
+SUBDIRS = native posix
 all: all-recursive
 
 .SUFFIXES:

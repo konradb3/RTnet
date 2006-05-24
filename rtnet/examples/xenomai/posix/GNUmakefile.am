@@ -1,0 +1,19 @@
+noinst_PROGRAMS = \
+	rtt-sender \
+	rtt-responder
+
+AM_CFLAGS = \
+	$(XNPOSIX_USER_CFLAGS) \
+	-I$(top_srcdir)/stack/include
+
+AM_LDFLAGS = \
+	$(XNPOSIX_USER_LDFLAGS) \
+	-lpthread -lrtdm
+
+OBJS =
+
+if CONFIG_RTNET_RTIPV4
+OBJS += rtt-sender rtt-responder
+endif
+
+all-local: $(OBJS)

@@ -421,13 +421,17 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
         ;;
     xeno-20x)
         RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
-        CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
         RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
+        XNPOSIX_USER_CFLAGS="`${XENO_CONFIG} --posix-cflags`"
+        XNPOSIX_USER_LDFLAGS="`${XENO_CONFIG} --posix-ldflags`"
+        CONFIG_RTNET_RTEXT_ARCH="`${XENO_CONFIG} --arch`"
         RTEXT_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
         ;;
     xeno-21x)
         RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
         RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
+        XNPOSIX_USER_CFLAGS="`${XENO_CONFIG} --posix-cflags`"
+        XNPOSIX_USER_LDFLAGS="`${XENO_CONFIG} --posix-ldflags`"
         if test "`eval echo \\$$wanted_kernel_arch`" \!= ""; then
             CONFIG_RTNET_RTEXT_ARCH="${RTNET_TARGET_ARCH}"
         else
@@ -1245,6 +1249,8 @@ AH_BOTTOM([#endif /* __IN_RTNET__ */])
 RTEXT_KMOD_CFLAGS="-D__IN_RTNET__ $RTEXT_KMOD_CFLAGS"
 AC_SUBST(RTEXT_KMOD_CFLAGS)
 AC_SUBST(RTEXT_USER_CFLAGS)
+AC_SUBST(XNPOSIX_USER_CFLAGS)
+AC_SUBST(XNPOSIX_USER_LDFLAGS)
 AC_SUBST(RTEXT_LIBRARIES)
 AC_SUBST(RTFW_KMOD_CFLAGS)
 
@@ -1298,7 +1304,6 @@ dnl        addons/examples/rtmac/netshm/kernel-demo \
 dnl        addons/examples/rtmac/round-trip-time/client \
 dnl        addons/examples/rtmac/round-trip-time/multi-client \
 dnl        addons/examples/rtmac/round-trip-time/parport-client \
-dnl        addons/examples/rtmac/round-trip-time/server \
 dnl        addons/examples/select \
 
 
@@ -1373,6 +1378,7 @@ AC_CONFIG_FILES([ \
     examples/xenomai/GNUmakefile \
     examples/xenomai/native/GNUmakefile \
     examples/xenomai/native/kernel/GNUmakefile \
+    examples/xenomai/posix/GNUmakefile \
     \
     scripts/GNUmakefile \
     scripts/kconfig/GNUmakefile \
@@ -1382,7 +1388,6 @@ AC_CONFIG_FILES([ \
 dnl    examples/round-trip-time/GNUmakefile \
 dnl    examples/round-trip-time/client/GNUmakefile \
 dnl    examples/round-trip-time/linux-client/GNUmakefile \
-dnl    examples/round-trip-time/server/GNUmakefile \
 dnl    examples/rtmac/GNUmakefile \
 dnl    examples/rtmac/event/GNUmakefile \
 dnl    examples/rtmac/event/collector/GNUmakefile \
