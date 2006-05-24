@@ -33,7 +33,7 @@
 
 
 static unsigned int num_rtskbs = 32;
-MODULE_PARM(num_rtskbs, "i");
+module_param(num_rtskbs, uint, 0444);
 MODULE_PARM_DESC(num_rtskbs, "Number of realtime socket buffers used by RTcfg");
 
 static struct rtskb_queue   rtcfg_pool;

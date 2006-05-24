@@ -43,9 +43,13 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
 # define compat_pci_restore_state(a, b)     pci_restore_state(a, b)
 # define compat_pci_save_state(a, b)        pci_save_state(a, b)
+# define compat_module_int_param_array(name, count) \
+    MODULE_PARM(name, "1-" __MODULE_STRING(count) "i")
 #else
 # define compat_pci_restore_state(a, b)     pci_restore_state(a)
 # define compat_pci_save_state(a, b)        pci_save_state(a)
+# define compat_module_int_param_array(name, count) \
+    module_param_array(name, int, NULL, 0444)
 #endif
 
 static inline void rtnetif_start_queue(struct rtnet_device *rtdev)

@@ -33,6 +33,7 @@
 #include <rtwlan.h>
 
 MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("RTnet stack core");
 
 
 struct rtnet_mgr STACK_manager;

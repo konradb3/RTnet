@@ -28,7 +28,7 @@
 
 
 static unsigned int stack_mgr_prio = RTNET_DEF_STACK_PRIORITY;
-MODULE_PARM(stack_mgr_prio, "i");
+module_param(stack_mgr_prio, uint, 0444);
 MODULE_PARM_DESC(stack_mgr_prio, "Priority of the stack manager task");
 
 

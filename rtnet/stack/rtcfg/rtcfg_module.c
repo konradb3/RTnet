@@ -34,7 +34,7 @@
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
 static int start_timer = 1;
 
-MODULE_PARM(start_timer, "i");
+module_param(start_timer, int, 0444);
 MODULE_PARM_DESC(start_timer, "set to zero if RTAI timer is already running");
 #endif
 

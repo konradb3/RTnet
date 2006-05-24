@@ -34,7 +34,7 @@
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
 static int start_timer = 0;
 
-MODULE_PARM(start_timer, "i");
+module_param(start_timer, int, 0444);
 MODULE_PARM_DESC(start_timer, "set to non-zero if RTAI timer was not yet "
                  "started");
 #endif
@@ -42,7 +42,7 @@ MODULE_PARM_DESC(start_timer, "set to non-zero if RTAI timer was not yet "
 MODULE_LICENSE("GPL");
 
 static unsigned int rtcap_rtskbs = 128;
-MODULE_PARM(rtcap_rtskbs, "i");
+module_param(rtcap_rtskbs, uint, 0444);
 MODULE_PARM_DESC(rtcap_rtskbs, "Number of real-time socket buffers per "
                  "real-time device");
 

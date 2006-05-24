@@ -41,7 +41,7 @@
 #define SKB_POOL_CLOSED     RTDM_USER_CONTEXT_FLAG + 0
 
 static unsigned int socket_rtskbs = DEFAULT_SOCKET_RTSKBS;
-MODULE_PARM(socket_rtskbs, "i");
+module_param(socket_rtskbs, uint, 0444);
 MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in socket pools");
 
 

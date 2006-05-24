@@ -33,7 +33,7 @@
 
 
 static unsigned int vnic_rtskbs = DEFAULT_VNIC_RTSKBS;
-MODULE_PARM(vnic_rtskbs, "i");
+module_param(vnic_rtskbs, uint, 0444);
 MODULE_PARM_DESC(vnic_rtskbs, "Number of realtime socket buffers per virtual NIC");
 
 static rtdm_nrtsig_t        vnic_signal;

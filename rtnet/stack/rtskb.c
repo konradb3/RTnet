@@ -30,8 +30,8 @@
 
 static unsigned int global_rtskbs    = DEFAULT_GLOBAL_RTSKBS;
 static unsigned int rtskb_cache_size = DEFAULT_RTSKB_CACHE_SIZE;
-MODULE_PARM(global_rtskbs, "i");
-MODULE_PARM(rtskb_cache_size, "i");
+module_param(global_rtskbs, uint, 0444);
+module_param(rtskb_cache_size, uint, 0444);
 MODULE_PARM_DESC(global_rtskbs, "Number of realtime socket buffers in global pool");
 MODULE_PARM_DESC(rtskb_cache_size, "Number of cached rtskbs for creating pools in real-time");
 

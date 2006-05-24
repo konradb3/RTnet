@@ -37,7 +37,7 @@
 
 
 static unsigned int device_rtskbs = DEFAULT_DEVICE_RTSKBS;
-MODULE_PARM(device_rtskbs, "i");
+module_param(device_rtskbs, uint, 0444);
 MODULE_PARM_DESC(device_rtskbs, "Number of additional global realtime socket "
                  "buffers per network adapter");
 

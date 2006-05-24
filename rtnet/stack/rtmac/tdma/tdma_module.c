@@ -41,7 +41,7 @@
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
 static int start_timer = 0;
 
-MODULE_PARM(start_timer, "i");
+module_param(start_timer, int, 0444);
 MODULE_PARM_DESC(start_timer, "set to non-zero to start RTAI timer");
 #endif
 

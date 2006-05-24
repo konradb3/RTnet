@@ -80,8 +80,8 @@ static u32                  port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
 static struct udp_socket    port_registry[RT_UDP_SOCKETS];
 static rtdm_lock_t          udp_socket_base_lock = RTDM_LOCK_UNLOCKED;
 
-MODULE_PARM(auto_port_start, "i");
-MODULE_PARM(auto_port_mask, "i");
+module_param(auto_port_start, uint, 0444);
+module_param(auto_port_mask, uint, 0444);
 MODULE_PARM_DESC(auto_port_start, "Start of automatically assigned port range");
 MODULE_PARM_DESC(auto_port_mask,
                  "Mask that defines port range for automatic assignment");

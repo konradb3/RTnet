@@ -131,24 +131,24 @@ static int debug = -1;	/* The debug level */
 #define MAX_UNITS               8
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 // *** RTnet ***
 
 MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
 MODULE_DESCRIPTION("Intel i82557/i82558/i82559 PCI EtherExpressPro driver");
 MODULE_LICENSE("GPL");
-MODULE_PARM(debug, "i");
-MODULE_PARM(options, "1-" __MODULE_STRING(8) "i");
-MODULE_PARM(full_duplex, "1-" __MODULE_STRING(8) "i");
+module_param(debug, int, 0444);
+compat_module_int_param_array(options, MAX_UNITS);
+compat_module_int_param_array(full_duplex, MAX_UNITS);
 /*MODULE_PARM(congenb, "i");*/
-MODULE_PARM(txfifo, "i");
-MODULE_PARM(rxfifo, "i");
-MODULE_PARM(txdmacount, "i");
-MODULE_PARM(rxdmacount, "i");
+module_param(txfifo, int, 0444);
+module_param(rxfifo, int, 0444);
+module_param(txdmacount, int, 0444);
+module_param(rxdmacount, int, 0444);
 // *** RTnet MODULE_PARM(rx_copybreak, "i");
-MODULE_PARM(max_interrupt_work, "i");
-MODULE_PARM(multicast_filter_limit, "i");
+module_param(max_interrupt_work, int, 0444);
+module_param(multicast_filter_limit, int, 0444);
 MODULE_PARM_DESC(debug, "eepro100 debug level (0-6)");
 MODULE_PARM_DESC(options, "eepro100: Bits 0-3: tranceiver type, bit 4: full duplex, bit 5: 100Mbps");
 MODULE_PARM_DESC(full_duplex, "eepro100 full duplex setting(s) (1)");

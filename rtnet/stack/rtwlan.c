@@ -27,10 +27,6 @@
 #include <rtwlan_io.h>
 #include <rtwlan.h>
 
-MODULE_AUTHOR("Daniel Gregorek <dxg@gmx.de>");
-MODULE_DESCRIPTION("RTnet WLAN stack");
-MODULE_LICENSE("GPL");
-
 
 int rtwlan_rx(struct rtskb * rtskb, struct rtnet_device * rtnet_dev)
 {

@@ -64,7 +64,7 @@
 #define DEFAULT_PROXY_RTSKBS        32
 
 static unsigned int proxy_rtskbs = DEFAULT_PROXY_RTSKBS;
-MODULE_PARM(proxy_rtskbs, "i");
+module_param(proxy_rtskbs, uint, 0444);
 MODULE_PARM_DESC(proxy_rtskbs, "Number of realtime socket buffers in proxy pool");
 
 static struct rtskb_queue rtskb_pool;

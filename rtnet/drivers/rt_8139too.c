@@ -57,8 +57,8 @@
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
 static unsigned int rx_pool_size = DEFAULT_RX_POOL_SIZE;
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
-MODULE_PARM(rx_pool_size, "i");
+compat_module_int_param_array(cards, MAX_UNITS);
+module_param(rx_pool_size, uint, 0444);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 // *** RTnet ***

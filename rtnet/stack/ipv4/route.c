@@ -75,7 +75,7 @@ static struct net_route     *net_hash_tbl[NET_HASH_TBL_SIZE + 1];
 static unsigned int         net_hash_key_shift = NET_HASH_KEY_SHIFT;
 static rtdm_lock_t          net_table_lock = RTDM_LOCK_UNLOCKED;
 
-MODULE_PARM(net_hash_key_shift, "i");
+module_param(net_hash_key_shift, uint, 0444);
 MODULE_PARM_DESC(net_hash_key_shift, "destination right shift for "
                  "network hash key (default: 8)");
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
