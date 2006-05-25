@@ -113,12 +113,12 @@ static int csr0 = 0x00A00000 | 0x4800;
 MODULE_AUTHOR("The Linux Kernel Team");
 MODULE_DESCRIPTION("Digital 21*4* Tulip ethernet driver");
 MODULE_LICENSE("GPL");
-MODULE_PARM(tulip_debug, "i");
-MODULE_PARM(max_interrupt_work, "i");
-MODULE_PARM(rx_copybreak, "i");
-MODULE_PARM(csr0, "i");
-MODULE_PARM(options, "1-" __MODULE_STRING(MAX_UNITS) "i");
-MODULE_PARM(full_duplex, "1-" __MODULE_STRING(MAX_UNITS) "i");
+module_param(tulip_debug, int, 0444);
+module_param(max_interrupt_work, int, 0444);
+/*MODULE_PARM(rx_copybreak, "i");*/
+module_param(csr0, int, 0444);
+compat_module_int_param_array(options, MAX_UNITS);
+compat_module_int_param_array(full_duplex, MAX_UNITS);
 
 #define PFX DRV_NAME ": "
 
@@ -129,7 +129,7 @@ int tulip_debug = 1;
 #endif
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 
 

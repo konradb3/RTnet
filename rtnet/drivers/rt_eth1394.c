@@ -108,11 +108,11 @@ static const int hdr_type_len[] = {
  * consume in the event that some partial datagrams are never completed.  This
  * should probably change to a sysctl item or the like if possible.
  */
-MODULE_PARM(max_partial_datagrams, "i");
+static int max_partial_datagrams = 25;
+module_param(max_partial_datagrams, int, 0444);
 MODULE_PARM_DESC(max_partial_datagrams,
 		 "Maximum number of partially received fragmented datagrams "
 		 "(default = 25).");
-static int max_partial_datagrams = 25;
 
 
 static int eth1394_header(struct rtskb *skb, struct rtnet_device *dev,

@@ -2022,9 +2022,9 @@ int io = 0;
 int irq = 0;
 int nowait = 0;
 
-MODULE_PARM(io, "i");
-MODULE_PARM(irq, "i");
-MODULE_PARM(nowait, "i");
+module_param(io, int, 0444);
+module_param(irq, int, 0444);
+module_param(nowait, int, 0444);
 
 /*------------------------------------------------------------
  . Module initialization function

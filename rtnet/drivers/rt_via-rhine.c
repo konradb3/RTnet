@@ -211,7 +211,7 @@ static const int multicast_filter_limit = 32;
 #define DEFAULT_RX_POOL_SIZE    16
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** RTnet ***/
 
@@ -246,14 +246,14 @@ MODULE_AUTHOR("Jan Kiszka");
 MODULE_DESCRIPTION("RTnet VIA Rhine PCI Fast Ethernet driver");
 MODULE_LICENSE("GPL");
 
-MODULE_PARM(max_interrupt_work, "i");
-MODULE_PARM(debug, "i");
+module_param(max_interrupt_work, int, 0444);
+module_param(debug, int, 0444);
 /*** RTnet ***
 MODULE_PARM(rx_copybreak, "i");
  *** RTnet ***/
-MODULE_PARM(backoff, "i");
-MODULE_PARM(options, "1-" __MODULE_STRING(MAX_UNITS) "i");
-MODULE_PARM(full_duplex, "1-" __MODULE_STRING(MAX_UNITS) "i");
+module_param(backoff, int, 0444);
+compat_module_int_param_array(options, MAX_UNITS);
+compat_module_int_param_array(full_duplex, MAX_UNITS);
 MODULE_PARM_DESC(max_interrupt_work, "VIA Rhine maximum events handled per interrupt");
 MODULE_PARM_DESC(debug, "VIA Rhine debug level (0-7)");
 /*** RTnet ***

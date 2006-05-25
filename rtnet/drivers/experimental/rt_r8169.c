@@ -117,7 +117,7 @@ static int media[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
 /*** RTnet ***/
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** /RTnet ***/
 
@@ -129,7 +129,7 @@ MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 #define DEBUG_RUN 16
 static int debug = -1;
 static int r8169_debug = -1;
-MODULE_PARM(debug, "i");
+module_param(debug, int, 0444);
 MODULE_PARM_DESC(debug, MODULENAME " debug level (bit mask, see docs!)");
 
 
@@ -442,7 +442,7 @@ struct rtl8169_private {
 
 MODULE_AUTHOR ("Realtek, modified for RTnet by Klaus.Keppler@gmx.de");
 MODULE_DESCRIPTION ("RealTek RTL-8169 Gigabit Ethernet driver");
-MODULE_PARM (media, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(media, MAX_UNITS);
 MODULE_LICENSE("GPL");
 
 

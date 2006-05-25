@@ -63,7 +63,7 @@ DRV_NAME ".c:v" DRV_VERSION " " DRV_RELDATE " Jan.Kiszka@web.de\n";
 #define DEFAULT_RX_POOL_SIZE    16
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** RTnet ***/
 
@@ -1775,30 +1775,30 @@ static struct pci_driver pcnet32_driver = {
     id_table:	pcnet32_pci_tbl,
 };
 
-MODULE_PARM(debug, "i");
+/* An additional parameter that may be passed in... */
+static int debug = -1;
+static int tx_start_pt = -1;
+
+module_param(debug, int, 0444);
 MODULE_PARM_DESC(debug, DRV_NAME " debug level (0-6)");
-MODULE_PARM(max_interrupt_work, "i");
+module_param(max_interrupt_work, int, 0444);
 MODULE_PARM_DESC(max_interrupt_work, DRV_NAME " maximum events handled per interrupt");
 /*** RTnet ***
 MODULE_PARM(rx_copybreak, "i");
 MODULE_PARM_DESC(rx_copybreak, DRV_NAME " copy breakpoint for copy-only-tiny-frames");
  *** RTnet ***/
-MODULE_PARM(tx_start_pt, "i");
+module_param(tx_start_pt, int, 0444);
 MODULE_PARM_DESC(tx_start_pt, DRV_NAME " transmit start point (0-3)");
-MODULE_PARM(pcnet32vlb, "i");
+module_param(pcnet32vlb, int, 0444);
 MODULE_PARM_DESC(pcnet32vlb, DRV_NAME " Vesa local bus (VLB) support (0/1)");
-MODULE_PARM(options, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(options, MAX_UNITS);
 MODULE_PARM_DESC(options, DRV_NAME " initial option setting(s) (0-15)");
-MODULE_PARM(full_duplex, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(full_duplex, MAX_UNITS);
 MODULE_PARM_DESC(full_duplex, DRV_NAME " full duplex setting(s) (1)");
 
 MODULE_AUTHOR("Jan Kiszka");
 MODULE_DESCRIPTION("RTnet Driver for PCnet32 and PCnetPCI based ethercards");
 MODULE_LICENSE("GPL");
-
-/* An additional parameter that may be passed in... */
-static int debug = -1;
-static int tx_start_pt = -1;
 
 static int __init pcnet32_init_module(void)
 {

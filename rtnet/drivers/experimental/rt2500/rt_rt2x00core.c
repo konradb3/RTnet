@@ -51,7 +51,7 @@ static int rt2x00_radio_on(struct _rt2x00_device * device);
 static int rt2x00_radio_off(struct _rt2x00_device * device);
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
-MODULE_PARM(cards, "1-" __MODULE_STRING(MAX_UNITS) "i");
+compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 
 struct _rt2x00_device * rt2x00_device(struct rtnet_device * rtnet_dev) {
