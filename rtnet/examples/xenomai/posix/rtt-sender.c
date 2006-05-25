@@ -31,7 +31,9 @@
  *
  */
 
+#include <errno.h>
 #include <pthread.h>
+#include <mqueue.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,12 +58,47 @@ pthread_t recv_thread;
 struct sockaddr_in dest_addr;
 
 int sock;
+mqd_t mq;
 
 #define BUFSIZE 1500
 union {
     char            data[BUFSIZE];
     struct timespec tx_date;
 } packet;
+
+struct station_stats {
+    struct in_addr  addr;
+    long long       last, min, max;
+    unsigned long   count;
+};
+
+struct packet_stats {
+    struct in_addr  addr;
+    long long       rtt;
+};
+
+#define MAX_STATIONS 100
+static struct station_stats station[MAX_STATIONS];
+
+
+static struct station_stats *lookup_stats(struct in_addr addr)
+{
+    int i;
+
+    for (i = 0; i < MAX_STATIONS; i++) {
+        if (station[i].addr.s_addr == addr.s_addr)
+            break;
+        if (station[i].addr.s_addr == 0) {
+            station[i].addr = addr;
+            station[i].min  = LONG_MAX;
+            station[i].max  = LONG_MIN;
+            break;
+        }
+    }
+    if (i == MAX_STATIONS)
+        return NULL;
+    return &station[i];
+}
 
 
 void *transmitter(void *arg)
@@ -106,7 +143,8 @@ void *receiver(void *arg)
     struct msghdr       msg;
     struct iovec        iov;
     struct sockaddr_in  addr;
-    struct timespec     rtt_time;
+    struct timespec     rx_date;
+    struct packet_stats stats;
     int                 ret;
 
 
@@ -129,29 +167,32 @@ void *receiver(void *arg)
             return NULL;
         }
 
-        clock_gettime(CLOCK_MONOTONIC, &rtt_time);
-        rtt_time.tv_sec  -= packet.tx_date.tv_sec;
-        rtt_time.tv_nsec -= packet.tx_date.tv_nsec;
-        if (rtt_time.tv_nsec < 0) {
-            rtt_time.tv_nsec += 1000000000;
-            rtt_time.tv_sec--;
-        }
-        printf("packet from %08X, rtt = %ld.%09ld\n", addr.sin_addr.s_addr,
-               rtt_time.tv_sec, rtt_time.tv_nsec);
+        clock_gettime(CLOCK_MONOTONIC, &rx_date);
+        stats.rtt = rx_date.tv_sec * 1000000000LL + rx_date.tv_nsec;
+        stats.rtt -= packet.tx_date.tv_sec * 1000000000LL +
+            packet.tx_date.tv_nsec;
+        stats.addr = addr.sin_addr;
+
+        mq_send(mq, (char *)&stats, sizeof(stats), 0);
     }
 }
 
 
 void catch_signal(int sig)
 {
+    mq_close(mq);
 }
 
 
 int main(int argc, char *argv[])
 {
+    struct sched_param param = { .sched_priority = 1 };
     struct sockaddr_in local_addr;
     int add_rtskbs = 30;
     pthread_attr_t thattr;
+    char mqname[16];
+    struct mq_attr mqattr;
+    int max_stations = 0;
     int ret;
 
 
@@ -224,6 +265,19 @@ int main(int argc, char *argv[])
     if (ret != add_rtskbs)
         printf("WARNING: ioctl(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
 
+    /* create statistic message queue */
+    snprintf(mqname, sizeof(mqname), "rtt-sender-%d", getpid());
+    mqattr.mq_flags   = 0;
+    mqattr.mq_maxmsg  = 100;
+    mqattr.mq_msgsize = sizeof(struct packet_stats);
+    mqattr.mq_curmsgs = 0;
+    mq = mq_open(mqname, O_RDWR | O_CREAT | O_EXCL, 0600, &mqattr);
+    if (mq == (mqd_t)-1) {
+        perror("opening mqueue failed");
+        close(sock);
+        return 1;
+    }
+
     /* create transmitter rt-thread */
     pthread_attr_init(&thattr);
     pthread_attr_setdetachstate(&thattr, PTHREAD_CREATE_JOINABLE);
@@ -231,6 +285,7 @@ int main(int argc, char *argv[])
     ret = pthread_create(&xmit_thread, &thattr, &transmitter, NULL);
     if (ret) {
         close(sock);
+        mq_close(mq);
         perror("pthread_create(transmitter) failed");
         return 1;
     }
@@ -238,19 +293,55 @@ int main(int argc, char *argv[])
     ret = pthread_create(&recv_thread, &thattr, &receiver, NULL);
     if (ret) {
         close(sock);
+        mq_close(mq);
         perror("pthread_create(receiver) failed");
         return 1;
     }
 
-    pause();
+    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+
+    while (1) {
+        struct packet_stats pack;
+        struct station_stats *pstat;
+        int nr;
+
+        ret = mq_receive(mq, (char *)&pack, sizeof(pack), NULL);
+        if (ret < (int)sizeof(pack))
+            break;
+
+        pstat = lookup_stats(pack.addr);
+        if (!pstat)
+            continue;
+
+        pstat->last = pack.rtt;
+        if (pstat->last < pstat->min)
+            pstat->min = pstat->last;
+        if (pstat->last > pstat->max)
+            pstat->max = pstat->last;
+        pstat->count++;
+
+        nr = pstat - &station[0];
+        if (nr > max_stations)
+            max_stations = nr;
+
+        printf("%s\t%.3f us, min=%.3f us, max=%.3f us, count=%ld\r"
+               "\033[%dA\n", inet_ntoa(pack.addr), (float)pstat->last/1000,
+               (float)pstat->min/1000, (float)pstat->max/1000,
+               pstat->count, nr);
+    }
+
+    /* This call also performs the required switch to secondary mode for
+       socket cleanup. */
+    printf("\033[%dB\n", max_stations);
 
     /* Important: First close the socket! */
-    while (close(sock) == -EAGAIN) {
+    while ((close(sock) < 0) && (errno == EAGAIN)) {
         printf("socket busy - waiting...\n");
         sleep(1);
     }
 
     pthread_join(xmit_thread, NULL);
+    pthread_kill(recv_thread, SIGHUP);
     pthread_join(recv_thread, NULL);
 
     return 0;

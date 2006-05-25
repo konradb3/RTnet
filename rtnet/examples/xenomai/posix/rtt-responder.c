@@ -195,11 +195,12 @@ int main(int argc, char *argv[])
     pause();
 
     /* Important: First close the socket! */
-    while (close(sock) == -EAGAIN) {
+    while ((close(sock) < 0) && (errno == EAGAIN)) {
         printf("socket busy - waiting...\n");
         sleep(1);
     }
 
+    pthread_kill(rt_thread, SIGHUP);
     pthread_join(rt_thread, NULL);
 
     return 0;
