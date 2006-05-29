@@ -97,9 +97,6 @@ int main(int argc, char *argv[]) {
      * Note: call must be in soft-mode because socket was created as non-rt! */
     rt_dev_close(sockfd);
 
-    /* Stop the timer. */
-    stop_rt_timer();
-
     /* Delete realtime buddy. */
     rt_task_delete(lxrtnettsk);
 
