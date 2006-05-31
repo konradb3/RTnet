@@ -46,6 +46,7 @@
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
 #include <net/sock.h>
+#include <net/ip.h>
 
 #include <linux/if_ether.h> /* For the statistics structure. */
 #include <linux/if_arp.h>   /* For ARPHRD_ETHER */
@@ -209,7 +210,7 @@ static inline void send_data_out(struct sk_buff *skb)
 
     /* Determine the device to use: Only ip routing is used here.
      * Non-ip protocols are not supported... */
-    rc = rt_ip_route_output(&rt, pData->ip_dst);
+    rc = rt_ip_route_output(&rt, pData->ip_dst, INADDR_ANY);
     if (rc == 0)
     {
         struct rtnet_device *rtdev = rt.rtdev;

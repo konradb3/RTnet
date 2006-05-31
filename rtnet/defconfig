@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # RTnet version: 0.9.3
-# Thu May  4 00:35:50 2006
+# Wed May 31 01:51:36 2006
 #
 CONFIG_RTNET_VERSION="0.9.3"
 
@@ -32,6 +32,7 @@ CONFIG_RTNET_RX_FIFO_SIZE=32
 # Protocols
 #
 CONFIG_RTNET_RTIPV4=y
+# CONFIG_RTNET_RTIPV4_ROUTE_SRC is not set
 # CONFIG_RTNET_RTIPV4_NETROUTING is not set
 # CONFIG_RTNET_RTIPV4_ROUTER is not set
 CONFIG_RTNET_RTPACKET=y

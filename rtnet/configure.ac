@@ -1004,6 +1004,18 @@ if test "$CONFIG_RTNET_RTIPV4" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4,1,[Real-Time IPv4 support])
 fi
 
+AC_MSG_CHECKING([whether to enable source IP routing])
+AC_ARG_ENABLE(route-src,
+    AS_HELP_STRING([--enable-route-src], [enable source IP routing @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_RTIPV4_ROUTE_SRC=y ;;
+        *) CONFIG_RTNET_RTIPV4_ROUTE_SRC=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_ROUTE_SRC:-n}])
+if test "$CONFIG_RTNET_RTIPV4_ROUTE_SRC" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_RTIPV4_ROUTE_SRC, 1, [Source IP routing])
+fi
+
 AC_MSG_CHECKING([whether to enable IP network routing])
 AC_ARG_ENABLE(net-routing,
     AS_HELP_STRING([--enable-net-routing], [enable IP network routing @<:@default=no@:>@]),

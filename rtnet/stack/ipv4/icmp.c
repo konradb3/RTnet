@@ -174,16 +174,15 @@ static int rt_icmp_glue_reply_bits(const void *p, unsigned char *to,
 static void rt_icmp_send_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 {
     struct dest_route   rt;
-    u32                 daddr;
     int                 err;
 
-
-    daddr = skb->nh.iph->saddr;
 
     icmp_param->head.icmph.checksum = 0;
     icmp_param->csum = 0;
 
-    if (rt_ip_route_output(&rt, daddr) != 0)
+    /* route back to the source address via the incoming device */
+    if (rt_ip_route_output(&rt, skb->nh.iph->saddr,
+                           skb->rtdev->local_ip) != 0)
         return;
 
     err = rt_ip_build_xmit(&icmp_socket, rt_icmp_glue_reply_bits, icmp_param,
@@ -304,7 +303,7 @@ static int rt_icmp_send_request(u32 daddr, struct icmp_bxm *icmp_param)
     icmp_param->head.icmph.checksum = 0;
     icmp_param->csum = 0;
 
-    if ((err = rt_ip_route_output(&rt, daddr)) < 0)
+    if ((err = rt_ip_route_output(&rt, daddr, INADDR_ANY)) < 0)
         return err;
 
     /* TODO: add support for fragmented ICMP packets */

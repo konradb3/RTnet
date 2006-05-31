@@ -378,18 +378,18 @@ static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
 
 #ifdef CONFIG_RTNET_RTIPV4
         if ((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) {
-            struct rtnet_device *rtdev;
+            struct rtnet_device *rtdev = rtdev_get_by_index(conn->ifindex);
 
-            rt_ip_route_del_host(conn->addr.ip_addr);
+            rt_ip_route_del_host(conn->addr.ip_addr, rtdev);
 
-            if (conn->addr_type == RTCFG_ADDR_IP) {
+            if (rtdev == NULL)
+                return;
+
+            if (!(conn->addr_type & FLAG_ASSIGN_ADDR_BY_MAC))
                 /* MAC address yet unknown -> use broadcast address */
-                rtdev = rtdev_get_by_index(conn->ifindex);
-                if (rtdev == NULL)
-                    return;
                 memcpy(conn->mac_addr, rtdev->broadcast, MAX_ADDR_LEN);
-                rtdev_dereference(rtdev);
-            }
+
+            rtdev_dereference(rtdev);
         }
 #endif /* CONFIG_RTNET_RTIPV4 */
     }

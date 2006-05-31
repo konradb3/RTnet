@@ -566,7 +566,7 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *sockctx,
         return -EINVAL;
 
     /* get output route */
-    err = rt_ip_route_output(&rt, daddr);
+    err = rt_ip_route_output(&rt, daddr, saddr);
     if (err)
         return err;
 

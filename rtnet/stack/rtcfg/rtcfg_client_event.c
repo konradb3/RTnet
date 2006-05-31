@@ -1047,7 +1047,7 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
 
             /* only delete remote IPs from routing table */
             if (rtskb->rtdev->local_ip != ip)
-                rt_ip_route_del_host(ip);
+                rt_ip_route_del_host(ip, rtskb->rtdev);
 
             dead_station_frm = (struct rtcfg_frm_dead_station *)
                 (((u8 *)dead_station_frm) + RTCFG_ADDRSIZE_IP);

@@ -49,7 +49,8 @@ void help(void)
         "\trtroute solicit <addr> dev <dev>\n"
         "\trtroute add <addr> <hwaddr> dev <dev>\n"
         "\trtroute add <addr> netmask <mask> gw <gw-addr>\n"
-        "\trtroute del <addr> [netmask <mask>]\n"
+        "\trtroute del <addr> [dev <dev>]\n"
+        "\trtroute del <addr> netmask <mask>\n"
         "\trtroute -f <host-routes-file>\n"
         );
 
@@ -270,16 +271,23 @@ void route_delete(int argc, char *argv[])
 
         ret = ioctl(f, IOC_RT_HOST_ROUTE_DELETE, &cmd);
     } else if (argc == 5) {
+        /*** delete device specific route ***/
+        if (strcmp(argv[3], "dev") == 0) {
+            cmd.args.delhost.ip_addr = addr.s_addr;
+            strncpy(cmd.head.if_name, argv[4], IFNAMSIZ);
+            ret = ioctl(f, IOC_RT_HOST_ROUTE_DELETE_DEV, &cmd);
+        }
         /*** delete network route ***/
-        if (strcmp(argv[3], "netmask") != 0)
-            help();
+        else if (strcmp(argv[3], "netmask") == 0) {
+            cmd.args.delnet.net_addr = addr.s_addr;
+            if (!inet_aton(argv[4], &addr))
+                help();
+            cmd.args.delnet.net_mask = addr.s_addr;
 
-        cmd.args.delnet.net_addr = addr.s_addr;
-        if (!inet_aton(argv[4], &addr))
+            ret = ioctl(f, IOC_RT_NET_ROUTE_DELETE, &cmd);
+        }
+        else
             help();
-        cmd.args.delnet.net_mask = addr.s_addr;
-
-        ret = ioctl(f, IOC_RT_NET_ROUTE_DELETE, &cmd);
     } else
         help();
 

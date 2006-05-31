@@ -158,7 +158,8 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             break;
 
         case IOC_RT_HOST_ROUTE_DELETE:
-            ret = rt_ip_route_del_host(cmd.args.delhost.ip_addr);
+        case IOC_RT_HOST_ROUTE_DELETE_DEV:
+            ret = rt_ip_route_del_host(cmd.args.delhost.ip_addr, rtdev);
             break;
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING

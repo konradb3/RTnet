@@ -10,10 +10,20 @@ config RTNET_RTIPV4
     For further information see also Documentation/README.routing and
     Documentation/README.ipfragmentation.
 
+config RTNET_RTIPV4_ROUTE_SRC
+    bool "Consider source IP for output routing"
+    depends on RTNET_RTIPV4
+    ---help---
+    When enabled, RTnet will also consider the local interface IP while
+    looking up a destination host route. This effectively allows to maintain
+    host routes for different network interfaces with identical IP addresses.
+
+    Normal RTnet setups are expected to use only unique IP addresses, thus
+    this option can be left disabled in that case to avoid (low) overhead.
+
 config RTNET_RTIPV4_NETROUTING
     bool "IP Network Routing"
     depends on RTNET_RTIPV4
-    default n
     ---help---
     Enables routing across IPv4 real-time networks. You will only require
     this feature in complex networks, while switching it off for flat,
@@ -25,7 +35,6 @@ config RTNET_RTIPV4_NETROUTING
 config RTNET_RTIPV4_ROUTER
     bool "IP Router"
     depends on RTNET_RTIPV4
-    default n
     ---help---
     When switched on, the RTnet station will be able to forward IPv4
     packets that are not directed to the station itself. Typically used in

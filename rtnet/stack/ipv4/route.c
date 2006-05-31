@@ -299,7 +299,7 @@ static int __init rt_route_proc_register(void)
 
 
 
-static void rt_route_proc_unregister(void)
+static void __exit rt_route_proc_unregister(void)
 {
     remove_proc_entry("route", ipv4_proc_root);
     remove_proc_entry("arp", ipv4_proc_root);
@@ -383,7 +383,11 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
 
     rt = host_hash_tbl[key];
     while (rt != NULL) {
-        if (rt->dest_host.ip == addr) {
+        if ((rt->dest_host.ip == addr)
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+            && (rt->dest_host.rtdev->local_ip == rtdev->local_ip)
+#endif /* CONFIG_RTNET_RTIPV4_ROUTE_SRC */
+           ) {
             rt->dest_host.rtdev = rtdev;
             memcpy(rt->dest_host.dev_addr, dev_addr, rtdev->addr_len);
 
@@ -420,7 +424,11 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
 /***
  *  rt_ip_route_del_host - deletes specified host route
  */
-int rt_ip_route_del_host(u32 addr)
+int __rt_ip_route_del_host(u32 addr
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+                           , struct rtnet_device *rtdev
+#endif /* CONFIG_RTNET_RTIPV4_ROUTE_SRC */
+                          )
 {
     rtdm_lockctx_t      context;
     struct host_route   *rt;
@@ -435,7 +443,11 @@ int rt_ip_route_del_host(u32 addr)
 
     rt = host_hash_tbl[key];
     while (rt != NULL) {
-        if (rt->dest_host.ip == addr) {
+        if ((rt->dest_host.ip == addr)
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+            && (!rtdev || (rt->dest_host.rtdev->local_ip == rtdev->local_ip))
+#endif
+           ) {
             *last_ptr = rt->next;
 
             rt_free_host_route(rt);
@@ -494,7 +506,7 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
     }
 
     if ((ip = rtdev->local_ip) != 0)
-        rt_ip_route_del_host(ip);
+        rt_ip_route_del_host(ip, rtdev);
 }
 
 
@@ -652,7 +664,11 @@ int rt_ip_route_del_net(u32 addr, u32 mask)
  *
  *  Note: increments refcount on returned rtdev in rt_buf
  */
-int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
+int __rt_ip_route_output(struct dest_route *rt_buf, u32 daddr
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+                         , u32 saddr
+#endif /* CONFIG_RTNET_RTIPV4_ROUTE_SRC */
+                        )
 {
     rtdm_lockctx_t      context;
     struct host_route   *host_rt;
@@ -670,13 +686,19 @@ int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr)
 
   restart:
 #endif /* !CONFIG_RTNET_RTIPV4_NETROUTING */
+
     key = ntohl(daddr) & HOST_HASH_KEY_MASK;
 
     rtdm_lock_get_irqsave(&host_table_lock, context);
 
     host_rt = host_hash_tbl[key];
     while (host_rt != NULL) {
-        if (host_rt->dest_host.ip == daddr) {
+        if ((host_rt->dest_host.ip == daddr)
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+            && ((saddr == INADDR_ANY) ||
+                (host_rt->dest_host.rtdev->local_ip == saddr))
+#endif /* CONFIG_RTNET_RTIPV4_ROUTE_SRC */
+           ) {
             memcpy(rt_buf->dev_addr, &host_rt->dest_host.dev_addr,
                    sizeof(rt_buf->dev_addr));
             rt_buf->rtdev = host_rt->dest_host.rtdev;
@@ -823,9 +845,9 @@ void rt_ip_routing_release(void)
 
 
 EXPORT_SYMBOL(rt_ip_route_add_host);
-EXPORT_SYMBOL(rt_ip_route_del_host);
+EXPORT_SYMBOL(__rt_ip_route_del_host);
 EXPORT_SYMBOL(rt_ip_route_del_all);
 
 #ifdef CONFIG_RTNET_ADDON_PROXY
-EXPORT_SYMBOL(rt_ip_route_output);
+EXPORT_SYMBOL(__rt_ip_route_output);
 #endif
