@@ -619,18 +619,20 @@ static inline unsigned char *__rtskb_put(struct rtskb *skb, unsigned int len)
     return tmp;
 }
 
-static inline unsigned char *rtskb_put(struct rtskb *skb, unsigned int len)
-{
-    unsigned char *tmp=skb->tail;
-
-    skb->tail+=len;
-    skb->len+=len;
-
-    RTNET_ASSERT(skb->tail <= skb->buf_end,
-        rtskb_over_panic(skb, len, current_text_addr()););
-
-    return tmp;
-}
+#define rtskb_put(skb, length) \
+({ \
+    struct rtskb *__rtskb = (skb); \
+    unsigned int __len = (length); \
+    unsigned char *tmp=__rtskb->tail; \
+\
+    __rtskb->tail += __len; \
+    __rtskb->len  += __len; \
+\
+    RTNET_ASSERT(__rtskb->tail <= __rtskb->buf_end, \
+        rtskb_over_panic(__rtskb, __len, current_text_addr());); \
+\
+    tmp; \
+})
 
 static inline unsigned char *__rtskb_push(struct rtskb *skb, unsigned int len)
 {
@@ -639,16 +641,19 @@ static inline unsigned char *__rtskb_push(struct rtskb *skb, unsigned int len)
     return skb->data;
 }
 
-static inline unsigned char *rtskb_push(struct rtskb *skb, unsigned int len)
-{
-    skb->data-=len;
-    skb->len+=len;
-
-    RTNET_ASSERT(skb->data >= skb->buf_start,
-        rtskb_under_panic(skb, len, current_text_addr()););
-
-    return skb->data;
-}
+#define rtskb_push(skb, length) \
+({ \
+    struct rtskb *__rtskb = (skb); \
+    unsigned int __len = (length); \
+\
+    __rtskb->data -= __len; \
+    __rtskb->len  += __len; \
+\
+    RTNET_ASSERT(__rtskb->data >= __rtskb->buf_start, \
+        rtskb_under_panic(__rtskb, __len, current_text_addr());); \
+\
+    __rtskb->data; \
+})
 
 static inline unsigned char *__rtskb_pull(struct rtskb *skb, unsigned int len)
 {

@@ -38,6 +38,7 @@
     { \
         rtdm_printk("Assertion failed! %s:%s:%d %s\n", \
         __FILE__, __FUNCTION__, __LINE__, (#expr)); \
+        show_stack(NULL, NULL); \
         func \
     }
 #else
