@@ -28,6 +28,7 @@
  *
  */
 
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
