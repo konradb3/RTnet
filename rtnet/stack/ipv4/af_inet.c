@@ -368,7 +368,7 @@ int __init rt_ipv4_proto_init(void)
 }
 
 
-void rt_ipv4_proto_release(void)
+void __exit rt_ipv4_proto_release(void)
 {
     rtdev_del_event_hook(&rtdev_hook);
     rtdm_dev_unregister(&ipv4_device, 1000);
