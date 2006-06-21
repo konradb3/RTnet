@@ -567,9 +567,6 @@ static void __exit rtnetproxy_cleanup_module(void)
     unregister_netdev(&dev_rtnetproxy);
     kfree(dev_rtnetproxy.priv);
 
-    memset(&dev_rtnetproxy, 0, sizeof(dev_rtnetproxy));
-    dev_rtnetproxy.init = rtnetproxy_init;
-
     rtskb_pool_release(&rtskb_pool);
 }
 

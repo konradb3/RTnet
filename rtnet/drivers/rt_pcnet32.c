@@ -70,7 +70,7 @@ MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*
  * PCI device identifiers for "new style" Linux PCI Device Drivers
  */
-static struct pci_device_id pcnet32_pci_tbl[] __devinitdata = {
+static struct pci_device_id pcnet32_pci_tbl[] = {
     { PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_LANCE_HOME, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
     { PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_LANCE, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
     { 0, }
@@ -78,7 +78,7 @@ static struct pci_device_id pcnet32_pci_tbl[] __devinitdata = {
 
 MODULE_DEVICE_TABLE (pci, pcnet32_pci_tbl);
 
-int cards_found __initdata = -1;
+static int cards_found = -1;
 
 /*
  * VLB I/O addresses

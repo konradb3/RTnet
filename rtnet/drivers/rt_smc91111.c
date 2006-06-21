@@ -2029,7 +2029,7 @@ module_param(nowait, int, 0444);
 /*------------------------------------------------------------
  . Module initialization function
  .-------------------------------------------------------------*/
-int init_module(void)
+int __init init_module(void)
 {
 	int result;
 
@@ -2073,7 +2073,7 @@ int init_module(void)
 /*------------------------------------------------------------
  . Cleanup when module is removed with rmmod
  .-------------------------------------------------------------*/
-void cleanup_module(void)
+void __exit cleanup_module(void)
 {
 	/* No need to check MOD_IN_USE, as sys_delete_module() checks. */
 	rt_unregister_rtnetdev(devSMC91111);
