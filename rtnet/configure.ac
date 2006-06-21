@@ -403,8 +403,13 @@ case "${RTEXT_LINUX_VERSION}" in
     2.4.*)
         unset CONFIG_KBUILD
         ;;
+    2.6.[[[:digit:]]] | 2.6.[[[:digit:]]].* | 2.6.1[[0123456]] | 2.6.1[[0123456]].*)
+        CONFIG_KBUILD=y
+        CONFIG_KBUILD_LEGACY=y
+        ;;
     2.6.*)
         CONFIG_KBUILD=y
+        unset CONFIG_KBUILD_LEGACY
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -465,13 +470,13 @@ else
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
         xeno-21x)
-	    # Kernel cflags capturing trick from RTAI 
-	    kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CC=$CC | grep '^RTEXT_KMOD_CFLAGS='`
-	    eval $kmod_cflags
-	    if test "$RTEXT_KMOD_CFLAGS" = ""; then
-	        AC_MSG_ERROR([Unable to retrieve compilation flags for kernel modules out of $RTEXT_LINUX_DIR/Makefile])
-	    fi	 
-	    RTEXT_KMOD_CFLAGS="$RTEXT_KMOD_CFLAGS -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
+            # Kernel cflags capturing trick from RTAI
+            kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CC=$CC | grep '^RTEXT_KMOD_CFLAGS='`
+            eval $kmod_cflags
+            if test "$RTEXT_KMOD_CFLAGS" = ""; then
+                AC_MSG_ERROR([Unable to retrieve compilation flags for kernel modules out of $RTEXT_LINUX_DIR/Makefile])
+            fi
+            RTEXT_KMOD_CFLAGS="$RTEXT_KMOD_CFLAGS -DEXPORT_SYMTAB -I${RTEXT_LINUX_DIR}/include/xenomai -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
@@ -559,8 +564,16 @@ if test x$CONFIG_KBUILD = x; then
 else
     RTNET_MODULE_EXT=.ko
     RTNET_KBUILD_ENV='src2obj = $(patsubst %.$(1),%.o,$(filter %.$(1),$(call notdir,$(2))))'
-    RTNET_KBUILD_CMD="                                                      \
-        +@for src in \$(filter-out FORCE, \$^); do                          \
+    RTNET_KBUILD_CMD="+@"
+    if test x$CONFIG_KBUILD_LEGACY = x; then
+        RTNET_KBUILD_CMD="$RTNET_KBUILD_CMD                                 \
+                if test \\! -r Modules.symvers; then                        \
+                    \$(LN_S) \"\`cd \$(top_builddir) && pwd\`/Modules.symvers\" .; \
+                fi;                                                         \
+                "
+    fi
+    RTNET_KBUILD_CMD="$RTNET_KBUILD_CMD                                     \
+        for src in \$(filter-out FORCE, \$^); do                            \
             if test \\! -r \`basename \$\$src\`; then                       \
                 \$(LN_S) \$\$src;                                           \
             fi;                                                             \
@@ -577,9 +590,13 @@ else
                 build_objs='\$(call src2obj,c,\$^)'                         \
                 build_targets=\"\`for tgt in \${OBJS}; do basename \$\$tgt  \
                     | sed -e's/\.ko/\.o /' | tr -d '\n'; done\`\"           \
-                MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"        \
                 modules                                                     \
                 "
+    if test x$CONFIG_KBUILD_LEGACY = xy; then
+        RTNET_KBUILD_CMD="$RTNET_KBUILD_CMD                                 \
+                MODVERDIR=\"\`cd \$(top_builddir) && pwd\`/symbols\"        \
+                "
+    fi
     RTNET_KBUILD_CLEAN="                                                    \
         @rm -f *.ko *.mod.c .*.cmd *.o;                                     \
         for src in \$^; do                                                  \
@@ -588,12 +605,16 @@ else
             fi;                                                             \
         done;                                                               \
         "
-    RTNET_KBUILD_DISTCLEAN="                                                \
-        @for mod in \${OBJS}; do                                            \
-            rm -f \`cd \$(top_builddir) && pwd\`/symbols/\`echo \$\$mod |   \
-                sed -e's/${RTNET_MODULE_EXT}//'\`.mod;                      \
-        done;                                                               \
-        "
+    if test x$CONFIG_KBUILD_LEGACY = xy; then
+        RTNET_KBUILD_DISTCLEAN="                                            \
+            @for mod in \${OBJS}; do                                        \
+                rm -f \`cd \$(top_builddir) && pwd\`/symbols/\`echo \$\$mod \
+                    | sed -e's/${RTNET_MODULE_EXT}//'\`.mod;                \
+            done;                                                           \
+            "
+    else
+        RTNET_KBUILD_DISTCLEAN=
+    fi
     dnl === Hack to suppress undefined symbol warnings during MODPOST stage ===
     case "${CONFIG_RTNET_RTEXT_VERSION}" in
         rtai-3x)
@@ -1323,7 +1344,7 @@ dnl ======================================================================
 dnl             create links to Xenomai and RT-FireWire symbols
 dnl ======================================================================
 
-if test x$CONFIG_KBUILD = xy; then
+if test x$CONFIG_KBUILD_LEGACY = xy; then
     case "${CONFIG_RTNET_RTEXT_VERSION}" in
         xeno-20x)
             mkdir -p symbols
