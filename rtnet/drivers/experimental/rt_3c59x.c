@@ -276,7 +276,7 @@ static int vortex_debug = 1;
 //#include "../comdbg.h"
 
 static int cards = INT_MAX;
-MODULE_PARM(cards, "i");
+module_param(cards, int, 0444);
 MODULE_PARM_DESC(cards, "number of cards to be supported");
 // *** RTnet ***
 
@@ -304,39 +304,6 @@ MODULE_AUTHOR("Donald Becker <becker@scyld.com>");
 MODULE_DESCRIPTION("3Com 3c59x/3c9xx ethernet driver for RTnet "
 					DRV_VERSION " " DRV_RELDATE);
 MODULE_LICENSE("GPL");
-
-MODULE_PARM(debug, "i");
-MODULE_PARM(options, "1-" __MODULE_STRING(8) "i");
-MODULE_PARM(full_duplex, "1-" __MODULE_STRING(8) "i");
-MODULE_PARM(hw_checksums, "1-" __MODULE_STRING(8) "i");
-MODULE_PARM(flow_ctrl, "1-" __MODULE_STRING(8) "i");
-MODULE_PARM(enable_wol, "1-" __MODULE_STRING(8) "i");
-/*** RTnet ***
-MODULE_PARM(rx_copybreak, "i");
- *** RTnet ***/
-MODULE_PARM(max_interrupt_work, "i");
-/*** RTnet ***
-MODULE_PARM(compaq_ioaddr, "i");
-MODULE_PARM(compaq_irq, "i");
-MODULE_PARM(compaq_device_id, "i");
-MODULE_PARM(watchdog, "i");
- *** RTnet ***/
-MODULE_PARM_DESC(debug, "3c59x debug level (0-6)");
-MODULE_PARM_DESC(options, "3c59x: Bits 0-3: media type, bit 4: bus mastering, bit 9: full duplex");
-MODULE_PARM_DESC(full_duplex, "3c59x full duplex setting(s) (1)");
-MODULE_PARM_DESC(hw_checksums, "3c59x Hardware checksum checking by adapter(s) (0-1)");
-MODULE_PARM_DESC(flow_ctrl, "3c59x 802.3x flow control usage (PAUSE only) (0-1)");
-MODULE_PARM_DESC(enable_wol, "3c59x: Turn on Wake-on-LAN for adapter(s) (0-1)");
-/*** RTnet ***
-MODULE_PARM_DESC(rx_copybreak, "3c59x copy breakpoint for copy-only-tiny-frames");
- *** RTnet ***/
-MODULE_PARM_DESC(max_interrupt_work, "3c59x maximum events handled per interrupt");
-/*** RTnet ***
-MODULE_PARM_DESC(compaq_ioaddr, "3c59x PCI I/O base address (Compaq BIOS problem workaround)");
-MODULE_PARM_DESC(compaq_irq, "3c59x PCI IRQ number (Compaq BIOS problem workaround)");
-MODULE_PARM_DESC(compaq_device_id, "3c59x PCI device ID (Compaq BIOS problem workaround)");
-MODULE_PARM_DESC(watchdog, "3c59x transmit timeout in milliseconds");
- *** RTnet ***/
 
 /* Operational parameter that usually are not changed. */
 
@@ -916,6 +883,39 @@ static int full_duplex[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static int hw_checksums[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static int flow_ctrl[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
 static int enable_wol[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
+
+module_param(debug, int, 0444);
+compat_module_int_param_array(options, MAX_UNITS);
+compat_module_int_param_array(full_duplex, MAX_UNITS);
+compat_module_int_param_array(hw_checksums, MAX_UNITS);
+compat_module_int_param_array(flow_ctrl, MAX_UNITS);
+compat_module_int_param_array(enable_wol, MAX_UNITS);
+/*** RTnet ***
+MODULE_PARM(rx_copybreak, "i");
+ *** RTnet ***/
+module_param(max_interrupt_work, int, 0444);
+/*** RTnet ***
+MODULE_PARM(compaq_ioaddr, "i");
+MODULE_PARM(compaq_irq, "i");
+MODULE_PARM(compaq_device_id, "i");
+MODULE_PARM(watchdog, "i");
+ *** RTnet ***/
+MODULE_PARM_DESC(debug, "3c59x debug level (0-6)");
+MODULE_PARM_DESC(options, "3c59x: Bits 0-3: media type, bit 4: bus mastering, bit 9: full duplex");
+MODULE_PARM_DESC(full_duplex, "3c59x full duplex setting(s) (1)");
+MODULE_PARM_DESC(hw_checksums, "3c59x Hardware checksum checking by adapter(s) (0-1)");
+MODULE_PARM_DESC(flow_ctrl, "3c59x 802.3x flow control usage (PAUSE only) (0-1)");
+MODULE_PARM_DESC(enable_wol, "3c59x: Turn on Wake-on-LAN for adapter(s) (0-1)");
+/*** RTnet ***
+MODULE_PARM_DESC(rx_copybreak, "3c59x copy breakpoint for copy-only-tiny-frames");
+ *** RTnet ***/
+MODULE_PARM_DESC(max_interrupt_work, "3c59x maximum events handled per interrupt");
+/*** RTnet ***
+MODULE_PARM_DESC(compaq_ioaddr, "3c59x PCI I/O base address (Compaq BIOS problem workaround)");
+MODULE_PARM_DESC(compaq_irq, "3c59x PCI IRQ number (Compaq BIOS problem workaround)");
+MODULE_PARM_DESC(compaq_device_id, "3c59x PCI device ID (Compaq BIOS problem workaround)");
+MODULE_PARM_DESC(watchdog, "3c59x transmit timeout in milliseconds");
+ *** RTnet ***/
 
 /* #define dev_alloc_skb dev_alloc_skb_debug */
 
