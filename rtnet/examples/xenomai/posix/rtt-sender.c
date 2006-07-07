@@ -47,7 +47,7 @@
 
 char *dest_ip_s = "127.0.0.1";
 char *local_ip_s = "";
-unsigned int cycle = 100000; /* 100 ms */
+unsigned int cycle = 50000; /* 50 ms */
 
 pthread_t xmit_thread;
 pthread_t recv_thread;
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
             printf("\n");
         }
 
-        printf("\033[%dA%s\t%.3f us, min=%.3f us, max=%.3f us, count=%ld\n",
+        printf("\033[%dA%s\t%9.3f us, min=%9.3f us, max=%9.3f us, count=%ld\n",
                stations-nr, inet_ntoa(pack.addr), (float)pstat->last/1000,
                (float)pstat->min/1000, (float)pstat->max/1000, pstat->count);
         for (nr = stations-nr-1; nr > 0; nr --)
