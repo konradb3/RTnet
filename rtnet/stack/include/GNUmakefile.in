@@ -247,7 +247,6 @@ nobase_include_HEADERS = \
 	rtmac.h
 
 noinst_HEADERS = \
-	comdbg.h \
 	rtdev.h \
 	rtdev_mgr.h \
 	rtnet_chrdev.h \
@@ -260,7 +259,11 @@ noinst_HEADERS = \
 	rtnet_sys_rtai.h \
 	rtnet_sys_xenomai.h \
 	rtskb.h \
+	rtskb_fifo.h \
 	stack_mgr.h \
+	\
+	rtwlan.h \
+	rtwlan_io.h \
 	\
 	nomac_chrdev.h \
 	tdma_chrdev.h \

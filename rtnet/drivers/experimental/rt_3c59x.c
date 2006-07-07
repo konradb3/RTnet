@@ -273,7 +273,6 @@ static int vortex_debug = 1;
 
 // *** RTnet ***
 #include <rtnet_port.h>
-//#include "../comdbg.h"
 
 static int cards = INT_MAX;
 module_param(cards, int, 0444);
