@@ -1,4 +1,4 @@
-                             RTnet Version 0.9.2
+                             RTnet Version 0.9.3
                              ===================
 
 What is it?
@@ -18,17 +18,17 @@ is provided.
 
 What are the requirements?
 --------------------------
-- Linux kernel 2.6.x: tested up to 2.6.16
+- Linux kernel 2.6.x: tested up to 2.6.17
   Linux kernel 2.4.x: tested up to 2.4.32
 - Xenomai 2.0 or better
-  RTAI 3.3 or better
-- x86, PowerPC, or ARM platform
-  (other platforms are lacking up-to-date RTAI or Xenomai support)
+  RTAI 3.3-cv or better
+- x86, PowerPC, or ARM platform (other platforms are untested)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), DEC 21x4x-based (tulip),
   AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x, RTL8169 network adapter,
   MPC8260 FCC, MPC8xx SCC/FEC, or MPC5200 on-chip controllers, SMSC LAN91C111
   embedded controller
 - For Ethernet-over-FireWire see rtfirewire.berlios.de
+- For RT-WLAN: Ralink 2500
 
 
 How to install it?
@@ -62,8 +62,8 @@ How to test it?
 3. Check <PREFIX>/etc/rtnet.conf and adapt at least the following parameters:
    RT_DRIVER, IPADDR, TDMA_MODE, TDMA_SLAVES.
 4. Run <PREFIX>/sbin/rtnet start
-5. Run rtping <remote-host> or load an application module
-   (like addons/examples/round_trip_time/run)
+5. Run rtping <remote-host> or run an example application
+   (e.g. examples/xenomai/posix/rtt-{sender,responder})
 
 
 Special notes
@@ -117,6 +117,7 @@ Klaus Keppler                           - RTL8169 gigabit driver
 Bill Vareka <bvareka-at-amsuper.com>    - joint-slots TDMA extension
 Fabian Koch <me-at-tabascoeye.de>       - various improvements of the
                                           configuration interfaces and tools
+Daniel Gregorek <dxg-at-gmx.de>         - RT-WLAN support, RT2500 driver
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some

@@ -1,3 +1,11 @@
+0.9.3
+- experimental RT-WLAN support with Ralink 2500 as first driver
+- support for kernel 2.6.17
+- re-added support for source-based IP routing
+- lock-less stack manager rx queue
+- added round-trip-time example (using pure POSIX)
+- various minor updates and fixes
+
 0.9.2
 - added support for RTDM API revision 4
 - finalised Xenomai 2.1 support
