@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     pthread_attr_t thattr;
     char mqname[16];
     struct mq_attr mqattr;
-    int max_stations = 0;
+    int stations = 0;
     int ret;
 
 
@@ -282,19 +282,22 @@ int main(int argc, char *argv[])
     pthread_attr_init(&thattr);
     pthread_attr_setdetachstate(&thattr, PTHREAD_CREATE_JOINABLE);
     pthread_attr_setstacksize(&thattr, PTHREAD_STACK_MIN);
-    ret = pthread_create(&xmit_thread, &thattr, &transmitter, NULL);
+    ret = pthread_create(&recv_thread, &thattr, &receiver, NULL);
     if (ret) {
+        errno = ret; perror("pthread_create(receiver) failed");
         close(sock);
         mq_close(mq);
-        perror("pthread_create(transmitter) failed");
         return 1;
     }
 
-    ret = pthread_create(&recv_thread, &thattr, &receiver, NULL);
+    /* create receiver rt-thread */
+    ret = pthread_create(&xmit_thread, &thattr, &transmitter, NULL);
     if (ret) {
+        errno = ret; perror("pthread_create(transmitter) failed");
         close(sock);
         mq_close(mq);
-        perror("pthread_create(receiver) failed");
+        pthread_kill(recv_thread, SIGHUP);
+        pthread_join(recv_thread, NULL);
         return 1;
     }
 
@@ -321,18 +324,20 @@ int main(int argc, char *argv[])
         pstat->count++;
 
         nr = pstat - &station[0];
-        if (nr > max_stations)
-            max_stations = nr;
+        if (nr >= stations) {
+            stations = nr+1;
+            printf("\n");
+        }
 
-        printf("%s\t%.3f us, min=%.3f us, max=%.3f us, count=%ld\r"
-               "\033[%dA\n", inet_ntoa(pack.addr), (float)pstat->last/1000,
-               (float)pstat->min/1000, (float)pstat->max/1000,
-               pstat->count, nr);
+        printf("\033[%dA%s\t%.3f us, min=%.3f us, max=%.3f us, count=%ld\n",
+               stations-nr, inet_ntoa(pack.addr), (float)pstat->last/1000,
+               (float)pstat->min/1000, (float)pstat->max/1000, pstat->count);
+        for (nr = stations-nr-1; nr > 0; nr --)
+            printf("\n");
     }
 
-    /* This call also performs the required switch to secondary mode for
-       socket cleanup. */
-    printf("\033[%dB\n", max_stations);
+    /* This call also leaves primary mode, required for socket cleanup. */
+    printf("shutting down\n");
 
     /* Important: First close the socket! */
     while ((close(sock) < 0) && (errno == EAGAIN)) {

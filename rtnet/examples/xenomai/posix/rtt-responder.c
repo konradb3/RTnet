@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     ret = pthread_create(&rt_thread, &thattr, &responder, NULL);
     if (ret) {
         close(sock);
-        perror("pthread_create failed");
+        errno = ret; perror("pthread_create failed");
         return 1;
     }
 
