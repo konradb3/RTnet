@@ -1,0 +1,10 @@
+#!/bin/sh
+if [ $# -lt 2 ]; then
+	echo "tag-release username release-number"
+	echo "(e.g.: tag-release kiszka 0.9.3)"
+	exit 1
+fi
+
+svn copy svn+ssh://$1@svn.berlios.de/svnroot/repos/rtnet/trunk \
+	svn+ssh://$1@svn.berlios.de/svnroot/repos/rtnet/tags/rtnet-$2 \
+	-m "release $2"
