@@ -40,7 +40,7 @@
 int             f;
 struct ipv4_cmd cmd;
 struct in_addr  addr;
-int             count    = 0;
+__u16           count    = 0;
 int             delay    = 1000;
 unsigned int    sent     = 0;
 unsigned int    received = 0;
