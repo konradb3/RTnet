@@ -39,16 +39,22 @@ MODULE_DESCRIPTION("RTnet stack core");
 struct rtnet_mgr STACK_manager;
 struct rtnet_mgr RTDEV_manager;
 
+EXPORT_SYMBOL(STACK_manager);
+EXPORT_SYMBOL(RTDEV_manager);
+
 const char rtnet_rtdm_provider_name[] =
     "(C) 1999-2005 RTnet Development Team, http://www.rtnet.org";
 
+EXPORT_SYMBOL(rtnet_rtdm_provider_name);
 
+
+#ifdef CONFIG_PROC_FS
 /***
  *      proc filesystem section
  */
-#ifdef CONFIG_PROC_FS
-
 struct proc_dir_entry *rtnet_proc_root;
+
+EXPORT_SYMBOL(rtnet_proc_root);
 
 
 static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
@@ -245,9 +251,9 @@ err_out4:
 err_out3:
 #ifdef CONFIG_PROC_FS
     rtnet_proc_unregister();
-#endif
 
 err_out2:
+#endif
     rtskb_pools_release();
 
 err_out1:
@@ -281,9 +287,3 @@ void __exit rtnet_release(void)
 
 module_init(rtnet_init);
 module_exit(rtnet_release);
-
-
-EXPORT_SYMBOL(rtnet_proc_root);
-EXPORT_SYMBOL(STACK_manager);
-EXPORT_SYMBOL(RTDEV_manager);
-EXPORT_SYMBOL(rtnet_rtdm_provider_name);
