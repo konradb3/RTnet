@@ -66,14 +66,12 @@ int __init rtcfg_init(void)
 
 #ifdef CONFIG_PROC_FS
     ret = rtcfg_init_proc();
-    if (ret != 0)
-        goto error3;
-#endif
+    if (ret != 0) {
+        rtcfg_cleanup_frames();
+        goto error2;
+    }
 
     return 0;
-
-  error3:
-    rtcfg_cleanup_frames();
 
   error2:
     rtcfg_cleanup_state_machines();

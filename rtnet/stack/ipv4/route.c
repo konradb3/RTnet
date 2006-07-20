@@ -828,6 +828,8 @@ int __init rt_ip_routing_init(void)
 
 #ifdef CONFIG_PROC_FS
     return rt_route_proc_register();
+#else /* !CONFIG_PROC_FS */
+    return 0;
 #endif /* CONFIG_PROC_FS */
 }
 
