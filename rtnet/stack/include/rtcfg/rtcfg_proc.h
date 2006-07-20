@@ -55,8 +55,8 @@ static inline void rtcfg_unlockwr_proc(int ifindex)
 
 #else
 
-#define rtcfg_lock_proc(x)
-#define rtcfg_unlock_proc(x)
+#define rtcfg_lockwr_proc(x)    do {} while (0)
+#define rtcfg_unlockwr_proc(x)  do {} while (0)
 
 #endif /* CONFIG_PROC_FS */
 
