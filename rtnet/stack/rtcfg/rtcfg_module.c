@@ -70,6 +70,7 @@ int __init rtcfg_init(void)
         rtcfg_cleanup_frames();
         goto error2;
     }
+#endif
 
     return 0;
 
