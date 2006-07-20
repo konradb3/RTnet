@@ -49,6 +49,10 @@ static inline void rtmac_vnic_cleanup(struct rtnet_device *rtdev)
 }
 
 
+int rtmac_proc_read_vnic(char *buf, char **start, off_t offset,
+                         int count, int *eof, void *data);
+
+
 int __init rtmac_vnic_module_init(void);
 void rtmac_vnic_module_cleanup(void);
 

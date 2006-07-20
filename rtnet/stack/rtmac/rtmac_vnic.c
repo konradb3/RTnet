@@ -282,8 +282,7 @@ int rtmac_vnic_add(struct rtnet_device *rtdev, vnic_xmit_handler vnic_xmit)
     vnic->hard_start_xmit = vnic_xmit;
     vnic->priv            = rtdev;
 
-    strcpy(vnic->name, "vnic");
-    strncpy(vnic->name+4 /*"vnic"*/, rtdev->name+5 /*"rteth"*/, IFNAMSIZ-4);
+    snprintf(vnic->name, sizeof(vnic->name), "vnic%d", rtdev->ifindex-1);
 
     res = register_netdev(vnic);
     if (res == 0)
@@ -306,6 +305,51 @@ void rtmac_vnic_unregister(struct rtnet_device *rtdev)
         mac_priv->vnic_registered = 0;
     }
 }
+
+
+
+#ifdef CONFIG_PROC_FS
+int rtmac_proc_read_vnic(char *buf, char **start, off_t offset, int count,
+                         int *eof, void *data)
+{
+    struct rtnet_device *rtdev;
+    int                 i;
+    int                 res = 0;
+    RTNET_PROC_PRINT_VARS(80);
+
+
+    if (!RTNET_PROC_PRINT("RT-NIC name\tVNIC name\n"))
+        goto done;
+
+    for (i = 1; i <= MAX_RT_DEVICES; i++) {
+        rtdev = rtdev_get_by_index(i);
+        if (rtdev == NULL)
+            continue;
+
+        if (down_interruptible(&rtdev->nrt_lock)) {
+            rtdev_dereference(rtdev);
+            return -ERESTARTSYS;
+        }
+
+        if (rtdev->mac_priv != NULL) {
+            struct rtmac_priv *rtmac;
+
+            rtmac = (struct rtmac_priv *)rtdev->mac_priv;
+            res = RTNET_PROC_PRINT("%-15s %s\n",
+                                    rtdev->name, rtmac->vnic.name);
+        }
+
+        up(&rtdev->nrt_lock);
+        rtdev_dereference(rtdev);
+
+        if (!res)
+            break;
+    }
+
+  done:
+    RTNET_PROC_PRINT_DONE;
+}
+#endif /* CONFIG_PROC_FS */
 
 
 

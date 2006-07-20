@@ -26,6 +26,7 @@
 
 #include <rtnet_internal.h>
 #include <rtmac/rtmac_disc.h>
+#include <rtmac/rtmac_vnic.h>
 #include <rtmac/rtmac_proc.h>
 
 
@@ -90,7 +91,16 @@ int rtmac_proc_register(void)
         goto err2;
     proc_entry->read_proc = rtmac_proc_read_disc;
 
+    proc_entry = create_proc_entry("vnics", S_IFREG | S_IRUGO | S_IWUSR,
+                                   rtmac_proc_root);
+    if (!proc_entry)
+        goto err3;
+    proc_entry->read_proc = rtmac_proc_read_vnic;
+
     return 0;
+
+  err3:
+    remove_proc_entry("disciplines", rtmac_proc_root);
 
   err2:
     remove_proc_entry("rtmac", rtnet_proc_root);
@@ -104,6 +114,7 @@ int rtmac_proc_register(void)
 
 void rtmac_proc_release(void)
 {
+    remove_proc_entry("vnics", rtmac_proc_root);
     remove_proc_entry("disciplines", rtmac_proc_root);
     remove_proc_entry("rtmac", rtnet_proc_root);
 }
