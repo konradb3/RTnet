@@ -195,8 +195,9 @@ void do_up(int argc, char *argv[])
                 (!inet_aton(argv[i], &addr)))
                 help();
             ip_mask = addr.s_addr;
-        } else if (strcmp(argv[i], "hw ether") == 0) {
-            if ((++i >= argc) || (ether_aton_r(argv[i], &hw_addr) == NULL))
+        } else if (strcmp(argv[i], "hw") == 0) {
+            if ((++i >= argc) || (strcmp(argv[i], "ether") != 0) ||
+                (++i >= argc) || (ether_aton_r(argv[i], &hw_addr) == NULL))
                 help();
             memcpy(cmd.args.up.dev_addr, hw_addr.ether_addr_octet,
                    sizeof(hw_addr.ether_addr_octet));
