@@ -1,6 +1,6 @@
-noinst_PROGRAMS = \
-	rtnet_ifs \
-	frag-ip
+exampledir = $(DESTDIR)$(prefix)/examples/xenomai/native
+
+example_PROGRAMS = rtnet_ifs
 
 AM_CFLAGS = \
 	$(RTEXT_USER_CFLAGS) \
@@ -11,16 +11,8 @@ AM_LDFLAGS = \
 	-lpthread -lnative -lrtdm \
 	-L$(RTEXT_LIBRARIES)
 
-OBJS =
-
 if CONFIG_RTNET_RTIPV4
-OBJS += rtnet_ifs
+example_PROGRAMS += frag-ip
 endif
-
-if CONFIG_RTNET_RTPACKET
-OBJS += frag-ip
-endif
-
-all-local: $(OBJS)
 
 SUBDIRS = kernel

@@ -1,4 +1,4 @@
-moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)/examples/xenomai/native
 modext = $(RTNET_MODULE_EXT)
 
 EXTRA_LIBRARIES = \
@@ -46,9 +46,9 @@ all-local.o: $(OBJS)
 all-local.ko: $(libkernel_frag_ip_a_SOURCES) $(libkernel_raw_packets_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
-#install-exec-local: $(OBJS)
-#	$(mkinstalldirs) $(moduledir)
-#	$(INSTALL_DATA) $^ $(moduledir)
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
 
 clean-local: $(libkernel_frag_ip_a_SOURCES) $(libkernel_raw_packets_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)

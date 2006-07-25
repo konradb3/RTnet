@@ -36,7 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = rtt-sender$(EXEEXT) rtt-responder$(EXEEXT)
+example_PROGRAMS = $(am__EXEEXT_1)
 @CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = rtt-sender rtt-responder
 subdir = examples/xenomai/posix
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
@@ -49,7 +49,11 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
-PROGRAMS = $(noinst_PROGRAMS)
+@CONFIG_RTNET_RTIPV4_TRUE@am__EXEEXT_1 = rtt-sender$(EXEEXT) \
+@CONFIG_RTNET_RTIPV4_TRUE@	rtt-responder$(EXEEXT)
+am__installdirs = "$(DESTDIR)$(exampledir)"
+examplePROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+PROGRAMS = $(example_PROGRAMS)
 rtt_responder_SOURCES = rtt-responder.c
 rtt_responder_OBJECTS = rtt-responder.$(OBJEXT)
 rtt_responder_LDADD = $(LDADD)
@@ -252,6 +256,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
+exampledir = $(DESTDIR)$(prefix)/examples/xenomai/posix
 AM_CFLAGS = \
 	$(XNPOSIX_USER_CFLAGS) \
 	-I$(top_srcdir)/stack/include
@@ -260,7 +265,6 @@ AM_LDFLAGS = \
 	$(XNPOSIX_USER_LDFLAGS) \
 	-lpthread -lrtdm
 
-OBJS = $(am__append_1)
 all: all-am
 
 .SUFFIXES:
@@ -294,9 +298,30 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+install-examplePROGRAMS: $(example_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(exampledir)" || $(mkdir_p) "$(DESTDIR)$(exampledir)"
+	@list='$(example_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	     || test -f $$p1 \
+	  ; then \
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(examplePROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(exampledir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(examplePROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(exampledir)/$$f" || exit 1; \
+	  else :; fi; \
+	done
 
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
+uninstall-examplePROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(example_PROGRAMS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f '$(DESTDIR)$(exampledir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(exampledir)/$$f"; \
+	done
+
+clean-examplePROGRAMS:
+	@list='$(example_PROGRAMS)'; for p in $$list; do \
 	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
@@ -425,8 +450,11 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile $(PROGRAMS) all-local
+all-am: GNUmakefile $(PROGRAMS)
 installdirs:
+	for dir in "$(DESTDIR)$(exampledir)"; do \
+	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
+	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -453,7 +481,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
+clean-am: clean-examplePROGRAMS clean-generic clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -472,7 +500,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-examplePROGRAMS
 
 install-exec-am:
 
@@ -500,22 +528,21 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am
+uninstall-am: uninstall-examplePROGRAMS uninstall-info-am
 
-.PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-noinstPROGRAMS ctags \
+.PHONY: CTAGS GTAGS all all-am check check-am clean \
+	clean-examplePROGRAMS clean-generic clean-libtool ctags \
 	distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am
+	install-data-am install-examplePROGRAMS install-exec \
+	install-exec-am install-info install-info-am install-man \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-examplePROGRAMS uninstall-info-am
 
-
-all-local: $(OBJS)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

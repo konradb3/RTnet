@@ -1,7 +1,5 @@
-noinst_PROGRAMS = \
-    linux_client \
-    linux_server
+exampledir = $(DESTDIR)$(prefix)/examples/generic
 
-all-local: \
-    linux_client \
-    linux_server
+example_PROGRAMS = \
+	linux_client \
+	linux_server

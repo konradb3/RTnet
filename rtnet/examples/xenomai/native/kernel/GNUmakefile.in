@@ -258,7 +258,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)/examples/xenomai/native
 modext = $(RTNET_MODULE_EXT)
 EXTRA_LIBRARIES = \
 	libkernel_frag_ip.a \
@@ -519,7 +519,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am:
+install-exec-am: install-exec-local
 
 install-info: install-info-am
 
@@ -552,12 +552,12 @@ uninstall-am: uninstall-info-am
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-local distclean-tags distdir dvi dvi-am html html-am \
 	info info-am install install-am install-data install-data-am \
-	install-exec install-exec-am install-info install-info-am \
-	install-man install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-info-am
+	install-exec install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
 
 frag-ip.o: libkernel_frag_ip.a
@@ -575,9 +575,9 @@ all-local.o: $(OBJS)
 all-local.ko: $(libkernel_frag_ip_a_SOURCES) $(libkernel_raw_packets_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
-#install-exec-local: $(OBJS)
-#	$(mkinstalldirs) $(moduledir)
-#	$(INSTALL_DATA) $^ $(moduledir)
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
 
 clean-local: $(libkernel_frag_ip_a_SOURCES) $(libkernel_raw_packets_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
