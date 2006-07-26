@@ -23,9 +23,9 @@
 
 #include <rtnet_chrdev.h>
 
-#define RTWLAN_MODE_RAW 0
-#define RTWLAN_MODE_ACK 1
-#define RTWLAN_MODE_MON 2
+#define RTWLAN_TXMODE_RAW 0
+#define RTWLAN_TXMODE_ACK 1
+#define RTWLAN_TXMODE_MCAST 2
 
 #define ENORTWLANDEV 0xff08
 
@@ -38,8 +38,10 @@ struct rtwlan_cmd {
         struct {
             unsigned int    bitrate;
             unsigned int    channel;
+            unsigned int    retry;
             unsigned int    txpower;
             unsigned int    mode;
+            unsigned int    autoresponder;
             unsigned int    dropbcast;
             unsigned int    dropmcast;
             unsigned int    bbpsens;
@@ -55,9 +57,11 @@ struct rtwlan_cmd {
             unsigned int   flags;
             unsigned int   bitrate;
             unsigned int   channel;
+            unsigned int   retry;
             unsigned int   txpower;
-            unsigned int   sensibility; 
+            unsigned int   bbpsens; 
             unsigned int   mode;
+            unsigned int   autoresponder;
             unsigned int   dropbcast;
             unsigned int   dropmcast;
             unsigned int   rx_packets;
@@ -82,28 +86,35 @@ struct rtwlan_cmd {
 #define IOC_RTWLAN_TXPOWER   _IOWR(RTNET_IOC_TYPE_RTWLAN, 3,	\
                                    struct rtwlan_cmd)
 
-#define IOC_RTWLAN_MODE      _IOWR(RTNET_IOC_TYPE_RTWLAN, 4,    \
+#define IOC_RTWLAN_RETRY     _IOWR(RTNET_IOC_TYPE_RTWLAN, 4,    \
                                    struct rtwlan_cmd)
 
-#define IOC_RTWLAN_DROPBCAST _IOWR(RTNET_IOC_TYPE_RTWLAN, 5,	\
+#define IOC_RTWLAN_TXMODE      _IOWR(RTNET_IOC_TYPE_RTWLAN, 5,    \
                                    struct rtwlan_cmd)
 
-#define IOC_RTWLAN_DROPMCAST _IOWR(RTNET_IOC_TYPE_RTWLAN, 6,    \
+#define IOC_RTWLAN_DROPBCAST _IOWR(RTNET_IOC_TYPE_RTWLAN, 6,	\
+                                   struct rtwlan_cmd)
+
+#define IOC_RTWLAN_DROPMCAST _IOWR(RTNET_IOC_TYPE_RTWLAN, 7,    \
 				   struct rtwlan_cmd)
 
-#define IOC_RTWLAN_REGREAD   _IOWR(RTNET_IOC_TYPE_RTWLAN, 7,	\
+#define IOC_RTWLAN_REGREAD   _IOWR(RTNET_IOC_TYPE_RTWLAN, 8,	\
                                    struct rtwlan_cmd)
 
-#define IOC_RTWLAN_REGWRITE  _IOWR(RTNET_IOC_TYPE_RTWLAN, 8,	\
+#define IOC_RTWLAN_REGWRITE  _IOWR(RTNET_IOC_TYPE_RTWLAN, 9,	\
                                    struct rtwlan_cmd)
 
-#define IOC_RTWLAN_BBPWRITE  _IOWR(RTNET_IOC_TYPE_RTWLAN, 9,	\
+#define IOC_RTWLAN_BBPWRITE  _IOWR(RTNET_IOC_TYPE_RTWLAN, 10,	\
                                    struct rtwlan_cmd)
 
-#define IOC_RTWLAN_BBPREAD   _IOWR(RTNET_IOC_TYPE_RTWLAN, 10,   \
+#define IOC_RTWLAN_BBPREAD   _IOWR(RTNET_IOC_TYPE_RTWLAN, 11,   \
 				   struct rtwlan_cmd)
 
-#define IOC_RTWLAN_BBPSENS   _IOWR(RTNET_IOC_TYPE_RTWLAN, 11,   \
+#define IOC_RTWLAN_BBPSENS   _IOWR(RTNET_IOC_TYPE_RTWLAN, 12,   \
                                    struct rtwlan_cmd)
+
+#define IOC_RTWLAN_AUTORESP  _IOWR(RTNET_IOC_TYPE_RTWLAN, 13,   \
+                                   struct rtwlan_cmd)
+
 
 #endif

@@ -27,8 +27,6 @@
  * Supported chipsets: RT2560.
  */
 
-#include "rt2x00dev.h"
-
 #ifndef RT2500PCI_H
 #define RT2500PCI_H
 
@@ -864,8 +862,8 @@ struct _rt2x00_pci{
     struct _data_ring		tx;
 
     rtdm_irq_t irq_handle;
+    rtdm_lock_t lock;
 
-    //  u32 * register_dump;
 } __attribute__ ((packed));
 
 static int rt2x00_get_rf_value(const struct _rt2x00_chip *chip, const u8 channel, struct _rf_channel *rf_reg) {
@@ -999,16 +997,16 @@ rt2x00_get_txpower(const struct _rt2x00_chip *chip, const u8 tx_power) {
  * Ring handlers.
  */
 static inline int rt2x00_pci_alloc_ring(
-					struct _rt2x00_device *device,
+					struct _rt2x00_core *core,
 					struct _data_ring *ring,
 					const u8 ring_type,
 					const u16 max_entries,
 					const u16 entry_size,
 					const u16 desc_size) {
 
-    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(device);
+    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(core);
 
-    rt2x00_init_ring(device, ring, ring_type, max_entries, entry_size, desc_size);
+    rt2x00_init_ring(core, ring, ring_type, max_entries, entry_size, desc_size);
 
     ring->data_addr = dma_alloc_coherent(&rt2x00pci->pci_dev->dev, ring->mem_size, &ring->data_dma, GFP_KERNEL);
     if(!ring->data_addr)
@@ -1020,12 +1018,12 @@ static inline int rt2x00_pci_alloc_ring(
 }
 
 static int
-rt2x00_pci_alloc_rings(struct _rt2x00_device *device) {
+rt2x00_pci_alloc_rings(struct _rt2x00_core *core) {
 
-    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(device);
+    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(core);
   
-    if(rt2x00_pci_alloc_ring(device, &rt2x00pci->rx, RING_RX, RX_ENTRIES, DATA_FRAME_SIZE, SIZE_DESCRIPTOR)
-       || rt2x00_pci_alloc_ring(device, &rt2x00pci->tx, RING_TX, TX_ENTRIES, DATA_FRAME_SIZE, SIZE_DESCRIPTOR)) {
+    if(rt2x00_pci_alloc_ring(core, &rt2x00pci->rx, RING_RX, RX_ENTRIES, DATA_FRAME_SIZE, SIZE_DESCRIPTOR)
+       || rt2x00_pci_alloc_ring(core, &rt2x00pci->tx, RING_TX, TX_ENTRIES, DATA_FRAME_SIZE, SIZE_DESCRIPTOR)) {
         ERROR("DMA allocation failed.\n");
         return -ENOMEM;
     }
@@ -1036,7 +1034,7 @@ rt2x00_pci_alloc_rings(struct _rt2x00_device *device) {
 static inline void
 rt2x00_pci_free_ring(struct _data_ring *ring) {
 
-    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(ring->device);
+    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(ring->core);
 
     if(ring->data_addr)
         dma_free_coherent(&rt2x00pci->pci_dev->dev, ring->mem_size, ring->data_addr, ring->data_dma);
@@ -1046,9 +1044,9 @@ rt2x00_pci_free_ring(struct _data_ring *ring) {
 }
 
 static void
-rt2x00_pci_free_rings(struct _rt2x00_device *device) {
+rt2x00_pci_free_rings(struct _rt2x00_core *core) {
 
-    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(device);
+    struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(core);
 
     rt2x00_pci_free_ring(&rt2x00pci->rx);
     rt2x00_pci_free_ring(&rt2x00pci->tx);

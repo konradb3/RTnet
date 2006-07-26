@@ -1,8 +1,3 @@
-noinst_HEADERS = \
-	rt2500pci.h \
-	rt2x00dev.h \
-	rt2x00.h
-
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
 

@@ -22,11 +22,13 @@ void help(void) {
     fprintf(stderr, "Usage:\n"
             "\trtiwconfig --help\n"
             "\trtiwconfig [<dev>]\n"
-            "\trtiwconfig <dev> bitrate <2|4|10|22|12|18|24|36|48|72|96|108>\n"
-            "\trtiwconfig <dev> channel <1-11>\n"
+            "\trtiwconfig <dev> bitrate <2|4|11|22|12|18|24|36|48|72|96|108>\n"
+            "\trtiwconfig <dev> channel <1-13>\n"
+            "\rrtiwconfig <dev> retry   <0-255>\n"
             "\trtiwconfig <dev> txpower <0-100>\n"
             "\trtiwconfig <dev> bbpsens <0-127>\n"
             "\trtiwconfig <dev> mode <raw|ack|monitor>\n"
+            "\trtiwconfig <dev> autoresponder <0|1>\n"
             "\trtiwconfig <dev> dropbcast <0|1>\n"
             "\trtiwconfig <dev> dropmcast <0|1>\n"
             "\t-- WARNING: Direct register access may cause system hang ! --\n"
@@ -44,23 +46,26 @@ void print_dev(void) {
     printf("\n");
     printf("%s\n", cmd.head.if_name);
     printf("bitrate: %d\t\t", cmd.args.info.bitrate);
+
     printf("txpower: %d\n", cmd.args.info.txpower);
     printf("channel: %d\t\t", cmd.args.info.channel);
-    printf("bbp sensibility: %d\n", cmd.args.info.sensibility);
+    printf("retry: %d\n", cmd.args.info.retry);
+    printf("autoresponder: %d\t", cmd.args.info.autoresponder);
+    printf("bbp sensibility: %d\n", cmd.args.info.bbpsens);
     printf("drop broadcast: %d\t", cmd.args.info.dropbcast);
     printf("rx packets: %5d\n", cmd.args.info.rx_packets);
     printf("drop multicast: %d\t", cmd.args.info.dropmcast);
     printf("tx packets: %5d\n", cmd.args.info.tx_packets);
-    printf("mode: ");
+    printf("tx mode: ");
     switch(cmd.args.info.mode) {
-    case RTWLAN_MODE_RAW:
+    case RTWLAN_TXMODE_RAW:
         printf("raw");
         break;
-    case RTWLAN_MODE_ACK:
+    case RTWLAN_TXMODE_ACK:
         printf("ack");
         break;
-    case RTWLAN_MODE_MON:
-        printf("monitor");
+    case RTWLAN_TXMODE_MCAST:
+        printf("mcast");
         break;
     default:
         printf("unknown");
@@ -162,6 +167,10 @@ int main(int argc, char * argv[]) {
             cmd.args.set.txpower = atoi(argv[3]);
             ret = ioctl(f, IOC_RTWLAN_TXPOWER, &cmd);
         }
+        else if(strcmp(argv[2], "retry") == 0) {
+            cmd.args.set.retry = atoi(argv[3]);
+            ret = ioctl(f, IOC_RTWLAN_RETRY, &cmd);
+        }
         else if(strcmp(argv[2], "regread") == 0) {
             sscanf(argv[3], "%x", &cmd.args.reg.address);
             ret = ioctl(f, IOC_RTWLAN_REGREAD, &cmd);
@@ -182,16 +191,20 @@ int main(int argc, char * argv[]) {
         }
         else if(strcmp(argv[2], "mode") == 0) {
             if(strcmp(argv[3], "raw") == 0)
-                cmd.args.set.mode = RTWLAN_MODE_RAW;
+                cmd.args.set.mode = RTWLAN_TXMODE_RAW;
             else if(strcmp(argv[3], "ack") == 0)
-                cmd.args.set.mode = RTWLAN_MODE_ACK;
-            else if(strcmp(argv[3], "monitor") == 0)
-                cmd.args.set.mode = RTWLAN_MODE_MON;
-            ret = ioctl(f, IOC_RTWLAN_MODE, &cmd);
+                cmd.args.set.mode = RTWLAN_TXMODE_ACK;
+            else if(strcmp(argv[3], "mcast") == 0)
+                cmd.args.set.mode = RTWLAN_TXMODE_MCAST;
+            ret = ioctl(f, IOC_RTWLAN_TXMODE, &cmd);
         }
         else if(strcmp(argv[2], "bbpsens") == 0) {
             cmd.args.set.bbpsens = atoi(argv[3]);
             ret = ioctl(f, IOC_RTWLAN_BBPSENS, &cmd);
+        }
+        else if(strcmp(argv[2], "autoresponder") == 0) {
+            cmd.args.set.autoresponder = atoi(argv[3]);
+            ret = ioctl(f, IOC_RTWLAN_AUTORESP, &cmd);
         }
         else
             help();

@@ -41,15 +41,9 @@
 
 #include <linux/if_ether.h>	/* ETH_ALEN */
 #include <linux/kernel.h>	/* ARRAY_SIZE */
-#include <linux/wireless.h>
-
-#include <rtnet_config.h>
 
 #include <rtskb.h>
-#include <rtdev.h>
-#include <rtnet_chrdev.h>
-
-#define CONFIG_RTWLAN_DEBUG
+#include <rtwlan_io.h>
 
 #define IEEE80211_1ADDR_LEN 10
 #define IEEE80211_2ADDR_LEN 16
@@ -118,10 +112,10 @@
 #define WLAN_FC_GET_TYPE(fc) ((fc) & IEEE80211_FCTL_FTYPE)
 #define WLAN_FC_GET_STYPE(fc) ((fc) & IEEE80211_FCTL_STYPE)
 
-#define IEEE80211_CCK_RATE_1MB		        0x02
-#define IEEE80211_CCK_RATE_2MB		        0x04
-#define IEEE80211_CCK_RATE_5MB		        0x0B
-#define IEEE80211_CCK_RATE_11MB		        0x16
+#define IEEE80211_DSSS_RATE_1MB		        0x02
+#define IEEE80211_DSSS_RATE_2MB		        0x04
+#define IEEE80211_DSSS_RATE_5MB		        0x0B
+#define IEEE80211_DSSS_RATE_11MB	        0x16
 #define IEEE80211_OFDM_RATE_6MB		        0x0C
 #define IEEE80211_OFDM_RATE_9MB		        0x12
 #define IEEE80211_OFDM_RATE_12MB		0x18
@@ -132,16 +126,22 @@
 #define IEEE80211_OFDM_RATE_54MB		0x6C
 #define IEEE80211_BASIC_RATE_MASK		0x80
 
+#define MAC_FMT "%02x:%02x:%02x:%02x:%02x:%02x"
+#define MAC_ARG(x) ((u8*)(x))[0],((u8*)(x))[1],((u8*)(x))[2],((u8*)(x))[3],((u8*)(x))[4],((u8*)(x))[5]
+
 /*
  * pointer to private data.
  */
-#define	NETDEV_ALIGN		32
-#define	NETDEV_ALIGN_CONST	(NETDEV_ALIGN - 1)
-
+static inline void * rtnetdev_priv(struct rtnet_device *rtnet_dev)
+{
+    return (char *)rtnet_dev + ((sizeof(struct rtnet_device) + 31) & ~31);
+}
 
 #ifdef CONFIG_RTWLAN_DEBUG
 #define RTWLAN_DEBUG_PRINTK(__message...)	do{ rtdm_printk(__message); }while(0)
 #define RTWLAN_DEBUG(__message,__args...)	RTWLAN_DEBUG_PRINTK(KERN_DEBUG  "rtwlan->%s: Debug - " __message,__FUNCTION__,##__args);
+#else
+#define RTWLAN_DEBUG(__message...)	do{  }while(0)
 #endif
 
 struct rtwlan_stats {
@@ -151,17 +151,16 @@ struct rtwlan_stats {
 };
 
 struct rtwlan_device {
-    struct rtnet_device *rtnet_dev;
 
     struct rtwlan_stats stats;
 
     struct rtskb_queue skb_pool;
-    rtdm_lock_t lock;
 
     int mode;
 
-    /* This must be the last item so that it points to the data
-     * allocated beyond this structure by alloc_ieee80211 */
+    int (*hard_start_xmit)(struct rtskb *rtskb, struct rtnet_device * rtnet_dev);
+
+    /* This must be the last item */
     u8 priv[0];
 };
 
@@ -184,10 +183,6 @@ struct ieee80211_hdr_3addr {
     u8 payload[0];
 } __attribute__ ((packed));
 
-static inline void * rtnetdev_priv(struct rtnet_device *rtnet_dev)
-{
-    return (char *)rtnet_dev + ((sizeof(struct rtnet_device) + NETDEV_ALIGN_CONST) & ~NETDEV_ALIGN_CONST);
-}
 
 static inline int ieee80211_get_hdrlen(u16 fc)
 {
@@ -236,21 +231,22 @@ static inline int ieee80211_is_ofdm_rate(u8 rate)
     return 0;
 }
 
-static inline int ieee80211_is_cck_rate(u8 rate)
+static inline int ieee80211_is_dsss_rate(u8 rate)
 {
     switch (rate & ~IEEE80211_BASIC_RATE_MASK) {
-        case IEEE80211_CCK_RATE_1MB:
-        case IEEE80211_CCK_RATE_2MB:
-        case IEEE80211_CCK_RATE_5MB:
-        case IEEE80211_CCK_RATE_11MB:
+        case IEEE80211_DSSS_RATE_1MB:
+        case IEEE80211_DSSS_RATE_2MB:
+        case IEEE80211_DSSS_RATE_5MB:
+        case IEEE80211_DSSS_RATE_11MB:
             return 1;
     }
     return 0;
 }
 
-static inline void *rtwlan_priv(struct rtnet_device *rtnet_dev)
+
+static inline void * rtwlan_priv(struct rtwlan_device *rtwlan_dev)
 {
-    return ((struct rtwlan_device *)rtnetdev_priv(rtnet_dev))->priv;
+    return (void *)rtwlan_dev + sizeof(struct rtwlan_device);
 }
 
 struct rtnet_device * rtwlan_alloc_dev(int sizeof_priv);

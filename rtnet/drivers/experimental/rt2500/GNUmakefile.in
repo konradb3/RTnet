@@ -13,7 +13,6 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -37,8 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = drivers/experimental/rt2500
-DIST_COMMON = $(noinst_HEADERS) $(srcdir)/GNUmakefile.am \
-	$(srcdir)/GNUmakefile.in
+DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/config/autoconf/.version \
@@ -74,7 +72,6 @@ SOURCES = $(libkernel_rt2500pci_a_SOURCES) \
 	$(libkernel_rt2x00core_a_SOURCES)
 DIST_SOURCES = $(libkernel_rt2500pci_a_SOURCES) \
 	$(libkernel_rt2x00core_a_SOURCES)
-HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -258,11 +255,6 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-noinst_HEADERS = \
-	rt2500pci.h \
-	rt2x00dev.h \
-	rt2x00.h
-
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
 EXTRA_LIBRARIES = \
@@ -475,7 +467,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile $(HEADERS) all-local
+all-am: GNUmakefile all-local
 installdirs:
 install: install-am
 install-exec: install-exec-am
