@@ -119,6 +119,16 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (down_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
+            /* We cannot change the promisc flag or the hardware address if
+               the device is already up. */
+            if ((rtdev->flags & IFF_UP) &&
+                (((cmd.args.up.set_dev_flags | cmd.args.up.clear_dev_flags) &
+                  IFF_PROMISC) ||
+                 (cmd.args.up.dev_addr_type != ARPHRD_VOID))) {
+                ret = -EBUSY;
+                goto up_out;
+            }
+
             rtdev->flags |= cmd.args.up.set_dev_flags;
             rtdev->flags &= ~cmd.args.up.clear_dev_flags;
 
@@ -132,7 +142,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
             set_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
 
-            ret = rtdev_open(rtdev);    /* also = 0 if dev already up */
+            ret = rtdev_open(rtdev);    /* also == 0 if rtdev is already up */
 
             if (ret == 0) {
                 down(&rtnet_devices_nrt_lock);
