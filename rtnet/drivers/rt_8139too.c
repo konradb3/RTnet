@@ -29,7 +29,7 @@
   */
 
 #define DRV_NAME            "rt_8139too"
-#define DRV_VERSION         "0.9.24-rt0.5"
+#define DRV_VERSION         "0.9.24-rt0.6"
 
 #include <linux/config.h>
 #include <linux/module.h>
@@ -49,20 +49,28 @@
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
-// *** RTnet ***
+/* *** RTnet *** */
 #include <rtnet_port.h>
 
 #define MAX_UNITS               8
 #define DEFAULT_RX_POOL_SIZE    16
 
 static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
+static int media[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = -1 };
 static unsigned int rx_pool_size = DEFAULT_RX_POOL_SIZE;
 compat_module_int_param_array(cards, MAX_UNITS);
+compat_module_int_param_array(media, MAX_UNITS);
 module_param(rx_pool_size, uint, 0444);
 MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
+MODULE_PARM_DESC(media, "8139too: Bits 4+9: force full duplex, bit 5: 100Mbps");
 MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
-// *** RTnet ***
 
+#if 0	/* FIXME: before we can use this option, a wrapper for duplex_lock vs. force_media has to be created */
+static int full_duplex[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = -1 };
+compat_module_int_param_array(full_duplex, MAX_UNITS);
+MODULE_PARM_DESC (full_duplex, "8139too: Force full duplex for board(s) (1)");
+#endif
+/* *** RTnet *** */
 
 
 #define RTL8139_DRIVER_NAME   DRV_NAME " Fast Ethernet driver " DRV_VERSION
@@ -74,13 +82,6 @@ MODULE_PARM_DESC(rx_pool_size, "number of receive buffers");
 #define USE_IO_OPS 1
 #endif
  *** RTnet *** */
-
-/* A few user-configurable values. */
-/* media options */
-#if 0
-static int media[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
-static int full_duplex[MAX_UNITS] = {-1, -1, -1, -1, -1, -1, -1, -1};
-#endif
 
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 20;
@@ -491,12 +492,10 @@ struct rtl8139_private {
         rtdm_lock_t lock;
         chip_t chipset;
         pid_t thr_pid;
-        wait_queue_head_t thr_wait;
-        struct completion thr_exited;
         u32 rx_config;
         struct rtl_extra_stats xstats;
         int time_to_die;
-  //        struct mii_if_info mii;
+        struct mii_if_info mii;
         struct rtskb_queue skb_pool;
         rtdm_irq_t irq_handle;
 };
@@ -505,26 +504,21 @@ MODULE_AUTHOR ("Jeff Garzik <jgarzik@mandrakesoft.com>");
 MODULE_DESCRIPTION ("RealTek RTL-8139 Fast Ethernet driver");
 MODULE_LICENSE("GPL");
 
-#if 0
+#if 0	/* unused module parameters from original 8139too driver */
 MODULE_PARM (multicast_filter_limit, "i");
 MODULE_PARM (max_interrupt_work, "i");
-MODULE_PARM (media, "1-" __MODULE_STRING(MAX_UNITS) "i");
-MODULE_PARM (full_duplex, "1-" __MODULE_STRING(MAX_UNITS) "i");
 MODULE_PARM (debug, "i");
 
 MODULE_PARM_DESC (debug, "8139too bitmapped message enable number");
 MODULE_PARM_DESC (multicast_filter_limit, "8139too maximum number of filtered multicast addresses");
 MODULE_PARM_DESC (max_interrupt_work, "8139too maximum events handled per interrupt");
-MODULE_PARM_DESC (media, "8139too: Bits 4+9: force full duplex, bit 5: 100Mbps");
-MODULE_PARM_DESC (full_duplex, "8139too: Force full duplex for board(s) (1)");
 #endif
 
 
 static int read_eeprom (void *ioaddr, int location, int addr_len);
-#if 0 // commented so there is no compiler warning 'defined but not used'
-static int mdio_read (struct net_device *dev, int phy_id, int location);
-static void mdio_write (struct net_device *dev, int phy_id, int location, int val);
-#endif // 0
+static int mdio_read (struct rtnet_device *rtdev, int phy_id, int location);
+static void mdio_write (struct rtnet_device *rtdev, int phy_id, int location, int val);
+
 
 static int rtl8139_open (struct rtnet_device *rtdev);
 static int rtl8139_close (struct rtnet_device *rtdev);
@@ -794,9 +788,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         struct rtnet_device *rtdev = NULL;
         struct rtl8139_private *tp;
         int i, addr_len;
-#if 0
         int option;
-#endif
         void *ioaddr;
         static int board_idx = -1;
         u8 pci_rev;
@@ -843,13 +835,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         rtdev->hard_header = &rt_eth_header;
         rtdev->hard_start_xmit = rtl8139_start_xmit;
 
-        //rtdev->do_ioctl = NULL;
-        //rtdev->init = NULL;
-        //rtdev->uninit = NULL;
-        //        rtdev->get_stats = rtl8139_get_stats;
-        //        rtdev->set_multicast_list = rtl8139_set_rx_mode;
-        //        rtdev->tx_timeout = rtl8139_tx_timeout;
-        //        rtdev->watchdog_timeo = TX_TIMEOUT;
+        /*rtdev->set_multicast_list = rtl8139_set_rx_mode; */
         rtdev->features |= NETIF_F_SG|NETIF_F_HW_CSUM;
 
         rtdev->irq = pdev->irq;
@@ -861,12 +847,6 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         tp->drv_flags = board_info[ent->driver_data].hw_flags;
         tp->mmio_addr = ioaddr;
         rtdm_lock_init (&tp->lock);
-        //init_waitqueue_head (&tp->thr_wait);
-        //        init_completion (&tp->thr_exited);
-
-        //        tp->mii.dev = dev;
-        //        tp->mii.mdio_read = mdio_read;
-        //        tp->mii.mdio_write = mdio_write;
 
         if (rtskb_pool_init(&tp->skb_pool, rx_pool_size) < rx_pool_size) {
                 i = -ENOMEM;
@@ -900,18 +880,18 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
                 }
         } else
 #endif
-
+#endif
         tp->phys[0] = 32;
 
         /* The lower four bits are the media type. */
         option = (board_idx >= MAX_UNITS) ? 0 : media[board_idx];
         if (option > 0) {
-          //                tp->mii.full_duplex = (option & 0x210) ? 1 : 0;
+                tp->mii.full_duplex = (option & 0x210) ? 1 : 0;
                 tp->default_port = option & 0xFF;
                 if (tp->default_port)
                         tp->medialock = 1;
         }
-#if 0
+#if 0	/* FIXME: create wrapper for duplex_lock vs. force_media in newer kernels */
         if (board_idx < MAX_UNITS  &&  full_duplex[board_idx] > 0)
                 tp->mii.full_duplex = full_duplex[board_idx];
         if (tp->mii.full_duplex) {
@@ -928,7 +908,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
                                    ((option & 0x20) ? 0x2000 : 0) |         /* 100Mbps? */
                                    ((option & 0x10) ? 0x0100 : 0)); /* Full duplex? */
         }
-#endif
+
 
         /* Put the chip into low-power mode. */
         if (rtl_chip_info[tp->chipset].flags & HasHltClk)
@@ -1051,7 +1031,7 @@ static int __devinit read_eeprom (void *ioaddr, int location, int addr_len)
 #define mdio_delay(mdio_addr)        readb(mdio_addr)
 
 
-#if 0 // commented so there is no compiler warning 'defined but not used'
+
 static char mii_2_8139_map[8] = {
         BasicModeCtrl,
         BasicModeStatus,
@@ -1079,7 +1059,7 @@ static void mdio_sync (void *mdio_addr)
 #endif
 
 
-static int mdio_read (struct net_device *dev, int phy_id, int location)
+static int mdio_read (struct rtnet_device *rtdev, int phy_id, int location)
 {
         struct rtl8139_private *tp = rtdev->priv;
         int retval = 0;
@@ -1162,7 +1142,7 @@ static void mdio_write (struct rtnet_device *rtdev, int phy_id, int location,
         }
 #endif
 }
-#endif // 0
+
 
 static int rtl8139_open (struct rtnet_device *rtdev)
 {
@@ -1188,8 +1168,8 @@ static int rtl8139_open (struct rtnet_device *rtdev)
 
                 return -ENOMEM;
         }
-
-        //        tp->mii.full_duplex = tp->mii.duplex_lock;
+        /* FIXME: create wrapper for duplex_lock vs. force_media
+           tp->mii.full_duplex = tp->mii.duplex_lock; */
         tp->tx_flag = (TX_FIFO_THRESH << 11) & 0x003f0000;
         tp->twistie = 1;
         tp->time_to_die = 0;
@@ -1207,7 +1187,6 @@ static int rtl8139_open (struct rtnet_device *rtdev)
 
 static void rtl_check_media (struct rtnet_device *rtdev)
 {
-#if 0
         struct rtl8139_private *tp = rtdev->priv;
 
         if (tp->phys[0] >= 0) {
@@ -1219,7 +1198,6 @@ static void rtl_check_media (struct rtnet_device *rtdev)
                        ((mii_lpa & 0x00C0) == LPA_10FULL) )
                                tp->mii.full_duplex = 1;
         }
-#endif
 }
 
 
@@ -1351,7 +1329,6 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         /* Note: the chip doesn't have auto-pad! */
         rtdm_lock_get(&tp->lock);
         RTL_W32_F (TxStatus0 + (entry * sizeof (u32)), tp->tx_flag | max(len, (unsigned int)ETH_ZLEN));
-        //rtdev->trans_start = jiffies;
         tp->cur_tx++;
         wmb();
         if ((tp->cur_tx - NUM_TX_DESC) == tp->dirty_tx)
@@ -1578,12 +1555,11 @@ static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
                         rtskb_reserve (skb, 2);        /* 16 byte align the IP fields. */
 
 
-                        // eth_copy_and_sum (skb, &rx_ring[ring_offset + 4], pkt_size, 0);
+                        /* eth_copy_and_sum (skb, &rx_ring[ring_offset + 4], pkt_size, 0); */
                         memcpy (skb->data, &rx_ring[ring_offset + 4], pkt_size);
                         rtskb_put (skb, pkt_size);
                         skb->protocol = rt_eth_type_trans (skb, rtdev);
                         rtnetif_rx (skb);
-                        //rtdev->last_rx = jiffies;
                         tp->stats.rx_bytes += pkt_size;
                         tp->stats.rx_packets++;
                 } else {
@@ -1616,7 +1592,7 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
 
         if ((status & RxUnderrun) && link_changed && (tp->drv_flags & HAS_LNK_CHNG)) {
                 /* Really link-change on new chips. */
-#if 0
+#if 0	/* FIXME: create wrapper for duplex_lock vs. force_media */
                 int lpar = RTL_R16 (NWayLPAR);
                 int duplex = (lpar & LPA_100FULL) || (lpar & 0x01C0) == 0x0040;
                                 || tp->mii.duplex_lock;
@@ -1762,8 +1738,6 @@ static int rtl8139_close (struct rtnet_device *rtdev)
         RTL_W32 (RxMissed, 0);
         rtdm_lock_put_irqrestore (&tp->lock, context);
 
-        //synchronize_irq ();
-
         rt_stack_disconnect(rtdev);
 
         rtl8139_tx_clear (tp);
@@ -1848,7 +1822,6 @@ static struct pci_driver rtl8139_pci_driver = {
         id_table:               rtl8139_pci_tbl,
         probe:                  rtl8139_init_one,
         remove:                 __devexit_p(rtl8139_remove_one),
-        //remove:                 rtl8139_remove_one,
         suspend:                NULL,
         resume:                 NULL,
 };
@@ -1876,97 +1849,3 @@ static void __exit rtl8139_cleanup_module (void)
 
 module_init(rtl8139_init_module);
 module_exit(rtl8139_cleanup_module);
-
-
-/*
-
-        8139too.c: A RealTek RTL-8139 Fast Ethernet driver for Linux.
-
-        Maintained by Jeff Garzik <jgarzik@mandrakesoft.com>
-        Copyright 2000,2001 Jeff Garzik
-
-        Much code comes from Donald Becker's rtl8139.c driver,
-        versions 1.13 and older.  This driver was originally based
-        on rtl8139.c version 1.07.  Header of rtl8139.c version 1.13:
-
-        -----<snip>-----
-
-                Written 1997-2001 by Donald Becker.
-                This software may be used and distributed according to the
-                terms of the GNU General Public License (GPL), incorporated
-                herein by reference.  Drivers based on or derived from this
-                code fall under the GPL and must retain the authorship,
-                copyright and license notice.  This file is not a complete
-                program and may only be used when the entire operating
-                system is licensed under the GPL.
-
-                This driver is for boards based on the RTL8129 and RTL8139
-                PCI ethernet chips.
-
-                The author may be reached as becker@scyld.com, or C/O Scyld
-                Computing Corporation 410 Severn Ave., Suite 210 Annapolis
-                MD 21403
-
-                Support and updates available at
-                http://www.scyld.com/network/rtl8139.html
-
-                Twister-tuning table provided by Kinston
-                <shangh@realtek.com.tw>.
-
-        -----<snip>-----
-
-        This software may be used and distributed according to the terms
-        of the GNU General Public License, incorporated herein by reference.
-
-        Contributors:
-
-                Donald Becker - he wrote the original driver, kudos to him!
-                (but please don't e-mail him for support, this isn't his driver)
-
-                Tigran Aivazian - bug fixes, skbuff free cleanup
-
-                Martin Mares - suggestions for PCI cleanup
-
-                David S. Miller - PCI DMA and softnet updates
-
-                Ernst Gill - fixes ported from BSD driver
-
-                Daniel Kobras - identified specific locations of
-                        posted MMIO write bugginess
-
-                Gerard Sharp - bug fix, testing and feedback
-
-                David Ford - Rx ring wrap fix
-
-                Dan DeMaggio - swapped RTL8139 cards with me, and allowed me
-                to find and fix a crucial bug on older chipsets.
-
-                Donald Becker/Chris Butterworth/Marcus Westergren -
-                Noticed various Rx packet size-related buglets.
-
-                Santiago Garcia Mantinan - testing and feedback
-
-                Jens David - 2.2.x kernel backports
-
-                Martin Dennett - incredibly helpful insight on undocumented
-                features of the 8139 chips
-
-                Jean-Jacques Michel - bug fix
-
-                Tobias Ringstr� - Rx interrupt status checking suggestion
-
-                Andrew Morton - Clear blocked signals, avoid
-                buffer overrun setting current->comm.
-
-                Kalle Olavi Niemitalo - Wake-on-LAN ioctls
-
-                Robert Kuebel - Save kernel thread from dying on any signal.
-
-        Submitting bug reports:
-
-                "rtl8139-diag -mmmaaavvveefN" output
-                enable RTL8139_DEBUG below, and look at 'dmesg' or kernel log
-
-                See 8139too.txt for more details.
-
-*/
