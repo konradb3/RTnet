@@ -3,7 +3,7 @@
  *  stack/stack_mgr.c - Stack-Manager
  *
  *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2005 Jan Kiszka <jan.kiszka@web.de>
+ *                2005, 2006 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,9 @@ module_param(stack_mgr_prio, uint, 0444);
 MODULE_PARM_DESC(stack_mgr_prio, "Priority of the stack manager task");
 
 
+#if (CONFIG_RTNET_RX_FIFO_SIZE & (CONFIG_RTNET_RX_FIFO_SIZE-1)) != 0
+#error CONFIG_RTNET_RX_FIFO_SIZE must be power of 2!
+#endif
 static DECLARE_RTSKB_FIFO(rx, CONFIG_RTNET_RX_FIFO_SIZE);
 
 struct list_head    rt_packets[RTPACKET_HASH_TBL_SIZE];
