@@ -213,7 +213,7 @@ int init_module(void)
     }
 
     ret = rt_task_set_periodic(&rt_xmit_task, TM_INFINITE, CYCLE);
-    if (ret == 0) {
+    if (ret != 0) {
         printk(" rt_task_set_periodic(rt_xmit_task) = %d!\n", ret);
         goto cleanup_xmit_task;
     }
@@ -231,7 +231,10 @@ int init_module(void)
     rt_task_delete(&rt_xmit_task);
 
  cleanup_recv_task:
+    rt_dev_close(sock);
     rt_task_delete(&rt_recv_task);
+    return ret;
+
 
  cleanup_sock:
     rt_dev_close(sock);
