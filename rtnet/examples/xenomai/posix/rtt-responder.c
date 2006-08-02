@@ -135,9 +135,10 @@ int main(int argc, char *argv[])
     }
  end_of_opt:
 
-    if (dest_ip_s[0])
+    if (dest_ip_s[0]) {
         inet_aton(dest_ip_s, &dest_addr.sin_addr);
-    else
+        dest_addr.sin_port = htons(XMT_PORT);
+    } else
         dest_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (local_ip_s[0])
