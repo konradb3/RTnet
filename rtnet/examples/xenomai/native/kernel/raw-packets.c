@@ -208,7 +208,10 @@ int init_module(void)
     rt_task_delete(&rt_xmit_task);
 
  cleanup_recv_task:
+    rt_dev_close(sock);
     rt_task_delete(&rt_recv_task);
+    return ret;
+
 
  cleanup_sock:
     rt_dev_close(sock);
