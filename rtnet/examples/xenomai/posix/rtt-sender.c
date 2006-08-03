@@ -52,8 +52,10 @@ unsigned int cycle = 50000; /* 50 ms */
 pthread_t xmit_thread;
 pthread_t recv_thread;
 
-#define RCV_PORT    35999
-#define XMT_PORT    36000
+#define RCV_PORT                35999
+#define XMT_PORT                36000
+
+#define DEFAULT_ADD_BUFFERS     30
 
 struct sockaddr_in dest_addr;
 
@@ -188,16 +190,16 @@ int main(int argc, char *argv[])
 {
     struct sched_param param = { .sched_priority = 1 };
     struct sockaddr_in local_addr;
-    int add_rtskbs = 30;
+    int add_rtskbs = DEFAULT_ADD_BUFFERS;
     pthread_attr_t thattr;
-    char mqname[16];
+    char mqname[32];
     struct mq_attr mqattr;
     int stations = 0;
     int ret;
 
 
     while (1) {
-        switch (getopt(argc, argv, "d:l:c:")) {
+        switch (getopt(argc, argv, "d:l:c:b:")) {
             case 'd':
                 dest_ip_s = optarg;
                 break;
@@ -210,12 +212,16 @@ int main(int argc, char *argv[])
                 cycle = atoi(optarg);
                 break;
 
+            case 'b':
+                add_rtskbs = atoi(optarg);
+
             case -1:
                 goto end_of_opt;
 
             default:
                 printf("usage: %s [-d <dest_ip>] [-l <local_ip>] "
-                       "[-c <cycle_microsecs>]\n", argv[0]);
+                       "[-c <cycle_microsecs>] [-b <add_buffers>]\n",
+                       argv[0]);
                 return 0;
         }
     }
@@ -263,14 +269,13 @@ int main(int argc, char *argv[])
     /* extend the socket pool */
     ret = ioctl(sock, RTNET_RTIOC_EXTPOOL, &add_rtskbs);
     if (ret != add_rtskbs)
-        printf("WARNING: ioctl(RTNET_RTIOC_EXTPOOL) = %d\n", ret);
+        perror("WARNING: ioctl(RTNET_RTIOC_EXTPOOL)");
 
-    /* create statistic message queue */
-    snprintf(mqname, sizeof(mqname), "rtt-sender-%d", getpid());
+    /* create statistics message queue */
+    snprintf(mqname, sizeof(mqname), "/rtt-sender-%d", getpid());
     mqattr.mq_flags   = 0;
     mqattr.mq_maxmsg  = 100;
     mqattr.mq_msgsize = sizeof(struct packet_stats);
-    mqattr.mq_curmsgs = 0;
     mq = mq_open(mqname, O_RDWR | O_CREAT | O_EXCL, 0600, &mqattr);
     if (mq == (mqd_t)-1) {
         perror("opening mqueue failed");
