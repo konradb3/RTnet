@@ -90,10 +90,14 @@ static inline int rtskb_fifo_insert_inirq(struct rtskb_fifo *fifo,
 static inline struct rtskb *__rtskb_fifo_remove(struct rtskb_fifo *fifo)
 {
     unsigned long pos = fifo->read_pos;
-    struct rtskb *result = fifo->buffer[pos];
+    struct rtskb *result;
 
+    /* check FIFO status first */
     if (unlikely(pos == fifo->write_pos))
         return NULL;
+
+    /* at least one rtskb is enqueued, so get the next one */
+    result = fifo->buffer[pos];
 
     /* result must have been read before read_pos update */
     smp_rmb();
