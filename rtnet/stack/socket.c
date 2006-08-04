@@ -225,58 +225,59 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
 int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
                        rtdm_user_info_t *user_info, int request, void *arg)
 {
-    struct rtnet_device     *rtdev;
-    struct ifreq            *cur_ifr;
-    struct sockaddr_in      *sin;
-    int                     i;
-    int                     size;
-    struct ifconf           *ifc = arg;
-    struct ifreq            *ifr = arg;
-    int                     ret = 0;
+    struct rtnet_device *rtdev;
+    struct ifreq        *ifr = arg;
+    int                 ret = 0;
 
+
+    if (request == SIOCGIFCONF) {
+        struct ifconf       *ifc = arg;
+        struct ifreq        *cur_ifr = ifc->ifc_req;
+        struct sockaddr_in  *sin;
+        int                 size = 0;
+        int                 i;
+
+        for (i = 1; i <= MAX_RT_DEVICES; i++) {
+            rtdev = rtdev_get_by_index(i);
+            if (rtdev != NULL) {
+                if ((rtdev->flags & IFF_RUNNING) == 0) {
+                    rtdev_dereference(rtdev);
+                    continue;
+                }
+
+                size += sizeof(struct ifreq);
+                if (size > ifc->ifc_len) {
+                    rtdev_dereference(rtdev);
+                    size = ifc->ifc_len;
+                    break;
+                }
+
+                strncpy(cur_ifr->ifr_name, rtdev->name,
+                        IFNAMSIZ);
+                sin = (struct sockaddr_in *)&cur_ifr->ifr_addr;
+                sin->sin_family      = AF_INET;
+                sin->sin_addr.s_addr = rtdev->local_ip;
+
+                cur_ifr++;
+                rtdev_dereference(rtdev);
+            }
+        }
+
+        ifc->ifc_len = size;
+        return 0;
+    }
+
+    rtdev = rtdev_get_by_name(ifr->ifr_name);
+    if (rtdev == NULL)
+        return -ENODEV;
 
     switch (request) {
-        case SIOCGIFCONF:
-            size = 0;
-            cur_ifr = ifc->ifc_req;
-
-            for (i = 1; i <= MAX_RT_DEVICES; i++) {
-                rtdev = rtdev_get_by_index(i);
-                if (rtdev != NULL) {
-                    if ((rtdev->flags & IFF_RUNNING) == 0) {
-                        rtdev_dereference(rtdev);
-                        continue;
-                    }
-
-                    size += sizeof(struct ifreq);
-                    if (size > ifc->ifc_len) {
-                        rtdev_dereference(rtdev);
-                        size = ifc->ifc_len;
-                        break;
-                    }
-
-                    strncpy(cur_ifr->ifr_name, rtdev->name,
-                            IFNAMSIZ);
-                    sin = (struct sockaddr_in *)&cur_ifr->ifr_addr;
-                    sin->sin_family      = AF_INET;
-                    sin->sin_addr.s_addr = rtdev->local_ip;
-
-                    cur_ifr++;
-                    rtdev_dereference(rtdev);
-                }
-            }
-
-            ifc->ifc_len = size;
+        case SIOCGIFINDEX:
+            ifr->ifr_ifindex = rtdev->ifindex;
             break;
 
         case SIOCGIFFLAGS:
-            rtdev = rtdev_get_by_name(ifr->ifr_name);
-            if (rtdev == NULL)
-                return -ENODEV;
-            else {
-                ifr->ifr_flags = rtdev->flags;
-                rtdev_dereference(rtdev);
-            }
+            ifr->ifr_flags = rtdev->flags;
             break;
 
         default:
@@ -284,6 +285,7 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
             break;
     }
 
+    rtdev_dereference(rtdev);
     return ret;
 }
 

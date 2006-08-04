@@ -26,6 +26,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <linux/if.h>
+#include <arpa/inet.h>
 
 #include <rtnet.h>
 
@@ -37,11 +38,11 @@
 int main(int argc, char *argv[])
 {
     int sockfd = 0;
-    struct ifreq ifr[MAX_RT_DEVICES];
+    struct ifreq ifr_buf[MAX_RT_DEVICES];
     short flags[MAX_RT_DEVICES];
+    int index[MAX_RT_DEVICES];
     int devices = 0;
     struct ifconf ifc;
-    struct ifreq flags_ifr;
     int i, ret;
 
     printf("RTnet, interface lister for Xenomai\n");
@@ -54,8 +55,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ifc.ifc_len = sizeof(ifr);
-    ifc.ifc_req = ifr;
+    ifc.ifc_len = sizeof(ifr_buf);
+    ifc.ifc_req = ifr_buf;
 
     ret = rt_dev_ioctl(sockfd, SIOCGIFCONF, &ifc);
     if (ret < 0) {
@@ -66,16 +67,28 @@ int main(int argc, char *argv[])
     }
 
     while (ifc.ifc_len >= (int)sizeof(struct ifreq)) {
-        memcpy(flags_ifr.ifr_name, ifc.ifc_req[devices].ifr_name, IFNAMSIZ);
-        ret = rt_dev_ioctl(sockfd, SIOCGIFFLAGS, &flags_ifr);
+        struct ifreq ifr;
+
+        memcpy(ifr.ifr_name, ifc.ifc_req[devices].ifr_name, IFNAMSIZ);
+        ret = rt_dev_ioctl(sockfd, SIOCGIFFLAGS, &ifr);
         if (ret < 0) {
             rt_dev_close(sockfd);
 
             printf("Error retrieving flags for device %s: %d\n",
-                   flags_ifr.ifr_name, ret);
+                   ifr.ifr_name, ret);
             return 1;
         }
-        flags[devices] = flags_ifr.ifr_flags;
+        flags[devices] = ifr.ifr_flags;
+
+        ret = rt_dev_ioctl(sockfd, SIOCGIFINDEX, &ifr);
+        if (ret < 0) {
+            rt_dev_close(sockfd);
+
+            printf("Error retrieving index for device %s: %d\n",
+                   ifr.ifr_name, ret);
+            return 1;
+        }
+        index[devices] = ifr.ifr_ifindex;
 
         ifc.ifc_len -= sizeof(struct ifreq);
         devices++;
@@ -83,13 +96,13 @@ int main(int argc, char *argv[])
 
     rt_dev_close(sockfd);
 
-    for (i = 0; i < devices; i++)
-        printf("Device %s: IP %d.%d.%d.%d, flags 0x%08X\n", ifr[i].ifr_name,
-               ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr & 0xFF,
-               ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr >> 8 & 0xFF,
-               ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr >> 16 & 0xFF,
-               ((struct sockaddr_in *)&ifr[i].ifr_addr)->sin_addr.s_addr >> 24,
-               flags[i]);
+    for (i = 0; i < devices; i++) {
+        struct sockaddr_in *addr = (struct sockaddr_in *)&ifr_buf[i].ifr_addr;
+
+        printf("Device %s: IP %s, flags 0x%08X, index %d\n",
+               ifr_buf[i].ifr_name, inet_ntoa(addr->sin_addr), flags[i],
+               index[i]);
+    }
 
     return 0;
 }
