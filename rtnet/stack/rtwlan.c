@@ -19,16 +19,11 @@
  *
  */
 
-#include <linux/kernel.h>
 #include <linux/module.h>
 
 #include <rtnet_port.h>
 
 #include <rtwlan.h>
-
-MODULE_AUTHOR("Daniel Gregorek <dxg@gmx.de>");
-MODULE_DESCRIPTION("RTnet WLAN stack");
-MODULE_LICENSE("GPL");
 
 int rtwlan_rx(struct rtskb * rtskb, struct rtnet_device * rtnet_dev)
 {
@@ -126,10 +121,10 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
 {
     struct rtwlan_cmd cmd;
     int ret=0;
-    
+
     if (copy_from_user(&cmd, (void *)arg, sizeof(cmd)) != 0)
         return -EFAULT;
-    
+
     switch(request) {
     case IOC_RTWLAN_IFINFO:
         if (cmd.args.info.ifindex > 0)
@@ -138,27 +133,27 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
             rtdev = rtdev_get_by_name(cmd.head.if_name);
         if (rtdev == NULL)
             return -ENODEV;
-        
+
         if (down_interruptible(&rtdev->nrt_lock)) {
             rtdev_dereference(rtdev);
             return -ERESTARTSYS;
         }
-        
+
         if (rtdev->do_ioctl)
             ret = rtdev->do_ioctl(rtdev, request, &cmd);
         else 
             ret = -ENORTWLANDEV;
-        
+
         memcpy(cmd.head.if_name, rtdev->name, IFNAMSIZ);
         cmd.args.info.ifindex      = rtdev->ifindex;
         cmd.args.info.flags        = rtdev->flags;
-        
+
         up(&rtdev->nrt_lock);
-        
+
         rtdev_dereference(rtdev);
-        
+
         break;
-        
+
     case IOC_RTWLAN_TXMODE:
     case IOC_RTWLAN_BITRATE:
     case IOC_RTWLAN_CHANNEL:
@@ -174,23 +169,23 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
     case IOC_RTWLAN_BBPSENS:
         if (down_interruptible(&rtdev->nrt_lock))
             return -ERESTARTSYS;
-        
+
             if (rtdev->do_ioctl)
                 ret = rtdev->do_ioctl(rtdev, request, &cmd);
             else
                 ret = -ENORTWLANDEV;
-            
+
             up(&rtdev->nrt_lock);
-            
+
             break;
-            
+
     default:
         ret = -ENOTTY;
     }
-    
+
     if (copy_to_user((void *)arg, &cmd, sizeof(cmd)) != 0)
         return -EFAULT;
-    
+
     return ret;
 }
 
@@ -205,7 +200,7 @@ int __init rtwlan_init(void)
 {
     if (rtnet_register_ioctls(&rtnet_wlan_ioctls))
         rtdm_printk(KERN_ERR "Failed to register rtnet_wlan_ioctl!\n");
-    
+
     return 0;
 }
 
