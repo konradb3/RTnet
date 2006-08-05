@@ -50,7 +50,6 @@ rtdm_lock_t         rt_packets_lock = RTDM_LOCK_UNLOCKED;
  */
 int rtdev_add_pack(struct rtpacket_type *pt)
 {
-    struct rtpacket_type    *pt_entry;
     int                     hash;
     int                     ret = 0;
     rtdm_lockctx_t          context;
@@ -65,16 +64,7 @@ int rtdev_add_pack(struct rtpacket_type *pt)
     hash = ntohs(pt->type) & RTPACKET_HASH_KEY_MASK;
 
     rtdm_lock_get_irqsave(&rt_packets_lock, context);
-
-    list_for_each_entry(pt_entry, &rt_packets[hash], list_entry) {
-        if (unlikely(pt_entry->type == pt->type)) {
-            ret = -EADDRNOTAVAIL;
-            goto unlock_out;
-        }
-    }
     list_add_tail(&pt->list_entry, &rt_packets[hash]);
-
-  unlock_out:
     rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
     return ret;
@@ -161,6 +151,7 @@ static void stackmgr_task(void *arg)
     struct rtpacket_type    *pt_entry;
     rtdm_lockctx_t          context;
     struct rtnet_device     *rtdev;
+    int                     err;
 
 
     while (rtdm_event_wait(mgr_event) == 0)
@@ -186,21 +177,23 @@ static void stackmgr_task(void *arg)
                     pt_entry->refcount++;
                     rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
-                    pt_entry->handler(skb, pt_entry);
+                    err = pt_entry->handler(skb, pt_entry);
 
                     rtdm_lock_get_irqsave(&rt_packets_lock, context);
                     pt_entry->refcount--;
                     rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
                     rtdev_dereference(rtdev);
-                    goto next_packet;
+                    if (!err)
+                        goto next_packet;
                 }
 
             rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
             /* don't warn if running in promiscuous mode (RTcap...?) */
             if ((rtdev->flags & IFF_PROMISC) == 0)
-                rtdm_printk("RTnet: unknown layer-3 protocol\n");
+                rtdm_printk("RTnet: no one cared for packet with layer 3 "
+                            "protocol type 0x%04x\n", ntohs(skb->protocol));
 
             kfree_rtskb(skb);
             rtdev_dereference(rtdev);

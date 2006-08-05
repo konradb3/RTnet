@@ -41,6 +41,8 @@
 #define RTPACKET_HASH_KEY_MASK  (RTPACKET_HASH_TBL_SIZE-1)
 
 struct rtpacket_type {
+    struct list_head    list_entry;
+
     unsigned short      type;
     short               refcount;
 
@@ -49,7 +51,6 @@ struct rtpacket_type {
                                        struct rtpacket_type *);
 
     char                *name;
-    struct list_head    list_entry;
 };
 
 

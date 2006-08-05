@@ -45,8 +45,10 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     rtdm_lockctx_t  context;
 
 
-    if (((ifindex != 0) && (ifindex != skb->rtdev->ifindex)) ||
-        (rtskb_acquire(skb, &sock->skb_pool) != 0))
+    if (unlikely((ifindex != 0) && (ifindex != skb->rtdev->ifindex)))
+        return EUNATCH;
+
+    if (unlikely(rtskb_acquire(skb, &sock->skb_pool) != 0))
         kfree_rtskb(skb);
     else {
         rtdev_reference(skb->rtdev);

@@ -55,13 +55,14 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
     }
 
     if (hdr->flags & RTMAC_FLAG_TUNNEL)
-        return rtmac_vnic_rx(skb, hdr->type);
+        rtmac_vnic_rx(skb, hdr->type);
     else if (disc->disc_type == hdr->type)
-        return disc->packet_rx(skb);
+        disc->packet_rx(skb);
+    return 0;
 
   error:
     kfree_rtskb(skb);
-    return -1;
+    return 0;
 }
 
 

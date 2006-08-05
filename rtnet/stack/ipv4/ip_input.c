@@ -163,11 +163,12 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
         return 0;
 #endif /* CONFIG_RTNET_RTIPV4_ROUTER */
 
-    return rt_ip_local_deliver(skb);
+    rt_ip_local_deliver(skb);
+    return 0;
 
   drop:
     kfree_rtskb(skb);
-    return NET_RX_DROP;
+    return 0;
 }
 
 
