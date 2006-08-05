@@ -28,7 +28,7 @@
 #include <linux/if.h>
 #include <linux/if_arp.h> /* ARPHRD_ETHER */
 #include <linux/netdevice.h>
-#include <linux/module.h>
+#include <linux/moduleparam.h>
 
 #include <rtnet_internal.h>
 #include <rtskb.h>

@@ -23,7 +23,7 @@
  *
  */
 
-#include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/spinlock.h>
 #include <linux/socket.h>
 #include <linux/in.h>

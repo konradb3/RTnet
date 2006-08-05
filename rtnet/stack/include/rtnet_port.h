@@ -23,6 +23,7 @@
 #ifdef __KERNEL__
 
 #include <linux/bitops.h>
+#include <linux/moduleparam.h>
 
 #include <rtdev.h>
 #include <rtdev_mgr.h>

@@ -22,8 +22,7 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <net/ip.h>
 
 #include <rtnet_internal.h>

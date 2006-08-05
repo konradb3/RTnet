@@ -27,6 +27,7 @@
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 
 #include <rtnet_sys.h>
 #include <rtmac/rtmac_vnic.h>

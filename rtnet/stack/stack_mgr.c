@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/moduleparam.h>
+
 #include <rtdev.h>
 #include <rtnet_internal.h>
 #include <rtskb_fifo.h>
