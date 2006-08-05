@@ -1,3 +1,20 @@
+0.9.4
+- fixed critical race in lock-less rx queue introduced with 0.9.3 [Mathias]
+- RT-WLAN related fixes and updates [Daniel]
+- pass media type to rt_8139too as module parameter [Fabian]
+- added support for SIOCGIFINDEX
+- various fixes, enhancements, and cleanups of the examples
+- added proper examples installation
+- vnic numbering now derived from RT-NIC index, not from its name
+- exported vnic->RT-device mapping via /proc/rtnet/rtmac/vnics
+- fixed CONFIG_PROC_FS=n build
+- fixed NIC dereferencing on packet drops due to overload
+- made new MAC setting feature via rtifconfig work
+- catch and deny NIC reconfiguration when it's running
+- fixed 2.4 build over RTAI-3.3-cv
+- fixed endless loop in rtping
+- fixed verbose mode of rtnet script
+
 0.9.3
 - experimental RT-WLAN support with Ralink 2500 as first driver
 - support for kernel 2.6.17
