@@ -28,7 +28,19 @@
 extern int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt);
 
 #ifdef CONFIG_RTNET_ADDON_PROXY
-extern int rt_ip_register_fallback(int (*callback)(struct rtskb *skb));
+typedef void (*rt_ip_fallback_handler_t)(struct rtskb *skb);
+
+/*
+ * This hook can be used to register a fallback handler for incoming
+ * IP packets. Typically this is done to move over to the standard Linux
+ * IP protocol (e.g. for handling TCP).
+ * Manipulating the fallback handler is expected to happen only when the
+ * RTnetinterfaces are shut down (avoiding race conditions).
+ *
+ * Note that merging RT and non-RT traffic this way most likely breaks hard
+ * real-time constraints!
+ */
+extern rt_ip_fallback_handler_t rt_ip_fallback_handler;
 #endif
 
 

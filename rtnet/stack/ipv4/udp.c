@@ -717,7 +717,7 @@ struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
 /***
  *  rt_udp_rcv
  */
-int rt_udp_rcv (struct rtskb *skb)
+void rt_udp_rcv (struct rtskb *skb)
 {
     struct rtsocket *sock = skb->sk;
     void            (*callback_func)(struct rtdm_dev_context *, void *);
@@ -731,7 +731,7 @@ int rt_udp_rcv (struct rtskb *skb)
     rtdm_lock_get_irqsave(&sock->param_lock, context);
 #ifdef CONFIG_RTNET_RTDM_SELECT
     if (sock->wakeup_select != NULL) {
-	wq_wakeup(sock->wakeup_select);
+        wq_wakeup(sock->wakeup_select);
     }
 #endif /* CONFIG_RTNET_RTDM_SELECT */
     callback_func = sock->callback_func;
@@ -740,8 +740,6 @@ int rt_udp_rcv (struct rtskb *skb)
 
     if (callback_func)
         callback_func(rt_socket_context(sock), callback_arg);
-
-    return 0;
 }
 
 

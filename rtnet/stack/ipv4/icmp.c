@@ -439,7 +439,7 @@ struct rtsocket *rt_icmp_dest_socket(struct rtskb *skb)
 /***
  *  rt_icmp_rcv
  */
-int rt_icmp_rcv(struct rtskb *skb)
+void rt_icmp_rcv(struct rtskb *skb)
 {
     struct icmphdr  *icmpHdr = skb->h.icmph;
     unsigned int    length   = skb->len;
@@ -472,11 +472,10 @@ int rt_icmp_rcv(struct rtskb *skb)
     }
 
     /* sane packet, process it */
-    (rt_icmp_pointers[icmpHdr->type].handler)(skb);
+    rt_icmp_pointers[icmpHdr->type].handler(skb);
 
   cleanup:
     kfree_rtskb(skb);
-    return 0;
 }
 
 

@@ -32,20 +32,10 @@
 #include <ipv4/route.h>
 
 #ifdef CONFIG_RTNET_ADDON_PROXY
-static int (*ip_fallback_handler)(struct rtskb *skb) = 0;
+#include <ipv4/ip_input.h>
 
-
-/* This function can be used to register a fallback handler for incoming
- * ip frames. Typically this is done to move over to the standard linux
- * ip protocol (e.g. for handling TCP).
- * By calling this function with the argument set to zero, the function is
- * unregistered.
- * Note: Only one function can be registered! */
-int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
-{
-    ip_fallback_handler = callback;
-    return 0;
-}
+rt_ip_fallback_handler_t rt_ip_fallback_handler = NULL;
+EXPORT_SYMBOL(rt_ip_fallback_handler);
 #endif /* CONFIG_RTNET_ADDON_PROXY */
 
 
@@ -53,13 +43,13 @@ int rt_ip_register_fallback( int (*callback)(struct rtskb *skb))
 /***
  *  rt_ip_local_deliver
  */
-static inline int rt_ip_local_deliver(struct rtskb *skb)
+static inline void rt_ip_local_deliver(struct rtskb *skb)
 {
     struct iphdr *iph       = skb->nh.iph;
     unsigned short protocol = iph->protocol;
     struct rtinet_protocol *ipprot;
     struct rtsocket *sock;
-    int ret;
+    int err;
 
 
     ipprot = rt_inet_protocols[rt_inet_hashkey(protocol)];
@@ -76,46 +66,38 @@ static inline int rt_ip_local_deliver(struct rtskb *skb)
         if (iph->frag_off & htons(IP_MF|IP_OFFSET)) {
             skb = rt_ip_defrag(skb, ipprot);
             if (!skb)
-                return 0;
+                return;
         } else {
             /* Get the destination socket */
             if ((sock = ipprot->dest_socket(skb)) == NULL) {
                 kfree_rtskb(skb);
-                return 0;
+                return;
             }
 
             /* Acquire the rtskb at the expense of the protocol pool */
-            ret = rtskb_acquire(skb, &sock->skb_pool);
+            err = rtskb_acquire(skb, &sock->skb_pool);
 
             /* Socket is now implicitely locked by the rtskb */
             rt_socket_dereference(sock);
 
-            if (ret != 0) {
+            if (err) {
                 kfree_rtskb(skb);
-                return 0;
+                return;
             }
         }
 
         /* Deliver the packet to the next layer */
-        ret = ipprot->rcv_handler(skb);
-    } else {
+        ipprot->rcv_handler(skb);
 #ifdef CONFIG_RTNET_ADDON_PROXY
+    } else if (rt_ip_fallback_handler) {
         /* If a fallback handler for IP protocol has been installed,
-         * call it! */
-        if (ip_fallback_handler) {
-            ret = ip_fallback_handler(skb);
-            if (ret) {
-                rtdm_printk("RTnet: fallback handler failed\n");
-            }
-            return ret;
-        }
+         * call it. */
+        rt_ip_fallback_handler(skb);
 #endif /* CONFIG_RTNET_ADDON_PROXY */
+    } else {
         rtdm_printk("RTnet: no protocol found\n");
         kfree_rtskb(skb);
-        ret = 0;
     }
-
-    return ret;
 }
 
 
@@ -170,8 +152,3 @@ int rt_ip_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     kfree_rtskb(skb);
     return 0;
 }
-
-
-#ifdef CONFIG_RTNET_ADDON_PROXY
-EXPORT_SYMBOL(rt_ip_register_fallback);
-#endif

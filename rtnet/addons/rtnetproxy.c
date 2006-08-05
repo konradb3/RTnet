@@ -1,4 +1,4 @@
-/* rtnetproxy.c: a network driver that uses the RTAI rtnet driver to
+/* rtnetproxy.c: a Linux network driver that uses the RTnet driver to
  * transport IP data from/to Linux kernel mode.
  * This allows the usage of TCP/IP from linux space using via the RTNET
  * network adapter.
@@ -98,7 +98,7 @@ static skb_exch_ringbuffer_t  ring_rtskb_kernel_rtnet;
 /* Spinlock for protected code areas... */
 static rtdm_lock_t skb_spinlock = RTDM_LOCK_UNLOCKED;
 
-/* handle for rtai srq: */
+/* handle for non-real-time signal */
 static rtdm_nrtsig_t rtnetproxy_signal;
 
 /* Thread for transmission */
@@ -174,9 +174,9 @@ static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev);
 
 /* ************************************************************************
  * This functions runs in rtai context.
- * It is called from rtnetproxy_user_srq whenever there is frame to sent out
- * Copy the standard linux sk_buff buffer to a rtnet buffer and send it out
- * using rtnet functions.
+ * It is called from rtnetproxy_transmit_thread whenever there is frame to
+ * sent out. Copies the standard linux sk_buff buffer to a rtnet buffer and
+ * sends it out using rtnet functions.
  * ************************************************************************ */
 static inline void send_data_out(struct sk_buff *skb)
 {
@@ -259,10 +259,10 @@ static void rtnetproxy_transmit_thread(void *arg)
     struct rtskb *del;
     while (1)
     {
-	/* Free all "used" rtskbs in ringbuffer */
-	while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet)) != 0)	{
-	    kfree_rtskb(del);
-	}
+        /* Free all "used" rtskbs in ringbuffer */
+        while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet)) != 0)	{
+            kfree_rtskb(del);
+    }
 
         /* Send out all frames in the ringbuffer that have not been sent yet */
         while ((skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
@@ -323,12 +323,12 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 
 
 /* ************************************************************************
- * This function runs in rtai context.
+ * This function runs in real-time context.
  *
  * It is called from inside rtnet whenever a packet has been received that
  * has to be processed by rtnetproxy.
  * ************************************************************************ */
-static int rtnetproxy_recv(struct rtskb *rtskb)
+static void rtnetproxy_recv(struct rtskb *rtskb)
 {
     /* Acquire rtskb (JK) */
     if (rtskb_acquire(rtskb, &rtskb_pool) != 0) {
@@ -347,14 +347,12 @@ static int rtnetproxy_recv(struct rtskb *rtskb)
         rtdm_printk("rtnetproxy_recv: No space in queue\n");
         kfree_rtskb(rtskb);
     }
-
-    return 0;
 }
 
 
 /* ************************************************************************
  * This function runs in kernel mode.
- * It is activated from rtnetproxy_rtai_srq whenever rtnet received a
+ * It is activated from rtnetproxy_signal_handler whenever rtnet received a
  * frame to be processed by rtnetproxy.
  * ************************************************************************ */
 static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
@@ -516,11 +514,11 @@ static int __init rtnetproxy_init_module(void)
                    rtnetproxy_transmit_thread, 0,
                    RTDM_TASK_LOWEST_PRIORITY, 0);
 
-    /* Register srq */
+    /* Register non-real-time signal */
     rtdm_nrtsig_init(&rtnetproxy_signal, rtnetproxy_signal_handler);
 
-    /* rtNet stuff: */
-    rt_ip_register_fallback(rtnetproxy_recv);
+    /* Register with RTnet */
+    rt_ip_fallback_handler = rtnetproxy_recv;
 
     printk("rtnetproxy installed as \"%s\"\n", dev_rtnetproxy.name);
 
@@ -530,11 +528,10 @@ static int __init rtnetproxy_init_module(void)
 
 static void __exit rtnetproxy_cleanup_module(void)
 {
-
     /* Unregister the fallback at rtnet */
-    rt_ip_register_fallback(0);
+    rt_ip_fallback_handler = NULL;
 
-    /* free the rtai srq */
+    /* free the non-real-time signal */
     rtdm_nrtsig_destroy(&rtnetproxy_signal);
 
     rtdm_task_destroy(&rtnetproxy_thread);

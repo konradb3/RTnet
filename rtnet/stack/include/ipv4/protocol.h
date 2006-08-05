@@ -40,7 +40,7 @@ struct rtinet_protocol {
     unsigned short      protocol;
 
     struct rtsocket     *(*dest_socket)(struct rtskb *);
-    int                 (*rcv_handler)(struct rtskb *);
+    void                (*rcv_handler)(struct rtskb *);
     void                (*err_handler)(struct rtskb *);
     int                 (*init_socket)(struct rtdm_dev_context *,
                                        rtdm_user_info_t *);
