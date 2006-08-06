@@ -64,7 +64,7 @@ distclean-local:
 
 SUBDIRS = $(OPTDIRS)
 
-EXTRA_DIST = Kconfig Makefile.kbuild
+EXTRA_DIST = Kconfig Makefile.kbuild README.r8169
 
 DISTCLEANFILES = Makefile
 

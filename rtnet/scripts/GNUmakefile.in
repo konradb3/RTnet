@@ -241,7 +241,8 @@ target_alias = @target_alias@
 SUBDIRS = kconfig
 EXTRA_DIST = \
 	arch2host.sh \
-	autogen.sh
+	autogen.sh \
+	tag-release
 
 all: all-recursive
 

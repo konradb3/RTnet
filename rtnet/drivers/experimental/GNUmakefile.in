@@ -287,7 +287,7 @@ libkernel_r8169_a_SOURCES = \
 OBJS = $(am__append_1) $(am__append_2)
 OPTDIRS = $(am__append_3)
 SUBDIRS = $(OPTDIRS)
-EXTRA_DIST = Kconfig Makefile.kbuild
+EXTRA_DIST = Kconfig Makefile.kbuild README.r8169
 DISTCLEANFILES = Makefile
 all: all-recursive
 
