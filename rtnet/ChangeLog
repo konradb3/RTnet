@@ -2,11 +2,13 @@
 - fixed critical race in lock-less rx queue introduced with 0.9.3 [Mathias]
 - RT-WLAN related fixes and updates [Daniel]
 - pass media type to rt_8139too as module parameter [Fabian]
+- allow multiple AF_PACKET sockets to listen on different devices for the
+  same protocol
 - added support for SIOCGIFINDEX
 - various fixes, enhancements, and cleanups of the examples
 - added proper examples installation
-- vnic numbering now derived from RT-NIC index, not from its name
-- exported vnic->RT-device mapping via /proc/rtnet/rtmac/vnics
+- VNIC numbering now derived from RT-NIC index, not from its name
+- exported NCIS->RT-device mapping via /proc/rtnet/rtmac/vnics
 - fixed CONFIG_PROC_FS=n build
 - fixed NIC dereferencing on packet drops due to overload
 - made new MAC setting feature via rtifconfig work
