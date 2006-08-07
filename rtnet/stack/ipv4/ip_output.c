@@ -41,7 +41,7 @@ static u16          rt_ip_id_count = 0;
 int rt_ip_build_xmit_slow(struct rtsocket *sk,
         int getfrag(const void *, char *, unsigned int, unsigned int),
         const void *frag, unsigned length, struct dest_route *rt,
-        int msg_flags, unsigned int mtu)
+        int msg_flags, unsigned int mtu, unsigned int prio)
 {
     int             err, next_err;
     struct rtskb    *skb;
@@ -105,7 +105,7 @@ int rt_ip_build_xmit_slow(struct rtsocket *sk,
 
         skb->rtdev    = rtdev;
         skb->nh.iph   = iph = (struct iphdr *)rtskb_put(skb, fraglen);
-        skb->priority = sk->priority;
+        skb->priority = prio;
 
         iph->version  = 4;
         iph->ihl      = 5;    /* 20 byte header - no options */
@@ -172,8 +172,15 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     u16                     msg_rt_ip_id;
     rtdm_lockctx_t          context;
     struct  rtnet_device    *rtdev = rt->rtdev;
-    unsigned int            mtu = rtdev->get_mtu(rtdev, sk->priority);
+    unsigned int            prio;
+    unsigned int            mtu;
 
+
+    /* sk->priority may encode both priority and output channel. Make sure
+       we use a consitent value, also for the MTU which is derived from the
+       channel. */
+    prio = (volatile unsigned int)sk->priority;
+    mtu = rtdev->get_mtu(rtdev, prio);
 
     /*
      *  Try the simple case first. This leaves fragmented frames, and by choice
@@ -184,7 +191,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
     if (length > mtu)
         return rt_ip_build_xmit_slow(sk, getfrag, frag,
                                      length - sizeof(struct iphdr),
-                                     rt, msg_flags, mtu);
+                                     rt, msg_flags, mtu, prio);
 
     /* Store id in local variable */
     rtdm_lock_get_irqsave(&rt_ip_id_lock, context);
@@ -201,7 +208,7 @@ int rt_ip_build_xmit(struct rtsocket *sk,
 
     skb->rtdev    = rtdev;
     skb->nh.iph   = iph = (struct iphdr *) rtskb_put(skb, length);
-    skb->priority = sk->priority;
+    skb->priority = prio;
 
     iph->version  = 4;
     iph->ihl      = 5;

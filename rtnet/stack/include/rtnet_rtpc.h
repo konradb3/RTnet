@@ -39,7 +39,7 @@ typedef void (*rtpc_cleanup_proc)(void *priv_data);
 
 struct rt_proc_call {
     struct list_head    list_entry;
-    volatile int        processed;
+    int                 processed;
     rtpc_proc           proc;
     int                 result;
     atomic_t            ref_count;

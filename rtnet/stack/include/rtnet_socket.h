@@ -48,14 +48,14 @@ struct rtsocket {
 
     rtdm_lock_t             param_lock;
 
-    volatile unsigned int   priority;
+    unsigned int            priority;
     nanosecs_t              timeout;    /* receive timeout, 0 for infinite */
 
     rtdm_sem_t              pending_sem;
 #ifdef CONFIG_RTNET_RTDM_SELECT
     wait_queue_primitive_t  *wakeup_select; /* for selecting calls - this
-					       SHOULD be the head of a wait
-					       queue mechanism. */
+                                               SHOULD be the head of a wait
+                                               queue mechanism. */
 #endif /* CONFIG_RTNET_RTDM_SELECT*/
 
     void                    (*callback_func)(struct rtdm_dev_context *,
@@ -78,7 +78,7 @@ struct rtsocket {
         /* packet socket specific */
         struct {
             struct rtpacket_type packet_type;
-            volatile int         ifindex;
+            int                  ifindex;
         } packet;
     } prot;
 };
