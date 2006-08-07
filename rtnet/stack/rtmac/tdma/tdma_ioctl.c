@@ -64,6 +64,8 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     /* search at least 3 cycle periods for other masters */
     cycle_ms = cfg->args.master.cycle_period;
     do_div(cycle_ms, 1000000);
+    if (cycle_ms == 0)
+        cycle_ms = 1;
     msleep(3*cycle_ms);
 
     if (rtskb_pool_init(&tdma->cal_rtskb_pool,
@@ -383,6 +385,8 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
             /* wait 2 cycle periods for the mode switch */
             cycle_ms = tdma->cycle_period;
             do_div(cycle_ms, 1000000);
+            if (cycle_ms == 0)
+                cycle_ms = 1;
             msleep(2*cycle_ms);
 
             /* catch the very unlikely case that the current master died
