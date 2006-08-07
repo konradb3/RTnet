@@ -66,6 +66,9 @@ void tdma_xmit_sync_frame(struct tdma_priv *tdma)
 
     rtmac_xmit(rtskb);
 
+    /* signal local waiters */
+    rtdm_event_pulse(&tdma->sync_event);
+
     return;
 
   err_out:
