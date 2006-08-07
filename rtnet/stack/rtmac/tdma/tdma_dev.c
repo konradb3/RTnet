@@ -4,7 +4,7 @@
  *
  *  RTmac - real-time networking media access control subsystem
  *  Copyright (C) 2002      Marc Kleine-Budde <kleine-budde@gmx.de>
- *                2003-2005 Jan Kiszka <Jan.Kiszka@web.de>
+ *                2003-2006 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,8 +30,7 @@
 
 
 struct tdma_dev_ctx {
-    volatile unsigned long  waiter_lock;
-    rtdm_task_t             *cycle_waiter;
+    rtdm_task_t *cycle_waiter;
 };
 
 
@@ -41,7 +40,6 @@ static int tdma_dev_open(struct rtdm_dev_context *context,
     struct tdma_dev_ctx *ctx = (struct tdma_dev_ctx *)context->dev_private;
 
 
-    ctx->waiter_lock  = 0;
     ctx->cycle_waiter = NULL;
 
     return 0;
@@ -70,9 +68,13 @@ static int wait_on_sync(struct tdma_dev_ctx *tdma_ctx,
 
 
     RTDM_EXECUTE_ATOMICALLY(
-        tdma_ctx->cycle_waiter = rtdm_task_current();
-        ret = rtdm_event_wait(sync_event);
-        tdma_ctx->cycle_waiter = NULL;
+        /* keep it simple: only one waiter per device instance allowed */
+        if (!tdma_ctx->cycle_waiter) {
+            tdma_ctx->cycle_waiter = rtdm_task_current();
+            ret = rtdm_event_wait(sync_event);
+            tdma_ctx->cycle_waiter = NULL;
+        } else
+            ret = -EBUSY;
     );
     return ret;
 }
