@@ -597,7 +597,7 @@ static inline void _kc_netif_poll_enable(struct net_device *netdev)
 /* 2.5.28 => 2.4.23 */
 #if ( LINUX_VERSION_CODE < KERNEL_VERSION(2,5,28) )
 
-static inline void _kc_synchronize_irq() { synchronize_irq(); }
+static inline void _kc_synchronize_irq(void) { synchronize_irq(); }
 #undef synchronize_irq
 #define synchronize_irq(X) _kc_synchronize_irq()
 

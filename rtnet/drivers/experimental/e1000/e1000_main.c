@@ -3147,7 +3147,6 @@ e1000_clean_rx_irq(struct e1000_adapter *adapter,
 	struct pci_dev *pdev = adapter->pdev;
 	struct e1000_rx_desc *rx_desc, *next_rxd;
 	struct e1000_buffer *buffer_info, *next_buffer;
-	unsigned long flags;
 	uint32_t length;
 	uint8_t last_byte;
 	unsigned int i;
