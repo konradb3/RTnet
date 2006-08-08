@@ -1453,7 +1453,7 @@ setup_tx_desc_die:
 
 	txdr->next_to_use = 0;
 	txdr->next_to_clean = 0;
-	spin_lock_init(&txdr->tx_lock);
+	rtdm_lock_init(&txdr->tx_lock);
 
 	return 0;
 }
@@ -2731,8 +2731,7 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 	unsigned int max_txd_pwr = E1000_MAX_TXD_PWR;
 	unsigned int tx_flags = 0;
 	unsigned int len = skb->len;
-	// unsigned long flags;
-        rtdm_lockctx_t context;
+	rtdm_lockctx_t context;
 	unsigned int nr_frags = 0;
 	unsigned int mss = 0;
 	int count = 0;
@@ -2769,14 +2768,12 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 	    (adapter->hw.mac_type == e1000_82573))
 		e1000_transfer_dhcp_info(adapter, skb);
 
-	// spin_lock_irqsave(&tx_ring->tx_lock, flags);
-        rtdm_lock_get_irqsave(&tx_ring->tx_lock, context);
+	rtdm_lock_get_irqsave(&tx_ring->tx_lock, context);
 
 	/* need: count + 2 desc gap to keep tail from touching
 	 * head, otherwise try next time */
 	if (unlikely(E1000_DESC_UNUSED(tx_ring) < count + 2)) {
 		rtnetif_stop_queue(netdev);
-		// spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
                 rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
 		return NETDEV_TX_BUSY;
 	}
@@ -2784,15 +2781,17 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 	if (unlikely(adapter->hw.mac_type == e1000_82547)) {
 		if (unlikely(e1000_82547_fifo_workaround(adapter, skb))) {
 			rtnetif_stop_queue(netdev);
-			mod_timer(&adapter->tx_fifo_stall_timer, jiffies);
-			// spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
                         rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
+
+			/* FIXME: warn the user earlier, i.e. on startup if
+			   half-duplex is detected! */
+			rtdm_printk("FATAL: rt_e1000 ran into 82547 "
+				    "controller bug!\n");
 			return NETDEV_TX_BUSY;
 		}
 	}
 
-	// spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
-        rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
+	rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
 
 
 	first = tx_ring->next_to_use;
@@ -2809,8 +2808,6 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 	e1000_tx_queue(adapter, tx_ring, tx_flags,
 	               e1000_tx_map(adapter, tx_ring, skb, first,
 	                            max_per_txd, nr_frags, mss));
-
-	// netdev->trans_start = jiffies;
 
 	return NETDEV_TX_OK;
 }
@@ -2874,7 +2871,9 @@ e1000_intr(rtdm_irq_t *irq_handle)
 			rctl = E1000_READ_REG(hw, RCTL);
 			E1000_WRITE_REG(hw, RCTL, rctl & ~E1000_RCTL_EN);
 		}
-		mod_timer(&adapter->watchdog_timer, jiffies);
+		/* FIXME: we need to handle this via some yet-to-be-invented
+		   error manager (Linux botton-half and/or kthread)
+		mod_timer(&adapter->watchdog_timer, jiffies);*/
 	}
 
 	/* Writing IMC and IMS is needed for 82547.
@@ -2922,7 +2921,9 @@ e1000_intr(rtdm_irq_t *irq_handle)
 	adapter->icr_gpi += icr & 0x01;
 #endif
 
-        rt_mark_stack_mgr(netdev);
+	/* FIXME: this can cause spurious wakeups of the stack manager!
+	   Only invoke if we actually received and queued something. */
+	rt_mark_stack_mgr(netdev);
 	return RTDM_IRQ_HANDLED;
 }
 
@@ -3032,11 +3033,11 @@ e1000_clean_tx_irq(struct e1000_adapter *adapter,
 #define TX_WAKE_THRESHOLD 32
 	if (unlikely(cleaned && rtnetif_queue_stopped(netdev) &&
 	             rtnetif_carrier_ok(netdev))) {
-		spin_lock(&tx_ring->tx_lock);
+		rtdm_lock_get(&tx_ring->tx_lock);
 		if (rtnetif_queue_stopped(netdev) &&
 		    (E1000_DESC_UNUSED(tx_ring) >= TX_WAKE_THRESHOLD))
 			rtnetif_wake_queue(netdev);
-		spin_unlock(&tx_ring->tx_lock);
+		rtdm_lock_put(&tx_ring->tx_lock);
 	}
 
 	if (adapter->detect_tx_hung) {
