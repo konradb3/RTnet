@@ -13,14 +13,13 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../..
+top_builddir = ../../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -36,9 +35,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-example_PROGRAMS = rtnet_ifs$(EXEEXT) $(am__EXEEXT_1)
-@CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = simpleclient simpleserver
-subdir = examples/rtai
+subdir = drivers/experimental/e1000
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
@@ -49,20 +46,14 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
-@CONFIG_RTNET_RTIPV4_TRUE@am__EXEEXT_1 = simpleclient$(EXEEXT) \
-@CONFIG_RTNET_RTIPV4_TRUE@	simpleserver$(EXEEXT)
-am__installdirs = "$(DESTDIR)$(exampledir)"
-examplePROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(example_PROGRAMS)
-rtnet_ifs_SOURCES = rtnet_ifs.c
-rtnet_ifs_OBJECTS = rtnet_ifs.$(OBJEXT)
-rtnet_ifs_LDADD = $(LDADD)
-simpleclient_SOURCES = simpleclient.c
-simpleclient_OBJECTS = simpleclient.$(OBJEXT)
-simpleclient_LDADD = $(LDADD)
-simpleserver_SOURCES = simpleserver.c
-simpleserver_OBJECTS = simpleserver.$(OBJEXT)
-simpleserver_LDADD = $(LDADD)
+ARFLAGS = cru
+libkernel_e1000_a_AR = $(AR) $(ARFLAGS)
+libkernel_e1000_a_LIBADD =
+am_libkernel_e1000_a_OBJECTS = libkernel_e1000_a-kcompat.$(OBJEXT) \
+	libkernel_e1000_a-e1000_hw.$(OBJEXT) \
+	libkernel_e1000_a-e1000_main.$(OBJEXT) \
+	libkernel_e1000_a-e1000_param.$(OBJEXT)
+libkernel_e1000_a_OBJECTS = $(am_libkernel_e1000_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -74,8 +65,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = rtnet_ifs.c simpleclient.c simpleserver.c
-DIST_SOURCES = rtnet_ifs.c simpleclient.c simpleserver.c
+SOURCES = $(libkernel_e1000_a_SOURCES)
+DIST_SOURCES = $(libkernel_e1000_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -261,15 +252,27 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-exampledir = $(DESTDIR)$(prefix)/examples/rtai
-AM_CFLAGS = \
-	$(RTEXT_USER_CFLAGS) \
-	-I$(top_srcdir)/stack/include
+moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
+modext = $(RTNET_MODULE_EXT)
+EXTRA_LIBRARIES = libkernel_e1000.a
+libkernel_e1000_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
 
-AM_LDFLAGS = \
-	-lpthread -llxrt \
-	-L$(RTEXT_LIBRARIES)
+libkernel_e1000_a_SOURCES = \
+	e1000_hw.h \
+	e1000_osdep.h \
+	kcompat.c \
+	e1000.h \
+	e1000_hw.c \
+	e1000_main.c \
+	e1000_param.c \
+	kcompat.h
 
+OBJS = rt_e1000$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -283,9 +286,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  examples/rtai/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  drivers/experimental/e1000/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  examples/rtai/GNUmakefile
+	  $(AUTOMAKE) --foreign  drivers/experimental/e1000/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -303,43 +306,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-install-examplePROGRAMS: $(example_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(exampledir)" || $(mkdir_p) "$(DESTDIR)$(exampledir)"
-	@list='$(example_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	     || test -f $$p1 \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(examplePROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(exampledir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(examplePROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(exampledir)/$$f" || exit 1; \
-	  else :; fi; \
-	done
-
-uninstall-examplePROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(example_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(exampledir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(exampledir)/$$f"; \
-	done
-
-clean-examplePROGRAMS:
-	@list='$(example_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-rtnet_ifs$(EXEEXT): $(rtnet_ifs_OBJECTS) $(rtnet_ifs_DEPENDENCIES) 
-	@rm -f rtnet_ifs$(EXEEXT)
-	$(LINK) $(rtnet_ifs_LDFLAGS) $(rtnet_ifs_OBJECTS) $(rtnet_ifs_LDADD) $(LIBS)
-simpleclient$(EXEEXT): $(simpleclient_OBJECTS) $(simpleclient_DEPENDENCIES) 
-	@rm -f simpleclient$(EXEEXT)
-	$(LINK) $(simpleclient_LDFLAGS) $(simpleclient_OBJECTS) $(simpleclient_LDADD) $(LIBS)
-simpleserver$(EXEEXT): $(simpleserver_OBJECTS) $(simpleserver_DEPENDENCIES) 
-	@rm -f simpleserver$(EXEEXT)
-	$(LINK) $(simpleserver_LDFLAGS) $(simpleserver_OBJECTS) $(simpleserver_LDADD) $(LIBS)
+libkernel_e1000.a: $(libkernel_e1000_a_OBJECTS) $(libkernel_e1000_a_DEPENDENCIES) 
+	-rm -f libkernel_e1000.a
+	$(libkernel_e1000_a_AR) libkernel_e1000.a $(libkernel_e1000_a_OBJECTS) $(libkernel_e1000_a_LIBADD)
+	$(RANLIB) libkernel_e1000.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -347,9 +317,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtnet_ifs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simpleclient.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/simpleserver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_e1000_a-e1000_hw.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_e1000_a-e1000_main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_e1000_a-e1000_param.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_e1000_a-kcompat.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -371,6 +342,62 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libkernel_e1000_a-kcompat.o: kcompat.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-kcompat.o -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-kcompat.Tpo" -c -o libkernel_e1000_a-kcompat.o `test -f 'kcompat.c' || echo '$(srcdir)/'`kcompat.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-kcompat.Tpo" "$(DEPDIR)/libkernel_e1000_a-kcompat.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-kcompat.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='kcompat.c' object='libkernel_e1000_a-kcompat.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-kcompat.o `test -f 'kcompat.c' || echo '$(srcdir)/'`kcompat.c
+
+libkernel_e1000_a-kcompat.obj: kcompat.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-kcompat.obj -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-kcompat.Tpo" -c -o libkernel_e1000_a-kcompat.obj `if test -f 'kcompat.c'; then $(CYGPATH_W) 'kcompat.c'; else $(CYGPATH_W) '$(srcdir)/kcompat.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-kcompat.Tpo" "$(DEPDIR)/libkernel_e1000_a-kcompat.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-kcompat.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='kcompat.c' object='libkernel_e1000_a-kcompat.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-kcompat.obj `if test -f 'kcompat.c'; then $(CYGPATH_W) 'kcompat.c'; else $(CYGPATH_W) '$(srcdir)/kcompat.c'; fi`
+
+libkernel_e1000_a-e1000_hw.o: e1000_hw.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-e1000_hw.o -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Tpo" -c -o libkernel_e1000_a-e1000_hw.o `test -f 'e1000_hw.c' || echo '$(srcdir)/'`e1000_hw.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Tpo" "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_hw.c' object='libkernel_e1000_a-e1000_hw.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-e1000_hw.o `test -f 'e1000_hw.c' || echo '$(srcdir)/'`e1000_hw.c
+
+libkernel_e1000_a-e1000_hw.obj: e1000_hw.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-e1000_hw.obj -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Tpo" -c -o libkernel_e1000_a-e1000_hw.obj `if test -f 'e1000_hw.c'; then $(CYGPATH_W) 'e1000_hw.c'; else $(CYGPATH_W) '$(srcdir)/e1000_hw.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Tpo" "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-e1000_hw.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_hw.c' object='libkernel_e1000_a-e1000_hw.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-e1000_hw.obj `if test -f 'e1000_hw.c'; then $(CYGPATH_W) 'e1000_hw.c'; else $(CYGPATH_W) '$(srcdir)/e1000_hw.c'; fi`
+
+libkernel_e1000_a-e1000_main.o: e1000_main.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-e1000_main.o -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-e1000_main.Tpo" -c -o libkernel_e1000_a-e1000_main.o `test -f 'e1000_main.c' || echo '$(srcdir)/'`e1000_main.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-e1000_main.Tpo" "$(DEPDIR)/libkernel_e1000_a-e1000_main.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-e1000_main.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_main.c' object='libkernel_e1000_a-e1000_main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-e1000_main.o `test -f 'e1000_main.c' || echo '$(srcdir)/'`e1000_main.c
+
+libkernel_e1000_a-e1000_main.obj: e1000_main.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-e1000_main.obj -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-e1000_main.Tpo" -c -o libkernel_e1000_a-e1000_main.obj `if test -f 'e1000_main.c'; then $(CYGPATH_W) 'e1000_main.c'; else $(CYGPATH_W) '$(srcdir)/e1000_main.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-e1000_main.Tpo" "$(DEPDIR)/libkernel_e1000_a-e1000_main.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-e1000_main.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_main.c' object='libkernel_e1000_a-e1000_main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-e1000_main.obj `if test -f 'e1000_main.c'; then $(CYGPATH_W) 'e1000_main.c'; else $(CYGPATH_W) '$(srcdir)/e1000_main.c'; fi`
+
+libkernel_e1000_a-e1000_param.o: e1000_param.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-e1000_param.o -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-e1000_param.Tpo" -c -o libkernel_e1000_a-e1000_param.o `test -f 'e1000_param.c' || echo '$(srcdir)/'`e1000_param.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-e1000_param.Tpo" "$(DEPDIR)/libkernel_e1000_a-e1000_param.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-e1000_param.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_param.c' object='libkernel_e1000_a-e1000_param.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-e1000_param.o `test -f 'e1000_param.c' || echo '$(srcdir)/'`e1000_param.c
+
+libkernel_e1000_a-e1000_param.obj: e1000_param.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_e1000_a-e1000_param.obj -MD -MP -MF "$(DEPDIR)/libkernel_e1000_a-e1000_param.Tpo" -c -o libkernel_e1000_a-e1000_param.obj `if test -f 'e1000_param.c'; then $(CYGPATH_W) 'e1000_param.c'; else $(CYGPATH_W) '$(srcdir)/e1000_param.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_e1000_a-e1000_param.Tpo" "$(DEPDIR)/libkernel_e1000_a-e1000_param.Po"; else rm -f "$(DEPDIR)/libkernel_e1000_a-e1000_param.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_param.c' object='libkernel_e1000_a-e1000_param.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_e1000_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_e1000_a-e1000_param.obj `if test -f 'e1000_param.c'; then $(CYGPATH_W) 'e1000_param.c'; else $(CYGPATH_W) '$(srcdir)/e1000_param.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -459,11 +486,8 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile $(PROGRAMS)
+all-am: GNUmakefile all-local
 installdirs:
-	for dir in "$(DESTDIR)$(exampledir)"; do \
-	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -484,20 +508,20 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-examplePROGRAMS clean-generic clean-libtool \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f GNUmakefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-libtool distclean-tags
+	distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -509,9 +533,9 @@ info: info-am
 
 info-am:
 
-install-data-am: install-examplePROGRAMS
+install-data-am:
 
-install-exec-am:
+install-exec-am: install-exec-local
 
 install-info: install-info-am
 
@@ -537,21 +561,45 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-examplePROGRAMS uninstall-info-am
+uninstall-am: uninstall-info-am
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean \
-	clean-examplePROGRAMS clean-generic clean-libtool ctags \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-examplePROGRAMS install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-examplePROGRAMS uninstall-info-am
+.PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
+	clean-generic clean-libtool clean-local ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-local distclean-tags distdir dvi dvi-am html html-am \
+	info info-am install install-am install-data install-data-am \
+	install-exec install-exec-am install-exec-local install-info \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-info-am
 
+
+rt_e1000.o: libkernel_e1000.a
+	$(LD) --whole-archive $< -r -o $@
+
+all-local: all-local$(modext)
+
+# 2.4 build
+all-local.o: $(OBJS)
+
+# 2.6 build
+all-local.ko: @RTNET_KBUILD_ENV@
+all-local.ko: $(libkernel_e1000_a_SOURCES) FORCE
+	$(RTNET_KBUILD_CMD)
+
+install-exec-local: $(OBJS)
+	$(mkinstalldirs) $(moduledir)
+	$(INSTALL_DATA) $^ $(moduledir)
+
+clean-local: $(libkernel_e1000_a_SOURCES)
+	$(RTNET_KBUILD_CLEAN)
+
+distclean-local:
+	$(RTNET_KBUILD_DISTCLEAN)
+
+.PHONY: FORCE
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

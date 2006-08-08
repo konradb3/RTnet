@@ -1,0 +1,9 @@
+EXTRA_CFLAGS += \
+	$(rtext_kmod_cflags) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include \
+	-I$(srcdir)
+
+obj-m += $(build_targets)
+
+rt_e1000-objs := $(build_objs)

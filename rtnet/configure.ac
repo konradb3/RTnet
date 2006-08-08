@@ -975,6 +975,16 @@ AC_ARG_ENABLE(rt2500,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_RT2500:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_RT2500,[test "$CONFIG_RTNET_DRV_RT2500" = "y"])
 
+AC_MSG_CHECKING([whether to build Intel PRO/1000 (Gigabit) driver])
+AC_ARG_ENABLE(e1000,
+    AS_HELP_STRING([--enable-e1000], [build Intel PRO/1000 driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_E1000=y ;;
+        *) CONFIG_RTNET_DRV_E1000=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_E1000:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_E1000,[test "$CONFIG_RTNET_DRV_E1000" = "y"])
+
 
 dnl ======================================================================
 dnl             Stack parameters
@@ -1311,6 +1321,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/tulip \
         drivers/experimental \
         drivers/experimental/rt2500 \
+        drivers/experimental/e1000 \
         \
         stack \
         stack/packet \
@@ -1389,6 +1400,7 @@ AC_CONFIG_FILES([ \
     drivers/tulip/GNUmakefile \
     drivers/experimental/GNUmakefile \
     drivers/experimental/rt2500/GNUmakefile \
+    drivers/experimental/e1000/GNUmakefile \
     \
     stack/GNUmakefile \
     stack/include/GNUmakefile \
