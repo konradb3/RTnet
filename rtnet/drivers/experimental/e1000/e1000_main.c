@@ -175,7 +175,6 @@ static void e1000_free_tx_resources(struct e1000_adapter *adapter,
                              struct e1000_tx_ring *tx_ring);
 static void e1000_free_rx_resources(struct e1000_adapter *adapter,
                              struct e1000_rx_ring *rx_ring);
-void e1000_update_stats(struct e1000_adapter *adapter);
 
 static int e1000_init_module(void);
 static void e1000_exit_module(void);
@@ -823,13 +822,6 @@ e1000_probe(struct pci_dev *pdev,
 	// netdev->change_mtu = &e1000_change_mtu;
 	// netdev->do_ioctl = &e1000_ioctl;
 	// e1000_set_ethtool_ops(netdev);
-#ifdef CONFIG_E1000_NAPI
-	netdev->poll = &e1000_clean;
-	netdev->weight = 64;
-#endif
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	netdev->poll_controller = e1000_netpoll;
-#endif
 	strcpy(netdev->name, pci_name(pdev));
 
 	netdev->mem_start = mmio_start;
@@ -883,16 +875,6 @@ e1000_probe(struct pci_dev *pdev,
 #endif
 	}
 
-#ifdef NETIF_F_TSO
-	if ((adapter->hw.mac_type >= e1000_82544) &&
-	   (adapter->hw.mac_type != e1000_82547))
-		netdev->features |= NETIF_F_TSO;
-
-#ifdef NETIF_F_TSO_IPV6
-	if (adapter->hw.mac_type > e1000_82547_rev_2)
-		netdev->features |= NETIF_F_TSO_IPV6;
-#endif
-#endif
 	if (pci_using_dac)
 		netdev->features |= NETIF_F_HIGHDMA;
 
@@ -2391,27 +2373,6 @@ e1000_watchdog(unsigned long data)
 				E1000_WRITE_REG(&adapter->hw, TARC0, tarc0);
 			}
 
-#ifdef NETIF_F_TSO
-			/* disable TSO for pcie and 10/100 speeds, to avoid
-			 * some hardware issues */
-			if (!adapter->tso_force &&
-			    adapter->hw.bus_type == e1000_bus_type_pci_express){
-				switch (adapter->link_speed) {
-				case SPEED_10:
-				case SPEED_100:
-					DPRINTK(PROBE,INFO,
-				        "10/100 speed: disabling TSO\n");
-					netdev->features &= ~NETIF_F_TSO;
-					break;
-				case SPEED_1000:
-					netdev->features |= NETIF_F_TSO;
-					break;
-				default:
-					/* oops */
-					break;
-				}
-			}
-#endif
 
 			/* enable transmits in the hardware, need to do this
 			 * after setting TARC0 */
@@ -2446,7 +2407,6 @@ e1000_watchdog(unsigned long data)
 		e1000_smartspeed(adapter);
 	}
 
-	// e1000_update_stats(adapter);
 
 	adapter->hw.tx_packet_delta = adapter->stats.tpt - adapter->tpt_old;
 	adapter->tpt_old = adapter->stats.tpt;
@@ -2506,85 +2466,6 @@ e1000_watchdog(unsigned long data)
 #define E1000_TX_FLAGS_VLAN_MASK	0xffff0000
 #define E1000_TX_FLAGS_VLAN_SHIFT	16
 
-static int
-e1000_tso(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
-          struct rtskb *skb)
-{
-#ifdef NETIF_F_TSO
-	struct e1000_context_desc *context_desc;
-	struct e1000_buffer *buffer_info;
-	unsigned int i;
-	uint32_t cmd_length = 0;
-	uint16_t ipcse = 0, tucse, mss;
-	uint8_t ipcss, ipcso, tucss, tucso, hdr_len;
-	int err;
-
-	if (skb_shinfo(skb)->tso_size) {
-		if (skb_header_cloned(skb)) {
-			err = pskb_expand_head(skb, 0, 0, GFP_ATOMIC);
-			if (err)
-				return err;
-		}
-
-		hdr_len = ((skb->h.raw - skb->data) + (skb->h.th->doff << 2));
-		mss = skb_shinfo(skb)->tso_size;
-		if (skb->protocol == ntohs(ETH_P_IP)) {
-			skb->nh.iph->tot_len = 0;
-			skb->nh.iph->check = 0;
-			skb->h.th->check =
-				~csum_tcpudp_magic(skb->nh.iph->saddr,
-						   skb->nh.iph->daddr,
-						   0,
-						   IPPROTO_TCP,
-						   0);
-			cmd_length = E1000_TXD_CMD_IP;
-			ipcse = skb->h.raw - skb->data - 1;
-#ifdef NETIF_F_TSO_IPV6
-		} else if (skb->protocol == ntohs(ETH_P_IPV6)) {
-			skb->nh.ipv6h->payload_len = 0;
-			skb->h.th->check =
-				~csum_ipv6_magic(&skb->nh.ipv6h->saddr,
-						 &skb->nh.ipv6h->daddr,
-						 0,
-						 IPPROTO_TCP,
-						 0);
-			ipcse = 0;
-#endif
-		}
-		ipcss = skb->nh.raw - skb->data;
-		ipcso = (void *)&(skb->nh.iph->check) - (void *)skb->data;
-		tucss = skb->h.raw - skb->data;
-		tucso = (void *)&(skb->h.th->check) - (void *)skb->data;
-		tucse = 0;
-
-		cmd_length |= (E1000_TXD_CMD_DEXT | E1000_TXD_CMD_TSE |
-			       E1000_TXD_CMD_TCP | (skb->len - (hdr_len)));
-
-		i = tx_ring->next_to_use;
-		context_desc = E1000_CONTEXT_DESC(*tx_ring, i);
-		buffer_info = &tx_ring->buffer_info[i];
-
-		context_desc->lower_setup.ip_fields.ipcss  = ipcss;
-		context_desc->lower_setup.ip_fields.ipcso  = ipcso;
-		context_desc->lower_setup.ip_fields.ipcse  = cpu_to_le16(ipcse);
-		context_desc->upper_setup.tcp_fields.tucss = tucss;
-		context_desc->upper_setup.tcp_fields.tucso = tucso;
-		context_desc->upper_setup.tcp_fields.tucse = cpu_to_le16(tucse);
-		context_desc->tcp_seg_setup.fields.mss     = cpu_to_le16(mss);
-		context_desc->tcp_seg_setup.fields.hdr_len = hdr_len;
-		context_desc->cmd_and_length = cpu_to_le32(cmd_length);
-
-		buffer_info->time_stamp = jiffies;
-
-		if (++i == tx_ring->count) i = 0;
-		tx_ring->next_to_use = i;
-
-		return TRUE;
-	}
-#endif
-
-	return FALSE;
-}
 
 static boolean_t
 e1000_tx_csum(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
@@ -2640,22 +2521,6 @@ e1000_tx_map(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 	while (len) {
 		buffer_info = &tx_ring->buffer_info[i];
 		size = min(len, max_per_txd);
-#ifdef NETIF_F_TSO
-		/* Workaround for Controller erratum --
-		 * descriptor for non-tso packet in a linear SKB that follows a
-		 * tso gets written back prematurely before the data is fully
-		 * DMA'd to the controller */
-		if (!skb->data_len && tx_ring->last_tx_tso &&
-		    !skb_shinfo(skb)->tso_size) {
-			tx_ring->last_tx_tso = 0;
-			size -= 4;
-		}
-
-		/* Workaround for premature desc write-backs
-		 * in TSO mode.  Append 4-byte sentinel desc */
-		if (unlikely(mss && !nr_frags && size == len && size > 8))
-			size -= 4;
-#endif
 		/* work-around for errata 10 and it applies
 		 * to all controllers in PCI-X mode
 		 * The fix is to make sure that the first descriptor of a
@@ -2697,12 +2562,6 @@ e1000_tx_map(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 		while (len) {
 			buffer_info = &tx_ring->buffer_info[i];
 			size = min(len, max_per_txd);
-#ifdef NETIF_F_TSO
-			/* Workaround for premature desc write-backs
-			 * in TSO mode.  Append 4-byte sentinel desc */
-			if (unlikely(mss && f == (nr_frags-1) && size == len && size > 8))
-				size -= 4;
-#endif
 			/* Workaround for potential 82544 hang in PCI-X.
 			 * Avoid terminating buffers within evenly-aligned
 			 * dwords. */
@@ -2872,15 +2731,11 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 	unsigned int max_txd_pwr = E1000_MAX_TXD_PWR;
 	unsigned int tx_flags = 0;
 	unsigned int len = skb->len;
-	unsigned long flags;
+	// unsigned long flags;
+        rtdm_lockctx_t context;
 	unsigned int nr_frags = 0;
 	unsigned int mss = 0;
 	int count = 0;
-	int tso;
-#ifdef MAX_SKB_FRAGS
-	unsigned int f;
-	len -= skb->data_len;
-#endif
 
 	/* This goes back to the question of how to logically map a tx queue
 	 * to a flow.  Right now, performance is impacted slightly negatively
@@ -2893,61 +2748,9 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 		return NETDEV_TX_OK;
 	}
 
-#ifdef NETIF_F_TSO
-	mss = skb_shinfo(skb)->tso_size;
-	/* The controller does a simple calculation to
-	 * make sure there is enough room in the FIFO before
-	 * initiating the DMA for each buffer.  The calc is:
-	 * 4 = ceil(buffer len/mss).  To make sure we don't
-	 * overrun the FIFO, adjust the max buffer len if mss
-	 * drops. */
-	if (mss) {
-		uint8_t hdr_len;
-		max_per_txd = min(mss << 2, max_per_txd);
-		max_txd_pwr = fls(max_per_txd) - 1;
-
-	/* TSO Workaround for 82571/2/3 Controllers -- if skb->data
-	 * points to just header, pull a few bytes of payload from
-	 * frags into skb->data */
-		hdr_len = ((skb->h.raw - skb->data) + (skb->h.th->doff << 2));
-		if (skb->data_len && (hdr_len == (skb->len - skb->data_len))) {
-			switch (adapter->hw.mac_type) {
-				unsigned int pull_size;
-			case e1000_82571:
-			case e1000_82572:
-			case e1000_82573:
-			case e1000_ich8lan:
-				pull_size = min((unsigned int)4, skb->data_len);
-				if (!__pskb_pull_tail(skb, pull_size)) {
-					DPRINTK(DRV, ERR,
-						"__pskb_pull_tail failed.\n");
-					kfree_rtskb(skb);
-					return NETDEV_TX_OK;
-				}
-				len = skb->len - skb->data_len;
-				break;
-			default:
-				/* do nothing */
-				break;
-			}
-		}
-	}
-
-	/* reserve a descriptor for the offload context */
-	if ((mss) || (skb->ip_summed == CHECKSUM_HW))
-		count++;
-	count++;
-#else
 	if (skb->ip_summed == CHECKSUM_HW)
 		count++;
-#endif
 
-#ifdef NETIF_F_TSO
-	/* Controller Erratum workaround */
-	if (!skb->data_len && tx_ring->last_tx_tso &&
-	    !skb_shinfo(skb)->tso_size)
-		count++;
-#endif
 
 	count += TXD_USE_COUNT(len, max_txd_pwr);
 
@@ -2961,36 +2764,20 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 			(len > 2015)))
 		count++;
 
-#ifdef MAX_SKB_FRAGS
-	nr_frags = skb_shinfo(skb)->nr_frags;
-	for (f = 0; f < nr_frags; f++)
-		count += TXD_USE_COUNT(skb_shinfo(skb)->frags[f].size,
-				       max_txd_pwr);
-	if (adapter->pcix_82544)
-		count += nr_frags;
-
-#endif
 
 	if (adapter->hw.tx_pkt_filtering &&
 	    (adapter->hw.mac_type == e1000_82573))
 		e1000_transfer_dhcp_info(adapter, skb);
 
-#ifdef NETIF_F_LLTX
-	local_irq_save(flags);
-	if (!spin_trylock(&tx_ring->tx_lock)) {
-		/* Collision - tell upper layer to requeue */
-		local_irq_restore(flags);
-		return NETDEV_TX_LOCKED;
-	}
-#else
-	spin_lock_irqsave(&tx_ring->tx_lock, flags);
-#endif
+	// spin_lock_irqsave(&tx_ring->tx_lock, flags);
+        rtdm_lock_get_irqsave(&tx_ring->tx_lock, context);
 
 	/* need: count + 2 desc gap to keep tail from touching
 	 * head, otherwise try next time */
 	if (unlikely(E1000_DESC_UNUSED(tx_ring) < count + 2)) {
 		rtnetif_stop_queue(netdev);
-		spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
+		// spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
+                rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
 		return NETDEV_TX_BUSY;
 	}
 
@@ -2998,37 +2785,19 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 		if (unlikely(e1000_82547_fifo_workaround(adapter, skb))) {
 			rtnetif_stop_queue(netdev);
 			mod_timer(&adapter->tx_fifo_stall_timer, jiffies);
-			spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
+			// spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
+                        rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
 			return NETDEV_TX_BUSY;
 		}
 	}
 
-#ifndef NETIF_F_LLTX
-	spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
+	// spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
+        rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
 
-#endif
-#ifdef NETIF_F_HW_VLAN_TX
-	if (unlikely(adapter->vlgrp && vlan_tx_tag_present(skb))) {
-		tx_flags |= E1000_TX_FLAGS_VLAN;
-		tx_flags |= (vlan_tx_tag_get(skb) << E1000_TX_FLAGS_VLAN_SHIFT);
-	}
-#endif
 
 	first = tx_ring->next_to_use;
 
-	tso = e1000_tso(adapter, tx_ring, skb);
-	if (tso < 0) {
-		kfree_rtskb(skb);
-#ifdef NETIF_F_LLTX
-		spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
-#endif
-		return NETDEV_TX_OK;
-	}
-
-	if (likely(tso)) {
-		tx_ring->last_tx_tso = 1;
-		tx_flags |= E1000_TX_FLAGS_TSO;
-	} else if (likely(e1000_tx_csum(adapter, tx_ring, skb)))
+	if (likely(e1000_tx_csum(adapter, tx_ring, skb)))
 		tx_flags |= E1000_TX_FLAGS_CSUM;
 
 	/* Old method was to assume IPv4 packet by default if TSO was enabled.
@@ -3043,13 +2812,6 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 
 	// netdev->trans_start = jiffies;
 
-#ifdef NETIF_F_LLTX
-	/* Make sure there is space in the ring for the next send. */
-	if (unlikely(E1000_DESC_UNUSED(tx_ring) < MAX_SKB_FRAGS + 2))
-		netif_stop_queue(netdev);
-
-	spin_unlock_irqrestore(&tx_ring->tx_lock, flags);
-#endif
 	return NETDEV_TX_OK;
 }
 
@@ -3064,163 +2826,6 @@ e1000_reset_task(struct rtnet_device *netdev)
 
 
 
-/**
- * e1000_update_stats - Update the board statistics counters
- * @adapter: board private structure
- **/
-
-void
-e1000_update_stats(struct e1000_adapter *adapter)
-{
-	struct e1000_hw *hw = &adapter->hw;
-	unsigned long flags;
-	uint16_t phy_tmp;
-
-#define PHY_IDLE_ERROR_COUNT_MASK 0x00FF
-
-	spin_lock_irqsave(&adapter->stats_lock, flags);
-
-	/* these counters are modified from e1000_adjust_tbi_stats,
-	 * called from the interrupt context, so they must only
-	 * be written while holding adapter->stats_lock
-	 */
-
-	adapter->stats.crcerrs += E1000_READ_REG(hw, CRCERRS);
-	adapter->stats.gprc += E1000_READ_REG(hw, GPRC);
-	adapter->stats.gorcl += E1000_READ_REG(hw, GORCL);
-	adapter->stats.gorch += E1000_READ_REG(hw, GORCH);
-	adapter->stats.bprc += E1000_READ_REG(hw, BPRC);
-	adapter->stats.mprc += E1000_READ_REG(hw, MPRC);
-	adapter->stats.roc += E1000_READ_REG(hw, ROC);
-
-	if (adapter->hw.mac_type != e1000_ich8lan) {
-	adapter->stats.prc64 += E1000_READ_REG(hw, PRC64);
-	adapter->stats.prc127 += E1000_READ_REG(hw, PRC127);
-	adapter->stats.prc255 += E1000_READ_REG(hw, PRC255);
-	adapter->stats.prc511 += E1000_READ_REG(hw, PRC511);
-	adapter->stats.prc1023 += E1000_READ_REG(hw, PRC1023);
-	adapter->stats.prc1522 += E1000_READ_REG(hw, PRC1522);
-	}
-
-	adapter->stats.symerrs += E1000_READ_REG(hw, SYMERRS);
-	adapter->stats.mpc += E1000_READ_REG(hw, MPC);
-	adapter->stats.scc += E1000_READ_REG(hw, SCC);
-	adapter->stats.ecol += E1000_READ_REG(hw, ECOL);
-	adapter->stats.mcc += E1000_READ_REG(hw, MCC);
-	adapter->stats.latecol += E1000_READ_REG(hw, LATECOL);
-	adapter->stats.dc += E1000_READ_REG(hw, DC);
-	adapter->stats.sec += E1000_READ_REG(hw, SEC);
-	adapter->stats.rlec += E1000_READ_REG(hw, RLEC);
-	adapter->stats.xonrxc += E1000_READ_REG(hw, XONRXC);
-	adapter->stats.xontxc += E1000_READ_REG(hw, XONTXC);
-	adapter->stats.xoffrxc += E1000_READ_REG(hw, XOFFRXC);
-	adapter->stats.xofftxc += E1000_READ_REG(hw, XOFFTXC);
-	adapter->stats.fcruc += E1000_READ_REG(hw, FCRUC);
-	adapter->stats.gptc += E1000_READ_REG(hw, GPTC);
-	adapter->stats.gotcl += E1000_READ_REG(hw, GOTCL);
-	adapter->stats.gotch += E1000_READ_REG(hw, GOTCH);
-	adapter->stats.rnbc += E1000_READ_REG(hw, RNBC);
-	adapter->stats.ruc += E1000_READ_REG(hw, RUC);
-	adapter->stats.rfc += E1000_READ_REG(hw, RFC);
-	adapter->stats.rjc += E1000_READ_REG(hw, RJC);
-	adapter->stats.torl += E1000_READ_REG(hw, TORL);
-	adapter->stats.torh += E1000_READ_REG(hw, TORH);
-	adapter->stats.totl += E1000_READ_REG(hw, TOTL);
-	adapter->stats.toth += E1000_READ_REG(hw, TOTH);
-	adapter->stats.tpr += E1000_READ_REG(hw, TPR);
-
-	if (adapter->hw.mac_type != e1000_ich8lan) {
-	adapter->stats.ptc64 += E1000_READ_REG(hw, PTC64);
-	adapter->stats.ptc127 += E1000_READ_REG(hw, PTC127);
-	adapter->stats.ptc255 += E1000_READ_REG(hw, PTC255);
-	adapter->stats.ptc511 += E1000_READ_REG(hw, PTC511);
-	adapter->stats.ptc1023 += E1000_READ_REG(hw, PTC1023);
-	adapter->stats.ptc1522 += E1000_READ_REG(hw, PTC1522);
-	}
-
-	adapter->stats.mptc += E1000_READ_REG(hw, MPTC);
-	adapter->stats.bptc += E1000_READ_REG(hw, BPTC);
-
-	/* used for adaptive IFS */
-
-	hw->tx_packet_delta = E1000_READ_REG(hw, TPT);
-	adapter->stats.tpt += hw->tx_packet_delta;
-	hw->collision_delta = E1000_READ_REG(hw, COLC);
-	adapter->stats.colc += hw->collision_delta;
-
-	if (hw->mac_type >= e1000_82543) {
-		adapter->stats.algnerrc += E1000_READ_REG(hw, ALGNERRC);
-		adapter->stats.rxerrc += E1000_READ_REG(hw, RXERRC);
-		adapter->stats.tncrs += E1000_READ_REG(hw, TNCRS);
-		adapter->stats.cexterr += E1000_READ_REG(hw, CEXTERR);
-		adapter->stats.tsctc += E1000_READ_REG(hw, TSCTC);
-		adapter->stats.tsctfc += E1000_READ_REG(hw, TSCTFC);
-	}
-	if (hw->mac_type > e1000_82547_rev_2) {
-		adapter->stats.iac += E1000_READ_REG(hw, IAC);
-		adapter->stats.icrxoc += E1000_READ_REG(hw, ICRXOC);
-
-		if (adapter->hw.mac_type != e1000_ich8lan) {
-		adapter->stats.icrxptc += E1000_READ_REG(hw, ICRXPTC);
-		adapter->stats.icrxatc += E1000_READ_REG(hw, ICRXATC);
-		adapter->stats.ictxptc += E1000_READ_REG(hw, ICTXPTC);
-		adapter->stats.ictxatc += E1000_READ_REG(hw, ICTXATC);
-		adapter->stats.ictxqec += E1000_READ_REG(hw, ICTXQEC);
-		adapter->stats.ictxqmtc += E1000_READ_REG(hw, ICTXQMTC);
-		adapter->stats.icrxdmtc += E1000_READ_REG(hw, ICRXDMTC);
-		}
-	}
-
-	/* Fill out the OS statistics structure */
-
-	adapter->net_stats.rx_packets = adapter->stats.gprc;
-	adapter->net_stats.tx_packets = adapter->stats.gptc;
-	adapter->net_stats.rx_bytes = adapter->stats.gorcl;
-	adapter->net_stats.tx_bytes = adapter->stats.gotcl;
-	adapter->net_stats.multicast = adapter->stats.mprc;
-	adapter->net_stats.collisions = adapter->stats.colc;
-
-	/* Rx Errors */
-
-	/* RLEC on some newer hardware can be incorrect so build
-	* our own version based on RUC and ROC */
-	adapter->net_stats.rx_errors = adapter->stats.rxerrc +
-		adapter->stats.crcerrs + adapter->stats.algnerrc +
-		adapter->stats.ruc + adapter->stats.roc +
-		adapter->stats.cexterr;
-	adapter->net_stats.rx_length_errors = adapter->stats.ruc +
-	                                      adapter->stats.roc;
-	adapter->net_stats.rx_crc_errors = adapter->stats.crcerrs;
-	adapter->net_stats.rx_frame_errors = adapter->stats.algnerrc;
-	adapter->net_stats.rx_missed_errors = adapter->stats.mpc;
-
-	/* Tx Errors */
-
-	adapter->net_stats.tx_errors = adapter->stats.ecol +
-	                               adapter->stats.latecol;
-	adapter->net_stats.tx_aborted_errors = adapter->stats.ecol;
-	adapter->net_stats.tx_window_errors = adapter->stats.latecol;
-	adapter->net_stats.tx_carrier_errors = adapter->stats.tncrs;
-
-	/* Tx Dropped needs to be maintained elsewhere */
-
-	/* Phy Stats */
-
-	if (hw->media_type == e1000_media_type_copper) {
-		if ((adapter->link_speed == SPEED_1000) &&
-		   (!e1000_read_phy_reg(hw, PHY_1000T_STATUS, &phy_tmp))) {
-			phy_tmp &= PHY_IDLE_ERROR_COUNT_MASK;
-			adapter->phy_stats.idle_errors += phy_tmp;
-		}
-
-		if ((hw->mac_type <= e1000_82546) &&
-		   (hw->phy_type == e1000_phy_m88) &&
-		   !e1000_read_phy_reg(hw, M88E1000_RX_ERR_CNTR, &phy_tmp))
-			adapter->phy_stats.receive_errors += phy_tmp;
-	}
-
-	spin_unlock_irqrestore(&adapter->stats_lock, flags);
-}
 
 /**
  * e1000_intr - Interrupt Handler
@@ -3598,12 +3203,6 @@ e1000_clean_rx_irq(struct e1000_adapter *adapter,
 			last_byte = *(skb->data + length - 1);
 			if (TBI_ACCEPT(&adapter->hw, status,
 			              rx_desc->errors, length, last_byte)) {
-				spin_lock_irqsave(&adapter->stats_lock, flags);
-				e1000_tbi_adjust_stats(&adapter->hw,
-				                       &adapter->stats,
-				                       length, skb->data);
-				spin_unlock_irqrestore(&adapter->stats_lock,
-				                       flags);
 				length--;
 			} else {
 				/* recycle */
