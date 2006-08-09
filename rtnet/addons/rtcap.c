@@ -354,7 +354,7 @@ void cleanup_tap_devices(void)
 
                 down(&rtdev->nrt_lock);
                 rtdev->hard_start_xmit = tap_device[i].orig_xmit;
-                if (rtdev->features & RTNETIF_F_NON_EXCLUSIVE_XMIT)
+                if (rtdev->features & NETIF_F_LLTX)
                     rtdev->start_xmit = tap_device[i].orig_xmit;
                 RTNET_MOD_DEC_USE_COUNT_EX(rtdev->rt_owner);
                 up(&rtdev->nrt_lock);
@@ -465,7 +465,7 @@ int __init rtcap_init(void)
             /* If the device requires no xmit_lock, start_xmit points equals
              * hard_start_xmit => we have to update this as well
              */
-            if (rtdev->features & RTNETIF_F_NON_EXCLUSIVE_XMIT)
+            if (rtdev->features & NETIF_F_LLTX)
                 rtdev->start_xmit = rtdev->hard_start_xmit;
 
             tap_device[i].present |= XMIT_HOOK;

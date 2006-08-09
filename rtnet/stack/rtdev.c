@@ -346,7 +346,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     if (rtdev->vers < RTDEV_VERS_2_0)
         return -EINVAL;
 
-    if (rtdev->features & RTNETIF_F_NON_EXCLUSIVE_XMIT)
+    if (rtdev->features & NETIF_F_LLTX)
         rtdev->start_xmit = rtdev->hard_start_xmit;
     else
         rtdev->start_xmit = rtdev_locked_xmit;

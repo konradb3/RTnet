@@ -147,7 +147,7 @@ static int __init loopback_init(void)
     rtdev->hard_start_xmit = &rt_loopback_xmit;
     rtdev->flags |= IFF_LOOPBACK;
     rtdev->flags &= ~IFF_BROADCAST;
-    rtdev->features |= RTNETIF_F_NON_EXCLUSIVE_XMIT;
+    rtdev->features |= NETIF_F_LLTX;
 
     if ((err = rt_register_rtnetdev(rtdev)) != 0)
     {

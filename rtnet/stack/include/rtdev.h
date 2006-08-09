@@ -43,7 +43,9 @@
 #define PRIV_FLAG_UP                    0
 #define PRIV_FLAG_ADDING_ROUTE          1
 
-#define RTNETIF_F_NON_EXCLUSIVE_XMIT    0x00010000
+#ifndef NETIF_F_LLTX
+#define NETIF_F_LLTX                    4096
+#endif
 
 
 /***
