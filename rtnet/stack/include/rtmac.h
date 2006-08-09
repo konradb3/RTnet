@@ -3,7 +3,7 @@
  *  include/rtmac.h
  *
  *  rtmac - real-time networking media access control subsystem
- *  Copyright (C) 2004, 2005 Jan Kiszka <Jan.Kiszka@web.de>
+ *  Copyright (C) 2004-2006 Jan Kiszka <Jan.Kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,12 +34,16 @@
 #define RTIOC_TYPE_RTMAC            RTDM_CLASS_RTMAC
 
 
-/* Common Cycle Types */
+/* ** Common Cycle Event Types ** */
+/* standard event, wake up once per cycle */
 #define RTMAC_WAIT_ON_DEFAULT       0x00
+/* wake up on media access of the station, may trigger multiple times per
+   cycle */
 #define RTMAC_WAIT_ON_XMIT          0x01
 
-/* TDMA-specific Cycle Types */
-#define TDMA_WAIT_ON_SYNC           0x10
+/* ** TDMA-specific Cycle Event Types ** */
+/* tigger on on SYNC frame reception/transmission */
+#define TDMA_WAIT_ON_SYNC           RTMAC_WAIT_ON_DEFAULT
 #define TDMA_WAIT_ON_SOF            TDMA_WAIT_ON_SYNC /* legacy support */
 
 

@@ -113,8 +113,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
             if (!rtdm_in_rt_context())
                 return -EACCES;
 
-            if (((int)arg != RTMAC_WAIT_ON_DEFAULT) &&
-                ((int)arg != TDMA_WAIT_ON_SYNC))
+            if ((int)arg !=TDMA_WAIT_ON_SYNC)
                 return -EINVAL;
 
             return wait_on_sync(ctx, &tdma->sync_event);
@@ -132,8 +131,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
             } else
                 type = ((struct rtmac_waitinfo *)arg)->type;
 
-            if ((type != RTMAC_WAIT_ON_DEFAULT) &&
-                (type != TDMA_WAIT_ON_SYNC))
+            if (type != TDMA_WAIT_ON_SYNC)
                 return -EINVAL;
 
             ret = wait_on_sync(ctx, &tdma->sync_event);
