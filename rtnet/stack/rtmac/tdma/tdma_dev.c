@@ -111,7 +111,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
         }
         case RTMAC_RTIOC_WAITONCYCLE:
             if (!rtdm_in_rt_context())
-                return -EACCES;
+                return -ENOSYS;
 
             if ((int)arg !=TDMA_WAIT_ON_SYNC)
                 return -EINVAL;
@@ -123,7 +123,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
             unsigned int            type;
 
             if (!rtdm_in_rt_context())
-                return -EACCES;
+                return -ENOSYS;
 
             if (user_info) {
                 if (!rtdm_rw_user_ok(user_info, waitinfo,
