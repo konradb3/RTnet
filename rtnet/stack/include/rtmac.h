@@ -57,7 +57,7 @@ struct rtmac_waitinfo {
 
 
 /* RTmac Discipline IOCTLs */
-#define RTMAC_RTIOC_TIMEOFFSET      _IOR(RTIOC_TYPE_RTMAC, 0x00, __s64)
+#define RTMAC_RTIOC_TIMEOFFSET      _IOR(RTIOC_TYPE_RTMAC, 0x00, int64_t)
 #define RTMAC_RTIOC_WAITONCYCLE     _IOW(RTIOC_TYPE_RTMAC, 0x01, unsigned int)
 #define RTMAC_RTIOC_WAITONCYCLE_EX  _IOWR(RTIOC_TYPE_RTMAC, 0x02, \
                                           struct rtmac_waitinfo)

@@ -15,4 +15,8 @@ if CONFIG_RTNET_RTIPV4
 example_PROGRAMS += frag-ip
 endif
 
+if CONFIG_RTNET_TDMA
+example_PROGRAMS += tdma-api
+endif
+
 SUBDIRS = kernel
