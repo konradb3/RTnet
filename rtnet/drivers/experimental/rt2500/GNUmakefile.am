@@ -5,6 +5,9 @@ EXTRA_LIBRARIES = \
 	libkernel_rt2x00core.a \
 	libkernel_rt2500pci.a
 
+noinst_HEADERS = \
+	rt2x00.h
+
 libkernel_rt2x00core_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
@@ -19,7 +22,8 @@ libkernel_rt2500pci_a_CPPFLAGS = \
 	-I$(top_builddir)/stack/include
 
 libkernel_rt2500pci_a_SOURCES = \
-	rt_rt2500pci.c
+	rt_rt2500pci.c \
+	rt2500pci.h
 
 OBJS = rt_rt2x00core$(modext) rt_rt2500pci$(modext)
 
