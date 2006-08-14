@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     RT_TASK                 task;
     struct rtmac_waitinfo   waitinfo;
     int                     err;
-    RTIME                   now, offset;
 
     mlockall(MCL_CURRENT | MCL_FUTURE);
 
@@ -65,8 +64,8 @@ int main(int argc, char *argv[])
 
     rt_task_shadow(&task, "tdma-api", 50, 0);
 
-    waitinfo.type     = TDMA_WAIT_ON_SYNC;
-    waitinfo.ext_size = 0;  /* reserved, must be 0 for now */
+    waitinfo.type = TDMA_WAIT_ON_SYNC;
+    waitinfo.size = sizeof(waitinfo);
 
     while (1) {
         do
@@ -80,18 +79,11 @@ int main(int argc, char *argv[])
             }
         } while (waitinfo.cycle_no%100 != 0);
 
-        now = rt_timer_read();
-        err = rt_dev_ioctl(fd, RTMAC_RTIOC_TIMEOFFSET, &offset);
-        if (err) {
-            fprintf(stderr, "failed to issue RTMAC_RTIOC_TIMEOFFSET, "
-                    "error code %d\n", err);
-            rt_dev_close(fd);
-            exit(1);
-        }
-
         /* You should not call printf in time-critical code, this is only
            for demostration purpose. */
-        printf("cycle #%ld, time %.9f s, offset %lld ns\n",
-               waitinfo.cycle_no, ((double)now+offset)/1000000000, offset);
+        printf("cycle #%ld, start %.9f s, offset %lld ns\n",
+               waitinfo.cycle_no,
+               (waitinfo.cycle_start+waitinfo.clock_offset)/1000000000.0,
+               waitinfo.clock_offset);
     }
 }

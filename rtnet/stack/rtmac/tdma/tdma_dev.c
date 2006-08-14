@@ -120,7 +120,10 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
 
         case RTMAC_RTIOC_WAITONCYCLE_EX: {
             struct rtmac_waitinfo   *waitinfo = (struct rtmac_waitinfo *)arg;
-            unsigned int            type;
+            struct rtmac_waitinfo   waitinfo_buf;
+
+            #define WAITINFO_HEAD_SIZE \
+                ((char *)&waitinfo_buf.cycle_no - (char *)&waitinfo_buf)
 
             if (!rtdm_in_rt_context())
                 return -ENOSYS;
@@ -128,29 +131,32 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
             if (user_info) {
                 if (!rtdm_rw_user_ok(user_info, waitinfo,
                                      sizeof(struct rtmac_waitinfo)) ||
-                    rtdm_copy_from_user(user_info, &type, &waitinfo->type,
-                                        sizeof(waitinfo->type)))
+                    rtdm_copy_from_user(user_info, &waitinfo_buf, arg,
+                                        WAITINFO_HEAD_SIZE))
                     return -EFAULT;
-            } else
-                type = waitinfo->type;
 
-            if (type != TDMA_WAIT_ON_SYNC)
+                waitinfo = &waitinfo_buf;
+            }
+
+            if ((waitinfo->type != TDMA_WAIT_ON_SYNC) ||
+                (waitinfo->size < sizeof(struct rtmac_waitinfo)))
                 return -EINVAL;
 
             ret = wait_on_sync(ctx, &tdma->sync_event);
             if (ret)
                 return ret;
 
-            /* We do not lock-protect the cycle_no access. The value is
-               expected to be stable for the reading thread unless it is
-               out off sync wrt/ the TDMA cycle anyway (overruns). */
+            rtdm_lock_get_irqsave(&tdma->lock, lock_ctx);
+            waitinfo->cycle_no     = tdma->current_cycle;
+            waitinfo->cycle_start  = tdma->current_cycle_start;
+            waitinfo->clock_offset = tdma->clock_offset;
+            rtdm_lock_put_irqrestore(&tdma->lock, lock_ctx);
+
             if (user_info) {
-                if (rtdm_copy_to_user(user_info, &waitinfo->cycle_no,
-                                      &tdma->current_cycle,
-                                      sizeof(waitinfo->cycle_no)))
+                if (rtdm_copy_to_user(user_info, arg, &waitinfo_buf,
+                                      sizeof(struct rtmac_waitinfo)))
                     return -EFAULT;
-            } else
-                waitinfo->cycle_no = tdma->current_cycle;
+            }
 
             return 0;
         }

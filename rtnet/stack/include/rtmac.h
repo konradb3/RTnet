@@ -49,10 +49,11 @@
 
 /* RTMAC_RTIOC_WAITONCYCLE_EX control and status data */
 struct rtmac_waitinfo {
-    unsigned int    type;
-    size_t          ext_size;
+    unsigned int    type; /* set to wait type before invoking the service */
+    size_t          size; /* must be at least sizeof(struct rtmac_waitinfo) */
     unsigned long   cycle_no;
-    char            ext[0];
+    uint64_t        cycle_start;
+    int64_t         clock_offset;
 };
 
 
