@@ -1556,7 +1556,7 @@ static void refill_rx(struct rtnet_device *dev)
 				break; /* Better luck next round. */
 			skb->rtdev = dev; /* Mark as being used by this device. */
 			np->rx_dma[entry] = pci_map_single(np->pci_dev,
-				skb->data, skb->len, PCI_DMA_FROMDEVICE);
+				skb->data, np->rx_buf_sz, PCI_DMA_FROMDEVICE);
 			np->rx_ring[entry].addr = cpu_to_le32(np->rx_dma[entry]);
 		}
 		np->rx_ring[entry].cmd_status = cpu_to_le32(np->rx_buf_sz);
