@@ -48,7 +48,6 @@ struct tulip_chip_table {
 	unsigned int io_size;
 	int valid_intrs;	/* CSR7 interrupt enable settings */
 	int flags;
-	void (*media_timer) (unsigned long data);
 };
 
 
@@ -354,7 +353,6 @@ struct tulip_private {
 	int revision;
 	int flags;
 	struct net_device_stats stats;
-	struct timer_list timer;	/* Media selection timer. */
 	u32 mc_filter[2];
 	/*RTnet*/rtdm_lock_t lock;
 	spinlock_t mii_lock;
@@ -407,14 +405,12 @@ struct eeprom_fixup {
 
 /* 21142.c */
 extern u16 t21142_csr14[];
-void t21142_timer(unsigned long data);
 void t21142_start_nway(/*RTnet*/struct rtnet_device *rtdev);
 void t21142_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5);
 
 
 /* PNIC2.c */
 void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5);
-void pnic2_timer(unsigned long data);
 void pnic2_start_nway(/*RTnet*/struct rtnet_device *rtdev);
 void pnic2_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5);
 
@@ -438,12 +434,6 @@ void tulip_find_mii (struct rtnet_device *dev, int board_idx);
 /* pnic.c */
 void pnic_do_nway(/*RTnet*/struct rtnet_device *rtdev);
 void pnic_lnk_change(/*RTnet*/struct rtnet_device *rtdev, int csr5);
-void pnic_timer(unsigned long data);
-
-/* timer.c */
-void tulip_timer(unsigned long data);
-void mxic_timer(unsigned long data);
-void comet_timer(unsigned long data);
 
 /* tulip_core.c */
 extern int tulip_debug;
@@ -495,7 +485,7 @@ static inline void tulip_stop_rxtx(struct tulip_private *tp)
 static inline void tulip_restart_rxtx(struct tulip_private *tp)
 {
 	tulip_stop_rxtx(tp);
-	udelay(5);
+	rtdm_task_busy_sleep(5);
 	tulip_start_rxtx(tp);
 }
 

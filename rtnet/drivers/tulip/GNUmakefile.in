@@ -36,8 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = drivers/tulip
-DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
-	ChangeLog
+DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/config/autoconf/.version \
@@ -54,7 +53,6 @@ am_libkernel_tulip_a_OBJECTS = libkernel_tulip_a-tulip_core.$(OBJEXT) \
 	libkernel_tulip_a-eeprom.$(OBJEXT) \
 	libkernel_tulip_a-interrupt.$(OBJEXT) \
 	libkernel_tulip_a-media.$(OBJEXT) \
-	libkernel_tulip_a-timer.$(OBJEXT) \
 	libkernel_tulip_a-21142.$(OBJEXT) \
 	libkernel_tulip_a-pnic.$(OBJEXT) \
 	libkernel_tulip_a-pnic2.$(OBJEXT)
@@ -270,7 +268,6 @@ libkernel_tulip_a_SOURCES = \
 	eeprom.c \
 	interrupt.c \
 	media.c \
-	timer.c \
 	21142.c \
 	pnic.c \
 	pnic2.c \
@@ -329,7 +326,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tulip_a-media.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tulip_a-pnic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tulip_a-pnic2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tulip_a-timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tulip_a-tulip_core.Po@am__quote@
 
 .c.o:
@@ -408,20 +404,6 @@ libkernel_tulip_a-media.obj: media.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='media.c' object='libkernel_tulip_a-media.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tulip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tulip_a-media.obj `if test -f 'media.c'; then $(CYGPATH_W) 'media.c'; else $(CYGPATH_W) '$(srcdir)/media.c'; fi`
-
-libkernel_tulip_a-timer.o: timer.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tulip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tulip_a-timer.o -MD -MP -MF "$(DEPDIR)/libkernel_tulip_a-timer.Tpo" -c -o libkernel_tulip_a-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_tulip_a-timer.Tpo" "$(DEPDIR)/libkernel_tulip_a-timer.Po"; else rm -f "$(DEPDIR)/libkernel_tulip_a-timer.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='libkernel_tulip_a-timer.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tulip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tulip_a-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
-
-libkernel_tulip_a-timer.obj: timer.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tulip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tulip_a-timer.obj -MD -MP -MF "$(DEPDIR)/libkernel_tulip_a-timer.Tpo" -c -o libkernel_tulip_a-timer.obj `if test -f 'timer.c'; then $(CYGPATH_W) 'timer.c'; else $(CYGPATH_W) '$(srcdir)/timer.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_tulip_a-timer.Tpo" "$(DEPDIR)/libkernel_tulip_a-timer.Po"; else rm -f "$(DEPDIR)/libkernel_tulip_a-timer.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='libkernel_tulip_a-timer.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tulip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tulip_a-timer.obj `if test -f 'timer.c'; then $(CYGPATH_W) 'timer.c'; else $(CYGPATH_W) '$(srcdir)/timer.c'; fi`
 
 libkernel_tulip_a-21142.o: 21142.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tulip_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tulip_a-21142.o -MD -MP -MF "$(DEPDIR)/libkernel_tulip_a-21142.Tpo" -c -o libkernel_tulip_a-21142.o `test -f '21142.c' || echo '$(srcdir)/'`21142.c; \

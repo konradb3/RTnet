@@ -413,7 +413,6 @@ int tulip_interrupt(rtdm_irq_t *irq_handle)
                         } else if (tp->chip_id == LC82C168) {
 				/* the LC82C168 doesn't have a hw timer.*/
 				outl(0x00, ioaddr + CSR7);
-				/*RTnet*/ //MUST_REMOVE_mod_timer(&tp->timer, RUN_AT(HZ/50));
 			} else {
                           /* Mask all interrupting sources, set timer to
 				re-enable. */
@@ -435,10 +434,9 @@ int tulip_interrupt(rtdm_irq_t *irq_handle)
 	if (tp->rx_buffers[entry].skb == NULL) {
 		if (tulip_debug > 1)
 			/*RTnet*/rtdm_printk(KERN_WARNING "%s: in rx suspend mode: (%lu) (tp->cur_rx = %u, ttimer = %d, rx = %d) go/stay in suspend mode\n", rtdev->name, tp->nir, tp->cur_rx, tp->ttimer, rx);
-		if (tp->chip_id == LC82C168) {
+		if (tp->chip_id == LC82C168)
 			outl(0x00, ioaddr + CSR7);
-			/*RTnet*/ //MUST_REMOVE_mod_timer(&tp->timer, RUN_AT(HZ/50));
-		} else {
+		else {
 			if (tp->ttimer == 0 || (inl(ioaddr + CSR11) & 0xffff) == 0) {
 				if (tulip_debug > 1)
 					/*RTnet*/rtdm_printk(KERN_WARNING "%s: in rx suspend mode: (%lu) set timer\n", rtdev->name, tp->nir);

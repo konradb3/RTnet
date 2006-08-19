@@ -13,7 +13,6 @@ libkernel_tulip_a_SOURCES = \
 	eeprom.c \
 	interrupt.c \
 	media.c \
-	timer.c \
 	21142.c \
 	pnic.c \
 	pnic2.c \
