@@ -230,7 +230,7 @@ if test "$RTAI_DIR" \!= ""; then
     RTAI_VERSION="`${RTAI_CONFIG} --version`"
 
     case "$RTAI_VERSION" in
-        magma | 3.3* | 3.4*)
+        magma | 3.[[3-9]]*)
             CONFIG_RTNET_RTEXT_VERSION=rtai-3x
             AC_DEFINE(CONFIG_RTAI_3x, 1, [We build for RTAI 3.x])
             ;;
@@ -295,7 +295,7 @@ else
     XENO_VERSION=`grep "#define XENO_VERSION_STRING" $RTEXT_LINUX_DIR/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     case "$XENO_VERSION" in
-        2.1* | 2.2*)
+        2.[[1-9]]*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-21x
             AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])
