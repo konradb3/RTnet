@@ -340,6 +340,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     struct list_head        *entry;
     struct rtdev_event_hook *hook;
     rtdm_lockctx_t          context;
+    int                     ifindex;
 
 
     /* requires at least driver layer version 2.0 */
@@ -353,7 +354,12 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
 
     down(&rtnet_devices_nrt_lock);
 
-    rtdev->ifindex = __rtdev_new_index();
+    ifindex = __rtdev_new_index();
+    if (ifindex < 0) {
+        up (&rtnet_devices_nrt_lock);
+        return ifindex;
+    }
+    rtdev->ifindex = ifindex;
 
     if (strchr(rtdev->name,'%') != NULL)
         rtdev_alloc_name(rtdev, rtdev->name);
