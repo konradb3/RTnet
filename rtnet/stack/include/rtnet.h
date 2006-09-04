@@ -29,6 +29,22 @@
 #include <rtdm/rtdm.h>
 
 
+/* RTDM_API_VER < 5 is lacking generic time types */
+#if !(defined RTDM_API_VER) || (RTDM_API_VER < 5)
+
+#ifndef __KERNEL__
+#include <stdint.h>
+#endif /* !__KERNEL__ */
+
+typedef uint64_t                nanosecs_abs_t;
+typedef int64_t                 nanosecs_rel_t;
+
+#define RTDM_TIMEOUT_INFINITE   0
+#define RTDM_TIMEOUT_NONE       (-1)
+
+#endif /* !RTDM_API_VER */
+
+
 struct rtdm_dev_context;
 
 struct rtnet_callback {

@@ -117,7 +117,7 @@ void tdma_worker(void *arg)
                                       REQUEST_CAL_JOB(job)->offset);
                 ret = tdma_xmit_request_cal_frame(tdma,
                         tdma->current_cycle + REQUEST_CAL_JOB(job)->period,
-                        REQUEST_CAL_JOB(job)->offset_ns);
+                        REQUEST_CAL_JOB(job)->offset);
 
                 /* terminate call on error */
                 if (ret < 0) {

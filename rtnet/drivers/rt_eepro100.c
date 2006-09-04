@@ -594,7 +594,7 @@ static void speedo_init_rx_ring(struct rtnet_device *rtdev);
 //static void speedo_tx_timeout(struct rtnet_device *rtdev);
 static int speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force);
-static int speedo_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp);
+static int speedo_rx(struct rtnet_device *rtdev, int* packets, nanosecs_abs_t *time_stamp);
 static void speedo_tx_buffer_gc(struct rtnet_device *rtdev);
 static int speedo_interrupt(rtdm_irq_t *irq_handle);
 static int speedo_close(struct rtnet_device *rtdev);
@@ -1617,7 +1617,7 @@ static void speedo_tx_buffer_gc(struct rtnet_device *rtdev)
 static int speedo_interrupt(rtdm_irq_t *irq_handle)
 {
 	// *** RTnet ***
-    nanosecs_t          time_stamp = rtdm_clock_read();
+    nanosecs_abs_t      time_stamp = rtdm_clock_read();
     struct rtnet_device *rtdev     =
         rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
@@ -1858,7 +1858,7 @@ static void speedo_refill_rx_buffers(struct rtnet_device *rtdev, int force)
 }
 
 static int
-speedo_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
+speedo_rx(struct rtnet_device *rtdev, int* packets, nanosecs_abs_t *time_stamp)
 {
 	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
 	int entry = sp->cur_rx % RX_RING_SIZE;

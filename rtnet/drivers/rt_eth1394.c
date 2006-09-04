@@ -33,6 +33,7 @@
 #include <net/arp.h>
 
 #define rtos_spinlock_t rtdm_lock_t
+#define nanosecs_abs_t  nanosecs_t
 
 #include <rt_eth1394.h>
 
@@ -917,7 +918,7 @@ static inline int is_datagram_complete(struct list_head *lh, int dg_size)
  * ethernet header, and fill it with some of our other fields. This is
  * an incoming packet from the 1394 bus.  */
 static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
-				  char *buf, int len, nanosecs_t time_stamp)
+				  char *buf, int len, nanosecs_abs_t time_stamp)
 {
 	struct rtskb *skb;
 	rtdm_lockctx_t context;
@@ -926,7 +927,7 @@ static int eth1394_data_handler(struct rtnet_device *dev, int srcid, int destid,
 	u16 ether_type = 0;  /* initialized to clear warning */
 	int hdr_len;
 	
-	//~ nanosecs_t time_stamp = rtdm_clock_read();
+	//~ nanosecs_abs_t time_stamp = rtdm_clock_read();
 
 	priv = (struct eth1394_priv *)dev->priv;
 
@@ -1375,7 +1376,7 @@ static void eth1394_complete_cb(struct hpsb_packet *packet, void *__ptask);
  *But before that, it also constructs the FireWire packet according to
  * ptask
  */
-static int eth1394_send_packet(struct packet_task *ptask, unsigned int tx_len, nanosecs_t *xmit_stamp)
+static int eth1394_send_packet(struct packet_task *ptask, unsigned int tx_len, nanosecs_abs_t *xmit_stamp)
 {
 	struct eth1394_priv *priv = ptask->priv;
 	struct hpsb_packet *packet = NULL;

@@ -150,7 +150,7 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
 
             ret = rtdm_task_init(&rtcfg_dev->timer_task, "rtcfg-timer",
                     rtcfg_timer, (void *)ifindex, RTDM_TASK_LOWEST_PRIORITY,
-                    ((nanosecs_t)cmd_event->args.server.period) * 1000000);
+                    ((nanosecs_rel_t)cmd_event->args.server.period)*1000000);
             if (ret < 0) {
                 rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
                 return ret;
@@ -163,7 +163,7 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
             rtcfg_dev->spec.srv.heartbeat = cmd_event->args.server.heartbeat;
 
             rtcfg_dev->spec.srv.heartbeat_timeout =
-                    ((nanosecs_t)cmd_event->args.server.heartbeat) * 1000000 *
+                    ((u64)cmd_event->args.server.heartbeat) * 1000000 *
                     cmd_event->args.server.threshold;
 
             rtcfg_next_main_state(ifindex, RTCFG_MAIN_SERVER_RUNNING);
@@ -316,8 +316,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
     new_conn->stage1_data  = cmd_event->args.add.stage1_data;
     new_conn->stage1_size  = cmd_event->args.add.stage1_size;
     new_conn->burstrate    = rtcfg_dev->burstrate;
-    new_conn->cfg_timeout  =
-            ((nanosecs_t)cmd_event->args.add.timeout) * 1000000;
+    new_conn->cfg_timeout  = ((u64)cmd_event->args.add.timeout) * 1000000;
 
     if (cmd_event->args.add.addr_type == RTCFG_ADDR_IP) {
 #ifdef CONFIG_RTNET_RTIPV4

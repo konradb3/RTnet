@@ -149,7 +149,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
             break;
 
         case RTNET_RTIOC_TIMEOUT:
-            sock->timeout = *(nanosecs_t *)arg;
+            sock->timeout = *(nanosecs_rel_t *)arg;
             break;
 
         case RTNET_RTIOC_CALLBACK:

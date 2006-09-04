@@ -27,7 +27,6 @@
 #define __RTNET_SYS_XENOMAI_H_
 
 #include <nucleus/pod.h>
-#include <rtdm/rtdm_driver.h>
 
 
 /* not available in Xenomai 2.0 */
@@ -43,14 +42,6 @@ static inline void nano_to_timeval(__u64 time, struct timeval *tval)
                                 (unsigned long *)&tval->tv_usec);
     tval->tv_usec /= 1000;
 }
-
-
-#if RTDM_API_VER < 4
-# define RTDM_IRQTYPE_SHARED        0
-# define RTDM_IRQTYPE_EDGE          0
-# define RTDM_IRQ_NONE              0
-# define RTDM_IRQ_HANDLED           RTDM_IRQ_ENABLE
-#endif /* RTDM_API_VER < 4 */
 
 
 #ifdef CONFIG_XENO_2_0x
@@ -81,6 +72,5 @@ static inline void rtos_irq_reacquire_lock(void)
     rthal_local_irq_disable_hw();
     xnpod_set_thread_mode(xnpod_current_thread(), XNLOCK, 0);
 }
-
 
 #endif /* __RTNET_SYS_XENOMAI_H_ */

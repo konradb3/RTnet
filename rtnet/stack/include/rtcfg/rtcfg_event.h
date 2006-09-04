@@ -93,7 +93,7 @@ struct rtcfg_device {
             u32                     clients_configured;
             struct list_head        conn_list;
             u16                     heartbeat;
-            nanosecs_t              heartbeat_timeout;
+            u64                     heartbeat_timeout;
         } srv;
     } spec;
 };

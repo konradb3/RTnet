@@ -31,17 +31,25 @@
 #include <linux/time.h>
 #include <linux/types.h>
 
-
-typedef __u64   nanosecs_t;     /* used for time calculations and I/O */
+#include <rtdm/rtdm_driver.h>
 
 
 #if defined(CONFIG_RTAI_3x)
 /* Support for 3.x */
-# include <rtnet_sys_rtai.h>
+#include <rtnet_sys_rtai.h>
 #elif defined(CONFIG_XENO_2_0x) || defined(CONFIG_XENO_2_1x)
 /* Support for Xenomai 2.0 or better */
-# include <rtnet_sys_xenomai.h>
+#include <rtnet_sys_xenomai.h>
 #endif
 
+
+/* common, RTDM-related part */
+
+#if RTDM_API_VER < 4
+#define RTDM_IRQTYPE_SHARED         0
+#define RTDM_IRQTYPE_EDGE           0
+#define RTDM_IRQ_NONE               0
+#define RTDM_IRQ_HANDLED            RTDM_IRQ_ENABLE
+#endif /* RTDM_API_VER < 4 */
 
 #endif /* __RTNET_SYS_H_ */

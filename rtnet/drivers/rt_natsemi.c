@@ -718,7 +718,7 @@ static void init_registers(struct rtnet_device *dev);
 static int start_tx(struct rtskb *skb, struct rtnet_device *dev);
 static int intr_handler(rtdm_irq_t *irq_handle);
 static void netdev_error(struct rtnet_device *dev, int intr_status);
-static void netdev_rx(struct rtnet_device *dev, nanosecs_t *time_stamp);
+static void netdev_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp);
 static void netdev_tx_done(struct rtnet_device *dev);
 static void __set_rx_mode(struct rtnet_device *dev);
 /*static void set_rx_mode(struct rtnet_device *dev);*/
@@ -1784,7 +1784,7 @@ static void netdev_tx_done(struct rtnet_device *dev)
    after the Tx thread. */
 static int intr_handler(rtdm_irq_t *irq_handle)
 {
-	nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
+	nanosecs_abs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
 	struct rtnet_device *dev =
 	    rtdm_irq_get_arg(irq_handle, struct rtnet_device); /*** RTnet ***/
 	struct netdev_private *np = dev->priv;
@@ -1845,7 +1845,7 @@ static int intr_handler(rtdm_irq_t *irq_handle)
 
 /* This routine is logically part of the interrupt handler, but separated
    for clarity and better register allocation. */
-static void netdev_rx(struct rtnet_device *dev, nanosecs_t *time_stamp)
+static void netdev_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp)
 {
 	struct netdev_private *np = dev->priv;
 	int entry = np->cur_rx % RX_RING_SIZE;

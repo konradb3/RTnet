@@ -101,7 +101,7 @@ int tulip_refill_rx(/*RTnet*/struct rtnet_device *rtdev)
 }
 
 
-static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
+static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_abs_t *time_stamp)
 {
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	int entry = tp->cur_rx % RX_RING_SIZE;
@@ -216,7 +216,7 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_t *time_stamp)
    after the Tx thread. */
 int tulip_interrupt(rtdm_irq_t *irq_handle)
 {
-	nanosecs_t time_stamp = rtdm_clock_read();/*RTnet*/
+	nanosecs_abs_t time_stamp = rtdm_clock_read();/*RTnet*/
 	struct rtnet_device *rtdev =
 	    rtdm_irq_get_arg(irq_handle, struct rtnet_device);/*RTnet*/
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;

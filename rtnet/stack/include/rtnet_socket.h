@@ -49,7 +49,7 @@ struct rtsocket {
     rtdm_lock_t             param_lock;
 
     unsigned int            priority;
-    nanosecs_t              timeout;    /* receive timeout, 0 for infinite */
+    nanosecs_rel_t          timeout;    /* receive timeout, 0 for infinite */
 
     rtdm_sem_t              pending_sem;
 #ifdef CONFIG_RTNET_RTDM_SELECT

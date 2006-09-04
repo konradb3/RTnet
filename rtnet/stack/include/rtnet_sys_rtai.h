@@ -26,8 +26,6 @@
 #ifndef __RTNET_SYS_RTAI_H_
 #define __RTNET_SYS_RTAI_H_
 
-#include <rtdm/rtdm_driver.h>
-
 
 /* workarounds for namespace pollution of RTAI */
 #undef SLEEP
@@ -40,14 +38,6 @@ static inline void nano_to_timeval(__u64 time, struct timeval *tval)
                                (unsigned long *)&tval->tv_usec);
     tval->tv_usec /= 1000;
 }
-
-
-#if RTDM_API_VER < 4
-# define RTDM_IRQTYPE_SHARED        0
-# define RTDM_IRQTYPE_EDGE          0
-# define RTDM_IRQ_NONE              0
-# define RTDM_IRQ_HANDLED           RTDM_IRQ_ENABLE
-#endif /* RTDM_API_VER < 4 */
 
 
 #define CONFIG_RTOS_STARTSTOP_TIMER 1
@@ -76,6 +66,5 @@ static inline void rtos_irq_reacquire_lock(void)
     hard_cli();
     rt_sched_unlock();
 }
-
 
 #endif /* __RTNET_SYS_RTAI_H_ */

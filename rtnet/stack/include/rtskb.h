@@ -166,12 +166,12 @@ struct rtskb {
     struct rtsocket     *sk;        /* assigned socket */
     struct rtnet_device *rtdev;     /* source or destination device */
 
-    nanosecs_t          time_stamp; /* arrival or transmission (RTcap) time */
+    nanosecs_abs_t      time_stamp; /* arrival or transmission (RTcap) time */
 
     /* patch address of the transmission time stamp, can be NULL
      * calculation: *xmit_stamp = cpu_to_be64(time_in_ns + *xmit_stamp)
      */
-    nanosecs_t          *xmit_stamp;
+    nanosecs_abs_t      *xmit_stamp;
 
     /* transport layer */
     union
@@ -223,7 +223,7 @@ struct rtskb {
     struct rtskb        *cap_next;  /* used for capture queue               */
     unsigned char       *cap_start; /* start offset for capturing           */
     unsigned int        cap_len;    /* capture length of this rtskb         */
-    nanosecs_t          cap_rtmac_stamp; /* RTmac enqueuing time            */
+    nanosecs_abs_t      cap_rtmac_stamp; /* RTmac enqueuing time            */
 #endif
 };
 

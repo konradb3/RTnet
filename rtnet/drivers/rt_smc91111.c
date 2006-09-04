@@ -843,10 +843,6 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 	unsigned short		ioaddr;
 	byte			* buf;
 	rtdm_lockctx_t		context;
-	union {
-		nanosecs_t	ns;
-		char		buf[sizeof(nanosecs_t)];
-	} xmit_stamp;
 
 	PRINTK3("%s:smc_hardware_send_packet\n", dev->name);
 
@@ -923,14 +919,16 @@ static void smc_hardware_send_packet( struct rtnet_device * dev )
 
 	/* get and patch time stamp just before the transmission */
 	if (skb->xmit_stamp) {
-		xmit_stamp.ns = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
+		nanosecs_abs_t xmit_stamp =
+			cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
 
 		/* point to the patch address */
 		outw(PTR_AUTOINC |
 			(4 + (char *)skb->xmit_stamp - (char *)skb->data),
 			ioaddr + PTR_REG);
 		/* we don't check alignments, we just write bytes */
-		outsb(ioaddr + DATA_REG, xmit_stamp.buf, sizeof(xmit_stamp));
+		outsb(ioaddr + DATA_REG, (char *)&xmit_stamp,
+			sizeof(xmit_stamp));
 	}
 
 	/* enable the interrupts */
@@ -1508,7 +1506,7 @@ static inline void smc_rcv(struct rtnet_device *dev)
 	int 	packet_number;
 	word	status;
 	word	packet_length;
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t	time_stamp = rtdm_clock_read();
 	int		timeout;
 
 	PRINTK3("%s:smc_rcv\n", dev->name);

@@ -345,7 +345,7 @@ static int  pcnet32_probe1(unsigned long, unsigned int, int, struct pci_dev *);
 static int  pcnet32_open(struct rtnet_device *);
 static int  pcnet32_init_ring(struct rtnet_device *);
 static int  pcnet32_start_xmit(struct rtskb *, struct rtnet_device *);
-static int  pcnet32_rx(struct rtnet_device *, nanosecs_t *time_stamp);
+static int  pcnet32_rx(struct rtnet_device *, nanosecs_abs_t *time_stamp);
 //static void pcnet32_tx_timeout (struct net_device *dev);
 static int pcnet32_interrupt(rtdm_irq_t *irq_handle);
 static int  pcnet32_close(struct rtnet_device *);
@@ -1208,7 +1208,7 @@ pcnet32_start_xmit(struct rtskb *skb, struct rtnet_device *dev) /*** RTnet ***/
 /* The PCNET32 interrupt handler. */
 static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 {
-    nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
+    nanosecs_abs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
     struct rtnet_device *dev =
         rtdm_irq_get_arg(irq_handle, struct rtnet_device); /*** RTnet ***/
     struct pcnet32_private *lp;
@@ -1370,7 +1370,7 @@ static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 }
 
 static int
-pcnet32_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** RTnet ***/
+pcnet32_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp) /*** RTnet ***/
 {
     struct pcnet32_private *lp = dev->priv;
     int entry = lp->cur_rx & RX_RING_MOD_MASK;

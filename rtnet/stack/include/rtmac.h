@@ -26,6 +26,8 @@
 
 #include <rtdm/rtdm.h>
 
+#include <rtnet.h> /* for nanosecs wrapping */
+
 
 /* sub-classes: RTDM_CLASS_RTMAC */
 #define RTDM_SUBCLASS_TDMA          0
@@ -52,8 +54,8 @@ struct rtmac_waitinfo {
     unsigned int    type; /* set to wait type before invoking the service */
     size_t          size; /* must be at least sizeof(struct rtmac_waitinfo) */
     unsigned long   cycle_no;
-    uint64_t        cycle_start;
-    int64_t         clock_offset;
+    nanosecs_abs_t  cycle_start;
+    nanosecs_rel_t  clock_offset;
 };
 
 

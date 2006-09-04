@@ -355,7 +355,7 @@ static void rtcfg_conn_check_cfg_timeout(struct rtcfg_connection *conn)
 
 static void rtcfg_conn_check_heartbeat(struct rtcfg_connection *conn)
 {
-    nanosecs_t          timeout;
+    u64                 timeout;
     struct rtcfg_device *rtcfg_dev;
 
 

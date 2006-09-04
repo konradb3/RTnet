@@ -373,7 +373,7 @@ ssize_t rt_udp_recvmsg(struct rtdm_dev_context *sockctx,
     size_t              data_len;
     struct udphdr       *uh;
     struct sockaddr_in  *sin;
-    nanosecs_t          timeout = sock->timeout;
+    nanosecs_rel_t      timeout = sock->timeout;
     int                 ret;
 
 

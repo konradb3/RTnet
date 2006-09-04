@@ -553,7 +553,7 @@ static void via_rhine_tx_timeout(struct net_device *dev);*/
 static int  via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev);
 static int via_rhine_interrupt(rtdm_irq_t *irq_handle);
 static void via_rhine_tx(struct rtnet_device *dev);
-static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp);
+static void via_rhine_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp);
 static void via_rhine_error(struct rtnet_device *dev, int intr_status);
 static void via_rhine_set_rx_mode(struct rtnet_device *dev);
 /*static struct net_device_stats *via_rhine_get_stats(struct net_device *dev);
@@ -1431,7 +1431,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
    after the Tx thread. */
 static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 {
-	nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
+	nanosecs_abs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
 	struct rtnet_device *dev =
 	    rtdm_irq_get_arg(irq_handle, struct rtnet_device); /*** RTnet ***/
 	long ioaddr;
@@ -1563,7 +1563,7 @@ static void via_rhine_tx(struct rtnet_device *dev) /*** RTnet ***/
 
 /* This routine is logically part of the interrupt handler, but isolated
    for clarity and better register allocation. */
-static void via_rhine_rx(struct rtnet_device *dev, nanosecs_t *time_stamp) /*** RTnet ***/
+static void via_rhine_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp) /*** RTnet ***/
 {
 	struct netdev_private *np = dev->priv;
 	int entry = np->cur_rx % RX_RING_SIZE;

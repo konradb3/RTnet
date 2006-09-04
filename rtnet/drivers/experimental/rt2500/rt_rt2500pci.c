@@ -128,7 +128,7 @@ static void rt2x00_interrupt_txdone(struct _data_ring * ring) {
 }
 
 
-static void rt2x00_interrupt_rxdone(struct _data_ring * ring, nanosecs_t *time_stamp) {
+static void rt2x00_interrupt_rxdone(struct _data_ring * ring, nanosecs_abs_t *time_stamp) {
 
     struct _rt2x00_pci	 * rt2x00pci  = rt2x00_priv(ring->core);
     struct rtnet_device  * rtnet_dev  = ring->core->rtnet_dev; 
@@ -175,7 +175,7 @@ static void rt2x00_interrupt_rxdone(struct _data_ring * ring, nanosecs_t *time_s
 
 int rt2x00_interrupt(rtdm_irq_t *irq_handle) {
 
-    nanosecs_t time_stamp = rtdm_clock_read();
+    nanosecs_abs_t time_stamp = rtdm_clock_read();
 
     struct rtnet_device   * rtnet_dev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
     struct rtwlan_device  * rtwlan_dev    = rtnetdev_priv(rtnet_dev);

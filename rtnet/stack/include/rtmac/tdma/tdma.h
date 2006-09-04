@@ -70,7 +70,7 @@ struct tdma_job {
 struct tdma_slot {
     struct tdma_job             head;
 
-    nanosecs_t                  offset;
+    u64                         offset;
     unsigned int                period;
     unsigned int                phasing;
     unsigned int                mtu;
@@ -86,13 +86,12 @@ struct tdma_request_cal {
     struct tdma_job             head;
 
     struct tdma_priv            *tdma;
-    nanosecs_t                  offset;
-    nanosecs_t                  offset_ns;
+    u64                         offset;
     unsigned int                period;
     unsigned int                phasing;
     unsigned int                cal_rounds;
-    nanosecs_t                  *cal_results;
-    nanosecs_t                  *result_buffer;
+    u64                         *cal_results;
+    u64                         *result_buffer;
 };
 
 
@@ -102,7 +101,7 @@ struct tdma_reply_cal {
     struct tdma_job             head;
 
     u32                         reply_cycle;
-    nanosecs_t                  reply_offset;
+    u64                         reply_offset;
     struct rtskb                *reply_rtskb;
 };
 
@@ -127,9 +126,9 @@ struct tdma_priv {
     unsigned long               flags;
     unsigned int                cal_rounds;
     u32                         current_cycle;
-    nanosecs_t                  current_cycle_start;
-    nanosecs_t                  master_packet_delay_ns;
-    nanosecs_t                  clock_offset;
+    u64                         current_cycle_start;
+    u64                         master_packet_delay_ns;
+    nanosecs_rel_t              clock_offset;
 
     struct tdma_job             sync_job;
     struct tdma_job             *first_job;
@@ -146,8 +145,8 @@ struct tdma_priv {
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
     struct rtskb_queue          cal_rtskb_pool;
-    nanosecs_t                  cycle_period;
-    nanosecs_t                  backup_sync_inc;
+    u64                         cycle_period;
+    u64                         backup_sync_inc;
 #endif
 
 #ifdef CONFIG_PROC_FS

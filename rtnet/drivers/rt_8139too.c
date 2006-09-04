@@ -1496,7 +1496,7 @@ static void rtl8139_rx_err
 
 static void rtl8139_rx_interrupt (struct rtnet_device *rtdev,
                                   struct rtl8139_private *tp, void *ioaddr,
-                                  nanosecs_t *time_stamp)
+                                  nanosecs_abs_t *time_stamp)
 {
         unsigned char *rx_ring;
         u16 cur_rx;
@@ -1632,7 +1632,7 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
    after the Tx thread. */
 static int rtl8139_interrupt(rtdm_irq_t *irq_handle)
 {
-        nanosecs_t time_stamp = rtdm_clock_read();
+        nanosecs_abs_t time_stamp = rtdm_clock_read();
 
         struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
         struct rtl8139_private *tp = rtdev->priv;

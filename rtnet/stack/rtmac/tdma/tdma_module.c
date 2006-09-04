@@ -57,7 +57,7 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
     struct tdma_priv    *entry;
     const char          *state;
 #ifdef CONFIG_RTNET_TDMA_MASTER
-    nanosecs_t          cycle;
+    u64                 cycle;
 #endif
     RTNET_PROC_PRINT_VARS(80);
 
@@ -116,7 +116,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     struct tdma_slot    *slot;
     int                 i;
     int                 jnt_id;
-    nanosecs_t          slot_offset;
+    u64                 slot_offset;
     RTNET_PROC_PRINT_VARS(80);
 
 

@@ -37,7 +37,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
                              struct tdma_config *cfg)
 {
     struct tdma_priv    *tdma;
-    nanosecs_t          cycle_ms;
+    u64                 cycle_ms;
     unsigned int        table_size;
     int                 ret;
 
@@ -236,10 +236,10 @@ void copyback_calibration(struct rt_proc_call *call, void *priv_data)
     struct tdma_request_cal *req_cal;
     struct tdma_priv        *tdma;
     int                     i;
-    nanosecs_t              value;
-    nanosecs_t              average = 0;
-    nanosecs_t              min = 0x7FFFFFFFFFFFFFFFLL;
-    nanosecs_t              max = 0;
+    u64                     value;
+    u64                     average = 0;
+    u64                     min = 0x7FFFFFFFFFFFFFFFLL;
+    u64                     max = 0;
 
 
     req_cal = rtpc_get_priv(call, struct tdma_request_cal);
@@ -331,15 +331,14 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
         req_cal.head.id        = XMIT_REQ_CAL;
         req_cal.head.ref_count = 0;
         req_cal.tdma           = tdma;
-        req_cal.offset_ns      = cfg->args.set_slot.offset;
+        req_cal.offset         = cfg->args.set_slot.offset;
         req_cal.period         = cfg->args.set_slot.period;
         req_cal.phasing        = cfg->args.set_slot.phasing;
         req_cal.cal_rounds     = tdma->cal_rounds;
         req_cal.cal_results    = cfg->args.set_slot.cal_results;
-        req_cal.offset         = cfg->args.set_slot.offset;
 
         req_cal.result_buffer =
-            kmalloc(req_cal.cal_rounds * sizeof(nanosecs_t), GFP_KERNEL);
+            kmalloc(req_cal.cal_rounds * sizeof(u64), GFP_KERNEL);
         if (!req_cal.result_buffer) {
             kfree(slot);
             return -ENOMEM;
@@ -372,8 +371,8 @@ static int tdma_ioctl_set_slot(struct rtnet_device *rtdev,
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
         if (test_bit(TDMA_FLAG_MASTER, &tdma->flags)) {
-            u32         cycle_no = (volatile u32)tdma->current_cycle;
-            nanosecs_t  cycle_ms;
+            u32 cycle_no = (volatile u32)tdma->current_cycle;
+            u64 cycle_ms;
 
 
             /* switch back to [backup] master mode */

@@ -207,9 +207,9 @@ int tdma_packet_rx(struct rtskb *rtskb)
 {
     struct tdma_priv        *tdma;
     struct tdma_frm_head    *head;
-    nanosecs_t              delay;
-    nanosecs_t              cycle_start;
-    nanosecs_t              clock_offset;
+    u64                     delay;
+    u64                     cycle_start;
+    nanosecs_rel_t          clock_offset;
     struct rt_proc_call     *call;
     struct tdma_request_cal *req_cal_job;
     rtdm_lockctx_t          context;

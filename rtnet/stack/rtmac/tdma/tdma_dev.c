@@ -94,7 +94,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
 
     switch (request) {
         case RTMAC_RTIOC_TIMEOFFSET: {
-            nanosecs_t offset;
+            nanosecs_rel_t offset;
 
             rtdm_lock_get_irqsave(&tdma->lock, lock_ctx);
             offset = tdma->clock_offset;

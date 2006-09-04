@@ -170,7 +170,7 @@ struct scc_enet_private {
 
 static int scc_enet_open(struct rtnet_device *rtdev);
 static int scc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
-static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp);
 static int scc_enet_interrupt(rtdm_irq_t *irq_handle);
 static int scc_enet_close(struct rtnet_device *rtdev);
 
@@ -350,7 +350,7 @@ static int scc_enet_interrupt(rtdm_irq_t *irq_handle)
 	volatile cbd_t	*bdp;
 	ushort	int_events;
 	int	must_restart;
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 
 
 	cep = (struct scc_enet_private *)rtdev->priv;
@@ -485,7 +485,7 @@ static int scc_enet_interrupt(rtdm_irq_t *irq_handle)
  * effectively tossing the packet.
  */
 static int
-scc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
+scc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_abs_t *time_stamp)
 {
 	struct	scc_enet_private *cep;
 	volatile cbd_t	*bdp;

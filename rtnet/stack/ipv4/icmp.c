@@ -52,7 +52,7 @@ struct icmp_bxm
     off_t               offset;
     struct {
         struct icmphdr  icmph;
-        nanosecs_t      timestamp;
+        nanosecs_abs_t  timestamp;
     } head;
     union {
         struct rtskb    *skb;
@@ -227,9 +227,9 @@ static void rt_icmp_echo_reply(struct rtskb *skb)
     if ((skb->h.icmph->un.echo.id == cmd->args.ping.id) &&
         (ntohs(skb->h.icmph->un.echo.sequence) == cmd->args.ping.sequence) &&
         skb->len == cmd->args.ping.msg_size) {
-        if (skb->len >= sizeof(nanosecs_t))
+        if (skb->len >= sizeof(nanosecs_abs_t))
             cmd->args.ping.rtt =
-                rtdm_clock_read() - *((nanosecs_t *)skb->data);
+                rtdm_clock_read() - *((nanosecs_abs_t *)skb->data);
         rtpc_complete_call(call, sizeof(struct icmphdr) + skb->len);
     } else
         rtpc_complete_call(call, 0);
@@ -340,9 +340,9 @@ int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size)
     icmp_param.head.icmph.un.echo.sequence = htons(sequence);
     icmp_param.offset = 0;
 
-    if (msg_size >= sizeof(nanosecs_t)) {
-        icmp_param.head_len = sizeof(struct icmphdr) + sizeof(nanosecs_t);
-        icmp_param.data_len = msg_size - sizeof(nanosecs_t);
+    if (msg_size >= sizeof(nanosecs_abs_t)) {
+        icmp_param.head_len = sizeof(struct icmphdr) + sizeof(nanosecs_abs_t);
+        icmp_param.data_len = msg_size - sizeof(nanosecs_abs_t);
 
         for (pos = 0; pos < icmp_param.data_len; pos++)
             pattern_buf[pos] = pos & 0xFF;

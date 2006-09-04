@@ -853,8 +853,8 @@ static void mdio_write(struct rtnet_device *vp, int phy_id, int location, int va
 
 static int vortex_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static int boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
-static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
-static int boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp);
+static int boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp);
 static int vortex_interrupt(rtdm_irq_t *irq_handle);
 static int boomerang_interrupt(rtdm_irq_t *irq_handle);
 static int vortex_close(struct rtnet_device *rtdev);
@@ -2150,7 +2150,7 @@ static void vortex_tx_timeout(struct rtnet_device *dev)
  * the cache impact.
  */
 static void
-vortex_error(struct rtnet_device *rtdev, int status, nanosecs_t *time_stamp)
+vortex_error(struct rtnet_device *rtdev, int status, nanosecs_abs_t *time_stamp)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
@@ -2438,7 +2438,7 @@ boomerang_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 static int vortex_interrupt(rtdm_irq_t *irq_handle)
 {
 	// *** RTnet ***
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
 	// *** RTnet ***
@@ -2548,7 +2548,7 @@ handler_exit:
 static int boomerang_interrupt(rtdm_irq_t *irq_handle)
 {
 	// *** RTnet ***
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 	struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
 	// *** RTnet ***
@@ -2679,7 +2679,7 @@ handler_exit:
     return RTDM_IRQ_HANDLED;
 }
 
-static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
+static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
@@ -2753,7 +2753,7 @@ static int vortex_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_
 }
 
 static int
-boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
+boomerang_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
 	int entry = vp->cur_rx % RX_RING_SIZE;

@@ -882,7 +882,8 @@ static void rtcfg_client_recv_stage_2_cfg(int ifindex, struct rtskb *rtskb)
     if (stage_2_cfg->heartbeat_period) {
         ret = rtdm_task_init(&rtcfg_dev->timer_task, "rtcfg-timer",
                 rtcfg_timer, (void *)ifindex, RTDM_TASK_LOWEST_PRIORITY,
-                ((nanosecs_t)ntohs(stage_2_cfg->heartbeat_period)) * 1000000);
+                (nanosecs_rel_t)ntohs(stage_2_cfg->heartbeat_period) *
+                1000000);
         if (ret < 0)
             /*ERRMSG*/rtdm_printk("RTcfg: unable to create timer task\n");
         else

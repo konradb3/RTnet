@@ -223,7 +223,7 @@ struct fec_enet_private {
 static int  fec_enet_open(struct rtnet_device *rtev);
 static int  fec_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 static void fec_enet_tx(struct rtnet_device *rtdev);
-static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static void fec_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp);
 static int fec_enet_interrupt(rtdm_irq_t *irq_handle);
 static int  fec_enet_close(struct rtnet_device *dev);
 static void fec_restart(struct rtnet_device *rtdev, int duplex);
@@ -488,7 +488,7 @@ static int fec_enet_interrupt(rtdm_irq_t *irq_handle)
 	int packets = 0;
 	volatile fec_t	*fecp;
 	uint	int_events;
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 
 
 	fecp = (volatile fec_t*)rtdev->base_addr;
@@ -611,7 +611,7 @@ fec_enet_tx(struct rtnet_device *rtdev)
  * effectively tossing the packet.
  */
 static void
-fec_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp)
+fec_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp)
 {
 	struct	fec_enet_private *fep;
 	volatile fec_t	*fecp;

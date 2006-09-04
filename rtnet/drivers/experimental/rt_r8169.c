@@ -1682,7 +1682,7 @@ static void rtl8169_tx_interrupt (struct rtnet_device *rtdev, struct rtl8169_pri
 //======================================================================================================
 /* This routine is logically part of the interrupt handler, but isolated
    for clarity. */
-static void rtl8169_rx_interrupt (struct rtnet_device *rtdev, struct rtl8169_private *priv, unsigned long ioaddr, nanosecs_t *time_stamp)
+static void rtl8169_rx_interrupt (struct rtnet_device *rtdev, struct rtl8169_private *priv, unsigned long ioaddr, nanosecs_abs_t *time_stamp)
 {
 	struct pci_dev *pdev = priv->pci_dev;
 	int cur_rx;
@@ -1823,7 +1823,7 @@ static int rtl8169_interrupt(rtdm_irq_t *irq_handle)
 	unsigned long ioaddr = priv->ioaddr;
 	int status = 0;
 	unsigned int old_packet_cnt = priv->stats.rx_packets; /*** RTnet ***/
-	nanosecs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
+	nanosecs_abs_t time_stamp = rtdm_clock_read(); /*** RTnet ***/
 
 	int interrupt_handled = RTDM_IRQ_NONE; /*** <kk> ***/
 

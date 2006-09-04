@@ -153,7 +153,7 @@ typedef struct {
 
 static int  fcc_enet_open(struct rtnet_device *rtev);
 static int  fcc_enet_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
-static int  fcc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_t *time_stamp);
+static int  fcc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t *time_stamp);
 static int fcc_enet_interrupt(rtdm_irq_t *irq_handle);
 static int  fcc_enet_close(struct rtnet_device *dev);
 
@@ -573,7 +573,7 @@ static int fcc_enet_interrupt(rtdm_irq_t *irq_handle)
 	volatile cbd_t	*bdp;
 	ushort	int_events;
 	int	must_restart;
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 
 
 	cep = (struct fcc_enet_private *)rtdev->priv;
@@ -712,7 +712,7 @@ static int fcc_enet_interrupt(rtdm_irq_t *irq_handle)
  * effectively tossing the packet.
  */
 static int
-fcc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_t *time_stamp)
+fcc_enet_rx(struct rtnet_device *rtdev, int* packets, nanosecs_abs_t *time_stamp)
 {
 	struct	fcc_enet_private *cep;
 	volatile cbd_t	*bdp;

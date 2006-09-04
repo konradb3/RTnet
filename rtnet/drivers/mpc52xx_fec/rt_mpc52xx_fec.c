@@ -1215,7 +1215,7 @@ static int mpc5xxx_sdma_receive_interrupt(rtdm_irq_t *irq_handle)
 	u32 status;
 	int length;
 	int packets = 0;
-	nanosecs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 
 
 #if MPC5xxx_FEC_DEBUG > 4
