@@ -1434,10 +1434,9 @@ static int smc_open(struct rtnet_device *dev)
 	smc_phy_configure(dev);
 
 	smc_set_multicast_list(dev);
-	rtdm_irq_enable(&lp->irq_handle);
 
 	/*
-  		According to Becker, I have to set the hardware address
+		According to Becker, I have to set the hardware address
 		at this point, because the (l)user can set it with an
 		ioctl.  Easily done...
 	*/

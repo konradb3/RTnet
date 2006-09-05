@@ -1907,7 +1907,6 @@ vortex_open(struct rtnet_device *rtdev)
 		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", rtdev->name, rtdev->irq);
 		goto out;
 	}
-	rtdm_irq_enable(&vp->irq_handle);
 	// *** RTnet ***
 
 	if (vp->full_bus_master_rx) { /* Boomerang bus master. */

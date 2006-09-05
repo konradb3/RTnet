@@ -1203,8 +1203,6 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
 /*** RTnet ***/
-	rtdm_irq_enable(&np->irq_handle);
-
 	/* Set the timer to check for link beat. */
 #if 0
 	init_timer(&np->timer);

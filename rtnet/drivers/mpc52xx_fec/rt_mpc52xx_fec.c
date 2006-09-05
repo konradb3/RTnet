@@ -1919,10 +1919,6 @@ mpc5xxx_fec_init(void)
 		return i;
 	}
 
-	rtdm_irq_enable(&priv->irq_handle);
-	rtdm_irq_enable(&priv->r_irq_handle);
-	rtdm_irq_enable(&priv->t_irq_handle);
-
 #if MPC5xxx_FEC_DEBUG > 1
 	printk("fec_irq %d, r_irq %d, t_irq %d\n",
 			dev->irq, priv->r_irq, priv->t_irq);

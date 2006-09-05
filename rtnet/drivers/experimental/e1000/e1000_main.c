@@ -318,8 +318,6 @@ static int e1000_request_irq(struct e1000_adapter *adapter)
 		DPRINTK(PROBE, ERR,
 		    "Unable to allocate interrupt Error: %d\n", err);
 
-        rtdm_irq_enable(&adapter->irq_handle);
-
 	return err;
 }
 

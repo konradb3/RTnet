@@ -875,8 +875,6 @@ pcnet32_open(struct rtnet_device *dev) /*** RTnet ***/
                          "rt_pcnet32", dev);
     if (i)
         return i;
-
-    rtdm_irq_enable(&lp->irq_handle);
 /*** RTnet ***/
 
     /* Check for a valid station address */

@@ -2039,6 +2039,8 @@ init_fcc_startup(fcc_info_t *fip, struct rtnet_device *rtdev)
 	 */
 	fccp->fcc_fccm = (FCC_ENET_TXE | FCC_ENET_RXF | FCC_ENET_TXB);
 
+	rt_stack_connect(rtdev, &STACK_manager);
+
 	/* Install our interrupt handler.
 	*/
 	if (rtdm_irq_request(&cep->irq_handle, fip->fc_interrupt,
@@ -2047,8 +2049,6 @@ init_fcc_startup(fcc_info_t *fip, struct rtnet_device *rtdev)
 		rtdev_free(rtdev);
 		return;
 	}
-	rt_stack_connect(rtdev, &STACK_manager);
-	rtdm_irq_enable(&cep->irq_handle);
 
 
 #if defined (CONFIG_RTAI_RTNET_USE_MDIO) && !defined (CONFIG_PM826)

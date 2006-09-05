@@ -976,7 +976,6 @@ int __init scc_enet_init(void)
 		rtdev_free(rtdev);
 		return i;
 	}
-	rtdm_irq_enable(&cep->irq_handle);
 	
 
 	/* Set GSMR_H to enable all normal operating modes.

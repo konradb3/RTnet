@@ -2059,7 +2059,6 @@ int __init fec_enet_init(void)
 		rtdev_free(rtdev);
 		return i;
 	}
-	rtdm_irq_enable(&fep->irq_handle);
 
 	rtdev->base_addr = (unsigned long)fecp;
 

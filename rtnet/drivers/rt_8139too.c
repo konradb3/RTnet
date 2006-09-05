@@ -1177,8 +1177,6 @@ static int rtl8139_open (struct rtnet_device *rtdev)
         rtl8139_init_ring (rtdev);
         rtl8139_hw_start (rtdev);
 
-        rtdm_irq_enable(&tp->irq_handle);
-
         RTNET_MOD_INC_USE_COUNT;
 
         return 0;

@@ -192,57 +192,52 @@ waiting on hardware events.
 27. call rtdm_clock_read within receive interrupt and set time_stamp field of skb accordingly
 
 
-28. add the following line to the open function (as soon as the IRQ is allowed to occur):
-
-    rtdm_irq_enable(&<priv>->irq_handle);
-
-
-29. initialize new unsigned int old_packet_cnt with <priv>->stats.rx_packets at
+28. initialize new unsigned int old_packet_cnt with <priv>->stats.rx_packets at
     the beginning of the interrupt handler
 
 
-30. add to the end of the interrupt handler:
+29. add to the end of the interrupt handler:
 
     rtdm_lock_put(&<priv>->lock); /* if locking is not done in interrupt main function */
     if (old_packet_cnt != <priv>->stats.rx_packets)
         rt_mark_stack_mgr(dev);
 
 
-31. disable any timer setup and delete calls
+30. disable any timer setup and delete calls
 
 
-32. uncomment not required(!) MII related assignments and functions
+31. uncomment not required(!) MII related assignments and functions
 
 
-33. uncomment any other unused functions
+32. uncomment any other unused functions
 
 
-34. replace register_netdev with rt_register_rtnetdev
+33. replace register_netdev with rt_register_rtnetdev
 
 
-35. replace netif_carrier_{on|off} with rtnetif_carrier_{on|off}
+34. replace netif_carrier_{on|off} with rtnetif_carrier_{on|off}
 
 
-36. replace dev_alloc_skb(size) with dev_alloc_rtskb(size, &<priv>->skb_pool)
+35. replace dev_alloc_skb(size) with dev_alloc_rtskb(size, &<priv>->skb_pool)
 
 
-37. reduce RX_RING_SIZE to 8
+36. reduce RX_RING_SIZE to 8
 
 
-38. replace MOD_INC_USE_COUNT/MOD_DEC_USE_COUNT with RTNET_MOD_INC_USE_COUNT/RTNET_MOD_DEC_USE_COUNT
+37. replace MOD_INC_USE_COUNT/MOD_DEC_USE_COUNT with RTNET_MOD_INC_USE_COUNT/RTNET_MOD_DEC_USE_COUNT
     and check if they are used appropriately
 
 
-39. rename type of lock field in private data from spinlock_t to rtdm_lock_t
+38. rename type of lock field in private data from spinlock_t to rtdm_lock_t
 
 
-40. replace spin_lock_init(&<priv>->lock) with rtdm_lock_init(&<priv>->lock)
+39. replace spin_lock_init(&<priv>->lock) with rtdm_lock_init(&<priv>->lock)
 
 
-41. rtskb structure does not contain a data_len field => set any occurrence to zero
+40. rtskb structure does not contain a data_len field => set any occurrence to zero
 
 
-42. return from interrupt handler only by providing RTDM_IRQ_HANDLED or RTDM_IRQ_NONE as
+41. return from interrupt handler only by providing RTDM_IRQ_HANDLED or RTDM_IRQ_NONE as
     return values, depending if the IRQ was handled or not
 
 

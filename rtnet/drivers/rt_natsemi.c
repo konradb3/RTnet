@@ -1181,13 +1181,11 @@ static int netdev_open(struct rtnet_device *dev)
 
 	rtnetif_start_queue(dev); /*** RTnet ***/
 
-/*** RTnet ***/
-	rtdm_irq_enable(&np->irq_handle);
-
 	if (netif_msg_ifup(np))
 		rtdm_printk(KERN_DEBUG "%s: Done netdev_open(), status: %#08x.\n",
 			dev->name, (int)readl((void *)(ioaddr + ChipCmd)));
 
+/*** RTnet ***/
 	/* Set the timer to check for link beat. */
 #if 0
 	init_timer(&np->timer);

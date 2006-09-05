@@ -1098,12 +1098,6 @@ speedo_open(struct rtnet_device *rtdev)
 	if ((sp->phy[0] & 0x8000) == 0)
 		mdio_read(ioaddr, sp->phy[0] & 0x1f, 0);
 
-// *** RTnet ***
-	/* Enable the device IRQ here, so that no race situation between the setup
-	 * code and the IRQ handler can occure. */
-	rtdm_irq_enable(&sp->irq_handle);
-// *** RTnet ***
-
 	return 0;
 }
 

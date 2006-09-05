@@ -1177,8 +1177,6 @@ static int rtl8169_open (struct rtnet_device *rtdev)
 	rtl8169_init_ring(rtdev);
 	rtl8169_hw_start(rtdev);
 
-	rtdm_irq_enable(&priv->irq_handle);	/*** RTnet ***/
-
 	// ------------------------------------------------------
 #if 0 /*** RTnet ***/
 	DBG_PRINT("FIX PCS -> rtl8169_request_timer\n");

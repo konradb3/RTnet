@@ -564,14 +564,14 @@ rt2x00_init_bbp(struct _rt2x00_pci *rt2x00pci) {
  */
 
 static int rt2x00_dev_radio_on(struct _rt2x00_core * core) {
-  
+
     struct _rt2x00_pci	*rt2x00pci = rt2x00_priv(core);
     u32			reg = 0x00000000;
     int retval;
-  
+
     if(rt2x00_pci_alloc_rings(core))
         goto exit_fail;
-  
+
     rt2x00_clear_ring(rt2x00pci, &rt2x00pci->rx);
     rt2x00_clear_ring(rt2x00pci, &rt2x00pci->tx);
 
@@ -609,13 +609,11 @@ static int rt2x00_dev_radio_on(struct _rt2x00_core * core) {
     rt2x00_set_field32(&reg, CSR8_RXDONE, 0);
     rt2x00_register_write(rt2x00pci, CSR8, reg);
 
-    rtdm_irq_enable(&rt2x00pci->irq_handle);
-
     return 0;
 
   exit_fail:
     rt2x00_pci_free_rings(core);
-  
+
     return -ENOMEM;
 }
 

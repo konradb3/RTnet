@@ -506,8 +506,6 @@ tulip_open(/*RTnet*/struct rtnet_device *rtdev)
 
 	tulip_up (rtdev);
 
-	rtdm_irq_enable(&tp->irq_handle);
-
 	rtnetif_start_queue (rtdev);
 
 	return 0;
