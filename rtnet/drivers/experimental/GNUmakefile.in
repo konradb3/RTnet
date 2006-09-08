@@ -38,7 +38,6 @@ host_triplet = @host@
 @CONFIG_RTNET_DRV_3C59X_TRUE@am__append_1 = rt_3c59x$(modext)
 @CONFIG_RTNET_DRV_R8169_TRUE@am__append_2 = rt_r8169$(modext)
 @CONFIG_RTNET_DRV_RT2500_TRUE@am__append_3 = rt2500
-@CONFIG_RTNET_DRV_E1000_TRUE@am__append_4 = e1000
 subdir = drivers/experimental
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -81,7 +80,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = rt2500 e1000
+DIST_SUBDIRS = rt2500
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -288,7 +287,7 @@ libkernel_r8169_a_SOURCES = \
 	rt_r8169.c
 
 OBJS = $(am__append_1) $(am__append_2)
-OPTDIRS = $(am__append_3) $(am__append_4)
+OPTDIRS = $(am__append_3)
 SUBDIRS = $(OPTDIRS)
 EXTRA_DIST = Kconfig Makefile.kbuild README.r8169
 DISTCLEANFILES = Makefile

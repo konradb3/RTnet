@@ -10,4 +10,3 @@ config RTNET_DRV_R8169
     depends on RTNET_EXP_DRIVERS
 
 source "drivers/experimental/rt2500/Kconfig"
-source "drivers/experimental/e1000/Kconfig"

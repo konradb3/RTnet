@@ -1,3 +1,0 @@
-config RTNET_DRV_E1000
-    bool "Intel(R) PRO/1000 (Gigabit)"
-    depends on RTNET_EXP_DRIVERS

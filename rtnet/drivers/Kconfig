@@ -4,12 +4,10 @@ comment "Common PCI Drivers"
 
 config RTNET_DRV_PCNET32
     bool "AMD PCnet32"
-    default n
 
 
 config RTNET_DRV_TULIP
     bool "DEC Tulip"
-    default n
 
 
 config RTNET_DRV_EEPRO100
@@ -27,7 +25,6 @@ config RTNET_DRV_EEPRO100_CMDTIMEOUT
 config RTNET_DRV_EEPRO100_DBG
     bool "Enable debugging and instrumentation"
     depends RTNET_DRV_EEPRO100
-    default n
     ---help---
     This option switches on internal debugging code of the EEPRO/100 driver.
     It also enables the collection of worst-case command delays in real-time
@@ -35,9 +32,13 @@ config RTNET_DRV_EEPRO100_DBG
     also reduce the worst-case transmission latency).
 
 
+config RTNET_DRV_E1000
+    bool "Intel(R) PRO/1000 (Gigabit)"
+    default y
+
+
 config RTNET_DRV_NATSEMI
     bool "NatSemi"
-    default n
 
 
 config RTNET_DRV_8139
@@ -47,7 +48,6 @@ config RTNET_DRV_8139
 
 config RTNET_DRV_VIA_RHINE
     bool "VIA Rhine"
-    default n
 
 
 if ARCH = ppc
@@ -56,22 +56,18 @@ comment "Embedded MPC Drivers"
 
 config RTNET_DRV_FCC_ENET
     bool "MPC8260 FCC Ethernet"
-    default n
 
 
 config RTNET_DRV_FEC_ENET
     bool "MPC8xx FEC Ethernet"
-    default n
 
 
 config RTNET_DRV_SCC_ENET
     bool "MPC8xx SCC Ethernet"
-    default n
 
 
 config RTNET_DRV_MPC52XX_FEC
     bool "MPC52xx FEC Ethernet"
-    default n
 
 endif
 
@@ -85,12 +81,10 @@ config RTNET_DRV_LOOPBACK
 
 config RTNET_DRV_SMC91111
     bool "SMSC LAN91C111"
-    default n
 
 
 config RTNET_DRV_ETH1394
     bool "Ethernet over 1394"
-    default n
 
 
 config RTNET_RTFIREWIRE_DIR

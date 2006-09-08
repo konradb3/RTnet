@@ -20773,11 +20773,11 @@ _ACEOF
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
         drivers \
+        drivers/e1000 \
         drivers/mpc52xx_fec \
         drivers/tulip \
         drivers/experimental \
         drivers/experimental/rt2500 \
-        drivers/experimental/e1000 \
         \
         stack \
         stack/packet \
@@ -20831,7 +20831,7 @@ fi
 
 
 
-                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile drivers/experimental/e1000/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
+                                                                                                                                                                                                                                                                                                            ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
 
 
 
@@ -21628,11 +21628,11 @@ do
   "GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
   "Documentation/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES Documentation/GNUmakefile" ;;
   "drivers/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
+  "drivers/e1000/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/e1000/GNUmakefile" ;;
   "drivers/mpc52xx_fec/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/mpc52xx_fec/GNUmakefile" ;;
   "drivers/tulip/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
   "drivers/experimental/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/GNUmakefile" ;;
   "drivers/experimental/rt2500/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/rt2500/GNUmakefile" ;;
-  "drivers/experimental/e1000/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES drivers/experimental/e1000/GNUmakefile" ;;
   "stack/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
   "stack/include/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
   "stack/packet/GNUmakefile" ) CONFIG_FILES="$CONFIG_FILES stack/packet/GNUmakefile" ;;

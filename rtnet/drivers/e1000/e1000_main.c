@@ -685,7 +685,7 @@ e1000_probe(struct pci_dev *pdev,
 	uint16_t eeprom_data;
 	uint16_t eeprom_apme_mask = E1000_EEPROM_APME;
 
-        if (cards[cards_found] == 0)
+        if (cards[cards_found++] == 0)
         {
             return -ENODEV;
         }
@@ -942,7 +942,6 @@ e1000_probe(struct pci_dev *pdev,
 
 	DPRINTK(PROBE, INFO, "Intel(R) PRO/1000 Network Connection\n");
 
-	cards_found++;
 	return 0;
 
 err_register:

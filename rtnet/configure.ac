@@ -1317,11 +1317,11 @@ dnl ======================================================================
 if test x$CONFIG_KBUILD = xy; then
     for DIR in \
         drivers \
+        drivers/e1000 \
         drivers/mpc52xx_fec \
         drivers/tulip \
         drivers/experimental \
         drivers/experimental/rt2500 \
-        drivers/experimental/e1000 \
         \
         stack \
         stack/packet \
@@ -1396,11 +1396,11 @@ AC_CONFIG_FILES([ \
     Documentation/GNUmakefile \
     \
     drivers/GNUmakefile \
+    drivers/e1000/GNUmakefile \
     drivers/mpc52xx_fec/GNUmakefile \
     drivers/tulip/GNUmakefile \
     drivers/experimental/GNUmakefile \
     drivers/experimental/rt2500/GNUmakefile \
-    drivers/experimental/e1000/GNUmakefile \
     \
     stack/GNUmakefile \
     stack/include/GNUmakefile \
