@@ -1,3 +1,16 @@
+0.9.5
+- added e1000 (Intel PRO/1000) Gigabit Ethernet driver
+- refactored, enhanced, and fixed RTMAC_RTIOC_WAITONCYCLE* API
+- added tdma-api example
+- fixed DMA mapping bug in rt_natsemi
+- cleaned up tulip driver
+- refactored internal time types to use RTDM's nanosecs_*_t or u64
+- refactored IRQ request + enabling in drivers to prepare for upcoming RTDM
+  changes
+- fixed potential startup issues of TDMA cycles < 1 ms
+- fixed "make xconfig"
+- further minor fixes
+
 0.9.4
 - fixed critical race in lock-less rx queue introduced with 0.9.3 [Mathias]
 - RT-WLAN related fixes and updates [Daniel]
