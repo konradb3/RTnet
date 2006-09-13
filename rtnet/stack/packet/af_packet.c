@@ -22,7 +22,6 @@
  */
 
 #include <linux/module.h>
-#include <linux/if_arp.h> /* ARPHRD_ETHER */
 #include <linux/sched.h>
 
 #include <rtnet_iovec.h>
@@ -89,7 +88,7 @@ int rt_packet_bind(struct rtsocket *sock, const struct sockaddr *addr,
 
     rtdm_lock_get_irqsave(&sock->param_lock, context);
 
-    /* release exisiting binding */
+    /* release existing binding */
     if ((pt->type != 0) && ((ret = rtdev_remove_pack(pt)) < 0)) {
         rtdm_lock_put_irqrestore(&sock->param_lock, context);
         return ret;
@@ -267,8 +266,7 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
     size_t              len   = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
     size_t              copy_len;
     size_t              real_len;
-    struct rtskb        *skb;
-    struct ethhdr       *eth;
+    struct rtskb        *rtskb;
     struct sockaddr_ll  *sll;
     int                 ret;
     nanosecs_abs_t      timeout = sock->timeout;
@@ -285,28 +283,32 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
         return ret;
     }
 
-    skb = rtskb_dequeue_chain(&sock->incoming);
-    RTNET_ASSERT(skb != NULL, return -EFAULT;);
-
-    eth = skb->mac.ethernet;
+    rtskb = rtskb_dequeue_chain(&sock->incoming);
+    RTNET_ASSERT(rtskb != NULL, return -EFAULT;);
 
     sll = msg->msg_name;
 
     /* copy the address */
     msg->msg_namelen = sizeof(*sll);
     if (sll != NULL) {
-        sll->sll_family   = AF_PACKET;
-        sll->sll_protocol = skb->protocol;
-        sll->sll_ifindex  = skb->rtdev->ifindex;
-        sll->sll_pkttype  = skb->pkt_type;
+        struct rtnet_device *rtdev = rtskb->rtdev;
 
-        /* Ethernet specific */
-        sll->sll_hatype   = ARPHRD_ETHER;
-        sll->sll_halen    = ETH_ALEN;
-        memcpy(sll->sll_addr, eth->h_source, ETH_ALEN);
+        sll->sll_family   = AF_PACKET;
+        sll->sll_hatype   = rtdev->type;
+        sll->sll_protocol = rtskb->protocol;
+        sll->sll_pkttype  = rtskb->pkt_type;
+        sll->sll_ifindex  = rtdev->ifindex;
+
+        /* Ethernet specific - we rather need some parse handler here */
+        memcpy(sll->sll_addr, rtskb->mac.ethernet->h_source, ETH_ALEN);
+        sll->sll_halen = ETH_ALEN;
     }
 
-    copy_len = real_len = skb->len;
+    /* Include the header in raw delivery */
+    if (sockctx->device->socket_type != SOCK_DGRAM)
+        rtskb_push(rtskb, rtskb->data - rtskb->mac.raw);
+
+    copy_len = real_len = rtskb->len;
 
     /* The data must not be longer than the available buffer size */
     if (copy_len > len) {
@@ -314,14 +316,13 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
         msg->msg_flags |= MSG_TRUNC;
     }
 
-    /* copy the data */
-    rt_memcpy_tokerneliovec(msg->msg_iov, skb->data, copy_len);
+    rt_memcpy_tokerneliovec(msg->msg_iov, rtskb->data, copy_len);
 
     if ((msg_flags & MSG_PEEK) == 0) {
-        rtdev_dereference(skb->rtdev);
-        kfree_rtskb(skb);
+        rtdev_dereference(rtskb->rtdev);
+        kfree_rtskb(rtskb);
     } else {
-        rtskb_queue_head(&sock->incoming, skb);
+        rtskb_queue_head(&sock->incoming, rtskb);
         rtdm_sem_up(&sock->pending_sem);
     }
 
@@ -342,20 +343,37 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
     struct sockaddr_ll  *sll  = (struct sockaddr_ll*)msg->msg_name;
     struct rtnet_device *rtdev;
     struct rtskb        *rtskb;
+    unsigned short      proto;
+    unsigned char       *addr;
+    int                 ifindex;
     int                 ret = 0;
 
 
     if (msg_flags & MSG_OOB)    /* Mirror BSD error message compatibility */
         return -EOPNOTSUPP;
-
-    /* a lot of sanity checks */
-    if ((msg_flags & ~MSG_DONTWAIT) ||
-        (sll == NULL) || (msg->msg_namelen != sizeof(struct sockaddr_ll)) ||
-        ((sll->sll_family != AF_PACKET) && (sll->sll_family != AF_UNSPEC)) ||
-        (sll->sll_ifindex <= 0))
+    if (msg_flags & ~MSG_DONTWAIT)
         return -EINVAL;
 
-    if ((rtdev = rtdev_get_by_index(sll->sll_ifindex)) == NULL)
+    if (sll == NULL) {
+        /* Note: We do not care for races with rt_packet_bind here - the user
+           has to. */
+        ifindex = sock->prot.packet.ifindex;
+        proto   = sock->prot.packet.packet_type.type;
+        addr    = NULL;
+    } else {
+        if ((msg->msg_namelen < sizeof(struct sockaddr_ll)) ||
+            (msg->msg_namelen <
+                (sll->sll_halen + offsetof(struct sockaddr_ll, sll_addr))) ||
+            ((sll->sll_family != AF_PACKET) &&
+            (sll->sll_family != AF_UNSPEC)))
+        return -EINVAL;
+
+        ifindex = sll->sll_ifindex;
+        proto   = sll->sll_protocol;
+        addr    = sll->sll_addr;
+    }
+
+    if ((rtdev = rtdev_get_by_index(ifindex)) == NULL)
         return -ENODEV;
 
     rtskb = alloc_rtskb(rtdev->hard_header_len + len, &sock->skb_pool);
@@ -367,7 +385,8 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
     /* If an RTmac discipline is active, this becomes a pure sanity check to
        avoid writing beyond rtskb boundaries. The hard check is then performed
        upon rtdev_xmit() by the discipline's xmit handler. */
-    if (len > rtdev->mtu) {
+    if (len > rtdev->mtu + ((sockctx->device->socket_type == SOCK_RAW) ?
+                            rtdev->hard_header_len : 0)) {
         ret = -EMSGSIZE;
         goto err;
     }
@@ -379,17 +398,19 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
 
     rtskb_reserve(rtskb, rtdev->hard_header_len);
 
-    rt_memcpy_fromkerneliovec(rtskb_put(rtskb, len), msg->msg_iov, len);
-
     rtskb->rtdev    = rtdev;
     rtskb->priority = sock->priority;
 
     if (rtdev->hard_header) {
-        ret = rtdev->hard_header(rtskb, rtdev, ntohs(sll->sll_protocol),
-                                 sll->sll_addr, rtdev->dev_addr, rtskb->len);
-        if (ret < 0)
+        ret = rtdev->hard_header(rtskb, rtdev, ntohs(proto), addr, NULL, len);
+        if (sockctx->device->socket_type != SOCK_DGRAM) {
+            rtskb->tail = rtskb->data;
+            rtskb->len = 0;
+        } else if (ret < 0)
             goto err;
     }
+
+    rt_memcpy_fromkerneliovec(rtskb_put(rtskb, len), msg->msg_iov, len);
 
     if ((rtdev->flags & IFF_UP) != 0) {
         if ((ret = rtdev_xmit(rtskb)) == 0)
@@ -399,14 +420,13 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
         goto err;
     }
 
-out:
+ out:
     rtdev_dereference(rtdev);
     return ret;
 
-err:
+ err:
     kfree_rtskb(rtskb);
-    rtdev_dereference(rtdev);
-    return ret;
+    goto out;
 }
 
 
@@ -443,15 +463,58 @@ static struct rtdm_device   packet_proto_dev = {
 };
 
 
+static struct rtdm_device   raw_packet_proto_dev = {
+    struct_version:     RTDM_DEVICE_STRUCT_VER,
+
+    device_flags:       RTDM_PROTOCOL_DEVICE,
+    context_size:       sizeof(struct rtsocket),
+
+    protocol_family:    PF_PACKET,
+    socket_type:        SOCK_RAW,
+
+    socket_rt:          rt_packet_socket,
+    socket_nrt:         rt_packet_socket,
+
+    ops: {
+        close_rt:       rt_packet_close,
+        close_nrt:      rt_packet_close,
+        ioctl_rt:       rt_packet_ioctl,
+        ioctl_nrt:      rt_packet_ioctl,
+        recvmsg_rt:     rt_packet_recvmsg,
+        sendmsg_rt:     rt_packet_sendmsg
+    },
+
+    device_class:       RTDM_CLASS_NETWORK,
+    device_sub_class:   RTDM_SUBCLASS_RTNET,
+    driver_name:        "rtpacket",
+    driver_version:     RTNET_RTDM_VER,
+    peripheral_name:    "Real-Time Packet Socket Interface",
+    provider_name:      rtnet_rtdm_provider_name,
+
+    proc_name:          "PACKET_RAW"
+};
+
+
 int __init rt_packet_proto_init(void)
 {
-    return rtdm_dev_register(&packet_proto_dev);
+    int err;
+
+    err = rtdm_dev_register(&packet_proto_dev);
+    if (err)
+        return err;
+
+    err = rtdm_dev_register(&raw_packet_proto_dev);
+    if (err)
+        rtdm_dev_unregister(&packet_proto_dev, 1000);
+
+    return err;
 }
 
 
 void rt_packet_proto_release(void)
 {
     rtdm_dev_unregister(&packet_proto_dev, 1000);
+    rtdm_dev_unregister(&raw_packet_proto_dev, 1000);
 }
 
 
