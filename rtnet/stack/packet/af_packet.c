@@ -3,7 +3,8 @@
  *  packet/af_packet.c
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 2003-2005 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2006 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2006 Jorge Almeida <j-almeida@criticalsoftware.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
