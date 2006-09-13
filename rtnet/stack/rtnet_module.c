@@ -43,7 +43,7 @@ EXPORT_SYMBOL(STACK_manager);
 EXPORT_SYMBOL(RTDEV_manager);
 
 const char rtnet_rtdm_provider_name[] =
-    "(C) 1999-2005 RTnet Development Team, http://www.rtnet.org";
+    "(C) 1999-2006 RTnet Development Team, http://www.rtnet.org";
 
 EXPORT_SYMBOL(rtnet_rtdm_provider_name);
 
