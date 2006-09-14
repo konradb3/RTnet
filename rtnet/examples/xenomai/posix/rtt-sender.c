@@ -259,10 +259,9 @@ int main(int argc, char *argv[])
     /* bind the rt-socket to local_addr */
     local_addr.sin_family = AF_INET;
     local_addr.sin_port   = htons(RCV_PORT);
-    if ((ret = bind(sock, (struct sockaddr *)&local_addr,
-                    sizeof(struct sockaddr_in))) < 0) {
-        close(sock);
+    if (bind(sock, (struct sockaddr *)&local_addr, sizeof(local_addr)) < 0) {
         perror("cannot bind to local ip/port");
+        close(sock);
         return 1;
     }
 
