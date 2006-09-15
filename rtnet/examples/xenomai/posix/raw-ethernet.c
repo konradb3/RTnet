@@ -62,19 +62,20 @@ int main(int argc, char *argv[])
     signal(SIGHUP, catch_signal);
     mlockall(MCL_CURRENT|MCL_FUTURE);
 
-    if ((sock = socket(PF_PACKET, SOCK_RAW, htons(0x1234))) < 0) {
-        perror("socket cannot be created");
-        return 1;
-    }
-
     if (argc < 2) {
         printf("usage: %s <interface>\n", argv[0]);
         return 0;
     }
 
+    if ((sock = socket(PF_PACKET, SOCK_RAW, htons(0x1234))) < 0) {
+        perror("socket cannot be created");
+        return 1;
+    }
+
     strncpy(ifr.ifr_name, argv[1], IFNAMSIZ);
     if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
         perror("cannot get interface index");
+        close(sock);
         return 1;
     }
 
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
         if (len < 0)
             break;
 
-        printf("sent msg! len=%d\n", len);
+        printf("Sent frame of %d bytes\n", len);
 
         nanosleep(&delay, NULL);
     }
