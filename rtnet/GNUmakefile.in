@@ -263,7 +263,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTDIRS = $(am__append_1)
 SUBDIRS = stack drivers addons $(OPTDIRS) tools Documentation scripts
-EXTRA_DIST = makefile Kconfig defconfig
+EXTRA_DIST = makefile Kconfig defconfig config/modules/Makefile
 all: all-recursive
 
 .SUFFIXES:
@@ -463,7 +463,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/config $(distdir)/config/autoconf $(distdir)/config/m4 $(distdir)/tools
+	$(mkdir_p) $(distdir)/config $(distdir)/config/autoconf $(distdir)/config/m4 $(distdir)/config/modules $(distdir)/tools
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
