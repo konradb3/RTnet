@@ -33,6 +33,12 @@
 /* EEPRO/100 debugging */
 #undef CONFIG_RTNET_DRV_EEPRO100_DBG
 
+/* loopback driver */
+#undef CONFIG_RTNET_DRV_LOOPBACK
+
+/* ETH_P_ALL support */
+#undef CONFIG_RTNET_ETH_P_ALL
+
 /* Host system alias */
 #undef CONFIG_RTNET_HOST_STRING
 

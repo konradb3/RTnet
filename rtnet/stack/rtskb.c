@@ -3,7 +3,8 @@
  *  stack/rtskb.c - rtskb implementation for rtnet
  *
  *  Copyright (C) 2002      Ulrich Marx <marx@fet.uni-hannover.de>,
- *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2006 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2006 Jorge Almeida <j-almeida@criticalsoftware.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of version 2 of the GNU General Public License as
@@ -44,6 +45,7 @@ static struct rtskb_queue rtskb_cache;
 
 /* pool of rtskbs for global use */
 struct rtskb_queue global_pool;
+EXPORT_SYMBOL(global_pool);
 
 /* pool statistics */
 unsigned int rtskb_pools=0;
@@ -54,9 +56,11 @@ unsigned int rtskb_amount_max=0;
 #ifdef CONFIG_RTNET_ADDON_RTCAP
 /* RTcap interface */
 rtdm_lock_t rtcap_lock;
-void (*rtcap_handler)(struct rtskb *skb) = NULL;
-#endif
+EXPORT_SYMBOL(rtcap_lock);
 
+void (*rtcap_handler)(struct rtskb *skb) = NULL;
+EXPORT_SYMBOL(rtcap_handler);
+#endif
 
 
 /***
@@ -83,6 +87,8 @@ unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset,
     RTNET_ASSERT(len == 0, );
     return csum;
 }
+
+EXPORT_SYMBOL(rtskb_copy_and_csum_bits);
 
 
 /***
@@ -114,6 +120,7 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
     }
 }
 
+EXPORT_SYMBOL(rtskb_copy_and_csum_dev);
 
 
 #ifdef CONFIG_RTNET_CHECKED
@@ -131,6 +138,7 @@ void rtskb_over_panic(struct rtskb *skb, int sz, void *here)
                 skb->len, sz, (skb->rtdev) ? skb->rtdev->name : "<NULL>");
 }
 
+EXPORT_SYMBOL(rtskb_over_panic);
 
 
 /**
@@ -146,8 +154,9 @@ void rtskb_under_panic(struct rtskb *skb, int sz, void *here)
     rtdm_printk("RTnet: rtskb_push :under: %p:%d put:%d dev:%s\n", here,
                 skb->len, sz, (skb->rtdev) ? skb->rtdev->name : "<NULL>");
 }
-#endif /* CONFIG_RTNET_CHECKED */
 
+EXPORT_SYMBOL(rtskb_under_panic);
+#endif /* CONFIG_RTNET_CHECKED */
 
 
 /***
@@ -188,6 +197,7 @@ struct rtskb *alloc_rtskb(unsigned int size, struct rtskb_queue *pool)
     return skb;
 }
 
+EXPORT_SYMBOL(alloc_rtskb);
 
 
 /***
@@ -252,6 +262,7 @@ void kfree_rtskb(struct rtskb *skb)
 #endif /* CONFIG_RTNET_ADDON_RTCAP */
 }
 
+EXPORT_SYMBOL(kfree_rtskb);
 
 
 /***
@@ -279,6 +290,7 @@ unsigned int rtskb_pool_init(struct rtskb_queue *pool,
     return i;
 }
 
+EXPORT_SYMBOL(rtskb_pool_init);
 
 
 /***
@@ -307,7 +319,6 @@ unsigned int rtskb_pool_init_rt(struct rtskb_queue *pool,
 }
 
 
-
 /***
  *  __rtskb_pool_release
  *  @pool: pool to release
@@ -325,6 +336,7 @@ void __rtskb_pool_release(struct rtskb_queue *pool)
     rtskb_pools--;
 }
 
+EXPORT_SYMBOL(__rtskb_pool_release);
 
 
 /***
@@ -344,7 +356,6 @@ void __rtskb_pool_release_rt(struct rtskb_queue *pool)
 
     rtskb_pools--;
 }
-
 
 
 unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
@@ -384,7 +395,6 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
 }
 
 
-
 unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
                                   unsigned int add_rtskbs)
 {
@@ -417,7 +427,6 @@ unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
 }
 
 
-
 unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
                                unsigned int rem_rtskbs)
 {
@@ -435,7 +444,6 @@ unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
 
     return i;
 }
-
 
 
 unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
@@ -456,7 +464,6 @@ unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
 
     return i;
 }
-
 
 
 /* Note: acquires only the first skb of a chain! */
@@ -483,6 +490,54 @@ int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
     return 0;
 }
 
+EXPORT_SYMBOL(rtskb_acquire);
+
+
+/* so far only used by ETH_P_ALL code */
+#ifdef CONFIG_RTNET_ETH_P_ALL
+
+/* clone rtskb to another, allocating the new rtskb from pool */
+struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
+{
+    struct rtskb    *clone_rtskb;
+    unsigned int    data_offs = rtskb->data - rtskb->mac.raw;
+    unsigned int    total_len = rtskb->len + data_offs;
+
+    clone_rtskb = alloc_rtskb(total_len, pool);
+    if (clone_rtskb == NULL)
+        return NULL;
+
+    /* Note: We don't clone
+        - rtskb.sk
+        - rtskb.xmit_stamp
+       until real use cases show up. */
+
+    clone_rtskb->priority   = rtskb->priority;
+    clone_rtskb->rtdev      = rtskb->rtdev;
+    clone_rtskb->time_stamp = rtskb->time_stamp;
+
+    clone_rtskb->mac.raw    = clone_rtskb->data;
+    clone_rtskb->nh.raw     = clone_rtskb->data;
+    clone_rtskb->h.raw      = clone_rtskb->data;
+
+    clone_rtskb->data       += data_offs;
+    clone_rtskb->nh.raw     += rtskb->data - rtskb->nh.raw;
+    clone_rtskb->h.raw      += rtskb->data - rtskb->h.raw;
+
+    clone_rtskb->protocol   = rtskb->protocol;
+    clone_rtskb->pkt_type   = rtskb->pkt_type;
+
+    clone_rtskb->ip_summed  = rtskb->ip_summed;
+    clone_rtskb->csum       = rtskb->csum;
+
+    memcpy(clone_rtskb->mac.raw, rtskb->mac.raw, total_len);
+    clone_rtskb->len = rtskb->len;
+
+    return clone_rtskb;
+}
+
+EXPORT_SYMBOL_GPL(rtskb_clone);
+#endif /* CONFIG_RTNET_ETH_P_ALL */
 
 
 int rtskb_pools_init(void)
@@ -524,7 +579,6 @@ err_out1:
 }
 
 
-
 void rtskb_pools_release(void)
 {
     rtskb_pool_release(&global_pool);
@@ -534,26 +588,3 @@ void rtskb_pools_release(void)
         printk(KERN_CRIT "RTnet: rtskb memory leakage detected "
                "- reboot required!\n");
 }
-
-
-EXPORT_SYMBOL(rtskb_copy_and_csum_bits);
-EXPORT_SYMBOL(rtskb_copy_and_csum_dev);
-
-EXPORT_SYMBOL(alloc_rtskb);
-EXPORT_SYMBOL(kfree_rtskb);
-
-EXPORT_SYMBOL(rtskb_pool_init);
-EXPORT_SYMBOL(__rtskb_pool_release);
-EXPORT_SYMBOL(global_pool);
-
-EXPORT_SYMBOL(rtskb_acquire);
-
-#ifdef CONFIG_RTNET_CHECKED
-EXPORT_SYMBOL(rtskb_over_panic);
-EXPORT_SYMBOL(rtskb_under_panic);
-#endif
-
-#ifdef CONFIG_RTNET_ADDON_RTCAP
-EXPORT_SYMBOL(rtcap_lock);
-EXPORT_SYMBOL(rtcap_handler);
-#endif

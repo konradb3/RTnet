@@ -10,6 +10,16 @@ config RTNET_RX_FIFO_SIZE
     of two! Effectively, only CONFIG_RTNET_RX_FIFO_SIZE-1 slots will
     be usable.
 
+config RTNET_ETH_P_ALL
+    bool "Support for ETH_P_ALL"
+    ---help---
+    Enables core support for registering listeners on all layer 3
+    protocols (ETH_P_ALL). Internally this is currently realised by
+    clone-copying incoming frames for those listners, future versions
+    will implement buffer sharing for efficiency reasons. Use with
+    care, every ETH_P_ALL-listener adds noticable overhead to the
+    reception path.
+
 config RTNET_RTWLAN
     bool "Real-Time WLAN"
     ---help---

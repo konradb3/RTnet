@@ -3,7 +3,8 @@
  *  stack/stack_mgr.c - Stack-Manager
  *
  *  Copyright (C) 2002 Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2005, 2006 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2003-2006 Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2006 Jorge Almeida <j-almeida@criticalsoftware.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,8 +41,10 @@ MODULE_PARM_DESC(stack_mgr_prio, "Priority of the stack manager task");
 static DECLARE_RTSKB_FIFO(rx, CONFIG_RTNET_RX_FIFO_SIZE);
 
 struct list_head    rt_packets[RTPACKET_HASH_TBL_SIZE];
+#ifdef CONFIG_RTNET_ETH_P_ALL
+struct list_head    rt_packets_all;
+#endif /* CONFIG_RTNET_ETH_P_ALL */
 rtdm_lock_t         rt_packets_lock = RTDM_LOCK_UNLOCKED;
-
 
 
 /***
@@ -50,26 +53,30 @@ rtdm_lock_t         rt_packets_lock = RTDM_LOCK_UNLOCKED;
  */
 int rtdev_add_pack(struct rtpacket_type *pt)
 {
-    int                     hash;
     int                     ret = 0;
     rtdm_lockctx_t          context;
-
-
-    if (pt->type == htons(ETH_P_ALL))
-        return -EINVAL;
 
     INIT_LIST_HEAD(&pt->list_entry);
     pt->refcount = 0;
 
-    hash = ntohs(pt->type) & RTPACKET_HASH_KEY_MASK;
-
     rtdm_lock_get_irqsave(&rt_packets_lock, context);
-    list_add_tail(&pt->list_entry, &rt_packets[hash]);
+
+    if (pt->type == htons(ETH_P_ALL))
+#ifdef CONFIG_RTNET_ETH_P_ALL
+        list_add_tail(&pt->list_entry, &rt_packets_all);
+#else /* !CONFIG_RTNET_ETH_P_ALL */
+        ret = -EINVAL;
+#endif /* CONFIG_RTNET_ETH_P_ALL */
+    else
+        list_add_tail(&pt->list_entry,
+                      &rt_packets[ntohs(pt->type) & RTPACKET_HASH_KEY_MASK]);
+
     rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
     return ret;
 }
 
+EXPORT_SYMBOL(rtdev_add_pack);
 
 
 /***
@@ -84,9 +91,6 @@ int rtdev_remove_pack(struct rtpacket_type *pt)
 
     RTNET_ASSERT(pt != NULL, return -EINVAL;);
 
-    if (pt->type == htons(ETH_P_ALL))
-        return -EINVAL;
-
     rtdm_lock_get_irqsave(&rt_packets_lock, context);
 
     if (pt->refcount > 0)
@@ -99,6 +103,7 @@ int rtdev_remove_pack(struct rtpacket_type *pt)
     return ret;
 }
 
+EXPORT_SYMBOL(rtdev_remove_pack);
 
 
 /***
@@ -125,83 +130,94 @@ void rtnetif_rx(struct rtskb *skb)
     }
 }
 
+EXPORT_SYMBOL(rtnetif_rx);
 
 
+#ifdef CONFIG_RTNET_DRV_LOOPBACK
+#define __DELIVER_PREFIX
+#else /* !CONFIG_RTNET_DRV_LOOPBACK */
+#define __DELIVER_PREFIX static inline
+#endif /* CONFIG_RTNET_DRV_LOOPBACK */
 
-/***
- *  rtnetif_tx: will be called from the  driver
- *  and send a message to rtdev-owned stack-manager
- *
- *  @rtdev - the network-device
- */
-void rtnetif_tx(struct rtnet_device *rtdev)
+__DELIVER_PREFIX void rt_stack_deliver(struct rtskb *rtskb)
 {
-}
-
-
-
-/***
- *      stackmgr_task
- */
-static void stackmgr_task(void *arg)
-{
-    rtdm_event_t            *mgr_event = &((struct rtnet_mgr *)arg)->event;
-    struct rtskb            *skb;
     unsigned short          hash;
     struct rtpacket_type    *pt_entry;
     rtdm_lockctx_t          context;
-    struct rtnet_device     *rtdev;
+    struct rtnet_device     *rtdev = rtskb->rtdev;
     int                     err;
+    int                     eth_p_all_hit = 0;
 
 
-    while (rtdm_event_wait(mgr_event) == 0)
-        while (1) {
-          next_packet:
-            /* we are the only reader => no locking required */
-            skb = __rtskb_fifo_remove(&rx.fifo);
-            if (!skb)
-                break;
+    rtcap_report_incoming(rtskb);
 
-            rtdev = skb->rtdev;
+    rtskb->nh.raw = rtskb->data;
 
-            rtcap_report_incoming(skb);
+    rtdm_lock_get_irqsave(&rt_packets_lock, context);
 
-            skb->nh.raw = skb->data;
+#ifdef CONFIG_RTNET_ETH_P_ALL
+    eth_p_all_hit = 0;
+    list_for_each_entry(pt_entry, &rt_packets_all, list_entry) {
+        pt_entry->refcount++;
+        rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
-            hash = ntohs(skb->protocol) & RTPACKET_HASH_KEY_MASK;
+        pt_entry->handler(rtskb, pt_entry);
 
-            rtdm_lock_get_irqsave(&rt_packets_lock, context);
+        rtdm_lock_get_irqsave(&rt_packets_lock, context);
+        pt_entry->refcount--;
+        eth_p_all_hit = 1;
+    }
+#endif /* CONFIG_RTNET_ETH_P_ALL */
 
-            list_for_each_entry(pt_entry, &rt_packets[hash], list_entry)
-                if (pt_entry->type == skb->protocol) {
-                    pt_entry->refcount++;
-                    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
+    hash = ntohs(rtskb->protocol) & RTPACKET_HASH_KEY_MASK;
 
-                    err = pt_entry->handler(skb, pt_entry);
-
-                    rtdm_lock_get_irqsave(&rt_packets_lock, context);
-                    pt_entry->refcount--;
-
-                    rtdev_dereference(rtdev);
-
-                    if (likely(!err)) {
-                        rtdm_lock_put_irqrestore(&rt_packets_lock, context);
-                        goto next_packet;
-                    }
-                }
-
+    list_for_each_entry(pt_entry, &rt_packets[hash], list_entry)
+        if (pt_entry->type == rtskb->protocol) {
+            pt_entry->refcount++;
             rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
-            /* don't warn if running in promiscuous mode (RTcap...?) */
-            if ((rtdev->flags & IFF_PROMISC) == 0)
-                rtdm_printk("RTnet: no one cared for packet with layer 3 "
-                            "protocol type 0x%04x\n", ntohs(skb->protocol));
+            err = pt_entry->handler(rtskb, pt_entry);
 
-            kfree_rtskb(skb);
+            rtdm_lock_get_irqsave(&rt_packets_lock, context);
+            pt_entry->refcount--;
+
             rtdev_dereference(rtdev);
+
+            if (likely(!err)) {
+                rtdm_lock_put_irqrestore(&rt_packets_lock, context);
+                return;
+            }
         }
+
+    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
+
+    /* Don't warn if ETH_P_ALL listener were present or when running in
+       promiscuous mode (RTcap). */
+    if (unlikely(!eth_p_all_hit && !(rtdev->flags & IFF_PROMISC)))
+        rtdm_printk("RTnet: no one cared for packet with layer 3 "
+                    "protocol type 0x%04x\n", ntohs(rtskb->protocol));
+
+    kfree_rtskb(rtskb);
+    rtdev_dereference(rtdev);
 }
 
+#ifdef CONFIG_RTNET_DRV_LOOPBACK
+EXPORT_SYMBOL_GPL(rt_stack_deliver);
+#endif /* CONFIG_RTNET_DRV_LOOPBACK */
+
+
+static void rt_stack_mgr_task(void *arg)
+{
+    rtdm_event_t            *mgr_event = &((struct rtnet_mgr *)arg)->event;
+    struct rtskb            *rtskb;
+
+
+    while (rtdm_event_wait(mgr_event) == 0) {
+        /* we are the only reader => no locking required */
+        while ((rtskb = __rtskb_fifo_remove(&rx.fifo)))
+            rt_stack_deliver(rtskb);
+    }
+}
 
 
 /***
@@ -212,6 +228,8 @@ void rt_stack_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr)
     rtdev->stack_event = &mgr->event;
 }
 
+EXPORT_SYMBOL(rt_stack_connect);
+
 
 /***
  *  rt_stack_disconnect
@@ -220,6 +238,8 @@ void rt_stack_disconnect (struct rtnet_device *rtdev)
 {
     rtdev->stack_event = NULL;
 }
+
+EXPORT_SYMBOL(rt_stack_disconnect);
 
 
 /***
@@ -234,13 +254,15 @@ int rt_stack_mgr_init (struct rtnet_mgr *mgr)
 
     for (i = 0; i < RTPACKET_HASH_TBL_SIZE; i++)
         INIT_LIST_HEAD(&rt_packets[i]);
+#ifdef CONFIG_RTNET_ETH_P_ALL
+    INIT_LIST_HEAD(&rt_packets_all);
+#endif /* CONFIG_RTNET_ETH_P_ALL */
 
     rtdm_event_init(&mgr->event, 0);
 
-    return rtdm_task_init(&mgr->task, "rtnet-stack", stackmgr_task, mgr,
+    return rtdm_task_init(&mgr->task, "rtnet-stack", rt_stack_mgr_task, mgr,
                           stack_mgr_prio, 0);
 }
-
 
 
 /***
@@ -251,17 +273,3 @@ void rt_stack_mgr_delete (struct rtnet_mgr *mgr)
     rtdm_event_destroy(&mgr->event);
     rtdm_task_join_nrt(&mgr->task, 100);
 }
-
-
-EXPORT_SYMBOL(rtdev_add_pack);
-EXPORT_SYMBOL(rtdev_remove_pack);
-
-EXPORT_SYMBOL(rtnetif_rx);
-EXPORT_SYMBOL(rt_mark_stack_mgr);
-EXPORT_SYMBOL(rtnetif_tx);
-
-EXPORT_SYMBOL(rt_stack_connect);
-EXPORT_SYMBOL(rt_stack_disconnect);
-
-EXPORT_SYMBOL(rt_packets);
-EXPORT_SYMBOL(rt_packets_lock);

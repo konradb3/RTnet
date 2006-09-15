@@ -181,7 +181,6 @@ out:
 
 
 static struct rtpacket_type arp_packet_type = {
-    name:       "ARPv4",
     type:       __constant_htons(ETH_P_ARP),
     handler:    &rt_arp_rcv
 };

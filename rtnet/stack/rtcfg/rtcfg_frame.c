@@ -530,7 +530,6 @@ int rtcfg_send_dead_station(struct rtcfg_connection *conn)
 
 
 static struct rtpacket_type rtcfg_packet_type = {
-    name:       "RTcfg",
     type:       __constant_htons(ETH_RTCFG),
     handler:    rtcfg_rx_handler
 };

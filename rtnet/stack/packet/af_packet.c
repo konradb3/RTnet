@@ -46,23 +46,33 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 
 
     if (unlikely((ifindex != 0) && (ifindex != skb->rtdev->ifindex)))
-        return EUNATCH;
+        return -EUNATCH;
 
-    if (unlikely(rtskb_acquire(skb, &sock->skb_pool) != 0))
-        kfree_rtskb(skb);
-    else {
-        rtdev_reference(skb->rtdev);
-        rtskb_queue_tail(&sock->incoming, skb);
-        rtdm_sem_up(&sock->pending_sem);
+#ifdef CONFIG_RTNET_ETH_P_ALL
+    if (pt->type == htons(ETH_P_ALL)) {
+        struct rtskb *clone_skb = rtskb_clone(skb, &sock->skb_pool);
+        if (clone_skb == NULL)
+            return 0;
+        skb = clone_skb;
+    } else
+#endif /* CONFIG_RTNET_ETH_P_ALL */
+        if (unlikely(!rtskb_acquire(skb, &sock->skb_pool))) {
+            kfree_rtskb(skb);
+            return 0;
+        }
 
-        rtdm_lock_get_irqsave(&sock->param_lock, context);
-        callback_func = sock->callback_func;
-        callback_arg  = sock->callback_arg;
-        rtdm_lock_put_irqrestore(&sock->param_lock, context);
+    rtdev_reference(skb->rtdev);
+    rtskb_queue_tail(&sock->incoming, skb);
+    rtdm_sem_up(&sock->pending_sem);
 
-        if (callback_func)
-            callback_func(rt_socket_context(sock), callback_arg);
-    }
+    rtdm_lock_get_irqsave(&sock->param_lock, context);
+    callback_func = sock->callback_func;
+    callback_arg  = sock->callback_arg;
+    rtdm_lock_put_irqrestore(&sock->param_lock, context);
+
+    if (callback_func)
+        callback_func(rt_socket_context(sock), callback_arg);
+
     return 0;
 }
 
@@ -100,7 +110,6 @@ int rt_packet_bind(struct rtsocket *sock, const struct sockaddr *addr,
 
     /* if protocol is non-zero, register the packet type */
     if (sock->protocol != 0) {
-        pt->name        = "PACKET_SOCKET";
         pt->handler     = rt_packet_rcv;
         pt->err_handler = NULL;
 
@@ -175,7 +184,6 @@ int rt_packet_socket(struct rtdm_dev_context *sockctx,
 
     /* if protocol is non-zero, register the packet type */
     if (protocol != 0) {
-        sock->prot.packet.packet_type.name        = "PACKET_SOCKET";
         sock->prot.packet.packet_type.handler     = rt_packet_rcv;
         sock->prot.packet.packet_type.err_handler = NULL;
 

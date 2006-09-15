@@ -4,7 +4,7 @@
  *
  *  RTnet - real-time networking subsystem
  *  Copyright (C) 2002      Ulrich Marx <marx@fet.uni-hannover.de>
- *                2003-2005 Jan Kiszka <jan.kiszka@web.de>
+ *                2003-2006 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,31 +49,32 @@ struct rtpacket_type {
     int                 (*handler)(struct rtskb *, struct rtpacket_type *);
     int                 (*err_handler)(struct rtskb *, struct rtnet_device *,
                                        struct rtpacket_type *);
-
-    char                *name;
 };
 
 
-extern int rtdev_add_pack(struct rtpacket_type *pt);
-extern int rtdev_remove_pack(struct rtpacket_type *pt);
+int rtdev_add_pack(struct rtpacket_type *pt);
+int rtdev_remove_pack(struct rtpacket_type *pt);
 
-extern void rt_stack_connect (struct rtnet_device *rtdev, struct rtnet_mgr *mgr);
-extern void rt_stack_disconnect (struct rtnet_device *rtdev);
-extern int rt_stack_mgr_init (struct rtnet_mgr *mgr);
-extern void rt_stack_mgr_delete (struct rtnet_mgr *mgr);
+void rt_stack_connect(struct rtnet_device *rtdev, struct rtnet_mgr *mgr);
+void rt_stack_disconnect(struct rtnet_device *rtdev);
 
-extern void rtnetif_rx(struct rtskb *skb);
-extern void rtnetif_tx(struct rtnet_device *rtdev);
+#ifdef CONFIG_RTNET_DRV_LOOPBACK
+void rt_stack_deliver(struct rtskb *rtskb);
+#endif /* CONFIG_RTNET_DRV_LOOPBACK */
+
+int rt_stack_mgr_init(struct rtnet_mgr *mgr);
+void rt_stack_mgr_delete(struct rtnet_mgr *mgr);
+
+void rtnetif_rx(struct rtskb *skb);
+
+static inline void rtnetif_tx(struct rtnet_device *rtdev)
+{
+}
 
 static inline void rt_mark_stack_mgr(struct rtnet_device *rtdev)
 {
     rtdm_event_signal(rtdev->stack_event);
 }
-
-
-extern struct list_head rt_packets[RTPACKET_HASH_TBL_SIZE];
-extern rtdm_lock_t      rt_packets_lock;
-
 
 #endif /* __KERNEL__ */
 

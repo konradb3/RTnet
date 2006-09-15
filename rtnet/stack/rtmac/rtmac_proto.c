@@ -68,7 +68,6 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
 
 struct rtpacket_type rtmac_packet_type = {
-    name:       "RTmac",
     type:       __constant_htons(ETH_RTMAC),
     handler:    rtmac_proto_rx
 };

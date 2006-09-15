@@ -942,6 +942,9 @@ AC_ARG_ENABLE(loopback,
     esac])
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_LOOPBACK:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_LOOPBACK,[test "$CONFIG_RTNET_DRV_LOOPBACK" = "y"])
+if test "$CONFIG_RTNET_DRV_LOOPBACK" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_DRV_LOOPBACK,1,[loopback driver])
+fi
 
 
 AC_MSG_CHECKING([whether to build 3Com 59x driver])
@@ -1004,11 +1007,23 @@ AC_MSG_RESULT($CONFIG_RTNET_RX_FIFO_SIZE)
 AC_DEFINE_UNQUOTED(CONFIG_RTNET_RX_FIFO_SIZE,
     $CONFIG_RTNET_RX_FIFO_SIZE, [RX-FIFO size])
 
+AC_MSG_CHECKING([whether to enable ETH_P_ALL support])
+AC_ARG_ENABLE(ethpall,
+    AS_HELP_STRING([--enable-ethpall], [enable ETH_P_ALL support @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_ETH_P_ALL=y ;;
+        *) CONFIG_RTNET_ETH_P_ALL=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_ETH_P_ALL:-n}])
+if test "$CONFIG_RTNET_ETH_P_ALL" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_ETH_P_ALL,1,[ETH_P_ALL support])
+fi
+
 AC_MSG_CHECKING([whether to build real-time WLAN support])
 AC_ARG_ENABLE(rtwlan,
     AS_HELP_STRING([--enable-rtwlan], [enable real-time WLAN support @<:@default=no@:>@]),
     [case "$enableval" in
-        y | yes) CONFIG_RTNET_RTWLANy ;;
+        y | yes) CONFIG_RTNET_RTWLAN=y ;;
         *) CONFIG_RTNET_RTWLAN=n ;;
     esac])
 AC_MSG_RESULT([${CONFIG_RTNET_RTWLAN:-n}])

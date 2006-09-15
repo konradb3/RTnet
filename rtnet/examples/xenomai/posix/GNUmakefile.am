@@ -13,3 +13,7 @@ AM_LDFLAGS = \
 if CONFIG_RTNET_RTIPV4
 example_PROGRAMS += rtt-sender rtt-responder
 endif
+
+if CONFIG_RTNET_RTPACKET
+example_PROGRAMS += eth_p_all raw-ethernet
+endif

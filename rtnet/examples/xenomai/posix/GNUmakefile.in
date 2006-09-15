@@ -36,8 +36,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-example_PROGRAMS = $(am__EXEEXT_1)
+example_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2)
 @CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = rtt-sender rtt-responder
+@CONFIG_RTNET_RTPACKET_TRUE@am__append_2 = eth_p_all raw-ethernet
 subdir = examples/xenomai/posix
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,9 +52,17 @@ CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 @CONFIG_RTNET_RTIPV4_TRUE@am__EXEEXT_1 = rtt-sender$(EXEEXT) \
 @CONFIG_RTNET_RTIPV4_TRUE@	rtt-responder$(EXEEXT)
+@CONFIG_RTNET_RTPACKET_TRUE@am__EXEEXT_2 = eth_p_all$(EXEEXT) \
+@CONFIG_RTNET_RTPACKET_TRUE@	raw-ethernet$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(exampledir)"
 examplePROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(example_PROGRAMS)
+eth_p_all_SOURCES = eth_p_all.c
+eth_p_all_OBJECTS = eth_p_all.$(OBJEXT)
+eth_p_all_LDADD = $(LDADD)
+raw_ethernet_SOURCES = raw-ethernet.c
+raw_ethernet_OBJECTS = raw-ethernet.$(OBJEXT)
+raw_ethernet_LDADD = $(LDADD)
 rtt_responder_SOURCES = rtt-responder.c
 rtt_responder_OBJECTS = rtt-responder.$(OBJEXT)
 rtt_responder_LDADD = $(LDADD)
@@ -71,8 +80,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = rtt-responder.c rtt-sender.c
-DIST_SOURCES = rtt-responder.c rtt-sender.c
+SOURCES = eth_p_all.c raw-ethernet.c rtt-responder.c rtt-sender.c
+DIST_SOURCES = eth_p_all.c raw-ethernet.c rtt-responder.c rtt-sender.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -328,6 +337,12 @@ clean-examplePROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
+eth_p_all$(EXEEXT): $(eth_p_all_OBJECTS) $(eth_p_all_DEPENDENCIES) 
+	@rm -f eth_p_all$(EXEEXT)
+	$(LINK) $(eth_p_all_LDFLAGS) $(eth_p_all_OBJECTS) $(eth_p_all_LDADD) $(LIBS)
+raw-ethernet$(EXEEXT): $(raw_ethernet_OBJECTS) $(raw_ethernet_DEPENDENCIES) 
+	@rm -f raw-ethernet$(EXEEXT)
+	$(LINK) $(raw_ethernet_LDFLAGS) $(raw_ethernet_OBJECTS) $(raw_ethernet_LDADD) $(LIBS)
 rtt-responder$(EXEEXT): $(rtt_responder_OBJECTS) $(rtt_responder_DEPENDENCIES) 
 	@rm -f rtt-responder$(EXEEXT)
 	$(LINK) $(rtt_responder_LDFLAGS) $(rtt_responder_OBJECTS) $(rtt_responder_LDADD) $(LIBS)
@@ -341,6 +356,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eth_p_all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw-ethernet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtt-responder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtt-sender.Po@am__quote@
 

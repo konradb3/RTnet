@@ -728,6 +728,8 @@ extern unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
 extern unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
                                          unsigned int rem_rtskbs);
 extern int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool);
+extern struct rtskb* rtskb_clone(struct rtskb *rtskb,
+                                 struct rtskb_queue *pool);
 
 extern int rtskb_pools_init(void);
 extern void rtskb_pools_release(void);

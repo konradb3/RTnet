@@ -25,6 +25,7 @@
 #include <linux/netdevice.h>
 
 #include <rtnet_port.h>
+#include <stack_mgr.h>
 
 MODULE_AUTHOR("Maintainer: Jan Kiszka <Jan.Kiszka@web.de>");
 MODULE_DESCRIPTION("RTnet loopback driver");
@@ -68,57 +69,24 @@ static int rt_loopback_close (struct rtnet_device *rtdev)
  *  @dev: network device to which packet is sent
  *
  */
-static int rt_loopback_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
+static int rt_loopback_xmit(struct rtskb *rtskb, struct rtnet_device *rtdev)
 {
-    unsigned short          hash;
-    struct rtpacket_type    *pt_entry;
-    rtdm_lockctx_t          context;
-
-
     /* write transmission stamp - in case any protocol ever gets the idea to
        ask the lookback device for this service... */
-    if (skb->xmit_stamp)
-        *skb->xmit_stamp = cpu_to_be64(rtdm_clock_read() + *skb->xmit_stamp);
+    if (rtskb->xmit_stamp)
+        *rtskb->xmit_stamp =
+            cpu_to_be64(rtdm_clock_read() + *rtskb->xmit_stamp);
 
     /* make sure that critical fields are re-intialised */
-    skb->chain_end = skb;
+    rtskb->chain_end = rtskb;
 
     /* parse the Ethernet header as usual */
-    skb->protocol = rt_eth_type_trans(skb, rtdev);
-    skb->nh.raw   = skb->data;
+    rtskb->protocol = rt_eth_type_trans(rtskb, rtdev);
 
     rtdev_reference(rtdev);
 
-    rtcap_report_incoming(skb);
+    rt_stack_deliver(rtskb);
 
-    hash = ntohs(skb->protocol) & RTPACKET_HASH_KEY_MASK;
-
-    rtdm_lock_get_irqsave(&rt_packets_lock, context);
-
-    list_for_each_entry(pt_entry, &rt_packets[hash], list_entry)
-        if (pt_entry->type == skb->protocol) {
-            pt_entry->refcount++;
-            rtdm_lock_put_irqrestore(&rt_packets_lock, context);
-
-            pt_entry->handler(skb, pt_entry);
-
-            rtdm_lock_get_irqsave(&rt_packets_lock, context);
-            pt_entry->refcount--;
-            rtdm_lock_put_irqrestore(&rt_packets_lock, context);
-
-            goto out;
-        }
-
-    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
-
-    /* don't warn if running in promiscuous mode (RTcap...?) */
-    if ((rtdev->flags & IFF_PROMISC) == 0)
-        rtdm_printk("RTnet: unknown layer-3 protocol\n");
-
-    kfree_rtskb(skb);
-
-  out:
-    rtdev_dereference(rtdev);
     return 0;
 }
 
