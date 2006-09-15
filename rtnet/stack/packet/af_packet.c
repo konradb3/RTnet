@@ -403,11 +403,15 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
     rtskb->priority = sock->priority;
 
     if (rtdev->hard_header) {
-        ret = rtdev->hard_header(rtskb, rtdev, ntohs(proto), addr, NULL, len);
+        int hdr_len;
+
+        ret = -EINVAL;
+        hdr_len = rtdev->hard_header(rtskb, rtdev, ntohs(proto),
+                                     addr, NULL, len);
         if (sockctx->device->socket_type != SOCK_DGRAM) {
             rtskb->tail = rtskb->data;
             rtskb->len = 0;
-        } else if (ret < 0)
+        } else if (hdr_len < 0)
             goto err;
     }
 
