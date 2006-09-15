@@ -181,11 +181,13 @@ static void stackmgr_task(void *arg)
 
                     rtdm_lock_get_irqsave(&rt_packets_lock, context);
                     pt_entry->refcount--;
-                    rtdm_lock_put_irqrestore(&rt_packets_lock, context);
 
                     rtdev_dereference(rtdev);
-                    if (!err)
+
+                    if (likely(!err)) {
+                        rtdm_lock_put_irqrestore(&rt_packets_lock, context);
                         goto next_packet;
+                    }
                 }
 
             rtdm_lock_put_irqrestore(&rt_packets_lock, context);
