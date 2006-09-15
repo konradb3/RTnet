@@ -356,8 +356,8 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
         return -EINVAL;
 
     if (sll == NULL) {
-        /* Note: We do not care for races with rt_packet_bind here - the user
-           has to. */
+        /* Note: We do not care about races with rt_packet_bind here -
+           the user has to do so. */
         ifindex = sock->prot.packet.ifindex;
         proto   = sock->prot.packet.packet_type.type;
         addr    = NULL;
@@ -392,7 +392,7 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
         goto err;
     }
 
-    if (sll->sll_halen != rtdev->addr_len) {
+    if ((sll != NULL) && (sll->sll_halen != rtdev->addr_len)) {
         ret = -EINVAL;
         goto err;
     }
