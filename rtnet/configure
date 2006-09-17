@@ -19468,8 +19468,7 @@ CPPFLAGS="${ac_save_CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include ${RTEXT_
 
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
 
-
-for ac_header in rtdm/rtdm.h rtdm/rtdm_driver.h
+for ac_header in rtdm/rtdm_driver.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -19527,86 +19526,11 @@ echo "$as_me: error: *** header not found or working, please check RT-extension 
 fi
 done
 
-
-    case "${CONFIG_RTNET_RTEXT_VERSION}" in
-        rtai-3x)
-
-
-
-for ac_header in rtai_sem.h rtai_malloc.h rtai_fifos.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <linux/kernel.h>
-
-
-#include <$ac_header>
-_ACEOF
-rm -f Makefile
-cat >Makefile <<_ACEOF
-EXTRA_CFLAGS += ${CFLAGS}
-EXTRA_CFLAGS += ${CPPFLAGS}
-obj-m += conftest.o
-_ACEOF
-rm -f conftest.$bs_kmodext conftest.o
-if { (eval echo "$as_me:$LINENO: \"$bs_kcompile > /dev/null\"") >&5
-  (eval $bs_kcompile > /dev/null) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile conftest.$ac_ext; rmdir .tmp_versions
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
-echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-done
-
-            ;;
-        xeno-20x | xeno-21x)
-            # nothing further to do
-            ;;
-        *)
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
-            ;;
-    esac
 else                                    # building against linux-2.4
     CPPFLAGS="${CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
 
 
-
-for ac_header in rtdm/rtdm.h rtdm/rtdm_driver.h
+for ac_header in rtdm/rtdm_driver.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_header" >&5
@@ -19672,87 +19596,6 @@ fi
 
 done
 
-
-    case "${CONFIG_RTNET_RTEXT_VERSION}" in
-        rtai-3x)    # mandatory RTAI-3 headers
-
-
-for ac_header in rtai_sem.h rtai_malloc.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <linux/kernel.h>
-
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: *** header not found or working, please check RTAI installation" >&5
-echo "$as_me: error: *** header not found or working, please check RTAI installation" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-done
-
-            ;;
-        xeno-21x)
-            # nothing to do
-            ;;
-        *)
-            { { echo "$as_me:$LINENO: error: *** internal error" >&5
-echo "$as_me: error: *** internal error" >&2;}
-   { (exit 1); exit 1; }; }
-            ;;
-    esac
 fi
 
 CPPFLAGS="${ac_save_CFLAGS}"

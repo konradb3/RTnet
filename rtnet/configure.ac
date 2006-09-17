@@ -659,55 +659,21 @@ CPPFLAGS="${ac_save_CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include ${RTEXT_
 # identified. (rpm)
 
 if test "${CONFIG_KBUILD}" = "y"; then  # building against linux-2.6
-    BS_CHECK_KHEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
+    BS_CHECK_KHEADERS([rtdm/rtdm_driver.h],
         [],
         [AC_MSG_ERROR([*** header not found or working, please check RT-extension installation])],
         [
 #include <linux/kernel.h>
         ])
-
-    case "${CONFIG_RTNET_RTEXT_VERSION}" in
-        rtai-3x)
-            BS_CHECK_KHEADERS([rtai_sem.h rtai_malloc.h rtai_fifos.h],
-                [],
-                [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
-                [
-#include <linux/kernel.h>
-                ])
-            ;;
-        xeno-20x | xeno-21x)
-            # nothing further to do
-            ;;
-        *)
-            AC_MSG_ERROR([*** internal error])
-            ;;
-    esac
 else                                    # building against linux-2.4
     CPPFLAGS="${CPPFLAGS} -D__KERNEL__ -I${RTEXT_LINUX_DIR}/include -I${RTEXT_LINUX_DIR}/include/xenomai/compat"
 
-    AC_CHECK_HEADERS([rtdm/rtdm.h rtdm/rtdm_driver.h],
+    AC_CHECK_HEADERS([rtdm/rtdm_driver.h],
         [],
         [AC_MSG_ERROR([*** header not found or working, please check RT-extension installation])],
         [
 #include <linux/kernel.h>
         ])
-
-    case "${CONFIG_RTNET_RTEXT_VERSION}" in
-        rtai-3x)    # mandatory RTAI-3 headers
-            AC_CHECK_HEADERS([rtai_sem.h rtai_malloc.h],
-            [],
-            [AC_MSG_ERROR([*** header not found or working, please check RTAI installation])],
-            [
-#include <linux/kernel.h>
-            ])
-            ;;
-        xeno-21x)
-            # nothing to do
-            ;;
-        *)
-            AC_MSG_ERROR([*** internal error])
-            ;;
-    esac
 fi
 
 CPPFLAGS="${ac_save_CFLAGS}"

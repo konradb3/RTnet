@@ -89,20 +89,8 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the <rtai_fifos.h> header file. */
-#undef HAVE_RTAI_FIFOS_H
-
-/* Define to 1 if you have the <rtai_malloc.h> header file. */
-#undef HAVE_RTAI_MALLOC_H
-
-/* Define to 1 if you have the <rtai_sem.h> header file. */
-#undef HAVE_RTAI_SEM_H
-
 /* Define to 1 if you have the <rtdm/rtdm_driver.h> header file. */
 #undef HAVE_RTDM_RTDM_DRIVER_H
-
-/* Define to 1 if you have the <rtdm/rtdm.h> header file. */
-#undef HAVE_RTDM_RTDM_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
