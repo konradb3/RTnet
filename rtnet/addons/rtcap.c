@@ -276,8 +276,10 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig)
                 stats->rx_bytes += skb->len;
 
                 netif_rx(skb);
-            } else
+            } else {
+                dev_kfree_skb(skb);
                 rtcap_kfree_rtskb(rtskb);
+            }
         } else {
             printk("RTcap: unable to allocate linux skb\n");
             rtcap_kfree_rtskb(rtskb);
