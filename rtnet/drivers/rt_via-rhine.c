@@ -1600,12 +1600,9 @@ static void via_rhine_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp) /
 				if (desc_status & 0x0030) np->stats.rx_length_errors++;
 				if (desc_status & 0x0048) np->stats.rx_fifo_errors++;
 				if (desc_status & 0x0004) np->stats.rx_frame_errors++;
-				if (desc_status & 0x0002) {
-					/* this can also be updated outside the interrupt handler */
-					rtdm_lock_get(&np->lock); /*** RTnet ***/
+				if (desc_status & 0x0002)
+					/* RTnet: this is only updated in the interrupt handler */
 					np->stats.rx_crc_errors++;
-					rtdm_lock_put(&np->lock); /*** RTnet ***/
-				}
 			}
 		} else {
 			struct rtskb *skb; /*** RTnet ***/
