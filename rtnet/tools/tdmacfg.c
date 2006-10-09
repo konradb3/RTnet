@@ -28,8 +28,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <arpa/inet.h>
 
 #include <tdma_chrdev.h>
 
@@ -38,7 +40,7 @@ static int                  f;
 static struct tdma_config   tdma_cfg;
 
 
-void help(void)
+static void help(void)
 {
     fprintf(stderr, "Usage:\n"
         "\ttdmacfg <dev> master <cycle_period> [-b <backup_offset>]\n"
@@ -184,10 +186,10 @@ void do_slave(int argc, char *argv[])
 void do_slot(int argc, char *argv[])
 {
     char            *log_filename = NULL;
+    int             result_size = 0;
     unsigned int    ioc;
     int             r;
     int             i;
-    int             result_size;
 
 
     if (argc < 4)

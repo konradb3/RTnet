@@ -33,6 +33,7 @@
 #include <net/if_arp.h>
 #include <netinet/ether.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <rtnet_chrdev.h>
 

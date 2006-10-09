@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -35,6 +36,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ether.h>
+#include <arpa/inet.h>
 
 #include <rtcfg_chrdev.h>
 
@@ -266,7 +268,6 @@ void cmd_add(int argc, char *argv[])
 void cmd_del(int argc, char *argv[])
 {
     int                 i;
-    unsigned int        ioctl_code;
     struct in_addr      ip_addr;
     struct ether_addr   mac_addr;
 

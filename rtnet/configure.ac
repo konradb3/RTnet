@@ -417,6 +417,8 @@ case "${RTEXT_LINUX_VERSION}" in
 esac
 AM_CONDITIONAL(CONFIG_KBUILD,[test "$CONFIG_KBUILD" = y])
 
+RTNET_INTERNAL_USER_CFLAGS="-Wall -pipe -O2 -fstrict-aliasing"
+
 # common stuff
 case "${CONFIG_RTNET_RTEXT_VERSION}" in
     rtai-3x)
@@ -433,9 +435,9 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
         RTEXT_SYMBOLS="`${XENO_CONFIG} --symbol-dir`"
         ;;
     xeno-21x)
-        RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags`"
+        RTEXT_USER_CFLAGS="`${XENO_CONFIG} --xeno-cflags` $RTNET_INTERNAL_USER_CFLAGS"
         RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir`"
-        XNPOSIX_USER_CFLAGS="`${XENO_CONFIG} --posix-cflags`"
+        XNPOSIX_USER_CFLAGS="`${XENO_CONFIG} --posix-cflags` $RTNET_INTERNAL_USER_CFLAGS"
         XNPOSIX_USER_LDFLAGS="`${XENO_CONFIG} --posix-ldflags`"
         if test "`eval echo \\$$wanted_kernel_arch`" \!= ""; then
             CONFIG_RTNET_RTEXT_ARCH="${RTNET_TARGET_ARCH}"
@@ -1271,6 +1273,7 @@ AH_BOTTOM([#endif /* __IN_RTNET__ */])
 
 
 RTEXT_KMOD_CFLAGS="-D__IN_RTNET__ $RTEXT_KMOD_CFLAGS"
+AC_SUBST(RTNET_INTERNAL_USER_CFLAGS)
 AC_SUBST(RTEXT_KMOD_CFLAGS)
 AC_SUBST(RTEXT_USER_CFLAGS)
 AC_SUBST(XNPOSIX_USER_CFLAGS)

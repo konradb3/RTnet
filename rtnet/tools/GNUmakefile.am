@@ -23,7 +23,8 @@ sbin_PROGRAMS = rtifconfig rtiwconfig $(OPTPROGS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include
+	-I$(top_builddir)/stack/include \
+	@RTNET_INTERNAL_USER_CFLAGS@
 
 all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
 

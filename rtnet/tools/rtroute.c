@@ -22,17 +22,17 @@
  *
  */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netinet/ether.h>
+#include <arpa/inet.h>
 
 #include <ipv4_chrdev.h>
 
@@ -41,6 +41,9 @@ int             f;
 struct ipv4_cmd cmd;
 struct in_addr  addr;
 
+
+/* help gcc a bit... */
+void help(void) __attribute__((noreturn));
 
 void help(void)
 {
