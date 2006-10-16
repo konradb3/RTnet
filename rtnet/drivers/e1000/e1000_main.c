@@ -202,7 +202,8 @@ static int e1000_intr(rtdm_irq_t *irq_handle);
 static boolean_t e1000_clean_tx_irq(struct e1000_adapter *adapter,
                                     struct e1000_tx_ring *tx_ring);
 static boolean_t e1000_clean_rx_irq(struct e1000_adapter *adapter,
-                                    struct e1000_rx_ring *rx_ring);
+                                    struct e1000_rx_ring *rx_ring,
+                                    nanosecs_abs_t *time_stamp);
 static void e1000_alloc_rx_buffers(struct e1000_adapter *adapter,
                                    struct e1000_rx_ring *rx_ring,
 				   int cleaned_count);
@@ -1709,7 +1710,7 @@ e1000_configure_rx(struct e1000_adapter *adapter)
         {
 		rdlen = adapter->rx_ring[0].count *
 			sizeof(struct e1000_rx_desc);
-		adapter->clean_rx = e1000_clean_rx_irq;
+		adapter->clean_rx = NULL; /* unused */
 		adapter->alloc_rx_buf = e1000_alloc_rx_buffers;
 	}
 
@@ -2421,12 +2422,13 @@ e1000_tx_map(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 
 static void
 e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
-               int tx_flags, int count)
+               int tx_flags, int count, nanosecs_abs_t *xmit_stamp)
 {
 	struct e1000_tx_desc *tx_desc = NULL;
 	struct e1000_buffer *buffer_info;
 	uint32_t txd_upper = 0, txd_lower = E1000_TXD_CMD_IFCS;
 	unsigned int i;
+	rtdm_lockctx_t context;
 
 
 	if (likely(tx_flags & E1000_TX_FLAGS_CSUM)) {
@@ -2449,6 +2451,11 @@ e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 
 	tx_desc->lower.data |= cpu_to_le32(adapter->txd_cmd);
 
+	rtdm_lock_irqsave(context);
+
+	if (xmit_stamp)
+		*xmit_stamp = cpu_to_be64(rtdm_clock_read() + *xmit_stamp);
+
 	/* Force memory writes to complete before letting h/w
 	 * know there are new descriptors to fetch.  (Only
 	 * applicable for weak-ordered memory model archs,
@@ -2457,6 +2464,8 @@ e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 
 	tx_ring->next_to_use = i;
 	writel(i, adapter->hw.hw_addr + tx_ring->tdt);
+
+	rtdm_lock_irqrestore(context);
 }
 
 /**
@@ -2608,7 +2617,8 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 
 	e1000_tx_queue(adapter, tx_ring, tx_flags,
 	               e1000_tx_map(adapter, tx_ring, skb, first,
-	                            max_per_txd, nr_frags, mss));
+	                            max_per_txd, nr_frags, mss),
+	               skb->xmit_stamp);
 
 	return NETDEV_TX_OK;
 }
@@ -2642,6 +2652,7 @@ e1000_intr(rtdm_irq_t *irq_handle)
 	struct e1000_hw *hw = &adapter->hw;
 	uint32_t rctl, icr = E1000_READ_REG(hw, ICR);
 	int i;
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 
 	if (unlikely(!icr)) {
 		return RTDM_IRQ_NONE;  /* Not our interrupt */
@@ -2682,7 +2693,8 @@ e1000_intr(rtdm_irq_t *irq_handle)
 	adapter->data_received = 0;
 
 	for (i = 0; i < E1000_MAX_INTR; i++)
-		if (unlikely(!e1000_clean_rx_irq(adapter, adapter->rx_ring) &
+		if (unlikely(!e1000_clean_rx_irq(adapter, adapter->rx_ring,
+		                                 &time_stamp) &
 		   !e1000_clean_tx_irq(adapter, adapter->tx_ring)))
 			break;
 
@@ -2839,7 +2851,8 @@ e1000_rx_checksum(struct e1000_adapter *adapter,
 
 static boolean_t
 e1000_clean_rx_irq(struct e1000_adapter *adapter,
-                   struct e1000_rx_ring *rx_ring)
+                   struct e1000_rx_ring *rx_ring,
+                   nanosecs_abs_t *time_stamp)
 {
 	struct rtnet_device *netdev = adapter->netdev;
 	struct pci_dev *pdev = adapter->pdev;
@@ -2935,8 +2948,9 @@ e1000_clean_rx_irq(struct e1000_adapter *adapter,
 				  le16_to_cpu(rx_desc->csum), skb);
 
 		skb->protocol = rt_eth_type_trans(skb, netdev);
+		skb->time_stamp = *time_stamp;
 		rtnetif_rx(skb);
-                adapter->data_received = 1; // Set flag for the main interrupt routine
+		adapter->data_received = 1; // Set flag for the main interrupt routine
 
 next_desc:
 		rx_desc->status = 0;
