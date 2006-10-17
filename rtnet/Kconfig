@@ -11,7 +11,7 @@ choice
     default RTNET_RTEXT_INKERNEL
 
 config RTNET_RTEXT_CLASSIC
-    bool "RTAI 3.3 or better, Xenomain 2.0.x"
+    bool "RTAI 3.3-cv or better, Xenomain 2.0.x"
 
 config RTNET_RTEXT_INKERNEL
     bool "Xenomai 2.1 or better"

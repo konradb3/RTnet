@@ -1,3 +1,13 @@
+0.9.6
+- added missing timestamping support to rt_e1000
+- added support for SOCK_RAW packet sockets [Jorge]
+- added optional ETH_P_ALL support, so far based on copying rtskbs [Jorge]
+- refactoring and minor fixes of SOCK_DGRAM packet sockets
+- added missing file for Xenomai over kernel 2.4 build
+- fixed broken locking in stack manager (corner-case bug since 0.9.4)
+- added examples for ETH_P_ALL and SOCK_RAW (Xenomai POSIX)
+- fixed Linux skb leak in rtcap when pseudo interface was down
+
 0.9.5
 - added e1000 (Intel PRO/1000) Gigabit Ethernet driver
 - refactored, enhanced, and fixed RTMAC_RTIOC_WAITONCYCLE* API

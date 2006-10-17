@@ -1,4 +1,4 @@
-                             RTnet Version 0.9.5
+                             RTnet Version 0.9.6
                              ===================
 
 What is it?
@@ -68,15 +68,7 @@ How to test it?
 
 Special notes
 -------------
-- When running RTnet on ARM using a 2.4 kernel, you have to add the following
-  line to linux/arch/arm/kernel/armksyms.c:
-
-  EXPORT_SYMBOL(__arch_strncpy_from_user);
-
-  Otherwise, rtai_rtdm will refuse to load. Don't forget to recompile and
-  install the modified kernel.
-
-- Starting the RTnet core manually (without RTmac):
+Starting the RTnet core manually (without RTmac):
   1. Load required componentes of the real-time Linux extension (see above)
   2. Load RTnet modules: rtnet (core), rtipv4 (IPv4 protocol + API), rtpacket
      (packet protocol + API), rt_loopback (rtlo loopback driver), rt_XXX
@@ -118,6 +110,8 @@ Bill Vareka <bvareka-at-amsuper.com>    - joint-slots TDMA extension
 Fabian Koch <me-at-tabascoeye.de>       - various improvements of the
                                           configuration interfaces and tools
 Daniel Gregorek <dxg-at-gmx.de>         - RT-WLAN support, RT2500 driver
+Jorge Almeida                           - SOCK_RAW for packet sockets and
+<j-almeida@criticalsoftware.com>          ETH_P_ALL support
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
