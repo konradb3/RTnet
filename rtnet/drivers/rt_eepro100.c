@@ -899,7 +899,8 @@ static int speedo_found1(struct pci_dev *pdev,
 	}
 
 	if (sp->rx_bug)
-		printk(KERN_INFO "  Receiver lock-up workaround activated.\n");
+		printk(KERN_ERR "  *** Receiver lock-up bug detected ***\n"
+		       KERN_ERR "  Your device may not work reliably!\n");
 
 	// *** RTnet ***
 	/* The Speedo-specific entries in the device structure. */
