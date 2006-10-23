@@ -611,6 +611,12 @@ static void speedo_show_state(struct rtnet_device *rtdev);
 static int mii_ctrl[8] = { 0x3300, 0x3100, 0x0000, 0x0100,
 						   0x2000, 0x2100, 0x0400, 0x3100};
 #endif
+static inline void speedo_write_flush(long ioaddr)
+{
+	/* Flush previous PCI writes through intermediate bridges
+	 * by doing a benign read */
+	(void)readb((void *)(ioaddr + SCBStatus));
+}
 
 static int __devinit eepro100_init_one (struct pci_dev *pdev,
 		const struct pci_device_id *ent)
@@ -1061,6 +1067,7 @@ speedo_open(struct rtnet_device *rtdev)
 
 	/* Fire up the hardware. */
 	outw(SCBMaskAll, ioaddr + SCBCmd);
+	speedo_write_flush(ioaddr);
 	speedo_resume(rtdev);
 
 	netdevice_start(rtdev);
@@ -1642,6 +1649,7 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle)
 		/* Will change from 0xfc00 to 0xff00 when we start handling
 		   FCP and ER interrupts --Dragan */
 		outw(status & 0xfc00, ioaddr + SCBStatus);
+		speedo_write_flush(ioaddr);
 
 		if (speedo_debug > 4)
 			rtdm_printk(KERN_DEBUG "%s: interrupt  status=%#4.4x.\n",
@@ -1987,8 +1995,15 @@ speedo_close(struct rtnet_device *rtdev)
 	/* Shut off the media monitoring timer. */
 	del_timer_sync(&sp->timer);
 
-	/* Shutting down the chip nicely fails to disable flow control. So.. */
+	/* Shutdown procedure according to Intel's e100 */
 	outl(PortPartialReset, ioaddr + SCBPort);
+	speedo_write_flush(ioaddr); udelay(20);
+
+	outl(PortReset, ioaddr + SCBPort);
+	speedo_write_flush(ioaddr); udelay(20);
+
+	outw(SCBMaskAll, ioaddr + SCBCmd);
+	speedo_write_flush(ioaddr);
 
 	// *** RTnet ***
 	if ( (i=rtdm_irq_free(&sp->irq_handle))<0 )
