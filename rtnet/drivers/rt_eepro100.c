@@ -1110,9 +1110,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 	rtdm_lockctx_t context;
 
 	/* Prevent interrupts from changing the Tx ring from underneath us. */
-
-	rtdm_irq_disable(&sp->irq_handle);
-	rtdm_lock_get(&sp->lock);
+	rtdm_lock_get_irqsave(&sp->lock, context);
 	// *** RTnet ***
 
 	/* Check if there are enough space. */
@@ -1121,8 +1119,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 		rtnetif_stop_queue(rtdev);
 		sp->tx_full = 1;
 
-		rtdm_lock_put(&sp->lock);
-		rtdm_irq_enable(&sp->irq_handle);
+		rtdm_lock_put_irqrestore(&sp->lock, context);
 
 		rtdm_printk(KERN_ERR "%s: incorrect tbusy state, fixed.\n", rtdev->name);
 		// *** RTnet ***
@@ -1163,13 +1160,10 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	/* Trigger the command unit resume. */
 	if (rt_wait_for_cmd_done(ioaddr + SCBCmd, __FUNCTION__) != 0) {
-		rtdm_lock_put(&sp->lock);
-		rtdm_irq_enable(&sp->irq_handle);
+		rtdm_lock_put_irqrestore(&sp->lock, context);
 
 		return 1;
 	}
-
-	rtdm_lock_irqsave(context);
 
 	/* get and patch time stamp just before the transmission */
 	if (skb->xmit_stamp)
@@ -1192,10 +1186,7 @@ speedo_start_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 
 	// *** RTnet ***
 	rtdm_lock_put_irqrestore(&sp->lock, context);
-	rtdm_irq_enable(&sp->irq_handle);
 	// *** RTnet ***
-
-	//rtdev->trans_start = jiffies;
 
 	return 0;
 }
