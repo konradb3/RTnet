@@ -86,7 +86,8 @@ struct rtnet_callback {
 #define SOCK_XMIT_PARAMS(priority, channel) ((priority) | ((channel) << 16))
 
 
-/* legacy function name wrappers */
+/* legacy function name wrappers, users should migrate to rt_dev_xxx */
+#ifdef __RTNET_USE_LEGACY_API__
 #define open_rt(path, oflag, ...)                           \
     rt_dev_open(path, oflag)
 #define socket_rt(protocol_family, socket_type, protocol)   \
@@ -123,6 +124,7 @@ struct rtnet_callback {
     rt_dev_getsockname(fd, name, namelen)
 #define getpeername_rt(fd, name, namelen)                   \
     rt_dev_getpeername(fd, name, namelen)
+#endif /* __RTNET_USE_LEGACY_API__ */
 
 
 #ifdef __KERNEL__
