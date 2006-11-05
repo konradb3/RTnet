@@ -548,27 +548,26 @@ static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev)
 /***
  *  rtdev_xmit - send real-time packet
  */
-int rtdev_xmit(struct rtskb *skb)
+int rtdev_xmit(struct rtskb *rtskb)
 {
     struct rtnet_device *rtdev;
-    int                 ret = 0;
+    int                 err;
 
 
-    RTNET_ASSERT(skb != NULL, return -1;);
-    RTNET_ASSERT(skb->rtdev != NULL, return -1;);
+    RTNET_ASSERT(rtskb != NULL, return -EINVAL;);
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
-    rtdev = skb->rtdev;
+    rtdev = rtskb->rtdev;
 
-    ret = rtdev->start_xmit(skb, rtdev);
-    if (ret != 0)
-    {
-        rtdm_printk("hard_start_xmit returned %d\n", ret);
-        /* if an error occured, we must free the skb here! */
-        if (skb)
-            kfree_rtskb(skb);
+    err = rtdev->start_xmit(rtskb, rtdev);
+    if (err) {
+        /* on error we must free the rtskb here */
+        kfree_rtskb(rtskb);
+
+        rtdm_printk("hard_start_xmit returned %d\n", err);
     }
 
-    return ret;
+    return err;
 }
 
 
@@ -577,38 +576,33 @@ int rtdev_xmit(struct rtskb *skb)
 /***
  *      rtdev_xmit_proxy - send rtproxy packet
  */
-int rtdev_xmit_proxy(struct rtskb *skb)
+int rtdev_xmit_proxy(struct rtskb *rtskb)
 {
     struct rtnet_device *rtdev;
-    int                 ret = 0;
+    int                 err;
 
 
-    RTNET_ASSERT(skb != NULL, return -1;);
-    RTNET_ASSERT(skb->rtdev != NULL, return -1;);
-    RTNET_ASSERT(skb->rtdev->hard_start_xmit != NULL, return -1;);
+    RTNET_ASSERT(rtskb != NULL, return -EINVAL;);
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
-
-    rtdev = skb->rtdev;
+    rtdev = rtskb->rtdev;
 
     /* TODO: make these lines race-condition-safe */
     if (rtdev->mac_disc) {
-        RTNET_ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, return -1;);
+        RTNET_ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, return -EINVAL;);
 
-        ret = rtdev->mac_disc->nrt_packet_tx(skb);
-    }
-    else
-    {
-        ret = rtdev->start_xmit(skb, rtdev);
-        if (ret != 0)
-        {
-            rtdm_printk("hard_start_xmit returned %d\n", ret);
-            /* if an error occured, we must free the skb here! */
-            if (skb)
-                kfree_rtskb(skb);
+        err = rtdev->mac_disc->nrt_packet_tx(rtskb);
+    } else {
+        err = rtdev->start_xmit(rtskb, rtdev);
+        if (err) {
+            /* on error we must free the rtskb here */
+            kfree_rtskb(rtskb);
+
+            rtdm_printk("hard_start_xmit returned %d\n", err);
         }
     }
 
-    return ret;
+    return err;
 }
 #endif /* CONFIG_RTNET_ADDON_PROXY */
 
