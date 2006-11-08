@@ -555,9 +555,10 @@ int rtdev_xmit(struct rtskb *rtskb)
 
 
     RTNET_ASSERT(rtskb != NULL, return -EINVAL;);
-    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
     rtdev = rtskb->rtdev;
+
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
     err = rtdev->start_xmit(rtskb, rtdev);
     if (err) {
@@ -583,9 +584,10 @@ int rtdev_xmit_proxy(struct rtskb *rtskb)
 
 
     RTNET_ASSERT(rtskb != NULL, return -EINVAL;);
-    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
     rtdev = rtskb->rtdev;
+
+    RTNET_ASSERT(rtdev != NULL, return -EINVAL;);
 
     /* TODO: make these lines race-condition-safe */
     if (rtdev->mac_disc) {
