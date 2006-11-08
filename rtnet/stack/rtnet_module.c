@@ -66,14 +66,14 @@ static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
     RTNET_PROC_PRINT_VARS(80);
 
 
-    if (!RTNET_PROC_PRINT("Name\t\tFlags\n"))
+    if (!RTNET_PROC_PRINT("Index\tName\t\tFlags\n"))
         goto done;
 
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
         rtdev = rtdev_get_by_index(i);
         if (rtdev != NULL) {
-            res = RTNET_PROC_PRINT("%-15s %s%s%s%s\n",
-                            rtdev->name,
+            res = RTNET_PROC_PRINT("%d\t%-15s %s%s%s%s\n",
+                            rtdev->ifindex, rtdev->name,
                             (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
                             (rtdev->flags & IFF_BROADCAST) ? " BROADCAST" : "",
                             (rtdev->flags & IFF_LOOPBACK) ? " LOOPBACK" : "",
