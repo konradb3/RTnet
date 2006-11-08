@@ -56,7 +56,7 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
         skb = clone_skb;
     } else
 #endif /* CONFIG_RTNET_ETH_P_ALL */
-        if (unlikely(!rtskb_acquire(skb, &sock->skb_pool))) {
+        if (unlikely(rtskb_acquire(skb, &sock->skb_pool) < 0)) {
             kfree_rtskb(skb);
             return 0;
         }
