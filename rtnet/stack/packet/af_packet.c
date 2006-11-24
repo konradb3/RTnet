@@ -286,11 +286,16 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
         timeout = -1;
 
     ret = rtdm_sem_timeddown(&sock->pending_sem, timeout, NULL);
-    if (unlikely(ret < 0)) {
-        if ((ret != -EWOULDBLOCK) && (ret != -ETIMEDOUT))
-            ret = -EBADF;   /* socket has been closed */
-        return ret;
-    }
+    if (unlikely(ret < 0))
+        switch (ret) {
+            case -EWOULDBLOCK:
+            case -ETIMEDOUT:
+            case -EINTR:
+                return ret;
+
+            default:
+                return -EBADF;   /* socket has been closed */
+        }
 
     rtskb = rtskb_dequeue_chain(&sock->incoming);
     RTNET_ASSERT(rtskb != NULL, return -EFAULT;);
