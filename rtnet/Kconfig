@@ -1,6 +1,6 @@
 config RTNET_VERSION
     string
-    default "0.9.6"
+    default "0.9.7"
 
 mainmenu "RTnet Configuration"
 

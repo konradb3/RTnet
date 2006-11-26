@@ -245,8 +245,7 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 {
     struct tdma_priv    *tdma = (struct tdma_priv *)priv;
     struct tdma_job     *job, *tmp;
-    rtdm_lockctx_t      context;
-    int                 ret;
+    int                 err;
 
 
     set_bit(TDMA_FLAG_SHUTDOWN, &tdma->flags);
@@ -255,31 +254,20 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     rtdm_event_destroy(&tdma->xmit_event);
     rtdm_event_destroy(&tdma->worker_wakeup);
 
-    ret = tdma_dev_release(tdma);
-    if (ret < 0)
-        return ret;
+    err = tdma_dev_release(tdma);
+    if (err < 0)
+        return err;
+
+    rtdm_task_join_nrt(&tdma->worker_task, 100);
 
     list_for_each_entry_safe(job, tmp, &tdma->first_job->entry, entry) {
         if (job->id >= 0)
             tdma_cleanup_slot(tdma, SLOT_JOB(job));
         else if (job->id == XMIT_RPL_CAL) {
-            rtdm_lock_get_irqsave(&tdma->lock, context);
-
             __list_del(job->entry.prev, job->entry.next);
-
-            while (job->ref_count > 0) {
-                rtdm_lock_put_irqrestore(&tdma->lock, context);
-                msleep(100);
-                rtdm_lock_get_irqsave(&tdma->lock, context);
-            }
-
             kfree_rtskb(REPLY_CAL_JOB(job)->reply_rtskb);
-
-            rtdm_lock_put_irqrestore(&tdma->lock, context);
         }
     }
-
-    rtdm_task_join_nrt(&tdma->worker_task, 100);
 
     if (tdma->slot_table)
         kfree(tdma->slot_table);
