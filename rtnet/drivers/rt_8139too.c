@@ -31,7 +31,6 @@
 #define DRV_NAME            "rt_8139too"
 #define DRV_VERSION         "0.9.24-rt0.6"
 
-#include <linux/config.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/compiler.h>

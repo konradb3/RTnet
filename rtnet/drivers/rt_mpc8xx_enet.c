@@ -28,7 +28,6 @@
  * Copyright (c) 2003 Wolfgang Grandegger (wg@denx.de)
  */
 
-#include <linux/config.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 

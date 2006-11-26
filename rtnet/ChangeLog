@@ -1,3 +1,12 @@
+0.9.7
+- fixed 0.9.6 regression in packet socket RX path
+- fixed restart of recvmsg syscall after signal interruption
+- build fixes for upcoming 2.6.19
+- fixed rt_eepro100 for PCI bridge scenarios [Mathias]
+- speed up locking in TX path of rt_eepro100
+- reorganised locking in TDMA discipline to avoid cleanup races on SMP
+- hide xxx_rt legacy API (=> use rt_dev_xxx)
+
 0.9.6
 - added missing timestamping support to rt_e1000
 - added support for SOCK_RAW packet sockets [Jorge]

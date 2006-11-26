@@ -2341,7 +2341,7 @@ e1000_tx_csum(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 	unsigned int i;
 	uint8_t css;
 
-	if (likely(skb->ip_summed == CHECKSUM_HW)) {
+	if (likely(skb->ip_summed == CHECKSUM_PARTIAL)) {
 		css = skb->h.raw - skb->data;
 
 		i = tx_ring->next_to_use;
@@ -2561,7 +2561,7 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 		return NETDEV_TX_OK;
 	}
 
-	if (skb->ip_summed == CHECKSUM_HW)
+	if (skb->ip_summed == CHECKSUM_PARTIAL)
 		count++;
 
 
@@ -2839,7 +2839,7 @@ e1000_rx_checksum(struct e1000_adapter *adapter,
 		 */
 		csum = ntohl(csum ^ 0xFFFF);
 		skb->csum = csum;
-		skb->ip_summed = CHECKSUM_HW;
+		skb->ip_summed = CHECKSUM_PARTIAL;
 	}
 	adapter->hw_csum_good++;
 }

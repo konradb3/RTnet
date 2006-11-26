@@ -143,6 +143,10 @@ cap_rtmac_stamp field now contains valid data.
  ***/
 
 
+#ifndef CHECKSUM_PARTIAL
+#define CHECKSUM_PARTIAL        CHECKSUM_HW
+#endif
+
 #define RTSKB_CAP_SHARED        1   /* rtskb shared between stack and RTcap */
 #define RTSKB_CAP_RTMAC_STAMP   2   /* cap_rtmac_stamp is valid             */
 

@@ -20,7 +20,6 @@
 #define DRV_VERSION	"0.9.15-pre11-rt"
 #define DRV_RELDATE	"May 11, 2002"
 
-#include <linux/config.h>
 #include <linux/module.h>
 #include "tulip.h"
 #include <linux/pci.h>

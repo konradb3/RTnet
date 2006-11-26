@@ -16,7 +16,6 @@
 /* Ported to RTnet by Wittawat Yamwong <wittawat@web.de> */
 
 #include "tulip.h"
-#include <linux/config.h>
 #include <linux/etherdevice.h>
 #include <linux/pci.h>
 

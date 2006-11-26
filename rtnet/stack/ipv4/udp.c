@@ -693,9 +693,9 @@ struct rtsocket *rt_udp_dest_socket(struct rtskb *skb)
 
     if (uh->check == 0)
         skb->ip_summed = CHECKSUM_UNNECESSARY;
-/* ip_summed (yet) never equals CHECKSUM_HW
+/* ip_summed (yet) never equals CHECKSUM_PARTIAL
     else
-        if (skb->ip_summed == CHECKSUM_HW) {
+        if (skb->ip_summed == CHECKSUM_PARTIAL) {
             skb->ip_summed = CHECKSUM_UNNECESSARY;
 
             if ( !rt_udp_check(uh, ulen, saddr, daddr, skb->csum) )

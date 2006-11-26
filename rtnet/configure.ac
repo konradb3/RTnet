@@ -188,7 +188,11 @@ else
 
     # get linux kernel tree and version
     RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
-    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $RTEXT_LINUX_DIR/include/linux/version.h 2>/dev/null | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
+    LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/utsrelease.h
+    if test \! -f $LINUX_RELEASE_FILE; then
+        LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/version.h
+    fi
+    RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $LINUX_RELEASE_FILE 2>/dev/null | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     if test \! -f ${RTEXT_LINUX_DIR}/include/xenomai/nucleus/version.h; then
         AC_MSG_ERROR([*** RT-extended kernel not found in $RTEXT_LINUX_DIR])
@@ -407,9 +411,15 @@ case "${RTEXT_LINUX_VERSION}" in
         CONFIG_KBUILD=y
         CONFIG_KBUILD_LEGACY=y
         ;;
+    2.6.17 | 2.6.17.*)
+        CONFIG_KBUILD=y
+        unset CONFIG_KBUILD_LEGACY
+        MODULE_SYMVERS=Modules.symvers
+        ;;
     2.6.*)
         CONFIG_KBUILD=y
         unset CONFIG_KBUILD_LEGACY
+        MODULE_SYMVERS=Module.symvers
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -569,8 +579,8 @@ else
     RTNET_KBUILD_CMD="+@"
     if test x$CONFIG_KBUILD_LEGACY = x; then
         RTNET_KBUILD_CMD="$RTNET_KBUILD_CMD                                 \
-                if test \\! -r Modules.symvers; then                        \
-                    \$(LN_S) \"\`cd \$(top_builddir) && pwd\`/Modules.symvers\" .; \
+                if test \\! -r $MODULE_SYMVERS; then                        \
+                    \$(LN_S) \"\`cd \$(top_builddir) && pwd\`/$MODULE_SYMVERS\" .; \
                 fi;                                                         \
                 "
     fi

@@ -1342,7 +1342,7 @@ static int via_rhine_start_tx(struct rtskb *skb, struct rtnet_device *dev) /*** 
 	np->tx_skbuff[entry] = skb;
 
 	if ((np->drv_flags & ReqTxAlign) &&
-		(((long)skb->data & 3) || /*** RTnet skb_shinfo(skb)->nr_frags != 0 || RTnet ***/ skb->ip_summed == CHECKSUM_HW)
+		(((long)skb->data & 3) || /*** RTnet skb_shinfo(skb)->nr_frags != 0 || RTnet ***/ skb->ip_summed == CHECKSUM_PARTIAL)
 		) {
 		/* Must use alignment buffer. */
 		if (skb->len > PKT_BUF_SZ) {

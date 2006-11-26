@@ -99,7 +99,7 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
     unsigned int csum;
     unsigned int csstart;
 
-    if (skb->ip_summed == CHECKSUM_HW) {
+    if (skb->ip_summed == CHECKSUM_PARTIAL) {
         csstart = skb->h.raw - skb->data;
 
         if (csstart > skb->len)
@@ -113,7 +113,7 @@ void rtskb_copy_and_csum_dev(const struct rtskb *skb, u8 *to)
     if (csstart != skb->len)
         csum = rtskb_copy_and_csum_bits(skb, csstart, to+csstart, skb->len-csstart, 0);
 
-    if (skb->ip_summed == CHECKSUM_HW) {
+    if (skb->ip_summed == CHECKSUM_PARTIAL) {
         unsigned int csstuff = csstart + skb->csum;
 
         *((unsigned short *)(to + csstuff)) = csum_fold(csum);
@@ -583,8 +583,5 @@ void rtskb_pools_release(void)
 {
     rtskb_pool_release(&global_pool);
     rtskb_pool_release(&rtskb_cache);
-
-    if (kmem_cache_destroy(rtskb_slab_pool) != 0)
-        printk(KERN_CRIT "RTnet: rtskb memory leakage detected "
-               "- reboot required!\n");
+    kmem_cache_destroy(rtskb_slab_pool);
 }
