@@ -280,6 +280,13 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
             ifr->ifr_flags = rtdev->flags;
             break;
 
+        case SIOCETHTOOL:
+            if (rtdev->do_ioctl != NULL)
+                ret = rtdev->do_ioctl(rtdev, request, arg);
+            else
+                ret = -EOPNOTSUPP;
+            break;
+
         default:
             ret = -EOPNOTSUPP;
             break;

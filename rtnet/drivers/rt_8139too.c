@@ -39,6 +39,8 @@
 #include <linux/ioport.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
+#include <linux/if.h>
+#include <linux/ethtool.h>
 #include <linux/rtnetlink.h>
 #include <linux/delay.h>
 #include <linux/ethtool.h>
@@ -524,6 +526,7 @@ static int rtl8139_close (struct rtnet_device *rtdev);
 static int rtl8139_interrupt (rtdm_irq_t *irq_handle);
 static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev);
 
+static int rtl8139_ioctl(struct rtnet_device *rtdev, unsigned int request, void *cmd);
 
 static void rtl8139_init_ring (struct rtnet_device *rtdev);
 static void rtl8139_set_rx_mode (struct rtnet_device *rtdev);
@@ -833,6 +836,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         rtdev->stop = rtl8139_close;
         rtdev->hard_header = &rt_eth_header;
         rtdev->hard_start_xmit = rtl8139_start_xmit;
+        rtdev->do_ioctl = rtl8139_ioctl;
 
         /*rtdev->set_multicast_list = rtl8139_set_rx_mode; */
         rtdev->features |= NETIF_F_SG|NETIF_F_HW_CSUM;
@@ -1340,6 +1344,33 @@ static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev)
         return 0;
 }
 
+static int rtl8139_ioctl(struct rtnet_device *rtdev, unsigned int request, void *arg)
+{
+    struct rtl8139_private *tp = rtdev->priv;
+    void *ioaddr = tp->mmio_addr;
+    int nReturn = 0;
+    struct ifreq *ifr = arg;
+    struct ethtool_value *value;
+
+    switch (request) {
+        case SIOCETHTOOL:
+            /* TODO: user-safe parameter access, most probably one layer higher */
+            value = (struct ethtool_value *)ifr->ifr_data;
+            if (value->cmd == ETHTOOL_GLINK)
+            {
+                if (RTL_R16(CSCR) & CSCR_LinkOKBit)
+                    value->data = 1;
+                else
+                    value->data = 0;
+            }
+            break;
+
+        default:
+            nReturn = -EOPNOTSUPP;
+            break;
+    }
+    return nReturn;
+}
 
 static void rtl8139_tx_interrupt (struct rtnet_device *rtdev,
                                   struct rtl8139_private *tp,
