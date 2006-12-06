@@ -280,6 +280,11 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
             ifr->ifr_flags = rtdev->flags;
             break;
 
+        case SIOCGIFHWADDR:
+            memcpy(ifr->ifr_hwaddr.sa_data, rtdev->dev_addr, rtdev->addr_len);
+            ifr->ifr_hwaddr.sa_family = rtdev->type;
+            break;
+
         case SIOCETHTOOL:
             if (rtdev->do_ioctl != NULL)
                 ret = rtdev->do_ioctl(rtdev, request, arg);
