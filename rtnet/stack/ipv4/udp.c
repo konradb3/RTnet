@@ -257,6 +257,7 @@ int rt_udp_socket(struct rtdm_dev_context *sockctx,
     sock->protocol        = IPPROTO_UDP;
     sock->prot.inet.saddr = INADDR_ANY;
     sock->prot.inet.state = TCP_CLOSE;
+    sock->prot.inet.tos   = 0;
 #ifdef CONFIG_RTNET_RTDM_SELECT
     sock->wakeup_select   = NULL;
 #endif /* CONFIG_RTNET_RTDM_SELECT */
