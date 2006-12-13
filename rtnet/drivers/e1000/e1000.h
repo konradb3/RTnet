@@ -208,7 +208,7 @@ struct e1000_tx_ring {
 	/* array of buffer information structs */
 	struct e1000_buffer *buffer_info;
 
-	spinlock_t tx_lock;
+	rtdm_lock_t tx_lock;
 	uint16_t tdh;
 	uint16_t tdt;
 	boolean_t last_tx_tso;
@@ -272,7 +272,6 @@ struct e1000_adapter {
 	uint32_t en_mng_pt;
 	uint16_t link_speed;
 	uint16_t link_duplex;
-	spinlock_t stats_lock;
 #ifdef CONFIG_E1000_NAPI
 	spinlock_t tx_queue_lock;
 #endif

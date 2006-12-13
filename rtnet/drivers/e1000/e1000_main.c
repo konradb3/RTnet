@@ -1100,7 +1100,6 @@ e1000_sw_init(struct e1000_adapter *adapter)
 
 
 	atomic_set(&adapter->irq_sem, 1);
-	spin_lock_init(&adapter->stats_lock);
 
 	return 0;
 }
