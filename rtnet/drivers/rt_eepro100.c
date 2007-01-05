@@ -610,13 +610,14 @@ static int __devinit eepro100_init_one (struct pci_dev *pdev,
 	ioaddr = (unsigned long)ioremap(pci_resource_start(pdev, 0),
 									pci_resource_len(pdev, 0));
 	if (!ioaddr) {
-		printk (KERN_ERR "eepro100: cannot remap MMIO region %lx @ %lx\n",
-				pci_resource_len(pdev, 0), pci_resource_start(pdev, 0));
+		printk(KERN_ERR "eepro100: cannot remap MMIO region %llx @ %llx\n",
+		       (unsigned long long)pci_resource_len(pdev, 0),
+		       (unsigned long long)pci_resource_start(pdev, 0));
 		goto err_out_free_mmio_region;
 	}
 	if (speedo_debug > 2)
-		printk("Found Intel i82557 PCI Speedo, MMIO at %#lx, IRQ %d.\n",
-			   pci_resource_start(pdev, 0), irq);
+		printk("Found Intel i82557 PCI Speedo, MMIO at %#llx, IRQ %d.\n",
+		       (unsigned long long)pci_resource_start(pdev, 0), irq);
 #endif
 
 	/* save power state b4 pci_enable_device overwrites it */

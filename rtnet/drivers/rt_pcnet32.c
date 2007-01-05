@@ -79,6 +79,7 @@ static struct pci_device_id pcnet32_pci_tbl[] = {
 MODULE_DEVICE_TABLE (pci, pcnet32_pci_tbl);
 
 static int cards_found = -1;
+static int pcnet32_have_pci;
 
 /*
  * VLB I/O addresses
@@ -1809,7 +1810,8 @@ static int __init pcnet32_init_module(void)
 	tx_start = tx_start_pt;
 
     /* find the PCI devices */
-    pci_module_init(&pcnet32_driver);
+    if (!pci_register_driver(&pcnet32_driver))
+	pcnet32_have_pci = 1;
 
     /* should we find any remaining VLbus devices ? */
     if (pcnet32vlb)
@@ -1818,7 +1820,7 @@ static int __init pcnet32_init_module(void)
     if (cards_found)
 	printk(KERN_INFO PFX "%d cards_found.\n", cards_found);
 
-    return cards_found ? 0 : -ENODEV;
+    return (pcnet32_have_pci + cards_found) ? 0 : -ENODEV;
 }
 
 static void __exit pcnet32_cleanup_module(void)
@@ -1834,8 +1836,6 @@ static void __exit pcnet32_cleanup_module(void)
 	rt_rtdev_disconnect(pcnet32_dev);
 /*** RTnet ***/
 	release_region(pcnet32_dev->base_addr, PCNET32_TOTAL_SIZE);
-	if (lp->pci_dev)
-	    pci_unregister_driver(&pcnet32_driver);
 	pci_free_consistent(lp->pci_dev, sizeof(*lp), lp, lp->dma_addr);
 /*** RTnet ***/
 	rtskb_pool_release(&lp->skb_pool);
@@ -1843,6 +1843,9 @@ static void __exit pcnet32_cleanup_module(void)
 /*** RTnet ***/
 	pcnet32_dev = next_dev;
     }
+
+    if (pcnet32_have_pci)
+	pci_unregister_driver(&pcnet32_driver);
 }
 
 module_init(pcnet32_init_module);
