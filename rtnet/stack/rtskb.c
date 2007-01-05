@@ -469,22 +469,38 @@ unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
 /* Note: acquires only the first skb of a chain! */
 int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
 {
-    struct rtskb *comp_rtskb = rtskb_dequeue(comp_pool);
+    struct rtskb *comp_rtskb;
+    struct rtskb_queue *release_pool;
+    rtdm_lockctx_t context;
 
 
-    if (!comp_rtskb)
+    rtdm_lock_get_irqsave(&comp_pool->lock, context);
+
+    comp_rtskb = __rtskb_dequeue(comp_pool);
+    if (!comp_rtskb) {
+        rtdm_lock_put_irqrestore(&comp_pool->lock, context);
         return -ENOMEM;
+    }
+
+    rtdm_lock_put(&comp_pool->lock);
+
 #ifdef CONFIG_RTNET_CHECKED
     comp_pool->pool_balance--;
 #endif
 
     comp_rtskb->chain_end = comp_rtskb;
-    comp_rtskb->pool = rtskb->pool;
-    rtskb_queue_tail(comp_rtskb->pool, comp_rtskb);
+    comp_rtskb->pool = release_pool = rtskb->pool;
+
+    rtdm_lock_get(&release_pool->lock);
+
 #ifdef CONFIG_RTNET_CHECKED
     comp_rtskb->chain_len = 1;
-    comp_rtskb->pool->pool_balance++;
+    release_pool->pool_balance++;
 #endif
+    __rtskb_queue_tail(release_pool, comp_rtskb);
+
+    rtdm_lock_put_irqrestore(&release_pool->lock, context);
+
     rtskb->pool = comp_pool;
 
     return 0;
