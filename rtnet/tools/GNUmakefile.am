@@ -1,5 +1,4 @@
 OPTPROGS =
-OPTSCRIPTS =
 OPTCONF =
 
 if CONFIG_RTNET_RTIPV4
@@ -19,7 +18,7 @@ OPTPROGS += tdmacfg
 OPTCONF += tdma.conf
 endif
 
-bin_SCRIPTS = rtnet $(OPTSCRIPTS)
+sbin_SCRIPTS = rtnet
 
 dist_sysconf_DATA = rtnet.conf $(OPTCONF)
 

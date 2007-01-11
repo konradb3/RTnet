@@ -65,7 +65,7 @@ CONFIG_CLEAN_FILES = rtnet rtnet.conf
 @CONFIG_RTNET_TDMA_TRUE@am__EXEEXT_4 = tdmacfg$(EXEEXT)
 am__EXEEXT_5 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4)
-am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(bindir)" \
+am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sbindir)" \
 	"$(DESTDIR)$(sysconfdir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
@@ -90,8 +90,8 @@ rtroute_LDADD = $(LDADD)
 tdmacfg_SOURCES = tdmacfg.c
 tdmacfg_OBJECTS = tdmacfg.$(OBJEXT)
 tdmacfg_LDADD = $(LDADD)
-binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
-SCRIPTS = $(bin_SCRIPTS)
+sbinSCRIPT_INSTALL = $(INSTALL_SCRIPT)
+SCRIPTS = $(sbin_SCRIPTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -304,9 +304,8 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4)
-OPTSCRIPTS = 
 OPTCONF = $(am__append_5)
-bin_SCRIPTS = rtnet $(OPTSCRIPTS)
+sbin_SCRIPTS = rtnet
 dist_sysconf_DATA = rtnet.conf $(OPTCONF)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
@@ -399,24 +398,24 @@ rtroute$(EXEEXT): $(rtroute_OBJECTS) $(rtroute_DEPENDENCIES)
 tdmacfg$(EXEEXT): $(tdmacfg_OBJECTS) $(tdmacfg_DEPENDENCIES) 
 	@rm -f tdmacfg$(EXEEXT)
 	$(LINK) $(tdmacfg_LDFLAGS) $(tdmacfg_OBJECTS) $(tdmacfg_LDADD) $(LIBS)
-install-binSCRIPTS: $(bin_SCRIPTS)
+install-sbinSCRIPTS: $(sbin_SCRIPTS)
 	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	test -z "$(sbindir)" || $(mkdir_p) "$(DESTDIR)$(sbindir)"
+	@list='$(sbin_SCRIPTS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  if test -f $$d$$p; then \
 	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	    echo " $(binSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	    $(binSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(bindir)/$$f"; \
+	    echo " $(sbinSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(sbindir)/$$f'"; \
+	    $(sbinSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(sbindir)/$$f"; \
 	  else :; fi; \
 	done
 
-uninstall-binSCRIPTS:
+uninstall-sbinSCRIPTS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	@list='$(sbin_SCRIPTS)'; for p in $$list; do \
 	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(sbindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(sbindir)/$$f"; \
 	done
 
 mostlyclean-compile:
@@ -560,7 +559,7 @@ check-am: all-am
 check: check-am
 all-am: GNUmakefile $(PROGRAMS) $(SCRIPTS) $(DATA) all-local
 installdirs:
-	for dir in "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -610,8 +609,8 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binSCRIPTS install-dist_sysconfDATA \
-	install-sbinPROGRAMS
+install-exec-am: install-dist_sysconfDATA install-sbinPROGRAMS \
+	install-sbinSCRIPTS
 
 install-info: install-info-am
 
@@ -637,23 +636,22 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binSCRIPTS uninstall-dist_sysconfDATA \
-	uninstall-info-am uninstall-sbinPROGRAMS
+uninstall-am: uninstall-dist_sysconfDATA uninstall-info-am \
+	uninstall-sbinPROGRAMS uninstall-sbinSCRIPTS
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-sbinPROGRAMS ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-binSCRIPTS install-data \
-	install-data-am install-dist_sysconfDATA install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-sbinPROGRAMS install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binSCRIPTS \
-	uninstall-dist_sysconfDATA uninstall-info-am \
-	uninstall-sbinPROGRAMS
+	install install-am install-data install-data-am \
+	install-dist_sysconfDATA install-exec install-exec-am \
+	install-info install-info-am install-man install-sbinPROGRAMS \
+	install-sbinSCRIPTS install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-dist_sysconfDATA uninstall-info-am \
+	uninstall-sbinPROGRAMS uninstall-sbinSCRIPTS
 
 
 all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
