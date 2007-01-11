@@ -1,9 +1,9 @@
 #
 # Automatically generated make config: don't edit
-# RTnet version: 0.9.4
-# Sat Aug  5 22:45:43 2006
+# RTnet version: 0.9.8
+# Thu Jan 11 15:20:28 2007
 #
-CONFIG_RTNET_VERSION="0.9.4"
+CONFIG_RTNET_VERSION="0.9.8"
 
 #
 # Real-Time Extension
@@ -26,6 +26,7 @@ CONFIG_RTNET_INSTALLDIR="/usr/local/rtnet"
 # Stack parameters
 #
 CONFIG_RTNET_RX_FIFO_SIZE=32
+# CONFIG_RTNET_ETH_P_ALL is not set
 # CONFIG_RTNET_RTWLAN is not set
 
 #
@@ -55,6 +56,7 @@ CONFIG_RTNET_RTCFG=y
 CONFIG_RTNET_DRV_EEPRO100=y
 CONFIG_RTNET_DRV_EEPRO100_CMDTIMEOUT=20
 # CONFIG_RTNET_DRV_EEPRO100_DBG is not set
+CONFIG_RTNET_DRV_E1000=y
 # CONFIG_RTNET_DRV_NATSEMI is not set
 CONFIG_RTNET_DRV_8139=y
 # CONFIG_RTNET_DRV_VIA_RHINE is not set
