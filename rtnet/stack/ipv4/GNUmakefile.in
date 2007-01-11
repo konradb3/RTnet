@@ -659,7 +659,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am
+uninstall-am: uninstall-info-am uninstall-local
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-local ctags distclean \
@@ -671,7 +671,7 @@ uninstall-am: uninstall-info-am
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am
+	tags uninstall uninstall-am uninstall-info-am uninstall-local
 
 
 rtipv4.o: libkernel_ipv4.a
@@ -690,6 +690,9 @@ all-local.ko: $(libkernel_ipv4_a_SOURCES) FORCE
 install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	$(INSTALL_DATA) $^ $(moduledir)
+
+uninstall-local:
+	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
 clean-local: $(libkernel_ipv4_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)

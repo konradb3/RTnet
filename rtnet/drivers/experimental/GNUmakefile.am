@@ -56,6 +56,9 @@ install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
+uninstall-local:
+	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
+
 clean-local: $(libkernel_3c59x_a_SOURCES) $(libkernel_r8169_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 

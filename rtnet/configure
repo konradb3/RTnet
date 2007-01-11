@@ -19420,7 +19420,7 @@ else
                 "
     fi
     RTNET_KBUILD_CLEAN="                                                    \
-        @rm -f *.ko *.mod.c .*.cmd *.o;                                     \
+        @rm -rf *.ko *.mod.c .*.cmd *.o .tmp_versions;                      \
         for src in \$^; do                                                  \
             if test -h \`basename \$\$src\`; then                           \
                 rm -f \`basename \$\$src\`;                                 \

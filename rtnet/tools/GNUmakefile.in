@@ -14,6 +14,8 @@
 
 @SET_MAKE@
 
+
+
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -44,8 +46,9 @@ host_triplet = @host@
 sbin_PROGRAMS = rtifconfig$(EXEEXT) rtiwconfig$(EXEEXT) \
 	$(am__EXEEXT_5)
 subdir = tools
-DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in \
-	$(srcdir)/rtnet.conf.in $(srcdir)/rtnet.in
+DIST_COMMON = $(am__dist_sysconf_DATA_DIST) $(srcdir)/GNUmakefile.am \
+	$(srcdir)/GNUmakefile.in $(srcdir)/rtnet.conf.in \
+	$(srcdir)/rtnet.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
 	$(top_srcdir)/config/autoconf/.version \
@@ -62,7 +65,8 @@ CONFIG_CLEAN_FILES = rtnet rtnet.conf
 @CONFIG_RTNET_TDMA_TRUE@am__EXEEXT_4 = tdmacfg$(EXEEXT)
 am__EXEEXT_5 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4)
-am__installdirs = "$(DESTDIR)$(sbindir)"
+am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(sysconfdir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
 nomaccfg_SOURCES = nomaccfg.c
@@ -86,6 +90,8 @@ rtroute_LDADD = $(LDADD)
 tdmacfg_SOURCES = tdmacfg.c
 tdmacfg_OBJECTS = tdmacfg.$(OBJEXT)
 tdmacfg_LDADD = $(LDADD)
+binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
+SCRIPTS = $(bin_SCRIPTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -101,6 +107,15 @@ SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtiwconfig.c rtping.c \
 	rtroute.c tdmacfg.c
 DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtiwconfig.c rtping.c \
 	rtroute.c tdmacfg.c
+am__dist_sysconf_DATA_DIST = rtnet.conf tdma.conf
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+dist_sysconfDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(dist_sysconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -291,12 +306,13 @@ OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4)
 OPTSCRIPTS = 
 OPTCONF = $(am__append_5)
+bin_SCRIPTS = rtnet $(OPTSCRIPTS)
+dist_sysconf_DATA = rtnet.conf $(OPTCONF)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
 	@RTNET_INTERNAL_USER_CFLAGS@
 
-EXTRA_DIST = tdma.conf
 all: all-am
 
 .SUFFIXES:
@@ -383,6 +399,25 @@ rtroute$(EXEEXT): $(rtroute_OBJECTS) $(rtroute_DEPENDENCIES)
 tdmacfg$(EXEEXT): $(tdmacfg_OBJECTS) $(tdmacfg_DEPENDENCIES) 
 	@rm -f tdmacfg$(EXEEXT)
 	$(LINK) $(tdmacfg_LDFLAGS) $(tdmacfg_OBJECTS) $(tdmacfg_LDADD) $(LIBS)
+install-binSCRIPTS: $(bin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f $$d$$p; then \
+	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
+	    echo " $(binSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	    $(binSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(bindir)/$$f"; \
+	  else :; fi; \
+	done
+
+uninstall-binSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
+	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	done
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -428,6 +463,23 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
+install-dist_sysconfDATA: $(dist_sysconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(sysconfdir)" || $(mkdir_p) "$(DESTDIR)$(sysconfdir)"
+	@list='$(dist_sysconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(dist_sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  $(dist_sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
+
+uninstall-dist_sysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_sysconf_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -506,9 +558,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: GNUmakefile $(PROGRAMS) all-local
+all-am: GNUmakefile $(PROGRAMS) $(SCRIPTS) $(DATA) all-local
 installdirs:
-	for dir in "$(DESTDIR)$(sbindir)"; do \
+	for dir in "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -556,9 +608,10 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local
+install-data-am:
 
-install-exec-am: install-exec-local install-sbinPROGRAMS
+install-exec-am: install-binSCRIPTS install-dist_sysconfDATA \
+	install-sbinPROGRAMS
 
 install-info: install-info-am
 
@@ -584,36 +637,26 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
+uninstall-am: uninstall-binSCRIPTS uninstall-dist_sysconfDATA \
+	uninstall-info-am uninstall-sbinPROGRAMS
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-sbinPROGRAMS ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-data-local install-exec install-exec-am \
-	install-exec-local install-info install-info-am install-man \
+	install install-am install-binSCRIPTS install-data \
+	install-data-am install-dist_sysconfDATA install-exec \
+	install-exec-am install-info install-info-am install-man \
 	install-sbinPROGRAMS install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am \
+	tags uninstall uninstall-am uninstall-binSCRIPTS \
+	uninstall-dist_sysconfDATA uninstall-info-am \
 	uninstall-sbinPROGRAMS
 
 
 all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
-
-install-exec-local: rtnet $(OPTSCRIPTS)
-	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	for FILE in $^; do					\
-		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
-	done
-
-install-data-local: rtnet.conf $(OPTCONF)
-	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
-	for FILE in $^; do					\
-		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\
-	done
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

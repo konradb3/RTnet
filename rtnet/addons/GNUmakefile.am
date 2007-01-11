@@ -50,6 +50,9 @@ install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
+uninstall-local:
+	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
+
 clean-local: $(ibkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 

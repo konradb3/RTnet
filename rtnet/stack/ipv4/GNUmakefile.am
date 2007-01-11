@@ -39,6 +39,9 @@ install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	$(INSTALL_DATA) $^ $(moduledir)
 
+uninstall-local:
+	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
+
 clean-local: $(libkernel_ipv4_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 

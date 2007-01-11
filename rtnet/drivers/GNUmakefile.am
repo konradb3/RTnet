@@ -224,6 +224,9 @@ install-exec-local: $(OBJS)
 	$(mkinstalldirs) $(moduledir)
 	if test "$^" \!= ""; then $(INSTALL_DATA) $^ $(moduledir); fi
 
+uninstall-local:
+	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
+
 clean-local: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_eepro100_a_SOURCES) \
 		$(libkernel_eth1394_a_SOURCES) \

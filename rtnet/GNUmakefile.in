@@ -265,6 +265,7 @@ target_alias = @target_alias@
 OPTDIRS = $(am__append_1)
 SUBDIRS = stack drivers addons $(OPTDIRS) tools Documentation scripts
 EXTRA_DIST = makefile Kconfig defconfig config/modules/Makefile
+DISTCLEANFILES = Modules.symvers Module.symvers
 all: all-recursive
 
 .SUFFIXES:
@@ -627,6 +628,7 @@ clean-generic:
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

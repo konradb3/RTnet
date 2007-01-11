@@ -19,6 +19,10 @@ OPTPROGS += tdmacfg
 OPTCONF += tdma.conf
 endif
 
+bin_SCRIPTS = rtnet $(OPTSCRIPTS)
+
+dist_sysconf_DATA = rtnet.conf $(OPTCONF)
+
 sbin_PROGRAMS = rtifconfig rtiwconfig $(OPTPROGS)
 
 AM_CPPFLAGS = \
@@ -27,17 +31,3 @@ AM_CPPFLAGS = \
 	@RTNET_INTERNAL_USER_CFLAGS@
 
 all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
-
-install-exec-local: rtnet $(OPTSCRIPTS)
-	$(mkinstalldirs) $(DESTDIR)$(sbindir)
-	for FILE in $^; do					\
-		$(INSTALL_SCRIPT) $$FILE $(DESTDIR)$(sbindir);	\
-	done
-
-install-data-local: rtnet.conf $(OPTCONF)
-	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
-	for FILE in $^; do					\
-		$(INSTALL_DATA) $$FILE $(DESTDIR)$(sysconfdir);	\
-	done
-
-EXTRA_DIST = tdma.conf
