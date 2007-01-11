@@ -8,6 +8,6 @@ fi
 RELEASE=$1
 shift 1
 
-svn copy https://svn.sourceforge.net/svnroot/rtnet/trunk \
-	https://svn.sourceforge.net/svnroot/rtnet/tags/rtnet-$RELEASE \
+svn copy https://rtnet.svn.sourceforge.net/svnroot/rtnet/trunk \
+	https://rtnet.svn.sourceforge.net/svnroot/rtnet/tags/rtnet-$RELEASE \
 	-m "release $RELEASE" $*
