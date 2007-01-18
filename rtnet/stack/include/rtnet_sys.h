@@ -52,8 +52,7 @@
 #define RTDM_IRQ_HANDLED            RTDM_IRQ_ENABLE
 #endif /* RTDM_API_VER < 4 */
 
-/* FIXME: set final revision number once new RTDM version is released */
-#if RTDM_API_VER < 1000000
+#if RTDM_API_VER < 6
 #define rtdm_irq_request(irq_handle, irq, handler, flags, name, device) \
     ({ \
         int err = rtdm_irq_request(irq_handle, irq, handler, flags, name, \
@@ -62,6 +61,6 @@
             rtdm_irq_enable(irq_handle); \
         err; \
     })
-#endif /* RTDM_API_VER < ??? */
+#endif /* RTDM_API_VER < 6 */
 
 #endif /* __RTNET_SYS_H_ */
