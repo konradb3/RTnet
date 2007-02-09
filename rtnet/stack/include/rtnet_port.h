@@ -37,6 +37,10 @@
 # define pci_dma_sync_single_for_cpu        pci_dma_sync_single
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+# define kmem_cache                         kmem_cache_s
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,8)
 # define proc_dointvec(a, b, c, d, e, f)    proc_dointvec(a, b, c, d, e)
 #endif

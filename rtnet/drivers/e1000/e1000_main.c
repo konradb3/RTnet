@@ -215,7 +215,6 @@ extern int ethtool_ioctl(struct ifreq *ifr);
 #endif
 static void e1000_enter_82542_rst(struct e1000_adapter *adapter);
 static void e1000_leave_82542_rst(struct e1000_adapter *adapter);
-static void e1000_reset_task(struct rtnet_device *dev);
 static void e1000_smartspeed(struct e1000_adapter *adapter);
 static int e1000_82547_fifo_workaround(struct e1000_adapter *adapter,
                                        struct rtskb *skb);
@@ -659,6 +658,20 @@ e1000_reset(struct e1000_adapter *adapter)
 	}
 }
 
+static void
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+e1000_reset_task(struct work_struct *work)
+{
+	struct e1000_adapter *adapter =
+		container_of(work, struct e1000_adapter, reset_task);
+#else
+e1000_reset_task(struct e1000_adapter *adapter)
+{
+#endif
+
+	e1000_reinit_locked(adapter);
+}
+
 /**
  * e1000_probe - Device Initialization Routine
  * @pdev: PCI device information struct
@@ -858,8 +871,13 @@ e1000_probe(struct pci_dev *pdev,
 	adapter->phy_info_timer.function = &e1000_update_phy_info;
 	adapter->phy_info_timer.data = (unsigned long) adapter;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+        INIT_WORK(&adapter->reset_task,
+                (void (*)(struct work_struct *))e1000_reset_task);
+#else
 	INIT_WORK(&adapter->reset_task,
-		(void (*)(void *))e1000_reset_task, netdev);
+		(void (*)(void *))e1000_reset_task, adapter);
+#endif
 
 	/* we're going to reset, so assume we have no link for now */
 
@@ -2621,18 +2639,6 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 
 	return NETDEV_TX_OK;
 }
-
-
-static void
-e1000_reset_task(struct rtnet_device *netdev)
-{
-	struct e1000_adapter *adapter = netdev->priv;
-
-	e1000_reinit_locked(adapter);
-}
-
-
-
 
 /**
  * e1000_intr - Interrupt Handler

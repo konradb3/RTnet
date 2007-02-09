@@ -28,6 +28,7 @@
 #include <rtdev.h>
 #include <rtnet_internal.h>
 #include <rtskb.h>
+#include <rtnet_port.h>
 
 static unsigned int global_rtskbs    = DEFAULT_GLOBAL_RTSKBS;
 static unsigned int rtskb_cache_size = DEFAULT_RTSKB_CACHE_SIZE;
@@ -38,7 +39,7 @@ MODULE_PARM_DESC(rtskb_cache_size, "Number of cached rtskbs for creating pools i
 
 
 /* Linux slab pool for rtskbs */
-static kmem_cache_t *rtskb_slab_pool;
+static struct kmem_cache *rtskb_slab_pool;
 
 /* preallocated rtskbs for real-time pool creation */
 static struct rtskb_queue rtskb_cache;
