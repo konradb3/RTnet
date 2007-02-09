@@ -1,4 +1,4 @@
-                             RTnet Version 0.9.7
+                             RTnet Version 0.9.9
                              ===================
 
 What is it?
@@ -18,8 +18,8 @@ is provided.
 
 What are the requirements?
 --------------------------
-- Linux kernel 2.6.x: tested up to 2.6.17
-  Linux kernel 2.4.x: tested up to 2.4.32
+- Linux kernel 2.6.x
+  Linux kernel 2.4.x
 - Xenomai 2.0 or better
   RTAI 3.3-cv or better
 - x86, PowerPC, or ARM platform (other platforms are untested)
