@@ -81,7 +81,8 @@ static int wait_on_sync(struct tdma_dev_ctx *tdma_ctx,
 
 
 static int tdma_dev_ioctl(struct rtdm_dev_context *context,
-                          rtdm_user_info_t *user_info, int request, void *arg)
+                          rtdm_user_info_t *user_info,
+                          unsigned int request, void *arg)
 {
     struct tdma_dev_ctx *ctx = (struct tdma_dev_ctx *)context->dev_private;
     struct tdma_priv    *tdma;
@@ -113,7 +114,7 @@ static int tdma_dev_ioctl(struct rtdm_dev_context *context,
             if (!rtdm_in_rt_context())
                 return -ENOSYS;
 
-            if ((int)arg !=TDMA_WAIT_ON_SYNC)
+            if ((long)arg !=TDMA_WAIT_ON_SYNC)
                 return -EINVAL;
 
             return wait_on_sync(ctx, &tdma->sync_event);

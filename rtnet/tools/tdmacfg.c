@@ -93,7 +93,7 @@ void write_calibration_log(char *log_filename, unsigned int rounds,
     }
 
     for (i = rounds-1; i >= 0; i--) {
-        r = sprintf(str_buf, "%llu\n", cal_results[i]);
+        r = sprintf(str_buf, "%llu\n", (unsigned long long)cal_results[i]);
         if (write(log_file, str_buf, r) < 0) {
             perror("write output file");
             free(cal_results);

@@ -184,10 +184,10 @@ static int tulip_rx(/*RTnet*/struct rtnet_device *rtdev, nanosecs_abs_t *time_st
 				if (tp->rx_buffers[entry].mapping !=
 				    le32_to_cpu(tp->rx_ring[entry].buffer1)) {
 					/*RTnet*/rtdm_printk(KERN_ERR "%s: Internal fault: The skbuff addresses "
-					       "do not match in tulip_rx: %08x vs. %08x ? / %p.\n",
+					       "do not match in tulip_rx: %08x vs. %08llx ? / %p.\n",
 					       rtdev->name,
 					       le32_to_cpu(tp->rx_ring[entry].buffer1),
-					       tp->rx_buffers[entry].mapping,
+					       (unsigned long long)tp->rx_buffers[entry].mapping,
 					       temp);/*RTnet*/
 				}
 #endif

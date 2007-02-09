@@ -78,7 +78,7 @@ void send_msg(void *arg)
         msg.msg_iov     = &iov;
         msg.msg_iovlen  = 1;
 
-        printk("Sending message of %d bytes\n", sizeof(buffer_out));
+        printk("Sending message of %zd bytes\n", sizeof(buffer_out));
         ret = rt_dev_sendmsg(sock, &msg, 0);
         if (ret != (int)sizeof(buffer_out))
             printk(" rt_dev_sendmsg() = %d!\n", ret);

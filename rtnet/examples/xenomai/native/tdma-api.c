@@ -84,6 +84,6 @@ int main(int argc, char *argv[])
         printf("cycle #%ld, start %.9f s, offset %lld ns\n",
                waitinfo.cycle_no,
                (waitinfo.cycle_start+waitinfo.clock_offset)/1000000000.0,
-               waitinfo.clock_offset);
+               (unsigned long long)waitinfo.clock_offset);
     }
 }

@@ -50,6 +50,10 @@ case "$host" in
         RTNET_TARGET_ARCH=i386
         wanted_kernel_arch=CONFIG_X86
         ;;
+    x86_64-*)
+        RTNET_TARGET_ARCH=x86_64
+        wanted_kernel_arch=CONFIG_X86_64
+        ;;
     arm-*)
         RTNET_TARGET_ARCH=arm
         wanted_kernel_arch=CONFIG_ARM
@@ -517,24 +521,6 @@ AC_MSG_RESULT([${RTNET_TARGET_ARCH}])
 if test x"${RTNET_TARGET_ARCH}" != x"${CONFIG_RTNET_RTEXT_ARCH}"; then
     AC_MSG_ERROR([*** RT-extension and RTnet target architectures are not the same])
 fi
-
-case "${CONFIG_RTNET_RTEXT_ARCH}" in
-    i386)
-        AC_DEFINE(CONFIG_ARCH_I386, 1,[we are building for x86])
-        ;;
-    ppc)
-        AC_DEFINE(CONFIG_ARCH_PPC, 1, [we are building for powerpc])
-        ;;
-    arm)
-        AC_DEFINE(CONFIG_ARCH_ARM, 1, [we are building for arm])
-        ;;
-#    cris)
-#       AC_DEFINE(CONFIG_ARCH_CRIS, 1, [we are trying to build for cris])
-#       ;;
-    *)
-        AC_MSG_ERROR([*** unsupported architecture])
-        ;;
-esac
 
 AC_SUBST(RTNET_TARGET_ARCH)
 

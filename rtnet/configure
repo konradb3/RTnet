@@ -18666,6 +18666,10 @@ case "$host" in
         RTNET_TARGET_ARCH=i386
         wanted_kernel_arch=CONFIG_X86
         ;;
+    x86_64-*)
+        RTNET_TARGET_ARCH=x86_64
+        wanted_kernel_arch=CONFIG_X86_64
+        ;;
     arm-*)
         RTNET_TARGET_ARCH=arm
         wanted_kernel_arch=CONFIG_ARM
@@ -19314,38 +19318,6 @@ if test x"${RTNET_TARGET_ARCH}" != x"${CONFIG_RTNET_RTEXT_ARCH}"; then
 echo "$as_me: error: *** RT-extension and RTnet target architectures are not the same" >&2;}
    { (exit 1); exit 1; }; }
 fi
-
-case "${CONFIG_RTNET_RTEXT_ARCH}" in
-    i386)
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_ARCH_I386 1
-_ACEOF
-
-        ;;
-    ppc)
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_ARCH_PPC 1
-_ACEOF
-
-        ;;
-    arm)
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_ARCH_ARM 1
-_ACEOF
-
-        ;;
-#    cris)
-#       AC_DEFINE(CONFIG_ARCH_CRIS, 1, [we are trying to build for cris])
-#       ;;
-    *)
-        { { echo "$as_me:$LINENO: error: *** unsupported architecture" >&5
-echo "$as_me: error: *** unsupported architecture" >&2;}
-   { (exit 1); exit 1; }; }
-        ;;
-esac
 
 
 

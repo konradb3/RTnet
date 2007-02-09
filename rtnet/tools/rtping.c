@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    printf("Real-time PING %s %d(%d) bytes of data.\n",
+    printf("Real-time PING %s %zd(%zd) bytes of data.\n",
            inet_ntoa(addr), cmd.args.ping.msg_size,
            cmd.args.ping.msg_size + 28);
 

@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
         if (len < 0)
             break;
 
-        printf("from: %s type: %04x length=%d\n",
+        printf("from: %s type: %04x length=%zd\n",
                ether_ntoa((struct ether_addr *)eth->ether_shost),
                ntohs(eth->ether_type), len);
     }

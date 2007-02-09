@@ -149,7 +149,8 @@ static int rtcfg_main_state_off(int ifindex, RTCFG_EVENT event_id,
             INIT_LIST_HEAD(&rtcfg_dev->spec.srv.conn_list);
 
             ret = rtdm_task_init(&rtcfg_dev->timer_task, "rtcfg-timer",
-                    rtcfg_timer, (void *)ifindex, RTDM_TASK_LOWEST_PRIORITY,
+                    rtcfg_timer, (void *)(long)ifindex,
+                     RTDM_TASK_LOWEST_PRIORITY,
                     ((nanosecs_rel_t)cmd_event->args.server.period)*1000000);
             if (ret < 0) {
                 rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);

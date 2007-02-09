@@ -7,6 +7,9 @@ case "$1" in
 i?86)
     echo $1-pc-linux-gnu
     ;;
+x86_64)
+    echo x86_64-unknown-linux-gnu
+    ;;
 ppc|powerpc)
     echo powerpc-unknown-linux-gnu
     ;;

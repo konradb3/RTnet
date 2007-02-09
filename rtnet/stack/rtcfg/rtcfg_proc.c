@@ -142,9 +142,9 @@ int rtcfg_proc_read_conn_state(char *buf, char **start, off_t offset,
 
     if (!RTNET_PROC_PRINT("state:\t\t\t%d (%s)\n"
                           "flags:\t\t\t%02X\n"
-                          "stage 1 size:\t\t%d\n"
+                          "stage 1 size:\t\t%zd\n"
                           "stage 2 filename:\t%s\n"
-                          "stage 2 size:\t\t%d\n"
+                          "stage 2 size:\t\t%zd\n"
                           "stage 2 offset:\t\t%d\n"
                           "burstrate:\t\t%d\n"
                           "mac address:\t\t%02X:%02X:%02X:%02X:%02X:%02X\n",

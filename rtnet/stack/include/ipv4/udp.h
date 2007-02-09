@@ -40,7 +40,7 @@ extern int rt_udp_close(struct rtdm_dev_context *context,
                         rtdm_user_info_t *user_info);
 extern int rt_udp_ioctl(struct rtdm_dev_context *context,
                         rtdm_user_info_t *user_info,
-                        int request, void *arg);
+                        unsigned int request, void *arg);
 extern ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
                               rtdm_user_info_t *user_info,
                               struct msghdr *msg, int flags);

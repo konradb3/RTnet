@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         if (len < 0)
             break;
 
-        printf("Sent frame of %d bytes\n", len);
+        printf("Sent frame of %zd bytes\n", len);
 
         nanosleep(&delay, NULL);
     }

@@ -238,7 +238,8 @@ int rt_packet_close(struct rtdm_dev_context *sockctx,
  *  rt_packet_ioctl
  */
 int rt_packet_ioctl(struct rtdm_dev_context *sockctx,
-                    rtdm_user_info_t *user_info, int request, void *arg)
+                    rtdm_user_info_t *user_info,
+                    unsigned int request, void *arg)
 {
     struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
     struct _rtdm_setsockaddr_args *setaddr = arg;

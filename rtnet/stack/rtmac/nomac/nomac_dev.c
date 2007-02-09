@@ -38,7 +38,7 @@ static int nomac_dev_openclose(void)
 
 static int nomac_dev_ioctl(struct rtdm_dev_context *context,
                            rtdm_user_info_t *user_info,
-                           int request, void *arg)
+                           unsigned int request, void *arg)
 {
     struct nomac_priv   *nomac;
 

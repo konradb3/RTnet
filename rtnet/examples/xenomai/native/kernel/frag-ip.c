@@ -128,7 +128,7 @@ void recv_msg(void *arg)
         } else {
             unsigned long ip = ntohl(addr.sin_addr.s_addr);
 
-            printk("received packet from %lu.%lu.%lu.%lu, length: %d+2, "
+            printk("received packet from %lu.%lu.%lu.%lu, length: %zd+2, "
                    "encoded length: %d,\n flags: %X, content %s\n", ip >> 24,
                    (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF,
                    ret-sizeof(msgsize), msgsize, msg.msg_flags,
