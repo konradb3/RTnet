@@ -29,7 +29,7 @@
   */
 
 #define DRV_NAME            "rt_8139too"
-#define DRV_VERSION         "0.9.24-rt0.6"
+#define DRV_VERSION         "0.9.24-rt0.7"
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -83,9 +83,6 @@ MODULE_PARM_DESC (full_duplex, "8139too: Force full duplex for board(s) (1)");
 #define USE_IO_OPS 1
 #endif
  *** RTnet *** */
-
-/* Maximum events (Rx packets, etc.) to handle at each interrupt. */
-static int max_interrupt_work = 20;
 
 /* Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
    The RTL chips use a 64 element hash table based on the Ethernet CRC.  */
@@ -507,12 +504,10 @@ MODULE_LICENSE("GPL");
 
 #if 0	/* unused module parameters from original 8139too driver */
 MODULE_PARM (multicast_filter_limit, "i");
-MODULE_PARM (max_interrupt_work, "i");
 MODULE_PARM (debug, "i");
 
 MODULE_PARM_DESC (debug, "8139too bitmapped message enable number");
 MODULE_PARM_DESC (multicast_filter_limit, "8139too maximum number of filtered multicast addresses");
-MODULE_PARM_DESC (max_interrupt_work, "8139too maximum events handled per interrupt");
 #endif
 
 
@@ -1155,7 +1150,8 @@ static int rtl8139_open (struct rtnet_device *rtdev)
         rt_stack_connect(rtdev, &STACK_manager);
 
         retval = rtdm_irq_request(&tp->irq_handle, rtdev->irq,
-                                  rtl8139_interrupt, 0, rtdev->name, rtdev);
+                                  rtl8139_interrupt, RTDM_IRQTYPE_SHARED,
+                                  rtdev->name, rtdev);
         if (retval)
                 return retval;
 
@@ -1661,84 +1657,69 @@ static void rtl8139_weird_interrupt (struct rtnet_device *rtdev,
 static int rtl8139_interrupt(rtdm_irq_t *irq_handle)
 {
         nanosecs_abs_t time_stamp = rtdm_clock_read();
-
         struct rtnet_device *rtdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
         struct rtl8139_private *tp = rtdev->priv;
-
-        int boguscnt = max_interrupt_work;
         void *ioaddr = tp->mmio_addr;
-
         int ackstat;
         int status;
         int link_changed = 0; /* avoid bogus "uninit" warning */
-
         int saved_status = 0;
+        int ret = RTDM_IRQ_NONE;
 
         rtdm_lock_get(&tp->lock);
 
-        do {
-                status = RTL_R16 (IntrStatus);
+        status = RTL_R16(IntrStatus);
 
-                /* h/w no longer present (hotplug?) or major error, bail */
-                if (status == 0xFFFF)
-                        break;
+        /* h/w no longer present (hotplug?) or major error, bail */
+        if (unlikely(status == 0xFFFF) || unlikely(!(status & rtl8139_intr_mask)))
+                goto out;
 
-                if ((status &
-                     (PCIErr | PCSTimeout | RxUnderrun | RxOverflow | RxFIFOOver | TxErr | TxOK | RxErr | RxOK)) == 0)
-                        break;
+        ret = RTDM_IRQ_HANDLED;
 
-                /* Acknowledge all of the current interrupt sources ASAP, but
-                   an first get an additional status bit from CSCR. */
-                if (status & RxUnderrun)
-                        link_changed = RTL_R16 (CSCR) & CSCR_LinkChangeBit;
-
-                /* The chip takes special action when we clear RxAckBits,
-                 * so we clear them later in rtl8139_rx_interrupt
-                 */
-                ackstat = status & ~(RxAckBits | TxErr);
-                RTL_W16 (IntrStatus, ackstat);
-
-                if (rtnetif_running (rtdev) && (status & RxAckBits)) {
-                        saved_status |= RxAckBits;
-                        rtl8139_rx_interrupt (rtdev, tp, ioaddr, &time_stamp);
-                }
-
-                /* Check uncommon events with one test. */
-                if (status & (PCIErr | PCSTimeout | RxUnderrun | RxOverflow | RxFIFOOver | RxErr)) {
-                        rtl8139_weird_interrupt (rtdev, tp, ioaddr, status, link_changed);
-                }
-
-                if (rtnetif_running (rtdev) && (status & TxOK)) {
-                        rtl8139_tx_interrupt (rtdev, tp, ioaddr);
-                        if (status & TxErr)
-                                RTL_W16 (IntrStatus, TxErr);
-                        rtnetif_tx(rtdev);
-                }
-
-                if (rtnetif_running (rtdev) && (status & TxErr)) {
-                        saved_status|=TxErr;
-                }
-
-                boguscnt--;
-        } while (boguscnt > 0);
-        if (boguscnt <= 0) {
-                rtdm_printk(KERN_WARNING "%s: Too much work at interrupt, "
-                           "IntrStatus=0x%4.4x.\n", rtdev->name, status);
-                /* Clear all interrupt sources. */
-                RTL_W16 (IntrStatus, 0xffff);
+        /* close possible race with dev_close */
+        if (unlikely(!rtnetif_running(rtdev))) {
+                RTL_W16(IntrMask, 0);
+                goto out;
         }
 
+        /* Acknowledge all of the current interrupt sources ASAP, but
+           first get an additional status bit from CSCR. */
+        if (unlikely(status & RxUnderrun))
+                link_changed = RTL_R16(CSCR) & CSCR_LinkChangeBit;
+
+        /* The chip takes special action when we clear RxAckBits,
+         * so we clear them later in rtl8139_rx_interrupt
+         */
+        ackstat = status & ~(RxAckBits | TxErr);
+        if (ackstat)
+                RTL_W16(IntrStatus, ackstat);
+
+        if (status & RxAckBits) {
+                saved_status |= RxAckBits;
+                rtl8139_rx_interrupt(rtdev, tp, ioaddr, &time_stamp);
+        }
+
+        /* Check uncommon events with one test. */
+        if (unlikely(status & (PCIErr | PCSTimeout | RxUnderrun | RxErr)))
+                rtl8139_weird_interrupt(rtdev, tp, ioaddr, status, link_changed);
+
+        if (status & (TxOK |TxErr)) {
+                rtl8139_tx_interrupt(rtdev, tp, ioaddr);
+                if (status & TxErr) {
+                        RTL_W16(IntrStatus, TxErr);
+                        saved_status |= TxErr;
+                }
+        }
+ out:
         rtdm_lock_put(&tp->lock);
 
-        if (saved_status & RxAckBits) {
+        if (saved_status & RxAckBits)
                 rt_mark_stack_mgr(rtdev);
-        }
 
-        if (saved_status & TxErr) {
+        if (saved_status & TxErr)
                 rtnetif_err_tx(rtdev);
-        }
 
-        return RTDM_IRQ_HANDLED;
+        return ret;
 }
 
 
