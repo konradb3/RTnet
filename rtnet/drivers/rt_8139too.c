@@ -1746,15 +1746,11 @@ static int rtl8139_close (struct rtnet_device *rtdev)
 {
         struct rtl8139_private *tp = rtdev->priv;
         void *ioaddr = tp->mmio_addr;
-        int ret = 0;
         rtdm_lockctx_t context;
 
         printk ("%s: Shutting down ethercard, status was 0x%4.4x.\n", rtdev->name, RTL_R16 (IntrStatus));
 
         rtnetif_stop_queue (rtdev);
-
-        if ( (ret=rtdm_irq_free(&tp->irq_handle))<0 )
-                return ret;
 
         rtdm_lock_get_irqsave (&tp->lock, context);
         /* Stop the chip's Tx and Rx DMA processes. */
@@ -1765,6 +1761,8 @@ static int rtl8139_close (struct rtnet_device *rtdev)
         tp->stats.rx_missed_errors += RTL_R32 (RxMissed);
         RTL_W32 (RxMissed, 0);
         rtdm_lock_put_irqrestore (&tp->lock, context);
+
+        rtdm_irq_free(&tp->irq_handle);
 
         rt_stack_disconnect(rtdev);
 
