@@ -297,7 +297,7 @@ case "$1" in
         ifconfig rteth0-mac down 2>/dev/null
         ifconfig rtlo down 2>/dev/null
 
-        $RTIFCONFIG rteth0 down
+        $RTIFCONFIG rteth0 down 2>/dev/null
         $RTIFCONFIG rtlo down 2>/dev/null
 
         rmmod tdma rtmac rtcfg rtcap rt_loopback $RT_DRIVER rtpacket rtipv4 rtnet 2>/dev/null
@@ -317,6 +317,24 @@ case "$1" in
         $RTIFCONFIG rteth0 up promisc
         ifconfig rteth0 up
         ifconfig rteth0-mac up
+        ;;
+
+    loopback)
+        insmod $RTNET_MOD/rtnet$MODULE_EXT >/dev/null || exit 1
+        insmod $RTNET_MOD/rtipv4$MODULE_EXT >/dev/null || exit 1
+        insmod $RTNET_MOD/rtpacket$MODULE_EXT >/dev/null || exit 1
+
+        insmod $RTNET_MOD/rt_loopback$MODULE_EXT >/dev/null || exit 1
+
+        if [ $RTCAP = "yes" ]; then
+            insmod $RTNET_MOD/rtcap$MODULE_EXT >/dev/null || exit 1
+        fi
+
+        $RTIFCONFIG rtlo up 127.0.0.1
+
+        if [ $RTCAP = "yes" ]; then
+            ifconfig rtlo up
+        fi
         ;;
 
     *)
