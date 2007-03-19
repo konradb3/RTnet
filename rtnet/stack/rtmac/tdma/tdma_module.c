@@ -273,7 +273,8 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
         kfree(tdma->slot_table);
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
-    rtskb_pool_release(&tdma->cal_rtskb_pool);
+    if (test_bit(TDMA_FLAG_MASTER, &tdma->flags))
+        rtskb_pool_release(&tdma->cal_rtskb_pool);
 #endif
 
     RTNET_MOD_DEC_USE_COUNT;

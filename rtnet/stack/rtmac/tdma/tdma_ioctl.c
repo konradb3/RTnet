@@ -59,6 +59,8 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
         return -EBUSY;
     }
 
+    set_bit(TDMA_FLAG_MASTER, &tdma->flags);
+
     tdma->cal_rounds = cfg->args.master.cal_rounds;
 
     /* search at least 3 cycle periods for other masters */
@@ -87,8 +89,7 @@ static int tdma_ioctl_master(struct rtnet_device *rtdev,
     tdma->max_slot_id = cfg->args.master.max_slot_id;
     memset(tdma->slot_table, 0, table_size);
 
-    set_bit(TDMA_FLAG_MASTER, &tdma->flags);
-    tdma->cycle_period       = cfg->args.master.cycle_period;
+    tdma->cycle_period = cfg->args.master.cycle_period;
     tdma->sync_job.ref_count = 0;
     INIT_LIST_HEAD(&tdma->sync_job.entry);
 
