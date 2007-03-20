@@ -343,7 +343,8 @@ int main(int argc, char *argv[])
     /* This call also leaves primary mode, required for socket cleanup. */
     printf("shutting down\n");
 
-    /* Important: First close the socket! */
+    /* Note: The following loop is no longer required since Xenomai 2.4,
+     *       plain close works as well. */
     while ((close(sock) < 0) && (errno == EAGAIN)) {
         printf("socket busy - waiting...\n");
         sleep(1);

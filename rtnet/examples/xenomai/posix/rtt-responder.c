@@ -195,7 +195,8 @@ int main(int argc, char *argv[])
 
     pause();
 
-    /* Important: First close the socket! */
+    /* Note: The following loop and the strict ordering "close before task
+     *       termination" is no longer required since Xenomai 2.4. */
     while ((close(sock) < 0) && (errno == EAGAIN)) {
         printf("socket busy - waiting...\n");
         sleep(1);

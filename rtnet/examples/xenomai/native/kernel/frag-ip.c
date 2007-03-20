@@ -249,7 +249,8 @@ void cleanup_module(void)
     /* In case you started it in this module, see comment above.
      * rt_timer_stop(); */
 
-    /* Important: First close the socket! */
+    /* Note: The following loop and the strict ordering "close before task
+     *       termination" is no longer required since Xenomai 2.4. */
     while (rt_dev_close(sock) == -EAGAIN) {
         printk("frag-ip: Socket busy - waiting...\n");
         set_current_state(TASK_UNINTERRUPTIBLE);
