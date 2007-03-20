@@ -1,3 +1,22 @@
+0.9.9
+- enabled IRQ sharing for rt_8139too and rt_e1000
+- added x86_64 support (via Xenomai)
+- enabled 2.6.20 build
+- added loopback testing mode to rtnet script
+- fixed cleanup bug in tdma
+- fixed cleanup race in rt_8139too
+
+0.9.8
+- rt_8139too gained SIOCETHTOOL/ETHTOOL_GLINK support (link status query),
+  other drivers can follow now [Jorge]
+- SIOCGIFHWADDR support for RTnet devices (get hardware address)
+  [Paolo Stein]
+- fixed missing TOS initialisation for UDP [spotted by Mathias Koehrer]
+- micro-optimised rtskb_acquire()
+- fixed build error of e1000 over latest I-pipe patch
+- fixed remaining build warnings over 2.6.19
+- fixed clean and uninstallation rules
+
 0.9.7
 - fixed 0.9.6 regression in packet socket RX path
 - fixed restart of recvmsg syscall after signal interruption

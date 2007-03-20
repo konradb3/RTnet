@@ -1,9 +1,9 @@
 #
 # Automatically generated make config: don't edit
-# RTnet version: 0.9.8
-# Thu Jan 11 15:20:28 2007
+# RTnet version: 0.9.9
+# Tue Mar 20 19:17:01 2007
 #
-CONFIG_RTNET_VERSION="0.9.8"
+CONFIG_RTNET_VERSION="0.9.9"
 
 #
 # Real-Time Extension
