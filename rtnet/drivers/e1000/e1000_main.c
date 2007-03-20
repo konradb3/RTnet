@@ -313,8 +313,9 @@ static int e1000_request_irq(struct e1000_adapter *adapter)
 		flags &= ~SA_SHIRQ;
 #endif
         rt_stack_connect(netdev, &STACK_manager);
-	if ((err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq, e1000_intr, 0,
-		              netdev->name, netdev)))
+	if ((err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq,
+				    e1000_intr, RTDM_IRQTYPE_SHARED,
+				    netdev->name, netdev)))
 		DPRINTK(PROBE, ERR,
 		    "Unable to allocate interrupt Error: %d\n", err);
 
