@@ -69,7 +69,8 @@ of the central master, additional backup masters can be set up which will take
 over sending Synchronistation frames in case of the the primary master failing
 to do so.
 
-This discipline revision supports flexible assignment of time slots to
+A time slot can be used to transmit a single packet of up to a specified maximum
+size. This discipline revision supports flexible assignment of time slots to
 real-time network participants. It is possible to use multiple slots per cycle.
 Furthermore, a slot can be shared between participants by occupying it only
 every Nth cycle. Besides at least one payload slot per participant, slots have
