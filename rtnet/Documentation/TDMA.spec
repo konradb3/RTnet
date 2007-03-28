@@ -445,14 +445,15 @@ Symbols:
 Time Slots
 ==========
 
-This TDMA discipline revision supports flexible assignment of time slots to
-real-time network participants. It is now possible to use multiple slots per
+A time slot can be used to transmit a single packet of up to a specified maximum
+size. This TDMA discipline revision supports flexible assignment of time slots
+to real-time network participants. It is now possible to use multiple slots per
 cycle. Furthermore, a slot can be shared between participants by occupying it
 only every Nth cycle. Besides at least one payload slot per participant, slots
 have to be reserved for the Synchronisation frame and, optionally, for one or
-more backup Synchronisation frames. The concrete timing strongly depends on
-the capability of all network participants. Therefore, timing requirements
-like worst case jitters or minimum slot gaps are not specified here.
+more backup Synchronisation frames. The concrete timing strongly depends on the
+capability of all network participants. Therefore, timing requirements like
+worst case jitters or minimum slot gaps are not specified here.
 
 In contrast to earlier TDMA discipline revisions, the slave configuration is
 no longer distributed by the TDMA master. This means that the slaves have to
