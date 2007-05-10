@@ -20,7 +20,8 @@ endif
 
 sbin_SCRIPTS = rtnet
 
-dist_sysconf_DATA = rtnet.conf $(OPTCONF)
+nodist_sysconf_DATA = rtnet.conf
+dist_sysconf_DATA = $(OPTCONF)
 
 sbin_PROGRAMS = rtifconfig rtiwconfig $(OPTPROGS)
 

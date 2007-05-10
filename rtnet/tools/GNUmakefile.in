@@ -66,7 +66,7 @@ CONFIG_CLEAN_FILES = rtnet rtnet.conf
 am__EXEEXT_5 = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
 	$(am__EXEEXT_4)
 am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sbindir)" \
-	"$(DESTDIR)$(sysconfdir)"
+	"$(DESTDIR)$(sysconfdir)" "$(DESTDIR)$(sysconfdir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
 nomaccfg_SOURCES = nomaccfg.c
@@ -107,7 +107,7 @@ SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtiwconfig.c rtping.c \
 	rtroute.c tdmacfg.c
 DIST_SOURCES = nomaccfg.c rtcfg.c rtifconfig.c rtiwconfig.c rtping.c \
 	rtroute.c tdmacfg.c
-am__dist_sysconf_DATA_DIST = rtnet.conf tdma.conf
+am__dist_sysconf_DATA_DIST = tdma.conf
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -115,7 +115,8 @@ am__vpath_adj = case $$p in \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 dist_sysconfDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(dist_sysconf_DATA)
+nodist_sysconfDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(dist_sysconf_DATA) $(nodist_sysconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -306,7 +307,8 @@ OPTPROGS = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4)
 OPTCONF = $(am__append_5)
 sbin_SCRIPTS = rtnet
-dist_sysconf_DATA = rtnet.conf $(OPTCONF)
+nodist_sysconf_DATA = rtnet.conf
+dist_sysconf_DATA = $(OPTCONF)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include \
@@ -479,6 +481,23 @@ uninstall-dist_sysconfDATA:
 	  echo " rm -f '$(DESTDIR)$(sysconfdir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(sysconfdir)/$$f"; \
 	done
+install-nodist_sysconfDATA: $(nodist_sysconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(sysconfdir)" || $(mkdir_p) "$(DESTDIR)$(sysconfdir)"
+	@list='$(nodist_sysconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(nodist_sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  $(nodist_sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
+
+uninstall-nodist_sysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(nodist_sysconf_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -559,7 +578,7 @@ check-am: all-am
 check: check-am
 all-am: GNUmakefile $(PROGRAMS) $(SCRIPTS) $(DATA) all-local
 installdirs:
-	for dir in "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(sysconfdir)" "$(DESTDIR)$(sysconfdir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -609,8 +628,8 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-dist_sysconfDATA install-sbinPROGRAMS \
-	install-sbinSCRIPTS
+install-exec-am: install-dist_sysconfDATA install-nodist_sysconfDATA \
+	install-sbinPROGRAMS install-sbinSCRIPTS
 
 install-info: install-info-am
 
@@ -637,7 +656,8 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-dist_sysconfDATA uninstall-info-am \
-	uninstall-sbinPROGRAMS uninstall-sbinSCRIPTS
+	uninstall-nodist_sysconfDATA uninstall-sbinPROGRAMS \
+	uninstall-sbinSCRIPTS
 
 .PHONY: CTAGS GTAGS all all-am all-local check check-am clean \
 	clean-generic clean-libtool clean-sbinPROGRAMS ctags distclean \
@@ -645,13 +665,15 @@ uninstall-am: uninstall-dist_sysconfDATA uninstall-info-am \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-data install-data-am \
 	install-dist_sysconfDATA install-exec install-exec-am \
-	install-info install-info-am install-man install-sbinPROGRAMS \
+	install-info install-info-am install-man \
+	install-nodist_sysconfDATA install-sbinPROGRAMS \
 	install-sbinSCRIPTS install-strip installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-dist_sysconfDATA uninstall-info-am \
-	uninstall-sbinPROGRAMS uninstall-sbinSCRIPTS
+	uninstall-nodist_sysconfDATA uninstall-sbinPROGRAMS \
+	uninstall-sbinSCRIPTS
 
 
 all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
