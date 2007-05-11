@@ -204,7 +204,7 @@ static void rtpc_dispatch_handler(void *arg)
 
 
 
-static void rtpc_signal_handler(rtdm_nrtsig_t nrt_sig)
+static void rtpc_signal_handler(rtdm_nrtsig_t nrt_sig, void *arg)
 {
     struct rt_proc_call *call;
 
@@ -253,7 +253,7 @@ int __init rtpc_init(void)
     int ret;
 
 
-    ret = rtdm_nrtsig_init(&rtpc_nrt_signal, rtpc_signal_handler);
+    ret = rtdm_nrtsig_init(&rtpc_nrt_signal, rtpc_signal_handler, NULL);
     if (ret < 0)
         return ret;
 

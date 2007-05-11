@@ -174,7 +174,7 @@ void rtcap_kfree_rtskb(struct rtskb *rtskb)
 
 
 
-static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig)
+static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 {
     struct rtskb            *rtskb;
     struct sk_buff          *skb;
@@ -391,7 +391,7 @@ int __init rtcap_init(void)
 
     rtskb_queue_init(&cap_queue);
 
-    ret = rtdm_nrtsig_init(&cap_signal, rtcap_signal_handler);
+    ret = rtdm_nrtsig_init(&cap_signal, rtcap_signal_handler, NULL);
     if (ret < 0)
         goto error1;
 
@@ -532,7 +532,7 @@ void rtcap_cleanup(void)
     rtdm_lock_put_irqrestore(&rtcap_lock, context);
 
     /* empty queue (should be already empty) */
-    rtcap_signal_handler(0 /* we ignore it anyway */);
+    rtcap_signal_handler(0, NULL /* we ignore them anyway */);
 
     cleanup_tap_devices();
 

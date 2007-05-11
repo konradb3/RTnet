@@ -397,7 +397,7 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
  * It is activated from rtnetproxy_recv whenever rtnet received a frame to
  * be processed by rtnetproxy.
  * ************************************************************************ */
-static void rtnetproxy_signal_handler(rtdm_nrtsig_t nrtsig)
+static void rtnetproxy_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 {
     struct rtskb *rtskb;
 
@@ -514,7 +514,7 @@ static int __init rtnetproxy_init_module(void)
                    RTDM_TASK_LOWEST_PRIORITY, 0);
 
     /* Register non-real-time signal */
-    rtdm_nrtsig_init(&rtnetproxy_signal, rtnetproxy_signal_handler);
+    rtdm_nrtsig_init(&rtnetproxy_signal, rtnetproxy_signal_handler, NULL);
 
     /* Register with RTnet */
     rt_ip_fallback_handler = rtnetproxy_recv;

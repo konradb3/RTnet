@@ -61,6 +61,8 @@
             rtdm_irq_enable(irq_handle); \
         err; \
     })
+#define rtdm_nrtsig_init(nrt_sig, handler, arg) \
+    rtdm_nrtsig_init(nrt_sig, (rtdm_nrtsig_handler_t)handler)
 #endif /* RTDM_API_VER < 6 */
 
 #endif /* __RTNET_SYS_H_ */
