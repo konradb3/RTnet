@@ -139,7 +139,7 @@ start_master() {
         for SLAVE in $TDMA_SLAVES; do
             echo "\$TDMACFG rteth0 slot 0 $OFFSET;ifconfig vnic0 up \$IPADDR \$NETMASK_OPT" | \
                 $RTCFG rteth0 add $SLAVE -stage1 - $STAGE_2_OPT
-            let OFFSET=$OFFSET+$TDMA_OFFSET
+            OFFSET=$(($OFFSET+$TDMA_OFFSET))
         done
     else
         # Get setup from TDMA_CONFIG file:
