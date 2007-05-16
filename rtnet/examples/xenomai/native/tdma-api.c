@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 
     rt_task_shadow(&task, "tdma-api", 50, 0);
 
+    /* See rtmac.h for more detailed description of rtmac_waitinfo. */
     waitinfo.type = TDMA_WAIT_ON_SYNC;
     waitinfo.size = sizeof(waitinfo);
 

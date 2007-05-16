@@ -51,10 +51,22 @@
 
 /* RTMAC_RTIOC_WAITONCYCLE_EX control and status data */
 struct rtmac_waitinfo {
-    unsigned int    type; /* set to wait type before invoking the service */
-    size_t          size; /* must be at least sizeof(struct rtmac_waitinfo) */
+    /** Set to wait type before invoking the service */
+    unsigned int    type;
+
+    /** Set to sizeof(struct rtmac_waitinfo) before invoking the service */
+    size_t          size;
+
+    /** Counter of elementary cycles of the underlying RTmac discipline
+        (if applicable) */
     unsigned long   cycle_no;
+
+    /** Date (in local time) of the last elementary cycle start of the RTmac
+        discipline (if applicable) */
     nanosecs_abs_t  cycle_start;
+
+    /** Offset of the local clock to the global clock provided by the RTmac
+        discipline (if applicable): t_global = t_local + clock_offset */
     nanosecs_rel_t  clock_offset;
 };
 
