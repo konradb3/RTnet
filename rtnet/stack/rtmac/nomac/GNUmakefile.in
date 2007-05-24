@@ -269,7 +269,7 @@ libkernel_nomac_a_SOURCES = \
 
 OBJS = nomac$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-am
 
 .SUFFIXES:

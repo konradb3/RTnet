@@ -53,7 +53,7 @@ install-exec-local: $(OBJS)
 uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
-clean-local: $(ibkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES)
+clean-local: $(libkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:
@@ -61,6 +61,6 @@ distclean-local:
 
 EXTRA_DIST = Kconfig Makefile.kbuild
 
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 
 .PHONY: FORCE

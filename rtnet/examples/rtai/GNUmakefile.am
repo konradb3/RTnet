@@ -1,4 +1,4 @@
-exampledir = $(DESTDIR)$(prefix)/examples/rtai
+exampledir = $(prefix)/examples/rtai
 
 example_PROGRAMS = rtnet_ifs
 

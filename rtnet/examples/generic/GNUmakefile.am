@@ -1,4 +1,4 @@
-exampledir = $(DESTDIR)$(prefix)/examples/generic
+exampledir = $(prefix)/examples/generic
 
 example_PROGRAMS = \
 	linux_client \

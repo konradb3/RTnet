@@ -69,6 +69,6 @@ SUBDIRS = $(OPTDIRS)
 
 EXTRA_DIST = Kconfig Makefile.kbuild README.r8169
 
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 
 .PHONY: FORCE

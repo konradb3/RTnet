@@ -452,7 +452,7 @@ OBJS = $(am__append_4) $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_11) $(am__append_12) $(am__append_13) \
 	$(am__append_14)
 EXTRA_DIST = Kconfig Makefile.kbuild
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-recursive
 
 .SUFFIXES:

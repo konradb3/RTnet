@@ -289,7 +289,7 @@ libkernel_rt2500pci_a_SOURCES = \
 
 OBJS = rt_rt2x00core$(modext) rt_rt2500pci$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-am
 
 .SUFFIXES:

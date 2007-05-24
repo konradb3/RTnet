@@ -270,7 +270,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-exampledir = $(DESTDIR)$(prefix)/examples/xenomai/native
+exampledir = $(prefix)/examples/xenomai/native
 AM_CFLAGS = \
 	$(RTEXT_USER_CFLAGS) \
 	-I$(top_srcdir)/stack/include \

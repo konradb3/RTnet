@@ -1,4 +1,4 @@
-exampledir = $(DESTDIR)$(prefix)/examples/xenomai/native
+exampledir = $(prefix)/examples/xenomai/native
 
 example_PROGRAMS = rtnet_ifs
 

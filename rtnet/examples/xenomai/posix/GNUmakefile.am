@@ -1,4 +1,4 @@
-exampledir = $(DESTDIR)$(prefix)/examples/xenomai/posix
+exampledir = $(prefix)/examples/xenomai/posix
 
 example_PROGRAMS =
 

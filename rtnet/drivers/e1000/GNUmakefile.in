@@ -273,7 +273,7 @@ libkernel_e1000_a_SOURCES = \
 
 OBJS = rt_e1000$(modext)
 EXTRA_DIST = Makefile.kbuild
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-am
 
 .SUFFIXES:

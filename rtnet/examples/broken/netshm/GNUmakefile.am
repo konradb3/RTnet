@@ -34,6 +34,6 @@ clean-local: $(libkernel_netshm_a_SOURCES)
 
 EXTRA_DIST = Makefile.kbuild
 
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 
 .PHONY: FORCE

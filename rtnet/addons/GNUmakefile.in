@@ -283,7 +283,7 @@ libkernel_rtnetproxy_a_SOURCES = \
 
 OBJS = $(am__append_1) $(am__append_2)
 EXTRA_DIST = Kconfig Makefile.kbuild
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-am
 
 .SUFFIXES:
@@ -583,7 +583,7 @@ install-exec-local: $(OBJS)
 uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
-clean-local: $(ibkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES)
+clean-local: $(libkernel_rtcap_a_SOURCES) $(libkernel_rtnetproxy_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:

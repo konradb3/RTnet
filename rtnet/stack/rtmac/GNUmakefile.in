@@ -284,7 +284,7 @@ libkernel_rtmac_a_SOURCES = \
 
 OBJS = rtmac$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-recursive
 
 .SUFFIXES:

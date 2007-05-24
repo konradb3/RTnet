@@ -292,7 +292,7 @@ libkernel_rtnet_a_SOURCES = iovec.c rtdev.c rtdev_mgr.c rtnet_chrdev.c \
 	$(am__append_5)
 OBJS = rtnet$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-recursive
 
 .SUFFIXES:

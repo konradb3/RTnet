@@ -268,7 +268,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-exampledir = $(DESTDIR)$(prefix)/examples/xenomai/posix
+exampledir = $(prefix)/examples/xenomai/posix
 AM_CFLAGS = \
 	$(XNPOSIX_USER_CFLAGS) \
 	-I$(top_srcdir)/stack/include

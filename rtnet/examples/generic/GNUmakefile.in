@@ -256,7 +256,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-exampledir = $(DESTDIR)$(prefix)/examples/generic
+exampledir = $(prefix)/examples/generic
 all: all-am
 
 .SUFFIXES:

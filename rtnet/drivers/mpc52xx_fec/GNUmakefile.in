@@ -265,7 +265,7 @@ libkernel_mpc52xx_fec_a_SOURCES = \
 
 OBJS = rt_mpc52xx_fec$(modext)
 EXTRA_DIST = Makefile.kbuild
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-am
 
 .SUFFIXES:

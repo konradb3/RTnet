@@ -262,7 +262,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-exampledir = $(DESTDIR)$(prefix)/examples/rtai
+exampledir = $(prefix)/examples/rtai
 AM_CFLAGS = \
 	$(RTEXT_USER_CFLAGS) \
 	-I$(top_srcdir)/stack/include

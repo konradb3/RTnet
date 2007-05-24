@@ -276,7 +276,7 @@ libkernel_tulip_a_SOURCES = \
 
 OBJS = rt_tulip$(modext)
 EXTRA_DIST = Makefile.kbuild
-DISTCLEANFILES = Makefile
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-am
 
 .SUFFIXES:
