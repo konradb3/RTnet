@@ -91,7 +91,7 @@ static const char version[] =
 #include <linux/skbuff.h>
 //#include <linux/kcomp.h>
 
-#ifdef CONFIG_SYSCTL
+#ifdef DISABLED____CONFIG_SYSCTL
 #include <linux/proc_fs.h>
 #include <linux/sysctl.h>
 #endif
@@ -458,7 +458,7 @@ static void smc_write_phy_register(int ioaddr, byte phyaddr, byte phyreg, word p
 
 /* Initilizes our device's sysctl proc filesystem */
 
-#ifdef CONFIG_SYSCTL
+#ifdef DISABLED____CONFIG_SYSCTL
 static void smc_sysctl_register(struct rtnet_device *);
 static void smc_sysctl_unregister(struct rtnet_device *);
 #endif /* CONFIG_SYSCTL */ 
@@ -1449,7 +1449,7 @@ static int smc_open(struct rtnet_device *dev)
 		outw( address, ioaddr + ADDR0_REG + i );
 	}
 
-#ifdef CONFIG_SYSCTL
+#ifdef DISABLED____CONFIG_SYSCTL
 	smc_sysctl_register(dev);
 #endif /* CONFIG_SYSCTL */
 
@@ -1917,7 +1917,7 @@ static int smc_close(struct rtnet_device *dev)
 
 	PRINTK2("%s:smc_close\n", dev->name);
 
-#ifdef CONFIG_SYSCTL
+#ifdef DISABLED____CONFIG_SYSCTL
 	smc_sysctl_unregister(dev);
 #endif /* CONFIG_SYSCTL */
 
@@ -2089,7 +2089,7 @@ void __exit cleanup_module(void)
 #endif /* MODULE */
 
 
-#ifdef CONFIG_SYSCTL
+#ifdef DISABLED____CONFIG_SYSCTL
 
 
 /*------------------------------------------------------------
