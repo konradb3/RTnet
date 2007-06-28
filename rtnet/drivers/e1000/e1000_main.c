@@ -273,7 +273,7 @@ e1000_init_module(void)
 
 	printk(KERN_INFO "%s\n", e1000_copyright);
 
-	ret = pci_module_init(&e1000_driver);
+	ret = pci_register_driver(&e1000_driver);
 	return ret;
 }
 
@@ -299,7 +299,7 @@ static int e1000_request_irq(struct e1000_adapter *adapter)
 	struct rtnet_device *netdev = adapter->netdev;
 	int flags, err = 0;
 
-	flags = SA_SHIRQ | SA_SAMPLE_RANDOM;
+	flags = RTDM_IRQTYPE_SHARED;
 #ifdef CONFIG_PCI_MSI
 	if (adapter->hw.mac_type > e1000_82547_rev_2) {
 		adapter->have_msi = TRUE;
@@ -310,12 +310,11 @@ static int e1000_request_irq(struct e1000_adapter *adapter)
 		}
 	}
 	if (adapter->have_msi)
-		flags &= ~SA_SHIRQ;
+		flags = 0;
 #endif
         rt_stack_connect(netdev, &STACK_manager);
 	if ((err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq,
-				    e1000_intr, RTDM_IRQTYPE_SHARED,
-				    netdev->name, netdev)))
+				    e1000_intr, flags, netdev->name, netdev)))
 		DPRINTK(PROBE, ERR,
 		    "Unable to allocate interrupt Error: %d\n", err);
 
