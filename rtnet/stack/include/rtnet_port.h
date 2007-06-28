@@ -41,6 +41,19 @@
 # define kmem_cache                         kmem_cache_s
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+/* only matches directly on vendor and device ID */
+static inline int pci_dev_present(const struct pci_device_id *ids)
+{
+	while (ids->vendor) {
+		if (pci_find_device(ids->vendor, ids->device, NULL))
+			return 1;
+		ids++;
+	}
+	return 0;
+}
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,8)
 # define proc_dointvec(a, b, c, d, e, f)    proc_dointvec(a, b, c, d, e)
 #endif

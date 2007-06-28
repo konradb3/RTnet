@@ -2037,7 +2037,7 @@ static int __init via_rhine_init (void)
 #ifdef MODULE
 	printk(version);
 #endif
-	return pci_module_init (&via_rhine_driver);
+	return pci_register_driver (&via_rhine_driver);
 }
 
 

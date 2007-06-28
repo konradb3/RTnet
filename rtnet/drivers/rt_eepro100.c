@@ -1999,7 +1999,7 @@ static int __init eepro100_init_module(void)
 	debug = speedo_debug; /* touch debug variable */
 #endif /* RTNET_DRV_EEPRO100_DBG */
 
-	return pci_module_init(&eepro100_driver);
+	return pci_register_driver(&eepro100_driver);
 }
 
 static void __exit eepro100_cleanup_module(void)

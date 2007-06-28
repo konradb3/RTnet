@@ -3358,7 +3358,7 @@ static int __init vortex_init (void)
 {
 	int pci_rc;
 
-	pci_rc = pci_module_init(&vortex_driver);
+	pci_rc = pci_register_driver(&vortex_driver);
 
 	if (pci_rc == 0)
 		vortex_have_pci = 1;
