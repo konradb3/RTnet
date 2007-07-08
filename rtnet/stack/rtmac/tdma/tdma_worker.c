@@ -38,8 +38,8 @@ static void do_slot_job(struct tdma_priv *tdma, struct tdma_slot *job,
     rtdm_lock_put_irqrestore(&tdma->lock, lockctx);
 
     /* wait for slot begin, then send one pending packet */
-    rtdm_task_sleep_until(tdma->current_cycle_start +
-                            SLOT_JOB(job)->offset);
+    rtdm_task_sleep_abs(tdma->current_cycle_start + SLOT_JOB(job)->offset,
+                        RTDM_TIMERMODE_REALTIME);
 
     rtdm_lock_get_irqsave(&tdma->lock, lockctx);
     rtskb = __rtskb_prio_dequeue(SLOT_JOB(job)->queue);
@@ -57,7 +57,8 @@ static void do_xmit_sync_job(struct tdma_priv *tdma, rtdm_lockctx_t lockctx)
     rtdm_lock_put_irqrestore(&tdma->lock, lockctx);
 
     /* wait for beginning of next cycle, then send sync */
-    rtdm_task_sleep_until(tdma->current_cycle_start + tdma->cycle_period);
+    rtdm_task_sleep_abs(tdma->current_cycle_start + tdma->cycle_period,
+                        RTDM_TIMERMODE_REALTIME);
     rtdm_lock_get_irqsave(&tdma->lock, lockctx);
     tdma->current_cycle++;
     tdma->current_cycle_start += tdma->cycle_period;
@@ -73,7 +74,8 @@ static void do_backup_sync_job(struct tdma_priv *tdma, rtdm_lockctx_t lockctx)
     rtdm_lock_put_irqrestore(&tdma->lock, lockctx);
 
     /* wait for backup slot */
-    rtdm_task_sleep_until(tdma->current_cycle_start + tdma->backup_sync_inc);
+    rtdm_task_sleep_abs(tdma->current_cycle_start + tdma->backup_sync_inc,
+                        RTDM_TIMERMODE_REALTIME);
 
     /* take over sync transmission if all earlier masters failed */
     if (!test_and_clear_bit(TDMA_FLAG_RECEIVED_SYNC, &tdma->flags)) {
@@ -113,7 +115,8 @@ static struct tdma_job *do_request_cal_job(struct tdma_priv *tdma,
 
     rtdm_lock_put_irqrestore(&tdma->lock, lockctx);
 
-    rtdm_task_sleep_until(tdma->current_cycle_start + job->offset);
+    rtdm_task_sleep_abs(tdma->current_cycle_start + job->offset,
+                        RTDM_TIMERMODE_REALTIME);
     err = tdma_xmit_request_cal_frame(tdma,
             tdma->current_cycle + job->period, job->offset);
 
@@ -155,7 +158,8 @@ static struct tdma_job *do_reply_cal_job(struct tdma_priv *tdma,
 
     if (job->reply_cycle == tdma->current_cycle) {
         /* send reply in the assigned slot */
-        rtdm_task_sleep_until(tdma->current_cycle_start + job->reply_offset);
+        rtdm_task_sleep_abs(tdma->current_cycle_start + job->reply_offset,
+                            RTDM_TIMERMODE_REALTIME);
         rtmac_xmit(job->reply_rtskb);
     } else {
         /* cleanup if cycle already passed */

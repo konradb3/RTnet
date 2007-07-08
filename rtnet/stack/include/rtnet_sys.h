@@ -63,6 +63,8 @@
     })
 #define rtdm_nrtsig_init(nrt_sig, handler, arg) \
     rtdm_nrtsig_init(nrt_sig, (rtdm_nrtsig_handler_t)handler)
+#define rtdm_task_sleep_abs(wakeup_date, mode) \
+    rtdm_task_sleep_until(wakeup_date)
 #endif /* RTDM_API_VER < 6 */
 
 #endif /* __RTNET_SYS_H_ */
