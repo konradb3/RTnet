@@ -227,7 +227,7 @@ struct smc_local {
 	unsigned short ChipRev;
 	/* <= Pramod, Odd Byte issue */
 
-#ifdef CONFIG_SYSCTL
+#ifdef DISABLED____CONFIG_SYSCTL
 
 	// Root directory /proc/sys/dev
 	// Second entry must be null to terminate the table
@@ -1412,6 +1412,7 @@ static int smc_open(struct rtnet_device *dev)
 	lp->rcr_cur_mode = RCR_DEFAULT;
 	lp->rpc_cur_mode = RPC_DEFAULT;
 
+#ifdef DISABLED____CONFIG_SYSCTL
 	// Set default parameters (files)
 	lp->ctl_swfdup = 0;
 	lp->ctl_ephloop = 0;
@@ -1424,6 +1425,7 @@ static int smc_open(struct rtnet_device *dev)
 	lp->ctl_lnkfail = 1;
 	lp->ctl_forcol = 0;
 	lp->ctl_filtcar = 0;
+#endif /* CONFIG_SYSCTL */
 
 	/* reset the hardware */
 
@@ -3575,6 +3577,7 @@ static void smc_wait_ms(unsigned int ms)
 /*------------------------------------------------------------
  . Sets the PHY to a configuration as determined by the user
  .-------------------------------------------------------------*/
+#ifdef DISABLED____CONFIG_SYSCTL
 static int smc_phy_fixed(struct rtnet_device* dev)
 {
 	int ioaddr = dev->base_addr;
@@ -3609,6 +3612,7 @@ static int smc_phy_fixed(struct rtnet_device* dev)
 	// Success
 	return(1);
 }
+#endif // CONFIG_SYSCTL
 
 
 /*------------------------------------------------------------
@@ -3703,6 +3707,7 @@ static void smc_phy_configure(struct rtnet_device* dev)
 	if (my_phy_caps & PHY_STAT_CAP_TH)
 		my_ad_caps |= PHY_AD_10_HDX;
 
+#ifdef DISABLED____CONFIG_SYSCTL
 	// Disable capabilities not selected by our user
 	if (lp->ctl_rspeed != 100)
 		{
@@ -3713,6 +3718,7 @@ static void smc_phy_configure(struct rtnet_device* dev)
 		{
 		my_ad_caps &= ~(PHY_AD_TX_FDX|PHY_AD_10_FDX);
 		}
+#endif // CONFIG_SYSCTL
 
 	// Update our Auto-Neg Advertisement Register
 	smc_write_phy_register(ioaddr, phyaddr, PHY_AD_REG, my_ad_caps);
@@ -3720,12 +3726,14 @@ static void smc_phy_configure(struct rtnet_device* dev)
 	PRINTK2("%s:phy caps=%x\n", dev->name, my_phy_caps);
 	PRINTK2("%s:phy advertised caps=%x\n", dev->name, my_ad_caps);
 
+#ifdef DISABLED____CONFIG_SYSCTL
 	// If the user requested no auto neg, then go set his request
 	if (!(lp->ctl_autoneg))
 		{
 		smc_phy_fixed(dev);
 		goto smc_phy_configure_exit;
 		}
+#endif // CONFIG_SYSCTL
 
 	// Restart auto-negotiation process in order to advertise my caps
 	smc_write_phy_register( ioaddr, phyaddr, PHY_CNTL_REG,
