@@ -42,6 +42,7 @@
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#include <linux/pci.h>
 /* only matches directly on vendor and device ID */
 static inline int pci_dev_present(const struct pci_device_id *ids)
 {
