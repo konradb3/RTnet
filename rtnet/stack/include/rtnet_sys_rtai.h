@@ -32,14 +32,6 @@
 #undef PRINTK
 
 
-static inline void nano_to_timeval(__u64 time, struct timeval *tval)
-{
-    tval->tv_sec = rtai_ulldiv(time, 1000000000,
-                               (unsigned long *)&tval->tv_usec);
-    tval->tv_usec /= 1000;
-}
-
-
 #define CONFIG_RTOS_STARTSTOP_TIMER 1
 
 static inline int rtos_timer_start(void)

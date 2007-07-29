@@ -36,14 +36,6 @@
 #endif
 
 
-static inline void nano_to_timeval(__u64 time, struct timeval *tval)
-{
-    tval->tv_sec = rthal_ulldiv(time, 1000000000,
-                                (unsigned long *)&tval->tv_usec);
-    tval->tv_usec /= 1000;
-}
-
-
 #ifdef CONFIG_XENO_2_0x
 
 #define CONFIG_RTOS_STARTSTOP_TIMER 1
