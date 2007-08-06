@@ -561,7 +561,11 @@ int rtskb_pools_init(void)
 {
     rtskb_slab_pool = kmem_cache_create("rtskb_slab_pool",
         ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(RTSKB_SIZE),
-        0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+        0, SLAB_HWCACHE_ALIGN, NULL
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
+        , NULL
+#endif
+        );
     if (rtskb_slab_pool == NULL)
         return -ENOMEM;
 
