@@ -56,12 +56,12 @@
 
 
 struct rtcfg_frm_head {
-#ifdef __LITTLE_ENDIAN
-    u8 id:5,
-       version:3;
-#elif __BIG_ENDIAN
-    u8 version:3,
-       id:5;
+#if defined(__LITTLE_ENDIAN_BITFIELD)
+    u8 id:5;
+    u8 version:3;
+#elif defined(__BIG_ENDIAN_BITFIELD)
+    u8 version:3;
+    u8 id:5;
 #else
     #error unsupported byte order
 #endif
