@@ -43,8 +43,8 @@ fi
 cat -n Kconfig | grep "     3" | sed -e 's/[^d]*default \"\([^\"]*\)\"/\1/' > config/autoconf/.version
 
 aclocal-1.9 -I config/m4
-libtoolize --force --copy
 autoheader
+libtoolize --force --copy
 automake-1.9 --add-missing --copy --gnu -Wall
 if test x"${1}" = x"verbose"; then
     autoconf -Wall

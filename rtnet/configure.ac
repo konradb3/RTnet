@@ -4,7 +4,7 @@
 AC_PREREQ(2.59)
 
 AC_INIT([RTnet],
-        m4_normalize(m4_include(config/autoconf/.version)),
+        m4_normalize(m4_include([config/autoconf/.version])),
         [rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
@@ -54,7 +54,7 @@ case "$host" in
         RTNET_TARGET_ARCH=x86_64
         wanted_kernel_arch=CONFIG_X86_64
         ;;
-    arm-*)
+    arm*-*)
         RTNET_TARGET_ARCH=arm
         wanted_kernel_arch=CONFIG_ARM
         ;;

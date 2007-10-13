@@ -19,6 +19,9 @@ ppc64|powerpc64)
 ia64|itanium)
     echo ia64-unknown-linux-gnu
     ;;
+arm*)
+    echo $1-unknown-linux-gnu
+    ;;
 "")
     # Shorthand not specified: return default value.
     echo $2
