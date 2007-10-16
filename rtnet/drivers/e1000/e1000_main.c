@@ -1202,6 +1202,9 @@ e1000_open(struct rtnet_device *netdev)
 	    e1000_check_mng_mode(&adapter->hw))
 		e1000_get_hw_control(adapter);
 
+	/* Wait for the hardware to come up */
+	msleep(3000);
+
 	return E1000_SUCCESS;
 
 err_up:
