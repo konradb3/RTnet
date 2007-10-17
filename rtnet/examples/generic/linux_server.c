@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
     }
 
     for (;;) {
+        clientLength=sizeof(clientName);
         size = recvfrom(udpSocket, mesg, MAX_MESG_SIZE, 0,
                         (struct sockaddr *)&clientName, &clientLength);
         if (size == -1) {
