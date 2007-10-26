@@ -19,6 +19,7 @@ modext = $(RTNET_MODULE_EXT)
 
 EXTRA_LIBRARIES = \
 	libkernel_8139too.a \
+	libkernel_at91_ether.a \
 	libkernel_eepro100.a \
 	libkernel_eth1394.a \
 	libkernel_loopback.a \
@@ -39,6 +40,15 @@ libkernel_8139too_a_CPPFLAGS = \
 
 libkernel_8139too_a_SOURCES = \
 	rt_8139too.c
+
+libkernel_at91_ether_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_at91_ether_a_SOURCES = \
+	rt_at91_ether.c \
+	rt_at91_ether.h
 
 libkernel_eepro100_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
@@ -124,8 +134,13 @@ libkernel_via_rhine_a_SOURCES = \
 
 OBJS =
 
+
 if CONFIG_RTNET_DRV_8139
 OBJS += rt_8139too$(modext)
+endif
+
+if CONFIG_RTNET_DRV_AT91ETHER
+OBJS += rt_at91_ether$(modext)
 endif
 
 if CONFIG_RTNET_DRV_EEPRO100
@@ -171,6 +186,9 @@ endif
 rt_8139too.o: libkernel_8139too.a
 	$(LD) --whole-archive $< -r -o $@
 
+rt_at91_ether.o: libkernel_at91_ether.a
+	$(LD) --whole-archive $< -r -o $@
+
 rt_eepro100.o: libkernel_eepro100.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -208,6 +226,7 @@ all-local.o: $(OBJS)
 
 # 2.6 build
 all-local.ko: $(libkernel_8139too_a_SOURCES) \
+		$(libkernel_at91_ether_a_SOURCES) \
 		$(libkernel_eepro100_a_SOURCES) \
 		$(libkernel_eth1394_a_SOURCES) \
 		$(libkernel_loopback_a_SOURCES) \
@@ -228,6 +247,7 @@ uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
 clean-local: $(libkernel_8139too_a_SOURCES) \
+		$(libkernel_at91_ether_a_SOURCES) \
 		$(libkernel_eepro100_a_SOURCES) \
 		$(libkernel_eth1394_a_SOURCES) \
 		$(libkernel_loopback_a_SOURCES) \

@@ -39,16 +39,17 @@ host_triplet = @host@
 @CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE@am__append_2 = mpc52xx_fec
 @CONFIG_RTNET_DRV_TULIP_TRUE@am__append_3 = tulip
 @CONFIG_RTNET_DRV_8139_TRUE@am__append_4 = rt_8139too$(modext)
-@CONFIG_RTNET_DRV_EEPRO100_TRUE@am__append_5 = rt_eepro100$(modext)
-@CONFIG_RTNET_DRV_ETH1394_TRUE@am__append_6 = rt_eth1394$(modext)
-@CONFIG_RTNET_DRV_LOOPBACK_TRUE@am__append_7 = rt_loopback$(modext)
-@CONFIG_RTNET_DRV_FCC_ENET_TRUE@am__append_8 = rt_mpc8260_fcc_enet$(modext)
-@CONFIG_RTNET_DRV_SCC_ENET_TRUE@am__append_9 = rt_mpc8xx_enet$(modext)
-@CONFIG_RTNET_DRV_FEC_ENET_TRUE@am__append_10 = rt_mpc8xx_fec$(modext)
-@CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_11 = rt_natsemi$(modext)
-@CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_12 = rt_pcnet32$(modext)
-@CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_13 = rt_smc91111$(modext)
-@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_14 = rt_via-rhine$(modext)
+@CONFIG_RTNET_DRV_AT91ETHER_TRUE@am__append_5 = rt_at91_ether$(modext)
+@CONFIG_RTNET_DRV_EEPRO100_TRUE@am__append_6 = rt_eepro100$(modext)
+@CONFIG_RTNET_DRV_ETH1394_TRUE@am__append_7 = rt_eth1394$(modext)
+@CONFIG_RTNET_DRV_LOOPBACK_TRUE@am__append_8 = rt_loopback$(modext)
+@CONFIG_RTNET_DRV_FCC_ENET_TRUE@am__append_9 = rt_mpc8260_fcc_enet$(modext)
+@CONFIG_RTNET_DRV_SCC_ENET_TRUE@am__append_10 = rt_mpc8xx_enet$(modext)
+@CONFIG_RTNET_DRV_FEC_ENET_TRUE@am__append_11 = rt_mpc8xx_fec$(modext)
+@CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_12 = rt_natsemi$(modext)
+@CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_13 = rt_pcnet32$(modext)
+@CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_14 = rt_smc91111$(modext)
+@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_15 = rt_via-rhine$(modext)
 subdir = drivers
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -66,6 +67,11 @@ libkernel_8139too_a_LIBADD =
 am_libkernel_8139too_a_OBJECTS =  \
 	libkernel_8139too_a-rt_8139too.$(OBJEXT)
 libkernel_8139too_a_OBJECTS = $(am_libkernel_8139too_a_OBJECTS)
+libkernel_at91_ether_a_AR = $(AR) $(ARFLAGS)
+libkernel_at91_ether_a_LIBADD =
+am_libkernel_at91_ether_a_OBJECTS =  \
+	libkernel_at91_ether_a-rt_at91_ether.$(OBJEXT)
+libkernel_at91_ether_a_OBJECTS = $(am_libkernel_at91_ether_a_OBJECTS)
 libkernel_eepro100_a_AR = $(AR) $(ARFLAGS)
 libkernel_eepro100_a_LIBADD =
 am_libkernel_eepro100_a_OBJECTS =  \
@@ -130,6 +136,7 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libkernel_8139too_a_SOURCES) \
+	$(libkernel_at91_ether_a_SOURCES) \
 	$(libkernel_eepro100_a_SOURCES) $(libkernel_eth1394_a_SOURCES) \
 	$(libkernel_loopback_a_SOURCES) \
 	$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
@@ -139,6 +146,7 @@ SOURCES = $(libkernel_8139too_a_SOURCES) \
 	$(libkernel_smc91111_a_SOURCES) \
 	$(libkernel_via_rhine_a_SOURCES)
 DIST_SOURCES = $(libkernel_8139too_a_SOURCES) \
+	$(libkernel_at91_ether_a_SOURCES) \
 	$(libkernel_eepro100_a_SOURCES) $(libkernel_eth1394_a_SOURCES) \
 	$(libkernel_loopback_a_SOURCES) \
 	$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
@@ -185,6 +193,8 @@ CONFIG_RTNET_DRV_3C59X_FALSE = @CONFIG_RTNET_DRV_3C59X_FALSE@
 CONFIG_RTNET_DRV_3C59X_TRUE = @CONFIG_RTNET_DRV_3C59X_TRUE@
 CONFIG_RTNET_DRV_8139_FALSE = @CONFIG_RTNET_DRV_8139_FALSE@
 CONFIG_RTNET_DRV_8139_TRUE = @CONFIG_RTNET_DRV_8139_TRUE@
+CONFIG_RTNET_DRV_AT91ETHER_FALSE = @CONFIG_RTNET_DRV_AT91ETHER_FALSE@
+CONFIG_RTNET_DRV_AT91ETHER_TRUE = @CONFIG_RTNET_DRV_AT91ETHER_TRUE@
 CONFIG_RTNET_DRV_E1000_FALSE = @CONFIG_RTNET_DRV_E1000_FALSE@
 CONFIG_RTNET_DRV_E1000_TRUE = @CONFIG_RTNET_DRV_E1000_TRUE@
 CONFIG_RTNET_DRV_EEPRO100_FALSE = @CONFIG_RTNET_DRV_EEPRO100_FALSE@
@@ -351,6 +361,7 @@ moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
 EXTRA_LIBRARIES = \
 	libkernel_8139too.a \
+	libkernel_at91_ether.a \
 	libkernel_eepro100.a \
 	libkernel_eth1394.a \
 	libkernel_loopback.a \
@@ -369,6 +380,15 @@ libkernel_8139too_a_CPPFLAGS = \
 
 libkernel_8139too_a_SOURCES = \
 	rt_8139too.c
+
+libkernel_at91_ether_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_at91_ether_a_SOURCES = \
+	rt_at91_ether.c \
+	rt_at91_ether.h
 
 libkernel_eepro100_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
@@ -455,7 +475,7 @@ libkernel_via_rhine_a_SOURCES = \
 OBJS = $(am__append_4) $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_8) $(am__append_9) $(am__append_10) \
 	$(am__append_11) $(am__append_12) $(am__append_13) \
-	$(am__append_14)
+	$(am__append_14) $(am__append_15)
 EXTRA_DIST = Kconfig Makefile.kbuild
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-recursive
@@ -495,6 +515,10 @@ libkernel_8139too.a: $(libkernel_8139too_a_OBJECTS) $(libkernel_8139too_a_DEPEND
 	-rm -f libkernel_8139too.a
 	$(libkernel_8139too_a_AR) libkernel_8139too.a $(libkernel_8139too_a_OBJECTS) $(libkernel_8139too_a_LIBADD)
 	$(RANLIB) libkernel_8139too.a
+libkernel_at91_ether.a: $(libkernel_at91_ether_a_OBJECTS) $(libkernel_at91_ether_a_DEPENDENCIES) 
+	-rm -f libkernel_at91_ether.a
+	$(libkernel_at91_ether_a_AR) libkernel_at91_ether.a $(libkernel_at91_ether_a_OBJECTS) $(libkernel_at91_ether_a_LIBADD)
+	$(RANLIB) libkernel_at91_ether.a
 libkernel_eepro100.a: $(libkernel_eepro100_a_OBJECTS) $(libkernel_eepro100_a_DEPENDENCIES) 
 	-rm -f libkernel_eepro100.a
 	$(libkernel_eepro100_a_AR) libkernel_eepro100.a $(libkernel_eepro100_a_OBJECTS) $(libkernel_eepro100_a_LIBADD)
@@ -543,6 +567,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_8139too_a-rt_8139too.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_loopback_a-rt_loopback.Po@am__quote@
@@ -588,6 +613,20 @@ libkernel_8139too_a-rt_8139too.obj: rt_8139too.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_8139too.c' object='libkernel_8139too_a-rt_8139too.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_8139too_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_8139too_a-rt_8139too.obj `if test -f 'rt_8139too.c'; then $(CYGPATH_W) 'rt_8139too.c'; else $(CYGPATH_W) '$(srcdir)/rt_8139too.c'; fi`
+
+libkernel_at91_ether_a-rt_at91_ether.o: rt_at91_ether.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_at91_ether_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_at91_ether_a-rt_at91_ether.o -MD -MP -MF "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Tpo" -c -o libkernel_at91_ether_a-rt_at91_ether.o `test -f 'rt_at91_ether.c' || echo '$(srcdir)/'`rt_at91_ether.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Tpo" "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Po"; else rm -f "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_at91_ether.c' object='libkernel_at91_ether_a-rt_at91_ether.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_at91_ether_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_at91_ether_a-rt_at91_ether.o `test -f 'rt_at91_ether.c' || echo '$(srcdir)/'`rt_at91_ether.c
+
+libkernel_at91_ether_a-rt_at91_ether.obj: rt_at91_ether.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_at91_ether_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_at91_ether_a-rt_at91_ether.obj -MD -MP -MF "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Tpo" -c -o libkernel_at91_ether_a-rt_at91_ether.obj `if test -f 'rt_at91_ether.c'; then $(CYGPATH_W) 'rt_at91_ether.c'; else $(CYGPATH_W) '$(srcdir)/rt_at91_ether.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Tpo" "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Po"; else rm -f "$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_at91_ether.c' object='libkernel_at91_ether_a-rt_at91_ether.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_at91_ether_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_at91_ether_a-rt_at91_ether.obj `if test -f 'rt_at91_ether.c'; then $(CYGPATH_W) 'rt_at91_ether.c'; else $(CYGPATH_W) '$(srcdir)/rt_at91_ether.c'; fi`
 
 libkernel_eepro100_a-rt_eepro100.o: rt_eepro100.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eepro100_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_eepro100_a-rt_eepro100.o -MD -MP -MF "$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Tpo" -c -o libkernel_eepro100_a-rt_eepro100.o `test -f 'rt_eepro100.c' || echo '$(srcdir)/'`rt_eepro100.c; \
@@ -1014,6 +1053,9 @@ uninstall-info: uninstall-info-recursive
 rt_8139too.o: libkernel_8139too.a
 	$(LD) --whole-archive $< -r -o $@
 
+rt_at91_ether.o: libkernel_at91_ether.a
+	$(LD) --whole-archive $< -r -o $@
+
 rt_eepro100.o: libkernel_eepro100.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -1051,6 +1093,7 @@ all-local.o: $(OBJS)
 
 # 2.6 build
 all-local.ko: $(libkernel_8139too_a_SOURCES) \
+		$(libkernel_at91_ether_a_SOURCES) \
 		$(libkernel_eepro100_a_SOURCES) \
 		$(libkernel_eth1394_a_SOURCES) \
 		$(libkernel_loopback_a_SOURCES) \
@@ -1071,6 +1114,7 @@ uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
 clean-local: $(libkernel_8139too_a_SOURCES) \
+		$(libkernel_at91_ether_a_SOURCES) \
 		$(libkernel_eepro100_a_SOURCES) \
 		$(libkernel_eth1394_a_SOURCES) \
 		$(libkernel_loopback_a_SOURCES) \

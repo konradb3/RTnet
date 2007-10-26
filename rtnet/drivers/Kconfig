@@ -86,12 +86,18 @@ config RTNET_DRV_SMC91111
 config RTNET_DRV_ETH1394
     bool "Ethernet over 1394"
 
-
 config RTNET_RTFIREWIRE_DIR
     string "Path of RT-FireWire Source Code"
     depends on RTNET_DRV_ETH1394
     default "/usr/local/rt-firewire"
 
+
+if ARCH = arm
+
+config RTNET_DRV_AT91ETHER
+    bool "AT91RM9200 Board Ethernet Driver"
+
+endif
 
 source "drivers/experimental/Kconfig"
 

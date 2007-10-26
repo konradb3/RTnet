@@ -952,6 +952,15 @@ AC_ARG_ENABLE(e1000,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_E1000:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_E1000,[test "$CONFIG_RTNET_DRV_E1000" = "y"])
 
+AC_MSG_CHECKING([whether to build AT91 Ethernet [AT91RM9200] driver])
+AC_ARG_ENABLE(at91ether,
+    AS_HELP_STRING([--enable-at91ether], [build AT91 Ethernet driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_AT91ETHER=y ;;
+        *) CONFIG_RTNET_DRV_AT91ETHER=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_AT91ETHER:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_AT91ETHER,[test "$CONFIG_RTNET_DRV_AT91ETHER" = "y"])
 
 dnl ======================================================================
 dnl             Stack parameters
