@@ -71,14 +71,23 @@ struct rt_icmp_control
 static rtdm_lock_t  echo_calls_lock = RTDM_LOCK_UNLOCKED;
 LIST_HEAD(echo_calls);
 
-/***
- *  Socket for icmp replies
- *  It is not part of the socket pool. It may furthermore be used concurrently
- *  by multiple tasks because all fields are static excect skb_pool, but that
- *  is spin lock protected.
- */
-static struct rtsocket icmp_socket;
+static struct {
+    /*
+     * Scratch pad, provided so that rt_socket_dereference(&icmp_socket);
+     * remains legal.
+     */
+    struct rtdm_dev_context dummy;
 
+    /*
+     *  Socket for icmp replies
+     *  It is not part of the socket pool. It may furthermore be used
+     *  concurrently by multiple tasks because all fields are static excect
+     *  skb_pool, but that one is spinlock protected.
+     */
+    struct rtsocket socket;
+} icmp_socket_container;
+
+#define icmp_socket     icmp_socket_container.socket
 
 
 void rt_icmp_queue_echo_request(struct rt_proc_call *call)
@@ -431,7 +440,7 @@ struct rtsocket *rt_icmp_dest_socket(struct rtskb *skb)
 {
     /* Note that the socket's refcount is not used by this protocol.
      * The socket returned here is static and not part of the global pool. */
-    return &icmp_socket;
+    return &socket_container.icmp_socket;
 }
 
 
