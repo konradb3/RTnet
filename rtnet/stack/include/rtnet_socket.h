@@ -86,8 +86,7 @@ struct rtsocket {
 
 static inline struct rtdm_dev_context *rt_socket_context(struct rtsocket *sock)
 {
-    return (struct rtdm_dev_context *)((void *)sock -
-        (void *)(&((struct rtdm_dev_context *)NULL)->dev_private));
+    return container_of((void *)sock, rtdm_dev_context, dev_private);
 }
 
 #define rt_socket_reference(sock)   \
