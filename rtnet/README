@@ -1,5 +1,5 @@
-                             RTnet Version 0.9.9
-                             ===================
+                             RTnet Version 0.9.10
+                             ====================
 
 What is it?
 -----------
@@ -22,7 +22,7 @@ What are the requirements?
   Linux kernel 2.4.x
 - Xenomai 2.0 or better
   RTAI 3.3-cv or better
-- x86[_64], PowerPC, or ARM platform (other platforms are untested)
+- x86, PowerPC, or ARM platform (other platforms are untested)
 - RealTek 8139, Intel 8255x (EtherExpress Pro 100), Intel PRO/1000, DEC
   21x4x-based (tulip), AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x,
   RTL8169 network adapter, MPC8260 FCC, MPC8xx SCC/FEC, or MPC5200 on-chip

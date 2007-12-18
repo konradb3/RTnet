@@ -1,3 +1,11 @@
+0.9.10
+- adopted to RTDM API revision 6
+- support for kernel up to 2.6.23
+- added rt_at91_ether [Yeoh Chun Yeow]
+- workaround for rt_e1000 start-up laziness
+- fixed memory corruption in ICMP code [spotted by Gilles Chanteperdrix]
+- minor build system fixes
+
 0.9.9
 - enabled IRQ sharing for rt_8139too and rt_e1000
 - added x86_64 support (via Xenomai)
