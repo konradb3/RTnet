@@ -440,7 +440,7 @@ struct rtsocket *rt_icmp_dest_socket(struct rtskb *skb)
 {
     /* Note that the socket's refcount is not used by this protocol.
      * The socket returned here is static and not part of the global pool. */
-    return &socket_container.icmp_socket;
+    return &icmp_socket;
 }
 
 
