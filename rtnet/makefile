@@ -1,5 +1,4 @@
 KCONFIG_DIR=./scripts/kconfig
-CC := gcc
 
 ifneq ($(MAKECMDGOALS),help)
 ifeq ($(rtnet_srctree),)
@@ -53,10 +52,10 @@ config.status: .rtnet_config
 	eval `grep ^CONFIG_RTNET_INSTALLDIR $<`; \
 	$(rtnet_srctree)/configure \
 	CROSS_COMPILE=$(CROSS_COMPILE) \
-	CC=$(CROSS_COMPILE)$(CC) \
-	CXX=$(CROSS_COMPILE)$(CXX) \
-	LD=$(CROSS_COMPILE)$(LD) \
-	AR=$(CROSS_COMPILE)$(AR) \
+	CC="$(CROSS_COMPILE)$(CC)" \
+	CXX="$(CROSS_COMPILE)$(CXX)" \
+	LD="$(CROSS_COMPILE)$(LD)" \
+	AR="$(CROSS_COMPILE)$(AR)" \
 	RANLIB=$(CROSS_COMPILE)ranlib \
 	STRIP=$(CROSS_COMPILE)strip \
 	NM=$(CROSS_COMPILE)nm \
