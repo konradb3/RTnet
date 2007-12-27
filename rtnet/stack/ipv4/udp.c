@@ -765,11 +765,11 @@ void rt_udp_rcv_err (struct rtskb *skb)
  *  UDP-Initialisation
  */
 static struct rtinet_protocol udp_protocol = {
-    protocol:       IPPROTO_UDP,
-    dest_socket:    &rt_udp_dest_socket,
-    rcv_handler:    &rt_udp_rcv,
-    err_handler:    &rt_udp_rcv_err,
-    init_socket:    &rt_udp_socket
+    .protocol =     IPPROTO_UDP,
+    .dest_socket =  &rt_udp_dest_socket,
+    .rcv_handler =  &rt_udp_rcv,
+    .err_handler =  &rt_udp_rcv_err,
+    .init_socket =  &rt_udp_socket
 };
 
 

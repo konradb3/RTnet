@@ -451,66 +451,66 @@ ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
 
 
 static struct rtdm_device   packet_proto_dev = {
-    struct_version:     RTDM_DEVICE_STRUCT_VER,
+    .struct_version =   RTDM_DEVICE_STRUCT_VER,
 
-    device_flags:       RTDM_PROTOCOL_DEVICE,
-    context_size:       sizeof(struct rtsocket),
+    .device_flags =     RTDM_PROTOCOL_DEVICE,
+    .context_size =     sizeof(struct rtsocket),
 
-    protocol_family:    PF_PACKET,
-    socket_type:        SOCK_DGRAM,
+    .protocol_family =  PF_PACKET,
+    .socket_type =      SOCK_DGRAM,
 
-    socket_rt:          rt_packet_socket,
-    socket_nrt:         rt_packet_socket,
+    .socket_rt =        rt_packet_socket,
+    .socket_nrt =       rt_packet_socket,
 
-    ops: {
-        close_rt:       rt_packet_close,
-        close_nrt:      rt_packet_close,
-        ioctl_rt:       rt_packet_ioctl,
-        ioctl_nrt:      rt_packet_ioctl,
-        recvmsg_rt:     rt_packet_recvmsg,
-        sendmsg_rt:     rt_packet_sendmsg
+    .ops = {
+        .close_rt =     rt_packet_close,
+        .close_nrt =    rt_packet_close,
+        .ioctl_rt =     rt_packet_ioctl,
+        .ioctl_nrt =    rt_packet_ioctl,
+        .recvmsg_rt =   rt_packet_recvmsg,
+        .sendmsg_rt =   rt_packet_sendmsg
     },
 
-    device_class:       RTDM_CLASS_NETWORK,
-    device_sub_class:   RTDM_SUBCLASS_RTNET,
-    driver_name:        "rtpacket",
-    driver_version:     RTNET_RTDM_VER,
-    peripheral_name:    "Real-Time Packet Socket Interface",
-    provider_name:      rtnet_rtdm_provider_name,
+    .device_class =     RTDM_CLASS_NETWORK,
+    .device_sub_class = RTDM_SUBCLASS_RTNET,
+    .driver_name =      "rtpacket",
+    .driver_version =   RTNET_RTDM_VER,
+    .peripheral_name =  "Real-Time Packet Socket Interface",
+    .provider_name =    rtnet_rtdm_provider_name,
 
-    proc_name:          "PACKET_DGRAM"
+    .proc_name =        "PACKET_DGRAM"
 };
 
 
 static struct rtdm_device   raw_packet_proto_dev = {
-    struct_version:     RTDM_DEVICE_STRUCT_VER,
+    .struct_version =   RTDM_DEVICE_STRUCT_VER,
 
-    device_flags:       RTDM_PROTOCOL_DEVICE,
-    context_size:       sizeof(struct rtsocket),
+    .device_flags =     RTDM_PROTOCOL_DEVICE,
+    .context_size =     sizeof(struct rtsocket),
 
-    protocol_family:    PF_PACKET,
-    socket_type:        SOCK_RAW,
+    .protocol_family =  PF_PACKET,
+    .socket_type =      SOCK_RAW,
 
-    socket_rt:          rt_packet_socket,
-    socket_nrt:         rt_packet_socket,
+    .socket_rt =        rt_packet_socket,
+    .socket_nrt =       rt_packet_socket,
 
-    ops: {
-        close_rt:       rt_packet_close,
-        close_nrt:      rt_packet_close,
-        ioctl_rt:       rt_packet_ioctl,
-        ioctl_nrt:      rt_packet_ioctl,
-        recvmsg_rt:     rt_packet_recvmsg,
-        sendmsg_rt:     rt_packet_sendmsg
+    .ops = {
+        .close_rt =     rt_packet_close,
+        .close_nrt =    rt_packet_close,
+        .ioctl_rt =     rt_packet_ioctl,
+        .ioctl_nrt =    rt_packet_ioctl,
+        .recvmsg_rt =   rt_packet_recvmsg,
+        .sendmsg_rt =   rt_packet_sendmsg
     },
 
-    device_class:       RTDM_CLASS_NETWORK,
-    device_sub_class:   RTDM_SUBCLASS_RTNET,
-    driver_name:        "rtpacket",
-    driver_version:     RTNET_RTDM_VER,
-    peripheral_name:    "Real-Time Packet Socket Interface",
-    provider_name:      rtnet_rtdm_provider_name,
+    .device_class =     RTDM_CLASS_NETWORK,
+    .device_sub_class = RTDM_SUBCLASS_RTNET,
+    .driver_name =      "rtpacket",
+    .driver_version =   RTNET_RTDM_VER,
+    .peripheral_name =  "Real-Time Packet Socket Interface",
+    .provider_name =    rtnet_rtdm_provider_name,
 
-    proc_name:          "PACKET_RAW"
+    .proc_name =        "PACKET_RAW"
 };
 
 

@@ -503,11 +503,11 @@ void rt_icmp_rcv_err(struct rtskb *skb)
  *  ICMP-Initialisation
  */
 static struct rtinet_protocol icmp_protocol = {
-    protocol:       IPPROTO_ICMP,
-    dest_socket:    &rt_icmp_dest_socket,
-    rcv_handler:    &rt_icmp_rcv,
-    err_handler:    &rt_icmp_rcv_err,
-    init_socket:    &rt_icmp_socket
+    .protocol =     IPPROTO_ICMP,
+    .dest_socket =  &rt_icmp_dest_socket,
+    .rcv_handler =  &rt_icmp_rcv,
+    .err_handler =  &rt_icmp_rcv_err,
+    .init_socket =  &rt_icmp_socket
 };
 
 

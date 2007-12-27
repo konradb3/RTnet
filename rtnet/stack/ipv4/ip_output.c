@@ -252,8 +252,8 @@ int rt_ip_build_xmit(struct rtsocket *sk,
  *  IP protocol layer initialiser
  */
 static struct rtpacket_type ip_packet_type = {
-    type:       __constant_htons(ETH_P_IP),
-    handler:    &rt_ip_rcv
+    .type =     __constant_htons(ETH_P_IP),
+    .handler =  &rt_ip_rcv
 };
 
 

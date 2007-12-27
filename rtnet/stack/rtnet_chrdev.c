@@ -287,19 +287,19 @@ void rtnet_unregister_ioctls(struct rtnet_ioctls *ioctls)
 
 
 static struct file_operations rtnet_fops = {
-    ioctl:  rtnet_ioctl,
+    .ioctl= rtnet_ioctl,
 };
 
 static struct miscdevice rtnet_chr_misc_dev = {
-    minor:  RTNET_MINOR,
-    name:   "RTnet",
-    fops:   &rtnet_fops,
+    .minor= RTNET_MINOR,
+    .name = "RTnet",
+    .fops = &rtnet_fops,
 };
 
 static struct rtnet_ioctls core_ioctls = {
-    service_name:   "RTnet Core",
-    ioctl_type:     RTNET_IOC_TYPE_CORE,
-    handler:        rtnet_core_ioctl
+    .service_name = "RTnet Core",
+    .ioctl_type =   RTNET_IOC_TYPE_CORE,
+    .handler =      rtnet_core_ioctl
 };
 
 

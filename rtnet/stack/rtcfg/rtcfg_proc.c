@@ -287,10 +287,10 @@ void rtcfg_remove_rtdev(struct rtnet_device *rtdev)
 
 
 static struct rtdev_event_hook rtdev_hook = {
-    register_device:    rtcfg_new_rtdev,
-    unregister_device:  rtcfg_remove_rtdev,
-    ifup:               NULL,
-    ifdown:             NULL
+    .register_device =  rtcfg_new_rtdev,
+    .unregister_device =rtcfg_remove_rtdev,
+    .ifup =             NULL,
+    .ifdown =           NULL
 };
 
 

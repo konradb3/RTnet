@@ -261,54 +261,54 @@ static void rt_ip_ifdown(struct rtnet_device *rtdev)
 
 
 static struct rtdev_event_hook  rtdev_hook = {
-    register_device:    NULL,
-    unregister_device:  NULL,
-    ifup:               rt_ip_ifup,
-    ifdown:             rt_ip_ifdown
+    .register_device =  NULL,
+    .unregister_device =NULL,
+    .ifup =             rt_ip_ifup,
+    .ifdown =           rt_ip_ifdown
 };
 
 static struct rtnet_ioctls ipv4_ioctls = {
-    service_name:       "IPv4",
-    ioctl_type:         RTNET_IOC_TYPE_IPV4,
-    handler:            ipv4_ioctl
+    .service_name =     "IPv4",
+    .ioctl_type =       RTNET_IOC_TYPE_IPV4,
+    .handler =          ipv4_ioctl
 };
 
 static struct rtdm_device ipv4_device = {
-    struct_version:     RTDM_DEVICE_STRUCT_VER,
+    .struct_version =   RTDM_DEVICE_STRUCT_VER,
 
-    device_flags:       RTDM_PROTOCOL_DEVICE,
-    context_size:       sizeof(struct rtsocket),
+    .device_flags =     RTDM_PROTOCOL_DEVICE,
+    .context_size =     sizeof(struct rtsocket),
 
-    protocol_family:    PF_INET,
-    socket_type:        SOCK_DGRAM,
+    .protocol_family =  PF_INET,
+    .socket_type =      SOCK_DGRAM,
 
-    socket_rt:          rt_inet_socket,
-    socket_nrt:         rt_inet_socket,
+    .socket_rt =        rt_inet_socket,
+    .socket_nrt =       rt_inet_socket,
 
     /* default is UDP */
-    ops: {
-        close_rt:       rt_udp_close,
-        close_nrt:      rt_udp_close,
-        ioctl_rt:       rt_udp_ioctl,
-        ioctl_nrt:      rt_udp_ioctl,
-        recvmsg_rt:     rt_udp_recvmsg,
-        sendmsg_rt:     rt_udp_sendmsg,
+    .ops = {
+        .close_rt =     rt_udp_close,
+        .close_nrt =    rt_udp_close,
+        .ioctl_rt =     rt_udp_ioctl,
+        .ioctl_nrt =    rt_udp_ioctl,
+        .recvmsg_rt =   rt_udp_recvmsg,
+        .sendmsg_rt =   rt_udp_sendmsg,
 #ifdef CONFIG_RTNET_RTDM_SELECT
-        poll_rt:        rt_udp_poll,
+        .poll_rt =      rt_udp_poll,
         /* there should be only the function poll() */
-        pollwait_rt:    rt_udp_pollwait,
-        pollfree_rt:    rt_udp_pollfree,
+        .pollwait_rt =  rt_udp_pollwait,
+        .pollfree_rt =  rt_udp_pollfree,
 #endif /* CONFIG_RTNET_RTDM_SELECT */
     },
 
-    device_class:       RTDM_CLASS_NETWORK,
-    device_sub_class:   RTDM_SUBCLASS_RTNET,
-    driver_name:        "rtipv4",
-    driver_version:     RTNET_RTDM_VER,
-    peripheral_name:    "Real-Time IPv4 Datagram Socket Interface",
-    provider_name:      rtnet_rtdm_provider_name,
+    .device_class =     RTDM_CLASS_NETWORK,
+    .device_sub_class = RTDM_SUBCLASS_RTNET,
+    .driver_name =      "rtipv4",
+    .driver_version =   RTNET_RTDM_VER,
+    .peripheral_name =  "Real-Time IPv4 Datagram Socket Interface",
+    .provider_name =    rtnet_rtdm_provider_name,
 
-    proc_name:          "INET_DGRAM"
+    .proc_name =        "INET_DGRAM"
 };
 
 

@@ -449,7 +449,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 
 
 struct rtnet_ioctls rtcfg_ioctls = {
-    service_name:   "RTcfg",
-    ioctl_type:     RTNET_IOC_TYPE_RTCFG,
-    handler:        rtcfg_ioctl
+    .service_name = "RTcfg",
+    .ioctl_type =   RTNET_IOC_TYPE_RTCFG,
+    .handler =      rtcfg_ioctl
 };
