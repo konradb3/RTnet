@@ -486,7 +486,9 @@ static int __init rtnetproxy_init_module(void)
     }
 
     dev_rtnetproxy.init = rtnetproxy_init;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
     SET_MODULE_OWNER(&dev_rtnetproxy);
+#endif
 
     /* Define the name for this unit */
     err=dev_alloc_name(&dev_rtnetproxy,"rtproxy");

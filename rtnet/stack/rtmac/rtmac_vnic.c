@@ -247,7 +247,9 @@ static int rtmac_vnic_init(struct net_device *dev)
     dev->mtu             = rtdev->mac_priv->vnic_max_mtu;
     dev->flags           &= ~IFF_MULTICAST;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
     SET_MODULE_OWNER(dev);
+#endif
 
     return 0;
 }
