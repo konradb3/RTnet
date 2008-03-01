@@ -227,13 +227,13 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
 {
     struct rtnet_device *rtdev;
     struct ifreq        *ifr = arg;
+    struct sockaddr_in  *sin;
     int                 ret = 0;
 
 
     if (request == SIOCGIFCONF) {
         struct ifconf       *ifc = arg;
         struct ifreq        *cur_ifr = ifc->ifc_req;
-        struct sockaddr_in  *sin;
         int                 size = 0;
         int                 i;
 
@@ -283,6 +283,12 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
         case SIOCGIFHWADDR:
             memcpy(ifr->ifr_hwaddr.sa_data, rtdev->dev_addr, rtdev->addr_len);
             ifr->ifr_hwaddr.sa_family = rtdev->type;
+            break;
+
+        case SIOCGIFADDR:
+            sin = (struct sockaddr_in *)&ifr->ifr_addr;
+            sin->sin_family      = AF_INET;
+            sin->sin_addr.s_addr = rtdev->local_ip;
             break;
 
         case SIOCETHTOOL:
