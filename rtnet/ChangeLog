@@ -1,7 +1,8 @@
 0.9.10
 - adopted to RTDM API revision 6
-- support for kernel up to 2.6.23
+- support for kernel up to 2.6.24
 - added rt_at91_ether [Yeoh Chun Yeow]
+- added SIOCGIFADDR support
 - workaround for rt_e1000 start-up laziness
 - fixed memory corruption in ICMP code [spotted by Gilles Chanteperdrix]
 - minor build system fixes
