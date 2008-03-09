@@ -56,8 +56,8 @@ static struct rtskb_queue   cap_queue;
 static struct rtskb_queue   cap_pool;
 
 static struct tap_device_t {
-    struct net_device       tap_dev;
-    struct net_device       rtmac_tap_dev;
+    struct net_device       *tap_dev;
+    struct net_device       *rtmac_tap_dev;
     struct net_device_stats tap_dev_stats;
     int                     present;
     int                     (*orig_xmit)(struct rtskb *skb,
@@ -231,9 +231,10 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
         ifindex = rtskb->rtdev->ifindex;
         active  = tap_device[ifindex].present;
 
-        if ((tap_device[ifindex].tap_dev.flags & IFF_UP) == 0)
+        if ((tap_device[ifindex].tap_dev->flags & IFF_UP) == 0)
             active &= ~TAP_DEV;
-        if ((tap_device[ifindex].rtmac_tap_dev.flags & IFF_UP) == 0)
+        if (active & RTMAC_TAP_DEV &&
+            !(tap_device[ifindex].rtmac_tap_dev->flags & IFF_UP))
             active &= ~RTMAC_TAP_DEV;
 
         if (active == 0) {
@@ -248,7 +249,7 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
                    rtskb->cap_start, rtskb->cap_len);
 
             if (active & TAP_DEV) {
-                skb->dev      = &tap_device[ifindex].tap_dev;
+                skb->dev      = tap_device[ifindex].tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
                 convert_timestamp(rtskb->time_stamp, skb);
 
@@ -267,12 +268,12 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
                 stats->rx_bytes += skb->len;
 
                 if (rtmac_skb != NULL) {
-                    rtmac_skb->dev = &tap_device[ifindex].rtmac_tap_dev;
+                    rtmac_skb->dev = tap_device[ifindex].rtmac_tap_dev;
                     netif_rx(rtmac_skb);
                 }
                 netif_rx(skb);
             } else if (rtskb->cap_flags & RTSKB_CAP_RTMAC_STAMP) {
-                skb->dev      = &tap_device[ifindex].rtmac_tap_dev;
+                skb->dev      = tap_device[ifindex].rtmac_tap_dev;
                 skb->protocol = eth_type_trans(skb, skb->dev);
                 convert_timestamp(rtskb->cap_rtmac_stamp, skb);
 
@@ -330,7 +331,7 @@ static int tap_dev_change_mtu(struct net_device *dev, int new_mtu)
 
 
 
-static int tap_dev_init(struct net_device *dev)
+static void tap_dev_setup(struct net_device *dev)
 {
     ether_setup(dev);
 
@@ -339,15 +340,16 @@ static int tap_dev_init(struct net_device *dev)
     dev->get_stats       = tap_dev_get_stats;
     dev->change_mtu      = tap_dev_change_mtu;
     dev->set_mac_address = NULL;
-
     dev->mtu             = 1500;
     dev->flags           &= ~IFF_MULTICAST;
+
+#ifdef HAVE_VALIDATE_ADDR
+    dev->validate_addr = NULL;
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
     SET_MODULE_OWNER(dev);
 #endif
-
-    return 0;
 }
 
 
@@ -361,7 +363,7 @@ void cleanup_tap_devices(void)
     for (i = 0; i < MAX_RT_DEVICES; i++)
         if ((tap_device[i].present & TAP_DEV) != 0) {
             if ((tap_device[i].present & XMIT_HOOK) != 0) {
-                rtdev = (struct rtnet_device *)tap_device[i].tap_dev.priv;
+                rtdev = (struct rtnet_device *)tap_device[i].tap_dev->priv;
 
                 down(&rtdev->nrt_lock);
                 rtdev->hard_start_xmit = tap_device[i].orig_xmit;
@@ -373,10 +375,13 @@ void cleanup_tap_devices(void)
                 rtdev_dereference(rtdev);
             }
 
-            if ((tap_device[i].present & RTMAC_TAP_DEV) != 0)
-                unregister_netdev(&tap_device[i].rtmac_tap_dev);
+            if ((tap_device[i].present & RTMAC_TAP_DEV) != 0) {
+                unregister_netdev(tap_device[i].rtmac_tap_dev);
+                free_netdev(tap_device[i].rtmac_tap_dev);
+            }
 
-            unregister_netdev(&tap_device[i].tap_dev);
+            unregister_netdev(tap_device[i].tap_dev);
+            free_netdev(tap_device[i].tap_dev);
         }
 }
 
@@ -431,42 +436,38 @@ int __init rtcap_init(void)
             memset(&tap_device[i].tap_dev_stats, 0,
                    sizeof(struct net_device_stats));
 
-            dev = &tap_device[i].tap_dev;
-            memset(dev, 0, sizeof(struct net_device));
-            dev->init = tap_dev_init;
+            dev = alloc_netdev(0, rtdev->name, tap_dev_setup);
+            if (!dev) {
+                ret = -ENOMEM;
+                goto error3;
+            }
+
+            tap_device[i].tap_dev = dev;
             dev->priv = rtdev;
-            strncpy(dev->name, rtdev->name, IFNAMSIZ-1);
-            dev->name[IFNAMSIZ-1] = 0;
 
             ret = register_netdev(dev);
-            if (ret < 0) {
-                up(&rtdev->nrt_lock);
-                rtdev_dereference(rtdev);
+            if (ret < 0)
+                goto error3;
 
-                printk("RTcap: unable to register %s!\n", dev->name);
-                goto error2;
-            }
             tap_device[i].present = TAP_DEV;
 
             tap_device[i].orig_xmit = rtdev->hard_start_xmit;
 
             if ((rtdev->flags & IFF_LOOPBACK) == 0) {
-                dev = &tap_device[i].rtmac_tap_dev;
-                memset(dev, 0, sizeof(struct net_device));
-                dev->init = tap_dev_init;
+                dev = alloc_netdev(0, rtdev->name, tap_dev_setup);
+                if (!dev) {
+                    ret = -ENOMEM;
+                    goto error3;
+                }
+
+                tap_device[i].rtmac_tap_dev = dev;
                 dev->priv = rtdev;
-                strncpy(dev->name, rtdev->name, IFNAMSIZ-1);
-                dev->name[IFNAMSIZ-1] = 0;
                 strncat(dev->name, "-mac", IFNAMSIZ-strlen(dev->name));
 
                 ret = register_netdev(dev);
-                if (ret < 0) {
-                    up(&rtdev->nrt_lock);
-                    rtdev_dereference(rtdev);
+                if (ret < 0)
+                    goto error3;
 
-                    printk("RTcap: unable to register %s!\n", dev->name);
-                    goto error2;
-                }
                 tap_device[i].present |= RTMAC_TAP_DEV;
 
                 rtdev->hard_start_xmit = rtcap_xmit_hook;
@@ -506,6 +507,11 @@ int __init rtcap_init(void)
     rtcap_handler = rtcap_rx_hook;
 
     return 0;
+
+  error3:
+    up(&rtdev->nrt_lock);
+    rtdev_dereference(rtdev);
+    printk("RTcap: unable to register %s!\n", dev->name);
 
   error2:
     cleanup_tap_devices();
