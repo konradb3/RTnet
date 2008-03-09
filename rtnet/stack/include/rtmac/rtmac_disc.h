@@ -39,10 +39,9 @@ typedef int (*vnic_xmit_handler)(struct sk_buff *skb, struct net_device *dev);
 
 struct rtmac_priv {
     int (*orig_start_xmit)(struct rtskb *skb, struct rtnet_device *dev);
-    struct net_device       vnic;
+    struct net_device       *vnic;
     struct net_device_stats vnic_stats;
     struct rtskb_queue      vnic_skb_pool;
-    int                     vnic_registered;
     unsigned int            vnic_max_mtu;
 
     u8                      disc_priv[0] __attribute__ ((aligned(16)));

@@ -103,7 +103,7 @@ static void rtmac_vnic_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
             /* copy data */
             memcpy(skb_put(skb, rtskb->len), rtskb->data, rtskb->len);
 
-            skb->dev      = &rtskb->rtdev->mac_priv->vnic;
+            skb->dev      = rtskb->rtdev->mac_priv->vnic;
             skb->protocol = eth_type_trans(skb, skb->dev);
 
             stats = &rtskb->rtdev->mac_priv->vnic_stats;
@@ -126,7 +126,7 @@ static void rtmac_vnic_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 
 
 
-static int rtmac_vnic_open(struct net_device *dev)
+static int rtmac_vnic_copy_mac(struct net_device *dev)
 {
     memcpy(dev->dev_addr, ((struct rtnet_device*)dev->priv)->dev_addr,
            sizeof(dev->dev_addr));
@@ -207,6 +207,7 @@ static int rtmac_vnic_change_mtu(struct net_device *dev, int new_mtu)
 void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev, unsigned int max_mtu)
 {
     struct rtmac_priv   *mac_priv = rtdev->mac_priv;
+    struct net_device   *vnic = mac_priv->vnic;
     unsigned int        prev_mtu  = mac_priv->vnic_max_mtu;
 
 
@@ -215,16 +216,16 @@ void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev, unsigned int max_mtu)
     /* set vnic mtu in case max_mtu is smaller than the current mtu or
        the current mtu was set to previous max_mtu */
     rtnl_lock();
-    if ((mac_priv->vnic.mtu > mac_priv->vnic_max_mtu) || (prev_mtu == mac_priv->vnic_max_mtu)) {
+    if ((vnic->mtu > mac_priv->vnic_max_mtu) || (prev_mtu == mac_priv->vnic_max_mtu)) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
-        dev_set_mtu(&mac_priv->vnic, mac_priv->vnic_max_mtu);
+        dev_set_mtu(vnic, mac_priv->vnic_max_mtu);
 #else   /* LINUX_VERSION_CODE < 2.6.x */
-        if (mac_priv->vnic.flags & IFF_UP) {
-            dev_close(&mac_priv->vnic);
-            mac_priv->vnic.mtu = mac_priv->vnic_max_mtu;
-            dev_open(&mac_priv->vnic);
+        if (vnic->flags & IFF_UP) {
+            dev_close(vnic);
+            vnic->mtu = mac_priv->vnic_max_mtu;
+            dev_open(vnic);
         } else
-            mac_priv->vnic.mtu = mac_priv->vnic_max_mtu;
+            vnic->mtu = mac_priv->vnic_max_mtu;
 #endif  /* LINUX_VERSION_CODE < 2.6.x */
     }
     rtnl_unlock();
@@ -232,26 +233,20 @@ void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev, unsigned int max_mtu)
 
 
 
-static int rtmac_vnic_init(struct net_device *dev)
+static void rtmac_vnic_setup(struct net_device *dev)
 {
-    struct rtnet_device *rtdev = (struct rtnet_device *)dev->priv;
-
-
     ether_setup(dev);
 
-    dev->open            = rtmac_vnic_open;
+    dev->open            = rtmac_vnic_copy_mac;
     dev->get_stats       = rtmac_vnic_get_stats;
     dev->change_mtu      = rtmac_vnic_change_mtu;
     dev->set_mac_address = NULL;
 
-    dev->mtu             = rtdev->mac_priv->vnic_max_mtu;
     dev->flags           &= ~IFF_MULTICAST;
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
     SET_MODULE_OWNER(dev);
 #endif
-
-    return 0;
 }
 
 
@@ -260,38 +255,48 @@ int rtmac_vnic_add(struct rtnet_device *rtdev, vnic_xmit_handler vnic_xmit)
 {
     int                 res;
     struct rtmac_priv   *mac_priv = rtdev->mac_priv;
-    struct net_device   *vnic = &mac_priv->vnic;
+    struct net_device   *vnic;
+    char                buf[IFNAMSIZ];
 
 
     /* does the discipline request vnic support? */
     if (!vnic_xmit)
         return 0;
 
-    mac_priv->vnic_registered = 0;
-    mac_priv->vnic_max_mtu    = rtdev->mtu - sizeof(struct rtmac_hdr);
+    mac_priv->vnic = NULL;
+    mac_priv->vnic_max_mtu = rtdev->mtu - sizeof(struct rtmac_hdr);
     memset(&mac_priv->vnic_stats, 0, sizeof(mac_priv->vnic_stats));
 
     /* create the rtskb pool */
     if (rtskb_pool_init(&mac_priv->vnic_skb_pool,
                         vnic_rtskbs) < vnic_rtskbs) {
-        rtskb_pool_release(&mac_priv->vnic_skb_pool);
-        return -ENOMEM;
+        res = -ENOMEM;
+        goto error;
     }
 
-    memset(vnic, 0, sizeof(struct net_device));
+    snprintf(buf, sizeof(buf), "vnic%d", rtdev->ifindex-1);
 
-    vnic->init            = rtmac_vnic_init;
+    vnic = alloc_netdev(0, buf, rtmac_vnic_setup);
+    if (!vnic) {
+        res = -ENOMEM;
+        goto error;
+    }
+
     vnic->hard_start_xmit = vnic_xmit;
     vnic->priv            = rtdev;
-
-    snprintf(vnic->name, sizeof(vnic->name), "vnic%d", rtdev->ifindex-1);
+    vnic->mtu             = mac_priv->vnic_max_mtu;
+    rtmac_vnic_copy_mac(vnic);
 
     res = register_netdev(vnic);
-    if (res == 0)
-        mac_priv->vnic_registered = 1;
-    else
-        rtskb_pool_release(&mac_priv->vnic_skb_pool);
+    if (res < 0)
+        goto error;
 
+    mac_priv->vnic = vnic;
+
+    return 0;
+
+ error:
+    rtskb_pool_release(&mac_priv->vnic_skb_pool);
     return res;
 }
 
@@ -302,9 +307,10 @@ void rtmac_vnic_unregister(struct rtnet_device *rtdev)
     struct rtmac_priv   *mac_priv = rtdev->mac_priv;
 
 
-    if (mac_priv->vnic_registered) {
-        unregister_netdev(&mac_priv->vnic);
-        mac_priv->vnic_registered = 0;
+    if (mac_priv->vnic) {
+        unregister_netdev(mac_priv->vnic);
+        free_netdev(mac_priv->vnic);
+        mac_priv->vnic = NULL;
     }
 }
 
@@ -338,7 +344,7 @@ int rtmac_proc_read_vnic(char *buf, char **start, off_t offset, int count,
 
             rtmac = (struct rtmac_priv *)rtdev->mac_priv;
             res = RTNET_PROC_PRINT("%-15s %s\n",
-                                    rtdev->name, rtmac->vnic.name);
+                                    rtdev->name, rtmac->vnic->name);
         }
 
         up(&rtdev->nrt_lock);
