@@ -3,7 +3,10 @@
 - support for kernel up to 2.6.24
 - added rt_at91_ether [Yeoh Chun Yeow]
 - added SIOCGIFADDR support
+- udev support
 - workaround for rt_e1000 start-up laziness
+- fixed Linux netdev creation on latest kernels for RTmac VNICs and RTcap tap
+  devices
 - fixed memory corruption in ICMP code [spotted by Gilles Chanteperdrix]
 - minor build system fixes
 
