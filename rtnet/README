@@ -49,7 +49,8 @@ How to install it?
    required API header files, and <PREFIX>/etc with configuration files to be
    used with the rtnet startup script.
 8. run "mknod /dev/rtnet c 10 240" on your target system to create the
-   configuration interface device node.
+   configuration interface device node. Alternatively, there is also an udev
+   rules file available under tools/00-rtnet.rules.
 
 
 How to test it?

@@ -40,6 +40,10 @@ static rwlock_t ioctl_handler_lock = RW_LOCK_UNLOCKED;
 
 LIST_HEAD(ioctl_handlers);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
+#include <linux/device.h>
+static struct class *rtnet_class;
+#endif
 
 /**
  * rtnet_ioctl -
@@ -310,15 +314,42 @@ static struct rtnet_ioctls core_ioctls = {
  */
 int __init rtnet_chrdev_init(void)
 {
-    int ret = misc_register(&rtnet_chr_misc_dev);
+    int err;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
+    struct class_device *cl_dev;
 
-    if (ret < 0)
-        printk("RTnet: unable to register rtnet character device "
-               "(error %d)\n", ret);
+    rtnet_class = class_create(THIS_MODULE, "rtnet");
+    if (IS_ERR(rtnet_class)) {
+        err = -EBUSY;
+        goto error;
+    }
+
+    cl_dev = class_device_create(rtnet_class, NULL,
+                                 MKDEV(MISC_MAJOR, RTNET_MINOR),
+                                 NULL, "rtnet");
+    if (IS_ERR(cl_dev)) {
+        class_destroy(rtnet_class);
+        err = -EBUSY;
+        goto error;
+    }
+#endif
+
+    err = misc_register(&rtnet_chr_misc_dev);
+    if (err) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
+        class_device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
+        class_destroy(rtnet_class);
+#endif
+        goto error;
+    }
 
     rtnet_register_ioctls(&core_ioctls);
+    return 0;
 
-    return ret;
+ error:
+    printk("RTnet: unable to register rtnet management device/class "
+           "(error %d)\n", err);
+    return err;
 }
 
 
@@ -330,6 +361,10 @@ int __init rtnet_chrdev_init(void)
 void rtnet_chrdev_release(void)
 {
     misc_deregister(&rtnet_chr_misc_dev);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
+    class_device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
+    class_destroy(rtnet_class);
+#endif
 }
 
 

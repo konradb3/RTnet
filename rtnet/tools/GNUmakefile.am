@@ -31,3 +31,5 @@ AM_CPPFLAGS = \
 	@RTNET_INTERNAL_USER_CFLAGS@
 
 all-local: rtifconfig rtiwconfig rtroute rtping $(OPTPROGS)
+
+EXTRA_DIST=00-rtnet.rules

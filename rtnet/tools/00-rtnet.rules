@@ -1,0 +1,5 @@
+# RTnet management device
+KERNEL=="rtnet", MODE="0600"
+
+# Don't let udev mess with our special network names
+KERNEL=="vnic*|rteth*|rtlo", NAME="$env{INTERFACE_NAME}"
