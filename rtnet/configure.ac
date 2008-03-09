@@ -487,7 +487,7 @@ else
             ;;
         xeno-21x)
             # Kernel cflags capturing trick from RTAI
-            kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CC=$CC | grep '^RTEXT_KMOD_CFLAGS='`
+            kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH "CC=\"$CC\"" | grep '^RTEXT_KMOD_CFLAGS='`
             eval $kmod_cflags
             if test "$RTEXT_KMOD_CFLAGS" = ""; then
                 AC_MSG_ERROR([Unable to retrieve compilation flags for kernel modules out of $RTEXT_LINUX_DIR/Makefile])
