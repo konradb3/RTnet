@@ -152,32 +152,36 @@ static struct {
         const char *name;
         u32 hw_flags;
 } board_info[] __devinitdata = {
-        { "RealTek RTL8139 Fast Ethernet", RTL8139_CAPS },
-        { "RealTek RTL8139B PCI/CardBus", RTL8139_CAPS },
-        { "SMC1211TX EZCard 10/100 (RealTek RTL8139)", RTL8139_CAPS },
-/*        { MPX5030, "Accton MPX5030 (RealTek RTL8139)", RTL8139_CAPS },*/
-        { "Delta Electronics 8139 10/100BaseTX", RTL8139_CAPS },
-        { "Addtron Technolgy 8139 10/100BaseTX", RTL8139_CAPS },
-        { "D-Link DFE-538TX (RealTek RTL8139)", RTL8139_CAPS },
-        { "D-Link DFE-690TXD (RealTek RTL8139)", RTL8139_CAPS },
-        { "AboCom FE2000VX (RealTek RTL8139)", RTL8139_CAPS },
-        { "Allied Telesyn 8139 CardBus", RTL8139_CAPS },
+        { "RealTek RTL8139", RTL8139_CAPS },
         { "RealTek RTL8129", RTL8129_CAPS },
 };
 
 
 static struct pci_device_id rtl8139_pci_tbl[] __devinitdata = {
         {0x10ec, 0x8139, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
-        {0x10ec, 0x8138, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139_CB },
-        {0x1113, 0x1211, PCI_ANY_ID, PCI_ANY_ID, 0, 0, SMC1211TX },
-/*        {0x1113, 0x1211, PCI_ANY_ID, PCI_ANY_ID, 0, 0, MPX5030 },*/
-        {0x1500, 0x1360, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DELTA8139 },
-        {0x4033, 0x1360, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ADDTRON8139 },
-        {0x1186, 0x1300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DFE538TX },
-        {0x1186, 0x1340, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DFE690TXD },
-        {0x13d1, 0xab06, PCI_ANY_ID, PCI_ANY_ID, 0, 0, FE2000VX },
-        {0x1259, 0xa117, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ALLIED8139 },
+        {0x10ec, 0x8138, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1113, 0x1211, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1500, 0x1360, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x4033, 0x1360, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1186, 0x1300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1186, 0x1340, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x13d1, 0xab06, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1259, 0xa117, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1259, 0xa11e, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x14ea, 0xab06, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x14ea, 0xab07, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x11db, 0x1234, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1432, 0x9130, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x02ac, 0x1012, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x018a, 0x0106, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x126c, 0x1211, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x1743, 0x8139, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+        {0x021b, 0x8139, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
 
+#ifdef CONFIG_SH_SECUREEDGE5410
+        /* Bogus 8139 silicon reports 8129 without external PROM :-( */
+        {0x10ec, 0x8129, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
+#endif
 #ifdef CONFIG_8139TOO_8129
         {0x10ec, 0x8129, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8129 },
 #endif
@@ -187,8 +191,8 @@ static struct pci_device_id rtl8139_pci_tbl[] __devinitdata = {
          * so we simply don't match on the main vendor id.
          */
         {PCI_ANY_ID, 0x8139, 0x10ec, 0x8139, 0, 0, RTL8139 },
-        {PCI_ANY_ID, 0x8139, 0x1186, 0x1300, 0, 0, DFE538TX },
-        {PCI_ANY_ID, 0x8139, 0x13d1, 0xab06, 0, 0, FE2000VX },
+        {PCI_ANY_ID, 0x8139, 0x1186, 0x1300, 0, 0, RTL8139 },
+        {PCI_ANY_ID, 0x8139, 0x13d1, 0xab06, 0, 0, RTL8139 },
 
         {0,}
 };
@@ -421,45 +425,58 @@ enum chip_flags {
 const static struct {
         const char *name;
         u8 version; /* from RTL8139C docs */
-        u32 RxConfigMask; /* should clear the bits supported by this chip */
         u32 flags;
 } rtl_chip_info[] = {
         { "RTL-8139",
           0x40,
-          0xf0fe0040, /* XXX copied from RTL8139A, verify */
           HasHltClk,
         },
 
         { "RTL-8139 rev K",
           0x60,
-          0xf0fe0040,
           HasHltClk,
         },
 
         { "RTL-8139A",
           0x70,
-          0xf0fe0040,
+          HasHltClk, /* XXX undocumented? */
+        },
+
+        { "RTL-8139A rev G",
+          0x72,
           HasHltClk, /* XXX undocumented? */
         },
 
         { "RTL-8139B",
           0x78,
-          0xf0fc0040,
           HasLWake,
         },
 
         { "RTL-8130",
           0x7C,
-          0xf0fe0040, /* XXX copied from RTL8139A, verify */
           HasLWake,
         },
 
         { "RTL-8139C",
           0x74,
-          0xf0fc0040, /* XXX copied from RTL8139B, verify */
           HasLWake,
         },
 
+        { "RTL-8100",
+          0x7A,
+          HasLWake,
+         },
+
+        { "RTL-8100B/8139D",
+          0x75,
+          HasHltClk /* XXX undocumented? */
+          | HasLWake,
+        },
+
+        { "RTL-8101",
+          0x77,
+          HasLWake,
+        },
 };
 
 struct rtl_extra_stats {
