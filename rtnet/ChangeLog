@@ -5,6 +5,7 @@
 - added SIOCGIFADDR support
 - udev support
 - workaround for rt_e1000 start-up laziness
+- updated rt_8139too PCI IDs
 - fixed Linux netdev creation on latest kernels for RTmac VNICs and RTcap tap
   devices
 - fixed memory corruption in ICMP code [spotted by Gilles Chanteperdrix]
