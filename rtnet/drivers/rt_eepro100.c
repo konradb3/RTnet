@@ -1999,7 +1999,13 @@ static int __init eepro100_init_module(void)
 	debug = speedo_debug; /* touch debug variable */
 #endif /* RTNET_DRV_EEPRO100_DBG */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+	if (pci_register_driver(&eepro100_driver) <= 0)
+		return -EINVAL;
+	return 0;
+#else
 	return pci_register_driver(&eepro100_driver);
+#endif
 }
 
 static void __exit eepro100_cleanup_module(void)
