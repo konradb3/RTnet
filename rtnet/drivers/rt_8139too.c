@@ -1861,7 +1861,7 @@ static int __init rtl8139_init_module (void)
         printk (KERN_INFO RTL8139_DRIVER_NAME "\n");
 #endif
 
-        return pci_register_driver (&rtl8139_pci_driver);
+        return compat_pci_register_driver (&rtl8139_pci_driver);
 }
 
 

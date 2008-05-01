@@ -32,6 +32,16 @@
 #include <ethernet/eth.h>
 
 
+#ifndef compat_pci_register_driver
+# if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+#  define compat_pci_register_driver(drv) \
+	(pci_register_driver(drv) <= 0 ? -EINVAL : 0)
+# else
+#  define compat_pci_register_driver(drv) \
+	pci_register_driver(drv)
+# endif
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 # define pci_dma_sync_single_for_device     pci_dma_sync_single
 # define pci_dma_sync_single_for_cpu        pci_dma_sync_single

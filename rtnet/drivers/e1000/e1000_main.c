@@ -277,7 +277,7 @@ e1000_init_module(void)
 
 	printk(KERN_INFO "%s\n", e1000_copyright);
 
-	ret = pci_register_driver(&e1000_driver);
+	ret = compat_pci_register_driver(&e1000_driver);
 	return ret;
 }
 

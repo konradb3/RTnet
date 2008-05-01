@@ -2111,7 +2111,7 @@ static int __init rtl8169_init_module (void)
 		r8169_debug = debug;
 	}
 	if (r8169_debug & DEBUG_RUN) printk("Initializing " MODULENAME " driver");
-	return pci_register_driver (&rtl8169_pci_driver);
+	return compat_pci_register_driver (&rtl8169_pci_driver);
 }
 
 

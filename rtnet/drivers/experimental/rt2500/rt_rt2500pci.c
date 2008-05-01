@@ -1239,7 +1239,7 @@ struct pci_driver rt2x00_pci_driver =
 
 static int __init rt2x00_pci_init(void) {
     rtdm_printk(KERN_INFO "Loading module: %s\n", version);
-    return pci_register_driver(&rt2x00_pci_driver);
+    return compat_pci_register_driver(&rt2x00_pci_driver);
 }
 
 static void __exit rt2x00_pci_exit(void) {
