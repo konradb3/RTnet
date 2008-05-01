@@ -1,37 +1,61 @@
-+ diff -u linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile.FECMOD linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile
---- linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile.FECMOD	2004-12-13 00:18:37.000000000 +0100
-+++ linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/Makefile	2005-06-12 11:21:32.000000000 +0200
-@@ -13,6 +13,9 @@
- O_TARGET 			:= 5xxx_io.o
- 
- subdir-$(CONFIG_MPC5200)	:= bestcomm
-+
-+export-objs			:= sdma.o
-+
- obj-$(CONFIG_MPC5200) 		:= bestcomm/bestcomm.o sdma.o
- 
- ifeq ($(CONFIG_MPC5100),y)
-+ diff -u linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c.FECMOD linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c
---- linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c.FECMOD	2003-12-03 20:08:19.000000000 +0100
-+++ linuxppc_2_4_devel-2005-02-18/arch/ppc/5xxx_io/sdma.c	2005-06-16 16:38:31.756321464 +0200
-@@ -255,3 +255,20 @@
- 
- 	return tasknum;
- }
-+
-+
-+/*
-+ * Hack to permit kernel modules accessing SDMA and BESTCOMM.
-+ */
++ diff -u linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/bestcomm_ksyms.c.RTNET linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/bestcomm_ksyms.c
+--- linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/bestcomm_ksyms.c.RTNET	2008-02-05 15:53:15.000000000 +0100
++++ linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/bestcomm_ksyms.c	2008-02-06 10:37:11.000000000 +0100
+@@ -0,0 +1,20 @@
++#include <linux/kernel.h>
 +#include <linux/module.h>
 +
-+void *mpc5xxx_task_get_bd_ring(int taskId)
-+{
-+      return TaskGetBDRing(taskId);
-+}
++#include "ppctypes.h"
++#include "bestcomm_api.h"
++#include "task_api/bestcomm_cntrl.h"
++#include "task_api/bestcomm_api_mem.h"
++#include "task_api/tasksetup_bdtable.h"
 +
-+EXPORT_SYMBOL(mpc5xxx_task_get_bd_ring);
-+EXPORT_SYMBOL(mpc5xxx_sdma_enable_task);
-+EXPORT_SYMBOL(mpc5xxx_sdma_fec_rx_task_setup);
-+EXPORT_SYMBOL(mpc5xxx_sdma_fec_tx_task_setup);
-+EXPORT_SYMBOL(mpc5xxx_sdma_disable_task);
++EXPORT_SYMBOL(TaskBDIdxTable);
++EXPORT_SYMBOL(TaskSetup_TASK_FEC_TX);
++EXPORT_SYMBOL(TaskSetup_TASK_FEC_RX);
++EXPORT_SYMBOL(TASK_FEC_TX_api);
++EXPORT_SYMBOL(TASK_FEC_RX_api);
++EXPORT_SYMBOL(TaskStart);
++EXPORT_SYMBOL(TaskBDAssign);
++EXPORT_SYMBOL(TaskBDRelease);
++EXPORT_SYMBOL(MBarGlobal);
++EXPORT_SYMBOL(TaskBDReset);
++EXPORT_SYMBOL(TaskStop);
++ diff -u linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/Makefile.RTNET linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/Makefile
+--- linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/Makefile.RTNET	2008-01-31 10:19:35.000000000 +0100
++++ linuxppc_2_4_devel/arch/ppc/5xxx_io/bestcomm/Makefile	2008-02-05 15:52:35.000000000 +0100
+@@ -12,6 +12,8 @@
+ 	       -I$(TOPDIR)/arch/$(ARCH)/5xxx_io/bestcomm/capi/task_api \
+ 	       -I$(TOPDIR)/arch/$(ARCH)/5xxx_io/bestcomm/code_dma/image_rtos1
+ 
++export-objs	:= bestcomm_ksyms.o
++
+ O_TARGET := bestcomm.o
+ 
+ obj-y	:=	capi/bestcomm_api.o capi/load_task.o \
+@@ -35,5 +37,8 @@
+ 		code_dma/image_rtos1/dma_image.o \
+ 		code_dma/image_rtos1/dma_image.reloc.o
+ 
++obj-$(CONFIG_MODULES)	+= bestcomm_ksyms.o
++
++
+ include $(TOPDIR)/Rules.make
+ 
++ diff -u linuxppc_2_4_devel/arch/ppc/kernel/mpc5xxx_common.c.RTNET linuxppc_2_4_devel/arch/ppc/kernel/mpc5xxx_common.c
+--- linuxppc_2_4_devel/arch/ppc/kernel/mpc5xxx_common.c.RTNET	2008-01-31 10:19:35.000000000 +0100
++++ linuxppc_2_4_devel/arch/ppc/kernel/mpc5xxx_common.c	2008-02-06 10:34:19.000000000 +0100
+@@ -16,11 +16,7 @@
+ #include <asm/ppcboot.h>
+ #endif
+ 
+-#if defined(CONFIG_PPC_5xxx_FEC) || \
+-    defined(CONFIG_UDA_1344) || \
+-    defined(CONFIG_5200_I2S) || \
+-    defined(CONFIG_BLK_DEV_IDE_MPC5xxx_MDMA) || \
+-    defined(CONFIG_BLK_DEV_IDE_MPC5xxx_UDMA)
++#if defined(CONFIG_BESTCOMM_API)
+ #define CONFIG_BESTCOMM_MPC5xxx
+ #include <bestcomm_api.h>
+ #include <mgt5200/sdma.h>

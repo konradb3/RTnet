@@ -22,10 +22,7 @@
 #include <linux/mii.h>
 #include <linux/skbuff.h>
 #include <asm/mpc5xxx.h>
-#ifdef CONFIG_BESTCOMM_API
-void *mpc5xxx_task_get_bd_ring(int taskId);
-//#include <bestcomm_api.h>
-#endif
+#include <bestcomm_api.h>
 
 /* Define board specific options */
 #define CONFIG_RTNET_USE_MDIO
@@ -35,8 +32,9 @@ void *mpc5xxx_task_get_bd_ring(int taskId);
 
 /* Tunable constants */
 #define MPC5xxx_FEC_RECV_BUFFER_SIZE	1518	/* max receive packet size */
-#define MPC5xxx_FEC_TBD_NUM   		64	/* max transmit packets */
-#define MPC5xxx_FEC_RBD_NUM  		64	/* max receive packets */
+#define MPC5xxx_FEC_RECV_BUFFER_SIZE_BC 2048	/* max receive packet size */
+#define MPC5xxx_FEC_TBD_NUM   		256	/* max transmit packets */
+#define MPC5xxx_FEC_RBD_NUM  		256	/* max receive packets */
 
 struct mpc5xxx_fec {
 	volatile u32 fec_id;			/* FEC + 0x000 */
@@ -262,18 +260,13 @@ struct mpc5xxx_fec {
 
 /* Receive & Transmit Buffer Descriptor definitions */
 struct mpc5xxx_fec_bd {
-#ifdef CONFIG_BESTCOMM_API
 	volatile u32 status;
-#else
-	volatile u16 status;
-	volatile u16 length;
-#endif
 	volatile u32 data;
 };
 
 /* Receive data buffer format */
 struct mpc5xxx_rbuf {
-	u8 data[MPC5xxx_FEC_RECV_BUFFER_SIZE];
+	u8 data[MPC5xxx_FEC_RECV_BUFFER_SIZE_BC];
 };
 
 struct fec_queue {
@@ -343,7 +336,7 @@ struct mpc5xxx_fec_priv {
 	uint phy_speed;
 	phy_info_t *phy;
 	struct tq_struct phy_task;
-	uint sequence_done;
+	volatile uint sequence_done;
 	uint link;
 	uint phy_addr;
 
@@ -357,54 +350,9 @@ struct mpc5xxx_fec_priv {
 };
 
 struct mpc5xxx_sram_fec {
-#ifndef CONFIG_BESTCOMM_API
-	volatile struct mpc5xxx_fec_bd  *tbd_base;
-	volatile struct mpc5xxx_fec_bd  *tbd_next;
-	volatile struct mpc5xxx_fec_bd  *rbd_base;
-	volatile struct mpc5xxx_fec_bd  *rbd_next;
-	volatile u8                      reserved[16];
-#endif
 	volatile struct mpc5xxx_fec_bd tbd[MPC5xxx_FEC_TBD_NUM];
 	volatile struct mpc5xxx_fec_bd rbd[MPC5xxx_FEC_RBD_NUM];
 };
-
-#ifndef CONFIG_BESTCOMM_API
-#define MPC5xxx_FEC_BD_WRAP	0x2000	/* Last BD in ring */
-
-#define MPC5xxx_FEC_RBD_EMPTY	0x8000	/* Buffer is empty */
-#define MPC5xxx_FEC_RBD_WRAP	0x2000	/* Last BD in ring */
-#define MPC5xxx_FEC_RBD_INT	0x1000	/* Interrupt */
-#define MPC5xxx_FEC_RBD_LAST	0x0800	/* Buffer is last in frame(useless) */
-#define MPC5xxx_FEC_RBD_MISS	0x0100	/* Miss bit for prom mode */
-#define MPC5xxx_FEC_RBD_BC	0x0080	/* Received frame is broadcast frame */
-#define MPC5xxx_FEC_RBD_MC	0x0040	/* Received frame is multicast frame */
-#define MPC5xxx_FEC_RBD_LG	0x0020	/* Frame length violation */
-#define MPC5xxx_FEC_RBD_NO	0x0010	/* Nonoctet align frame */
-#define MPC5xxx_FEC_RBD_SH	0x0008	/* Short frame, FEC does not support */
-#define MPC5xxx_FEC_RBD_CR	0x0004	/* CRC error */
-#define MPC5xxx_FEC_RBD_OV	0x0002	/* Receive FIFO overrun */
-#define MPC5xxx_FEC_RBD_TR	0x0001	/* The receive frame is truncated */
-
-#define MPC5xxx_FEC_RBD_INIT	(MPC5xxx_FEC_RBD_INT	| MPC5xxx_FEC_RBD_EMPTY)
-#define MPC5xxx_FEC_RBD_ERR	(MPC5xxx_FEC_RBD_LG	| \
-				 MPC5xxx_FEC_RBD_NO	| \
-				 MPC5xxx_FEC_RBD_CR	| \
-				 MPC5xxx_FEC_RBD_OV	| \
-				 MPC5xxx_FEC_RBD_TR)
-
-#define MPC5xxx_FEC_TBD_TFD	0x8000	/* Buffer is ready */
-#define MPC5xxx_FEC_TBD_WRAP	0x2000	/* Last BD in ring */
-#define MPC5xxx_FEC_TBD_INT	0x1000	/* Interrupt */
-#define MPC5xxx_FEC_TBD_LAST	0x0800	/* Buffer is last in frame */
-#define MPC5xxx_FEC_TBD_TC	0x0400	/* Transmit the CRC */
-#define MPC5xxx_FEC_TBD_ABC	0x0200	/* Append bad CRC */
-
-#define MPC5xxx_FEC_TBD_INIT	(MPC5xxx_FEC_TBD_INT	| \
-				 MPC5xxx_FEC_TBD_TC	| \
-				 MPC5xxx_FEC_TBD_TFD	| \
-				 MPC5xxx_FEC_TBD_LAST)
-
-#else
 
 #define MPC5xxx_FEC_RBD_READY	0x40000000
 #define MPC5xxx_FEC_RBD_RFD	0x08000000	/* receive frame done */
@@ -418,158 +366,7 @@ struct mpc5xxx_sram_fec {
 #define MPC5xxx_FEC_TBD_INIT	(MPC5xxx_FEC_TBD_INT | MPC5xxx_FEC_TBD_TFD | \
 				 MPC5xxx_FEC_TBD_READY)
 
-inline struct mpc5xxx_fec_bd *
-mpc5xxx_fec_get_bd_ring(int tasknum)
-{
-#ifdef ORIGINAL_VERSION
-	return (struct mpc5xxx_fec_bd *)TaskGetBDRing(tasknum);
-#else
-	return (struct mpc5xxx_fec_bd *)mpc5xxx_task_get_bd_ring(tasknum);
-#endif
-}
-#endif
 
-inline void
-fec_init_queue(struct fec_queue *queue, struct mpc5xxx_fec_bd *bd_base,
-	struct rtskb **skb_base, u16 length)
-{
-	queue->bd_base = bd_base;
-	queue->skb_base = skb_base;
-	queue->last_index = length - 1;
-	queue->start_index = 0;
-	queue->finish_index = 0;
-}
-
-inline int
-fec_queue_empty(struct fec_queue *queue)
-{
-	return queue->start_index == queue->finish_index;
-}
-
-inline int
-fec_queue_count(struct fec_queue *queue)
-{
-	return (queue->start_index - queue->finish_index)
-		% (queue->last_index + 1);
-}
-
-inline void
-fec_next_start(struct fec_queue *queue)
-{
-	if (queue->start_index == queue->last_index)
-		queue->start_index = 0;
-	else
-		queue->start_index++;
-}
-
-inline void
-fec_set_start_status(struct fec_queue *queue, u32 status)
-{
-#ifndef CONFIG_BESTCOMM_API
-	if (queue->start_index == queue->last_index)
-		status |= MPC5xxx_FEC_BD_WRAP;
-	out_be16(&queue->bd_base[queue->start_index].status, (u16)status);
-#else
-	out_be32(&queue->bd_base[queue->start_index].status, status);
-#endif
-}
-
-#ifndef CONFIG_BESTCOMM_API
-inline void
-fec_set_start_len(struct fec_queue *queue, u16 length)
-{
-	out_be16(&queue->bd_base[queue->start_index].length, length);
-}
-#endif
-
-inline void
-fec_set_start_data(struct fec_queue *queue, u32 data)
-{
-	out_be32(&queue->bd_base[queue->start_index].data, data);
-}
-
-inline void
-fec_set_start_skb(struct fec_queue *queue, struct rtskb *skb)
-{
-	queue->skb_base[queue->start_index] = skb;
-}
-
-inline u32
-fec_start_status(struct fec_queue *queue)
-{
-#ifdef CONFIG_BESTCOMM_API
-	return in_be32(&queue->bd_base[queue->start_index].status);
-#else
-	return in_be16(&queue->bd_base[queue->start_index].status);
-#endif
-}
-
-inline u32
-fec_start_data(struct fec_queue *queue)
-{
-	return in_be32(&queue->bd_base[queue->start_index].data);
-}
-
-inline struct rtskb *
-fec_start_skb(struct fec_queue *queue)
-{
-	return queue->skb_base[queue->start_index];
-}
-
-inline void
-fec_next_finish(struct fec_queue *queue)
-{
-	if (queue->finish_index == queue->last_index)
-		queue->finish_index = 0;
-	else
-		queue->finish_index++;
-}
-
-inline void
-fec_set_finish_status(struct fec_queue *queue, u32 status)
-{
-#ifndef CONFIG_BESTCOMM_API
-	if (queue->finish_index == queue->last_index)
-		status |= MPC5xxx_FEC_BD_WRAP;
-	out_be16(&queue->bd_base[queue->finish_index].status, status);
-#else
-	out_be32(&queue->bd_base[queue->finish_index].status, status);
-#endif
-}
-
-inline void
-fec_set_finish_data(struct fec_queue *queue, u32 data)
-{
-	out_be32(&queue->bd_base[queue->finish_index].data, data);
-}
-
-inline void
-fec_set_finish_skb(struct fec_queue *queue, struct rtskb *skb)
-{
-	queue->skb_base[queue->finish_index] = skb;
-}
-
-inline u32
-fec_finish_status(struct fec_queue *queue)
-{
-#ifdef CONFIG_BESTCOMM_API
-	return in_be32(&queue->bd_base[queue->finish_index].status);
-#else
-	return in_be16(&queue->bd_base[queue->finish_index].status);
-#endif
-}
-
-inline u32
-fec_finish_data(struct fec_queue *queue)
-{
-	return in_be32(&queue->bd_base[queue->finish_index].data);
-}
-
-inline struct rtskb *
-fec_finish_skb(struct fec_queue *queue)
-{
-	return queue->skb_base[queue->finish_index];
-}
 
 /* MII-related definitions */
 #define MPC5xxx_FEC_MII_DATA_ST		0x40000000	/* Start frame */
@@ -616,5 +413,18 @@ struct mibCounters {
 };
 
 #define MPC5xxx_FEC_WATCHDOG_TIMEOUT  ((400*HZ)/1000)
+
+
+#define MPC5xxx_FEC_FRAME_LAST		0x08000000	/* Last */
+#define MPC5xxx_FEC_FRAME_M		0x01000000	/* M? */
+#define MPC5xxx_FEC_FRAME_BC		0x00800000	/* Broadcast */
+#define MPC5xxx_FEC_FRAME_MC		0x00400000	/* Multicast */
+#define MPC5xxx_FEC_FRAME_LG		0x00200000	/* Length error */
+#define MPC5xxx_FEC_FRAME_NO		0x00100000	/* Non-octet aligned frame error */
+#define MPC5xxx_FEC_FRAME_CR		0x00040000	/* CRC frame error */
+#define MPC5xxx_FEC_FRAME_OV		0x00020000	/* Overrun error */
+#define MPC5xxx_FEC_FRAME_TR		0x00010000	/* Truncated error */
+
+
 
 #endif	/* __RT_MPC52XX_FEC_H_ */

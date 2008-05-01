@@ -5,6 +5,10 @@ EXTRA_LIBRARIES = libkernel_mpc52xx_fec.a
 
 libkernel_mpc52xx_fec_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
+	-I$(RTEXT_KERNEL_DIR)/arch/ppc/5xxx_io/bestcomm/include \
+	-I$(RTEXT_KERNEL_DIR)/arch/ppc/5xxx_io/bestcomm/capi \
+	-I$(RTEXT_KERNEL_DIR)/arch/ppc/5xxx_io/bestcomm/capi/task_api \
+	-I$(RTEXT_KERNEL_DIR)/arch/ppc/5xxx_io/bestcomm/code_dma/image_rtos1 \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
