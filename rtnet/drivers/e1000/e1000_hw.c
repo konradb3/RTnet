@@ -626,12 +626,10 @@ e1000_reset_hw(struct e1000_hw *hw)
             break;
     }
 
-    /* Disable HW ARPs on ASF enabled adapters */
-    if (hw->mac_type >= e1000_82540 && hw->mac_type <= e1000_82547_rev_2) {
-        manc = E1000_READ_REG(hw, MANC);
-        manc &= ~(E1000_MANC_ARP_EN);
-        E1000_WRITE_REG(hw, MANC, manc);
-    }
+    /* Disable HW ARPs */
+    manc = E1000_READ_REG(hw, MANC);
+    manc &= ~(E1000_MANC_ARP_EN | E1000_MANC_ARP_RES_EN);
+    E1000_WRITE_REG(hw, MANC, manc);
 
     if ((hw->mac_type == e1000_82541) || (hw->mac_type == e1000_82547)) {
         e1000_phy_init_script(hw);
