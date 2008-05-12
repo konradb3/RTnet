@@ -33,7 +33,7 @@ int rtwlan_rx(struct rtskb * rtskb, struct rtnet_device * rtnet_dev)
     /* strip rtwlan header */
     rtskb_pull(rtskb, ieee80211_get_hdrlen(fc));
     rtskb->protocol = rt_eth_type_trans (rtskb, rtnet_dev);
-    
+
     /* forward rtskb to rtnet */
     rtnetif_rx(rtskb);
 
@@ -64,7 +64,7 @@ int rtwlan_tx(struct rtskb *rtskb, struct rtnet_device *rtnet_dev)
         memcpy(dest, rtskb->data, ETH_ALEN);        
     }
 
-    /* 
+    /*
      * Generate ieee80211 compatible header
      */
     memcpy(header.addr3, src, ETH_ALEN);	/* BSSID */
@@ -205,7 +205,7 @@ int __init rtwlan_init(void)
 }
 
 
-void __exit rtwlan_exit(void)
+void rtwlan_exit(void)
 {
     rtnet_unregister_ioctls(&rtnet_wlan_ioctls);
 }

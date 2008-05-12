@@ -255,7 +255,7 @@ int rtwlan_tx(struct rtskb * rtskb, struct rtnet_device * rtnet_dev);
 
 #ifdef CONFIG_RTNET_RTWLAN
 int __init rtwlan_init(void);
-void __exit rtwlan_exit(void);
+void rtwlan_exit(void);
 #else /* !CONFIG_RTNET_RTWLAN */
 #define rtwlan_init()   0
 #define rtwlan_exit()

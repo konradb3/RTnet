@@ -298,7 +298,7 @@ static int __init rt_route_proc_register(void)
 
 
 
-static void __exit rt_route_proc_unregister(void)
+static void rt_route_proc_unregister(void)
 {
     remove_proc_entry("route", ipv4_proc_root);
     remove_proc_entry("arp", ipv4_proc_root);

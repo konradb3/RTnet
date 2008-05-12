@@ -82,6 +82,6 @@ static inline int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr,
 #endif /* CONFIG_RTNET_RTIPV4_ROUTE_SRC */
 
 int __init rt_ip_routing_init(void);
-void __exit rt_ip_routing_release(void);
+void rt_ip_routing_release(void);
 
 #endif  /* __RTNET_ROUTE_H_ */

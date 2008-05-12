@@ -84,7 +84,7 @@ static int pcnet32_have_pci;
 /*
  * VLB I/O addresses
  */
-static unsigned int pcnet32_portlist[] __initdata =
+static unsigned int pcnet32_portlist[] __devinitdata =
 	{ 0x300, 0x320, 0x340, 0x360, 0 };
 
 
