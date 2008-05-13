@@ -70,6 +70,13 @@ static inline void rt_ip_local_deliver(struct rtskb *skb)
         } else {
             /* Get the destination socket */
             if ((sock = ipprot->dest_socket(skb)) == NULL) {
+#ifdef CONFIG_RTNET_ADDON_PROXY
+                if (rt_ip_fallback_handler) {
+                    __rtskb_push(skb, iph->ihl*4);
+                    rt_ip_fallback_handler(skb);
+                    return;
+                }
+#endif
                 kfree_rtskb(skb);
                 return;
             }
