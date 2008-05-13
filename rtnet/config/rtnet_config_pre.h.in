@@ -6,6 +6,9 @@
 /* rtnetproxy support */
 #undef CONFIG_RTNET_ADDON_PROXY
 
+/* rtnetproxy ARP support */
+#undef CONFIG_RTNET_ADDON_PROXY_ARP
+
 /* RTcap support */
 #undef CONFIG_RTNET_ADDON_RTCAP
 

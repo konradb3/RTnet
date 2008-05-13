@@ -1189,6 +1189,19 @@ if test "$CONFIG_RTNET_ADDON_PROXY" = "y"; then
     AC_DEFINE(CONFIG_RTNET_ADDON_PROXY,1,[rtnetproxy support])
 fi
 
+AC_MSG_CHECKING([whether to enable rtnetproxy ARP support])
+AC_ARG_ENABLE(proxy-arp,
+    AS_HELP_STRING([--enable-proxy-arp], [enable ARP support for IP protocol proxy driver @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_ADDON_PROXY_ARP=y ;;
+        *) CONFIG_RTNET_ADDON_PROXY_ARP=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_ADDON_PROXY_ARP:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_ADDON_PROXY_ARP,[test "$CONFIG_RTNET_ADDON_PROXY_ARP" = "y"])
+if test "$CONFIG_RTNET_ADDON_PROXY_ARP" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_ADDON_PROXY_ARP,1,[rtnetproxy ARP support])
+fi
+
 
 #dnl ======================================================================
 #dnl             RTDM select (disabled until RTDM actually supports this)

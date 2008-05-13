@@ -105,6 +105,14 @@ static rtdm_task_t rtnetproxy_thread;
 
 static rtdm_sem_t rtnetproxy_sem;
 
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+static char* rtdev_attach = "rteth0";
+module_param(rtdev_attach, charp, 0444);
+MODULE_PARM_DESC(rtdev_attach, "Attach to the specified RTnet device");
+
+struct rtnet_device *rtnetproxy_rtdev;
+#endif
+
 /* ***********************************************************************
  * Returns the next pointer from the ringbuffer or zero if nothing is
  * available
@@ -181,7 +189,10 @@ static inline void send_data_out(struct sk_buff *skb)
 {
 
     struct rtskb        *rtskb;
+#ifndef CONFIG_RTNET_ADDON_PROXY_ARP
     struct dest_route   rt;
+    int rc;
+#endif
 
     struct skb_data_format
     {
@@ -194,7 +205,6 @@ static inline void send_data_out(struct sk_buff *skb)
                                   * thus no spaces are allowed! */
 
     struct skb_data_format *pData;
-    int rc;
 
     /* Copy the data from the standard sk_buff to the realtime sk_buff:
      * Both have the same length. */
@@ -208,6 +218,17 @@ static inline void send_data_out(struct sk_buff *skb)
 
     pData = (struct skb_data_format*) rtskb->data;
 
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    rtdev_reference(rtnetproxy_rtdev);
+
+    rtskb->rtdev = rtnetproxy_rtdev;
+
+    /* Call the actual transmit function */
+    rtdev_xmit_proxy(rtskb);
+
+    rtdev_dereference(rtnetproxy_rtdev);
+
+#else /* !CONFIG_RTNET_ADDON_PROXY_ARP */
     /* Determine the device to use: Only ip routing is used here.
      * Non-ip protocols are not supported... */
     rc = rt_ip_route_output(&rt, pData->ip_dst, INADDR_ANY);
@@ -244,6 +265,7 @@ static inline void send_data_out(struct sk_buff *skb)
         kfree_rtskb(rtskb);
     }
 
+#endif /* CONFIG_RTNET_ADDON_PROXY_ARP */
 }
 
 /* ************************************************************************
@@ -456,7 +478,11 @@ static int __init rtnetproxy_init(struct net_device *dev)
     /* Fill in device structure with ethernet-generic values. */
     ether_setup(dev);
     dev->tx_queue_len = 0;
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    memcpy(dev->dev_addr, rtnetproxy_rtdev->dev_addr, sizeof(dev->dev_addr));
+#else
     dev->flags |= IFF_NOARP;
+#endif
     dev->flags &= ~IFF_MULTICAST;
 
     return 0;
@@ -478,6 +504,15 @@ static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev)
 static int __init rtnetproxy_init_module(void)
 {
     int err;
+
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    if ((rtnetproxy_rtdev = rtdev_get_by_name(rtdev_attach)) == NULL) {
+	printk("Couldn't attach to %s\n", rtdev_attach);
+	return -EINVAL;
+    }
+    rtdev_dereference(rtnetproxy_rtdev);
+    printk("RTproxy attached to %s\n", rtdev_attach);
+#endif
 
     /* Initialize the proxy's rtskb pool (JK) */
     if (rtskb_pool_init(&rtskb_pool, proxy_rtskbs) < proxy_rtskbs) {

@@ -25,6 +25,9 @@
 #include <stack_mgr.h>
 #include <ipv4/arp.h>
 
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+#include <ipv4/ip_input.h>
+#endif /* CONFIG_RTNET_ADDON_PROXY_ARP */
 
 /***
  *  arp_send:   Create and send an arp packet. If (dest_hw == NULL),
@@ -168,12 +171,20 @@ int rt_arp_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     if (tip == rtdev->local_ip) {
         rt_ip_route_add_host(sip, sha, rtdev);
 
+#ifndef CONFIG_RTNET_ADDON_PROXY_ARP
         if (arp->ar_op == __constant_htons(ARPOP_REQUEST))
             rt_arp_send(ARPOP_REPLY, ETH_P_ARP, sip, rtdev, tip, sha,
                         rtdev->dev_addr, sha);
+#endif /* CONFIG_RTNET_ADDON_PROXY_ARP */
     }
 
 out:
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    if (rt_ip_fallback_handler) {
+	    rt_ip_fallback_handler(skb);
+	    return 0;
+    }
+#endif /* CONFIG_RTNET_ADDON_PROXY_ARP */
     kfree_rtskb(skb);
     return 0;
 }
