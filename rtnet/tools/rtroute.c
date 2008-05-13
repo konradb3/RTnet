@@ -54,6 +54,7 @@ void help(void)
         "\trtroute add <addr> netmask <mask> gw <gw-addr>\n"
         "\trtroute del <addr> [dev <dev>]\n"
         "\trtroute del <addr> netmask <mask>\n"
+        "\trtroute get <addr> [dev <dev>]\n"
         "\trtroute -f <host-routes-file>\n"
         );
 
@@ -307,6 +308,49 @@ void route_delete(int argc, char *argv[])
 
 
 
+void route_get(int argc, char *argv[])
+{
+    int ret;
+
+
+    if (argc == 3) {
+        /*** get host route ***/
+        cmd.args.gethost.ip_addr = addr.s_addr;
+
+        ret = ioctl(f, IOC_RT_HOST_ROUTE_GET, &cmd);
+    } else if (argc == 5) {
+        /*** get device specific route ***/
+        if (strcmp(argv[3], "dev") == 0) {
+            cmd.args.delhost.ip_addr = addr.s_addr;
+            strncpy(cmd.head.if_name, argv[4], IFNAMSIZ);
+            ret = ioctl(f, IOC_RT_HOST_ROUTE_GET_DEV, &cmd);
+        }
+        else
+            help();
+    } else
+        help();
+
+    if (ret >= 0) {
+        char *p = cmd.args.gethost.dev_addr;
+        printf("Destination\tHW Address\t\tDevice\n"
+               "%s\t%02x:%02x:%02x:%02x:%02x:%02x\t%s\n", argv[2],
+               p[0], p[1], p[2] , p[3], p[4], p[5], cmd.head.if_name);
+    } else {
+        if (errno == ENOENT) {
+            fprintf(stderr, "No route for host %s", argv[2]);
+            if (argc == 5)
+                fprintf(stderr, "on device %s", argv[4]);
+            fprintf(stderr, " found\n");
+        } else
+            perror("ioctl");
+        exit(1);
+    }
+
+    exit(0);
+}
+
+
+
 int main(int argc, char *argv[])
 {
     const char  rtnet_dev[] = "/dev/rtnet";
@@ -338,6 +382,8 @@ int main(int argc, char *argv[])
         route_add(argc, argv);
     if (strcmp(argv[1], "del") == 0)
         route_delete(argc, argv);
+    if (strcmp(argv[1], "get") == 0)
+        route_get(argc, argv);
 
     help();
 

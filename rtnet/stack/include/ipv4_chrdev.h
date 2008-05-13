@@ -40,6 +40,11 @@ struct ipv4_cmd {
         struct {
             __u32           ip_addr;
             unsigned char   dev_addr[DEV_ADDR_LEN];
+        } gethost;
+
+        struct {
+            __u32           ip_addr;
+            unsigned char   dev_addr[DEV_ADDR_LEN];
         } addhost;
 
         struct {
@@ -86,7 +91,12 @@ struct ipv4_cmd {
 #define IOC_RT_PING                     _IOWR(RTNET_IOC_TYPE_IPV4, 5 |  \
                                               RTNET_IOC_NODEV_PARAM,    \
                                               struct ipv4_cmd)
-#define IOC_RT_HOST_ROUTE_DELETE_DEV    _IOW(RTNET_IOC_TYPE_IPV4, 6,   \
+#define IOC_RT_HOST_ROUTE_DELETE_DEV    _IOW(RTNET_IOC_TYPE_IPV4, 6,    \
                                              struct ipv4_cmd)
+#define IOC_RT_HOST_ROUTE_GET           _IOWR(RTNET_IOC_TYPE_IPV4, 7 |  \
+					      RTNET_IOC_NODEV_PARAM,    \
+					      struct ipv4_cmd)
+#define IOC_RT_HOST_ROUTE_GET_DEV       _IOWR(RTNET_IOC_TYPE_IPV4, 8,   \
+					      struct ipv4_cmd)
 
 #endif  /* __IPV4_H_ */

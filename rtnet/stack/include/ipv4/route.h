@@ -53,11 +53,20 @@ int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr);
 
 #ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
 int __rt_ip_route_del_host(u32 addr, struct rtnet_device *rtdev);
+int __rt_ip_route_get_host(u32 addr, char* if_name, unsigned char *dev_addr,
+			   struct rtnet_device *rtdev);
 int __rt_ip_route_output(struct dest_route *rt_buf, u32 daddr, u32 saddr);
 
 static inline int rt_ip_route_del_host(u32 addr, struct rtnet_device *rtdev)
 {
     return __rt_ip_route_del_host(addr, rtdev);
+}
+
+static inline int rt_ip_route_get_host(u32 addr, char* if_name,
+				       unsigned char *dev_addr,
+				       struct rtnet_device *rtdev)
+{
+    return __rt_ip_route_get_host(addr, if_name, dev_addr, rtdev);
 }
 
 static inline int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr,
@@ -67,11 +76,19 @@ static inline int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr,
 }
 #else /* !CONFIG_RTNET_RTIPV4_ROUTE_SRC */
 int __rt_ip_route_del_host(u32 addr);
+int __rt_ip_route_get_host(u32 addr, char* if_name, unsigned char *dev_addr);
 int __rt_ip_route_output(struct dest_route *rt_buf, u32 daddr);
 
 static inline int rt_ip_route_del_host(u32 addr, struct rtnet_device *rtdev)
 {
     return __rt_ip_route_del_host(addr);
+}
+
+static inline int rt_ip_route_get_host(u32 addr, char* if_name,
+				       unsigned char *dev_addr,
+				       struct rtnet_device *rtdev)
+{
+    return __rt_ip_route_get_host(addr, if_name, dev_addr);
 }
 
 static inline int rt_ip_route_output(struct dest_route *rt_buf, u32 daddr,

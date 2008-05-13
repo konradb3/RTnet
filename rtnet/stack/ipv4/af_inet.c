@@ -162,6 +162,17 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = rt_ip_route_del_host(cmd.args.delhost.ip_addr, rtdev);
             break;
 
+        case IOC_RT_HOST_ROUTE_GET:
+        case IOC_RT_HOST_ROUTE_GET_DEV:
+	    ret = rt_ip_route_get_host(cmd.args.gethost.ip_addr,
+				       cmd.head.if_name,
+				       cmd.args.gethost.dev_addr, rtdev);
+            if (ret >= 0) {
+                if (copy_to_user((void *)arg, &cmd, sizeof(cmd)) != 0)
+                    ret = -EFAULT;
+            }
+            break;
+
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
         case IOC_RT_NET_ROUTE_ADD:
             ret = rt_ip_route_add_net(cmd.args.addnet.net_addr,

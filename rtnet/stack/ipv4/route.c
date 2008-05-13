@@ -509,6 +509,50 @@ void rt_ip_route_del_all(struct rtnet_device *rtdev)
 }
 
 
+/***
+ *  rt_ip_route_get_host - check if specified host route is resolved
+ */
+int __rt_ip_route_get_host(u32 addr, char *if_name, unsigned char *dev_addr
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+			   , struct rtnet_device *rtdev
+#endif /* CONFIG_RTNET_RTIPV4_ROUTE_SRC */
+                          )
+{
+    rtdm_lockctx_t      context;
+    struct host_route   *rt;
+    struct host_route   **last_ptr;
+    unsigned int        key;
+
+
+    key = ntohl(addr) & HOST_HASH_KEY_MASK;
+    last_ptr = &host_hash_tbl[key];
+
+    rtdm_lock_get_irqsave(&host_table_lock, context);
+
+    rt = host_hash_tbl[key];
+    while (rt != NULL) {
+        if ((rt->dest_host.ip == addr)
+#ifdef CONFIG_RTNET_RTIPV4_ROUTE_SRC
+            && (!rtdev || rt->dest_host.rtdev->local_ip == rtdev->local_ip)
+#endif
+           ) {
+            memcpy(dev_addr, rt->dest_host.dev_addr,
+                   rt->dest_host.rtdev->addr_len);
+            strncpy(if_name, rt->dest_host.rtdev->name, IFNAMSIZ);
+
+            rtdm_lock_put_irqrestore(&host_table_lock, context);
+            return 0;
+        }
+
+        last_ptr = &rt->next;
+        rt = rt->next;
+    }
+
+    rtdm_lock_put_irqrestore(&host_table_lock, context);
+
+    return -ENOENT;
+}
+
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
 /***
