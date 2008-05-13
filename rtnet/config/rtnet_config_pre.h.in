@@ -45,6 +45,9 @@
 /* Real-Time IPv4 support */
 #undef CONFIG_RTNET_RTIPV4
 
+/* Real-Time IPv4 ICMP support */
+#undef CONFIG_RTNET_RTIPV4_ICMP
+
 /* Network routing */
 #undef CONFIG_RTNET_RTIPV4_NETROUTING
 

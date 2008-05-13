@@ -79,6 +79,7 @@ static void cleanup_route_solicit(void *priv_data)
 
 
 
+#ifdef CONFIG_RTNET_RTIPV4_ICMP
 static int ping_handler(struct rt_proc_call *call)
 {
     struct ipv4_cmd *cmd;
@@ -114,6 +115,7 @@ static void ping_complete_handler(struct rt_proc_call *call, void *priv_data)
     usr_cmd->args.ping.ip_addr = cmd->args.ping.ip_addr;
     usr_cmd->args.ping.rtt     = cmd->args.ping.rtt;
 }
+#endif /* CONFIG_RTNET_RTIPV4_ICMP */
 
 
 
@@ -186,6 +188,7 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             break;
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
+#ifdef CONFIG_RTNET_RTIPV4_ICMP
         case IOC_RT_PING:
             ret = rtpc_dispatch_call(ping_handler, cmd.args.ping.timeout, &cmd,
                                      sizeof(cmd), ping_complete_handler, NULL);
@@ -196,6 +199,7 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (ret < 0)
                 rt_icmp_cleanup_echo_requests();
             break;
+#endif /* CONFIG_RTNET_RTIPV4_ICMP */
 
         default:
             ret = -ENOTTY;

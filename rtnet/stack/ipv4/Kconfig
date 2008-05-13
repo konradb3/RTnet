@@ -10,6 +10,16 @@ config RTNET_RTIPV4
     For further information see also Documentation/README.routing and
     Documentation/README.ipfragmentation.
 
+config RTNET_RTIPV4_ICMP
+    bool "ICMP support"
+    depends on RTNET_RTIPV4
+    default y
+    ---help---
+    Enables ICMP support of the RTnet Real-Time IPv4 protocol.
+
+    When the RTnet-Proxy is enabled while this feature is disabled, ICMP
+    will be forwarded to the Linux network stack.
+
 config RTNET_RTIPV4_ROUTE_SRC
     bool "Consider source IP for output routing"
     depends on RTNET_RTIPV4

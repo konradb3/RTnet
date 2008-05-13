@@ -16,9 +16,12 @@ libkernel_ipv4_a_SOURCES = \
 	ip_input.c \
 	ip_sock.c \
 	udp.c \
-	icmp.c \
 	ip_output.c \
 	ip_fragment.c
+
+if CONFIG_RTNET_RTIPV4_ICMP
+libkernel_ipv4_a_SOURCES += icmp.c
+endif
 
 OBJS = rtipv4$(modext)
 

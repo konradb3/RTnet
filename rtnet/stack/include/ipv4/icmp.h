@@ -44,8 +44,13 @@ void rt_icmp_dequeue_echo_request(struct rt_proc_call *call);
 void rt_icmp_cleanup_echo_requests(void);
 int rt_icmp_send_echo(u32 daddr, u16 id, u16 sequence, size_t msg_size);
 
+#ifdef CONFIG_RTNET_RTIPV4_ICMP
 void __init rt_icmp_init(void);
 void rt_icmp_release(void);
+#else /* !CONFIG_RTNET_RTIPV4_ICMP */
+#define rt_icmp_init() do {} while (0)
+#define rt_icmp_release() do {} while (0)
+#endif /* CONFIG_RTNET_RTIPV4_ICMP */
 
 
 #endif  /* __RTNET_ICMP_H_ */

@@ -31,6 +31,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@CONFIG_RTNET_RTIPV4_ICMP_TRUE@am__append_1 = icmp.c
 subdir = stack/ipv4
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -45,15 +46,18 @@ CONFIG_CLEAN_FILES =
 ARFLAGS = cru
 libkernel_ipv4_a_AR = $(AR) $(ARFLAGS)
 libkernel_ipv4_a_LIBADD =
+am__libkernel_ipv4_a_SOURCES_DIST = route.c protocol.c arp.c af_inet.c \
+	ip_input.c ip_sock.c udp.c ip_output.c ip_fragment.c icmp.c
+@CONFIG_RTNET_RTIPV4_ICMP_TRUE@am__objects_1 = libkernel_ipv4_a-icmp.$(OBJEXT)
 am_libkernel_ipv4_a_OBJECTS = libkernel_ipv4_a-route.$(OBJEXT) \
 	libkernel_ipv4_a-protocol.$(OBJEXT) \
 	libkernel_ipv4_a-arp.$(OBJEXT) \
 	libkernel_ipv4_a-af_inet.$(OBJEXT) \
 	libkernel_ipv4_a-ip_input.$(OBJEXT) \
 	libkernel_ipv4_a-ip_sock.$(OBJEXT) \
-	libkernel_ipv4_a-udp.$(OBJEXT) libkernel_ipv4_a-icmp.$(OBJEXT) \
+	libkernel_ipv4_a-udp.$(OBJEXT) \
 	libkernel_ipv4_a-ip_output.$(OBJEXT) \
-	libkernel_ipv4_a-ip_fragment.$(OBJEXT)
+	libkernel_ipv4_a-ip_fragment.$(OBJEXT) $(am__objects_1)
 libkernel_ipv4_a_OBJECTS = $(am_libkernel_ipv4_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/config@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
@@ -68,7 +72,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libkernel_ipv4_a_SOURCES)
-DIST_SOURCES = $(libkernel_ipv4_a_SOURCES)
+DIST_SOURCES = $(am__libkernel_ipv4_a_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -209,18 +213,9 @@ libkernel_ipv4_a_CPPFLAGS = \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
-libkernel_ipv4_a_SOURCES = \
-	route.c \
-	protocol.c \
-	arp.c \
-	af_inet.c \
-	ip_input.c \
-	ip_sock.c \
-	udp.c \
-	icmp.c \
-	ip_output.c \
-	ip_fragment.c
-
+libkernel_ipv4_a_SOURCES = route.c protocol.c arp.c af_inet.c \
+	ip_input.c ip_sock.c udp.c ip_output.c ip_fragment.c \
+	$(am__append_1)
 OBJS = rtipv4$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers
@@ -398,20 +393,6 @@ libkernel_ipv4_a-udp.obj: udp.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_ipv4_a-udp.obj `if test -f 'udp.c'; then $(CYGPATH_W) 'udp.c'; else $(CYGPATH_W) '$(srcdir)/udp.c'; fi`
 
-libkernel_ipv4_a-icmp.o: icmp.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_ipv4_a-icmp.o -MD -MP -MF $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo -c -o libkernel_ipv4_a-icmp.o `test -f 'icmp.c' || echo '$(srcdir)/'`icmp.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo $(DEPDIR)/libkernel_ipv4_a-icmp.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='icmp.c' object='libkernel_ipv4_a-icmp.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_ipv4_a-icmp.o `test -f 'icmp.c' || echo '$(srcdir)/'`icmp.c
-
-libkernel_ipv4_a-icmp.obj: icmp.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_ipv4_a-icmp.obj -MD -MP -MF $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo -c -o libkernel_ipv4_a-icmp.obj `if test -f 'icmp.c'; then $(CYGPATH_W) 'icmp.c'; else $(CYGPATH_W) '$(srcdir)/icmp.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo $(DEPDIR)/libkernel_ipv4_a-icmp.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='icmp.c' object='libkernel_ipv4_a-icmp.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_ipv4_a-icmp.obj `if test -f 'icmp.c'; then $(CYGPATH_W) 'icmp.c'; else $(CYGPATH_W) '$(srcdir)/icmp.c'; fi`
-
 libkernel_ipv4_a-ip_output.o: ip_output.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_ipv4_a-ip_output.o -MD -MP -MF $(DEPDIR)/libkernel_ipv4_a-ip_output.Tpo -c -o libkernel_ipv4_a-ip_output.o `test -f 'ip_output.c' || echo '$(srcdir)/'`ip_output.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_ipv4_a-ip_output.Tpo $(DEPDIR)/libkernel_ipv4_a-ip_output.Po
@@ -439,6 +420,20 @@ libkernel_ipv4_a-ip_fragment.obj: ip_fragment.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ip_fragment.c' object='libkernel_ipv4_a-ip_fragment.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_ipv4_a-ip_fragment.obj `if test -f 'ip_fragment.c'; then $(CYGPATH_W) 'ip_fragment.c'; else $(CYGPATH_W) '$(srcdir)/ip_fragment.c'; fi`
+
+libkernel_ipv4_a-icmp.o: icmp.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_ipv4_a-icmp.o -MD -MP -MF $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo -c -o libkernel_ipv4_a-icmp.o `test -f 'icmp.c' || echo '$(srcdir)/'`icmp.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo $(DEPDIR)/libkernel_ipv4_a-icmp.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='icmp.c' object='libkernel_ipv4_a-icmp.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_ipv4_a-icmp.o `test -f 'icmp.c' || echo '$(srcdir)/'`icmp.c
+
+libkernel_ipv4_a-icmp.obj: icmp.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_ipv4_a-icmp.obj -MD -MP -MF $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo -c -o libkernel_ipv4_a-icmp.obj `if test -f 'icmp.c'; then $(CYGPATH_W) 'icmp.c'; else $(CYGPATH_W) '$(srcdir)/icmp.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_ipv4_a-icmp.Tpo $(DEPDIR)/libkernel_ipv4_a-icmp.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='icmp.c' object='libkernel_ipv4_a-icmp.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_ipv4_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_ipv4_a-icmp.obj `if test -f 'icmp.c'; then $(CYGPATH_W) 'icmp.c'; else $(CYGPATH_W) '$(srcdir)/icmp.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

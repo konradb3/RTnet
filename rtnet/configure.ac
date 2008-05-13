@@ -1023,6 +1023,19 @@ if test "$CONFIG_RTNET_RTIPV4" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4,1,[Real-Time IPv4 support])
 fi
 
+AC_MSG_CHECKING([whether to enable real-time IPv4 ICMP support])
+AC_ARG_ENABLE(icmp,
+    AS_HELP_STRING([--enable-icmp], [enable real-time IPv4 ICMP support @<:@default=yes@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_RTIPV4_ICMP=y ;;
+        *) CONFIG_RTNET_RTIPV4_ICMP=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_ICMP:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTIPV4_ICMP,[test "$CONFIG_RTNET_RTIPV4_ICMP" = "y"])
+if test "$CONFIG_RTNET_RTIPV4_ICMP" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_RTIPV4_ICMP,1,[Real-Time IPv4 ICMP support])
+fi
+
 AC_MSG_CHECKING([whether to enable source IP routing])
 AC_ARG_ENABLE(route-src,
     AS_HELP_STRING([--enable-route-src], [enable source IP routing @<:@default=no@:>@]),
