@@ -859,10 +859,8 @@ static int boomerang_interrupt(rtdm_irq_t *irq_handle);
 static int vortex_close(struct rtnet_device *rtdev);
 static void dump_tx_ring(struct rtnet_device *rtdev);
 
-// *** RTnet ***
-//static void update_stats(long ioaddr, struct net_device *dev);
-//static struct net_device_stats *vortex_get_stats(struct net_device *dev);
-// *** RTnet ***
+static void update_stats(long ioaddr, struct rtnet_device *dev);
+static struct net_device_stats *vortex_get_stats(struct rtnet_device *rtdev);
 
 static void set_rx_mode(struct rtnet_device *rtdev);
 
@@ -1397,6 +1395,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	} else {
 		rtdev->hard_start_xmit = vortex_start_xmit;
 	}
+	rtdev->get_stats = vortex_get_stats;
 
 	if (print_info) {
 		printk(KERN_INFO "%s: scatter/gather %sabled. h/w checksums %sabled\n",
@@ -3023,20 +3022,18 @@ dump_tx_ring(struct rtnet_device *rtdev)
 	}
 }
 
-#if 0
-static struct net_device_stats *vortex_get_stats(struct net_device *dev)
+static struct net_device_stats *vortex_get_stats(struct rtnet_device *rtdev)
 {
-	struct vortex_private *vp = (struct vortex_private *)dev->priv;
-	unsigned long flags;
+	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
+	rtdm_lockctx_t flags;
 
-	if (netif_device_present(dev)) {	/* AKPM: Used to be netif_running */
-		spin_lock_irqsave (&vp->lock, flags);
-		update_stats(dev->base_addr, dev);
-		spin_unlock_irqrestore (&vp->lock, flags);
+	if (rtnetif_device_present(rtdev)) {	/* AKPM: Used to be netif_running */
+		rtdm_lock_get_irqsave (&vp->lock, flags);
+		update_stats(rtdev->base_addr, rtdev);
+		rtdm_lock_put_irqrestore (&vp->lock, flags);
 	}
 	return &vp->stats;
 }
-#endif
 
 /*  Update statistics.
 	Unlike with the EL3 we need not worry about interrupts changing
@@ -3045,7 +3042,6 @@ static struct net_device_stats *vortex_get_stats(struct net_device *dev)
 	table.  This is done by checking that the ASM (!) code generated uses
 	atomic updates with '+='.
 	*/
-#if 0
 static void update_stats(long ioaddr, struct rtnet_device *rtdev)
 {
 	struct vortex_private *vp = (struct vortex_private *)rtdev->priv;
@@ -3084,7 +3080,6 @@ static void update_stats(long ioaddr, struct rtnet_device *rtdev)
 	EL3WINDOW(old_window >> 13);
 	return;
 }
-#endif
 #if 0
 static int netdev_ethtool_ioctl(struct rtnet_device *rtdev, void *useraddr)
 {

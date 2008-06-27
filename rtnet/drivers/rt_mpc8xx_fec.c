@@ -230,8 +230,8 @@ static void fec_stop(struct rtnet_device *rtdev);
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 static void fec_enet_mii(struct net_device *dev);
 #endif	/* CONFIG_RTAI_RTNET_USE_MDIO */
+static struct net_device_stats *fec_enet_get_stats(struct rtnet_device *rtdev);
 #ifdef ORIGINAL_VERSION
-static struct net_device_stats *fec_enet_get_stats(struct net_device *dev);
 static void set_multicast_list(struct net_device *dev);
 #endif /* ORIGINAL_VERSION */
 
@@ -1635,14 +1635,12 @@ fec_enet_close(struct rtnet_device *rtdev)
 	return 0;
 }
 
-#ifdef ORIGINAL_VERSION
-static struct net_device_stats *fec_enet_get_stats(struct net_device *dev)
+static struct net_device_stats *fec_enet_get_stats(struct rtnet_device *rtdev)
 {
 	struct fec_enet_private *fep = (struct fec_enet_private *)rtdev->priv;
 
 	return &fep->stats;
 }
-#endif
 
 #ifdef CONFIG_RTAI_RTNET_USE_MDIO
 
@@ -2098,6 +2096,7 @@ int __init fec_enet_init(void)
 	rtdev->hard_start_xmit = fec_enet_start_xmit;
 	rtdev->stop = fec_enet_close;
 	rtdev->hard_header = &rt_eth_header;
+	rtdev->get_stats = fec_enet_get_stats;
 
 	if (!rx_pool_size)
 		rx_pool_size = RX_RING_SIZE * 2;

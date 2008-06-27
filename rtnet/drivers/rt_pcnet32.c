@@ -350,7 +350,7 @@ static int  pcnet32_rx(struct rtnet_device *, nanosecs_abs_t *time_stamp);
 //static void pcnet32_tx_timeout (struct net_device *dev);
 static int pcnet32_interrupt(rtdm_irq_t *irq_handle);
 static int  pcnet32_close(struct rtnet_device *);
-//static struct net_device_stats *pcnet32_get_stats(struct net_device *);
+static struct net_device_stats *pcnet32_get_stats(struct rtnet_device *);
 //static void pcnet32_set_multicast_list(struct net_device *);
 //static int  pcnet32_ioctl(struct net_device *, struct ifreq *, int);
 //static int mdio_read(struct net_device *dev, int phy_id, int reg_num);
@@ -830,8 +830,8 @@ pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
     dev->open = &pcnet32_open;
     dev->hard_start_xmit = &pcnet32_start_xmit;
     dev->stop = &pcnet32_close;
-/*** RTnet ***
     dev->get_stats = &pcnet32_get_stats;
+/*** RTnet ***
     dev->set_multicast_list = &pcnet32_set_multicast_list;
     dev->do_ioctl = &pcnet32_ioctl;
     dev->tx_timeout = pcnet32_tx_timeout;
@@ -1529,24 +1529,24 @@ pcnet32_close(struct rtnet_device *dev) /*** RTnet ***/
 }
 
 /*** RTnet ***/
-#if 0
 static struct net_device_stats *
-pcnet32_get_stats(struct net_device *dev)
+pcnet32_get_stats(struct rtnet_device *rtdev)
 {
-    struct pcnet32_private *lp = dev->priv;
-    unsigned long ioaddr = dev->base_addr;
+    struct pcnet32_private *lp = rtdev->priv;
+    unsigned long ioaddr = rtdev->base_addr;
+    rtdm_lockctx_t context;
     u16 saved_addr;
-    unsigned long flags;
 
-    spin_lock_irqsave(&lp->lock, flags);
+    rtdm_lock_get_irqsave(&lp->lock, context);
     saved_addr = lp->a.read_rap(ioaddr);
     lp->stats.rx_missed_errors = lp->a.read_csr (ioaddr, 112);
     lp->a.write_rap(ioaddr, saved_addr);
-    spin_unlock_irqrestore(&lp->lock, flags);
+    rtdm_lock_put_irqrestore(&lp->lock, context);
 
     return &lp->stats;
 }
 
+#if 0
 /* taken from the sunlance driver, which it took from the depca driver */
 static void pcnet32_load_multicast (struct net_device *dev)
 {

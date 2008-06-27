@@ -467,7 +467,7 @@ static int rtl8169_close (struct rtnet_device *rtdev);
 static inline u32 ether_crc (int length, unsigned char *data);
 static void rtl8169_set_rx_mode (struct rtnet_device *rtdev);
 /* static void rtl8169_tx_timeout (struct net_device *dev); */	/*** RTnet ***/
-/* static struct net_device_stats *rtl8169_get_stats(struct net_device *netdev); */	/*** RTnet ***/
+static struct net_device_stats *rtl8169_get_stats(struct rtnet_device *netdev);
 
 #ifdef RTL8169_JUMBO_FRAME_SUPPORT
 static int rtl8169_change_mtu(struct net_device *dev, int new_mtu);
@@ -862,7 +862,7 @@ static int __devinit rtl8169_init_one (struct pci_dev *pdev, const struct pci_de
 
 	rtdev->open		= rtl8169_open;
 	rtdev->hard_start_xmit 	= rtl8169_start_xmit;
-	/* dev->get_stats    	= rtl8169_get_stats; */			/*** RTnet ***/
+	rtdev->get_stats    	= rtl8169_get_stats;
 	rtdev->stop 		= rtl8169_close;
 	/* dev->tx_timeout 	= rtl8169_tx_timeout; */			/*** RTnet ***/
 	/* dev->set_multicast_list = rtl8169_set_rx_mode; */	/*** RTnet ***/
@@ -2073,15 +2073,13 @@ static void rtl8169_set_rx_mode (struct rtnet_device *rtdev)
 
 
 //================================================================================
-#if 0 /*** RTnet ***/
-struct net_device_stats *rtl8169_get_stats(struct net_device *dev)
+static struct net_device_stats *rtl8169_get_stats(struct rtnet_device *rtdev)
 
 {
-	struct rtl8169_private *priv = dev->priv;
+    struct rtl8169_private *priv = rtdev->priv;
 
     return &priv->stats;
 }
-#endif /* #if 0 */ /*** /RTnet ***/
 
 
 

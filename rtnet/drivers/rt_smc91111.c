@@ -356,7 +356,7 @@ static int smc_close(struct rtnet_device *dev);
  . This routine allows the proc file system to query the driver's
  . statistics.
 */
-//static struct net_device_stats * smc_query_statistics( struct net_device *dev);
+static struct net_device_stats *smc_query_statistics(struct rtnet_device *rtdev);
 
 /*
  . Finally, a call to set promiscuous mode ( for TCPDUMP and related
@@ -1325,8 +1325,8 @@ static int __init smc_probe(struct rtnet_device *dev, int ioaddr )
 	dev->open		        = smc_open;
 	dev->stop		        = smc_close;
 	dev->hard_start_xmit   	= smc_wait_to_send_packet;
+	dev->get_stats			= smc_query_statistics;
 //	dev->tx_timeout			= smc_timeout;
-//	dev->get_stats			= smc_query_statistics;
 #ifdef	HAVE_MULTICAST
 //	dev->set_multicast_list 	= &smc_set_multicast_list;
 #endif
@@ -1934,19 +1934,18 @@ static int smc_close(struct rtnet_device *dev)
 	return 0;
 }
 
-#if 0
 /*------------------------------------------------------------
  . Get the current statistics.
  . This may be called with the card open or closed.
  .-------------------------------------------------------------*/
-static struct net_device_stats* smc_query_statistics(struct net_device *dev) {
-	struct smc_local *lp = (struct smc_local *)dev->priv;
+static struct net_device_stats* smc_query_statistics(struct rtnet_device *rtdev)
+{
+	struct smc_local *lp = (struct smc_local *)rtdev->priv;
 
-	PRINTK2("%s:smc_query_statistics\n", dev->name);
+	PRINTK2("%s:smc_query_statistics\n", rtdev->name);
 
 	return &lp->stats;
 }
-#endif
 
 /*-----------------------------------------------------------
  . smc_set_multicast_list

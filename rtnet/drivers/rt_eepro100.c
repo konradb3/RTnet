@@ -561,7 +561,7 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle);
 static int speedo_close(struct rtnet_device *rtdev);
 static void set_rx_mode(struct rtnet_device *rtdev);
 static void speedo_show_state(struct rtnet_device *rtdev);
-
+static struct net_device_stats *speedo_get_stats(struct rtnet_device *rtdev);
 
 
 static inline void speedo_write_flush(long ioaddr)
@@ -797,6 +797,7 @@ static int speedo_found1(struct pci_dev *pdev,
 	rtdev->hard_start_xmit = &speedo_start_xmit;
 	rtdev->stop = &speedo_close;
 	rtdev->hard_header = &rt_eth_header;
+	rtdev->get_stats = &speedo_get_stats;
 	//rtdev->do_ioctl = NULL;
 
 	if (rtskb_pool_init(&sp->skb_pool, RX_RING_SIZE*2) < RX_RING_SIZE*2) {
@@ -1047,6 +1048,12 @@ static void speedo_show_state(struct rtnet_device *rtdev)
 				   rtdev->name, phy_num, i, mdio_read(ioaddr, phy_num, i));
 		}
 	}
+}
+
+static struct net_device_stats *speedo_get_stats(struct rtnet_device *rtdev)
+{
+	struct speedo_private *sp = (struct speedo_private *)rtdev->priv;
+	return &sp->stats;
 }
 
 /* Initialize the Rx and Tx rings, along with various 'dev' bits. */

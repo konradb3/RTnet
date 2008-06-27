@@ -173,8 +173,8 @@ static int scc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t 
 static int scc_enet_interrupt(rtdm_irq_t *irq_handle);
 static int scc_enet_close(struct rtnet_device *rtdev);
 
+static struct net_device_stats *scc_enet_get_stats(struct rtnet_device *rtdev);
 #ifdef ORIGINAL_VERSION
-static struct net_device_stats *scc_enet_get_stats(struct net_device *dev);
 static void set_multicast_list(struct net_device *dev);
 #endif
 
@@ -596,14 +596,12 @@ scc_enet_close(struct rtnet_device *rtdev)
 	return 0;
 }
 
-#ifdef ORIGINAL_VERSION
-static struct net_device_stats *scc_enet_get_stats(struct net_device *dev)
+static struct net_device_stats *scc_enet_get_stats(struct rtnet_device *rtdev)
 {
-	struct scc_enet_private *cep = (struct scc_enet_private *)dev->priv;
+	struct scc_enet_private *cep = (struct scc_enet_private *)rtdev->priv;
 
 	return &cep->stats;
 }
-#endif
 
 #ifdef ORIGINAL_VERSION
 /* Set or clear the multicast filter for this adaptor.
@@ -1042,6 +1040,7 @@ int __init scc_enet_init(void)
 	rtdev->hard_start_xmit = scc_enet_start_xmit;
 	rtdev->stop = scc_enet_close;
 	rtdev->hard_header = &rt_eth_header;
+	rtdev->get_stats = scc_enet_get_stats;
 
 	if (!rx_pool_size)
 		rx_pool_size = RX_RING_SIZE * 2;

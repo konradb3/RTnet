@@ -259,13 +259,13 @@ static int eth1394_stop (struct rtnet_device *dev)
 	return 0;
 }
 
-#if 0
 /* Return statistics to the caller */
 static struct net_device_stats *eth1394_stats (struct rtnet_device *dev)
 {
 	return &(((struct eth1394_priv *)dev->priv)->stats);
 }
 
+#if 0
 static void eth1394_tx_timeout (struct rtnet_device *dev)
 {
 	ETH1394_PRINT (KERN_ERR, dev->name, "Timeout, resetting host %s\n",
@@ -396,6 +396,7 @@ static void eth1394_add_host (struct hpsb_host *host)
 	dev->hard_start_xmit = eth1394_tx;
 	dev->stop = eth1394_stop;
 	dev->hard_header = eth1394_header;
+	dev->get_stats = eth1394_stats;
 	dev->flags		= IFF_BROADCAST | IFF_MULTICAST;
 	dev->addr_len		= ETH_ALEN;
 	dev->hard_header_len 	= ETH_HLEN;

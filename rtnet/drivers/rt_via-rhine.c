@@ -556,8 +556,8 @@ static void via_rhine_tx(struct rtnet_device *dev);
 static void via_rhine_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp);
 static void via_rhine_error(struct rtnet_device *dev, int intr_status);
 static void via_rhine_set_rx_mode(struct rtnet_device *dev);
-/*static struct net_device_stats *via_rhine_get_stats(struct net_device *dev);
-static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);*/
+static struct net_device_stats *via_rhine_get_stats(struct rtnet_device *rtdev);
+/*static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);*/
 static int  via_rhine_close(struct rtnet_device *dev);
 /*** RTnet ***/
 
@@ -807,8 +807,8 @@ static int __devinit via_rhine_init_one (struct pci_dev *pdev,
 	dev->open = via_rhine_open;
 	dev->hard_start_xmit = via_rhine_start_tx;
 	dev->stop = via_rhine_close;
-/*** RTnet ***
 	dev->get_stats = via_rhine_get_stats;
+/*** RTnet ***
 	dev->set_multicast_list = via_rhine_set_rx_mode;
 	dev->do_ioctl = netdev_ioctl;
 	dev->tx_timeout = via_rhine_tx_timeout;
@@ -1791,22 +1791,20 @@ static void via_rhine_error(struct rtnet_device *dev, int intr_status) /*** RTne
 	rtdm_lock_put(&np->lock); /*** RTnet ***/
 }
 
-/*** RTnet ***
-static struct net_device_stats *via_rhine_get_stats(struct net_device *dev)
+static struct net_device_stats *via_rhine_get_stats(struct rtnet_device *rtdev)
 {
-	struct netdev_private *np = dev->priv;
-	long ioaddr = dev->base_addr;
-	unsigned long flags;
+	struct netdev_private *np = rtdev->priv;
+	long ioaddr = rtdev->base_addr;
+	rtdm_lockctx_t context;
 
-	spin_lock_irqsave(&np->lock, flags);
+	rtdm_lock_get_irqsave(&np->lock, context);
 	np->stats.rx_crc_errors	+= readw(ioaddr + RxCRCErrs);
 	np->stats.rx_missed_errors	+= readw(ioaddr + RxMissed);
-	clear_tally_counters(ioaddr);
-	spin_unlock_irqrestore(&np->lock, flags);
+	clear_tally_counters((void *)ioaddr);
+	rtdm_lock_put_irqrestore(&np->lock, context);
 
 	return &np->stats;
 }
- *** RTnet ***/
 
 static void via_rhine_set_rx_mode(struct rtnet_device *dev) /*** RTnet ***/
 {

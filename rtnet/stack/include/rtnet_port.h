@@ -107,6 +107,11 @@ static inline int rtnetif_running(struct rtnet_device *rtdev)
     return test_bit(__LINK_STATE_START, &rtdev->state);
 }
 
+static inline int rtnetif_device_present(struct rtnet_device *rtdev)
+{
+    return test_bit(__LINK_STATE_PRESENT, &rtdev->state);
+}
+
 static inline void rtnetif_carrier_on(struct rtnet_device *rtdev)
 {
     clear_bit(__LINK_STATE_NOCARRIER, &rtdev->state);

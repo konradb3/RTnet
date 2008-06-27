@@ -539,6 +539,7 @@ static int rtl8139_interrupt (rtdm_irq_t *irq_handle);
 static int rtl8139_start_xmit (struct rtskb *skb, struct rtnet_device *rtdev);
 
 static int rtl8139_ioctl(struct rtnet_device *rtdev, unsigned int request, void *cmd);
+static struct net_device_stats *rtl8139_get_stats(struct rtnet_device*rtdev);
 
 static void rtl8139_init_ring (struct rtnet_device *rtdev);
 static void rtl8139_set_rx_mode (struct rtnet_device *rtdev);
@@ -849,6 +850,7 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         rtdev->hard_header = &rt_eth_header;
         rtdev->hard_start_xmit = rtl8139_start_xmit;
         rtdev->do_ioctl = rtl8139_ioctl;
+        rtdev->get_stats = rtl8139_get_stats;
 
         /*rtdev->set_multicast_list = rtl8139_set_rx_mode; */
         rtdev->features |= NETIF_F_SG|NETIF_F_HW_CSUM;
@@ -1383,6 +1385,12 @@ static int rtl8139_ioctl(struct rtnet_device *rtdev, unsigned int request, void 
             break;
     }
     return nReturn;
+}
+
+static struct net_device_stats *rtl8139_get_stats(struct rtnet_device*rtdev)
+{
+	struct rtl8139_private *tp = rtdev->priv;
+	return &tp->stats;
 }
 
 static void rtl8139_tx_interrupt (struct rtnet_device *rtdev,

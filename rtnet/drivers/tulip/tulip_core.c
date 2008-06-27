@@ -254,6 +254,7 @@ static int tulip_open(/*RTnet*/struct rtnet_device *rtdev);
 static int tulip_close(/*RTnet*/struct rtnet_device *rtdev);
 static void tulip_up(/*RTnet*/struct rtnet_device *rtdev);
 static void tulip_down(/*RTnet*/struct rtnet_device *rtdev);
+static struct net_device_stats *tulip_get_stats(struct rtnet_device *rtdev);
 //static void set_rx_mode(struct net_device *dev);
 
 
@@ -663,6 +664,12 @@ static void tulip_clean_tx_ring(struct tulip_private *tp)
 		tp->tx_buffers[entry].skb = NULL;
 		tp->tx_buffers[entry].mapping = 0;
 	}
+}
+
+static struct net_device_stats *tulip_get_stats(struct rtnet_device *rtdev)
+{
+	struct tulip_private *tp = (struct tulip_private *) rtdev->priv;
+	return &tp->stats;
 }
 
 static void tulip_down (/*RTnet*/struct rtnet_device *rtdev)
@@ -1416,6 +1423,7 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	rtdev->stop = tulip_close;
 	rtdev->hard_header = rt_eth_header;
 	rtdev->hard_start_xmit = tulip_start_xmit;
+	rtdev->get_stats = tulip_get_stats;
 
 	/*RTnet*/
 	if (rtskb_pool_init(&tp->skb_pool, RX_RING_SIZE*2) < RX_RING_SIZE*2)

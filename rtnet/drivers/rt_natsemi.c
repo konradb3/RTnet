@@ -721,9 +721,9 @@ static void netdev_rx(struct rtnet_device *dev, nanosecs_abs_t *time_stamp);
 static void netdev_tx_done(struct rtnet_device *dev);
 static void __set_rx_mode(struct rtnet_device *dev);
 /*static void set_rx_mode(struct rtnet_device *dev);*/
-static void __get_stats(struct rtnet_device *dev);
-/*static struct net_device_stats *get_stats(struct net_device *dev);
-static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+static void __get_stats(struct rtnet_device *rtdev);
+static struct net_device_stats *get_stats(struct rtnet_device *dev);
+/*static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 static int netdev_set_wol(struct rtnet_device *dev, u32 newval);
 static int netdev_get_wol(struct rtnet_device *dev, u32 *supported, u32 *cur);
 static int netdev_set_sopass(struct rtnet_device *dev, u8 *newval);
@@ -868,8 +868,8 @@ static int __devinit natsemi_probe1 (struct pci_dev *pdev,
 	dev->open = &netdev_open;
 	dev->hard_start_xmit = &start_tx;
 	dev->stop = &netdev_close;
-/*** RTnet ***
 	dev->get_stats = &get_stats;
+/*** RTnet ***
 	dev->set_multicast_list = &set_rx_mode;
 	dev->do_ioctl = &netdev_ioctl;
 	dev->tx_timeout = &tx_timeout;
@@ -2002,22 +2002,19 @@ static void __get_stats(struct rtnet_device *dev)
 	np->stats.rx_missed_errors += readl((void *)(ioaddr + RxMissed));
 }
 
-/*** RTnet ***/
-#if 0
-static struct net_device_stats *get_stats(struct net_device *dev)
+static struct net_device_stats *get_stats(struct rtnet_device *rtdev)
 {
-	struct netdev_private *np = dev->priv;
+	struct netdev_private *np = rtdev->priv;
+	rtdm_lockctx_t context;
 
 	/* The chip only need report frame silently dropped. */
-	spin_lock_irq(&np->lock);
-	if (netif_running(dev) && !np->hands_off)
-		__get_stats(dev);
-	spin_unlock_irq(&np->lock);
+	rtdm_lock_get_irqsave(&np->lock, context);
+	if (rtnetif_running(rtdev) && !np->hands_off)
+		__get_stats(rtdev);
+	rtdm_lock_put_irqrestore(&np->lock, context);
 
 	return &np->stats;
 }
-#endif
-/*** RTnet ***/
 
 /**
  * dp83815_crc - computer CRC for hash table entries

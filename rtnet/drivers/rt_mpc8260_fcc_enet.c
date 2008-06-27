@@ -156,8 +156,8 @@ static int  fcc_enet_rx(struct rtnet_device *rtdev, int *packets, nanosecs_abs_t
 static int fcc_enet_interrupt(rtdm_irq_t *irq_handle);
 static int  fcc_enet_close(struct rtnet_device *dev);
 
+static struct net_device_stats *fcc_enet_get_stats(struct rtnet_device *rtdev);
 #ifdef ORIGINAL_VERSION
-static struct net_device_stats *fcc_enet_get_stats(struct net_device *dev);
 static void set_multicast_list(struct net_device *dev);
 static int fcc_enet_set_mac_address(struct net_device *dev, void *addr);
 #endif /* ORIGINAL_VERSION */
@@ -812,14 +812,12 @@ fcc_enet_close(struct rtnet_device *rtdev)
 	return 0;
 }
 
-#ifdef ORIGINAL_VERSION
-static struct net_device_stats *fcc_enet_get_stats(struct net_device *dev)
+static struct net_device_stats *fcc_enet_get_stats(struct rtnet_device *rtdev)
 {
-	struct fcc_enet_private *cep = (struct fcc_enet_private *)dev->priv;
+	struct fcc_enet_private *cep = (struct fcc_enet_private *)rtdev->priv;
 
 	return &cep->stats;
 }
-#endif
 
 #ifdef	CONFIG_RTAI_RTNET_USE_MDIO
 
@@ -1672,6 +1670,7 @@ int __init fec_enet_init(void)
 		rtdev->hard_start_xmit = fcc_enet_start_xmit;
 		rtdev->stop = fcc_enet_close;
 		rtdev->hard_header = &rt_eth_header;
+		rtdev->get_stats = fcc_enet_get_stats;
 
 		if (!rx_pool_size)
 			rx_pool_size = RX_RING_SIZE * 2;
