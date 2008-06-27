@@ -24,6 +24,8 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 
 #include <rtdev_mgr.h>
 #include <rtnet_chrdev.h>
@@ -43,7 +45,7 @@ EXPORT_SYMBOL(STACK_manager);
 EXPORT_SYMBOL(RTDEV_manager);
 
 const char rtnet_rtdm_provider_name[] =
-    "(C) 1999-2006 RTnet Development Team, http://www.rtnet.org";
+    "(C) 1999-2008 RTnet Development Team, http://www.rtnet.org";
 
 EXPORT_SYMBOL(rtnet_rtdm_provider_name);
 
@@ -144,6 +146,87 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
 
 
 
+void *dev_seq_start(struct seq_file *seq, loff_t *pos)
+{
+    down(&rtnet_devices_nrt_lock);
+    return *pos ? __rtdev_get_by_index(*pos - 1) : SEQ_START_TOKEN;
+}
+
+void *dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+    ++*pos;
+    if (v == SEQ_START_TOKEN)
+        return __rtdev_get_by_index(0);
+    else
+        return __rtdev_get_by_index(*pos - 1);
+}
+
+void dev_seq_stop(struct seq_file *seq, void *v)
+{
+    up(&rtnet_devices_nrt_lock);
+}
+
+static void dev_seq_printf_stats(struct seq_file *seq, struct rtnet_device *dev)
+{
+    if (dev && dev->get_stats) {
+        struct net_device_stats *stats = dev->get_stats(dev);
+
+        seq_printf(seq, "%6s:%8lu %7lu %4lu %4lu %4lu %5lu %10lu %9lu "
+                        "%8lu %7lu %4lu %4lu %4lu %5lu %7lu %10lu\n",
+                   dev->name, stats->rx_bytes, stats->rx_packets,
+                   stats->rx_errors,
+                   stats->rx_dropped + stats->rx_missed_errors,
+                   stats->rx_fifo_errors,
+                   stats->rx_length_errors + stats->rx_over_errors +
+                     stats->rx_crc_errors + stats->rx_frame_errors,
+                   stats->rx_compressed, stats->multicast,
+                   stats->tx_bytes, stats->tx_packets,
+                   stats->tx_errors, stats->tx_dropped,
+                   stats->tx_fifo_errors, stats->collisions,
+                   stats->tx_carrier_errors +
+                     stats->tx_aborted_errors +
+                     stats->tx_window_errors +
+                     stats->tx_heartbeat_errors,
+                   stats->tx_compressed);
+    } else
+        seq_printf(seq, "%6s: No statistics available.\n", dev->name);
+}
+
+static int dev_seq_show(struct seq_file *seq, void *v)
+{
+    if (v == SEQ_START_TOKEN)
+        seq_puts(seq, "Inter-|   Receive                            "
+                      "                    |  Transmit\n"
+                      " face |bytes    packets errs drop fifo frame "
+                      "compressed multicast|bytes    packets errs "
+                      "drop fifo colls carrier compressed\n");
+    else
+        dev_seq_printf_stats(seq, v);
+    return 0;
+}
+
+static struct seq_operations dev_seq_ops = {
+    .start = dev_seq_start,
+    .next  = dev_seq_next,
+    .stop  = dev_seq_stop,
+    .show  = dev_seq_show,
+};
+
+static int dev_seq_open(struct inode *inode, struct file *file)
+{
+    return seq_open(file, &dev_seq_ops);
+}
+
+static struct file_operations rtdev_stats_seq_fops = {
+    .owner   = THIS_MODULE,
+    .open    = dev_seq_open,
+    .read    = seq_read,
+    .llseek  = seq_lseek,
+    .release = seq_release,
+};
+
+
+
 static int rtnet_proc_register(void)
 {
     struct proc_dir_entry *proc_entry;
@@ -170,7 +253,15 @@ static int rtnet_proc_register(void)
         goto error4;
     proc_entry->read_proc = rtnet_read_proc_version;
 
+    proc_entry = create_proc_entry("stats", S_IRUGO, rtnet_proc_root);
+    if (!proc_entry)
+        goto error5;
+    proc_entry->proc_fops = &rtdev_stats_seq_fops;
+
     return 0;
+
+  error5:
+    remove_proc_entry("version", rtnet_proc_root);
 
   error4:
     remove_proc_entry("rtskb", rtnet_proc_root);
@@ -193,6 +284,7 @@ static void rtnet_proc_unregister(void)
     remove_proc_entry("devices", rtnet_proc_root);
     remove_proc_entry("rtskb", rtnet_proc_root);
     remove_proc_entry("version", rtnet_proc_root);
+    remove_proc_entry("stats", rtnet_proc_root);
     remove_proc_entry("rtnet", 0);
 }
 #endif  /* CONFIG_PROC_FS */

@@ -41,7 +41,7 @@ module_param(device_rtskbs, uint, 0444);
 MODULE_PARM_DESC(device_rtskbs, "Number of additional global realtime socket "
                  "buffers per network adapter");
 
-static struct rtnet_device  *rtnet_devices[MAX_RT_DEVICES];
+struct rtnet_device         *rtnet_devices[MAX_RT_DEVICES];
 static struct rtnet_device  *loopback_device;
 static rtdm_lock_t          rtnet_devices_rt_lock  = RTDM_LOCK_UNLOCKED;
 
@@ -55,8 +55,9 @@ static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 /***
  *  __rtdev_get_by_name - find a rtnet_device by its name
  *  @name: name to find
+ *  @note: caller must hold rtnet_devices_nrt_lock
  */
-static inline struct rtnet_device *__rtdev_get_by_name(const char *name)
+static struct rtnet_device *__rtdev_get_by_name(const char *name)
 {
     int                 i;
     struct rtnet_device *rtdev;
@@ -90,17 +91,6 @@ struct rtnet_device *rtdev_get_by_name(const char *name)
     rtdm_lock_put_irqrestore(&rtnet_devices_rt_lock, context);
 
     return rtdev;
-}
-
-
-
-/***
- *  __rtdev_get_by_index - find a rtnet_device by its ifindex
- *  @ifindex: index of device
- */
-static inline struct rtnet_device *__rtdev_get_by_index(int ifindex)
-{
-    return rtnet_devices[ifindex-1];
 }
 
 

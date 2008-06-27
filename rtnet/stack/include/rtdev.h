@@ -141,6 +141,7 @@ struct rtnet_device {
 
     int                 (*do_ioctl)(struct rtnet_device *rtdev, 
 				    unsigned int request, void * cmd);
+    struct net_device_stats *(*get_stats)(struct rtnet_device *rtdev);
 };
 
 
@@ -157,6 +158,7 @@ struct rtdev_event_hook {
 
 extern struct list_head event_hook_list;
 extern struct semaphore rtnet_devices_nrt_lock;
+extern struct rtnet_device *rtnet_devices[];
 
 
 struct rtnet_device *rt_alloc_etherdev(int sizeof_priv);
@@ -169,6 +171,16 @@ void rtdev_add_event_hook(struct rtdev_event_hook *hook);
 void rtdev_del_event_hook(struct rtdev_event_hook *hook);
 
 void rtdev_alloc_name (struct rtnet_device *rtdev, const char *name_mask);
+
+/**
+ *  __rtdev_get_by_index - find a rtnet_device by its ifindex
+ *  @ifindex: index of device
+ *  @note: caller must hold rtnet_devices_nrt_lock
+ */
+static inline struct rtnet_device *__rtdev_get_by_index(int ifindex)
+{
+    return rtnet_devices[ifindex-1];
+}
 
 struct rtnet_device *rtdev_get_by_name(const char *if_name);
 struct rtnet_device *rtdev_get_by_index(int ifindex);

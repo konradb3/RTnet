@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
@@ -50,6 +51,110 @@
 int                     f;
 struct rtnet_core_cmd   cmd;
 
+struct user_net_device_stats {
+    unsigned long long rx_packets;      /* total packets received       */
+    unsigned long long tx_packets;      /* total packets transmitted    */
+    unsigned long long rx_bytes;        /* total bytes received         */
+    unsigned long long tx_bytes;        /* total bytes transmitted      */
+    unsigned long rx_errors;            /* bad packets received         */
+    unsigned long tx_errors;            /* packet transmit problems     */
+    unsigned long rx_dropped;           /* no space in linux buffers    */
+    unsigned long tx_dropped;           /* no space available in linux  */
+    unsigned long rx_multicast;         /* multicast packets received   */
+    unsigned long rx_compressed;
+    unsigned long tx_compressed;
+    unsigned long collisions;
+
+    /* detailed rx_errors: */
+    unsigned long rx_length_errors;
+    unsigned long rx_over_errors;       /* receiver ring buff overflow  */
+    unsigned long rx_crc_errors;        /* recved pkt with crc error    */
+    unsigned long rx_frame_errors;      /* recv'd frame alignment error */
+    unsigned long rx_fifo_errors;       /* recv'r fifo overrun          */
+    unsigned long rx_missed_errors;     /* receiver missed packet     */
+    /* detailed tx_errors */
+    unsigned long tx_aborted_errors;
+    unsigned long tx_carrier_errors;
+    unsigned long tx_fifo_errors;
+    unsigned long tx_heartbeat_errors;
+    unsigned long tx_window_errors;
+};
+
+struct itf_stats {
+    char name[IFNAMSIZ];
+    struct user_net_device_stats stats;
+    struct itf_stats *next;
+};
+
+static struct itf_stats *itf_stats_head;
+
+void parse_stats(void)
+{
+    struct itf_stats *itf;
+    char buf[512];
+    FILE *fh;
+
+    fh = fopen("/proc/rtnet/stats", "r");
+    if (!fh)
+        return;
+
+    fgets(buf, sizeof buf, fh); /* eat headers */
+    fgets(buf, sizeof buf, fh);
+
+    while (fgets(buf, sizeof buf, fh)) {
+        char *name, *p;
+
+        itf = malloc(sizeof(*itf));
+        if (!itf)
+            return;
+
+        name = buf;
+        while (isspace(*name))
+            name++;
+        p = name;
+        while (*p && *p != ':')
+            p++;
+        *p = '\0';
+        snprintf(itf->name, sizeof(itf->name), "%s", name);
+
+        p++;
+        sscanf(p,
+               "%llu %llu %lu %lu %lu %lu %lu %lu %llu %llu %lu %lu %lu %lu %lu %lu",
+               &itf->stats.rx_bytes,
+               &itf->stats.rx_packets,
+               &itf->stats.rx_errors,
+               &itf->stats.rx_dropped,
+               &itf->stats.rx_fifo_errors,
+               &itf->stats.rx_frame_errors,
+               &itf->stats.rx_compressed,
+               &itf->stats.rx_multicast,
+               &itf->stats.tx_bytes,
+               &itf->stats.tx_packets,
+               &itf->stats.tx_errors,
+               &itf->stats.tx_dropped,
+               &itf->stats.tx_fifo_errors,
+               &itf->stats.collisions,
+               &itf->stats.tx_carrier_errors,
+               &itf->stats.tx_compressed);
+
+        itf->next = itf_stats_head;
+        itf_stats_head = itf;
+    }
+
+    fclose(fh);
+}
+
+struct itf_stats *find_stats(const char *itf_name)
+{
+    struct itf_stats *itf;
+
+    for(itf = itf_stats_head; itf; itf = itf->next)
+        if(!strcmp(itf->name, itf_name))
+            break;
+
+    return itf;
+}
+
 
 void help(void)
 {
@@ -70,6 +175,7 @@ void print_dev(void)
     struct in_addr  ip_addr;
     struct in_addr  broadcast_ip;
     unsigned int    flags;
+    struct itf_stats *itf;
 
 
     cmd.head.if_name[9] = 0;
@@ -106,13 +212,60 @@ void print_dev(void)
 
     flags = cmd.args.info.flags &
         (IFF_UP | IFF_BROADCAST | IFF_LOOPBACK | IFF_RUNNING | IFF_PROMISC);
-    printf("          %s%s%s%s%s%s MTU: %d\n\n",
+    printf("          %s%s%s%s%s%s MTU: %d\n",
            ((flags & IFF_UP) != 0) ? "UP " : "",
            ((flags & IFF_BROADCAST) != 0) ? "BROADCAST " : "",
            ((flags & IFF_LOOPBACK) != 0) ? "LOOPBACK " : "",
            ((flags & IFF_RUNNING) != 0) ? "RUNNING " : "",
            ((flags & IFF_PROMISC) != 0) ? "PROMISC " : "",
            (flags == 0) ? "[NO FLAGS] " : "", cmd.args.info.mtu);
+
+    if ((itf = find_stats(cmd.head.if_name))) {
+        unsigned long long rx, tx, short_rx, short_tx;
+        char Rext[5]="b";
+        char Text[5]="b";
+
+        printf("          ");
+        printf("RX packets:%llu errors:%lu dropped:%lu overruns:%lu frame:%lu\n",
+               itf->stats.rx_packets, itf->stats.rx_errors,
+               itf->stats.rx_dropped, itf->stats.rx_fifo_errors,
+               itf->stats.rx_frame_errors);
+
+        printf("          ");
+        printf("TX packets:%llu errors:%lu dropped:%lu overruns:%lu carrier:%lu\n",
+               itf->stats.tx_packets, itf->stats.tx_errors,
+               itf->stats.tx_dropped, itf->stats.tx_fifo_errors,
+               itf->stats.tx_carrier_errors);
+
+        printf("          collisions:%lu ", itf->stats.collisions);
+        printf("\n          ");
+
+        rx = itf->stats.rx_bytes;  
+        tx = itf->stats.tx_bytes;
+        short_rx = rx * 10;  
+        short_tx = tx * 10;
+        if (rx > 1048576) {
+            short_rx /= 1048576;
+            strcpy(Rext, "Mb");
+        } else if (rx > 1024) {
+            short_rx /= 1024;
+            strcpy(Rext, "Kb");
+        }
+        if (tx > 1048576) {
+            short_tx /= 1048576;
+            strcpy(Text, "Mb");
+        } else if (tx > 1024) {
+            short_tx /= 1024;
+            strcpy(Text, "Kb");
+        }
+
+        printf("RX bytes:%llu (%lu.%lu %s)  TX bytes:%llu (%lu.%lu %s)\n",
+               rx, (unsigned long)(short_rx / 10),
+               (unsigned long)(short_rx % 10), Rext, 
+               tx, (unsigned long)(short_tx / 10), 
+               (unsigned long)(short_tx % 10), Text);
+    }
+    printf("\n");
 }
 
 
@@ -254,6 +407,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    parse_stats();
     if (argc == 1)
         do_display(PRINT_FLAG_ALL);
 
