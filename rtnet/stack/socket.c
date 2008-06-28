@@ -167,7 +167,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
             rtdm_lock_put_irqrestore(&sock->param_lock, context);
 
             if (rtdm_in_rt_context())
-                return -EACCES;
+                return -ENOSYS;
             ret = rtskb_pool_extend(&sock->skb_pool, rtskbs);
             atomic_sub(rtskbs-ret, &sock->pool_size);
             break;
@@ -186,7 +186,7 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
             rtdm_lock_put_irqrestore(&sock->param_lock, context);
 
             if (rtdm_in_rt_context())
-                return -EACCES;
+                return -ENOSYS;
             ret = rtskb_pool_shrink(&sock->skb_pool, *(unsigned int *)arg);
             atomic_add(rtskbs-ret, &sock->pool_size);
             break;
