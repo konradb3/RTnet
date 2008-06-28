@@ -31,18 +31,12 @@
 #include <rtnet_port.h>
 
 static unsigned int global_rtskbs    = DEFAULT_GLOBAL_RTSKBS;
-static unsigned int rtskb_cache_size = DEFAULT_RTSKB_CACHE_SIZE;
 module_param(global_rtskbs, uint, 0444);
-module_param(rtskb_cache_size, uint, 0444);
 MODULE_PARM_DESC(global_rtskbs, "Number of realtime socket buffers in global pool");
-MODULE_PARM_DESC(rtskb_cache_size, "Number of cached rtskbs for creating pools in real-time");
 
 
 /* Linux slab pool for rtskbs */
 static struct kmem_cache *rtskb_slab_pool;
-
-/* preallocated rtskbs for real-time pool creation */
-static struct rtskb_queue rtskb_cache;
 
 /* pool of rtskbs for global use */
 struct rtskb_queue global_pool;
@@ -295,32 +289,6 @@ EXPORT_SYMBOL(rtskb_pool_init);
 
 
 /***
- *  rtskb_pool_init_rt
- *  @pool: pool to be initialized
- *  @initial_size: number of rtskbs to allocate
- *  return: number of actually allocated rtskbs
- */
-unsigned int rtskb_pool_init_rt(struct rtskb_queue *pool,
-                                unsigned int initial_size)
-{
-    unsigned int i;
-
-    rtskb_queue_init(pool);
-#ifdef CONFIG_RTNET_CHECKED
-    pool->pool_balance = 0;
-#endif
-
-    i = rtskb_pool_extend_rt(pool, initial_size);
-
-    rtskb_pools++;
-    if (rtskb_pools > rtskb_pools_max)
-        rtskb_pools_max = rtskb_pools;
-
-    return i;
-}
-
-
-/***
  *  __rtskb_pool_release
  *  @pool: pool to release
  */
@@ -338,25 +306,6 @@ void __rtskb_pool_release(struct rtskb_queue *pool)
 }
 
 EXPORT_SYMBOL(__rtskb_pool_release);
-
-
-/***
- *  __rtskb_pool_release_rt
- *  @pool: pool to release
- */
-void __rtskb_pool_release_rt(struct rtskb_queue *pool)
-{
-    struct rtskb *skb;
-
-
-    while ((skb = rtskb_dequeue(pool)) != NULL) {
-        skb->chain_end = skb;
-        rtskb_queue_tail(&rtskb_cache, skb);
-        rtskb_amount--;
-    }
-
-    rtskb_pools--;
-}
 
 
 unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
@@ -396,38 +345,6 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
 }
 
 
-unsigned int rtskb_pool_extend_rt(struct rtskb_queue *pool,
-                                  unsigned int add_rtskbs)
-{
-    unsigned int i;
-    struct rtskb *skb;
-
-
-    RTNET_ASSERT(pool != NULL, return -EINVAL;);
-
-    for (i = 0; i < add_rtskbs; i++) {
-        /* get rtskb from rtskb cache */
-        if (!(skb = rtskb_dequeue(&rtskb_cache))) {
-            rtdm_printk("RTnet: rtskb allocation from real-time cache "
-                        "failed\n");
-            break;
-        }
-
-        /* most of the initialization has been done upon cache creation */
-        skb->chain_end = skb;
-        skb->pool = pool;
-
-        rtskb_queue_tail(pool, skb);
-
-        rtskb_amount++;
-        if (rtskb_amount > rtskb_amount_max)
-            rtskb_amount_max = rtskb_amount;
-    }
-
-    return i;
-}
-
-
 unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
                                unsigned int rem_rtskbs)
 {
@@ -440,26 +357,6 @@ unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
             break;
 
         kmem_cache_free(rtskb_slab_pool, skb);
-        rtskb_amount--;
-    }
-
-    return i;
-}
-
-
-unsigned int rtskb_pool_shrink_rt(struct rtskb_queue *pool,
-                                  unsigned int rem_rtskbs)
-{
-    unsigned int    i;
-    struct rtskb    *skb;
-
-
-    for (i = 0; i < rem_rtskbs; i++) {
-        if ((skb = rtskb_dequeue(pool)) == NULL)
-            break;
-        skb->chain_end = skb;
-
-        rtskb_queue_tail(&rtskb_cache, skb);
         rtskb_amount--;
     }
 
@@ -569,10 +466,6 @@ int rtskb_pools_init(void)
     if (rtskb_slab_pool == NULL)
         return -ENOMEM;
 
-    /* create the rtskb cache like a normal pool */
-    if (rtskb_pool_init(&rtskb_cache, rtskb_cache_size) < rtskb_cache_size)
-        goto err_out1;
-
     /* reset the statistics (cache is accounted separately) */
     rtskb_pools      = 0;
     rtskb_pools_max  = 0;
@@ -581,7 +474,7 @@ int rtskb_pools_init(void)
 
     /* create the global rtskb pool */
     if (rtskb_pool_init(&global_pool, global_rtskbs) < global_rtskbs)
-        goto err_out2;
+        goto err_out;
 
 #ifdef CONFIG_RTNET_ADDON_RTCAP
     rtdm_lock_init(&rtcap_lock);
@@ -589,11 +482,8 @@ int rtskb_pools_init(void)
 
     return 0;
 
-err_out2:
+err_out:
     rtskb_pool_release(&global_pool);
-    rtskb_pool_release(&rtskb_cache);
-
-err_out1:
     kmem_cache_destroy(rtskb_slab_pool);
 
     return -ENOMEM;
@@ -603,6 +493,5 @@ err_out1:
 void rtskb_pools_release(void)
 {
     rtskb_pool_release(&global_pool);
-    rtskb_pool_release(&rtskb_cache);
     kmem_cache_destroy(rtskb_slab_pool);
 }

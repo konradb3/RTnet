@@ -69,10 +69,7 @@ int rt_socket_init(struct rtdm_dev_context *sockctx)
     rtdm_lock_init(&sock->param_lock);
     rtdm_sem_init(&sock->pending_sem, 0);
 
-    if (test_bit(RTDM_CREATED_IN_NRT, &sockctx->context_flags))
-        pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
-    else
-        pool_size = rtskb_pool_init_rt(&sock->skb_pool, socket_rtskbs);
+    pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
     atomic_set(&sock->pool_size, pool_size);
 
     if (pool_size < socket_rtskbs) {
@@ -109,19 +106,11 @@ int rt_socket_cleanup(struct rtdm_dev_context *sockctx)
     rtdm_lock_put_irqrestore(&sock->param_lock, context);
 
     if (rtskbs > 0) {
-        if (test_bit(RTDM_CREATED_IN_NRT, &sockctx->context_flags)) {
-            rtskbs = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
-            atomic_sub(rtskbs, &sock->pool_size);
-            if (atomic_read(&sock->pool_size) > 0)
-                return -EAGAIN;
-            rtskb_pool_release(&sock->skb_pool);
-        } else {
-            rtskbs = rtskb_pool_shrink_rt(&sock->skb_pool, rtskbs);
-            atomic_sub(rtskbs, &sock->pool_size);
-            if (atomic_read(&sock->pool_size) > 0)
-                return -EAGAIN;
-            rtskb_pool_release_rt(&sock->skb_pool);
-        }
+        rtskbs = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
+        atomic_sub(rtskbs, &sock->pool_size);
+        if (atomic_read(&sock->pool_size) > 0)
+            return -EAGAIN;
+        rtskb_pool_release(&sock->skb_pool);
     }
 
     return 0;
@@ -177,12 +166,9 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
 
             rtdm_lock_put_irqrestore(&sock->param_lock, context);
 
-            if (test_bit(RTDM_CREATED_IN_NRT, &sockctx->context_flags)) {
-                if (rtdm_in_rt_context())
-                    return -EACCES;
-                ret = rtskb_pool_extend(&sock->skb_pool, rtskbs);
-            } else
-                ret = rtskb_pool_extend_rt(&sock->skb_pool, rtskbs);
+            if (rtdm_in_rt_context())
+                return -EACCES;
+            ret = rtskb_pool_extend(&sock->skb_pool, rtskbs);
             atomic_sub(rtskbs-ret, &sock->pool_size);
             break;
 
@@ -199,13 +185,9 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
 
             rtdm_lock_put_irqrestore(&sock->param_lock, context);
 
-            if (test_bit(RTDM_CREATED_IN_NRT, &sockctx->context_flags)) {
-                if (rtdm_in_rt_context())
-                    return -EACCES;
-                ret = rtskb_pool_shrink(&sock->skb_pool, *(unsigned int *)arg);
-            } else
-                ret = rtskb_pool_shrink_rt(&sock->skb_pool,
-                                           *(unsigned int *)arg);
+            if (rtdm_in_rt_context())
+                return -EACCES;
+            ret = rtskb_pool_shrink(&sock->skb_pool, *(unsigned int *)arg);
             atomic_add(rtskbs-ret, &sock->pool_size);
             break;
 

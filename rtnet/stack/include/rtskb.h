@@ -82,12 +82,6 @@ shrinked (rtskb_pool_shrink()) during runtime. When shutting down the
 program/module, every pool has to be released (rtskb_pool_release()). All these
 commands demand to be executed within a non real-time context.
 
-To support real-time pool manipulation, a tunable number of rtskbs can be
-preallocated in a dedicated pool. When every a real-time-safe variant of the
-commands mentioned above is used (postfix: _rt), rtskbs are taken from or
-returned to that real-time pool. Note that real-time and non real-time commands
-must not be mixed up when manipulating a pool.
-
 Pools are organized as normal rtskb queues (struct rtskb_queue). When a rtskb
 is allocated (alloc_rtskb()), it is actually dequeued from the pool's queue.
 When freeing a rtskb (kfree_rtskb()), the rtskb is enqueued to its owning pool.
@@ -262,7 +256,6 @@ struct rtskb_prio_queue {
 
 
 /* default values for the module parameter */
-#define DEFAULT_RTSKB_CACHE_SIZE    0       /* default number of cached rtskbs for new pools */
 #define DEFAULT_GLOBAL_RTSKBS       0       /* default number of rtskb's in global pool */
 #define DEFAULT_DEVICE_RTSKBS       16      /* default additional rtskbs per network adapter */
 #define DEFAULT_SOCKET_RTSKBS       16      /* default number of rtskb's in socket pools */

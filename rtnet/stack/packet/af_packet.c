@@ -459,11 +459,9 @@ static struct rtdm_device   packet_proto_dev = {
     .protocol_family =  PF_PACKET,
     .socket_type =      SOCK_DGRAM,
 
-    .socket_rt =        rt_packet_socket,
     .socket_nrt =       rt_packet_socket,
 
     .ops = {
-        .close_rt =     rt_packet_close,
         .close_nrt =    rt_packet_close,
         .ioctl_rt =     rt_packet_ioctl,
         .ioctl_nrt =    rt_packet_ioctl,
@@ -491,11 +489,9 @@ static struct rtdm_device   raw_packet_proto_dev = {
     .protocol_family =  PF_PACKET,
     .socket_type =      SOCK_RAW,
 
-    .socket_rt =        rt_packet_socket,
     .socket_nrt =       rt_packet_socket,
 
     .ops = {
-        .close_rt =     rt_packet_close,
         .close_nrt =    rt_packet_close,
         .ioctl_rt =     rt_packet_ioctl,
         .ioctl_nrt =    rt_packet_ioctl,

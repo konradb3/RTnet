@@ -297,12 +297,10 @@ static struct rtdm_device ipv4_device = {
     .protocol_family =  PF_INET,
     .socket_type =      SOCK_DGRAM,
 
-    .socket_rt =        rt_inet_socket,
     .socket_nrt =       rt_inet_socket,
 
     /* default is UDP */
     .ops = {
-        .close_rt =     rt_udp_close,
         .close_nrt =    rt_udp_close,
         .ioctl_rt =     rt_udp_ioctl,
         .ioctl_nrt =    rt_udp_ioctl,
