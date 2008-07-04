@@ -43,6 +43,11 @@ LIST_HEAD(ioctl_handlers);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
 #include <linux/device.h>
 static struct class *rtnet_class;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
+#define device                          class_device
+#define device_create(a, b, c, d)       class_device_create(a, b, c, NULL, d)
+#define device_destroy(a, b)            class_device_destroy(a, b)
+#endif
 #endif
 
 /**
@@ -316,7 +321,7 @@ int __init rtnet_chrdev_init(void)
 {
     int err;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-    struct class_device *cl_dev;
+    struct device *cl_dev;
 
     rtnet_class = class_create(THIS_MODULE, "rtnet");
     if (IS_ERR(rtnet_class)) {
@@ -324,9 +329,8 @@ int __init rtnet_chrdev_init(void)
         goto error;
     }
 
-    cl_dev = class_device_create(rtnet_class, NULL,
-                                 MKDEV(MISC_MAJOR, RTNET_MINOR),
-                                 NULL, "rtnet");
+    cl_dev = device_create(rtnet_class, NULL, MKDEV(MISC_MAJOR, RTNET_MINOR),
+                           "rtnet");
     if (IS_ERR(cl_dev)) {
         class_destroy(rtnet_class);
         err = -EBUSY;
@@ -337,7 +341,7 @@ int __init rtnet_chrdev_init(void)
     err = misc_register(&rtnet_chr_misc_dev);
     if (err) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-        class_device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
+        device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
         class_destroy(rtnet_class);
 #endif
         goto error;
@@ -362,7 +366,7 @@ void rtnet_chrdev_release(void)
 {
     misc_deregister(&rtnet_chr_misc_dev);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-    class_device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
+    device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
     class_destroy(rtnet_class);
 #endif
 }
