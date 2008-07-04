@@ -577,14 +577,8 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *sockctx,
     if (err)
         return err;
 
-    /* check if specified source address fits */
-    if ((saddr != INADDR_ANY) && (saddr != rt.rtdev->local_ip)) {
-        rtdev_dereference(rt.rtdev);
-        return -EHOSTUNREACH;
-    }
-
     /* we found a route, remember the routing dest-addr could be the netmask */
-    ufh.saddr     = rt.rtdev->local_ip;
+    ufh.saddr     = saddr ?: rt.rtdev->local_ip;
     ufh.daddr     = daddr;
     ufh.uh.dest   = dport;
     ufh.uh.len    = htons(ulen);
