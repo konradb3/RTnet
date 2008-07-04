@@ -1,10 +1,10 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
+AC_PREREQ(2.61)
 
 AC_INIT([RTnet],
-        m4_normalize(m4_include([config/autoconf/.version])),
+        m4_normalize(m4_include(config/autoconf/.version)),
         [rtnet-users@lists.sourceforge.net])
 AC_CONFIG_HEADERS([config/rtnet_config_pre.h])
 AC_CONFIG_AUX_DIR([config/autoconf])
@@ -1034,18 +1034,6 @@ AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_ICMP:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_RTIPV4_ICMP,[test "$CONFIG_RTNET_RTIPV4_ICMP" = "y"])
 if test "$CONFIG_RTNET_RTIPV4_ICMP" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4_ICMP,1,[Real-Time IPv4 ICMP support])
-fi
-
-AC_MSG_CHECKING([whether to enable source IP routing])
-AC_ARG_ENABLE(route-src,
-    AS_HELP_STRING([--enable-route-src], [enable source IP routing @<:@default=no@:>@]),
-    [case "$enableval" in
-        y | yes) CONFIG_RTNET_RTIPV4_ROUTE_SRC=y ;;
-        *) CONFIG_RTNET_RTIPV4_ROUTE_SRC=n ;;
-    esac])
-AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_ROUTE_SRC:-n}])
-if test "$CONFIG_RTNET_RTIPV4_ROUTE_SRC" = "y"; then
-    AC_DEFINE(CONFIG_RTNET_RTIPV4_ROUTE_SRC, 1, [Source IP routing])
 fi
 
 AC_MSG_CHECKING([whether to enable IP network routing])

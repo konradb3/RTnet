@@ -1,9 +1,9 @@
 #
 # Automatically generated make config: don't edit
-# RTnet version: 0.9.9
-# Tue Mar 20 19:17:01 2007
+# RTnet version: 0.9.11
+# Fri Jul  4 21:55:51 2008
 #
-CONFIG_RTNET_VERSION="0.9.9"
+CONFIG_RTNET_VERSION="0.9.11"
 
 #
 # Real-Time Extension
@@ -34,7 +34,6 @@ CONFIG_RTNET_RX_FIFO_SIZE=32
 #
 CONFIG_RTNET_RTIPV4=y
 CONFIG_RTNET_RTIPV4_ICMP=y
-# CONFIG_RTNET_RTIPV4_ROUTE_SRC is not set
 # CONFIG_RTNET_RTIPV4_NETROUTING is not set
 # CONFIG_RTNET_RTIPV4_ROUTER is not set
 CONFIG_RTNET_RTPACKET=y

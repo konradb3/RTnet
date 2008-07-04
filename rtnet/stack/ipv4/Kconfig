@@ -20,17 +20,6 @@ config RTNET_RTIPV4_ICMP
     When the RTnet-Proxy is enabled while this feature is disabled, ICMP
     will be forwarded to the Linux network stack.
 
-config RTNET_RTIPV4_ROUTE_SRC
-    bool "Consider source IP for output routing"
-    depends on RTNET_RTIPV4
-    ---help---
-    When enabled, RTnet will also consider the local interface IP while
-    looking up a destination host route. This effectively allows to maintain
-    host routes for different network interfaces with identical IP addresses.
-
-    Normal RTnet setups are expected to use only unique IP addresses, thus
-    this option can be left disabled in that case to avoid (low) overhead.
-
 config RTNET_RTIPV4_NETROUTING
     bool "IP Network Routing"
     depends on RTNET_RTIPV4
