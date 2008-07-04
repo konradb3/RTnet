@@ -54,9 +54,6 @@
 /* Router */
 #undef CONFIG_RTNET_RTIPV4_ROUTER
 
-/* Source IP routing */
-#undef CONFIG_RTNET_RTIPV4_ROUTE_SRC
-
 /* Real-Time WLAN support */
 #undef CONFIG_RTNET_RTWLAN
 
