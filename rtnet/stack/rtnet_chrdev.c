@@ -125,7 +125,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
     switch (request) {
         case IOC_RT_IFUP:
-            if (down_interruptible(&rtdev->nrt_lock))
+            if (mutex_lock_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             /* We cannot change the promisc flag or the hardware address if
@@ -154,7 +154,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             ret = rtdev_open(rtdev);    /* also == 0 if rtdev is already up */
 
             if (ret == 0) {
-                down(&rtnet_devices_nrt_lock);
+                mutex_lock(&rtnet_devices_nrt_lock);
 
                 list_for_each(entry, &event_hook_list) {
                     hook = list_entry(entry, struct rtdev_event_hook, entry);
@@ -162,16 +162,16 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                         hook->ifup(rtdev, &cmd);
                 }
 
-                up(&rtnet_devices_nrt_lock);
+                mutex_unlock(&rtnet_devices_nrt_lock);
             } else
                 clear_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
 
           up_out:
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_IFDOWN:
-            if (down_interruptible(&rtdev->nrt_lock))
+            if (mutex_lock_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             /* spin lock required for sync with routing code */
@@ -180,7 +180,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (test_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags)) {
                 rtdm_lock_put_irqrestore(&rtdev->rtdev_lock, context);
 
-                up(&rtdev->nrt_lock);
+                mutex_unlock(&rtdev->nrt_lock);
                 return -EBUSY;
             }
             clear_bit(PRIV_FLAG_UP, &rtdev->priv_flags);
@@ -192,7 +192,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                 ret = rtdev->mac_detach(rtdev);
 
             if (ret == 0) {
-                down(&rtnet_devices_nrt_lock);
+                mutex_lock(&rtnet_devices_nrt_lock);
 
                 list_for_each(entry, &event_hook_list) {
                     hook = list_entry(entry, struct rtdev_event_hook, entry);
@@ -200,12 +200,12 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
                         hook->ifdown(rtdev);
                 }
 
-                up(&rtnet_devices_nrt_lock);
+                mutex_unlock(&rtnet_devices_nrt_lock);
 
                 ret = rtdev_close(rtdev);
             }
 
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_IFINFO:
@@ -216,7 +216,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             if (rtdev == NULL)
                 return -ENODEV;
 
-            if (down_interruptible(&rtdev->nrt_lock)) {
+            if (mutex_lock_interruptible(&rtdev->nrt_lock)) {
                 rtdev_dereference(rtdev);
                 return -ERESTARTSYS;
             }
@@ -230,7 +230,7 @@ static int rtnet_core_ioctl(struct rtnet_device *rtdev, unsigned int request,
             cmd.args.info.flags        = rtdev->flags;
             memcpy(cmd.args.info.dev_addr, rtdev->dev_addr, MAX_ADDR_LEN);
 
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
 
             rtdev_dereference(rtdev);
 

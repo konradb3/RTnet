@@ -71,7 +71,7 @@ static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
     if (!RTNET_PROC_PRINT("Index\tName\t\tFlags\n"))
         goto done;
 
-    down(&rtnet_devices_nrt_lock);
+    mutex_lock(&rtnet_devices_nrt_lock);
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
         rtdev = __rtdev_get_by_index(i);
         if (rtdev != NULL) {
@@ -85,7 +85,7 @@ static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
                 break;
         }
     }
-    up(&rtnet_devices_nrt_lock);
+    mutex_unlock(&rtnet_devices_nrt_lock);
 
   done:
     RTNET_PROC_PRINT_DONE;
@@ -149,7 +149,7 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
 
 void *dev_seq_start(struct seq_file *seq, loff_t *pos)
 {
-    down(&rtnet_devices_nrt_lock);
+    mutex_lock(&rtnet_devices_nrt_lock);
     return *pos ? __rtdev_get_by_index(*pos) : SEQ_START_TOKEN;
 }
 
@@ -164,7 +164,7 @@ void *dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
 
 void dev_seq_stop(struct seq_file *seq, void *v)
 {
-    up(&rtnet_devices_nrt_lock);
+    mutex_unlock(&rtnet_devices_nrt_lock);
 }
 
 static void dev_seq_printf_stats(struct seq_file *seq, struct rtnet_device *dev)

@@ -365,12 +365,12 @@ void cleanup_tap_devices(void)
             if ((tap_device[i].present & XMIT_HOOK) != 0) {
                 rtdev = (struct rtnet_device *)tap_device[i].tap_dev->priv;
 
-                down(&rtdev->nrt_lock);
+                mutex_lock(&rtdev->nrt_lock);
                 rtdev->hard_start_xmit = tap_device[i].orig_xmit;
                 if (rtdev->features & NETIF_F_LLTX)
                     rtdev->start_xmit = tap_device[i].orig_xmit;
                 RTNET_MOD_DEC_USE_COUNT_EX(rtdev->rt_owner);
-                up(&rtdev->nrt_lock);
+                mutex_unlock(&rtdev->nrt_lock);
 
                 rtdev_dereference(rtdev);
             }
@@ -414,17 +414,17 @@ int __init rtcap_init(void)
 
         rtdev = rtdev_get_by_index(i);
         if (rtdev != NULL) {
-            down(&rtdev->nrt_lock);
+            mutex_lock(&rtdev->nrt_lock);
 
             if (test_bit(PRIV_FLAG_UP, &rtdev->priv_flags)) {
-                up(&rtdev->nrt_lock);
+                mutex_unlock(&rtdev->nrt_lock);
                 printk("RTcap: %s busy, skipping device!\n", rtdev->name);
                 rtdev_dereference(rtdev);
                 continue;
             }
 
             if (rtdev->mac_priv != NULL) {
-                up(&rtdev->nrt_lock);
+                mutex_unlock(&rtdev->nrt_lock);
 
                 printk("RTcap: RTmac discipline already active on device %s. "
                        "Load RTcap before RTmac!\n", rtdev->name);
@@ -483,7 +483,7 @@ int __init rtcap_init(void)
             tap_device[i].present |= XMIT_HOOK;
             RTNET_MOD_INC_USE_COUNT_EX(rtdev->rt_owner);
 
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
 
             devices++;
         }
@@ -509,7 +509,7 @@ int __init rtcap_init(void)
     return 0;
 
   error3:
-    up(&rtdev->nrt_lock);
+    mutex_unlock(&rtdev->nrt_lock);
     rtdev_dereference(rtdev);
     printk("RTcap: unable to register %s!\n", dev->name);
 

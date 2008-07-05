@@ -23,7 +23,6 @@
  */
 
 #include <asm/div64.h>
-#include <asm/semaphore.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/module.h>
@@ -48,7 +47,7 @@ MODULE_PARM_DESC(start_timer, "set to non-zero to start RTAI timer");
 
 #ifdef CONFIG_PROC_FS
 LIST_HEAD(tdma_devices);
-DECLARE_MUTEX(tdma_nrt_lock);
+DEFINE_MUTEX(tdma_nrt_lock);
 
 
 int tdma_proc_read(char *buf, char **start, off_t offset, int count,
@@ -62,7 +61,7 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
     RTNET_PROC_PRINT_VARS(80);
 
 
-    down(&tdma_nrt_lock);
+    mutex_lock(&tdma_nrt_lock);
 
     if (!RTNET_PROC_PRINT("Interface       API Device      Operation Mode  "
                           "Cycle   State\n"))
@@ -102,7 +101,7 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
     }
 
   done:
-    up(&tdma_nrt_lock);
+    mutex_unlock(&tdma_nrt_lock);
 
     RTNET_PROC_PRINT_DONE;
 }
@@ -120,7 +119,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
     RTNET_PROC_PRINT_VARS(80);
 
 
-    down(&tdma_nrt_lock);
+    mutex_lock(&tdma_nrt_lock);
 
     if (!RTNET_PROC_PRINT("Interface       "
                           "Slots (id[->joint]:offset:phasing/period:size)\n"))
@@ -140,7 +139,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
         if (entry->slot_table) {
-            if (down_interruptible(&entry->rtdev->nrt_lock))
+            if (mutex_lock_interruptible(&entry->rtdev->nrt_lock))
                 break;
 
             for (i = 0; i <= entry->max_slot_id; i++) {
@@ -152,7 +151,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
 
                 if (slot->queue == &slot->local_queue) {
                     if (!RTNET_PROC_PRINT("%d", i)) {
-                        up(&entry->rtdev->nrt_lock);
+                        mutex_unlock(&entry->rtdev->nrt_lock);
                         goto done;
                     }
                 } else
@@ -160,7 +159,7 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                         if (&entry->slot_table[jnt_id]->local_queue ==
                             slot->queue) {
                             if (!RTNET_PROC_PRINT("%d->%d", i, jnt_id)) {
-                                up(&entry->rtdev->nrt_lock);
+                                mutex_unlock(&entry->rtdev->nrt_lock);
                                 goto done;
                             }
                             break;
@@ -171,19 +170,19 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                 if (!RTNET_PROC_PRINT(":%ld:%d/%d:%d  ",
                         (unsigned long)slot_offset, slot->phasing + 1,
                         slot->period, slot->mtu)) {
-                    up(&entry->rtdev->nrt_lock);
+                    mutex_unlock(&entry->rtdev->nrt_lock);
                     goto done;
                 }
             }
 
-            up(&entry->rtdev->nrt_lock);
+            mutex_unlock(&entry->rtdev->nrt_lock);
         }
         if (!RTNET_PROC_PRINT("\n"))
             break;
     }
 
   done:
-    up(&tdma_nrt_lock);
+    mutex_unlock(&tdma_nrt_lock);
 
     RTNET_PROC_PRINT_DONE;
 }
@@ -220,9 +219,9 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
     RTNET_MOD_INC_USE_COUNT;
 
 #ifdef CONFIG_PROC_FS
-    down(&tdma_nrt_lock);
+    mutex_lock(&tdma_nrt_lock);
     list_add(&tdma->list_entry, &tdma_devices);
-    up(&tdma_nrt_lock);
+    mutex_unlock(&tdma_nrt_lock);
 #endif /* CONFIG_PROC_FS */
 
     return 0;
@@ -280,9 +279,9 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
     RTNET_MOD_DEC_USE_COUNT;
 
 #ifdef CONFIG_PROC_FS
-    down(&tdma_nrt_lock);
+    mutex_lock(&tdma_nrt_lock);
     list_del(&tdma->list_entry);
-    up(&tdma_nrt_lock);
+    mutex_unlock(&tdma_nrt_lock);
 #endif /* CONFIG_PROC_FS */
 
     return 0;

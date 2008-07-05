@@ -134,7 +134,7 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
         if (rtdev == NULL)
             return -ENODEV;
 
-        if (down_interruptible(&rtdev->nrt_lock)) {
+        if (mutex_lock_interruptible(&rtdev->nrt_lock)) {
             rtdev_dereference(rtdev);
             return -ERESTARTSYS;
         }
@@ -148,7 +148,7 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
         cmd.args.info.ifindex      = rtdev->ifindex;
         cmd.args.info.flags        = rtdev->flags;
 
-        up(&rtdev->nrt_lock);
+        mutex_unlock(&rtdev->nrt_lock);
 
         rtdev_dereference(rtdev);
 
@@ -167,7 +167,7 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
     case IOC_RTWLAN_BBPWRITE:
     case IOC_RTWLAN_BBPREAD:
     case IOC_RTWLAN_BBPSENS:
-        if (down_interruptible(&rtdev->nrt_lock))
+        if (mutex_lock_interruptible(&rtdev->nrt_lock))
             return -ERESTARTSYS;
 
             if (rtdev->do_ioctl)
@@ -175,7 +175,7 @@ int rtwlan_ioctl(struct rtnet_device * rtdev,
             else
                 ret = -ENORTWLANDEV;
 
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
 
             break;
 

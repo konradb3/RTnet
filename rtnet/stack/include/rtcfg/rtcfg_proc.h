@@ -25,13 +25,11 @@
 #ifndef __RTCFG_PROC_H_
 #define __RTCFG_PROC_H_
 
-
-#include <asm/semaphore.h>
-
+#include <rtnet_internal.h>
 
 #ifdef CONFIG_PROC_FS
 
-extern struct semaphore nrt_proc_lock;
+extern struct mutex nrt_proc_lock;
 
 
 void rtcfg_update_conn_proc_entries(int ifindex);
@@ -43,14 +41,14 @@ void rtcfg_cleanup_proc(void);
 
 static inline void rtcfg_lockwr_proc(int ifindex)
 {
-    down(&nrt_proc_lock);
+    mutex_lock(&nrt_proc_lock);
     rtcfg_remove_conn_proc_entries(ifindex);
 }
 
 static inline void rtcfg_unlockwr_proc(int ifindex)
 {
     rtcfg_update_conn_proc_entries(ifindex);
-    up(&nrt_proc_lock);
+    mutex_unlock(&nrt_proc_lock);
 }
 
 #else

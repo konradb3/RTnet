@@ -23,7 +23,6 @@
  *
  */
 
-#include <asm/semaphore.h>
 #include <linux/spinlock.h>
 #include <linux/if.h>
 #include <linux/if_arp.h> /* ARPHRD_ETHER */
@@ -46,7 +45,7 @@ static struct rtnet_device  *loopback_device;
 static rtdm_lock_t          rtnet_devices_rt_lock  = RTDM_LOCK_UNLOCKED;
 
 LIST_HEAD(event_hook_list);
-DECLARE_MUTEX(rtnet_devices_nrt_lock);
+DEFINE_MUTEX(rtnet_devices_nrt_lock);
 
 static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
 
@@ -242,7 +241,7 @@ struct rtnet_device *rtdev_alloc(int sizeof_priv)
 
     rtdm_mutex_init(&rtdev->xmit_mutex);
     rtdm_lock_init(&rtdev->rtdev_lock);
-    init_MUTEX(&rtdev->nrt_lock);
+    mutex_init(&rtdev->nrt_lock);
 
     atomic_set(&rtdev->refcount, 0);
 
@@ -342,11 +341,11 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     else
         rtdev->start_xmit = rtdev_locked_xmit;
 
-    down(&rtnet_devices_nrt_lock);
+    mutex_lock(&rtnet_devices_nrt_lock);
 
     ifindex = __rtdev_new_index();
     if (ifindex < 0) {
-        up (&rtnet_devices_nrt_lock);
+        mutex_unlock(&rtnet_devices_nrt_lock);
         return ifindex;
     }
     rtdev->ifindex = ifindex;
@@ -355,7 +354,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
         rtdev_alloc_name(rtdev, rtdev->name);
 
     if (__rtdev_get_by_name(rtdev->name) != NULL) {
-        up(&rtnet_devices_nrt_lock);
+        mutex_unlock(&rtnet_devices_nrt_lock);
         return -EEXIST;
     }
 
@@ -365,7 +364,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
         /* allow only one loopback device */
         if (loopback_device) {
             rtdm_lock_put_irqrestore(&rtnet_devices_rt_lock, context);
-            up(&rtnet_devices_nrt_lock);
+            mutex_unlock(&rtnet_devices_nrt_lock);
             return -EEXIST;
         }
         loopback_device = rtdev;
@@ -380,7 +379,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
             hook->register_device(rtdev);
     }
 
-    up(&rtnet_devices_nrt_lock);
+    mutex_unlock(&rtnet_devices_nrt_lock);
 
     /* Default state at registration is that the device is present. */
     set_bit(__LINK_STATE_PRESENT, &rtdev->state);
@@ -411,19 +410,19 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
     if (rtdev->flags & IFF_UP)
         rtdev_close(rtdev);
 
-    down(&rtnet_devices_nrt_lock);
+    mutex_lock(&rtnet_devices_nrt_lock);
     rtdm_lock_get_irqsave(&rtnet_devices_rt_lock, context);
 
     while (atomic_read(&rtdev->refcount) > 0) {
         rtdm_lock_put_irqrestore(&rtnet_devices_rt_lock, context);
-        up(&rtnet_devices_nrt_lock);
+        mutex_unlock(&rtnet_devices_nrt_lock);
 
         printk("RTnet: unregistering %s deferred- refcount = %d\n",
                rtdev->name, atomic_read(&rtdev->refcount));
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
 
-        down(&rtnet_devices_nrt_lock);
+        mutex_lock(&rtnet_devices_nrt_lock);
         rtdm_lock_get_irqsave(&rtnet_devices_rt_lock, context);
     }
     rtnet_devices[rtdev->ifindex-1] = NULL;
@@ -438,7 +437,7 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
             hook->unregister_device(rtdev);
     }
 
-    up(&rtnet_devices_nrt_lock);
+    mutex_unlock(&rtnet_devices_nrt_lock);
 
     clear_bit(__LINK_STATE_PRESENT, &rtdev->state);
 
@@ -454,18 +453,18 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
 void rtdev_add_event_hook(struct rtdev_event_hook *hook)
 {
-    down(&rtnet_devices_nrt_lock);
+    mutex_lock(&rtnet_devices_nrt_lock);
     list_add(&hook->entry, &event_hook_list);
-    up(&rtnet_devices_nrt_lock);
+    mutex_unlock(&rtnet_devices_nrt_lock);
 }
 
 
 
 void rtdev_del_event_hook(struct rtdev_event_hook *hook)
 {
-    down(&rtnet_devices_nrt_lock);
+    mutex_lock(&rtnet_devices_nrt_lock);
     list_del(&hook->entry);
-    up(&rtnet_devices_nrt_lock);
+    mutex_unlock(&rtnet_devices_nrt_lock);
 }
 
 

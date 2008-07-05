@@ -133,17 +133,17 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
 
     switch (request) {
         case IOC_RT_HOST_ROUTE_ADD:
-            if (down_interruptible(&rtdev->nrt_lock))
+            if (mutex_lock_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             ret = rt_ip_route_add_host(cmd.args.addhost.ip_addr,
                                        cmd.args.addhost.dev_addr, rtdev);
 
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_HOST_ROUTE_SOLICIT:
-            if (down_interruptible(&rtdev->nrt_lock))
+            if (mutex_lock_interruptible(&rtdev->nrt_lock))
                 return -ERESTARTSYS;
 
             rtdev_reference(rtdev);
@@ -151,12 +151,12 @@ static int ipv4_ioctl(struct rtnet_device *rtdev, unsigned int request,
             params.ip_addr = cmd.args.solicit.ip_addr;
 
             /* We need the rtpc wrapping because rt_arp_solicit can block on a
-             * real-time semaphore in the NIC's xmit routine. */
+             * real-time lock in the NIC's xmit routine. */
             ret = rtpc_dispatch_call(route_solicit_handler, 0, &params,
                                      sizeof(params), NULL,
                                      cleanup_route_solicit);
 
-            up(&rtdev->nrt_lock);
+            mutex_unlock(&rtdev->nrt_lock);
             break;
 
         case IOC_RT_HOST_ROUTE_DELETE:

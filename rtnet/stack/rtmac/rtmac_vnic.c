@@ -334,7 +334,7 @@ int rtmac_proc_read_vnic(char *buf, char **start, off_t offset, int count,
         if (rtdev == NULL)
             continue;
 
-        if (down_interruptible(&rtdev->nrt_lock)) {
+        if (mutex_lock_interruptible(&rtdev->nrt_lock)) {
             rtdev_dereference(rtdev);
             return -ERESTARTSYS;
         }
@@ -347,7 +347,7 @@ int rtmac_proc_read_vnic(char *buf, char **start, off_t offset, int count,
                                     rtdev->name, rtmac->vnic->name);
         }
 
-        up(&rtdev->nrt_lock);
+        mutex_unlock(&rtdev->nrt_lock);
         rtdev_dereference(rtdev);
 
         if (!res)

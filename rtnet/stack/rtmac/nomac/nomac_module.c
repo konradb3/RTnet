@@ -22,7 +22,6 @@
  *
  */
 
-#include <asm/semaphore.h>
 #include <linux/init.h>
 #include <linux/module.h>
 
@@ -36,7 +35,7 @@
 
 #ifdef CONFIG_PROC_FS
 LIST_HEAD(nomac_devices);
-DECLARE_MUTEX(nomac_nrt_lock);
+DEFINE_MUTEX(nomac_nrt_lock);
 
 
 int nomac_proc_read(char *buf, char **start, off_t offset, int count,
@@ -46,7 +45,7 @@ int nomac_proc_read(char *buf, char **start, off_t offset, int count,
     RTNET_PROC_PRINT_VARS(80);
 
 
-    down(&nomac_nrt_lock);
+    mutex_lock(&nomac_nrt_lock);
 
     if (!RTNET_PROC_PRINT("Interface       API Device      State\n"))
         goto done;
@@ -58,7 +57,7 @@ int nomac_proc_read(char *buf, char **start, off_t offset, int count,
     }
 
   done:
-    up(&nomac_nrt_lock);
+    mutex_unlock(&nomac_nrt_lock);
 
     RTNET_PROC_PRINT_DONE;
 }
@@ -84,9 +83,9 @@ int nomac_attach(struct rtnet_device *rtdev, void *priv)
     RTNET_MOD_INC_USE_COUNT;
 
 #ifdef CONFIG_PROC_FS
-    down(&nomac_nrt_lock);
+    mutex_lock(&nomac_nrt_lock);
     list_add(&nomac->list_entry, &nomac_devices);
-    up(&nomac_nrt_lock);
+    mutex_unlock(&nomac_nrt_lock);
 #endif /* CONFIG_PROC_FS */
 
     return 0;
@@ -108,9 +107,9 @@ int nomac_detach(struct rtnet_device *rtdev, void *priv)
     RTNET_MOD_DEC_USE_COUNT;
 
 #ifdef CONFIG_PROC_FS
-    down(&nomac_nrt_lock);
+    mutex_lock(&nomac_nrt_lock);
     list_del(&nomac->list_entry);
-    up(&nomac_nrt_lock);
+    mutex_unlock(&nomac_nrt_lock);
 #endif /* CONFIG_PROC_FS */
 
     return 0;

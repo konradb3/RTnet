@@ -32,11 +32,10 @@
 #ifdef __KERNEL__
 
 #include <asm/atomic.h>
-#include <asm/semaphore.h>
 #include <linux/netdevice.h>
 
 #include <rtskb.h>
-
+#include <rtnet_internal.h>
 
 #define RTDEV_VERS_2_0                  0x0200
 
@@ -106,7 +105,7 @@ struct rtnet_device {
 
     rtdm_mutex_t        xmit_mutex; /* protects xmit routine        */
     rtdm_lock_t         rtdev_lock; /* management lock              */
-    struct semaphore    nrt_lock;   /* non-real-time locking        */
+    struct mutex        nrt_lock;   /* non-real-time locking        */
 
     unsigned int        add_rtskbs; /* additionally allocated global rtskbs */
 
@@ -157,7 +156,7 @@ struct rtdev_event_hook {
 };
 
 extern struct list_head event_hook_list;
-extern struct semaphore rtnet_devices_nrt_lock;
+extern struct mutex rtnet_devices_nrt_lock;
 extern struct rtnet_device *rtnet_devices[];
 
 

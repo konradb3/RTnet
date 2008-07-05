@@ -22,8 +22,6 @@
  *
  */
 
-#include <asm/semaphore.h>
-
 #include <rtdev.h>
 #include <rtnet_internal.h>
 #include <rtcfg/rtcfg_conn_event.h>
@@ -32,7 +30,7 @@
 
 
 #ifdef CONFIG_PROC_FS
-DECLARE_MUTEX(nrt_proc_lock);
+DEFINE_MUTEX(nrt_proc_lock);
 static struct proc_dir_entry    *rtcfg_proc_root;
 
 
@@ -96,7 +94,7 @@ int rtcfg_proc_read_stations(char *buf, char **start, off_t offset, int count,
     RTNET_PROC_PRINT_VARS_EX(80);
 
 
-    if (down_interruptible(&nrt_proc_lock))
+    if (mutex_lock_interruptible(&nrt_proc_lock))
         return -ERESTARTSYS;
 
     if (rtcfg_dev->state == RTCFG_MAIN_SERVER_RUNNING) {
@@ -125,7 +123,7 @@ int rtcfg_proc_read_stations(char *buf, char **start, off_t offset, int count,
         }
     }
 
-    up(&nrt_proc_lock);
+    mutex_unlock(&nrt_proc_lock);
     RTNET_PROC_PRINT_DONE_EX;
 }
 
@@ -237,7 +235,7 @@ void rtcfg_new_rtdev(struct rtnet_device *rtdev)
     struct proc_dir_entry   *proc_entry;
 
 
-    down(&nrt_proc_lock);
+    mutex_lock(&nrt_proc_lock);
 
     dev->proc_entry = create_proc_entry(rtdev->name, S_IFDIR, rtcfg_proc_root);
     if (!dev->proc_entry)
@@ -258,7 +256,7 @@ void rtcfg_new_rtdev(struct rtnet_device *rtdev)
     proc_entry->data      = dev;
 
   exit:
-    up(&nrt_proc_lock);
+    mutex_unlock(&nrt_proc_lock);
 }
 
 
@@ -270,7 +268,7 @@ void rtcfg_remove_rtdev(struct rtnet_device *rtdev)
 
     // To-Do: issue down command
 
-    down(&nrt_proc_lock);
+    mutex_lock(&nrt_proc_lock);
 
     if (dev->proc_entry) {
         rtcfg_remove_conn_proc_entries(rtdev->ifindex);
@@ -281,7 +279,7 @@ void rtcfg_remove_rtdev(struct rtnet_device *rtdev)
         dev->proc_entry = NULL;
     }
 
-    up(&nrt_proc_lock);
+    mutex_unlock(&nrt_proc_lock);
 }
 
 
