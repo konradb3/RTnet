@@ -306,12 +306,6 @@ static struct rtdm_device ipv4_device = {
         .ioctl_nrt =    rt_udp_ioctl,
         .recvmsg_rt =   rt_udp_recvmsg,
         .sendmsg_rt =   rt_udp_sendmsg,
-#ifdef CONFIG_RTNET_RTDM_SELECT
-        .poll_rt =      rt_udp_poll,
-        /* there should be only the function poll() */
-        .pollwait_rt =  rt_udp_pollwait,
-        .pollfree_rt =  rt_udp_pollfree,
-#endif /* CONFIG_RTNET_RTDM_SELECT */
     },
 
     .device_class =     RTDM_CLASS_NETWORK,

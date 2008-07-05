@@ -47,11 +47,6 @@ extern ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
 extern ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context,
                               rtdm_user_info_t *user_info,
                               const struct msghdr *msg, int flags);
-#ifdef CONFIG_RTNET_RTDM_SELECT
-extern unsigned int rt_udp_poll(struct rtdm_dev_context *context); /* , poll_table *wait) */
-extern ssize_t rt_udp_pollwait(struct rtdm_dev_context *context, wait_queue_primitive_t *sem);
-extern ssize_t rt_udp_pollfree(struct rtdm_dev_context *context);
-#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 extern void __init rt_udp_init(void);
 extern void rt_udp_release(void);

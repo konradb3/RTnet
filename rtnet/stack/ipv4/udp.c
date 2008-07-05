@@ -258,9 +258,6 @@ int rt_udp_socket(struct rtdm_dev_context *sockctx,
     sock->prot.inet.saddr = INADDR_ANY;
     sock->prot.inet.state = TCP_CLOSE;
     sock->prot.inet.tos   = 0;
-#ifdef CONFIG_RTNET_RTDM_SELECT
-    sock->wakeup_select   = NULL;
-#endif /* CONFIG_RTNET_RTDM_SELECT */
 
     rtdm_lock_get_irqsave(&udp_socket_base_lock, context);
 
@@ -597,72 +594,6 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *sockctx,
         return err;
 }
 
-#ifdef CONFIG_RTNET_RTDM_SELECT
-/***
- *  rt_udp_poll
- */
-unsigned int rt_udp_poll(struct rtdm_dev_context *sockctx) /* , poll_table *wait) */
-{
-    struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
-    unsigned int mask = 0;
-
-    /* rtdm_poll_wait(sockctx, sock->wqe_in, wait) */
-    /* rtdm_poll_wait(sockctx, sock->wqe_out, wait) */
-
-    /* if data is available (sock.incoming!=NULL), bit-or mask with POLLIN */
-    if (NULL != sock->incoming.first)	{
-	mask |= POLLIN;
-    }
-
-#warning check that sending really does not block
-    mask |= POLLOUT;
-
-    return mask;
-}
-
-/***
- *  rt_udp_pollwait
- * The right position for this function is in rtdm! (A poll function should be implemented here instead.)
- */
-ssize_t rt_udp_pollwait(struct rtdm_dev_context *sockctx, wait_queue_primitive_t *sem)
-{
-    struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
-    rtdm_lockctx_t  context;
-
-    rtdm_lock_get_irqsave(&sock->param_lock, context);
-
-    /* check for available data / free buffers */
-    /* call poll_wait() */
-
-#warning there could already be a pointer to a semaphore
-    sock->wakeup_select = sem;
-    /* the linux select() calls poll_freewait with a poll_table, who knows alls registered waitqueues;
-     * so in linux the wait-queue belongs to the socket and not like the semaphore to the select-process */
-    rtdm_lock_put_irqrestore(&sock->param_lock, context);
-
-    /* a meaningfull value should be returned */
-    return 0;
-}
-
-/***
- *  rt_udp_pollfree
- */
-ssize_t rt_udp_pollfree(struct rtdm_dev_context *sockctx)
-{
-    struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
-    rtdm_lockctx_t  context;
-
-
-    rtdm_lock_get_irqsave(&sock->param_lock, context);
-
-    sock->wakeup_select = NULL;
-
-    rtdm_lock_put_irqrestore(&sock->param_lock, context);
-
-    /* a meaningfull value should be returned */
-    return 0;
-}
-#endif /* CONFIG_RTNET_RTDM_SELECT */
 
 
 /***
@@ -730,11 +661,6 @@ void rt_udp_rcv (struct rtskb *skb)
     rtdm_sem_up(&sock->pending_sem);
 
     rtdm_lock_get_irqsave(&sock->param_lock, context);
-#ifdef CONFIG_RTNET_RTDM_SELECT
-    if (sock->wakeup_select != NULL) {
-        wq_wakeup(sock->wakeup_select);
-    }
-#endif /* CONFIG_RTNET_RTDM_SELECT */
     callback_func = sock->callback_func;
     callback_arg  = sock->callback_arg;
     rtdm_lock_put_irqrestore(&sock->param_lock, context);

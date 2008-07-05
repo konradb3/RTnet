@@ -52,11 +52,6 @@ struct rtsocket {
     nanosecs_rel_t          timeout;    /* receive timeout, 0 for infinite */
 
     rtdm_sem_t              pending_sem;
-#ifdef CONFIG_RTNET_RTDM_SELECT
-    wait_queue_primitive_t  *wakeup_select; /* for selecting calls - this
-                                               SHOULD be the head of a wait
-                                               queue mechanism. */
-#endif /* CONFIG_RTNET_RTDM_SELECT*/
 
     void                    (*callback_func)(struct rtdm_dev_context *,
                                              void *arg);

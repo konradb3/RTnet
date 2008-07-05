@@ -21888,31 +21888,6 @@ _ACEOF
 fi
 
 
-#dnl ======================================================================
-#dnl             RTDM select (disabled until RTDM actually supports this)
-#dnl ======================================================================
-#
-#AC_MSG_CHECKING([whether to enable RTDM select])
-#AC_ARG_ENABLE(rtdm-select,
-#    AS_HELP_STRING([--enable-rtdm-select], [enable select function for RTDM (experimental) [default=no]]),
-#    [case "$enableval" in
-#        y | yes) CONFIG_RTNET_RTDM_SELECT=y ;;
-#        *) CONFIG_RTNET_RTDM_SELECT=n ;;
-#    esac],
-#    [CONFIG_RTNET_RTDM_SELECT=n])
-#AC_MSG_RESULT([${CONFIG_RTNET_RTDM_SELECT:-n}])
-#
-#dnl When RTDM select has matured, the example compilation should no longer
-#dnl depend on the internal select support by RTnet. Instead, running the
-#dnl example shall give an error.
-#
-#AM_CONDITIONAL(CONFIG_RTNET_RTDM_SELECT, [test "$CONFIG_RTNET_RTDM_SELECT" = "y"])
-#
-#if test "$CONFIG_RTNET_RTDM_SELECT" = "y"; then
-#    AC_DEFINE(CONFIG_RTNET_RTDM_SELECT, 1, [RTDM select support])
-#fi
-
-
 
 { echo "$as_me:$LINENO: checking whether to build examples" >&5
 echo $ECHO_N "checking whether to build examples... $ECHO_C" >&6; }
