@@ -149,16 +149,16 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
 void *dev_seq_start(struct seq_file *seq, loff_t *pos)
 {
     down(&rtnet_devices_nrt_lock);
-    return *pos ? __rtdev_get_by_index(*pos - 1) : SEQ_START_TOKEN;
+    return *pos ? __rtdev_get_by_index(*pos) : SEQ_START_TOKEN;
 }
 
 void *dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
 {
     ++*pos;
     if (v == SEQ_START_TOKEN)
-        return __rtdev_get_by_index(0);
+        return __rtdev_get_by_index(1);
     else
-        return __rtdev_get_by_index(*pos - 1);
+        return __rtdev_get_by_index(*pos);
 }
 
 void dev_seq_stop(struct seq_file *seq, void *v)
