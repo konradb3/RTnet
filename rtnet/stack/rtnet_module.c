@@ -71,8 +71,9 @@ static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
     if (!RTNET_PROC_PRINT("Index\tName\t\tFlags\n"))
         goto done;
 
+    down(&rtnet_devices_nrt_lock);
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
-        rtdev = rtdev_get_by_index(i);
+        rtdev = __rtdev_get_by_index(i);
         if (rtdev != NULL) {
             res = RTNET_PROC_PRINT("%d\t%-15s %s%s%s%s\n",
                             rtdev->ifindex, rtdev->name,
@@ -80,11 +81,11 @@ static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
                             (rtdev->flags & IFF_BROADCAST) ? " BROADCAST" : "",
                             (rtdev->flags & IFF_LOOPBACK) ? " LOOPBACK" : "",
                             (rtdev->flags & IFF_PROMISC) ? " PROMISC" : "");
-            rtdev_dereference(rtdev);
             if (!res)
                 break;
         }
     }
+    up(&rtnet_devices_nrt_lock);
 
   done:
     RTNET_PROC_PRINT_DONE;
