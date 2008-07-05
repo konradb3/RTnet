@@ -75,8 +75,8 @@ static struct rtnet_device *mpc5xxx_fec_dev;
 static int mpc5xxx_fec_interrupt(rtdm_irq_t *irq_handle);
 static int mpc5xxx_fec_receive_interrupt(rtdm_irq_t *irq_handle);
 static int mpc5xxx_fec_transmit_interrupt(rtdm_irq_t *irq_handle);
+static struct net_device_stats *mpc5xxx_fec_get_stats(struct rtnet_device *dev);
 #ifdef ORIGINAL_CODE
-static struct rtnet_device_stats *mpc5xxx_fec_get_stats(struct rtnet_device *);
 static void mpc5xxx_fec_set_multicast_list(struct rtnet_device *dev);
 #endif /* ORIGINAL_CODE */
 static void mpc5xxx_fec_reinit(struct rtnet_device* dev);
@@ -96,9 +96,7 @@ static void mpc5xxx_mdio_callback(uint regval, struct rtnet_device *dev, uint da
 static int mpc5xxx_mdio_read(struct rtnet_device *dev, int phy_id, int location);
 #endif
 
-#ifdef ORIGINAL_CODE
 static void mpc5xxx_fec_update_stat(struct rtnet_device *);
-#endif /* ORIGINAL_CODE */
 
 /* MII processing.  We keep this as simple as possible.  Requests are
  * placed on the list (if there is room).  When the request is finished
@@ -1098,9 +1096,7 @@ mpc5xxx_fec_setup(struct rtnet_device *dev, int reinit)
 		 * Read MIB counters in order to reset them,
 		 * then zero all the stats fields in memory
 		 */
-#ifdef ORIGINAL_CODE
 		mpc5xxx_fec_update_stat(dev);
-#endif /* ORIGINAL_CODE */
 
 #ifdef CONFIG_RTNET_USE_MDIO
 		if (reinit) {
@@ -1636,9 +1632,7 @@ mpc5xxx_fec_cleanup(struct rtnet_device *dev, int reinit)
 	}
 #endif
 
-#ifdef ORIGINAL_CODE
 	mpc5xxx_fec_get_stats(dev);
-#endif /* ORIGINAL_CODE */
 
 	return 0;
 }
@@ -1651,16 +1645,14 @@ mpc5xxx_fec_close(struct rtnet_device *dev)
 	return ret;
 }
 
-#ifdef ORIGINAL_CODE
 /*
  * Get the current statistics.
  * This may be called with the card open or closed.
  */
-static struct rtnet_device_stats *
-mpc5xxx_fec_get_stats(struct rtnet_device *dev)
+static struct net_device_stats *mpc5xxx_fec_get_stats(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
-	struct rtnet_device_stats *stats = &priv->stats;
+	struct net_device_stats *stats = &priv->stats;
 	struct mpc5xxx_fec *fec = priv->fec;
 
 	stats->rx_bytes = in_be32(&fec->rmon_r_octets);
@@ -1705,7 +1697,7 @@ static void
 mpc5xxx_fec_update_stat(struct rtnet_device *dev)
 {
 	struct mpc5xxx_fec_priv *priv = (struct mpc5xxx_fec_priv *)dev->priv;
-	struct rtnet_device_stats *stats = &priv->stats;
+	struct net_device_stats *stats = &priv->stats;
 	struct mpc5xxx_fec *fec = priv->fec;
 
 	out_be32(&fec->mib_control, MPC5xxx_FEC_MIB_DISABLE);
@@ -1716,6 +1708,7 @@ mpc5xxx_fec_update_stat(struct rtnet_device *dev)
 	mpc5xxx_fec_get_stats(dev);
 }
 
+#ifdef ORIGINAL_CODE
 /*
  * Set or clear the multicast filter for this adaptor.
  */
@@ -1985,14 +1978,14 @@ mpc5xxx_fec_init(void)
 	dev->stop		= mpc5xxx_fec_close;
 	dev->hard_start_xmit	= mpc5xxx_fec_hard_start_xmit;
 	//FIXME dev->hard_header	= &rt_eth_header;
+	dev->get_stats		= mpc5xxx_fec_get_stats;
 #ifdef ORIGINAL_CODE
 	dev->do_ioctl		= mpc5xxx_fec_ioctl;
-	dev->get_stats		= mpc5xxx_fec_get_stats;
 	dev->set_mac_address	= mpc5xxx_fec_set_mac_address;
 	dev->set_multicast_list = mpc5xxx_fec_set_multicast_list;
 
 	dev->tx_timeout		= mpc5xxx_fec_tx_timeout;
-	dev->watchdog_timeo	= MPC5xxx_FEC_WATCHDOG_TIMEOUT; 
+	dev->watchdog_timeo	= MPC5xxx_FEC_WATCHDOG_TIMEOUT;
 #endif /* ORIGINAL_CODE */
 	dev->flags &= ~IFF_RUNNING;
 
@@ -2016,13 +2009,11 @@ mpc5xxx_fec_init(void)
 		*(u16 *)&dev->dev_addr[4] = in_be16((u16*)&fec->paddr2);
 	}
 
-#ifdef ORIGINAL_CODE
 	/*
 	 * Read MIB counters in order to reset them,
 	 * then zero all the stats fields in memory
 	 */
 	mpc5xxx_fec_update_stat(dev);
-#endif /* ORIGINAL_CODE */
 
 	return 0;
 
