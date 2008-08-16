@@ -358,6 +358,7 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
     struct host_route   *new_route;
     struct host_route   *rt;
     unsigned int        key;
+    int                 ret = 0;
 
 
     rtdm_lock_get_irqsave(&rtdev->rtdev_lock, context);
@@ -407,12 +408,13 @@ int rt_ip_route_add_host(u32 addr, unsigned char *dev_addr,
         rtdm_lock_put_irqrestore(&host_table_lock, context);
 
         /*ERRMSG*/rtdm_printk("RTnet: no more host routes available\n");
+        ret = -ENOBUFS;
     }
 
   out:
     clear_bit(PRIV_FLAG_ADDING_ROUTE, &rtdev->priv_flags);
 
-    return 0;
+    return ret;
 }
 
 
@@ -628,13 +630,14 @@ int rt_ip_route_add_net(u32 addr, u32 mask, u32 gw_addr)
         *last_ptr       = new_route;
 
         rtdm_lock_put_irqrestore(&net_table_lock, context);
+
+        return 0;
     } else {
         rtdm_lock_put_irqrestore(&net_table_lock, context);
 
         /*ERRMSG*/rtdm_printk("RTnet: no more network routes available\n");
+        return -ENOBUFS;
     }
-
-    return 0;
 }
 
 
