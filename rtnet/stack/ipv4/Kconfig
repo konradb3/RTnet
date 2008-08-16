@@ -20,6 +20,16 @@ config RTNET_RTIPV4_ICMP
     When the RTnet-Proxy is enabled while this feature is disabled, ICMP
     will be forwarded to the Linux network stack.
 
+config RTNET_RTIPV4_HOST_ROUTES
+    int "Maximum host routing table entries"
+    depends on RTNET_RTIPV4
+    default 32
+    ---help---
+    Each IPv4 supporting interface and each remote host that is directly
+    reachable via via some output interface requires a host routing table
+    entry. If you run larger networks with may hosts per subnet, you may
+    have to increase this limit. Must be power of 2!
+
 config RTNET_RTIPV4_NETROUTING
     bool "IP Network Routing"
     depends on RTNET_RTIPV4
@@ -30,6 +40,16 @@ config RTNET_RTIPV4_NETROUTING
     decision delay.
 
     See Documentation/README.routing for further information.
+
+config RTNET_RTIPV4_NET_ROUTES
+    int "Maximum network routing table entries"
+    depends on RTNET_RTIPV4_NETROUTING
+    default 16
+    ---help---
+    Each route describing a target network reachable via a router
+    requires an entry in the network routing table. If you run very
+    complex realtime networks, you may have to increase this limit. Must
+    be power of 2!
 
 config RTNET_RTIPV4_ROUTER
     bool "IP Router"

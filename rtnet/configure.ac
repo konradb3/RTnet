@@ -971,7 +971,7 @@ AC_ARG_ENABLE(rxfifosize,
     AS_HELP_STRING([--with-rxfifosize], [Set RX-FIFO size]),
     [case "$enableval" in
         [[[:digit:]]]*) CONFIG_RTNET_RX_FIFO_SIZE=$enableval ;;
-        *) AC_MSG_ERROR([Bad argument to option: --enable-rxfifosize=<slots>]) ;;
+        *) AC_MSG_ERROR([Bad argument to option: --with-rxfifosize=<slots>]) ;;
     esac])
 if test x$CONFIG_RTNET_RX_FIFO_SIZE = x ; then
     CONFIG_RTNET_RX_FIFO_SIZE=32
@@ -1036,6 +1036,20 @@ if test "$CONFIG_RTNET_RTIPV4_ICMP" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4_ICMP,1,[Real-Time IPv4 ICMP support])
 fi
 
+AC_MSG_CHECKING([for host routes])
+AC_ARG_ENABLE(host-routes,
+    AS_HELP_STRING([--with-host-routes], [Set maximum host routes @<:@default=32@:>@]),
+    [case "$enableval" in
+        [[[:digit:]]]*) CONFIG_RTNET_RTIPV4_HOST_ROUTES=$enableval ;;
+        *) AC_MSG_ERROR([Bad argument to option: --with-host-routes=<n>]) ;;
+    esac])
+if test x$CONFIG_RTNET_RTIPV4_HOST_ROUTES = x ; then
+    CONFIG_RTNET_RTIPV4_HOST_ROUTES=32
+fi
+AC_MSG_RESULT($CONFIG_RTNET_RTIPV4_HOST_ROUTES)
+AC_DEFINE_UNQUOTED(CONFIG_RTNET_RTIPV4_HOST_ROUTES,
+    $CONFIG_RTNET_RTIPV4_HOST_ROUTES, [host routes])
+
 AC_MSG_CHECKING([whether to enable IP network routing])
 AC_ARG_ENABLE(net-routing,
     AS_HELP_STRING([--enable-net-routing], [enable IP network routing @<:@default=no@:>@]),
@@ -1046,6 +1060,20 @@ AC_ARG_ENABLE(net-routing,
 AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_NETROUTING:-n}])
 if test "$CONFIG_RTNET_RTIPV4_NETROUTING" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4_NETROUTING, 1, [Network routing])
+
+    AC_MSG_CHECKING([for network routes])
+    AC_ARG_ENABLE(net-routes,
+        AS_HELP_STRING([--with-net-routes], [Set maximum network routes @<:@default=16@:>@]),
+        [case "$enableval" in
+            [[[:digit:]]]*) CONFIG_RTNET_RTIPV4_NET_ROUTES=$enableval ;;
+            *) AC_MSG_ERROR([Bad argument to option: --with-net-routes=<n>]) ;;
+        esac])
+    if test x$CONFIG_RTNET_RTIPV4_NET_ROUTES = x ; then
+        CONFIG_RTNET_RTIPV4_NET_ROUTES=16
+    fi
+    AC_MSG_RESULT($CONFIG_RTNET_RTIPV4_NET_ROUTES)
+    AC_DEFINE_UNQUOTED(CONFIG_RTNET_RTIPV4_NET_ROUTES,
+        $CONFIG_RTNET_RTIPV4_NET_ROUTES, [network routes])
 fi
 
 AC_MSG_CHECKING([whether to enable IP router support])

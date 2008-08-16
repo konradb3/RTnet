@@ -31,14 +31,6 @@
 #include <ipv4/route.h>
 
 
-#define HOST_ROUTES         32
-#define HOST_HASH_TBL_SIZE  64
-#define HOST_HASH_KEY_MASK  (HOST_HASH_TBL_SIZE-1)
-#define NET_ROUTES          16
-#define NET_HASH_TBL_SIZE   32
-#define NET_HASH_KEY_MASK   (NET_HASH_TBL_SIZE-1)
-#define NET_HASH_KEY_SHIFT  8
-
 /* FIXME: should also become some tunable parameter */
 #define ROUTER_FORWARD_PRIO \
     RTSKB_PRIO_VALUE(QUEUE_MAX_PRIO+(QUEUE_MIN_PRIO-QUEUE_MAX_PRIO+1)/2, \
@@ -59,15 +51,35 @@ struct net_route {
     u32                     gw_ip;
 };
 
+#if (CONFIG_RTNET_RTIPV4_HOST_ROUTES & (CONFIG_RTNET_RTIPV4_HOST_ROUTES - 1))
+# error CONFIG_RTNET_RTIPV4_HOST_ROUTES must be power of 2
+#endif
+#if CONFIG_RTNET_RTIPV4_HOST_ROUTES < 256
+# define HOST_HASH_TBL_SIZE 64
+#else
+# define HOST_HASH_TBL_SIZE ((CONFIG_RTNET_RTIPV4_HOST_ROUTES / 256) * 64)
+#endif
+#define HOST_HASH_KEY_MASK  (HOST_HASH_TBL_SIZE-1)
 
-static struct host_route    host_routes[HOST_ROUTES];
+static struct host_route    host_routes[CONFIG_RTNET_RTIPV4_HOST_ROUTES];
 static struct host_route    *free_host_route;
 static int                  allocated_host_routes;
 static struct host_route    *host_hash_tbl[HOST_HASH_TBL_SIZE];
 static rtdm_lock_t          host_table_lock = RTDM_LOCK_UNLOCKED;
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
-static struct net_route     net_routes[NET_ROUTES];
+#if (CONFIG_RTNET_RTIPV4_NET_ROUTES & (CONFIG_RTNET_RTIPV4_NET_ROUTES - 1))
+# error CONFIG_RTNET_RTIPV4_NET_ROUTES must be power of 2
+#endif
+#if CONFIG_RTNET_RTIPV4_NET_ROUTES < 256
+# define NET_HASH_TBL_SIZE  64
+#else
+# define NET_HASH_TBL_SIZE  ((CONFIG_RTNET_RTIPV4_NET_ROUTES / 256) * 64)
+#endif
+#define NET_HASH_KEY_MASK   (NET_HASH_TBL_SIZE-1)
+#define NET_HASH_KEY_SHIFT  8
+
+static struct net_route     net_routes[CONFIG_RTNET_RTIPV4_NET_ROUTES];
 static struct net_route     *free_net_route;
 static int                  allocated_net_routes;
 static struct net_route     *net_hash_tbl[NET_HASH_TBL_SIZE + 1];
@@ -96,7 +108,8 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
 
     if (!RTNET_PROC_PRINT("Host routes allocated/total:\t%d/%d\n"
                           "Host hash table size:\t\t%d\n",
-                          allocated_host_routes, HOST_ROUTES,
+                          allocated_host_routes,
+                          CONFIG_RTNET_RTIPV4_HOST_ROUTES,
                           HOST_HASH_TBL_SIZE))
         goto done;
 
@@ -105,7 +118,8 @@ static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
     if (!RTNET_PROC_PRINT("Network routes allocated/total:\t%d/%d\n"
                           "Network hash table size:\t%d\n"
                           "Network hash key shift/mask:\t%d/%08X\n",
-                          allocated_net_routes, NET_ROUTES, NET_HASH_TBL_SIZE,
+                          allocated_net_routes,
+                          CONFIG_RTNET_RTIPV4_NET_ROUTES, NET_HASH_TBL_SIZE,
                           net_hash_key_shift, mask))
         goto done;
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
@@ -845,12 +859,12 @@ int __init rt_ip_routing_init(void)
     int i;
 
 
-    for (i = 0; i < HOST_ROUTES-2; i++)
+    for (i = 0; i < CONFIG_RTNET_RTIPV4_HOST_ROUTES-2; i++)
         host_routes[i].next = &host_routes[i+1];
     free_host_route = &host_routes[0];
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
-    for (i = 0; i < NET_ROUTES-2; i++)
+    for (i = 0; i < CONFIG_RTNET_RTIPV4_NET_ROUTES-2; i++)
         net_routes[i].next = &net_routes[i+1];
     free_net_route = &net_routes[0];
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */

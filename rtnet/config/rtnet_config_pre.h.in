@@ -45,11 +45,17 @@
 /* Real-Time IPv4 support */
 #undef CONFIG_RTNET_RTIPV4
 
+/* host routes */
+#undef CONFIG_RTNET_RTIPV4_HOST_ROUTES
+
 /* Real-Time IPv4 ICMP support */
 #undef CONFIG_RTNET_RTIPV4_ICMP
 
 /* Network routing */
 #undef CONFIG_RTNET_RTIPV4_NETROUTING
+
+/* network routes */
+#undef CONFIG_RTNET_RTIPV4_NET_ROUTES
 
 /* Router */
 #undef CONFIG_RTNET_RTIPV4_ROUTER

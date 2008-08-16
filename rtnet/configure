@@ -1605,7 +1605,9 @@ Optional Features:
   --enable-rtwlan         enable real-time WLAN support [default=no]
   --enable-rtipv4         enable real-time IPv4 support [default=yes]
   --enable-icmp           enable real-time IPv4 ICMP support [default=yes]
+  --with-host-routes      Set maximum host routes [default=32]
   --enable-net-routing    enable IP network routing [default=no]
+  --with-net-routes       Set maximum network routes [default=16]
   --enable-router         enable IP router [default=no]
   --enable-rtpacket       build Real-Time Packet socket support [default=yes]
   --enable-rtcfg          build RTcfg [default=yes]
@@ -4533,7 +4535,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4536 "configure"' > conftest.$ac_ext
+  echo '#line 4538 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7590,11 +7592,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7593: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7595: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7597: \$? = $ac_status" >&5
+   echo "$as_me:7599: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7880,11 +7882,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7883: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7885: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7887: \$? = $ac_status" >&5
+   echo "$as_me:7889: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7984,11 +7986,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7987: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7989: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7991: \$? = $ac_status" >&5
+   echo "$as_me:7993: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10348,7 +10350,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10351 "configure"
+#line 10353 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10448,7 +10450,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10451 "configure"
+#line 10453 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12849,11 +12851,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12852: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12854: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12856: \$? = $ac_status" >&5
+   echo "$as_me:12858: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12953,11 +12955,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12956: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12958: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12960: \$? = $ac_status" >&5
+   echo "$as_me:12962: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14536,11 +14538,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14539: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14541: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14543: \$? = $ac_status" >&5
+   echo "$as_me:14545: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14640,11 +14642,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14643: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14645: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14647: \$? = $ac_status" >&5
+   echo "$as_me:14649: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16847,11 +16849,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16850: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16852: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16854: \$? = $ac_status" >&5
+   echo "$as_me:16856: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17137,11 +17139,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17140: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17142: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17144: \$? = $ac_status" >&5
+   echo "$as_me:17146: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17241,11 +17243,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17244: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17246: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17248: \$? = $ac_status" >&5
+   echo "$as_me:17250: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21483,8 +21485,8 @@ echo $ECHO_N "checking for RX-FIFO size... $ECHO_C" >&6; }
 if test "${enable_rxfifosize+set}" = set; then
   enableval=$enable_rxfifosize; case "$enableval" in
         [[:digit:]]*) CONFIG_RTNET_RX_FIFO_SIZE=$enableval ;;
-        *) { { echo "$as_me:$LINENO: error: Bad argument to option: --enable-rxfifosize=<slots>" >&5
-echo "$as_me: error: Bad argument to option: --enable-rxfifosize=<slots>" >&2;}
+        *) { { echo "$as_me:$LINENO: error: Bad argument to option: --with-rxfifosize=<slots>" >&5
+echo "$as_me: error: Bad argument to option: --with-rxfifosize=<slots>" >&2;}
    { (exit 1); exit 1; }; } ;;
     esac
 fi
@@ -21606,6 +21608,29 @@ _ACEOF
 
 fi
 
+{ echo "$as_me:$LINENO: checking for host routes" >&5
+echo $ECHO_N "checking for host routes... $ECHO_C" >&6; }
+# Check whether --enable-host-routes was given.
+if test "${enable_host_routes+set}" = set; then
+  enableval=$enable_host_routes; case "$enableval" in
+        [[:digit:]]*) CONFIG_RTNET_RTIPV4_HOST_ROUTES=$enableval ;;
+        *) { { echo "$as_me:$LINENO: error: Bad argument to option: --with-host-routes=<n>" >&5
+echo "$as_me: error: Bad argument to option: --with-host-routes=<n>" >&2;}
+   { (exit 1); exit 1; }; } ;;
+    esac
+fi
+
+if test x$CONFIG_RTNET_RTIPV4_HOST_ROUTES = x ; then
+    CONFIG_RTNET_RTIPV4_HOST_ROUTES=32
+fi
+{ echo "$as_me:$LINENO: result: $CONFIG_RTNET_RTIPV4_HOST_ROUTES" >&5
+echo "${ECHO_T}$CONFIG_RTNET_RTIPV4_HOST_ROUTES" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define CONFIG_RTNET_RTIPV4_HOST_ROUTES $CONFIG_RTNET_RTIPV4_HOST_ROUTES
+_ACEOF
+
+
 { echo "$as_me:$LINENO: checking whether to enable IP network routing" >&5
 echo $ECHO_N "checking whether to enable IP network routing... $ECHO_C" >&6; }
 # Check whether --enable-net-routing was given.
@@ -21622,6 +21647,29 @@ if test "$CONFIG_RTNET_RTIPV4_NETROUTING" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_RTIPV4_NETROUTING 1
+_ACEOF
+
+
+    { echo "$as_me:$LINENO: checking for network routes" >&5
+echo $ECHO_N "checking for network routes... $ECHO_C" >&6; }
+    # Check whether --enable-net-routes was given.
+if test "${enable_net_routes+set}" = set; then
+  enableval=$enable_net_routes; case "$enableval" in
+            [[:digit:]]*) CONFIG_RTNET_RTIPV4_NET_ROUTES=$enableval ;;
+            *) { { echo "$as_me:$LINENO: error: Bad argument to option: --with-net-routes=<n>" >&5
+echo "$as_me: error: Bad argument to option: --with-net-routes=<n>" >&2;}
+   { (exit 1); exit 1; }; } ;;
+        esac
+fi
+
+    if test x$CONFIG_RTNET_RTIPV4_NET_ROUTES = x ; then
+        CONFIG_RTNET_RTIPV4_NET_ROUTES=16
+    fi
+    { echo "$as_me:$LINENO: result: $CONFIG_RTNET_RTIPV4_NET_ROUTES" >&5
+echo "${ECHO_T}$CONFIG_RTNET_RTIPV4_NET_ROUTES" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define CONFIG_RTNET_RTIPV4_NET_ROUTES $CONFIG_RTNET_RTIPV4_NET_ROUTES
 _ACEOF
 
 fi
