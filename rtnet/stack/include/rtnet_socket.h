@@ -89,13 +89,17 @@ static inline struct rtdm_dev_context *rt_socket_context(struct rtsocket *sock)
 #define rt_socket_dereference(sock) \
     atomic_dec(&(rt_socket_context(sock)->close_lock_count))
 
-extern int rt_socket_init(struct rtdm_dev_context *context);
-extern int rt_socket_cleanup(struct rtdm_dev_context *context);
-extern int rt_socket_common_ioctl(struct rtdm_dev_context *context,
-                                  rtdm_user_info_t *user_info,
-                                  int request, void *arg);
-extern int rt_socket_if_ioctl(struct rtdm_dev_context *context,
-                              rtdm_user_info_t *user_info,
-                              int request, void *arg);
+int rt_socket_init(struct rtdm_dev_context *context);
+int rt_socket_cleanup(struct rtdm_dev_context *context);
+int rt_socket_common_ioctl(struct rtdm_dev_context *context,
+                           rtdm_user_info_t *user_info,
+                           int request, void *arg);
+int rt_socket_if_ioctl(struct rtdm_dev_context *context,
+                       rtdm_user_info_t *user_info,
+                       int request, void *arg);
+int rt_socket_select_bind(struct rtdm_dev_context *context,
+                          rtdm_selector_t *selector,
+                          enum rtdm_selecttype type,
+                          unsigned fd_index);
 
 #endif  /* __RTNET_SOCKET_H_ */

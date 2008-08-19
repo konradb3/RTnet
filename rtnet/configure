@@ -21980,6 +21980,17 @@ _ACEOF
 
 fi
 
+{ echo "$as_me:$LINENO: checking whether to enable select-like support" >&5
+echo $ECHO_N "checking whether to enable select-like support... $ECHO_C" >&6; }
+if test "$CONFIG_XENO_OPT_RTDM_SELECT" = "y"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTNET_SELECT_SUPPORT 1
+_ACEOF
+
+fi
+{ echo "$as_me:$LINENO: result: ${CONFIG_XENO_OPT_RTDM_SELECT:-n}" >&5
+echo "${ECHO_T}${CONFIG_XENO_OPT_RTDM_SELECT:-n}" >&6; }
 
 
 

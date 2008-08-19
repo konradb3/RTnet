@@ -466,7 +466,10 @@ static struct rtdm_device   packet_proto_dev = {
         .ioctl_rt =     rt_packet_ioctl,
         .ioctl_nrt =    rt_packet_ioctl,
         .recvmsg_rt =   rt_packet_recvmsg,
-        .sendmsg_rt =   rt_packet_sendmsg
+        .sendmsg_rt =   rt_packet_sendmsg,
+#ifdef CONFIG_RTNET_SELECT_SUPPORT
+        .select_bind =  rt_socket_select_bind,
+#endif
     },
 
     .device_class =     RTDM_CLASS_NETWORK,
@@ -496,7 +499,10 @@ static struct rtdm_device   raw_packet_proto_dev = {
         .ioctl_rt =     rt_packet_ioctl,
         .ioctl_nrt =    rt_packet_ioctl,
         .recvmsg_rt =   rt_packet_recvmsg,
-        .sendmsg_rt =   rt_packet_sendmsg
+        .sendmsg_rt =   rt_packet_sendmsg,
+#ifdef CONFIG_RTNET_SELECT_SUPPORT
+        .select_bind =  rt_socket_select_bind,
+#endif
     },
 
     .device_class =     RTDM_CLASS_NETWORK,

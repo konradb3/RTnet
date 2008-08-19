@@ -66,6 +66,9 @@
 /* RX-FIFO size */
 #undef CONFIG_RTNET_RX_FIFO_SIZE
 
+/* Select support */
+#undef CONFIG_RTNET_SELECT_SUPPORT
+
 /* TDMA master support */
 #undef CONFIG_RTNET_TDMA_MASTER
 

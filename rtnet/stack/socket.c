@@ -290,6 +290,30 @@ int rt_socket_if_ioctl(struct rtdm_dev_context *sockctx,
 }
 
 
+#ifdef CONFIG_RTNET_SELECT_SUPPORT
+int rt_socket_select_bind(struct rtdm_dev_context *context,
+                          rtdm_selector_t *selector,
+                          enum rtdm_selecttype type,
+                          unsigned fd_index)
+{
+    struct rtsocket *sock = (struct rtsocket *)&context->dev_private;
+
+    switch (type) {
+        case XNSELECT_READ:
+            return rtdm_sem_select_bind(&sock->pending_sem, selector,
+                                        XNSELECT_READ, fd_index);
+        default:
+            return -EBADF;
+    }
+
+    return -EINVAL;
+}
+
+EXPORT_SYMBOL(rt_socket_select_bind);
+#endif /* CONFIG_RTNET_SELECT_SUPPORT */
+
+
+
 EXPORT_SYMBOL(rt_socket_init);
 EXPORT_SYMBOL(rt_socket_cleanup);
 EXPORT_SYMBOL(rt_socket_common_ioctl);

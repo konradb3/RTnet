@@ -306,6 +306,9 @@ static struct rtdm_device ipv4_device = {
         .ioctl_nrt =    rt_udp_ioctl,
         .recvmsg_rt =   rt_udp_recvmsg,
         .sendmsg_rt =   rt_udp_sendmsg,
+#ifdef CONFIG_RTNET_SELECT_SUPPORT
+        .select_bind =  rt_socket_select_bind,
+#endif
     },
 
     .device_class =     RTDM_CLASS_NETWORK,

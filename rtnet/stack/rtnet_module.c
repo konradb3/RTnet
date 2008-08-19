@@ -30,6 +30,7 @@
 #include <rtdev_mgr.h>
 #include <rtnet_chrdev.h>
 #include <rtnet_internal.h>
+#include <rtnet_socket.h>
 #include <rtnet_rtpc.h>
 #include <stack_mgr.h>
 #include <rtwlan.h>
