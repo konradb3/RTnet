@@ -24,6 +24,7 @@
 
 #include <linux/bitops.h>
 #include <linux/moduleparam.h>
+#include <linux/list.h>
 
 #include <rtdev.h>
 #include <rtdev_mgr.h>
@@ -79,6 +80,56 @@ static inline int pci_dev_present(const struct pci_device_id *ids)
 # define compat_pci_save_state(a, b)        pci_save_state(a)
 # define compat_module_int_param_array(name, count) \
     module_param_array(name, int, NULL, 0444)
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+# define LIST_POISON1  ((void *) 0x00100100)
+# define LIST_POISON2  ((void *) 0x00200200)
+
+struct hlist_head {
+	struct hlist_node *first;
+};
+
+struct hlist_node {
+	struct hlist_node *next, **pprev;
+};
+
+# define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
+
+static inline void __hlist_del(struct hlist_node *n)
+{
+	struct hlist_node *next = n->next;
+	struct hlist_node **pprev = n->pprev;
+	*pprev = next;
+	if (next)
+		next->pprev = pprev;
+}
+
+static inline void hlist_del(struct hlist_node *n)
+{
+	__hlist_del(n);
+	n->next = LIST_POISON1;
+	n->pprev = LIST_POISON2;
+}
+
+static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
+{
+	struct hlist_node *first = h->first;
+	n->next = first;
+	if (first)
+		first->pprev = &n->next;
+	h->first = n;
+	n->pprev = &h->first;
+}
+
+# define hlist_entry(ptr, type, member) \
+	((type *)((char *)(ptr) - (unsigned long)(&((type *)0)->member)))
+
+# define hlist_for_each_entry(tpos, pos, head, member)			 \
+	for (pos = (head)->first;					 \
+	     pos && ({ prefetch(pos->next); 1;}) &&			 \
+		({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
+	     pos = pos->next)
 #endif
 
 static inline void rtnetif_start_queue(struct rtnet_device *rtdev)

@@ -29,6 +29,7 @@
 #include <linux/udp.h>
 #include <linux/tcp.h>
 #include <net/checksum.h>
+#include <linux/list.h>
 
 #include <rtskb.h>
 #include <rtnet_internal.h>
@@ -51,6 +52,7 @@ struct udp_socket {
     u16             sport;      /* local port */
     u32             saddr;      /* local ip-addr */
     struct rtsocket *sock;
+    struct hlist_node link;
 };
 
 /***
@@ -80,12 +82,49 @@ static u32                  port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
 static struct udp_socket    port_registry[RT_UDP_SOCKETS];
 static rtdm_lock_t          udp_socket_base_lock = RTDM_LOCK_UNLOCKED;
 
+static struct hlist_head port_hash[RT_UDP_SOCKETS * 2];
+#define port_hash_mask (RT_UDP_SOCKETS * 2 - 1)
+
 module_param(auto_port_start, uint, 0444);
 module_param(auto_port_mask, uint, 0444);
 MODULE_PARM_DESC(auto_port_start, "Start of automatically assigned port range");
 MODULE_PARM_DESC(auto_port_mask,
                  "Mask that defines port range for automatic assignment");
 
+static inline struct udp_socket *port_hash_search(u32 saddr, u16 sport)
+{
+	unsigned bucket = sport & port_hash_mask;
+	struct udp_socket *sock;
+	struct hlist_node *n;
+
+	hlist_for_each_entry(sock, n, &port_hash[bucket], link)
+		if (sock->sport == sport &&
+		    (saddr == INADDR_ANY
+		     || sock->saddr == saddr
+		     || sock->saddr == INADDR_ANY))
+			return sock;
+
+	return NULL;
+}
+
+static inline int port_hash_insert(struct udp_socket *sock, u32 saddr, u16 sport)
+{
+	unsigned bucket;
+
+	if (port_hash_search(saddr, sport))
+		return -EADDRINUSE;
+
+	bucket = sport & port_hash_mask;
+	sock->saddr = saddr;
+	sock->sport = sport;
+	hlist_add_head(&sock->link, &port_hash[bucket]);
+	return 0;
+}
+
+static inline void port_hash_del(struct udp_socket *sock)
+{
+	hlist_del(&sock->link);
+}
 
 /***
  *  rt_udp_v4_lookup
@@ -93,48 +132,20 @@ MODULE_PARM_DESC(auto_port_mask,
 static inline struct rtsocket *rt_udp_v4_lookup(u32 daddr, u16 dport)
 {
     rtdm_lockctx_t  context;
-    int             index;
-    int             bit;
-    int             bitmap_index;
-#if BITS_PER_LONG == 32
-    unsigned long   bitmap;
-#elif BITS_PER_LONG == 64
-    u32             bitmap;
-#else
-#error please include asm/types.h
-#endif
-    struct rtsocket *sock;
+    struct udp_socket *sock;
 
+    rtdm_lock_get_irqsave(&udp_socket_base_lock, context);
+    sock = port_hash_search(daddr, dport);
+    if (sock) {
+	    rt_socket_reference(sock->sock);
 
-    for (bitmap_index = 0; bitmap_index < ((RT_UDP_SOCKETS + 31) / 32);
-         bitmap_index++) {
-        bit    = 0;
-        index  = bitmap_index * 32;
+	    rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
 
-        rtdm_lock_get_irqsave(&udp_socket_base_lock, context);
-
-        bitmap = port_bitmap[bitmap_index];
-        while (bitmap != 0) {
-            if (test_bit(bit, &bitmap)) {
-                if ((port_registry[index].sport == dport) &&
-                    ((port_registry[index].saddr == INADDR_ANY) ||
-                     (port_registry[index].saddr == daddr))) {
-                    sock = port_registry[index].sock;
-                    rt_socket_reference(sock);
-
-                    rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
-
-                    return sock;
-                }
-                clear_bit(bit, &bitmap);
-            }
-            index++;
-            bit++;
-        }
-
-        rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
+	    return sock->sock;
     }
 
+    rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
+	    
     return NULL;
 }
 
@@ -168,15 +179,22 @@ int rt_udp_bind(struct rtsocket *sock, const struct sockaddr *addr,
         return -EINVAL;
     }
 
+    port_hash_del(&port_registry[index]);
+    if (port_hash_insert(&port_registry[index],
+			 usin->sin_addr.s_addr,
+			 usin->sin_port ?: index + auto_port_start)) {
+	    port_hash_insert(&port_registry[index],
+			     port_registry[index].saddr,
+			     port_registry[index].sport);
+	    rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
+	    return -EADDRINUSE;
+    }
+
     /* set the source-addr */
-    sock->prot.inet.saddr = usin->sin_addr.s_addr;
+    sock->prot.inet.saddr = port_registry[index].saddr;
 
     /* set source port, if not set by user */
-    if ((sock->prot.inet.sport = usin->sin_port) == 0)
-        sock->prot.inet.sport = index + auto_port_start;
-
-    port_registry[index].sport = sock->prot.inet.sport;
-    port_registry[index].saddr = sock->prot.inet.saddr;
+    sock->prot.inet.sport = port_registry[index].sport;
 
     rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
 
@@ -280,8 +298,7 @@ int rt_udp_socket(struct rtdm_dev_context *sockctx,
     sock->prot.inet.sport     = index + auto_port_start;
 
     /* register UDP socket */
-    port_registry[index].sport = sock->prot.inet.sport;
-    port_registry[index].saddr = INADDR_ANY;
+    port_hash_insert(&port_registry[index], INADDR_ANY, sock->prot.inet.sport);
     port_registry[index].sock  = sock;
 
     rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
@@ -310,6 +327,7 @@ int rt_udp_close(struct rtdm_dev_context *sockctx,
     if (sock->prot.inet.reg_index >= 0) {
         port = sock->prot.inet.reg_index;
         clear_bit(port % 32, &port_bitmap[port / 32]);
+	port_hash_del(&port_registry[port]);
 
         free_ports++;
 
@@ -575,7 +593,7 @@ ssize_t rt_udp_sendmsg(struct rtdm_dev_context *sockctx,
         return err;
 
     /* we found a route, remember the routing dest-addr could be the netmask */
-    ufh.saddr     = saddr ?: rt.rtdev->local_ip;
+    ufh.saddr     = saddr != INADDR_ANY ? saddr : rt.rtdev->local_ip;
     ufh.daddr     = daddr;
     ufh.uh.dest   = dport;
     ufh.uh.len    = htons(ulen);
@@ -692,19 +710,21 @@ static struct rtinet_protocol udp_protocol = {
     .init_socket =  &rt_udp_socket
 };
 
-
-
 /***
  *  rt_udp_init
  */
 void __init rt_udp_init(void)
 {
+    int i;
     if ((auto_port_start < 0) || (auto_port_start >= 0x10000 - RT_UDP_SOCKETS))
         auto_port_start = 1024;
     auto_port_start = htons(auto_port_start & (auto_port_mask & 0xFFFF));
     auto_port_mask  = htons(auto_port_mask | 0xFFFF0000);
 
     rt_inet_add_protocol(&udp_protocol);
+
+    for (i = 0; i < ARRAY_SIZE(port_hash); i++)
+	    INIT_HLIST_HEAD(&port_hash[i]);
 }
 
 
