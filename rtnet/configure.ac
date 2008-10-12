@@ -736,6 +736,24 @@ fi
 
 
 dnl ======================================================================
+dnl             determine select support
+dnl ======================================================================
+AC_MSG_CHECKING([whether to enable select-like support])
+case "${CONFIG_RTNET_RTEXT_VERSION}" in
+    rtai-3x)
+        CONFIG_RTDM_SELECT=$CONFIG_RTAI_RTDM_SELECT
+        ;;
+    xeno-*)
+        CONFIG_RTDM_SELECT=$CONFIG_XENO_OPT_RTDM_SELECT
+        ;;
+esac
+if test "$CONFIG_RTDM_SELECT" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_SELECT_SUPPORT, 1, [Select support])
+fi
+AC_MSG_RESULT([${CONFIG_RTDM_SELECT:-n}])
+
+
+dnl ======================================================================
 dnl             network interface card driver
 dnl ======================================================================
 
@@ -1262,12 +1280,6 @@ AC_MSG_RESULT([${CONFIG_RTNET_CHECKED:-n}])
 if test "$CONFIG_RTNET_CHECKED" = "y"; then
     AC_DEFINE(CONFIG_RTNET_CHECKED, 1, [Bug checks])
 fi
-
-AC_MSG_CHECKING([whether to enable select-like support])
-if test "$CONFIG_XENO_OPT_RTDM_SELECT" = "y"; then
-    AC_DEFINE(CONFIG_RTNET_SELECT_SUPPORT, 1, [Select support])
-fi
-AC_MSG_RESULT([${CONFIG_XENO_OPT_RTDM_SELECT:-n}])
 
 dnl ======================================================================
 dnl             hac^H^H^Hfix problem with multible defined symbols problem

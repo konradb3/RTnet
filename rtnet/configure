@@ -21035,6 +21035,27 @@ _ACEOF
 fi
 
 
+{ echo "$as_me:$LINENO: checking whether to enable select-like support" >&5
+echo $ECHO_N "checking whether to enable select-like support... $ECHO_C" >&6; }
+case "${CONFIG_RTNET_RTEXT_VERSION}" in
+    rtai-3x)
+        CONFIG_RTDM_SELECT=$CONFIG_RTAI_RTDM_SELECT
+        ;;
+    xeno-*)
+        CONFIG_RTDM_SELECT=$CONFIG_XENO_OPT_RTDM_SELECT
+        ;;
+esac
+if test "$CONFIG_RTDM_SELECT" = "y"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define CONFIG_RTNET_SELECT_SUPPORT 1
+_ACEOF
+
+fi
+{ echo "$as_me:$LINENO: result: ${CONFIG_RTDM_SELECT:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTDM_SELECT:-n}" >&6; }
+
+
 
 { echo "$as_me:$LINENO: checking whether to build Realtek 8139 driver" >&5
 echo $ECHO_N "checking whether to build Realtek 8139 driver... $ECHO_C" >&6; }
@@ -21979,18 +22000,6 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
-
-{ echo "$as_me:$LINENO: checking whether to enable select-like support" >&5
-echo $ECHO_N "checking whether to enable select-like support... $ECHO_C" >&6; }
-if test "$CONFIG_XENO_OPT_RTDM_SELECT" = "y"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define CONFIG_RTNET_SELECT_SUPPORT 1
-_ACEOF
-
-fi
-{ echo "$as_me:$LINENO: result: ${CONFIG_XENO_OPT_RTDM_SELECT:-n}" >&5
-echo "${ECHO_T}${CONFIG_XENO_OPT_RTDM_SELECT:-n}" >&6; }
 
 
 
