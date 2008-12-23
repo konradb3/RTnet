@@ -134,38 +134,38 @@ static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 
 static inline void rtnetif_start_queue(struct rtnet_device *rtdev)
 {
-    clear_bit(__LINK_STATE_XOFF, &rtdev->state);
+    clear_bit(__RTNET_LINK_STATE_XOFF, &rtdev->link_state);
 }
 
 static inline void rtnetif_wake_queue(struct rtnet_device *rtdev)
 {
-    if (test_and_clear_bit(__LINK_STATE_XOFF, &rtdev->state))
+    if (test_and_clear_bit(__RTNET_LINK_STATE_XOFF, &rtdev->link_state))
     /*TODO __netif_schedule(dev); */ ;
 }
 
 static inline void rtnetif_stop_queue(struct rtnet_device *rtdev)
 {
-    set_bit(__LINK_STATE_XOFF, &rtdev->state);
+    set_bit(__RTNET_LINK_STATE_XOFF, &rtdev->link_state);
 }
 
 static inline int rtnetif_queue_stopped(struct rtnet_device *rtdev)
 {
-    return test_bit(__LINK_STATE_XOFF, &rtdev->state);
+    return test_bit(__RTNET_LINK_STATE_XOFF, &rtdev->link_state);
 }
 
 static inline int rtnetif_running(struct rtnet_device *rtdev)
 {
-    return test_bit(__LINK_STATE_START, &rtdev->state);
+    return test_bit(__RTNET_LINK_STATE_START, &rtdev->link_state);
 }
 
 static inline int rtnetif_device_present(struct rtnet_device *rtdev)
 {
-    return test_bit(__LINK_STATE_PRESENT, &rtdev->state);
+    return test_bit(__RTNET_LINK_STATE_PRESENT, &rtdev->link_state);
 }
 
 static inline void rtnetif_carrier_on(struct rtnet_device *rtdev)
 {
-    clear_bit(__LINK_STATE_NOCARRIER, &rtdev->state);
+    clear_bit(__RTNET_LINK_STATE_NOCARRIER, &rtdev->link_state);
     /*
     if (netif_running(dev))
         __netdev_watchdog_up(dev);
@@ -174,12 +174,12 @@ static inline void rtnetif_carrier_on(struct rtnet_device *rtdev)
 
 static inline void rtnetif_carrier_off(struct rtnet_device *rtdev)
 {
-    set_bit(__LINK_STATE_NOCARRIER, &rtdev->state);
+    set_bit(__RTNET_LINK_STATE_NOCARRIER, &rtdev->link_state);
 }
 
 static inline int rtnetif_carrier_ok(struct rtnet_device *rtdev)
 {
-    return !test_bit(__LINK_STATE_NOCARRIER, &rtdev->state);
+    return !test_bit(__RTNET_LINK_STATE_NOCARRIER, &rtdev->link_state);
 }
 
 

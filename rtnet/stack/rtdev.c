@@ -382,7 +382,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     mutex_unlock(&rtnet_devices_nrt_lock);
 
     /* Default state at registration is that the device is present. */
-    set_bit(__LINK_STATE_PRESENT, &rtdev->state);
+    set_bit(__RTNET_LINK_STATE_PRESENT, &rtdev->link_state);
 
     printk("RTnet: registered %s\n", rtdev->name);
 
@@ -439,7 +439,7 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
 
     mutex_unlock(&rtnet_devices_nrt_lock);
 
-    clear_bit(__LINK_STATE_PRESENT, &rtdev->state);
+    clear_bit(__RTNET_LINK_STATE_PRESENT, &rtdev->link_state);
 
     RTNET_ASSERT(atomic_read(&rtdev->refcount) == 0,
            printk("RTnet: rtdev reference counter < 0!\n"););
@@ -487,7 +487,7 @@ int rtdev_open(struct rtnet_device *rtdev)
 
     if ( !ret )  {
         rtdev->flags |= (IFF_UP | IFF_RUNNING);
-        set_bit(__LINK_STATE_START, &rtdev->state);
+        set_bit(__RTNET_LINK_STATE_START, &rtdev->link_state);
 #if 0
         dev_mc_upload(dev);                 /* Initialize multicasting status   */
 #endif
@@ -513,7 +513,7 @@ int rtdev_close(struct rtnet_device *rtdev)
         ret = rtdev->stop(rtdev);
 
     rtdev->flags &= ~(IFF_UP|IFF_RUNNING);
-    clear_bit(__LINK_STATE_START, &rtdev->state);
+    clear_bit(__RTNET_LINK_STATE_START, &rtdev->link_state);
 
     return ret;
 }

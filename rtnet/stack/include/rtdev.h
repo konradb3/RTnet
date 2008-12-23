@@ -47,6 +47,13 @@
 #endif
 
 
+enum rtnet_link_state {
+	__RTNET_LINK_STATE_XOFF = 0,
+	__RTNET_LINK_STATE_START,
+	__RTNET_LINK_STATE_PRESENT,
+	__RTNET_LINK_STATE_NOCARRIER,
+};
+
 /***
  *  rtnet_device
  */
@@ -73,7 +80,7 @@ struct rtnet_device {
     unsigned char       dma;        /* DMA channel          */
     __u16               __padding;
 
-    unsigned long       state;
+    unsigned long       link_state;
     int                 ifindex;
     atomic_t            refcount;
 
