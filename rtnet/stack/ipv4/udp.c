@@ -72,13 +72,9 @@ struct udp_socket {
 static unsigned int         auto_port_start = 1024;
 static unsigned int         auto_port_mask  = ~(RT_UDP_SOCKETS-1);
 static int                  free_ports      = RT_UDP_SOCKETS;
-#if BITS_PER_LONG == 32
-static unsigned long        port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
-#elif BITS_PER_LONG == 64
-static u32                  port_bitmap[(RT_UDP_SOCKETS + 31) / 32];
-#else
-#error please include asm/types.h
-#endif
+#define RT_PORT_BITMAP_WORDS \
+    ((RT_UDP_SOCKETS + BITS_PER_LONG - 1) / BITS_PER_LONG)
+static unsigned long        port_bitmap[RT_PORT_BITMAP_WORDS];
 static struct udp_socket    port_registry[RT_UDP_SOCKETS];
 static rtdm_lock_t          udp_socket_base_lock = RTDM_LOCK_UNLOCKED;
 
@@ -288,8 +284,8 @@ int rt_udp_socket(struct rtdm_dev_context *sockctx,
     free_ports--;
 
     /* find free auto-port in bitmap */
-    for (i = 0; i < sizeof(port_bitmap)/4; i++)
-        if (port_bitmap[i] != 0xFFFFFFFF)
+    for (i = 0; i < RT_PORT_BITMAP_WORDS; i++)
+        if (port_bitmap[i] != (unsigned long)-1)
             break;
     index = ffz(port_bitmap[i]);
     set_bit(index, &port_bitmap[i]);
@@ -326,7 +322,7 @@ int rt_udp_close(struct rtdm_dev_context *sockctx,
 
     if (sock->prot.inet.reg_index >= 0) {
         port = sock->prot.inet.reg_index;
-        clear_bit(port % 32, &port_bitmap[port / 32]);
+        clear_bit(port % BITS_PER_LONG, &port_bitmap[port / BITS_PER_LONG]);
 	port_hash_del(&port_registry[port]);
 
         free_ports++;
