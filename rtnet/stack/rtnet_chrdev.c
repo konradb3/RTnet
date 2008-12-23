@@ -40,16 +40,6 @@ static rwlock_t ioctl_handler_lock = RW_LOCK_UNLOCKED;
 
 LIST_HEAD(ioctl_handlers);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-#include <linux/device.h>
-static struct class *rtnet_class;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
-#define device                          class_device
-#define device_create(a, b, c, d)       class_device_create(a, b, c, NULL, d)
-#define device_destroy(a, b)            class_device_destroy(a, b)
-#endif
-#endif
-
 /**
  * rtnet_ioctl -
  * @inode:
@@ -301,7 +291,7 @@ static struct file_operations rtnet_fops = {
 
 static struct miscdevice rtnet_chr_misc_dev = {
     .minor= RTNET_MINOR,
-    .name = "RTnet",
+    .name = "rtnet",
     .fops = &rtnet_fops,
 };
 
@@ -320,40 +310,16 @@ static struct rtnet_ioctls core_ioctls = {
 int __init rtnet_chrdev_init(void)
 {
     int err;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-    struct device *cl_dev;
-
-    rtnet_class = class_create(THIS_MODULE, "rtnet");
-    if (IS_ERR(rtnet_class)) {
-        err = -EBUSY;
-        goto error;
-    }
-
-    cl_dev = device_create(rtnet_class, NULL, MKDEV(MISC_MAJOR, RTNET_MINOR),
-                           "rtnet");
-    if (IS_ERR(cl_dev)) {
-        class_destroy(rtnet_class);
-        err = -EBUSY;
-        goto error;
-    }
-#endif
 
     err = misc_register(&rtnet_chr_misc_dev);
     if (err) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-        device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
-        class_destroy(rtnet_class);
-#endif
-        goto error;
+        printk("RTnet: unable to register rtnet management device/class "
+               "(error %d)\n", err);
+        return err;
     }
 
     rtnet_register_ioctls(&core_ioctls);
     return 0;
-
- error:
-    printk("RTnet: unable to register rtnet management device/class "
-           "(error %d)\n", err);
-    return err;
 }
 
 
@@ -365,10 +331,6 @@ int __init rtnet_chrdev_init(void)
 void rtnet_chrdev_release(void)
 {
     misc_deregister(&rtnet_chr_misc_dev);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
-    device_destroy(rtnet_class, MKDEV(MISC_MAJOR, RTNET_MINOR));
-    class_destroy(rtnet_class);
-#endif
 }
 
 
