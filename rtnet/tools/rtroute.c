@@ -217,9 +217,11 @@ void route_listadd(char *name)
         /* split string into tokens */
         argc = 0;
         args[argc] = strtok(buf, space);
-        do
-            args[++argc] = strtok(NULL, space);
-        while ((argc < 4) && args[argc]);
+        do {
+            if (++argc > 3)
+                break;
+            args[argc] = strtok(NULL, space);
+        } while (args[argc]);
 
         /* wrong number of arguments? */
         if (argc != 3) {
@@ -331,7 +333,7 @@ void route_get(int argc, char *argv[])
         help();
 
     if (ret >= 0) {
-        char *p = cmd.args.gethost.dev_addr;
+        unsigned char *p = cmd.args.gethost.dev_addr;
         printf("Destination\tHW Address\t\tDevice\n"
                "%s\t%02x:%02x:%02x:%02x:%02x:%02x\t%s\n", argv[2],
                p[0], p[1], p[2] , p[3], p[4], p[5], cmd.head.if_name);
