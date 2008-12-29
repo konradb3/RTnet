@@ -45,7 +45,8 @@ host_triplet = @host@
 @CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_12 = rt_natsemi$(modext)
 @CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_13 = rt_pcnet32$(modext)
 @CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_14 = rt_smc91111$(modext)
-@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_15 = rt_via-rhine$(modext)
+@CONFIG_RTNET_DRV_MACB_TRUE@am__append_15 = rt_macb$(modext)
+@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_16 = rt_via-rhine$(modext)
 subdir = drivers
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -83,6 +84,10 @@ libkernel_loopback_a_LIBADD =
 am_libkernel_loopback_a_OBJECTS =  \
 	libkernel_loopback_a-rt_loopback.$(OBJEXT)
 libkernel_loopback_a_OBJECTS = $(am_libkernel_loopback_a_OBJECTS)
+libkernel_macb_a_AR = $(AR) $(ARFLAGS)
+libkernel_macb_a_LIBADD =
+am_libkernel_macb_a_OBJECTS = libkernel_macb_a-rt_macb.$(OBJEXT)
+libkernel_macb_a_OBJECTS = $(am_libkernel_macb_a_OBJECTS)
 libkernel_mpc8260_fcc_enet_a_AR = $(AR) $(ARFLAGS)
 libkernel_mpc8260_fcc_enet_a_LIBADD =
 am_libkernel_mpc8260_fcc_enet_a_OBJECTS =  \
@@ -135,7 +140,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 SOURCES = $(libkernel_8139too_a_SOURCES) \
 	$(libkernel_at91_ether_a_SOURCES) \
 	$(libkernel_eepro100_a_SOURCES) $(libkernel_eth1394_a_SOURCES) \
-	$(libkernel_loopback_a_SOURCES) \
+	$(libkernel_loopback_a_SOURCES) $(libkernel_macb_a_SOURCES) \
 	$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_fec_a_SOURCES) \
@@ -145,7 +150,7 @@ SOURCES = $(libkernel_8139too_a_SOURCES) \
 DIST_SOURCES = $(libkernel_8139too_a_SOURCES) \
 	$(libkernel_at91_ether_a_SOURCES) \
 	$(libkernel_eepro100_a_SOURCES) $(libkernel_eth1394_a_SOURCES) \
-	$(libkernel_loopback_a_SOURCES) \
+	$(libkernel_loopback_a_SOURCES) $(libkernel_macb_a_SOURCES) \
 	$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_fec_a_SOURCES) \
@@ -312,6 +317,7 @@ EXTRA_LIBRARIES = \
 	libkernel_natsemi.a \
 	libkernel_pcnet32.a \
 	libkernel_smc91111.a \
+	libkernel_macb.a \
 	libkernel_via-rhine.a
 
 libkernel_8139too_a_CPPFLAGS = \
@@ -405,6 +411,15 @@ libkernel_smc91111_a_SOURCES = \
 	rt_smc91111.c \
 	rt_smc91111.h
 
+libkernel_macb_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_macb_a_SOURCES = \
+	rt_macb.c \
+	rt_macb.h
+
 libkernel_via_rhine_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
@@ -416,7 +431,7 @@ libkernel_via_rhine_a_SOURCES = \
 OBJS = $(am__append_4) $(am__append_5) $(am__append_6) $(am__append_7) \
 	$(am__append_8) $(am__append_9) $(am__append_10) \
 	$(am__append_11) $(am__append_12) $(am__append_13) \
-	$(am__append_14) $(am__append_15)
+	$(am__append_14) $(am__append_15) $(am__append_16)
 EXTRA_DIST = Kconfig Makefile.kbuild
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 all: all-recursive
@@ -472,6 +487,10 @@ libkernel_loopback.a: $(libkernel_loopback_a_OBJECTS) $(libkernel_loopback_a_DEP
 	-rm -f libkernel_loopback.a
 	$(libkernel_loopback_a_AR) libkernel_loopback.a $(libkernel_loopback_a_OBJECTS) $(libkernel_loopback_a_LIBADD)
 	$(RANLIB) libkernel_loopback.a
+libkernel_macb.a: $(libkernel_macb_a_OBJECTS) $(libkernel_macb_a_DEPENDENCIES) 
+	-rm -f libkernel_macb.a
+	$(libkernel_macb_a_AR) libkernel_macb.a $(libkernel_macb_a_OBJECTS) $(libkernel_macb_a_LIBADD)
+	$(RANLIB) libkernel_macb.a
 libkernel_mpc8260_fcc_enet.a: $(libkernel_mpc8260_fcc_enet_a_OBJECTS) $(libkernel_mpc8260_fcc_enet_a_DEPENDENCIES) 
 	-rm -f libkernel_mpc8260_fcc_enet.a
 	$(libkernel_mpc8260_fcc_enet_a_AR) libkernel_mpc8260_fcc_enet.a $(libkernel_mpc8260_fcc_enet_a_OBJECTS) $(libkernel_mpc8260_fcc_enet_a_LIBADD)
@@ -512,6 +531,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_loopback_a-rt_loopback.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_macb_a-rt_macb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8xx_enet_a-rt_mpc8xx_enet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8xx_fec_a-rt_mpc8xx_fec.Po@am__quote@
@@ -610,6 +630,20 @@ libkernel_loopback_a-rt_loopback.obj: rt_loopback.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_loopback.c' object='libkernel_loopback_a-rt_loopback.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_loopback_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_loopback_a-rt_loopback.obj `if test -f 'rt_loopback.c'; then $(CYGPATH_W) 'rt_loopback.c'; else $(CYGPATH_W) '$(srcdir)/rt_loopback.c'; fi`
+
+libkernel_macb_a-rt_macb.o: rt_macb.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_macb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_macb_a-rt_macb.o -MD -MP -MF $(DEPDIR)/libkernel_macb_a-rt_macb.Tpo -c -o libkernel_macb_a-rt_macb.o `test -f 'rt_macb.c' || echo '$(srcdir)/'`rt_macb.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_macb_a-rt_macb.Tpo $(DEPDIR)/libkernel_macb_a-rt_macb.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_macb.c' object='libkernel_macb_a-rt_macb.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_macb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_macb_a-rt_macb.o `test -f 'rt_macb.c' || echo '$(srcdir)/'`rt_macb.c
+
+libkernel_macb_a-rt_macb.obj: rt_macb.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_macb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_macb_a-rt_macb.obj -MD -MP -MF $(DEPDIR)/libkernel_macb_a-rt_macb.Tpo -c -o libkernel_macb_a-rt_macb.obj `if test -f 'rt_macb.c'; then $(CYGPATH_W) 'rt_macb.c'; else $(CYGPATH_W) '$(srcdir)/rt_macb.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_macb_a-rt_macb.Tpo $(DEPDIR)/libkernel_macb_a-rt_macb.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_macb.c' object='libkernel_macb_a-rt_macb.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_macb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_macb_a-rt_macb.obj `if test -f 'rt_macb.c'; then $(CYGPATH_W) 'rt_macb.c'; else $(CYGPATH_W) '$(srcdir)/rt_macb.c'; fi`
 
 libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o: rt_mpc8260_fcc_enet.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_mpc8260_fcc_enet_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o -MD -MP -MF $(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Tpo -c -o libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.o `test -f 'rt_mpc8260_fcc_enet.c' || echo '$(srcdir)/'`rt_mpc8260_fcc_enet.c
@@ -1028,6 +1062,9 @@ rt_pcnet32.o: libkernel_pcnet32.a
 rt_smc91111.o: libkernel_smc91111.a
 	$(LD) --whole-archive $< -r -o $@
 
+rt_macb.o: libkernel_macb.a
+	$(LD) --whole-archive $< -r -o $@
+
 rt_via-rhine.o: libkernel_via-rhine.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -1048,6 +1085,7 @@ all-local.ko: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
+		$(libkernel_macb_a_SOURCES) \
 		$(libkernel_via_rhine_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
@@ -1069,6 +1107,7 @@ clean-local: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
+		$(libkernel_macb_a_SOURCES) \
 		$(libkernel_via_rhine_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 

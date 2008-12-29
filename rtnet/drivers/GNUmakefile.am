@@ -29,6 +29,7 @@ EXTRA_LIBRARIES = \
 	libkernel_natsemi.a \
 	libkernel_pcnet32.a \
 	libkernel_smc91111.a \
+	libkernel_macb.a \
 	libkernel_via-rhine.a
 
 RTEXT_KMOD_CFLAGS += $(RTFW_KMOD_CFLAGS)
@@ -124,6 +125,15 @@ libkernel_smc91111_a_SOURCES = \
 	rt_smc91111.c \
 	rt_smc91111.h
 
+libkernel_macb_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_macb_a_SOURCES = \
+	rt_macb.c \
+	rt_macb.h
+
 libkernel_via_rhine_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
@@ -179,6 +189,10 @@ if CONFIG_RTNET_DRV_SMC91111
 OBJS += rt_smc91111$(modext)
 endif
 
+if CONFIG_RTNET_DRV_MACB
+OBJS += rt_macb$(modext)
+endif
+
 if CONFIG_RTNET_DRV_VIA_RHINE
 OBJS += rt_via-rhine$(modext)
 endif
@@ -216,6 +230,9 @@ rt_pcnet32.o: libkernel_pcnet32.a
 rt_smc91111.o: libkernel_smc91111.a
 	$(LD) --whole-archive $< -r -o $@
 
+rt_macb.o: libkernel_macb.a
+	$(LD) --whole-archive $< -r -o $@
+
 rt_via-rhine.o: libkernel_via-rhine.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -236,6 +253,7 @@ all-local.ko: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
+		$(libkernel_macb_a_SOURCES) \
 		$(libkernel_via_rhine_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
@@ -257,6 +275,7 @@ clean-local: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
+		$(libkernel_macb_a_SOURCES) \
 		$(libkernel_via_rhine_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 

@@ -97,6 +97,12 @@ if ARCH = arm
 config RTNET_DRV_AT91ETHER
     bool "AT91RM9200 Board Ethernet Driver"
 
+config RTNET_DRV_MACB
+    bool "MACB AT91SAM926x devices"
+    ---help---
+    Driver for internal MAC-controller on AT91SAM926x microcontrollers.
+    Porting by Cristiano Mantovani and Stefano Banzi (Marposs SpA).
+
 endif
 
 source "drivers/experimental/Kconfig"

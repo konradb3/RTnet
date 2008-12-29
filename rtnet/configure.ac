@@ -904,6 +904,17 @@ AC_MSG_RESULT([${CONFIG_RTNET_DRV_SMC91111:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_SMC91111,[test "$CONFIG_RTNET_DRV_SMC91111" = "y"])
 
 
+AC_MSG_CHECKING([whether to build MACB driver])
+AC_ARG_ENABLE(macb,
+    AS_HELP_STRING([--enable-macb], [build MACB driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_MACB=y ;;
+        *) CONFIG_RTNET_DRV_MACB=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_MACB:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_MACB,[test "$CONFIG_RTNET_DRV_MACB" = "y"])
+
+
 AC_MSG_CHECKING([whether to build Eth1394 driver])
 AC_ARG_ENABLE(eth1394,
     AS_HELP_STRING([--enable-eth1394], [build Eth1394 driver]),

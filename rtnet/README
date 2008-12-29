@@ -114,6 +114,8 @@ Daniel Gregorek <dxg-at-gmx.de>         - RT-WLAN support, RT2500 driver
 Jorge Almeida                           - SOCK_RAW for packet sockets and
 <j-almeida@criticalsoftware.com>          ETH_P_ALL support
 Yeoh Chun Yeow <yeohchunyeow@gmail.com>	- rt_at91_ether driver
+Cristiano Mantovani <cristianomantovani@hotmail.com>,
+Stefano Banzi                           - rt_macv driver
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
