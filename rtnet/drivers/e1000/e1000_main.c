@@ -2445,14 +2445,12 @@ e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 	struct e1000_buffer *buffer_info;
 	uint32_t txd_upper = 0, txd_lower = E1000_TXD_CMD_IFCS;
 	unsigned int i;
-	rtdm_lockctx_t context;
 
 
 	if (likely(tx_flags & E1000_TX_FLAGS_CSUM)) {
 		txd_lower |= E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 		txd_upper |= E1000_TXD_POPTS_TXSM << 8;
 	}
-
 
 	i = tx_ring->next_to_use;
 
@@ -2468,8 +2466,6 @@ e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 
 	tx_desc->lower.data |= cpu_to_le32(adapter->txd_cmd);
 
-	rtdm_lock_irqsave(context);
-
 	if (xmit_stamp)
 		*xmit_stamp = cpu_to_be64(rtdm_clock_read() + *xmit_stamp);
 
@@ -2481,8 +2477,6 @@ e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
 
 	tx_ring->next_to_use = i;
 	writel(i, adapter->hw.hw_addr + tx_ring->tdt);
-
-	rtdm_lock_irqrestore(context);
 }
 
 /**
@@ -2623,19 +2617,17 @@ e1000_xmit_frame(struct rtskb *skb, struct rtnet_device *netdev)
 		}
 	}
 
-	rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
-
-
 	first = tx_ring->next_to_use;
 
 	if (likely(e1000_tx_csum(adapter, tx_ring, skb)))
 		tx_flags |= E1000_TX_FLAGS_CSUM;
 
-
 	e1000_tx_queue(adapter, tx_ring, tx_flags,
 	               e1000_tx_map(adapter, tx_ring, skb, first,
 	                            max_per_txd, nr_frags, mss),
 	               skb->xmit_stamp);
+
+	rtdm_lock_put_irqrestore(&tx_ring->tx_lock, context);
 
 	return NETDEV_TX_OK;
 }
