@@ -970,6 +970,16 @@ AC_ARG_ENABLE(e1000,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_E1000:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_E1000,[test "$CONFIG_RTNET_DRV_E1000" = "y"])
 
+AC_MSG_CHECKING([whether to build new Intel PRO/1000 (Gigabit) driver (experimental)])
+AC_ARG_ENABLE(e1000-new,
+    AS_HELP_STRING([--enable-e1000-new], [build new Intel PRO/1000 driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_E1000_NEW=y ;;
+        *) CONFIG_RTNET_DRV_E1000_NEW=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_E1000_NEW:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_E1000_NEW,[test "$CONFIG_RTNET_DRV_E1000_NEW" = "y"])
+
 AC_MSG_CHECKING([whether to build AT91 Ethernet [AT91RM9200] driver])
 AC_ARG_ENABLE(at91ether,
     AS_HELP_STRING([--enable-at91ether], [build AT91 Ethernet driver]),
@@ -1347,6 +1357,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/tulip \
         drivers/experimental \
         drivers/experimental/rt2500 \
+        drivers/experimental/e1000 \
         \
         stack \
         stack/packet \
@@ -1426,6 +1437,7 @@ AC_CONFIG_FILES([ \
     drivers/tulip/GNUmakefile \
     drivers/experimental/GNUmakefile \
     drivers/experimental/rt2500/GNUmakefile \
+    drivers/experimental/e1000/GNUmakefile \
     \
     stack/GNUmakefile \
     stack/include/GNUmakefile \

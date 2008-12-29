@@ -1,4 +1,3 @@
 config RTNET_DRV_RT2500
     bool "Ralink 2500 WLAN"
-    depends on RTNET_EXP_DRIVERS
     select RTNET_RTWLAN

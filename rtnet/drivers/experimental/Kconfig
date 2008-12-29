@@ -1,12 +1,17 @@
 config RTNET_EXP_DRIVERS
     bool "Experimental Drivers"
 
+if RTNET_EXP_DRIVERS
+
 config RTNET_DRV_3C59X
     bool "3Com 59x"
-    depends on RTNET_EXP_DRIVERS
 
 config RTNET_DRV_R8169
     bool "Realtek 8169 (Gigabit)"
-    depends on RTNET_EXP_DRIVERS
+
+config RTNET_DRV_E1000_NEW
+    bool "New Intel(R) PRO/1000 (Gigabit)"
 
 source "drivers/experimental/rt2500/Kconfig"
+
+endif

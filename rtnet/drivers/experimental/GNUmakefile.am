@@ -37,6 +37,10 @@ if CONFIG_RTNET_DRV_RT2500
 OPTDIRS += rt2500
 endif
 
+if CONFIG_RTNET_DRV_E1000_NEW
+OPTDIRS += e1000
+endif
+
 rt_3c59x.o: libkernel_3c59x.a
 	$(LD) --whole-archive $< -r -o $@
 

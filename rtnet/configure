@@ -937,6 +937,8 @@ CONFIG_RTNET_DRV_RT2500_TRUE
 CONFIG_RTNET_DRV_RT2500_FALSE
 CONFIG_RTNET_DRV_E1000_TRUE
 CONFIG_RTNET_DRV_E1000_FALSE
+CONFIG_RTNET_DRV_E1000_NEW_TRUE
+CONFIG_RTNET_DRV_E1000_NEW_FALSE
 CONFIG_RTNET_DRV_AT91ETHER_TRUE
 CONFIG_RTNET_DRV_AT91ETHER_FALSE
 CONFIG_RTNET_RTWLAN_TRUE
@@ -1599,6 +1601,7 @@ Optional Features:
   --enable-r8169          build Realtek 8169 (Gigabit) driver
   --enable-rt2500         build Ralink 2500 WLAN driver
   --enable-e1000          build Intel PRO/1000 driver
+  --enable-e1000-new      build new Intel PRO/1000 driver
   --enable-at91ether      build AT91 Ethernet driver
   --with-rxfifosize       Set RX-FIFO size
   --enable-ethpall        enable ETH_P_ALL support [default=no]
@@ -4535,7 +4538,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4538 "configure"' > conftest.$ac_ext
+  echo '#line 4541 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7592,11 +7595,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7595: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7598: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7599: \$? = $ac_status" >&5
+   echo "$as_me:7602: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7882,11 +7885,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7885: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7888: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7889: \$? = $ac_status" >&5
+   echo "$as_me:7892: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7986,11 +7989,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7989: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7992: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7993: \$? = $ac_status" >&5
+   echo "$as_me:7996: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10350,7 +10353,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10353 "configure"
+#line 10356 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10450,7 +10453,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10453 "configure"
+#line 10456 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12851,11 +12854,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12854: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12857: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12858: \$? = $ac_status" >&5
+   echo "$as_me:12861: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12955,11 +12958,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12958: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12961: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12962: \$? = $ac_status" >&5
+   echo "$as_me:12965: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14538,11 +14541,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14541: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14544: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14545: \$? = $ac_status" >&5
+   echo "$as_me:14548: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14642,11 +14645,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14645: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14648: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14649: \$? = $ac_status" >&5
+   echo "$as_me:14652: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16849,11 +16852,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16852: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16855: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16856: \$? = $ac_status" >&5
+   echo "$as_me:16859: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17139,11 +17142,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17142: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17145: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17146: \$? = $ac_status" >&5
+   echo "$as_me:17149: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -17243,11 +17246,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17246: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17249: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17250: \$? = $ac_status" >&5
+   echo "$as_me:17253: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -21478,6 +21481,27 @@ else
 fi
 
 
+{ echo "$as_me:$LINENO: checking whether to build new Intel PRO/1000 (Gigabit) driver (experimental)" >&5
+echo $ECHO_N "checking whether to build new Intel PRO/1000 (Gigabit) driver (experimental)... $ECHO_C" >&6; }
+# Check whether --enable-e1000-new was given.
+if test "${enable_e1000_new+set}" = set; then
+  enableval=$enable_e1000_new; case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_E1000_NEW=y ;;
+        *) CONFIG_RTNET_DRV_E1000_NEW=n ;;
+    esac
+fi
+
+{ echo "$as_me:$LINENO: result: ${CONFIG_RTNET_DRV_E1000_NEW:-n}" >&5
+echo "${ECHO_T}${CONFIG_RTNET_DRV_E1000_NEW:-n}" >&6; }
+ if test "$CONFIG_RTNET_DRV_E1000_NEW" = "y"; then
+  CONFIG_RTNET_DRV_E1000_NEW_TRUE=
+  CONFIG_RTNET_DRV_E1000_NEW_FALSE='#'
+else
+  CONFIG_RTNET_DRV_E1000_NEW_TRUE='#'
+  CONFIG_RTNET_DRV_E1000_NEW_FALSE=
+fi
+
+
 { echo "$as_me:$LINENO: checking whether to build AT91 Ethernet AT91RM9200 driver" >&5
 echo $ECHO_N "checking whether to build AT91 Ethernet AT91RM9200 driver... $ECHO_C" >&6; }
 # Check whether --enable-at91ether was given.
@@ -22042,6 +22066,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/tulip \
         drivers/experimental \
         drivers/experimental/rt2500 \
+        drivers/experimental/e1000 \
         \
         stack \
         stack/packet \
@@ -22095,7 +22120,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
+ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile drivers/experimental/e1000/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
 
 
 
@@ -22381,6 +22406,13 @@ if test -z "${CONFIG_RTNET_DRV_E1000_TRUE}" && test -z "${CONFIG_RTNET_DRV_E1000
   { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_E1000\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_E1000\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTNET_DRV_E1000_NEW_TRUE}" && test -z "${CONFIG_RTNET_DRV_E1000_NEW_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_DRV_E1000_NEW\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"CONFIG_RTNET_DRV_E1000_NEW\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -22957,6 +22989,7 @@ do
     "drivers/tulip/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
     "drivers/experimental/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/experimental/GNUmakefile" ;;
     "drivers/experimental/rt2500/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/experimental/rt2500/GNUmakefile" ;;
+    "drivers/experimental/e1000/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/experimental/e1000/GNUmakefile" ;;
     "stack/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/GNUmakefile" ;;
     "stack/include/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/include/GNUmakefile" ;;
     "stack/packet/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/packet/GNUmakefile" ;;
@@ -23250,6 +23283,8 @@ CONFIG_RTNET_DRV_RT2500_TRUE!$CONFIG_RTNET_DRV_RT2500_TRUE$ac_delim
 CONFIG_RTNET_DRV_RT2500_FALSE!$CONFIG_RTNET_DRV_RT2500_FALSE$ac_delim
 CONFIG_RTNET_DRV_E1000_TRUE!$CONFIG_RTNET_DRV_E1000_TRUE$ac_delim
 CONFIG_RTNET_DRV_E1000_FALSE!$CONFIG_RTNET_DRV_E1000_FALSE$ac_delim
+CONFIG_RTNET_DRV_E1000_NEW_TRUE!$CONFIG_RTNET_DRV_E1000_NEW_TRUE$ac_delim
+CONFIG_RTNET_DRV_E1000_NEW_FALSE!$CONFIG_RTNET_DRV_E1000_NEW_FALSE$ac_delim
 CONFIG_RTNET_DRV_AT91ETHER_TRUE!$CONFIG_RTNET_DRV_AT91ETHER_TRUE$ac_delim
 CONFIG_RTNET_DRV_AT91ETHER_FALSE!$CONFIG_RTNET_DRV_AT91ETHER_FALSE$ac_delim
 CONFIG_RTNET_RTWLAN_TRUE!$CONFIG_RTNET_RTWLAN_TRUE$ac_delim
@@ -23275,8 +23310,6 @@ CONFIG_RTNET_ADDON_PROXY_FALSE!$CONFIG_RTNET_ADDON_PROXY_FALSE$ac_delim
 CONFIG_RTNET_ADDON_PROXY_ARP_TRUE!$CONFIG_RTNET_ADDON_PROXY_ARP_TRUE$ac_delim
 CONFIG_RTNET_ADDON_PROXY_ARP_FALSE!$CONFIG_RTNET_ADDON_PROXY_ARP_FALSE$ac_delim
 CONFIG_RTNET_EXAMPLES_TRUE!$CONFIG_RTNET_EXAMPLES_TRUE$ac_delim
-CONFIG_RTNET_EXAMPLES_FALSE!$CONFIG_RTNET_EXAMPLES_FALSE$ac_delim
-RTNET_INTERNAL_USER_CFLAGS!$RTNET_INTERNAL_USER_CFLAGS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -23318,6 +23351,8 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+CONFIG_RTNET_EXAMPLES_FALSE!$CONFIG_RTNET_EXAMPLES_FALSE$ac_delim
+RTNET_INTERNAL_USER_CFLAGS!$RTNET_INTERNAL_USER_CFLAGS$ac_delim
 RTEXT_KMOD_CFLAGS!$RTEXT_KMOD_CFLAGS$ac_delim
 RTEXT_USER_CFLAGS!$RTEXT_USER_CFLAGS$ac_delim
 XNPOSIX_USER_CFLAGS!$XNPOSIX_USER_CFLAGS$ac_delim
@@ -23329,7 +23364,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 9; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 11; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
