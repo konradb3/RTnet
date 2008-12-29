@@ -270,11 +270,11 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
             goto err;
         }
 
-        file->name   = ((char *)file) + sizeof(struct rtcfg_file);
+        file->name   = (char *)file + sizeof(struct rtcfg_file);
         file->buffer = NULL;
 
-        ret = copy_from_user((char *)file->name,
-                             (char *)cmd->args.add.stage2_filename,
+        ret = copy_from_user((void *)file + sizeof(struct rtcfg_file),
+                             (const void *)cmd->args.add.stage2_filename,
                              size);
         if (ret != 0) {
             ret = -EFAULT;
