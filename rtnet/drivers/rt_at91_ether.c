@@ -1017,8 +1017,6 @@ static int __devinit at91ether_setup_rt(unsigned long phy_type, unsigned short p
 	dev->base_addr = res->start;
 	dev->irq = platform_get_irq(pdev, 0);
 
-	SET_MODULE_OWNER(dev);
-
 	/* Chun Yeow: Install the interrupt handler in device open routine */
 
 	/* Allocate memory for DMA Receive descriptors */
