@@ -42,6 +42,7 @@
 #include <netinet/in.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
+#include <limits.h>
 
 #include <rtnet.h>
 
