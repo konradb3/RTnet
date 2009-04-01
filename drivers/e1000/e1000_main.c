@@ -779,7 +779,7 @@ e1000_probe(struct pci_dev *pdev,
 	netdev->mem_end = mmio_start + mmio_len;
 	netdev->base_addr = adapter->hw.io_base;
 
-	adapter->bd_number = cards_found;
+	adapter->bd_number = cards_found - 1;
 
 	/* setup the private structure */
 
