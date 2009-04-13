@@ -142,10 +142,14 @@ extern struct proc_dir_entry *rtnet_proc_root;
 /* manage module reference counter */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
+#define __module_ref_addr(mod, cpu)     (&module->ref[cpu].count)
+#endif
+
 static inline void RTNET_MOD_INC_USE_COUNT_EX(struct module *module)
 {
 #if defined(CONFIG_MODULE_UNLOAD) && defined(MODULE)
-    local_inc(&module->ref[get_cpu()].count);
+    local_inc(__module_ref_addr(module, get_cpu()));
     put_cpu();
 #else
     (void)try_module_get(module);
