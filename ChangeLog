@@ -1,3 +1,17 @@
+0.9.11
+- kernel support up to 2.6.29
+- statistics support for RT NICs
+- enhancements of rtnetproxy (UDP, ARP)
+- fixes and enhancements of rt_e1000
+- new experimental e1000 driver (shall once replace rt_e1000)
+- rtmacb driver for AT91
+- hash table based UDP socket lookup
+- support for select() on blocking receive
+- configurable routing table sizes
+- drop socket creation/destruction from RT context
+- rewritten mpc52xx driver
+- kernel 2.4 build fixes
+
 0.9.10
 - adopted to RTDM API revision 6
 - support for kernel up to 2.6.24
