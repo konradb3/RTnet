@@ -1,4 +1,4 @@
-                             RTnet Version 0.9.10
+                             RTnet Version 0.9.11
                              ====================
 
 What is it?
@@ -115,7 +115,9 @@ Jorge Almeida                           - SOCK_RAW for packet sockets and
 <j-almeida@criticalsoftware.com>          ETH_P_ALL support
 Yeoh Chun Yeow <yeohchunyeow@gmail.com>	- rt_at91_ether driver
 Cristiano Mantovani <cristianomantovani@hotmail.com>,
-Stefano Banzi                           - rt_macv driver
+Stefano Banzi                           - rt_macb driver
+Gilles Chanteperdrix                    - NIC statistics, select() groundwork,
+<gilles.chanteperdrix@xenomai.org>        various fixes and enhancements
 
 Acknowledgements:
 David Schleef                           - he wrote the original RTnet, some
