@@ -128,7 +128,8 @@ static void rtmac_vnic_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 
 static int rtmac_vnic_copy_mac(struct net_device *dev)
 {
-    memcpy(dev->dev_addr, ((struct rtnet_device*)dev->priv)->dev_addr,
+    memcpy(dev->dev_addr,
+           (*(struct rtnet_device **)netdev_priv(dev))->dev_addr,
            sizeof(dev->dev_addr));
 
     return 0;
@@ -138,7 +139,7 @@ static int rtmac_vnic_copy_mac(struct net_device *dev)
 
 int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-    struct rtnet_device     *rtdev = (struct rtnet_device*)dev->priv;
+    struct rtnet_device     *rtdev = *(struct rtnet_device **)netdev_priv(dev);
     struct net_device_stats *stats = &rtdev->mac_priv->vnic_stats;
     struct rtskb_queue      *pool = &rtdev->mac_priv->vnic_skb_pool;
     struct ethhdr           *ethernet = (struct ethhdr*)skb->data;
@@ -188,7 +189,7 @@ int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
 
 static struct net_device_stats *rtmac_vnic_get_stats(struct net_device *dev)
 {
-    return &((struct rtnet_device*)dev->priv)->mac_priv->vnic_stats;
+    return &(*(struct rtnet_device **)netdev_priv(dev))->mac_priv->vnic_stats;
 }
 
 
@@ -276,15 +277,15 @@ int rtmac_vnic_add(struct rtnet_device *rtdev, vnic_xmit_handler vnic_xmit)
 
     snprintf(buf, sizeof(buf), "vnic%d", rtdev->ifindex-1);
 
-    vnic = alloc_netdev(0, buf, rtmac_vnic_setup);
+    vnic = alloc_netdev(sizeof(struct rtnet_device *), buf, rtmac_vnic_setup);
     if (!vnic) {
         res = -ENOMEM;
         goto error;
     }
 
     vnic->hard_start_xmit = vnic_xmit;
-    vnic->priv            = rtdev;
-    vnic->mtu             = mac_priv->vnic_max_mtu;
+    vnic->mtu = mac_priv->vnic_max_mtu;
+    *(struct rtnet_device **)netdev_priv(vnic) = rtdev;
     rtmac_vnic_copy_mac(vnic);
 
     res = register_netdev(vnic);

@@ -299,7 +299,8 @@ static void rtcap_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 
 static int tap_dev_open(struct net_device *dev)
 {
-    memcpy(dev->dev_addr, ((struct rtnet_device*)dev->priv)->dev_addr,
+    memcpy(dev->dev_addr,
+           (*(struct rtnet_device **)netdev_priv(dev))->dev_addr,
            sizeof(dev->dev_addr));
 
     return 0;
@@ -317,7 +318,7 @@ static int tap_dev_xmit(struct sk_buff *skb, struct net_device *dev)
 
 static struct net_device_stats *tap_dev_get_stats(struct net_device *dev)
 {
-    struct rtnet_device *rtdev = (struct rtnet_device*)dev->priv;
+    struct rtnet_device *rtdev = *(struct rtnet_device **)netdev_priv(dev);
 
     return &tap_device[rtdev->ifindex].tap_dev_stats;
 }
@@ -363,7 +364,8 @@ void cleanup_tap_devices(void)
     for (i = 0; i < MAX_RT_DEVICES; i++)
         if ((tap_device[i].present & TAP_DEV) != 0) {
             if ((tap_device[i].present & XMIT_HOOK) != 0) {
-                rtdev = (struct rtnet_device *)tap_device[i].tap_dev->priv;
+                rtdev = *(struct rtnet_device **)
+                    netdev_priv(tap_device[i].tap_dev);
 
                 mutex_lock(&rtdev->nrt_lock);
                 rtdev->hard_start_xmit = tap_device[i].orig_xmit;
@@ -436,14 +438,15 @@ int __init rtcap_init(void)
             memset(&tap_device[i].tap_dev_stats, 0,
                    sizeof(struct net_device_stats));
 
-            dev = alloc_netdev(0, rtdev->name, tap_dev_setup);
+            dev = alloc_netdev(sizeof(struct rtnet_device *), rtdev->name,
+                               tap_dev_setup);
             if (!dev) {
                 ret = -ENOMEM;
                 goto error3;
             }
 
             tap_device[i].tap_dev = dev;
-            dev->priv = rtdev;
+            *(struct rtnet_device **)netdev_priv(dev) = rtdev;
 
             ret = register_netdev(dev);
             if (ret < 0)
@@ -461,7 +464,7 @@ int __init rtcap_init(void)
                 }
 
                 tap_device[i].rtmac_tap_dev = dev;
-                dev->priv = rtdev;
+                *(struct rtnet_device **)netdev_priv(dev) = rtdev;
                 strncat(dev->name, "-mac", IFNAMSIZ-strlen(dev->name));
 
                 ret = register_netdev(dev);
