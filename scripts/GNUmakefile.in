@@ -191,8 +191,7 @@ top_srcdir = @top_srcdir@
 SUBDIRS = kconfig
 EXTRA_DIST = \
 	arch2host.sh \
-	autogen.sh \
-	tag-release
+	autogen.sh
 
 all: all-recursive
 
