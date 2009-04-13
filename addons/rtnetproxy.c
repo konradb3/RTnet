@@ -169,7 +169,6 @@ static void *write_to_ringbuffer(skb_exch_ringbuffer_t *pRing, void *p)
 static struct net_device dev_rtnetproxy;
 
 static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev);
-static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev);
 
 
 
@@ -306,12 +305,12 @@ static void rtnetproxy_transmit_thread(void *arg)
  * ************************************************************************ */
 static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-    struct net_device_stats *stats = dev->priv;
-
     if (write_to_ringbuffer(&ring_skb_kernel_rtnet, skb))
     {
-        stats->tx_packets++;
-        stats->tx_bytes+=skb->len;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+        dev->stats.tx_packets++;
+        dev->stats.tx_bytes+=skb->len;
+#endif
     }
     else
     {
@@ -380,7 +379,6 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
 {
     struct sk_buff *skb;
     struct net_device *dev = &dev_rtnetproxy;
-    struct net_device_stats *stats = dev->priv;
 
     int header_len = rtskb->rtdev->hard_header_len;
     int len        = rtskb->len + header_len;
@@ -406,9 +404,10 @@ static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
 #endif
 
     dev->last_rx = jiffies;
-    stats->rx_bytes+=skb->len;
-    stats->rx_packets++;
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+    dev->stats.rx_bytes+=skb->len;
+    dev->stats.rx_packets++;
+#endif
 
     netif_rx(skb);  /* pass it to the received stuff */
 
@@ -463,12 +462,6 @@ static int __init rtnetproxy_init(struct net_device *dev)
 {
     /* Initialize the device structure. */
 
-    dev->priv = kmalloc(sizeof(struct net_device_stats), GFP_KERNEL);
-    if (dev->priv == NULL)
-        return -ENOMEM;
-    memset(dev->priv, 0, sizeof(struct net_device_stats));
-
-    dev->get_stats = rtnetproxy_get_stats;
     dev->hard_start_xmit = rtnetproxy_xmit;
     dev->set_multicast_list = set_multicast_list;
 #ifdef CONFIG_NET_FASTROUTE
@@ -486,14 +479,6 @@ static int __init rtnetproxy_init(struct net_device *dev)
     dev->flags &= ~IFF_MULTICAST;
 
     return 0;
-}
-
-/* ************************************************************************
- *  get_stats
- * ************************************************************************ */
-static struct net_device_stats *rtnetproxy_get_stats(struct net_device *dev)
-{
-    return dev->priv;
 }
 
 /* ************************************************************************
@@ -599,7 +584,6 @@ static void __exit rtnetproxy_cleanup_module(void)
 
     /* Unregister the net device: */
     unregister_netdev(&dev_rtnetproxy);
-    kfree(dev_rtnetproxy.priv);
 
     rtskb_pool_release(&rtskb_pool);
 }
