@@ -192,8 +192,17 @@ struct rtnet_device *rtdev_get_by_name(const char *if_name);
 struct rtnet_device *rtdev_get_by_index(int ifindex);
 struct rtnet_device *rtdev_get_by_hwaddr(unsigned short type,char *ha);
 struct rtnet_device *rtdev_get_loopback(void);
-#define rtdev_reference(rtdev)      atomic_inc(&(rtdev)->refcount)
-#define rtdev_dereference(rtdev)    atomic_dec(&(rtdev)->refcount)
+
+static inline void rtdev_reference(struct rtnet_device *rtdev)
+{
+    atomic_inc(&rtdev->refcount);
+}
+
+static inline void rtdev_dereference(struct rtnet_device *rtdev)
+{
+    smp_mb__before_atomic_dec();
+    atomic_dec(&rtdev->refcount);
+}
 
 int rtdev_xmit(struct rtskb *skb);
 
