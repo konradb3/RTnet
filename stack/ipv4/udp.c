@@ -158,21 +158,23 @@ int rt_udp_bind(struct rtsocket *sock, const struct sockaddr *addr,
     struct sockaddr_in  *usin = (struct sockaddr_in *)addr;
     rtdm_lockctx_t      context;
     int                 index;
+    int                 err = 0;
 
 
     if ((addrlen < (int)sizeof(struct sockaddr_in)) ||
         ((usin->sin_port & auto_port_mask) == auto_port_start))
         return -EINVAL;
 
-    if ((index = sock->prot.inet.reg_index) < 0)
-        /* socket is being closed */
-        return -EBADF;
-
     rtdm_lock_get_irqsave(&udp_socket_base_lock, context);
 
+    if ((index = sock->prot.inet.reg_index) < 0) {
+        /* socket is being closed */
+        err = -EBADF;
+        goto unlock_out;
+    }
     if (sock->prot.inet.state != TCP_CLOSE) {
-        rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
-        return -EINVAL;
+        err = -EINVAL;
+        goto unlock_out;
     }
 
     port_hash_del(&port_registry[index]);
@@ -192,9 +194,10 @@ int rt_udp_bind(struct rtsocket *sock, const struct sockaddr *addr,
     /* set source port, if not set by user */
     sock->prot.inet.sport = port_registry[index].sport;
 
+ unlock_out:
     rtdm_lock_put_irqrestore(&udp_socket_base_lock, context);
 
-    return 0;
+    return err;
 }
 
 
