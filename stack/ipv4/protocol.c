@@ -72,9 +72,15 @@ int rt_inet_socket(struct rtdm_dev_context *context,
     struct rtinet_protocol  *prot;
 
 
-    /* default is UDP */
     if (protocol == 0)
-        protocol = IPPROTO_UDP;
+        switch (context->device->socket_type) {
+        case SOCK_DGRAM:
+            protocol = IPPROTO_UDP;
+            break;
+        case SOCK_STREAM:
+            protocol = IPPROTO_TCP;
+            break;
+        }
 
     prot = rt_inet_protocols[rt_inet_hashkey(protocol)];
 
