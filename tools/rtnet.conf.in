@@ -1,9 +1,6 @@
-#!/bin/sh
-#
 # This file is usually located in <PREFIX>/etc/rtnet.conf
 # Please adapt it to your system.
 # This configuration file is used with the rtnet script.
-#
 
 # RTnet installation path
 prefix="@prefix@"
