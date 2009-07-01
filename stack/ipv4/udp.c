@@ -33,6 +33,7 @@
 
 #include <rtskb.h>
 #include <rtnet_internal.h>
+#include <rtnet_port.h>
 #include <rtnet_iovec.h>
 #include <rtnet_socket.h>
 #include <ipv4/ip_fragment.h>
