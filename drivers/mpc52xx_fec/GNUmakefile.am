@@ -13,7 +13,8 @@ libkernel_mpc52xx_fec_a_CPPFLAGS = \
 	-I$(top_builddir)/stack/include
 
 libkernel_mpc52xx_fec_a_SOURCES = \
-	rt_mpc52xx_fec.c
+	rt_mpc52xx_fec.c \
+	rt_mpc52xx_fec.h
 
 OBJS = rt_mpc52xx_fec$(modext)
 
@@ -42,7 +43,7 @@ clean-local: $(libkernel_mpc52xx_fec_a_SOURCES)
 distclean-local:
 	$(RTNET_KBUILD_DISTCLEAN)
 
-EXTRA_DIST = Makefile.kbuild
+EXTRA_DIST = Makefile.kbuild linuxppc_2_4_devel-fec.patch
 
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers
 
