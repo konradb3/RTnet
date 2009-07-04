@@ -226,7 +226,7 @@ libkernel_ipv4_a_SOURCES = route.c protocol.c arp.c af_inet.c \
 	$(am__append_1)
 OBJS = rtipv4$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers module.order
 all: all-am
 
 .SUFFIXES:

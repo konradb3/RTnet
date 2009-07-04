@@ -221,7 +221,7 @@ libkernel_mpc52xx_fec_a_SOURCES = \
 
 OBJS = rt_mpc52xx_fec$(modext)
 EXTRA_DIST = Makefile.kbuild linuxppc_2_4_devel-fec.patch
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers module.order
 all: all-am
 
 .SUFFIXES:

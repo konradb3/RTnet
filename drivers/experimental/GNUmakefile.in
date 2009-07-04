@@ -246,7 +246,7 @@ OBJS = $(am__append_1) $(am__append_2)
 OPTDIRS = $(am__append_3) $(am__append_4)
 SUBDIRS = $(OPTDIRS)
 EXTRA_DIST = Kconfig Makefile.kbuild README.r8169
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers module.order
 all: all-recursive
 
 .SUFFIXES:
