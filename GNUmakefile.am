@@ -20,6 +20,6 @@ install-data-local:
 	rm -f $(DESTDIR)$(prefix)/symbols
 	$(LN_S) @abs_top_builddir@/symbols $(DESTDIR)$(prefix)/symbols
 
-DISTCLEANFILES = Modules.symvers Module.symvers
+DISTCLEANFILES = Modules.symvers Module.symvers Module.markers modules.order
 
 .PHONY: reconfig xconfig gconfig mconfig menuconfig config oldconfig help

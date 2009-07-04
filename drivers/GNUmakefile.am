@@ -284,6 +284,6 @@ distclean-local:
 
 EXTRA_DIST = Kconfig Makefile.kbuild
 
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
 
 .PHONY: FORCE
