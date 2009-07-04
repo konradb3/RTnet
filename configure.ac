@@ -613,14 +613,11 @@ else
     else
         RTNET_KBUILD_DISTCLEAN=
     fi
-    dnl === Hack to suppress undefined symbol warnings during MODPOST stage ===
     case "${CONFIG_RTNET_RTEXT_VERSION}" in
         rtai-3x)
-            if test -e $RTEXT_LINUX_DIR/Module.symvers; then
-                mv $RTEXT_LINUX_DIR/Module.symvers $RTEXT_LINUX_DIR/Module.symvers.let_modpost_be_quiet
-            fi
-            if test -e $RTEXT_LINUX_DIR/vmlinux; then
-                mv $RTEXT_LINUX_DIR/vmlinux $RTEXT_LINUX_DIR/vmlinux.let_modpost_be_quiet
+            RTAI_MOD_SYMVER="`${RTAI_CONFIG} --module-dir`/Module.symvers"
+            if test -e ${RTAI_MOD_SYMVER} ; then
+                cp ${RTAI_MOD_SYMVER} ./
             fi
             ;;
     esac
