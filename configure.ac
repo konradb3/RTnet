@@ -596,7 +596,7 @@ else
                 "
     fi
     RTNET_KBUILD_CLEAN="                                                    \
-        @rm -rf *.ko *.mod.c .*.cmd *.o .tmp_versions;                      \
+        \$(MAKE) -C $RTEXT_LINUX_DIR M=\"\`pwd\`\" clean;                   \
         for src in \$^; do                                                  \
             if test -h \`basename \$\$src\`; then                           \
                 rm -f \`basename \$\$src\`;                                 \
