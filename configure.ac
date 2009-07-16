@@ -59,7 +59,7 @@ case "$host" in
         wanted_kernel_arch=CONFIG_ARM
         ;;
     powerpc-*|ppc-*)
-        RTNET_TARGET_ARCH=ppc
+        RTNET_TARGET_ARCH=powerpc
         wanted_kernel_arch=CONFIG_PPC
         ;;
 #    mips-*|mipsel-*)
@@ -223,6 +223,13 @@ else
     fi
 
     AC_MSG_RESULT([$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP} + Xenomai)])
+fi
+
+# Fixup real arch for powerpc
+if test "${RTNET_TARGET_ARCH}" = "powerpc" ; then
+   AC_MSG_CHECKING([for real PowerPC arch])
+    readlink ${CONFIG_RTNET_LINUX_DIR}/include/asm | grep -q ppc && RTNET_TARGET_ARCH="ppc"
+    AC_MSG_RESULT([$RTNET_TARGET_ARCH])
 fi
 
 #
