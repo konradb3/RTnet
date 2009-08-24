@@ -217,7 +217,7 @@ top_srcdir = @top_srcdir@
 OPTDIRS = $(am__append_1)
 SUBDIRS = stack drivers addons $(OPTDIRS) tools Documentation scripts
 EXTRA_DIST = makefile Kconfig defconfig config/modules/Makefile
-DISTCLEANFILES = Modules.symvers Module.symvers Module.markers module.order
+DISTCLEANFILES = Modules.symvers Module.symvers Module.markers modules.order
 all: all-recursive
 
 .SUFFIXES:

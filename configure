@@ -11412,7 +11412,7 @@ case "$host" in
         wanted_kernel_arch=CONFIG_ARM
         ;;
     powerpc-*|ppc-*)
-        RTNET_TARGET_ARCH=ppc
+        RTNET_TARGET_ARCH=powerpc
         wanted_kernel_arch=CONFIG_PPC
         ;;
 #    mips-*|mipsel-*)
@@ -11676,6 +11676,15 @@ $as_echo "$as_me: error: *** Xenomai configuration tool not found: ${XENO_CONFIG
 
     { $as_echo "$as_me:$LINENO: result: $RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP} + Xenomai)" >&5
 $as_echo "$RTEXT_LINUX_DIR (kernel ${RTEXT_LINUX_VERSION}${CONFIG_SMP:+-SMP} + Xenomai)" >&6; }
+fi
+
+# Fixup real arch for powerpc
+if test "${RTNET_TARGET_ARCH}" = "powerpc" ; then
+   { $as_echo "$as_me:$LINENO: checking for real PowerPC arch" >&5
+$as_echo_n "checking for real PowerPC arch... " >&6; }
+    readlink ${CONFIG_RTNET_LINUX_DIR}/include/asm | grep -q ppc && RTNET_TARGET_ARCH="ppc"
+    { $as_echo "$as_me:$LINENO: result: $RTNET_TARGET_ARCH" >&5
+$as_echo "$RTNET_TARGET_ARCH" >&6; }
 fi
 
 #

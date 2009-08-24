@@ -231,7 +231,7 @@ libkernel_rtcfg_a_SOURCES = \
 
 OBJS = rtcfg$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers module.order
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
 all: all-am
 
 .SUFFIXES:

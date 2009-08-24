@@ -215,7 +215,7 @@ libkernel_packet_a_SOURCES = \
 
 OBJS = rtpacket$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers module.order
+DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
 all: all-am
 
 .SUFFIXES:
