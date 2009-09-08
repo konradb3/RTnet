@@ -4492,7 +4492,7 @@ static void e1000_phy_read_status(struct e1000_adapter *adapter)
  * @irq: interrupt number
  * @data: pointer to a network interface device structure
  **/
-static irqreturn_t e1000_intr_msi(rtdm_irq_t *irq_handle)
+static int e1000_intr_msi(rtdm_irq_t *irq_handle)
 {
     struct rtnet_device *netdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device); 
 	struct e1000_adapter *adapter = netdev_priv(netdev);
