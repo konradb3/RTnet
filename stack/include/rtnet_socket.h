@@ -97,9 +97,11 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *context,
 int rt_socket_if_ioctl(struct rtdm_dev_context *context,
                        rtdm_user_info_t *user_info,
                        int request, void *arg);
+#ifdef CONFIG_RTNET_SELECT_SUPPORT
 int rt_socket_select_bind(struct rtdm_dev_context *context,
                           rtdm_selector_t *selector,
                           enum rtdm_selecttype type,
                           unsigned fd_index);
+#endif /* CONFIG_RTNET_SELECT_SUPPORT */
 
 #endif  /* __RTNET_SOCKET_H_ */
