@@ -192,13 +192,18 @@ else
 
     # get linux kernel tree and version
     RTEXT_LINUX_DIR="${CONFIG_RTNET_LINUX_DIR}"
+    if test -L ${RTEXT_LINUX_DIR}/source; then
+        RTEXT_LINUX_SRC_DIR="`cd ${RTEXT_LINUX_DIR}/source && pwd`"
+    else
+        RTEXT_LINUX_SRC_DIR=${RTEXT_LINUX_DIR}
+    fi
     LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/utsrelease.h
     if test \! -f $LINUX_RELEASE_FILE; then
         LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/version.h
     fi
     RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $LINUX_RELEASE_FILE 2>/dev/null | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
-    if test \! -f ${RTEXT_LINUX_DIR}/include/xenomai/nucleus/version.h; then
+    if test \! -f ${RTEXT_LINUX_SRC_DIR}/include/xenomai/nucleus/version.h; then
         AC_MSG_ERROR([*** RT-extended kernel not found in $RTEXT_LINUX_DIR])
     fi
 
@@ -307,7 +312,7 @@ elif test "$XENO_DIR" \!= ""; then
 
 else
     AC_MSG_CHECKING([for Xenomai version])
-    XENO_VERSION=`grep "#define XENO_VERSION_STRING" $RTEXT_LINUX_DIR/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
+    XENO_VERSION=`grep "#define XENO_VERSION_STRING" ${RTEXT_LINUX_SRC_DIR}/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     case "$XENO_VERSION" in
         2.[[1-9]]*)
@@ -481,7 +486,7 @@ if test "$CONFIG_KBUILD" = "y"; then
             RTEXT_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
             ;;
         xeno-21x)
-            RTEXT_KMOD_CFLAGS="-I${RTEXT_LINUX_DIR}/include/xenomai"
+            RTEXT_KMOD_CFLAGS="-I${RTEXT_LINUX_SRC_DIR}/include/xenomai"
             ;;
         *)
             AC_MSG_ERROR([*** internal error])
