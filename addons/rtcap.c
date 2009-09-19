@@ -332,21 +332,33 @@ static int tap_dev_change_mtu(struct net_device *dev, int new_mtu)
 
 
 
+#ifdef HAVE_NET_DEVICE_OPS
+static const struct net_device_ops tap_netdev_ops = {
+    .ndo_open       = tap_dev_open,
+    .ndo_start_xmit = tap_dev_xmit,
+    .ndo_get_stats  = tap_dev_get_stats,
+    .ndo_change_mtu = tap_dev_change_mtu,
+};
+#endif /* !HAVE_NET_DEVICE_OPS */
+
 static void tap_dev_setup(struct net_device *dev)
 {
     ether_setup(dev);
 
+#ifdef HAVE_NET_DEVICE_OPS
+    dev->netdev_ops      = &tap_netdev_ops;
+#else /* !HAVE_NET_DEVICE_OPS */
     dev->open            = tap_dev_open;
     dev->hard_start_xmit = tap_dev_xmit;
     dev->get_stats       = tap_dev_get_stats;
     dev->change_mtu      = tap_dev_change_mtu;
     dev->set_mac_address = NULL;
+#ifdef HAVE_VALIDATE_ADDR
+    dev->validate_addr   = NULL;
+#endif
+#endif /* !HAVE_NET_DEVICE_OPS */
     dev->mtu             = 1500;
     dev->flags           &= ~IFF_MULTICAST;
-
-#ifdef HAVE_VALIDATE_ADDR
-    dev->validate_addr = NULL;
-#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
     SET_MODULE_OWNER(dev);

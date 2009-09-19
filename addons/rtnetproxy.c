@@ -460,14 +460,6 @@ static int rtnetproxy_accept_fastpath(struct net_device *dev, struct dst_entry *
  * ************************************************************************ */
 static int __init rtnetproxy_init(struct net_device *dev)
 {
-    /* Initialize the device structure. */
-
-    dev->hard_start_xmit = rtnetproxy_xmit;
-    dev->set_multicast_list = set_multicast_list;
-#ifdef CONFIG_NET_FASTROUTE
-    dev->accept_fastpath = rtnetproxy_accept_fastpath;
-#endif
-
     /* Fill in device structure with ethernet-generic values. */
     ether_setup(dev);
     dev->tx_queue_len = 0;
@@ -480,6 +472,14 @@ static int __init rtnetproxy_init(struct net_device *dev)
 
     return 0;
 }
+
+#ifdef HAVE_NET_DEVICE_OPS
+static const struct net_device_ops rtnetproxy_netdev_ops = {
+    .ndo_init               = rtnetproxy_init,
+    .ndo_start_xmit         = rtnetproxy_xmit,
+    .ndo_set_multicast_list = set_multicast_list,
+};
+#endif /* !HAVE_NET_DEVICE_OPS */
 
 /* ************************************************************************
  * ************************************************************************
@@ -505,7 +505,17 @@ static int __init rtnetproxy_init_module(void)
         return -ENOMEM;
     }
 
+#ifdef HAVE_NET_DEVICE_OPS
+    dev_rtnetproxy.netdev_ops = &rtnetproxy_netdev_ops;
+#else /* !HAVE_NET_DEVICE_OPS */
     dev_rtnetproxy.init = rtnetproxy_init;
+    dev_rtnetproxy.hard_start_xmit = rtnetproxy_xmit;
+    dev_rtnetproxy.set_multicast_list = set_multicast_list;
+#ifdef CONFIG_NET_FASTROUTE
+    dev->accept_fastpath = rtnetproxy_accept_fastpath;
+#endif
+#endif /* !HAVE_NET_DEVICE_OPS */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
     SET_MODULE_OWNER(&dev_rtnetproxy);
 #endif
