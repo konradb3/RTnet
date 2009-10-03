@@ -233,15 +233,26 @@ void rtmac_vnic_set_max_mtu(struct rtnet_device *rtdev, unsigned int max_mtu)
 }
 
 
+#ifdef HAVE_NET_DEVICE_OPS
+static struct net_device_ops vnic_netdev_ops = {
+    .ndo_open       = rtmac_vnic_copy_mac,
+    .ndo_get_stats  = rtmac_vnic_get_stats,
+    .ndo_change_mtu = rtmac_vnic_change_mtu,
+};
+#endif /* HAVE_NET_DEVICE_OPS */
 
 static void rtmac_vnic_setup(struct net_device *dev)
 {
     ether_setup(dev);
 
+#ifdef HAVE_NET_DEVICE_OPS
+    dev->netdev_ops      = &vnic_netdev_ops;
+#else /* !HAVE_NET_DEVICE_OPS */
     dev->open            = rtmac_vnic_copy_mac;
     dev->get_stats       = rtmac_vnic_get_stats;
     dev->change_mtu      = rtmac_vnic_change_mtu;
     dev->set_mac_address = NULL;
+#endif /* !HAVE_NET_DEVICE_OPS */
 
     dev->flags           &= ~IFF_MULTICAST;
 
@@ -283,7 +294,11 @@ int rtmac_vnic_add(struct rtnet_device *rtdev, vnic_xmit_handler vnic_xmit)
         goto error;
     }
 
+#ifdef HAVE_NET_DEVICE_OPS
+    vnic_netdev_ops.ndo_start_xmit = vnic_xmit;
+#else /* !HAVE_NET_DEVICE_OPS */
     vnic->hard_start_xmit = vnic_xmit;
+#endif /* !HAVE_NET_DEVICE_OPS */
     vnic->mtu = mac_priv->vnic_max_mtu;
     *(struct rtnet_device **)netdev_priv(vnic) = rtdev;
     rtmac_vnic_copy_mac(vnic);
