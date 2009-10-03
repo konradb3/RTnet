@@ -339,7 +339,7 @@ static const struct net_device_ops tap_netdev_ops = {
     .ndo_get_stats  = tap_dev_get_stats,
     .ndo_change_mtu = tap_dev_change_mtu,
 };
-#endif /* !HAVE_NET_DEVICE_OPS */
+#endif /* HAVE_NET_DEVICE_OPS */
 
 static void tap_dev_setup(struct net_device *dev)
 {

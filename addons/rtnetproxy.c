@@ -479,7 +479,7 @@ static const struct net_device_ops rtnetproxy_netdev_ops = {
     .ndo_start_xmit         = rtnetproxy_xmit,
     .ndo_set_multicast_list = set_multicast_list,
 };
-#endif /* !HAVE_NET_DEVICE_OPS */
+#endif /* HAVE_NET_DEVICE_OPS */
 
 /* ************************************************************************
  * ************************************************************************
