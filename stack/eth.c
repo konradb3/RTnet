@@ -40,6 +40,12 @@ int rt_eth_header(struct rtskb *skb, struct rtnet_device *rtdev,
     struct ethhdr *eth = (struct ethhdr *)rtskb_push(skb,ETH_HLEN);
 
     /*
+     *  Set rtskb mac field
+     */
+
+    skb->mac.ethernet = eth;
+
+    /*
      *  Set the protocol type. For a packet of type ETH_P_802_3 we put the length
      *  in here instead. It is up to the 802.2 layer to carry protocol information.
      */
