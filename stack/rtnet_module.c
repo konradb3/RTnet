@@ -148,84 +148,60 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
 
 
 
-void *dev_seq_start(struct seq_file *seq, loff_t *pos)
+static int rtnet_read_proc_stats(char *buf, char **start, off_t offset,
+                                 int count, int *eof, void *data)
 {
+    int i;
+    int res;
+    struct rtnet_device *rtdev;
+    RTNET_PROC_PRINT_VARS(130);
+
+
+    if (!RTNET_PROC_PRINT("Inter-|   Receive                            "
+                          "                    |  Transmit\n") ||
+        !RTNET_PROC_PRINT(" face |bytes    packets errs drop fifo frame "
+                          "compressed multicast|bytes    packets errs "
+                          "drop fifo colls carrier compressed\n"))
+        goto done;
+
     mutex_lock(&rtnet_devices_nrt_lock);
-    return *pos ? __rtdev_get_by_index(*pos) : SEQ_START_TOKEN;
-}
+    for (i = 1; i <= MAX_RT_DEVICES; i++) {
+        rtdev = __rtdev_get_by_index(i);
+        if (rtdev == NULL)
+            continue;
+        if (rtdev->get_stats) {
+            struct net_device_stats *stats = rtdev->get_stats(rtdev);
 
-void *dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-    ++*pos;
-    if (v == SEQ_START_TOKEN)
-        return __rtdev_get_by_index(1);
-    else
-        return __rtdev_get_by_index(*pos);
-}
-
-void dev_seq_stop(struct seq_file *seq, void *v)
-{
+            res = RTNET_PROC_PRINT(
+                    "%6s:%8lu %7lu %4lu %4lu %4lu %5lu %10lu %9lu "
+                    "%8lu %7lu %4lu %4lu %4lu %5lu %7lu %10lu\n",
+                    rtdev->name, stats->rx_bytes, stats->rx_packets,
+                    stats->rx_errors,
+                    stats->rx_dropped + stats->rx_missed_errors,
+                    stats->rx_fifo_errors,
+                    stats->rx_length_errors + stats->rx_over_errors +
+                      stats->rx_crc_errors + stats->rx_frame_errors,
+                    stats->rx_compressed, stats->multicast,
+                    stats->tx_bytes, stats->tx_packets,
+                    stats->tx_errors, stats->tx_dropped,
+                    stats->tx_fifo_errors, stats->collisions,
+                    stats->tx_carrier_errors +
+                      stats->tx_aborted_errors +
+                      stats->tx_window_errors +
+                      stats->tx_heartbeat_errors,
+                    stats->tx_compressed);
+        } else {
+            res = RTNET_PROC_PRINT("%6s: No statistics available.\n",
+                                   rtdev->name);
+        }
+        if (!res)
+            break;
+    }
     mutex_unlock(&rtnet_devices_nrt_lock);
+
+  done:
+    RTNET_PROC_PRINT_DONE;
 }
-
-static void dev_seq_printf_stats(struct seq_file *seq, struct rtnet_device *dev)
-{
-    if (dev && dev->get_stats) {
-        struct net_device_stats *stats = dev->get_stats(dev);
-
-        seq_printf(seq, "%6s:%8lu %7lu %4lu %4lu %4lu %5lu %10lu %9lu "
-                        "%8lu %7lu %4lu %4lu %4lu %5lu %7lu %10lu\n",
-                   dev->name, stats->rx_bytes, stats->rx_packets,
-                   stats->rx_errors,
-                   stats->rx_dropped + stats->rx_missed_errors,
-                   stats->rx_fifo_errors,
-                   stats->rx_length_errors + stats->rx_over_errors +
-                     stats->rx_crc_errors + stats->rx_frame_errors,
-                   stats->rx_compressed, stats->multicast,
-                   stats->tx_bytes, stats->tx_packets,
-                   stats->tx_errors, stats->tx_dropped,
-                   stats->tx_fifo_errors, stats->collisions,
-                   stats->tx_carrier_errors +
-                     stats->tx_aborted_errors +
-                     stats->tx_window_errors +
-                     stats->tx_heartbeat_errors,
-                   stats->tx_compressed);
-    } else
-        seq_printf(seq, "%6s: No statistics available.\n", dev->name);
-}
-
-static int dev_seq_show(struct seq_file *seq, void *v)
-{
-    if (v == SEQ_START_TOKEN)
-        seq_puts(seq, "Inter-|   Receive                            "
-                      "                    |  Transmit\n"
-                      " face |bytes    packets errs drop fifo frame "
-                      "compressed multicast|bytes    packets errs "
-                      "drop fifo colls carrier compressed\n");
-    else
-        dev_seq_printf_stats(seq, v);
-    return 0;
-}
-
-static struct seq_operations dev_seq_ops = {
-    .start = dev_seq_start,
-    .next  = dev_seq_next,
-    .stop  = dev_seq_stop,
-    .show  = dev_seq_show,
-};
-
-static int dev_seq_open(struct inode *inode, struct file *file)
-{
-    return seq_open(file, &dev_seq_ops);
-}
-
-static struct file_operations rtdev_stats_seq_fops = {
-    .owner   = THIS_MODULE,
-    .open    = dev_seq_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = seq_release,
-};
 
 
 
@@ -258,7 +234,7 @@ static int rtnet_proc_register(void)
     proc_entry = create_proc_entry("stats", S_IRUGO, rtnet_proc_root);
     if (!proc_entry)
         goto error5;
-    proc_entry->proc_fops = &rtdev_stats_seq_fops;
+    proc_entry->read_proc = rtnet_read_proc_stats;
 
     return 0;
 
