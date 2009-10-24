@@ -276,6 +276,8 @@ void do_display(int print_flags)
     int ret;
 
 
+    parse_stats();
+
     if ((print_flags & PRINT_FLAG_ALL) != 0)
         for (i = 1; i <= MAX_RT_DEVICES; i++) {
             cmd.args.info.ifindex = i;
@@ -407,7 +409,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    parse_stats();
     if (argc == 1)
         do_display(PRINT_FLAG_ALL);
 
