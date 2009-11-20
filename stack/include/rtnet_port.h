@@ -25,6 +25,7 @@
 #include <linux/bitops.h>
 #include <linux/moduleparam.h>
 #include <linux/list.h>
+#include <linux/netdevice.h>
 
 #include <rtdev.h>
 #include <rtdev_mgr.h>
@@ -182,6 +183,12 @@ static inline int rtnetif_carrier_ok(struct rtnet_device *rtdev)
     return !test_bit(__RTNET_LINK_STATE_NOCARRIER, &rtdev->link_state);
 }
 
+#ifndef HAVE_NETDEV_PRIV
+static inline void *netdev_priv(struct net_device *dev)
+{
+        return dev->priv;
+}
+#endif
 
 #endif /* __KERNEL__ */
 
