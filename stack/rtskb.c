@@ -435,8 +435,8 @@ struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
     clone_rtskb->h.raw      = clone_rtskb->data;
 
     clone_rtskb->data       += data_offs;
-    clone_rtskb->nh.raw     += rtskb->data - rtskb->nh.raw;
-    clone_rtskb->h.raw      += rtskb->data - rtskb->h.raw;
+    clone_rtskb->nh.raw     += rtskb->nh.raw - rtskb->mac.raw;
+    clone_rtskb->h.raw      += rtskb->h.raw - rtskb->mac.raw;
 
     clone_rtskb->protocol   = rtskb->protocol;
     clone_rtskb->pkt_type   = rtskb->pkt_type;
