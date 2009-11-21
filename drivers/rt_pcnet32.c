@@ -1216,6 +1216,7 @@ static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
     int boguscnt =  max_interrupt_work;
     int must_restart;
     unsigned int old_packet_cnt; /*** RTnet ***/
+    int ret = RTDM_IRQ_NONE;
 
 /*** RTnet ***
     if (!dev) {
@@ -1235,6 +1236,8 @@ static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
     while ((csr0 = lp->a.read_csr (ioaddr, 0)) & 0x8600 && --boguscnt >= 0) {
 	/* Acknowledge all of the current interrupt sources ASAP. */
 	lp->a.write_csr (ioaddr, 0, csr0 & ~0x004f);
+
+	ret = RTDM_IRQ_HANDLED;
 
 	must_restart = 0;
 
@@ -1364,7 +1367,7 @@ static int pcnet32_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
     if (old_packet_cnt != lp->stats.rx_packets)
         rt_mark_stack_mgr(dev);
 
-    return RTDM_IRQ_HANDLED;
+    return ret;
 /*** RTnet ***/
 }
 
