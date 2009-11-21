@@ -1788,9 +1788,10 @@ static int intr_handler(rtdm_irq_t *irq_handle)
 	unsigned int old_packet_cnt = np->stats.rx_packets; /*** RTnet ***/
 	long ioaddr = dev->base_addr;
 	int boguscnt = max_interrupt_work;
+	int ret = RTDM_IRQ_NONE;
 
 	if (np->hands_off)
-		return RTDM_IRQ_NONE;
+		return ret;
 	do {
 		/* Reading automatically acknowledges all int sources. */
 		u32 intr_status = readl((void *)(ioaddr + IntrStatus));
@@ -1803,6 +1804,8 @@ static int intr_handler(rtdm_irq_t *irq_handle)
 
 		if (intr_status == 0)
 			break;
+
+		ret = RTDM_IRQ_HANDLED;
 
 		if (intr_status &
 		   (IntrRxDone | IntrRxIntr | RxStatusFIFOOver |
@@ -1837,7 +1840,7 @@ static int intr_handler(rtdm_irq_t *irq_handle)
 /*** RTnet ***/
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
-	return RTDM_IRQ_HANDLED;
+	return ret;
 }
 
 /* This routine is logically part of the interrupt handler, but separated
