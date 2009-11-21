@@ -1274,6 +1274,7 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle)
 	struct rtnet_device *rtdev     =
 	rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	int packets = 0;
+	int ret = RTDM_IRQ_NONE;
 	// *** RTnet ***
 
 	struct speedo_private *sp;
@@ -1290,7 +1291,7 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle)
 		rtdm_printk(KERN_ERR"%s: SMP simultaneous entry of an interrupt handler.\n",
 			   rtdev->name);
 		sp->in_interrupt = 0;	/* Avoid halting machine. */
-		return 0;
+		return ret;
 	}
 #endif
 
@@ -1308,6 +1309,8 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle)
 
 		if ((status & 0xfc00) == 0)
 			break;
+
+		ret = RTDM_IRQ_HANDLED;
 
 		/* Always check if all rx buffers are allocated.  --SAW */
 		speedo_refill_rx_buffers(rtdev, 0);
@@ -1413,7 +1416,7 @@ static int speedo_interrupt(rtdm_irq_t *irq_handle)
 	clear_bit(0, (void*)&sp->in_interrupt);
 	if (packets > 0)
 		rt_mark_stack_mgr(rtdev);
-	return RTDM_IRQ_HANDLED;
+	return ret;
 }
 
 static inline struct RxFD *speedo_rx_alloc(struct rtnet_device *rtdev, int entry)
