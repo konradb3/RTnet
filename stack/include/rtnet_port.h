@@ -190,6 +190,10 @@ static inline void *netdev_priv(struct net_device *dev)
 }
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+#define DMA_BIT_MASK(n)	(((n) == 64) ? ~0ULL : ((1ULL<<(n))-1))
+#endif
+
 #endif /* __KERNEL__ */
 
 #endif /* __RTNET_PORT_H_ */
