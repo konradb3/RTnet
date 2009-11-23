@@ -1437,6 +1437,7 @@ static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 	int boguscnt = max_interrupt_work;
 	struct netdev_private *np = dev->priv; /*** RTnet ***/
 	unsigned int old_packet_cnt = np->stats.rx_packets; /*** RTnet ***/
+	int ret = RTDM_IRQ_NONE;
 
 	ioaddr = dev->base_addr;
 
@@ -1446,6 +1447,8 @@ static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 			writeb(0x08, (void *)ioaddr + IntrStatus2);
 		writew(intr_status & 0xffff, (void *)ioaddr + IntrStatus);
 		IOSYNC;
+
+		ret = RTDM_IRQ_HANDLED;
 
 		if (debug > 4)
 			rtdm_printk(KERN_DEBUG "%s: Interrupt, status %8.8x.\n", /*** RTnet ***/
@@ -1495,7 +1498,7 @@ static int via_rhine_interrupt(rtdm_irq_t *irq_handle) /*** RTnet ***/
 /*** RTnet ***/
 	if (old_packet_cnt != np->stats.rx_packets)
 		rt_mark_stack_mgr(dev);
-	return RTDM_IRQ_HANDLED;
+	return ret;
 }
 
 /* This routine is logically part of the interrupt handler, but isolated
