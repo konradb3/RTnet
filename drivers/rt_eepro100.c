@@ -903,7 +903,8 @@ speedo_open(struct rtnet_device *rtdev)
 	rt_stack_connect(rtdev, &STACK_manager);
 
 	retval = rtdm_irq_request(&sp->irq_handle, rtdev->irq,
-	                          speedo_interrupt, 0, "rt_eepro100", rtdev);
+				  speedo_interrupt, RTDM_IRQTYPE_SHARED,
+				  "rt_eepro100", rtdev);
 	if (retval) {
 		RTNET_MOD_DEC_USE_COUNT;
 		return retval;

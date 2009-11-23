@@ -1149,8 +1149,8 @@ static int netdev_open(struct rtnet_device *dev)
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rtdm_irq_request(&np->irq_handle, dev->irq, intr_handler, 0,
-	                     "rt_natsemi", dev);
+	i = rtdm_irq_request(&np->irq_handle, dev->irq, intr_handler,
+			     RTDM_IRQTYPE_SHARED, "rt_natsemi", dev);
 /*** RTnet ***/
 /*	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);*/
 	if (i) {

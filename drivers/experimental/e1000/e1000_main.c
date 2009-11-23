@@ -512,9 +512,7 @@ module_exit(e1000_exit_module);
 static int e1000_request_irq(struct e1000_adapter *adapter)
 {
 	struct net_device *netdev = adapter->netdev;
-	int irq_flags, err = 0;
-
-	irq_flags = IRQF_SHARED;
+	int err = 0;
 
 	if (adapter->flags & E1000_FLAG_HAS_MSI) {
 		err = pci_enable_msi(adapter->pdev);
@@ -523,19 +521,18 @@ static int e1000_request_irq(struct e1000_adapter *adapter)
 	}
     rt_stack_connect(netdev, &STACK_manager);
 	if (adapter->flags & E1000_FLAG_MSI_ENABLED) {
-		irq_flags &= ~IRQF_SHARED;
 		err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq, e1000_intr_msi,
 		                  0, netdev->name, netdev);
 		if (!err) {
 			return err;
 		} else {
-			irq_flags |= IRQF_SHARED;
 			adapter->flags &= ~E1000_FLAG_MSI_ENABLED;
 			pci_disable_msi(adapter->pdev);
 		}
 	}
-	err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq, e1000_intr, 0,
-	                  netdev->name, netdev);
+	err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq,
+			       e1000_intr, RTDM_IRQTYPE_SHARED, netdev->name,
+			       netdev);
 	if (err)
 		DPRINTK(PROBE, ERR, "Unable to allocate interrupt Error: %d\n",
 		        err);

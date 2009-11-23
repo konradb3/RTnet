@@ -872,8 +872,8 @@ pcnet32_open(struct rtnet_device *dev) /*** RTnet ***/
 
     rt_stack_connect(dev, &STACK_manager);
 
-    i = rtdm_irq_request(&lp->irq_handle, dev->irq, pcnet32_interrupt, 0,
-                         "rt_pcnet32", dev);
+    i = rtdm_irq_request(&lp->irq_handle, dev->irq, pcnet32_interrupt,
+                         RTDM_IRQTYPE_SHARED, "rt_pcnet32", dev);
     if (i)
         return i;
 /*** RTnet ***/

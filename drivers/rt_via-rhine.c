@@ -1173,8 +1173,8 @@ static int via_rhine_open(struct rtnet_device *dev) /*** RTnet ***/
 
 /*** RTnet ***/
 	rt_stack_connect(dev, &STACK_manager);
-	i = rtdm_irq_request(&np->irq_handle, dev->irq, via_rhine_interrupt, 0,
-	                     "rt_via-rhine", dev);
+	i = rtdm_irq_request(&np->irq_handle, dev->irq, via_rhine_interrupt,
+			     RTDM_IRQTYPE_SHARED, "rt_via-rhine", dev);
 /*** RTnet ***/
 	if (i) {
 		RTNET_MOD_DEC_USE_COUNT;

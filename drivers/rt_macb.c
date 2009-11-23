@@ -1208,7 +1208,8 @@ static int __init macb_probe(struct platform_device *pdev)
 
 	rtdev->irq = platform_get_irq(pdev, 0);
 	rt_stack_connect(rtdev, &STACK_manager);
-	err = rtdm_irq_request(&bp->irq_handle, rtdev->irq, macb_interrupt, 0, rtdev->name, rtdev);
+	err = rtdm_irq_request(&bp->irq_handle, rtdev->irq, macb_interrupt,
+			       RTDM_IRQTYPE_SHARED, rtdev->name, rtdev);
 	if (err) {
 		rtdm_printk(KERN_ERR"%s: Unable to request IRQ %d (error %d)\n", rtdev->name, rtdev->irq, err);
 		goto err_out_iounmap;
