@@ -30,6 +30,7 @@
 
 #include <rtdev.h>
 #include <rtnet_chrdev.h>
+#include <rtnet_port.h> /* for netdev_priv() */
 
 
 #ifdef CONFIG_RTOS_STARTSTOP_TIMER
