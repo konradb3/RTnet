@@ -42,7 +42,8 @@ struct rtsocket {
     unsigned short          protocol;
 
     struct rtskb_queue      skb_pool;
-    atomic_t                pool_size;
+    unsigned int            pool_size;
+    struct mutex            pool_nrt_lock;
 
     struct rtskb_queue      incoming;
 

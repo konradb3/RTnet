@@ -70,7 +70,8 @@ int rt_socket_init(struct rtdm_dev_context *sockctx)
     rtdm_sem_init(&sock->pending_sem, 0);
 
     pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
-    atomic_set(&sock->pool_size, pool_size);
+    sock->pool_size = pool_size;
+    mutex_init(&sock->pool_nrt_lock);
 
     if (pool_size < socket_rtskbs) {
         /* fix statistics */
@@ -92,28 +93,27 @@ int rt_socket_init(struct rtdm_dev_context *sockctx)
 int rt_socket_cleanup(struct rtdm_dev_context *sockctx)
 {
     struct rtsocket *sock  = (struct rtsocket *)&sockctx->dev_private;
-    unsigned int    rtskbs;
-    rtdm_lockctx_t  context;
+    int ret = 0;
 
 
     rtdm_sem_destroy(&sock->pending_sem);
 
-    rtdm_lock_get_irqsave(&sock->param_lock, context);
+    mutex_lock(&sock->pool_nrt_lock);
 
     set_bit(SKB_POOL_CLOSED, &sockctx->context_flags);
-    rtskbs = atomic_read(&sock->pool_size);
 
-    rtdm_lock_put_irqrestore(&sock->param_lock, context);
+    if (sock->pool_size > 0) {
+        sock->pool_size -= rtskb_pool_shrink(&sock->skb_pool, sock->pool_size);
 
-    if (rtskbs > 0) {
-        rtskbs = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
-        atomic_sub(rtskbs, &sock->pool_size);
-        if (atomic_read(&sock->pool_size) > 0)
-            return -EAGAIN;
-        rtskb_pool_release(&sock->skb_pool);
+        if (sock->pool_size > 0)
+            ret = -EAGAIN;
+        else
+            rtskb_pool_release(&sock->skb_pool);
     }
 
-    return 0;
+    mutex_unlock(&sock->pool_nrt_lock);
+
+    return ret;
 }
 
 
@@ -156,39 +156,33 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
         case RTNET_RTIOC_EXTPOOL:
             rtskbs = *(unsigned int *)arg;
 
-            rtdm_lock_get_irqsave(&sock->param_lock, context);
-
-            if (test_bit(SKB_POOL_CLOSED, &sockctx->context_flags)) {
-                rtdm_lock_put_irqrestore(&sock->param_lock, context);
-                return -EBADF;
-            }
-            atomic_add(rtskbs, &sock->pool_size);
-
-            rtdm_lock_put_irqrestore(&sock->param_lock, context);
-
             if (rtdm_in_rt_context())
                 return -ENOSYS;
-            ret = rtskb_pool_extend(&sock->skb_pool, rtskbs);
-            atomic_sub(rtskbs-ret, &sock->pool_size);
+
+            mutex_lock(&sock->pool_nrt_lock);
+
+            if (test_bit(SKB_POOL_CLOSED, &sockctx->context_flags)) {
+                mutex_unlock(&sock->pool_nrt_lock);
+                return -EBADF;
+            }
+            sock->pool_size += rtskb_pool_extend(&sock->skb_pool, rtskbs);
+
+            mutex_unlock(&sock->pool_nrt_lock);
+
             break;
 
         case RTNET_RTIOC_SHRPOOL:
             rtskbs = *(unsigned int *)arg;
 
-            rtdm_lock_get_irqsave(&sock->param_lock, context);
-
-            if (test_bit(SKB_POOL_CLOSED, &sockctx->context_flags)) {
-                rtdm_lock_put_irqrestore(&sock->param_lock, context);
-                return -EBADF;
-            }
-            atomic_sub(rtskbs, &sock->pool_size);
-
-            rtdm_lock_put_irqrestore(&sock->param_lock, context);
-
             if (rtdm_in_rt_context())
                 return -ENOSYS;
-            ret = rtskb_pool_shrink(&sock->skb_pool, *(unsigned int *)arg);
-            atomic_add(rtskbs-ret, &sock->pool_size);
+
+            mutex_lock(&sock->pool_nrt_lock);
+
+            sock->pool_size -= rtskb_pool_shrink(&sock->skb_pool, rtskbs);
+
+            mutex_unlock(&sock->pool_nrt_lock);
+
             break;
 
         default:
