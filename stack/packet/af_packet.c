@@ -279,7 +279,7 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
     struct rtskb        *rtskb;
     struct sockaddr_ll  *sll;
     int                 ret;
-    nanosecs_abs_t      timeout = sock->timeout;
+    nanosecs_rel_t      timeout = sock->timeout;
 
 
     /* non-blocking receive? */
