@@ -26,30 +26,8 @@
 #ifndef __RTNET_UDP_H_
 #define __RTNET_UDP_H_
 
-#include <linux/init.h>
-
-#include <ipv4/protocol.h>
-
-
 /* Maximum number of active udp sockets
    Only increase with care (look-up delays!), must be power of 2 */
 #define RT_UDP_SOCKETS      64
-
-
-extern int rt_udp_close(struct rtdm_dev_context *context,
-                        rtdm_user_info_t *user_info);
-extern int rt_udp_ioctl(struct rtdm_dev_context *context,
-                        rtdm_user_info_t *user_info,
-                        unsigned int request, void *arg);
-extern ssize_t rt_udp_recvmsg(struct rtdm_dev_context *context,
-                              rtdm_user_info_t *user_info,
-                              struct msghdr *msg, int flags);
-extern ssize_t rt_udp_sendmsg(struct rtdm_dev_context *context,
-                              rtdm_user_info_t *user_info,
-                              const struct msghdr *msg, int flags);
-
-extern void __init rt_udp_init(void);
-extern void rt_udp_release(void);
-
 
 #endif  /* __RTNET_UDP_H_ */

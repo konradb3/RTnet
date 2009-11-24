@@ -1,39 +1,19 @@
-OPTDIRS =
-
-if CONFIG_RTNET_RTIPV4_UDP
-OPTDIRS += udp
-endif
-
-SUBDIRS = . $(OPTDIRS)
-
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
 
-EXTRA_LIBRARIES = \
-	libkernel_ipv4.a
+EXTRA_LIBRARIES = libkernel_udp.a
 
-libkernel_ipv4_a_CPPFLAGS = \
+libkernel_udp_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
-libkernel_ipv4_a_SOURCES = \
-	route.c \
-	protocol.c \
-	arp.c \
-	af_inet.c \
-	ip_input.c \
-	ip_sock.c \
-	ip_output.c \
-	ip_fragment.c
+libkernel_udp_a_SOURCES = \
+	udp.c
 
-if CONFIG_RTNET_RTIPV4_ICMP
-libkernel_ipv4_a_SOURCES += icmp.c
-endif
+OBJS = rtudp$(modext)
 
-OBJS = rtipv4$(modext)
-
-rtipv4.o: libkernel_ipv4.a
+rtudp.o: libkernel_udp.a
 	$(LD) --whole-archive $< -r -o $@
 
 all-local: all-local$(modext)
@@ -43,7 +23,7 @@ all-local.o: $(OBJS)
 
 # 2.6 build
 all-local.ko: @RTNET_KBUILD_ENV@
-all-local.ko: $(libkernel_ipv4_a_SOURCES) FORCE
+all-local.ko: $(libkernel_udp_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
@@ -53,7 +33,7 @@ install-exec-local: $(OBJS)
 uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
-clean-local: $(libkernel_ipv4_a_SOURCES)
+clean-local: $(libkernel_udp_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:

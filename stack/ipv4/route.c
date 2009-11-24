@@ -892,7 +892,4 @@ void rt_ip_routing_release(void)
 EXPORT_SYMBOL(rt_ip_route_add_host);
 EXPORT_SYMBOL(rt_ip_route_del_host);
 EXPORT_SYMBOL(rt_ip_route_del_all);
-
-#ifdef CONFIG_RTNET_ADDON_PROXY
 EXPORT_SYMBOL(rt_ip_route_output);
-#endif

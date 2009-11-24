@@ -82,6 +82,8 @@ static rtdm_lock_t          udp_socket_base_lock = RTDM_LOCK_UNLOCKED;
 static struct hlist_head port_hash[RT_UDP_SOCKETS * 2];
 #define port_hash_mask (RT_UDP_SOCKETS * 2 - 1)
 
+MODULE_LICENSE("GPL");
+
 module_param(auto_port_start, uint, 0444);
 module_param(auto_port_mask, uint, 0444);
 MODULE_PARM_DESC(auto_port_start, "Start of automatically assigned port range");
@@ -710,10 +712,43 @@ static struct rtinet_protocol udp_protocol = {
     .init_socket =  &rt_udp_socket
 };
 
+static struct rtdm_device udp_device = {
+    .struct_version =   RTDM_DEVICE_STRUCT_VER,
+
+    .device_flags =     RTDM_PROTOCOL_DEVICE,
+    .context_size =     sizeof(struct rtsocket),
+
+    .protocol_family =  PF_INET,
+    .socket_type =      SOCK_DGRAM,
+
+    .socket_nrt =       rt_inet_socket,
+
+    /* default is UDP */
+    .ops = {
+        .close_nrt =    rt_udp_close,
+        .ioctl_rt =     rt_udp_ioctl,
+        .ioctl_nrt =    rt_udp_ioctl,
+        .recvmsg_rt =   rt_udp_recvmsg,
+        .sendmsg_rt =   rt_udp_sendmsg,
+#ifdef CONFIG_RTNET_SELECT_SUPPORT
+        .select_bind =  rt_socket_select_bind,
+#endif
+    },
+
+    .device_class =     RTDM_CLASS_NETWORK,
+    .device_sub_class = RTDM_SUBCLASS_RTNET,
+    .driver_name =      "rtudp",
+    .driver_version =   RTNET_RTDM_VER,
+    .peripheral_name =  "Real-Time IPv4 Datagram Socket Interface",
+    .provider_name =    rtnet_rtdm_provider_name,
+
+    .proc_name =        "INET_DGRAM"
+};
+
 /***
  *  rt_udp_init
  */
-void __init rt_udp_init(void)
+static int __init rt_udp_init(void)
 {
     int i;
     if ((auto_port_start < 0) || (auto_port_start >= 0x10000 - RT_UDP_SOCKETS))
@@ -725,6 +760,8 @@ void __init rt_udp_init(void)
 
     for (i = 0; i < ARRAY_SIZE(port_hash); i++)
 	    INIT_HLIST_HEAD(&port_hash[i]);
+
+    return rtdm_dev_register(&udp_device);
 }
 
 
@@ -732,7 +769,11 @@ void __init rt_udp_init(void)
 /***
  *  rt_udp_release
  */
-void rt_udp_release(void)
+static void __exit rt_udp_release(void)
 {
+    rtdm_dev_unregister(&udp_device, 1000);
     rt_inet_del_protocol(&udp_protocol);
 }
+
+module_init(rt_udp_init);
+module_exit(rt_udp_release);

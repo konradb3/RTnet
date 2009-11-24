@@ -20,6 +20,13 @@ config RTNET_RTIPV4_ICMP
     When the RTnet-Proxy is enabled while this feature is disabled, ICMP
     will be forwarded to the Linux network stack.
 
+config RTNET_RTIPV4_UDP
+    bool "UDP support"
+    depends on RTNET_RTIPV4
+    default y
+    ---help---
+    Enables UDP support of the RTnet Real-Time IPv4 protocol.
+
 config RTNET_RTIPV4_HOST_ROUTES
     int "Maximum host routing table entries"
     depends on RTNET_RTIPV4

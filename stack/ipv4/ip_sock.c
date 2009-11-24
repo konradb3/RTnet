@@ -152,3 +152,4 @@ int rt_ip_ioctl(struct rtdm_dev_context *context, rtdm_user_info_t *user_info,
             return rt_socket_if_ioctl(context, user_info, request, arg);
     }
 }
+EXPORT_SYMBOL(rt_ip_ioctl);

@@ -1084,6 +1084,16 @@ if test "$CONFIG_RTNET_RTIPV4_ICMP" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4_ICMP,1,[Real-Time IPv4 ICMP support])
 fi
 
+AC_MSG_CHECKING([whether to enable real-time IPv4 UDP support])
+AC_ARG_ENABLE(udp,
+    AS_HELP_STRING([--enable-udp], [enable real-time IPv4 UDP support @<:@default=yes@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_RTIPV4_UDP=y ;;
+        *) CONFIG_RTNET_RTIPV4_UDP=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_UDP:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_RTIPV4_UDP,[test "$CONFIG_RTNET_RTIPV4_UDP" = "y"])
+
 AC_MSG_CHECKING([for host routes])
 AC_ARG_ENABLE(host-routes,
     AS_HELP_STRING([--with-host-routes], [Set maximum host routes @<:@default=32@:>@]),
@@ -1382,6 +1392,7 @@ if test x$CONFIG_KBUILD = xy; then
         stack \
         stack/packet \
         stack/ipv4 \
+        stack/ipv4/udp \
         stack/rtcfg \
         stack/rtmac \
         stack/rtmac/nomac \
@@ -1463,6 +1474,7 @@ AC_CONFIG_FILES([ \
     stack/include/GNUmakefile \
     stack/packet/GNUmakefile \
     stack/ipv4/GNUmakefile \
+    stack/ipv4/udp/GNUmakefile \
     stack/rtcfg/GNUmakefile \
     stack/rtmac/GNUmakefile \
     stack/rtmac/nomac/GNUmakefile \
