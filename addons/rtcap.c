@@ -470,7 +470,8 @@ int __init rtcap_init(void)
             tap_device[i].orig_xmit = rtdev->hard_start_xmit;
 
             if ((rtdev->flags & IFF_LOOPBACK) == 0) {
-                dev = alloc_netdev(0, rtdev->name, tap_dev_setup);
+                dev = alloc_netdev(sizeof(struct rtnet_device *), rtdev->name,
+                                   tap_dev_setup);
                 if (!dev) {
                     ret = -ENOMEM;
                     goto error3;
