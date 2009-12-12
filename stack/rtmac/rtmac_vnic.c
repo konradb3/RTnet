@@ -27,6 +27,7 @@
 
 #include <rtnet_internal.h>
 #include <rtdev.h>
+#include <rtnet_port.h> /* for netdev_priv() */
 #include <rtmac/rtmac_disc.h>
 #include <rtmac/rtmac_proto.h>
 #include <rtmac/rtmac_vnic.h>
