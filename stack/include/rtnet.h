@@ -86,47 +86,6 @@ struct rtnet_callback {
 #define SOCK_XMIT_PARAMS(priority, channel) ((priority) | ((channel) << 16))
 
 
-/* legacy function name wrappers, users should migrate to rt_dev_xxx */
-#ifdef __RTNET_USE_LEGACY_API__
-#define open_rt(path, oflag, ...)                           \
-    rt_dev_open(path, oflag)
-#define socket_rt(protocol_family, socket_type, protocol)   \
-    rt_dev_socket(protocol_family, socket_type, protocol)
-#define close_rt(fd)                                        \
-    rt_dev_close(fd)
-#define ioctl_rt(fd, request, ...)                          \
-    rt_dev_ioctl(fd, request, __VA_ARGS__)
-#define recvmsg_rt(fd, msg, flags)                          \
-    rt_dev_recvmsg(fd, msg, flags)
-#define sendmsg_rt(fd, msg, flags)                          \
-    rt_dev_sendmsg(fd, msg, flags)
-#define bind_rt(fd, my_addr, addrlen)                       \
-    rt_dev_bind(fd, my_addr, addrlen)
-#define connect_rt(fd, serv_addr, addrlen)                  \
-    rt_dev_connect(fd, serv_addr, addrlen)
-#define listen_rt(fd, backlog)                              \
-    rt_dev_listen(fd, backlog)
-#define accept_rt(fd, addr, addrlen)                        \
-    rt_dev_accept(fd, addr, addrlen)
-#define recv_rt(fd, buf, len, flags)                        \
-    rt_dev_recv(fd, buf, len, flags)
-#define recvfrom_rt(fd, buf, len, flags, from, fromlen)     \
-    rt_dev_recvfrom(fd, buf, len, flags, from, fromlen)
-#define send_rt(fd, buf, len, flags)                        \
-    rt_dev_send(fd, buf, len, flags)
-#define sendto_rt(fd, buf, len, flags, to, tolen)           \
-    rt_dev_sendto(fd, buf, len, flags, to, tolen)
-#define getsockopt_rt(fd, optname, optval, optlen)          \
-    rt_dev_getsockopt(fd, optname, optval, optlen)
-#define setsockopt_rt(fd, optname, optval, optlen)          \
-    rt_dev_setsockopt(fd, optname, optval, optlen)
-#define getsockname_rt(fd, name, namelen)                   \
-    rt_dev_getsockname(fd, name, namelen)
-#define getpeername_rt(fd, name, namelen)                   \
-    rt_dev_getpeername(fd, name, namelen)
-#endif /* __RTNET_USE_LEGACY_API__ */
-
-
 #ifdef __KERNEL__
 
 /* utility functions */
