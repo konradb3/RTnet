@@ -50,7 +50,8 @@ int rtmac_proto_rx(struct rtskb *skb, struct rtpacket_type *pt)
 
     if (hdr->ver != RTMAC_VERSION) {
         rtdm_printk("RTmac: received unsupported RTmac protocol version on "
-                    "device %s\n", skb->rtdev->name);
+                    "device %s.  Got 0x%x but expected 0x%x\n",
+                    skb->rtdev->name, hdr->ver, RTMAC_VERSION);
         goto error;
     }
 
