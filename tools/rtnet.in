@@ -15,16 +15,18 @@ debug_func() {
 usage() {
     cat << EOF
 Usage:
-    $0 [-cf <config-file>] [-v] {start|stop}
+    $0 [-cf <config-file>] [-v] [-c] {start|stop}
         Start or stop station according to configuration file
 
-    $0 [-cf <config-file>] [-v] master <slave_ip1> [<slave_ip2> ...]
+    $0 [-cf <config-file>] [-v] [-c] master <slave_ip1> [<slave_ip2> ...]
         Start station as master for given list of slaves
 
     $0 [-cf <config-file>] [-v] capture
         Start only passive realtime capturing
 
     The additional switch -v enables verbose output.
+    The additional switch -c enables capturing mode to allow use of a network
+        analyzer such as Wireshark (if rtnet was built with --enable-rtcap).
 EOF
 }
 
@@ -251,6 +253,11 @@ if [ "$1" = "-v" ]; then
     RTIFCONFIG="debug_func $RTIFCONFIG"
     RTCFG="debug_func $RTCFG"
     TDMACFG="debug_func $TDMACFG"
+    shift 1
+fi
+
+if [ "$1" = "-c" ]; then
+    RTCAP="yes"
     shift 1
 fi
 
