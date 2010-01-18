@@ -606,11 +606,11 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
 
             rtdev = rtskb->rtdev;
 
-            daddr = *(u32*)stage_1_cfg->client_addr;
+            memcpy(&daddr, stage_1_cfg->client_addr, 4);
             stage_1_cfg = (struct rtcfg_frm_stage_1_cfg *)
                 (((u8 *)stage_1_cfg) + RTCFG_ADDRSIZE_IP);
 
-            saddr = *(u32*)stage_1_cfg->server_addr;
+            memcpy(&saddr, stage_1_cfg->server_addr, 4);
             stage_1_cfg = (struct rtcfg_frm_stage_1_cfg *)
                 (((u8 *)stage_1_cfg) + RTCFG_ADDRSIZE_IP);
 
@@ -748,6 +748,7 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
     struct rtcfg_frm_announce *announce_frm;
     struct rtcfg_device       *rtcfg_dev = &device[ifindex];
     u32                       i;
+    u32                       announce_frm_addr;
     int                       result;
 
 
@@ -771,8 +772,10 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
                 return -EINVAL;
             }
 
+            memcpy(&announce_frm_addr, announce_frm->addr, 4);
+
             /* update routing table */
-            rt_ip_route_add_host(*(u32 *)announce_frm->addr,
+            rt_ip_route_add_host(announce_frm_addr,
                                  rtskb->mac.ethernet->h_source, rtskb->rtdev);
 
             announce_frm = (struct rtcfg_frm_announce *)
@@ -1045,7 +1048,7 @@ static void rtcfg_client_recv_dead_station(int ifindex, struct rtskb *rtskb)
                 return;
             }
 
-            ip = *(u32 *)dead_station_frm->logical_addr;
+            memcpy(&ip, dead_station_frm->logical_addr, 4);
 
             /* only delete remote IPs from routing table */
             if (rtskb->rtdev->local_ip != ip)
@@ -1132,11 +1135,11 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
 
             rtdev = rtskb->rtdev;
 
-            daddr = *(u32*)stage_1_cfg->client_addr;
+            memcpy(&daddr, stage_1_cfg->client_addr, 4);
             stage_1_cfg = (struct rtcfg_frm_stage_1_cfg *)
                 (((u8 *)stage_1_cfg) + RTCFG_ADDRSIZE_IP);
 
-            saddr = *(u32*)stage_1_cfg->server_addr;
+            memcpy(&saddr, stage_1_cfg->server_addr, 4);
             stage_1_cfg = (struct rtcfg_frm_stage_1_cfg *)
                 (((u8 *)stage_1_cfg) + RTCFG_ADDRSIZE_IP);
 

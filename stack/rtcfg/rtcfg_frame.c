@@ -170,12 +170,12 @@ int rtcfg_send_stage_1(struct rtcfg_connection *conn)
     if (stage_1_frm->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, 2*RTCFG_ADDRSIZE_IP);
 
-        *(u32*)stage_1_frm->client_addr = conn->addr.ip_addr;
+        memcpy(stage_1_frm->client_addr, &(conn->addr.ip_addr), 4);
 
         stage_1_frm = (struct rtcfg_frm_stage_1_cfg *)
             (((u8 *)stage_1_frm) + RTCFG_ADDRSIZE_IP);
 
-        *(u32*)stage_1_frm->server_addr = rtdev->local_ip;
+        memcpy(stage_1_frm->server_addr, &(rtdev->local_ip), 4);
 
         stage_1_frm = (struct rtcfg_frm_stage_1_cfg *)
             (((u8 *)stage_1_frm) + RTCFG_ADDRSIZE_IP);
@@ -332,7 +332,7 @@ int rtcfg_send_announce_new(int ifindex)
     if (announce_new->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
-        *(u32*)announce_new->addr = rtdev->local_ip;
+        memcpy(announce_new->addr, &(rtdev->local_ip), 4);
 
         announce_new = (struct rtcfg_frm_announce *)
             (((u8 *)announce_new) + RTCFG_ADDRSIZE_IP);
@@ -388,7 +388,7 @@ int rtcfg_send_announce_reply(int ifindex, u8 *dest_mac_addr)
     if (announce_rpl->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
-        *(u32*)announce_rpl->addr = rtdev->local_ip;
+        memcpy(announce_rpl->addr, &(rtdev->local_ip), 4);
 
         announce_rpl = (struct rtcfg_frm_announce *)
             (((u8 *)announce_rpl) + RTCFG_ADDRSIZE_IP);
@@ -512,7 +512,7 @@ int rtcfg_send_dead_station(struct rtcfg_connection *conn)
     if (dead_station_frm->addr_type == RTCFG_ADDR_IP) {
         rtskb_put(rtskb, RTCFG_ADDRSIZE_IP);
 
-        *(u32*)dead_station_frm->logical_addr = conn->addr.ip_addr;
+        memcpy(dead_station_frm->logical_addr, &(conn->addr.ip_addr), 4);
 
         dead_station_frm = (struct rtcfg_frm_dead_station *)
             (((u8 *)dead_station_frm) + RTCFG_ADDRSIZE_IP);

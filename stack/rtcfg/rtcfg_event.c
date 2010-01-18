@@ -506,6 +506,7 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
     struct list_head          *entry;
     struct rtcfg_frm_announce *announce;
     struct rtcfg_connection   *conn;
+    u32                        announce_addr;
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_announce)) {
@@ -522,8 +523,10 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
         switch (announce->addr_type) {
 #ifdef CONFIG_RTNET_RTIPV4
             case RTCFG_ADDR_IP:
+                memcpy(&announce_addr, announce->addr, 4);
+
                 if (((conn->addr_type & RTCFG_ADDR_MASK) == RTCFG_ADDR_IP) &&
-                    (*(u32 *)announce->addr == conn->addr.ip_addr)) {
+                    (announce_addr == conn->addr.ip_addr)) {
                     /* save MAC address - Ethernet-specific! */
                     memcpy(conn->mac_addr, rtskb->mac.ethernet->h_source,
                            ETH_ALEN);
