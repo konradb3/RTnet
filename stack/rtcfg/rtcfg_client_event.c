@@ -601,7 +601,7 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
                 RTCFG_DEBUG(1, "RTcfg: received invalid stage_1_cfg "
                             "frame\n");
                 kfree_rtskb(rtskb);
-                break;
+                return;
             }
 
             rtdev = rtskb->rtdev;
