@@ -164,6 +164,25 @@ static inline int rtnetif_device_present(struct rtnet_device *rtdev)
     return test_bit(__RTNET_LINK_STATE_PRESENT, &rtdev->link_state);
 }
 
+static inline void rtnetif_device_detach(struct rtnet_device *rtdev)
+{
+	if (test_and_clear_bit(__RTNET_LINK_STATE_PRESENT,
+			       &rtdev->link_state) &&
+	    rtnetif_running(rtdev)) {
+		rtnetif_stop_queue(rtdev);
+	}
+}
+
+static inline void rtnetif_device_attach(struct rtnet_device *rtdev)
+{
+	if (!test_and_set_bit(__RTNET_LINK_STATE_PRESENT,
+			      &rtdev->link_state) &&
+	    rtnetif_running(rtdev)) {
+		rtnetif_wake_queue(rtdev);
+		/* __netdev_watchdog_up(rtdev); */
+	}
+}
+
 static inline void rtnetif_carrier_on(struct rtnet_device *rtdev)
 {
     clear_bit(__RTNET_LINK_STATE_NOCARRIER, &rtdev->link_state);
