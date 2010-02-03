@@ -34,19 +34,20 @@ host_triplet = @host@
 @CONFIG_RTNET_DRV_E1000_TRUE@am__append_1 = e1000
 @CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE@am__append_2 = mpc52xx_fec
 @CONFIG_RTNET_DRV_TULIP_TRUE@am__append_3 = tulip
-@CONFIG_RTNET_DRV_8139_TRUE@am__append_4 = rt_8139too$(modext)
-@CONFIG_RTNET_DRV_AT91ETHER_TRUE@am__append_5 = rt_at91_ether$(modext)
-@CONFIG_RTNET_DRV_EEPRO100_TRUE@am__append_6 = rt_eepro100$(modext)
-@CONFIG_RTNET_DRV_ETH1394_TRUE@am__append_7 = rt_eth1394$(modext)
-@CONFIG_RTNET_DRV_LOOPBACK_TRUE@am__append_8 = rt_loopback$(modext)
-@CONFIG_RTNET_DRV_FCC_ENET_TRUE@am__append_9 = rt_mpc8260_fcc_enet$(modext)
-@CONFIG_RTNET_DRV_SCC_ENET_TRUE@am__append_10 = rt_mpc8xx_enet$(modext)
-@CONFIG_RTNET_DRV_FEC_ENET_TRUE@am__append_11 = rt_mpc8xx_fec$(modext)
-@CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_12 = rt_natsemi$(modext)
-@CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_13 = rt_pcnet32$(modext)
-@CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_14 = rt_smc91111$(modext)
-@CONFIG_RTNET_DRV_MACB_TRUE@am__append_15 = rt_macb$(modext)
-@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_16 = rt_via-rhine$(modext)
+@CONFIG_RTNET_DRV_IGB_TRUE@am__append_4 = igb
+@CONFIG_RTNET_DRV_8139_TRUE@am__append_5 = rt_8139too$(modext)
+@CONFIG_RTNET_DRV_AT91ETHER_TRUE@am__append_6 = rt_at91_ether$(modext)
+@CONFIG_RTNET_DRV_EEPRO100_TRUE@am__append_7 = rt_eepro100$(modext)
+@CONFIG_RTNET_DRV_ETH1394_TRUE@am__append_8 = rt_eth1394$(modext)
+@CONFIG_RTNET_DRV_LOOPBACK_TRUE@am__append_9 = rt_loopback$(modext)
+@CONFIG_RTNET_DRV_FCC_ENET_TRUE@am__append_10 = rt_mpc8260_fcc_enet$(modext)
+@CONFIG_RTNET_DRV_SCC_ENET_TRUE@am__append_11 = rt_mpc8xx_enet$(modext)
+@CONFIG_RTNET_DRV_FEC_ENET_TRUE@am__append_12 = rt_mpc8xx_fec$(modext)
+@CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_13 = rt_natsemi$(modext)
+@CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_14 = rt_pcnet32$(modext)
+@CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_15 = rt_smc91111$(modext)
+@CONFIG_RTNET_DRV_MACB_TRUE@am__append_16 = rt_macb$(modext)
+@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_17 = rt_via-rhine$(modext)
 subdir = drivers
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -173,7 +174,7 @@ RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = experimental e1000 mpc52xx_fec tulip
+DIST_SUBDIRS = experimental e1000 mpc52xx_fec tulip igb
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -307,7 +308,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-OPTDIRS = $(am__append_1) $(am__append_2) $(am__append_3)
+OPTDIRS = $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4)
 SUBDIRS = experimental $(OPTDIRS)
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
@@ -434,10 +436,10 @@ libkernel_via_rhine_a_CPPFLAGS = \
 libkernel_via_rhine_a_SOURCES = \
 	rt_via-rhine.c
 
-OBJS = $(am__append_4) $(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) $(am__append_9) $(am__append_10) \
-	$(am__append_11) $(am__append_12) $(am__append_13) \
-	$(am__append_14) $(am__append_15) $(am__append_16)
+OBJS = $(am__append_5) $(am__append_6) $(am__append_7) $(am__append_8) \
+	$(am__append_9) $(am__append_10) $(am__append_11) \
+	$(am__append_12) $(am__append_13) $(am__append_14) \
+	$(am__append_15) $(am__append_16) $(am__append_17)
 EXTRA_DIST = Kconfig Makefile.kbuild
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
 all: all-recursive

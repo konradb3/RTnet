@@ -1010,6 +1010,16 @@ AC_ARG_ENABLE(at91ether,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_AT91ETHER:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_AT91ETHER,[test "$CONFIG_RTNET_DRV_AT91ETHER" = "y"])
 
+AC_MSG_CHECKING([whether to build Intel 82575 (Gigabit) driver])
+AC_ARG_ENABLE(igb,
+    AS_HELP_STRING([--enable-igb], [build Intel 82575 driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_IGB=y ;;
+        *) CONFIG_RTNET_DRV_IGB=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_IGB:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_IGB,[test "$CONFIG_RTNET_DRV_IGB" = "y"])
+
 dnl ======================================================================
 dnl             Stack parameters
 dnl ======================================================================
@@ -1385,6 +1395,7 @@ if test x$CONFIG_KBUILD = xy; then
         drivers/e1000 \
         drivers/mpc52xx_fec \
         drivers/tulip \
+        drivers/igb \
         drivers/experimental \
         drivers/experimental/rt2500 \
         drivers/experimental/e1000 \
@@ -1466,6 +1477,7 @@ AC_CONFIG_FILES([ \
     drivers/e1000/GNUmakefile \
     drivers/mpc52xx_fec/GNUmakefile \
     drivers/tulip/GNUmakefile \
+    drivers/igb/GNUmakefile \
     drivers/experimental/GNUmakefile \
     drivers/experimental/rt2500/GNUmakefile \
     drivers/experimental/e1000/GNUmakefile \

@@ -50,6 +50,10 @@ config RTNET_DRV_VIA_RHINE
     bool "VIA Rhine"
 
 
+config RTNET_DRV_IGB
+    bool "Intel(R) 82575 (Gigabit)"
+
+
 if ARCH = ppc
 
 comment "Embedded MPC Drivers"
