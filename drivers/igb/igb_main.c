@@ -186,9 +186,9 @@ static int igb_xmit_frame_ring_adv(struct sk_buff *, struct net_device *,
 				  struct igb_ring *);
 static int igb_xmit_frame_adv(struct sk_buff *skb, struct net_device *);
 static struct net_device_stats *igb_get_stats(struct net_device *);
-static int igb_change_mtu(struct net_device *, int);
-static int igb_set_mac(struct net_device *, void *);
-static irqreturn_t igb_intr(rtdm_irq_t *irq_handle);
+/* static int igb_change_mtu(struct net_device *, int); */
+/* static int igb_set_mac(struct net_device *, void *); */
+static int igb_intr(rtdm_irq_t *irq_handle);
 #ifdef CONFIG_PCI_MSI
 static irqreturn_t igb_intr_msi(int irq, void *);
 static irqreturn_t igb_msix_other(int irq, void *);
@@ -213,7 +213,7 @@ static void igb_alloc_rx_buffers_adv(struct igb_ring *, int);
 #ifdef CONFIG_IGB_LRO
 static int igb_get_skb_hdr(struct sk_buff *skb, void **, void **, u64 *, void *);
 #endif
-static int igb_ioctl(struct net_device *, struct ifreq *, int cmd);
+/* static int igb_ioctl(struct net_device *, struct ifreq *, int cmd); */
 #ifdef IGB_HAVE_TX_TIMEOUT
 static void igb_tx_timeout(struct net_device *);
 #endif
@@ -1193,15 +1193,16 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 		return err;
 
 	pci_using_dac = 0;
-	err = pci_set_dma_mask(pdev, DMA_64BIT_MASK);
+	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
 	if (!err) {
-		err = pci_set_consistent_dma_mask(pdev, DMA_64BIT_MASK);
+		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
 		if (!err)
 			pci_using_dac = 1;
 	} else {
-		err = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
+		err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
 		if (err) {
-			err = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK);
+			err = pci_set_consistent_dma_mask(pdev,
+							  DMA_BIT_MASK(32));
 			if (err) {
 				dev_err(&pdev->dev, "No usable DMA "
 					"configuration, aborting\n");
@@ -2414,6 +2415,7 @@ static void igb_clean_all_rx_rings(struct igb_adapter *adapter)
 		igb_clean_rx_ring(&adapter->rx_ring[i]);
 }
 
+#if 0
 /**
  * igb_set_mac - Change the Ethernet Address of the NIC
  * @netdev: network interface device structure
@@ -2436,6 +2438,7 @@ static int igb_set_mac(struct net_device *netdev, void *p)
 
 	return 0;
 }
+#endif
 
 /**
  * igb_set_multi - Multicast and Promiscuous mode set
@@ -3339,6 +3342,7 @@ igb_get_stats(struct net_device *netdev)
 	return &adapter->net_stats;
 }
 
+#if 0
 /**
  * igb_change_mtu - Change the Maximum Transfer Unit
  * @netdev: network interface device structure
@@ -3408,6 +3412,7 @@ static int igb_change_mtu(struct net_device *netdev, int new_mtu)
 
 	return 0;
 }
+#endif
 
 /**
  * igb_update_stats - Update the board statistics counters
@@ -3795,7 +3800,7 @@ static irqreturn_t igb_intr_msi(int irq, void *data)
  * @data: pointer to a network interface device structure
  **/
 // static irqreturn_t igb_intr(int irq, void *data)
-static irqreturn_t igb_intr(rtdm_irq_t *irq_handle)
+static int igb_intr(rtdm_irq_t *irq_handle)
 {
         nanosecs_abs_t time_stamp = rtdm_clock_read();
 	struct net_device *netdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
@@ -4435,6 +4440,7 @@ no_buffers:
 	}
 }
 
+#if 0
 /**
  * igb_mii_ioctl -
  * @netdev:
@@ -4484,6 +4490,7 @@ static int igb_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 		return -EOPNOTSUPP;
 	}
 }
+#endif
 
 static void igb_vlan_rx_register(struct net_device *netdev,
 				 struct vlan_group *grp)
