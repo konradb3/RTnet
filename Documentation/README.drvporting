@@ -240,6 +240,9 @@ waiting on hardware events.
 41. return from interrupt handler only by providing RTDM_IRQ_HANDLED or RTDM_IRQ_NONE as
     return values, depending if the IRQ was handled or not
 
+42. fill rtdev field in every received rtskb object properly
+
+    skb->rtdev = rtdev
 
 XX. check the critical paths in xmit function and interrupt handler for delays
     or hardware wait loops, disable or avoid them
