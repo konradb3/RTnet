@@ -49,17 +49,27 @@ MODULE_PARM_DESC(socket_rtskbs, "Default number of realtime socket buffers in so
  *  internal socket functions                                           *
  ************************************************************************/
 
+int rt_bare_socket_init(struct rtsocket *sock, unsigned short protocol,
+                        unsigned int priority, unsigned int pool_size)
+{
+    sock->protocol = protocol;
+    sock->priority = priority;
+
+    return rtskb_pool_init(&sock->skb_pool, pool_size);
+}
+EXPORT_SYMBOL(rt_bare_socket_init);
+
+
+
 /***
  *  rt_socket_init - initialises a new socket structure
  */
-int rt_socket_init(struct rtdm_dev_context *sockctx)
+int rt_socket_init(struct rtdm_dev_context *sockctx, unsigned short protocol)
 {
     struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
     unsigned int    pool_size;
 
 
-    sock->priority =
-        RTSKB_PRIO_VALUE(SOCK_DEF_PRIO, RTSKB_DEF_RT_CHANNEL);
     sock->callback_func = NULL;
 
     rtskb_queue_init(&sock->incoming);
@@ -69,7 +79,10 @@ int rt_socket_init(struct rtdm_dev_context *sockctx)
     rtdm_lock_init(&sock->param_lock);
     rtdm_sem_init(&sock->pending_sem, 0);
 
-    pool_size = rtskb_pool_init(&sock->skb_pool, socket_rtskbs);
+    pool_size = rt_bare_socket_init(sock, protocol,
+                                    RTSKB_PRIO_VALUE(SOCK_DEF_PRIO,
+                                                     RTSKB_DEF_RT_CHANNEL),
+                                    socket_rtskbs);
     sock->pool_size = pool_size;
     mutex_init(&sock->pool_nrt_lock);
 

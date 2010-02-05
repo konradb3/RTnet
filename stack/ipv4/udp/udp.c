@@ -271,10 +271,9 @@ int rt_udp_socket(struct rtdm_dev_context *sockctx,
     rtdm_lockctx_t  context;
 
 
-    if ((ret = rt_socket_init(sockctx)) != 0)
+    if ((ret = rt_socket_init(sockctx, IPPROTO_UDP)) != 0)
         return ret;
 
-    sock->protocol        = IPPROTO_UDP;
     sock->prot.inet.saddr = INADDR_ANY;
     sock->prot.inet.state = TCP_CLOSE;
     sock->prot.inet.tos   = 0;

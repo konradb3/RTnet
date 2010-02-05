@@ -90,7 +90,7 @@ static inline struct rtdm_dev_context *rt_socket_context(struct rtsocket *sock)
 #define rt_socket_dereference(sock) \
     atomic_dec(&(rt_socket_context(sock)->close_lock_count))
 
-int rt_socket_init(struct rtdm_dev_context *context);
+int rt_socket_init(struct rtdm_dev_context *context, unsigned short protocol);
 int rt_socket_cleanup(struct rtdm_dev_context *context);
 int rt_socket_common_ioctl(struct rtdm_dev_context *context,
                            rtdm_user_info_t *user_info,
@@ -104,5 +104,13 @@ int rt_socket_select_bind(struct rtdm_dev_context *context,
                           enum rtdm_selecttype type,
                           unsigned fd_index);
 #endif /* CONFIG_RTNET_SELECT_SUPPORT */
+
+int rt_bare_socket_init(struct rtsocket *sock, unsigned short protocol,
+                        unsigned int priority, unsigned int pool_size);
+
+static inline void rt_bare_socket_cleanup(struct rtsocket *sock)
+{
+    rtskb_pool_release(&sock->skb_pool);
+}
 
 #endif  /* __RTNET_SOCKET_H_ */

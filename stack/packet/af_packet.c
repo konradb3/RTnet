@@ -176,7 +176,7 @@ int rt_packet_socket(struct rtdm_dev_context *sockctx,
     int             ret;
 
 
-    if ((ret = rt_socket_init(sockctx)) != 0)
+    if ((ret = rt_socket_init(sockctx, protocol)) != 0)
         return ret;
 
     sock->prot.packet.packet_type.type = protocol;
@@ -192,8 +192,6 @@ int rt_packet_socket(struct rtdm_dev_context *sockctx,
             return ret;
         }
     }
-
-    sock->protocol = protocol;
 
     return 0;
 }

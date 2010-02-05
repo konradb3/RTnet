@@ -520,14 +520,12 @@ void __init rt_icmp_init(void)
     unsigned int skbs;
 
 
-    icmp_socket.protocol = IPPROTO_ICMP;
-    icmp_socket.prot.inet.tos = 0;
-    icmp_socket.priority = RT_ICMP_PRIO;
-
-    /* create the rtskb pool */
-    skbs = rtskb_pool_init(&icmp_socket.skb_pool, ICMP_REPLY_POOL_SIZE);
+    skbs = rt_bare_socket_init(&icmp_socket, IPPROTO_ICMP, RT_ICMP_PRIO,
+                               ICMP_REPLY_POOL_SIZE);
     if (skbs < ICMP_REPLY_POOL_SIZE)
         printk("RTnet: allocated only %d icmp rtskbs\n", skbs);
+
+    icmp_socket.prot.inet.tos = 0;
 
     rt_inet_add_protocol(&icmp_protocol);
 }
@@ -541,5 +539,5 @@ void rt_icmp_release(void)
 {
     rt_icmp_cleanup_echo_requests();
     rt_inet_del_protocol(&icmp_protocol);
-    rtskb_pool_release(&icmp_socket.skb_pool);
+    rt_bare_socket_cleanup(&icmp_socket);
 }
