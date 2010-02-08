@@ -31,7 +31,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = stack/rtmac/tdma
+subdir = drivers/igb
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/bs.m4 \
@@ -43,14 +43,14 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/rtnet_config_pre.h
 CONFIG_CLEAN_FILES =
 ARFLAGS = cru
-libkernel_tdma_a_AR = $(AR) $(ARFLAGS)
-libkernel_tdma_a_LIBADD =
-am_libkernel_tdma_a_OBJECTS = libkernel_tdma_a-tdma_dev.$(OBJEXT) \
-	libkernel_tdma_a-tdma_ioctl.$(OBJEXT) \
-	libkernel_tdma_a-tdma_module.$(OBJEXT) \
-	libkernel_tdma_a-tdma_proto.$(OBJEXT) \
-	libkernel_tdma_a-tdma_worker.$(OBJEXT)
-libkernel_tdma_a_OBJECTS = $(am_libkernel_tdma_a_OBJECTS)
+libkernel_igb_a_AR = $(AR) $(ARFLAGS)
+libkernel_igb_a_LIBADD =
+am_libkernel_igb_a_OBJECTS = libkernel_igb_a-igb_main.$(OBJEXT) \
+	libkernel_igb_a-e1000_82575.$(OBJEXT) \
+	libkernel_igb_a-e1000_mac.$(OBJEXT) \
+	libkernel_igb_a-e1000_nvm.$(OBJEXT) \
+	libkernel_igb_a-e1000_phy.$(OBJEXT)
+libkernel_igb_a_OBJECTS = $(am_libkernel_igb_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -63,8 +63,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libkernel_tdma_a_SOURCES)
-DIST_SOURCES = $(libkernel_tdma_a_SOURCES)
+SOURCES = $(libkernel_igb_a_SOURCES)
+DIST_SOURCES = $(libkernel_igb_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -202,22 +202,32 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
-EXTRA_LIBRARIES = libkernel_tdma.a
-libkernel_tdma_a_CPPFLAGS = \
+EXTRA_LIBRARIES = libkernel_igb.a
+libkernel_igb_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
 	-I$(top_builddir)/stack/include
 
-libkernel_tdma_a_SOURCES = \
-	tdma_dev.c \
-	tdma_ioctl.c \
-	tdma_module.c \
-	tdma_proto.c \
-	tdma_worker.c
+libkernel_igb_a_SOURCES = \
+	e1000_regs.h \
+	e1000_defines.h \
+	igb.h \
+	igb_main.c \
+	e1000_hw.h \
+	e1000_82575.c \
+	e1000_82575.h \
+	e1000_mac.c \
+	e1000_mac.h \
+	e1000_nvm.c \
+	e1000_nvm.h \
+	e1000_phy.c \
+	e1000_phy.h
 
-OBJS = tdma$(modext)
-EXTRA_DIST = Makefile.kbuild Kconfig
-DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
+
+# igb_ethtool.c
+OBJS = rt_igb$(modext)
+EXTRA_DIST = Makefile.kbuild
+DISTCLEANFILES = Makefile
 all: all-am
 
 .SUFFIXES:
@@ -231,9 +241,9 @@ $(srcdir)/GNUmakefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/GNUmakefile.am  $(am_
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  stack/rtmac/tdma/GNUmakefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  drivers/igb/GNUmakefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  stack/rtmac/tdma/GNUmakefile
+	  $(AUTOMAKE) --foreign  drivers/igb/GNUmakefile
 .PRECIOUS: GNUmakefile
 GNUmakefile: $(srcdir)/GNUmakefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -251,10 +261,10 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-libkernel_tdma.a: $(libkernel_tdma_a_OBJECTS) $(libkernel_tdma_a_DEPENDENCIES) 
-	-rm -f libkernel_tdma.a
-	$(libkernel_tdma_a_AR) libkernel_tdma.a $(libkernel_tdma_a_OBJECTS) $(libkernel_tdma_a_LIBADD)
-	$(RANLIB) libkernel_tdma.a
+libkernel_igb.a: $(libkernel_igb_a_OBJECTS) $(libkernel_igb_a_DEPENDENCIES) 
+	-rm -f libkernel_igb.a
+	$(libkernel_igb_a_AR) libkernel_igb.a $(libkernel_igb_a_OBJECTS) $(libkernel_igb_a_LIBADD)
+	$(RANLIB) libkernel_igb.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -262,11 +272,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tdma_a-tdma_dev.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tdma_a-tdma_module.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tdma_a-tdma_proto.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_tdma_a-tdma_worker.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_igb_a-e1000_82575.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_igb_a-e1000_mac.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_igb_a-e1000_nvm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_igb_a-e1000_phy.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_igb_a-igb_main.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -289,75 +299,75 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libkernel_tdma_a-tdma_dev.o: tdma_dev.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_dev.o -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_dev.Tpo -c -o libkernel_tdma_a-tdma_dev.o `test -f 'tdma_dev.c' || echo '$(srcdir)/'`tdma_dev.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_dev.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_dev.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_dev.c' object='libkernel_tdma_a-tdma_dev.o' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-igb_main.o: igb_main.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-igb_main.o -MD -MP -MF $(DEPDIR)/libkernel_igb_a-igb_main.Tpo -c -o libkernel_igb_a-igb_main.o `test -f 'igb_main.c' || echo '$(srcdir)/'`igb_main.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-igb_main.Tpo $(DEPDIR)/libkernel_igb_a-igb_main.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='igb_main.c' object='libkernel_igb_a-igb_main.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_dev.o `test -f 'tdma_dev.c' || echo '$(srcdir)/'`tdma_dev.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-igb_main.o `test -f 'igb_main.c' || echo '$(srcdir)/'`igb_main.c
 
-libkernel_tdma_a-tdma_dev.obj: tdma_dev.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_dev.obj -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_dev.Tpo -c -o libkernel_tdma_a-tdma_dev.obj `if test -f 'tdma_dev.c'; then $(CYGPATH_W) 'tdma_dev.c'; else $(CYGPATH_W) '$(srcdir)/tdma_dev.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_dev.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_dev.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_dev.c' object='libkernel_tdma_a-tdma_dev.obj' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-igb_main.obj: igb_main.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-igb_main.obj -MD -MP -MF $(DEPDIR)/libkernel_igb_a-igb_main.Tpo -c -o libkernel_igb_a-igb_main.obj `if test -f 'igb_main.c'; then $(CYGPATH_W) 'igb_main.c'; else $(CYGPATH_W) '$(srcdir)/igb_main.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-igb_main.Tpo $(DEPDIR)/libkernel_igb_a-igb_main.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='igb_main.c' object='libkernel_igb_a-igb_main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_dev.obj `if test -f 'tdma_dev.c'; then $(CYGPATH_W) 'tdma_dev.c'; else $(CYGPATH_W) '$(srcdir)/tdma_dev.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-igb_main.obj `if test -f 'igb_main.c'; then $(CYGPATH_W) 'igb_main.c'; else $(CYGPATH_W) '$(srcdir)/igb_main.c'; fi`
 
-libkernel_tdma_a-tdma_ioctl.o: tdma_ioctl.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_ioctl.o -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Tpo -c -o libkernel_tdma_a-tdma_ioctl.o `test -f 'tdma_ioctl.c' || echo '$(srcdir)/'`tdma_ioctl.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_ioctl.c' object='libkernel_tdma_a-tdma_ioctl.o' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_82575.o: e1000_82575.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_82575.o -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_82575.Tpo -c -o libkernel_igb_a-e1000_82575.o `test -f 'e1000_82575.c' || echo '$(srcdir)/'`e1000_82575.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_82575.Tpo $(DEPDIR)/libkernel_igb_a-e1000_82575.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_82575.c' object='libkernel_igb_a-e1000_82575.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_ioctl.o `test -f 'tdma_ioctl.c' || echo '$(srcdir)/'`tdma_ioctl.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_82575.o `test -f 'e1000_82575.c' || echo '$(srcdir)/'`e1000_82575.c
 
-libkernel_tdma_a-tdma_ioctl.obj: tdma_ioctl.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_ioctl.obj -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Tpo -c -o libkernel_tdma_a-tdma_ioctl.obj `if test -f 'tdma_ioctl.c'; then $(CYGPATH_W) 'tdma_ioctl.c'; else $(CYGPATH_W) '$(srcdir)/tdma_ioctl.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_ioctl.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_ioctl.c' object='libkernel_tdma_a-tdma_ioctl.obj' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_82575.obj: e1000_82575.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_82575.obj -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_82575.Tpo -c -o libkernel_igb_a-e1000_82575.obj `if test -f 'e1000_82575.c'; then $(CYGPATH_W) 'e1000_82575.c'; else $(CYGPATH_W) '$(srcdir)/e1000_82575.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_82575.Tpo $(DEPDIR)/libkernel_igb_a-e1000_82575.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_82575.c' object='libkernel_igb_a-e1000_82575.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_ioctl.obj `if test -f 'tdma_ioctl.c'; then $(CYGPATH_W) 'tdma_ioctl.c'; else $(CYGPATH_W) '$(srcdir)/tdma_ioctl.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_82575.obj `if test -f 'e1000_82575.c'; then $(CYGPATH_W) 'e1000_82575.c'; else $(CYGPATH_W) '$(srcdir)/e1000_82575.c'; fi`
 
-libkernel_tdma_a-tdma_module.o: tdma_module.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_module.o -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_module.Tpo -c -o libkernel_tdma_a-tdma_module.o `test -f 'tdma_module.c' || echo '$(srcdir)/'`tdma_module.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_module.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_module.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_module.c' object='libkernel_tdma_a-tdma_module.o' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_mac.o: e1000_mac.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_mac.o -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_mac.Tpo -c -o libkernel_igb_a-e1000_mac.o `test -f 'e1000_mac.c' || echo '$(srcdir)/'`e1000_mac.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_mac.Tpo $(DEPDIR)/libkernel_igb_a-e1000_mac.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_mac.c' object='libkernel_igb_a-e1000_mac.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_module.o `test -f 'tdma_module.c' || echo '$(srcdir)/'`tdma_module.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_mac.o `test -f 'e1000_mac.c' || echo '$(srcdir)/'`e1000_mac.c
 
-libkernel_tdma_a-tdma_module.obj: tdma_module.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_module.obj -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_module.Tpo -c -o libkernel_tdma_a-tdma_module.obj `if test -f 'tdma_module.c'; then $(CYGPATH_W) 'tdma_module.c'; else $(CYGPATH_W) '$(srcdir)/tdma_module.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_module.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_module.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_module.c' object='libkernel_tdma_a-tdma_module.obj' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_mac.obj: e1000_mac.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_mac.obj -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_mac.Tpo -c -o libkernel_igb_a-e1000_mac.obj `if test -f 'e1000_mac.c'; then $(CYGPATH_W) 'e1000_mac.c'; else $(CYGPATH_W) '$(srcdir)/e1000_mac.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_mac.Tpo $(DEPDIR)/libkernel_igb_a-e1000_mac.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_mac.c' object='libkernel_igb_a-e1000_mac.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_module.obj `if test -f 'tdma_module.c'; then $(CYGPATH_W) 'tdma_module.c'; else $(CYGPATH_W) '$(srcdir)/tdma_module.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_mac.obj `if test -f 'e1000_mac.c'; then $(CYGPATH_W) 'e1000_mac.c'; else $(CYGPATH_W) '$(srcdir)/e1000_mac.c'; fi`
 
-libkernel_tdma_a-tdma_proto.o: tdma_proto.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_proto.o -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_proto.Tpo -c -o libkernel_tdma_a-tdma_proto.o `test -f 'tdma_proto.c' || echo '$(srcdir)/'`tdma_proto.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_proto.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_proto.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_proto.c' object='libkernel_tdma_a-tdma_proto.o' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_nvm.o: e1000_nvm.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_nvm.o -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_nvm.Tpo -c -o libkernel_igb_a-e1000_nvm.o `test -f 'e1000_nvm.c' || echo '$(srcdir)/'`e1000_nvm.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_nvm.Tpo $(DEPDIR)/libkernel_igb_a-e1000_nvm.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_nvm.c' object='libkernel_igb_a-e1000_nvm.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_proto.o `test -f 'tdma_proto.c' || echo '$(srcdir)/'`tdma_proto.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_nvm.o `test -f 'e1000_nvm.c' || echo '$(srcdir)/'`e1000_nvm.c
 
-libkernel_tdma_a-tdma_proto.obj: tdma_proto.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_proto.obj -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_proto.Tpo -c -o libkernel_tdma_a-tdma_proto.obj `if test -f 'tdma_proto.c'; then $(CYGPATH_W) 'tdma_proto.c'; else $(CYGPATH_W) '$(srcdir)/tdma_proto.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_proto.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_proto.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_proto.c' object='libkernel_tdma_a-tdma_proto.obj' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_nvm.obj: e1000_nvm.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_nvm.obj -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_nvm.Tpo -c -o libkernel_igb_a-e1000_nvm.obj `if test -f 'e1000_nvm.c'; then $(CYGPATH_W) 'e1000_nvm.c'; else $(CYGPATH_W) '$(srcdir)/e1000_nvm.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_nvm.Tpo $(DEPDIR)/libkernel_igb_a-e1000_nvm.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_nvm.c' object='libkernel_igb_a-e1000_nvm.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_proto.obj `if test -f 'tdma_proto.c'; then $(CYGPATH_W) 'tdma_proto.c'; else $(CYGPATH_W) '$(srcdir)/tdma_proto.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_nvm.obj `if test -f 'e1000_nvm.c'; then $(CYGPATH_W) 'e1000_nvm.c'; else $(CYGPATH_W) '$(srcdir)/e1000_nvm.c'; fi`
 
-libkernel_tdma_a-tdma_worker.o: tdma_worker.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_worker.o -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_worker.Tpo -c -o libkernel_tdma_a-tdma_worker.o `test -f 'tdma_worker.c' || echo '$(srcdir)/'`tdma_worker.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_worker.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_worker.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_worker.c' object='libkernel_tdma_a-tdma_worker.o' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_phy.o: e1000_phy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_phy.o -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_phy.Tpo -c -o libkernel_igb_a-e1000_phy.o `test -f 'e1000_phy.c' || echo '$(srcdir)/'`e1000_phy.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_phy.Tpo $(DEPDIR)/libkernel_igb_a-e1000_phy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_phy.c' object='libkernel_igb_a-e1000_phy.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_worker.o `test -f 'tdma_worker.c' || echo '$(srcdir)/'`tdma_worker.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_phy.o `test -f 'e1000_phy.c' || echo '$(srcdir)/'`e1000_phy.c
 
-libkernel_tdma_a-tdma_worker.obj: tdma_worker.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_tdma_a-tdma_worker.obj -MD -MP -MF $(DEPDIR)/libkernel_tdma_a-tdma_worker.Tpo -c -o libkernel_tdma_a-tdma_worker.obj `if test -f 'tdma_worker.c'; then $(CYGPATH_W) 'tdma_worker.c'; else $(CYGPATH_W) '$(srcdir)/tdma_worker.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_tdma_a-tdma_worker.Tpo $(DEPDIR)/libkernel_tdma_a-tdma_worker.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='tdma_worker.c' object='libkernel_tdma_a-tdma_worker.obj' libtool=no @AMDEPBACKSLASH@
+libkernel_igb_a-e1000_phy.obj: e1000_phy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_igb_a-e1000_phy.obj -MD -MP -MF $(DEPDIR)/libkernel_igb_a-e1000_phy.Tpo -c -o libkernel_igb_a-e1000_phy.obj `if test -f 'e1000_phy.c'; then $(CYGPATH_W) 'e1000_phy.c'; else $(CYGPATH_W) '$(srcdir)/e1000_phy.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libkernel_igb_a-e1000_phy.Tpo $(DEPDIR)/libkernel_igb_a-e1000_phy.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='e1000_phy.c' object='libkernel_igb_a-e1000_phy.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_tdma_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_tdma_a-tdma_worker.obj `if test -f 'tdma_worker.c'; then $(CYGPATH_W) 'tdma_worker.c'; else $(CYGPATH_W) '$(srcdir)/tdma_worker.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_igb_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_igb_a-e1000_phy.obj `if test -f 'e1000_phy.c'; then $(CYGPATH_W) 'e1000_phy.c'; else $(CYGPATH_W) '$(srcdir)/e1000_phy.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -542,7 +552,7 @@ uninstall-am: uninstall-local
 	tags uninstall uninstall-am uninstall-local
 
 
-tdma.o: libkernel_tdma.a
+rt_igb.o: libkernel_igb.a
 	$(LD) --whole-archive $< -r -o $@
 
 all-local: all-local$(modext)
@@ -552,7 +562,7 @@ all-local.o: $(OBJS)
 
 # 2.6 build
 all-local.ko: @RTNET_KBUILD_ENV@
-all-local.ko: $(libkernel_tdma_a_SOURCES) FORCE
+all-local.ko: $(libkernel_igb_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
@@ -562,7 +572,7 @@ install-exec-local: $(OBJS)
 uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
-clean-local: $(libkernel_tdma_a_SOURCES)
+clean-local: $(libkernel_igb_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:
