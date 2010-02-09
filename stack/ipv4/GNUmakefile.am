@@ -4,6 +4,10 @@ if CONFIG_RTNET_RTIPV4_UDP
 OPTDIRS += udp
 endif
 
+if CONFIG_RTNET_RTIPV4_TCP
+OPTDIRS += tcp
+endif
+
 SUBDIRS = . $(OPTDIRS)
 
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)

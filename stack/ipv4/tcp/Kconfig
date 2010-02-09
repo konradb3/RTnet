@@ -1,0 +1,9 @@
+config RTNET_RTIPV4_TCP
+    bool "TCP support"
+    depends on RTNET_RTIPV4
+    default y
+    ---help---
+    Enables TCP support of the RTnet Real-Time IPv4 protocol.
+
+    When the RTnet IPv4 is enabled while this feature is disabled, TCP
+    will be forwarded to the Linux network stack.

@@ -32,7 +32,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @CONFIG_RTNET_RTIPV4_UDP_TRUE@am__append_1 = udp
-@CONFIG_RTNET_RTIPV4_ICMP_TRUE@am__append_2 = icmp.c
+@CONFIG_RTNET_RTIPV4_TCP_TRUE@am__append_2 = tcp
+@CONFIG_RTNET_RTIPV4_ICMP_TRUE@am__append_3 = icmp.c
 subdir = stack/ipv4
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -89,7 +90,7 @@ RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = . udp
+DIST_SUBDIRS = . udp tcp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -223,7 +224,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-OPTDIRS = $(am__append_1)
+OPTDIRS = $(am__append_1) $(am__append_2)
 SUBDIRS = . $(OPTDIRS)
 moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
@@ -236,7 +237,7 @@ libkernel_ipv4_a_CPPFLAGS = \
 	-I$(top_builddir)/stack/include
 
 libkernel_ipv4_a_SOURCES = route.c protocol.c arp.c af_inet.c \
-	ip_input.c ip_sock.c ip_output.c ip_fragment.c $(am__append_2)
+	ip_input.c ip_sock.c ip_output.c ip_fragment.c $(am__append_3)
 OBJS = rtipv4$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order

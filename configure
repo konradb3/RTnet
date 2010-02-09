@@ -815,6 +815,8 @@ CONFIG_RTNET_RTCFG_FALSE
 CONFIG_RTNET_RTCFG_TRUE
 CONFIG_RTNET_RTPACKET_FALSE
 CONFIG_RTNET_RTPACKET_TRUE
+CONFIG_RTNET_RTIPV4_TCP_FALSE
+CONFIG_RTNET_RTIPV4_TCP_TRUE
 CONFIG_RTNET_RTIPV4_UDP_FALSE
 CONFIG_RTNET_RTIPV4_UDP_TRUE
 CONFIG_RTNET_RTIPV4_ICMP_FALSE
@@ -1044,6 +1046,7 @@ enable_rtwlan
 enable_rtipv4
 enable_icmp
 enable_udp
+enable_tcp
 enable_host_routes
 enable_net_routing
 enable_net_routes
@@ -1740,6 +1743,7 @@ Optional Features:
   --enable-rtipv4         enable real-time IPv4 support [default=yes]
   --enable-icmp           enable real-time IPv4 ICMP support [default=yes]
   --enable-udp            enable real-time IPv4 UDP support [default=yes]
+  --enable-tcp            enable real-time IPv4 TCP support [default=yes]
   --with-host-routes      Set maximum host routes [default=32]
   --enable-net-routing    enable IP network routing [default=no]
   --with-net-routes       Set maximum network routes [default=16]
@@ -4596,13 +4600,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4599: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4603: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4602: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4606: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4605: output\"" >&5)
+  (eval echo "\"\$as_me:4609: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5808,7 +5812,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5811 "configure"' > conftest.$ac_ext
+  echo '#line 5815 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7665,11 +7669,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7668: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7672: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7672: \$? = $ac_status" >&5
+   echo "$as_me:7676: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8004,11 +8008,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8007: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8011: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8011: \$? = $ac_status" >&5
+   echo "$as_me:8015: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8109,11 +8113,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8112: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8116: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8116: \$? = $ac_status" >&5
+   echo "$as_me:8120: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8164,11 +8168,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8167: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8171: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8171: \$? = $ac_status" >&5
+   echo "$as_me:8175: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10964,7 +10968,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10967 "configure"
+#line 10971 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11060,7 +11064,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11063 "configure"
+#line 11067 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13103,6 +13107,27 @@ else
 fi
 
 
+{ $as_echo "$as_me:$LINENO: checking whether to enable real-time IPv4 TCP support" >&5
+$as_echo_n "checking whether to enable real-time IPv4 TCP support... " >&6; }
+# Check whether --enable-tcp was given.
+if test "${enable_tcp+set}" = set; then
+  enableval=$enable_tcp; case "$enableval" in
+        y | yes) CONFIG_RTNET_RTIPV4_TCP=y ;;
+        *) CONFIG_RTNET_RTIPV4_TCP=n ;;
+    esac
+fi
+
+{ $as_echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTIPV4_TCP:-n}" >&5
+$as_echo "${CONFIG_RTNET_RTIPV4_TCP:-n}" >&6; }
+ if test "$CONFIG_RTNET_RTIPV4_TCP" = "y"; then
+  CONFIG_RTNET_RTIPV4_TCP_TRUE=
+  CONFIG_RTNET_RTIPV4_TCP_FALSE='#'
+else
+  CONFIG_RTNET_RTIPV4_TCP_TRUE='#'
+  CONFIG_RTNET_RTIPV4_TCP_FALSE=
+fi
+
+
 { $as_echo "$as_me:$LINENO: checking for host routes" >&5
 $as_echo_n "checking for host routes... " >&6; }
 # Check whether --enable-host-routes was given.
@@ -13523,6 +13548,7 @@ if test x$CONFIG_KBUILD = xy; then
         stack/packet \
         stack/ipv4 \
         stack/ipv4/udp \
+        stack/ipv4/tcp \
         stack/rtcfg \
         stack/rtmac \
         stack/rtmac/nomac \
@@ -13572,7 +13598,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/igb/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile drivers/experimental/e1000/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/ipv4/udp/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
+ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/igb/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile drivers/experimental/e1000/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/ipv4/udp/GNUmakefile stack/ipv4/tcp/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
 
 
 
@@ -13908,6 +13934,13 @@ if test -z "${CONFIG_RTNET_RTIPV4_UDP_TRUE}" && test -z "${CONFIG_RTNET_RTIPV4_U
   { { $as_echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_RTIPV4_UDP\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
 $as_echo "$as_me: error: conditional \"CONFIG_RTNET_RTIPV4_UDP\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if test -z "${CONFIG_RTNET_RTIPV4_TCP_TRUE}" && test -z "${CONFIG_RTNET_RTIPV4_TCP_FALSE}"; then
+  { { $as_echo "$as_me:$LINENO: error: conditional \"CONFIG_RTNET_RTIPV4_TCP\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+$as_echo "$as_me: error: conditional \"CONFIG_RTNET_RTIPV4_TCP\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -14760,6 +14793,7 @@ do
     "stack/packet/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/packet/GNUmakefile" ;;
     "stack/ipv4/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/ipv4/GNUmakefile" ;;
     "stack/ipv4/udp/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/ipv4/udp/GNUmakefile" ;;
+    "stack/ipv4/tcp/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/ipv4/tcp/GNUmakefile" ;;
     "stack/rtcfg/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/rtcfg/GNUmakefile" ;;
     "stack/rtmac/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/rtmac/GNUmakefile" ;;
     "stack/rtmac/nomac/GNUmakefile") CONFIG_FILES="$CONFIG_FILES stack/rtmac/nomac/GNUmakefile" ;;

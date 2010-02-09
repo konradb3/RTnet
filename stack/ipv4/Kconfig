@@ -62,3 +62,4 @@ config RTNET_RTIPV4_ROUTER
     See Documentation/README.routing for further information.
 
 source "stack/ipv4/udp/Kconfig"
+source "stack/ipv4/tcp/Kconfig"
