@@ -348,8 +348,10 @@ static void rt_tcp_keepalive_feed(struct tcp_socket *ts)
     }
 }
 
-static void rt_tcp_socket_invalidate(struct tcp_socket *ts, u8 to_state)
+static int rt_tcp_socket_invalidate(struct tcp_socket *ts, u8 to_state)
 {
+    int signal = ts->is_valid;
+
     ts->tcp_state = to_state;
 
     /*
@@ -362,11 +364,16 @@ static void rt_tcp_socket_invalidate(struct tcp_socket *ts, u8 to_state)
         if (ts->keepalive.enabled) {
             rt_tcp_keepalive_stop(ts);
         }
-
-        /* awake all readers and writers destroying events */
-        rtdm_sem_destroy(&ts->sock.pending_sem);
-        rtdm_event_destroy(&ts->send_evt);
     }
+
+    return signal;
+}
+
+static void rt_tcp_socket_invalidate_signal(struct tcp_socket *ts)
+{
+    /* awake all readers and writers destroying events */
+    rtdm_sem_destroy(&ts->sock.pending_sem);
+    rtdm_event_destroy(&ts->send_evt);
 }
 
 static void rt_tcp_socket_validate(struct tcp_socket *ts)
@@ -390,7 +397,8 @@ static void rt_tcp_retransmit_handler(void *data)
 {
     struct tcp_socket *ts = (struct tcp_socket *)data;
     struct rtskb* skb;
-    rtdm_lockctx_t  context;
+    rtdm_lockctx_t context;
+    int signal;
 
     rtdm_lock_get_irqsave(&ts->socket_lock, context);
 
@@ -428,8 +436,11 @@ static void rt_tcp_retransmit_handler(void *data)
         ts->timer_state = max_retransmits;
 
         /* report about connection lost */
-        rt_tcp_socket_invalidate(ts, TCP_CLOSE);
+        signal = rt_tcp_socket_invalidate(ts, TCP_CLOSE);
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
+        if (signal)
+            rt_tcp_socket_invalidate_signal(ts);
 
         /* retransmission queue will be cleaned up in rt_tcp_socket_destruct */
         rtdm_printk("rttcp: connection is lost by NACK timeout\n");
@@ -738,6 +749,7 @@ static void rt_tcp_keepalive_timer(rtdm_timer_t *timer)
                                                    struct tcp_keepalive, timer);
 
     struct tcp_socket *ts = container_of(keepalive, struct tcp_socket, keepalive);
+    int signal = 0;
 
     rtdm_lock_get_irqsave(&ts->socket_lock, context);
 
@@ -745,7 +757,7 @@ static void rt_tcp_keepalive_timer(rtdm_timer_t *timer)
         /* Send a probe */
         if (rt_tcp_segment(&ts->rt, ts, 0, 0, NULL, 1) < 0) {
             /* data receiving and sending is not possible anymore */
-            rt_tcp_socket_invalidate(ts, TCP_TIME_WAIT);
+            signal = rt_tcp_socket_invalidate(ts, TCP_TIME_WAIT);
             rtdm_lock_put_irqrestore(&ts->socket_lock, context);
         }
 
@@ -757,9 +769,12 @@ static void rt_tcp_keepalive_timer(rtdm_timer_t *timer)
     } else {
         /* data receiving and sending is not possible anymore */
 
-        rt_tcp_socket_invalidate(ts, TCP_TIME_WAIT);
+        signal = rt_tcp_socket_invalidate(ts, TCP_TIME_WAIT);
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
     }
+
+    if (signal)
+        rt_tcp_socket_invalidate_signal(ts);
 }
 #endif
 
@@ -851,6 +866,7 @@ static void rt_tcp_rcv(struct rtskb *skb)
     struct tcp_socket* ts;
     struct tcphdr* th = skb->h.th;
     unsigned int data_len = skb->len - (th->doff << 2);
+    int signal;
 
     ts = container_of(skb->sk, struct tcp_socket, sock);
 
@@ -949,8 +965,12 @@ static void rt_tcp_rcv(struct rtskb *skb)
     if (th->fin) {
         if (ts->tcp_state == TCP_ESTABLISHED) {
             /* Send ACK */
-            rt_tcp_socket_invalidate(ts, TCP_CLOSE_WAIT);
+            signal = rt_tcp_socket_invalidate(ts, TCP_CLOSE_WAIT);
             rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
+            if (signal)
+                rt_tcp_socket_invalidate_signal(ts);
+
             rt_tcp_send(ts, TCP_FLAG_ACK);
             goto feed;
         } else if ((ts->tcp_state == TCP_FIN_WAIT1 && th->ack) ||
@@ -1231,6 +1251,7 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
     rtdm_lockctx_t  context;
     struct rtskb    *skb;
     int             index;
+    int             signal;
 
     struct rtdm_dev_context *sockctx;
     struct rtsocket *sock = &ts->sock;
@@ -1252,7 +1273,8 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
     rtdm_lock_put_irqrestore(&tcp_socket_base_lock, context);
 
     rtdm_lock_get_irqsave(&ts->socket_lock, context);
-    rt_tcp_socket_invalidate(ts, TCP_CLOSE);
+
+    signal = rt_tcp_socket_invalidate(ts, TCP_CLOSE);
 
     rt_tcp_keepalive_disable(ts);
 
@@ -1261,6 +1283,9 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
         kfree_rtskb(skb);
 
     rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
+    if (signal)
+        rt_tcp_socket_invalidate_signal(ts);
 
     rtdm_event_destroy(&ts->conn_evt);
 
@@ -1291,6 +1316,7 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
     struct tcp_socket* ts = (struct tcp_socket *)&sockctx->dev_private;
     struct rt_tcp_dispatched_packet_send_cmd send_cmd;
     rtdm_lockctx_t context;
+    int signal = 0;
 
     rtdm_lock_get_irqsave(&ts->socket_lock, context);
 
@@ -1314,8 +1340,10 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
         /* close() from ESTABLISHED */
         send_cmd.ts = ts;
         send_cmd.flags = TCP_FLAG_FIN;
-        rt_tcp_socket_invalidate(ts, TCP_FIN_WAIT1);
+        signal = rt_tcp_socket_invalidate(ts, TCP_FIN_WAIT1);
+
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
         rtpc_dispatch_call(rt_tcp_dispatched_packet_send, 0, &send_cmd,
                            sizeof(send_cmd), NULL, NULL);
         /* result is ignored */
@@ -1323,8 +1351,10 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
         /* Send FIN in CLOSE_WAIT */
         send_cmd.ts = ts;
         send_cmd.flags = TCP_FLAG_FIN;
-        rt_tcp_socket_invalidate(ts, TCP_LAST_ACK);
+        signal = rt_tcp_socket_invalidate(ts, TCP_LAST_ACK);
+
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
         rtpc_dispatch_call(rt_tcp_dispatched_packet_send, 0, &send_cmd,
                            sizeof(send_cmd), NULL, NULL);
         /* result is ignored */
@@ -1338,6 +1368,9 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
         */
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
     }
+
+    if (signal)
+        rt_tcp_socket_invalidate_signal(ts);
 
     msleep(timeout);
     rt_tcp_socket_destruct(ts);
