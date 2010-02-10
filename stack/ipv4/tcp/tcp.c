@@ -1601,6 +1601,8 @@ static int rt_tcp_accept(struct tcp_socket *ts, struct sockaddr *addr,
     ts->is_accepted = 1;
     rtdm_lock_put_irqrestore(&ts->socket_lock, context);
 
+    ret = rt_socket_context(&ts->sock)->fd;
+
  err:
     /* it is not critical to leave this unlocked
        due to single entry nature of accept() */
