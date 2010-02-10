@@ -430,7 +430,8 @@ static void rt_tcp_retransmit_handler(void *data)
         }
 
         rtdm_lock_get_irqsave(&ts->socket_lock, context);
-        timerwheel_add_timer(&ts->timer, rt_tcp_retransmission_timeout);
+        if (ts->tcp_state != TCP_CLOSE)
+            timerwheel_add_timer(&ts->timer, rt_tcp_retransmission_timeout);
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
     } else {
         ts->timer_state = max_retransmits;
@@ -674,7 +675,8 @@ static int rt_tcp_segment(struct dest_route *rt, struct tcp_socket *ts, __be32 f
     }
 
     /* add rtskb entry to the socket retransmission queue */
-    if ((flags & (TCP_FLAG_SYN|TCP_FLAG_FIN)) || data_len) {
+    if (ts->tcp_state != TCP_CLOSE &&
+        ((flags & (TCP_FLAG_SYN|TCP_FLAG_FIN)) || data_len)) {
         /* rtskb_clone below is called under lock, this is an admission,
            because for now there is no rtskb copy by reference */
         if ((cloned_skb = rtskb_clone(skb, &ts->sock.skb_pool)) == NULL) {
@@ -1278,10 +1280,6 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
 
     rt_tcp_keepalive_disable(ts);
 
-    /* free packets in retransmission queue */
-    while ((skb = __rtskb_dequeue(&ts->retransmit_queue)) != NULL)
-        kfree_rtskb(skb);
-
     rtdm_lock_put_irqrestore(&ts->socket_lock, context);
 
     if (signal)
@@ -1304,6 +1302,10 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
 
     /* ensure that the timer is no longer running */
     timerwheel_remove_timer_sync(&ts->timer);
+
+    /* free packets in retransmission queue */
+    while ((skb = __rtskb_dequeue(&ts->retransmit_queue)) != NULL)
+        kfree_rtskb(skb);
 }
 
 /***
