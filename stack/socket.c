@@ -178,9 +178,13 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
                 mutex_unlock(&sock->pool_nrt_lock);
                 return -EBADF;
             }
-            sock->pool_size += rtskb_pool_extend(&sock->skb_pool, rtskbs);
+            ret = rtskb_pool_extend(&sock->skb_pool, rtskbs);
+            sock->pool_size += ret;
 
             mutex_unlock(&sock->pool_nrt_lock);
+
+            if (ret == 0 && rtskbs > 0)
+                ret = -ENOMEM;
 
             break;
 
@@ -192,9 +196,13 @@ int rt_socket_common_ioctl(struct rtdm_dev_context *sockctx,
 
             mutex_lock(&sock->pool_nrt_lock);
 
-            sock->pool_size -= rtskb_pool_shrink(&sock->skb_pool, rtskbs);
+            ret = rtskb_pool_shrink(&sock->skb_pool, rtskbs);
+            sock->pool_size -= ret;
 
             mutex_unlock(&sock->pool_nrt_lock);
+
+            if (ret == 0 && rtskbs > 0)
+                ret = -EBUSY;
 
             break;
 
