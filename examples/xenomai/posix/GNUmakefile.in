@@ -32,9 +32,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-example_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2)
+example_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
 @CONFIG_RTNET_RTIPV4_TRUE@am__append_1 = rtt-sender rtt-responder
 @CONFIG_RTNET_RTPACKET_TRUE@am__append_2 = eth_p_all raw-ethernet
+@CONFIG_RTNET_RTIPV4_TCP_TRUE@am__append_3 = rttcp-server rttcp-client
 subdir = examples/xenomai/posix
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -55,6 +56,8 @@ CONFIG_CLEAN_FILES =
 @CONFIG_RTNET_RTIPV4_TRUE@	rtt-responder$(EXEEXT)
 @CONFIG_RTNET_RTPACKET_TRUE@am__EXEEXT_2 = eth_p_all$(EXEEXT) \
 @CONFIG_RTNET_RTPACKET_TRUE@	raw-ethernet$(EXEEXT)
+@CONFIG_RTNET_RTIPV4_TCP_TRUE@am__EXEEXT_3 = rttcp-server$(EXEEXT) \
+@CONFIG_RTNET_RTIPV4_TCP_TRUE@	rttcp-client$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(exampledir)"
 examplePROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(example_PROGRAMS)
@@ -70,6 +73,12 @@ rtt_responder_LDADD = $(LDADD)
 rtt_sender_SOURCES = rtt-sender.c
 rtt_sender_OBJECTS = rtt-sender.$(OBJEXT)
 rtt_sender_LDADD = $(LDADD)
+rttcp_client_SOURCES = rttcp-client.c
+rttcp_client_OBJECTS = rttcp-client.$(OBJEXT)
+rttcp_client_LDADD = $(LDADD)
+rttcp_server_SOURCES = rttcp-server.c
+rttcp_server_OBJECTS = rttcp-server.$(OBJEXT)
+rttcp_server_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -82,8 +91,10 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = eth_p_all.c raw-ethernet.c rtt-responder.c rtt-sender.c
-DIST_SOURCES = eth_p_all.c raw-ethernet.c rtt-responder.c rtt-sender.c
+SOURCES = eth_p_all.c raw-ethernet.c rtt-responder.c rtt-sender.c \
+	rttcp-client.c rttcp-server.c
+DIST_SOURCES = eth_p_all.c raw-ethernet.c rtt-responder.c rtt-sender.c \
+	rttcp-client.c rttcp-server.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -301,6 +312,12 @@ rtt-responder$(EXEEXT): $(rtt_responder_OBJECTS) $(rtt_responder_DEPENDENCIES)
 rtt-sender$(EXEEXT): $(rtt_sender_OBJECTS) $(rtt_sender_DEPENDENCIES) 
 	@rm -f rtt-sender$(EXEEXT)
 	$(LINK) $(rtt_sender_OBJECTS) $(rtt_sender_LDADD) $(LIBS)
+rttcp-client$(EXEEXT): $(rttcp_client_OBJECTS) $(rttcp_client_DEPENDENCIES) 
+	@rm -f rttcp-client$(EXEEXT)
+	$(LINK) $(rttcp_client_OBJECTS) $(rttcp_client_LDADD) $(LIBS)
+rttcp-server$(EXEEXT): $(rttcp_server_OBJECTS) $(rttcp_server_DEPENDENCIES) 
+	@rm -f rttcp-server$(EXEEXT)
+	$(LINK) $(rttcp_server_OBJECTS) $(rttcp_server_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -312,6 +329,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw-ethernet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtt-responder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtt-sender.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rttcp-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rttcp-server.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

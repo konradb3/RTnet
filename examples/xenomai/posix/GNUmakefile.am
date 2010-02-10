@@ -17,3 +17,7 @@ endif
 if CONFIG_RTNET_RTPACKET
 example_PROGRAMS += eth_p_all raw-ethernet
 endif
+
+if CONFIG_RTNET_RTIPV4_TCP
+example_PROGRAMS += rttcp-server rttcp-client
+endif
