@@ -615,8 +615,9 @@ static void rt_tcp_build_header(struct tcp_socket *ts, struct rtskb *skb,
     th->check = tcp_v4_check(skb->len - iphdrlen, ts->saddr, ts->daddr, wcheck);
 }
 
-static int rt_tcp_segment(struct dest_route *rt, struct tcp_socket *ts, __be32 flags, u32 data_len,
-                          u8 *data_ptr, u8 is_keepalive)
+static int
+rt_tcp_segment(struct dest_route *rt, struct tcp_socket *ts, __be32 flags,
+               u32 data_len, u8 *data_ptr, u8 is_keepalive)
 {
     struct tcphdr       *th;
     struct rtsocket     *sk    = &ts->sock;
@@ -677,20 +678,20 @@ static int rt_tcp_segment(struct dest_route *rt, struct tcp_socket *ts, __be32 f
     /* add rtskb entry to the socket retransmission queue */
     if (ts->tcp_state != TCP_CLOSE &&
         ((flags & (TCP_FLAG_SYN|TCP_FLAG_FIN)) || data_len)) {
-        /* rtskb_clone below is called under lock, this is an admission,
-           because for now there is no rtskb copy by reference */
-        if ((cloned_skb = rtskb_clone(skb, &ts->sock.skb_pool)) == NULL) {
+        if (ts->timer_state != max_retransmits) {
             rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-            rtdm_printk("rttcp: cann't clone skb\n");
-            ret = -ENOMEM;
+            rtdm_printk("rttcp: send is delayed, no ack responses\n");
+            ret = -EAGAIN;
             goto error;
         }
 
-        if (ts->timer_state != max_retransmits) {
+        /* rtskb_clone below is called under lock, this is an admission,
+           because for now there is no rtskb copy by reference */
+        cloned_skb = rtskb_clone(skb, &ts->sock.skb_pool);
+        if (!cloned_skb) {
             rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-            kfree_rtskb(cloned_skb);
-            rtdm_printk("rttcp: send is delayed, no ack responses\n");
-            ret = -EAGAIN;
+            rtdm_printk("rttcp: cann't clone skb\n");
+            ret = -ENOMEM;
             goto error;
         }
 
