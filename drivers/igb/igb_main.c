@@ -137,10 +137,6 @@ compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (eg. 1,0,1)");
 
 // RTNET wrappers
-#define kmalloc(a,b) rtdm_malloc(a)
-#define vmalloc(a) rtdm_malloc(a)
-#define kfree(a) rtdm_free(a)
-#define vfree(a) rtdm_free(a)
 #define skb_reserve(a,b) rtskb_reserve(a,b)
 #define sk_buff rtskb
 #define net_device rtnet_device
