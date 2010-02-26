@@ -136,13 +136,6 @@ static int cards[MAX_UNITS] = { [0 ... (MAX_UNITS-1)] = 1 };
 compat_module_int_param_array(cards, MAX_UNITS);
 MODULE_PARM_DESC(cards, "array of cards to be supported (eg. 1,0,1)");
 
-// RTNET wrappers
-#define skb_reserve(a,b) rtskb_reserve(a,b)
-#define sk_buff rtskb
-#define net_device rtnet_device
-#define netdev_priv(a) a->priv
-// ----------------------
-
 static struct pci_device_id igb_pci_tbl[] = {
 	{ PCI_VDEVICE(INTEL, E1000_DEV_ID_82576), board_82575 },
 	{ PCI_VDEVICE(INTEL, E1000_DEV_ID_82576_FIBER), board_82575 },
@@ -165,8 +158,8 @@ void igb_update_stats(struct igb_adapter *);
 static int igb_probe(struct pci_dev *, const struct pci_device_id *);
 static void __devexit igb_remove(struct pci_dev *pdev);
 static int igb_sw_init(struct igb_adapter *);
-static int igb_open(struct net_device *);
-static int igb_close(struct net_device *);
+static int igb_open(struct rtnet_device *);
+static int igb_close(struct rtnet_device *);
 static void igb_configure_tx(struct igb_adapter *);
 static void igb_configure_rx(struct igb_adapter *);
 static void igb_setup_rctl(struct igb_adapter *);
@@ -174,14 +167,14 @@ static void igb_clean_all_tx_rings(struct igb_adapter *);
 static void igb_clean_all_rx_rings(struct igb_adapter *);
 static void igb_clean_tx_ring(struct igb_ring *);
 static void igb_clean_rx_ring(struct igb_ring *);
-static void igb_set_multi(struct net_device *);
+static void igb_set_multi(struct rtnet_device *);
 static void igb_update_phy_info(unsigned long);
 static void igb_watchdog(unsigned long);
 static void igb_watchdog_task(struct work_struct *);
-static int igb_xmit_frame_ring_adv(struct sk_buff *, struct net_device *,
+static int igb_xmit_frame_ring_adv(struct rtskb *, struct rtnet_device *,
 				  struct igb_ring *);
-static int igb_xmit_frame_adv(struct sk_buff *skb, struct net_device *);
-static struct net_device_stats *igb_get_stats(struct net_device *);
+static int igb_xmit_frame_adv(struct rtskb *skb, struct rtnet_device *);
+static struct net_device_stats *igb_get_stats(struct rtnet_device *);
 /* static int igb_change_mtu(struct net_device *, int); */
 /* static int igb_set_mac(struct net_device *, void *); */
 static int igb_intr(rtdm_irq_t *irq_handle);
@@ -207,16 +200,16 @@ static int igb_poll(struct napi_struct *, int);
 static bool igb_clean_rx_irq_adv(struct igb_ring *, nanosecs_abs_t *);
 static void igb_alloc_rx_buffers_adv(struct igb_ring *, int);
 #ifdef CONFIG_IGB_LRO
-static int igb_get_skb_hdr(struct sk_buff *skb, void **, void **, u64 *, void *);
+static int igb_get_skb_hdr(struct rtskb *skb, void **, void **, u64 *, void *);
 #endif
 /* static int igb_ioctl(struct net_device *, struct ifreq *, int cmd); */
 #ifdef IGB_HAVE_TX_TIMEOUT
-static void igb_tx_timeout(struct net_device *);
+static void igb_tx_timeout(struct rtnet_device *);
 #endif
 static void igb_reset_task(struct work_struct *);
-static void igb_vlan_rx_register(struct net_device *, struct vlan_group *);
-static void igb_vlan_rx_add_vid(struct net_device *, u16);
-static void igb_vlan_rx_kill_vid(struct net_device *, u16);
+static void igb_vlan_rx_register(struct rtnet_device *, struct vlan_group *);
+static void igb_vlan_rx_add_vid(struct rtnet_device *, u16);
+static void igb_vlan_rx_kill_vid(struct rtnet_device *, u16);
 static void igb_restore_vlan(struct igb_adapter *);
 
 static int igb_suspend(struct pci_dev *, pm_message_t);
@@ -235,7 +228,7 @@ static struct notifier_block dca_notifier = {
 
 #ifdef CONFIG_NET_POLL_CONTROLLER
 /* for netdump / net console */
-static void igb_netpoll(struct net_device *);
+static void igb_netpoll(struct rtnet_device *);
 #endif
 
 static pci_ers_result_t igb_io_error_detected(struct pci_dev *,
@@ -581,7 +574,7 @@ static void igb_configure_msix(struct igb_adapter *adapter)
  **/
 static int igb_request_msix(struct igb_adapter *adapter)
 {
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	int i, err = 0, vector = 0;
 
 	vector = 0;
@@ -693,7 +686,7 @@ out:
  **/
 static int igb_request_irq(struct igb_adapter *adapter)
 {
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	struct e1000_hw *hw = &adapter->hw;
 	int err = 0;
 
@@ -756,7 +749,7 @@ request_done:
 static void igb_free_irq(struct igb_adapter *adapter)
 {
 #ifdef CONFIG_PCI_MSI
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 
 	if (adapter->msix_entries) {
 		int vector = 0, i;
@@ -824,7 +817,7 @@ static void igb_irq_enable(struct igb_adapter *adapter)
 
 static void igb_update_mng_vlan(struct igb_adapter *adapter)
 {
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	u16 vid = adapter->hw.mng_cookie.vlan_id;
 	u16 old_vid = adapter->mng_vlan_id;
 	if (adapter->vlgrp) {
@@ -892,7 +885,7 @@ static void igb_get_hw_control(struct igb_adapter *adapter)
  **/
 static void igb_configure(struct igb_adapter *adapter)
 {
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	int i;
 
 	igb_get_hw_control(adapter);
@@ -956,7 +949,7 @@ int igb_up(struct igb_adapter *adapter)
 void igb_down(struct igb_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	u32 tctl, rctl;
 #ifdef CONFIG_IGB_NAPI
 	int i;
@@ -1160,7 +1153,7 @@ static const struct net_device_ops igb_netdev_ops = {
 static int __devinit igb_probe(struct pci_dev *pdev,
 			       const struct pci_device_id *ent)
 {
-	struct net_device *netdev;
+	struct rtnet_device *netdev;
 	struct igb_adapter *adapter;
 	struct e1000_hw *hw;
 	const struct e1000_info *ei = igb_info_tbl[ent->driver_data];
@@ -1236,7 +1229,7 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 	netdev->vers = RTDEV_VERS_2_0;
 
 	pci_set_drvdata(pdev, netdev);
-	adapter = netdev_priv(netdev);
+	adapter = netdev->priv;
 	adapter->netdev = netdev;
 	adapter->pdev = pdev;
 	hw = &adapter->hw;
@@ -1548,8 +1541,8 @@ err_dma:
  **/
 static void __devexit igb_remove(struct pci_dev *pdev)
 {
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = pci_get_drvdata(pdev);
+	struct igb_adapter *adapter = netdev->priv;
 #ifdef CONFIG_IGB_DCA
 	struct e1000_hw *hw = &adapter->hw;
 #endif
@@ -1615,7 +1608,7 @@ static void __devexit igb_remove(struct pci_dev *pdev)
 static int __devinit igb_sw_init(struct igb_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	struct pci_dev *pdev = adapter->pdev;
 
 	pci_read_config_word(pdev, PCI_COMMAND, &hw->bus.pci_cmd_word);
@@ -1666,9 +1659,9 @@ static int __devinit igb_sw_init(struct igb_adapter *adapter)
  * handler is registered with the OS, the watchdog timer is started,
  * and the stack is notified that the interface is ready.
  **/
-static int igb_open(struct net_device *netdev)
+static int igb_open(struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	int err;
 #ifdef CONFIG_IGB_NAPI
@@ -1751,9 +1744,9 @@ err_setup_tx:
  * needs to be disabled.  A global MAC reset is issued to stop the
  * hardware, and all transmit and receive resources are freed.
  **/
-static int igb_close(struct net_device *netdev)
+static int igb_close(struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 
 	WARN_ON(test_bit(__IGB_RESETTING, &adapter->state));
 	igb_down(adapter);
@@ -2421,7 +2414,7 @@ static void igb_clean_all_rx_rings(struct igb_adapter *adapter)
  **/
 static int igb_set_mac(struct net_device *netdev, void *p)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct sockaddr *addr = p;
 
 	if (!is_valid_ether_addr(addr->sa_data))
@@ -2445,9 +2438,9 @@ static int igb_set_mac(struct net_device *netdev, void *p)
  * responsible for configuring the hardware for proper multicast,
  * promiscuous mode, and all-multi behavior.
  **/
-static void igb_set_multi(struct net_device *netdev)
+static void igb_set_multi(struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	struct e1000_mac_info *mac = &hw->mac;
 	struct dev_mc_list *mc_ptr;
@@ -2523,7 +2516,7 @@ static void igb_watchdog_task(struct work_struct *work)
 					struct igb_adapter, watchdog_task);
 	struct e1000_hw *hw = &adapter->hw;
 
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	struct igb_ring *tx_ring = adapter->tx_ring;
 	struct e1000_mac_info *mac = &adapter->hw.mac;
 	u32 link;
@@ -2872,7 +2865,7 @@ set_itr_now:
 #if NETIF_F_TSO
 static inline int igb_tso_adv(struct igb_adapter *adapter,
 			      struct igb_ring *tx_ring,
-			      struct sk_buff *skb, u32 tx_flags, u8 *hdr_len)
+			      struct rtskb *skb, u32 tx_flags, u8 *hdr_len)
 {
 	struct e1000_adv_tx_context_desc *context_desc;
 	unsigned int i;
@@ -2955,7 +2948,7 @@ static inline int igb_tso_adv(struct igb_adapter *adapter,
 
 static inline bool igb_tx_csum_adv(struct igb_adapter *adapter,
 					struct igb_ring *tx_ring,
-					struct sk_buff *skb, u32 tx_flags)
+					struct rtskb *skb, u32 tx_flags)
 {
 #if NETIF_F_HW_VLAN_TX
 	struct e1000_adv_tx_context_desc *context_desc;
@@ -3026,7 +3019,7 @@ static inline bool igb_tx_csum_adv(struct igb_adapter *adapter,
 #define IGB_MAX_DATA_PER_TXD	(1<<IGB_MAX_TXD_PWR)
 
 static int igb_tx_map_adv(struct igb_adapter *adapter, struct igb_ring *tx_ring,
-			  struct sk_buff *skb, unsigned int first)
+			  struct rtskb *skb, unsigned int first)
 {
 	struct igb_buffer *buffer_info;
 	unsigned int len = skb->len;
@@ -3148,10 +3141,10 @@ static inline void igb_tx_queue_adv(struct igb_adapter *adapter,
 	mmiowb();
 }
 
-static int __igb_maybe_stop_tx(struct net_device *netdev,
+static int __igb_maybe_stop_tx(struct rtnet_device *netdev,
 			       struct igb_ring *tx_ring, int size)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 
 	//netif_stop_subqueue(netdev, tx_ring->queue_index);
 	rtnetif_stop_queue(netdev);
@@ -3174,7 +3167,7 @@ static int __igb_maybe_stop_tx(struct net_device *netdev,
 	return 0;
 }
 
-static int igb_maybe_stop_tx(struct net_device *netdev,
+static int igb_maybe_stop_tx(struct rtnet_device *netdev,
 			     struct igb_ring *tx_ring, int size)
 {
 	if (IGB_DESC_UNUSED(tx_ring) >= size)
@@ -3184,11 +3177,11 @@ static int igb_maybe_stop_tx(struct net_device *netdev,
 
 #define TXD_USE_COUNT(S) (((S) >> (IGB_MAX_TXD_PWR)) + 1)
 
-static int igb_xmit_frame_ring_adv(struct sk_buff *skb,
-				   struct net_device *netdev,
+static int igb_xmit_frame_ring_adv(struct rtskb *skb,
+				   struct rtnet_device *netdev,
 				   struct igb_ring *tx_ring)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	unsigned int first;
 	unsigned int tx_flags = 0;
 	unsigned int len = skb->len;
@@ -3277,9 +3270,9 @@ static int igb_xmit_frame_ring_adv(struct sk_buff *skb,
 	return NETDEV_TX_OK;
 }
 
-static int igb_xmit_frame_adv(struct sk_buff *skb, struct net_device *netdev)
+static int igb_xmit_frame_adv(struct rtskb *skb, struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct igb_ring *tx_ring;
 
 	int r_idx = 0;
@@ -3301,9 +3294,9 @@ static int igb_xmit_frame_adv(struct sk_buff *skb, struct net_device *netdev)
  * igb_tx_timeout - Respond to a Tx Hang
  * @netdev: network interface device structure
  **/
-static void igb_tx_timeout(struct net_device *netdev)
+static void igb_tx_timeout(struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 
 	/* Do the reset outside of interrupt context */
@@ -3330,9 +3323,9 @@ static void igb_reset_task(struct work_struct *work)
  * The statistics are actually updated from the timer callback.
  **/
 static struct net_device_stats *
-igb_get_stats(struct net_device *netdev)
+igb_get_stats(struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 
 	/* only return the current stats */
 	return &adapter->net_stats;
@@ -3348,7 +3341,7 @@ igb_get_stats(struct net_device *netdev)
  **/
 static int igb_change_mtu(struct net_device *netdev, int new_mtu)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	int max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN;
 
 	if ((max_frame < ETH_ZLEN + ETH_FCS_LEN) ||
@@ -3551,8 +3544,8 @@ void igb_update_stats(struct igb_adapter *adapter)
 #ifdef CONFIG_PCI_MSI
 static irqreturn_t igb_msix_other(int irq, void *data)
 {
-	struct net_device *netdev = data;
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = data;
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = rd32(E1000_ICR);
 
@@ -3712,8 +3705,8 @@ static void igb_setup_dca(struct igb_adapter *adapter)
 
 static int __igb_notify_dca(struct device *dev, void *data)
 {
-	struct net_device *netdev = dev_get_drvdata(dev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = dev_get_drvdata(dev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	unsigned long event = *(unsigned long *)data;
 
@@ -3767,8 +3760,8 @@ static int igb_notify_dca(struct notifier_block *nb, unsigned long event,
  **/
 static irqreturn_t igb_intr_msi(int irq, void *data)
 {
-	struct net_device *netdev = data;
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = data;
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	/* read ICR disables interrupts using IAM */
 	u32 icr = rd32(E1000_ICR);
@@ -3799,8 +3792,9 @@ static irqreturn_t igb_intr_msi(int irq, void *data)
 static int igb_intr(rtdm_irq_t *irq_handle)
 {
         nanosecs_abs_t time_stamp = rtdm_clock_read();
-	struct net_device *netdev = rtdm_irq_get_arg(irq_handle, struct rtnet_device);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev =
+		rtdm_irq_get_arg(irq_handle, struct rtnet_device);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	/* Interrupt Auto-Mask...upon reading ICR, interrupts are masked.  No
 	 * need for the IMC write */
@@ -3878,7 +3872,7 @@ static int igb_poll(struct napi_struct *napi, int budget)
 {
 	struct igb_ring *rx_ring = container_of(napi, struct igb_ring, napi);
 	struct igb_adapter *adapter = rx_ring->adapter;
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	int tx_clean_complete, work_done = 0;
 
 	/* this poll routine only supports one tx and one rx queue */
@@ -3915,7 +3909,7 @@ static int igb_clean_rx_ring_msix(struct napi_struct *napi, int budget)
 	struct igb_ring *rx_ring = container_of(napi, struct igb_ring, napi);
 	struct igb_adapter *adapter = rx_ring->adapter;
 	struct e1000_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	int work_done = 0;
 
 #ifdef CONFIG_IGB_DCA
@@ -3954,10 +3948,10 @@ static int igb_clean_rx_ring_msix(struct napi_struct *napi, int budget)
 static bool igb_clean_tx_irq(struct igb_ring *tx_ring)
 {
 	struct igb_adapter *adapter = tx_ring->adapter;
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	struct e1000_hw *hw = &adapter->hw;
 	struct igb_buffer *buffer_info;
-	struct sk_buff *skb;
+	struct rtskb *skb;
 	union e1000_adv_tx_desc *tx_desc, *eop_desc;
 	unsigned int total_bytes = 0, total_packets = 0;
 	unsigned int i, eop, count = 0;
@@ -4081,7 +4075,7 @@ static bool igb_clean_tx_irq(struct igb_ring *tx_ring)
  * @hdr_flags: pointer to header flags
  * @priv: pointer to the receive descriptor for the current sk_buff
  **/
-static int igb_get_skb_hdr(struct sk_buff *skb, void **iphdr, void **tcph,
+static int igb_get_skb_hdr(struct rtskb *skb, void **iphdr, void **tcph,
                            u64 *hdr_flags, void *priv)
 {
 	union e1000_adv_rx_desc *rx_desc = priv;
@@ -4114,7 +4108,7 @@ static int igb_get_skb_hdr(struct sk_buff *skb, void **iphdr, void **tcph,
  **/
 static void igb_receive_skb(struct igb_ring *ring, u8 status,
                             union e1000_adv_rx_desc * rx_desc,
-                            struct sk_buff *skb)
+                            struct rtskb *skb)
 {
 #if NETIF_F_HW_VLAN_RX
 	bool vlan_extracted = (ring->adapter->vlgrp && (status & E1000_RXD_STAT_VP));
@@ -4146,7 +4140,7 @@ static void igb_receive_skb(struct igb_ring *ring, u8 status,
 
 
 static inline void igb_rx_checksum_adv(struct igb_adapter *adapter,
-				       u32 status_err, struct sk_buff *skb)
+				       u32 status_err, struct rtskb *skb)
 {
 	skb->ip_summed = CHECKSUM_NONE;
 
@@ -4174,11 +4168,11 @@ static bool igb_clean_rx_irq_adv(struct igb_ring *rx_ring,
 static bool igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t *time_stamp)
 {
 	struct igb_adapter *adapter = rx_ring->adapter;
-	struct net_device *netdev = adapter->netdev;
+	struct rtnet_device *netdev = adapter->netdev;
 	struct pci_dev *pdev = adapter->pdev;
 	union e1000_adv_rx_desc *rx_desc , *next_rxd;
 	struct igb_buffer *buffer_info , *next_buffer;
-	struct sk_buff *skb;
+	struct rtskb *skb;
 	unsigned int i;
 	u32 length, hlen, staterr;
 	bool cleaned = false;
@@ -4338,7 +4332,7 @@ static void igb_alloc_rx_buffers_adv(struct igb_ring *rx_ring,
 	struct pci_dev *pdev = adapter->pdev;
 	union e1000_adv_rx_desc *rx_desc;
 	struct igb_buffer *buffer_info;
-	struct sk_buff *skb;
+	struct rtskb *skb;
 	unsigned int i;
 
 	i = rx_ring->next_to_use;
@@ -4445,7 +4439,7 @@ no_buffers:
  **/
 static int igb_mii_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct mii_ioctl_data *data = if_mii(ifr);
 
 	if (adapter->hw.phy.media_type != e1000_media_type_copper)
@@ -4488,10 +4482,10 @@ static int igb_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 }
 #endif
 
-static void igb_vlan_rx_register(struct net_device *netdev,
+static void igb_vlan_rx_register(struct rtnet_device *netdev,
 				 struct vlan_group *grp)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 ctrl, rctl;
 
@@ -4529,9 +4523,9 @@ static void igb_vlan_rx_register(struct net_device *netdev,
 		igb_irq_enable(adapter);
 }
 
-static void igb_vlan_rx_add_vid(struct net_device *netdev, u16 vid)
+static void igb_vlan_rx_add_vid(struct rtnet_device *netdev, u16 vid)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 vfta, index;
 
@@ -4546,9 +4540,9 @@ static void igb_vlan_rx_add_vid(struct net_device *netdev, u16 vid)
 	igb_write_vfta(&adapter->hw, index, vfta);
 }
 
-static void igb_vlan_rx_kill_vid(struct net_device *netdev, u16 vid)
+static void igb_vlan_rx_kill_vid(struct rtnet_device *netdev, u16 vid)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 vfta, index;
 
@@ -4630,8 +4624,8 @@ int igb_set_spd_dplx(struct igb_adapter *adapter, u16 spddplx)
 
 static int igb_suspend(struct pci_dev *pdev, pm_message_t state)
 {
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = pci_get_drvdata(pdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 ctrl, rctl, status;
 	u32 wufc = adapter->wol;
@@ -4711,8 +4705,8 @@ static int igb_suspend(struct pci_dev *pdev, pm_message_t state)
 #ifdef CONFIG_PM
 static int igb_resume(struct pci_dev *pdev)
 {
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = pci_get_drvdata(pdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 err;
 
@@ -4772,9 +4766,9 @@ static void igb_shutdown(struct pci_dev *pdev)
  * without having to re-enable interrupts. It's not called while
  * the interrupt routine is executing.
  */
-static void igb_netpoll(struct net_device *netdev)
+static void igb_netpoll(struct rtnet_device *netdev)
 {
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct igb_adapter *adapter = netdev->priv;
 	int i;
 	int work_done = 0;
 
@@ -4805,8 +4799,8 @@ static void igb_netpoll(struct net_device *netdev)
 static pci_ers_result_t igb_io_error_detected(struct pci_dev *pdev,
 					      pci_channel_state_t state)
 {
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = pci_get_drvdata(pdev);
+	struct igb_adapter *adapter = netdev->priv;
 
 	rtnetif_device_detach(netdev);
 
@@ -4827,8 +4821,8 @@ static pci_ers_result_t igb_io_error_detected(struct pci_dev *pdev,
  */
 static pci_ers_result_t igb_io_slot_reset(struct pci_dev *pdev)
 {
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = pci_get_drvdata(pdev);
+	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	pci_ers_result_t result;
 	int err;
@@ -4874,8 +4868,8 @@ static pci_ers_result_t igb_io_slot_reset(struct pci_dev *pdev)
  */
 static void igb_io_resume(struct pci_dev *pdev)
 {
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igb_adapter *adapter = netdev_priv(netdev);
+	struct rtnet_device *netdev = pci_get_drvdata(pdev);
+	struct igb_adapter *adapter = netdev->priv;
 
 	if (rtnetif_running(netdev)) {
 		if (igb_up(adapter)) {
