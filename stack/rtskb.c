@@ -407,9 +407,6 @@ int rtskb_acquire(struct rtskb *rtskb, struct rtskb_queue *comp_pool)
 EXPORT_SYMBOL(rtskb_acquire);
 
 
-/* so far only used by ETH_P_ALL code */
-#ifdef CONFIG_RTNET_ETH_P_ALL
-
 /* clone rtskb to another, allocating the new rtskb from pool */
 struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
 {
@@ -451,7 +448,6 @@ struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
 }
 
 EXPORT_SYMBOL_GPL(rtskb_clone);
-#endif /* CONFIG_RTNET_ETH_P_ALL */
 
 
 int rtskb_pools_init(void)
