@@ -315,8 +315,13 @@ else
     XENO_VERSION=`grep "#define XENO_VERSION_STRING" ${RTEXT_LINUX_SRC_DIR}/include/xenomai/nucleus/version.h | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
     case "$XENO_VERSION" in
-        2.[[1-9]]*)
+        2.[[1-4]]*|2.5.[[01]])
             CONFIG_RTNET_RTEXT_VERSION=xeno-21x
+            AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
+            AC_MSG_RESULT([${XENO_VERSION}])
+            ;;
+        2.5.[[2-9]]*)
+            CONFIG_RTNET_RTEXT_VERSION=xeno-252
             AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])
             ;;
@@ -352,7 +357,7 @@ case "$CONFIG_RTNET_RTEXT_VERSION" in
 
         ;;
 
-    xeno-20x | xeno-21x) # ---> Xenomai 2.x <---
+    xeno-20x | xeno-21x | xeno-252) # ---> Xenomai 2.x <---
 
         # check for RTDM skin, needed by RTnet
         AC_MSG_CHECKING([for RTDM skin])
@@ -471,6 +476,17 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
             CONFIG_RTNET_RTEXT_ARCH="<something else>"
         fi
         ;;
+    xeno-252)
+        RTEXT_USER_CFLAGS="`${XENO_CONFIG} --skin=native --cflags` $RTNET_INTERNAL_USER_CFLAGS"
+        RTEXT_LIBRARIES="`${XENO_CONFIG} --library-dir` -lxenomai"
+        XNPOSIX_USER_CFLAGS="`${XENO_CONFIG} --skin=posix --cflags` $RTNET_INTERNAL_USER_CFLAGS"
+        XNPOSIX_USER_LDFLAGS="`${XENO_CONFIG} --skin=posix --ldflags`"
+        if test "`eval echo \\$$wanted_kernel_arch`" \!= ""; then
+            CONFIG_RTNET_RTEXT_ARCH="${RTNET_TARGET_ARCH}"
+        else
+            CONFIG_RTNET_RTEXT_ARCH="<something else>"
+        fi
+        ;;
     *)
         AC_MSG_ERROR([*** internal error])
         ;;
@@ -485,7 +501,7 @@ if test "$CONFIG_KBUILD" = "y"; then
         xeno-20x)
             RTEXT_KMOD_CFLAGS="`${XENO_CONFIG} --module-cflags`"
             ;;
-        xeno-21x)
+        xeno-21x | xeno-252)
             RTEXT_KMOD_CFLAGS="-I${RTEXT_LINUX_SRC_DIR}/include/xenomai"
             ;;
         *)
@@ -497,7 +513,7 @@ else
         rtai-3x)
             RTEXT_KMOD_CFLAGS="`${RTAI_CONFIG} --module-cflags`"
             ;;
-        xeno-21x)
+        xeno-21x | xeno-252)
             # Kernel cflags capturing trick from RTAI
             kmod_cflags=`cd $srcdir/config/modules && make -s RTEXT_LINUX_DIR=$RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH "CC=\"$CC\"" | grep '^RTEXT_KMOD_CFLAGS='`
             eval $kmod_cflags
@@ -731,7 +747,7 @@ case "${CONFIG_RTNET_RTEXT_VERSION}" in
             AC_MSG_RESULT([${CONFIG_REGPARM:-n}])
         fi
         ;;
-    xeno-20x | xeno-21x) CONFIG_RTNET_LXRT=n
+    xeno-20x | xeno-21x | xeno-252) CONFIG_RTNET_LXRT=n
         ;;
     *)
         AC_MSG_ERROR([*** internal error])
@@ -1460,7 +1476,7 @@ if test x$CONFIG_KBUILD_LEGACY = xy; then
                 done
             fi
             ;;
-        xeno-21x)
+        xeno-21x | xeno-252)
             mkdir -p symbols
             rm -rf symbols/*
             if test -d ${RTFW_SYMBOLS}; then
