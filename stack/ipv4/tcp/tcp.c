@@ -869,6 +869,7 @@ static void rt_tcp_rcv(struct rtskb *skb)
     struct tcp_socket* ts;
     struct tcphdr* th = skb->h.th;
     unsigned int data_len = skb->len - (th->doff << 2);
+    u32 seq = ntohl(th->seq);
     int signal;
 
     ts = container_of(skb->sk, struct tcp_socket, sock);
@@ -884,7 +885,7 @@ static void rt_tcp_rcv(struct rtskb *skb)
     }
 
     /* Check if it is a keepalive probe */
-    if (ts->sync.ack_seq == (ntohl(th->seq) + 1) &&
+    if (ts->sync.ack_seq == (seq + 1) &&
         ts->tcp_state == TCP_ESTABLISHED) {
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
         rt_tcp_send(ts, TCP_FLAG_ACK);
@@ -899,17 +900,21 @@ static void rt_tcp_rcv(struct rtskb *skb)
      * th->ack && th->rst && ...
      * th->syn && (ts->tcp_state == TCP_LISTEN ||
                    ts->tcp_state == TCP_SYN_SENT)
-     * rt_tcp_before(ts->sync.ack_seq, ntohl(th->seq)) &&
-           rt_tcp_after(ts->sync.ack_seq + ts->sync.window, ntohl(th->seq))
-
+     * rt_tcp_after(seq, ts->sync.ack_seq) &&
+           rt_tcp_before(seq, ts->sync.ack_seq + ts->sync.window)
      */
 
-    if ((rt_tcp_before(ts->sync.ack_seq, ntohl(th->seq)) &&
-         rt_tcp_after(ts->sync.ack_seq + ts->sync.window, ntohl(th->seq))) ||
+    if ((rt_tcp_after(seq, ts->sync.ack_seq) &&
+         rt_tcp_before(seq, ts->sync.ack_seq + ts->sync.window)) ||
         th->rst ||
         (th->syn && (ts->tcp_state == TCP_LISTEN ||
                      ts->tcp_state == TCP_SYN_SENT))) {
         /* everything is ok */
+    } else if (rt_tcp_after(seq, ts->sync.ack_seq - data_len)) {
+        /* retransmission of data we already acked */
+        rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+        rt_tcp_send(ts, TCP_FLAG_ACK);
+        goto drop;
     } else {
         /* drop forward ack */
         if (th->ack &&
@@ -922,8 +927,9 @@ static void rt_tcp_rcv(struct rtskb *skb)
         }
 
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-        rtdm_printk("rttcp: sequence number is not in window, dropped %u %u %u\n",
-                    ts->sync.ack_seq, ntohl(th->seq), ts->sync.window);
+        rtdm_printk("rttcp: sequence number is not in window, "
+                    "dropped (failed: %u <= %u <= %u)\n",
+                    ts->sync.ack_seq, seq, ts->sync.ack_seq + ts->sync.window);
 
         /* That's a forced RST for a lost connection */
         rst_socket.saddr = skb->nh.iph->daddr;
