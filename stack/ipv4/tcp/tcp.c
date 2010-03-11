@@ -1083,11 +1083,12 @@ static void rt_tcp_rcv(struct rtskb *skb)
             rtdm_lock_put_irqrestore(&ts->socket_lock, context);
             /* socket destruction will be done on close() */
             goto feed;
-        } else if (ts->tcp_state != TCP_ESTABLISHED) {
-            /* e.g. on TCP_FIN_WAIT2, just drop */
-            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-            goto drop;
         }
+    }
+
+    if (ts->tcp_state != TCP_ESTABLISHED) {
+        rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+        goto drop;
     }
 
     if (data_len == 0) {
