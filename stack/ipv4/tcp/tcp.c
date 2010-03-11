@@ -419,6 +419,9 @@ static void rt_tcp_retransmit_handler(void *data)
         /* more tries */
         ts->timer_state--;
 
+        if (ts->tcp_state != TCP_CLOSE)
+            timerwheel_add_timer(&ts->timer, rt_tcp_retransmission_timeout);
+
         /* warning, rtskb_clone is under lock */
         skb = rtskb_clone(ts->retransmit_queue.first, &ts->sock.skb_pool);
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
@@ -428,11 +431,6 @@ static void rt_tcp_retransmit_handler(void *data)
             kfree_rtskb(skb);
             rtdm_printk("rttcp: cann't resend a packet from a timer\n");
         }
-
-        rtdm_lock_get_irqsave(&ts->socket_lock, context);
-        if (ts->tcp_state != TCP_CLOSE)
-            timerwheel_add_timer(&ts->timer, rt_tcp_retransmission_timeout);
-        rtdm_lock_put_irqrestore(&ts->socket_lock, context);
     } else {
         ts->timer_state = max_retransmits;
 
