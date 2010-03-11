@@ -112,6 +112,7 @@ static int timerwheel_sleep(void)
 static void timerwheel_pivot(void *arg)
 {
     struct timerwheel_timer *timer;
+    rtdm_lockctx_t context;
     int ret;
 
     while (1) {
@@ -123,8 +124,11 @@ static void timerwheel_pivot(void *arg)
 
         while ((timer = timerwheel_get_from_current_slot())) {
             timer->handler(timer->data);
-            smp_wmb();
-            timer->slot = TIMERWHEEL_TIMER_UNUSED;
+
+            rtdm_lock_get_irqsave(&wheel.slot_lock, context);
+            if (timer->slot == TIMERWHEEL_TIMER_TRIGGERED)
+                timer->slot = TIMERWHEEL_TIMER_UNUSED;
+            rtdm_lock_put_irqrestore(&wheel.slot_lock, context);
         }
     }
 }
