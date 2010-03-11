@@ -418,9 +418,7 @@ static void rt_tcp_retransmit_handler(void *data)
     if (ts->timer_state) {
         /* more tries */
         ts->timer_state--;
-
-        if (ts->tcp_state != TCP_CLOSE)
-            timerwheel_add_timer(&ts->timer, rt_tcp_retransmission_timeout);
+        timerwheel_add_timer(&ts->timer, rt_tcp_retransmission_timeout);
 
         /* warning, rtskb_clone is under lock */
         skb = rtskb_clone(ts->retransmit_queue.first, &ts->sock.skb_pool);
