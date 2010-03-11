@@ -471,7 +471,6 @@ static void rt_tcp_retransmit_ack(struct tcp_socket *ts, u32 ack_seq)
       retransmission queue will be drained completely
     */
     if (!rt_tcp_before(ts->nacked_first, ack_seq)) {
-        rtdm_printk("rttcp: nacked %u %u\n", ts->nacked_first, ack_seq);
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
         return;
     }
