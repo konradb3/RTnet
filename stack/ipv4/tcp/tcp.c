@@ -1285,18 +1285,20 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
 
     rt_tcp_keepalive_disable(ts);
 
+    sock->prot.inet.state = TCP_CLOSE;
+
+    /* dereference rtdev */
+    if (ts->rt.rtdev != NULL) {
+        rtdev_dereference(ts->rt.rtdev);
+        ts->rt.rtdev = NULL;
+    }
+
     rtdm_lock_put_irqrestore(&ts->socket_lock, context);
 
     if (signal)
         rt_tcp_socket_invalidate_signal(ts);
 
     rtdm_event_destroy(&ts->conn_evt);
-
-    sock->prot.inet.state = TCP_CLOSE;
-
-    /* dereference rtdev */
-    if (ts->rt.rtdev != NULL)
-        rtdev_dereference(ts->rt.rtdev);
 
     /* cleanup already collected fragments */
     rt_ip_frag_invalidate_socket(sock);
@@ -1319,26 +1321,12 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
 static int rt_tcp_close(struct rtdm_dev_context *sockctx,
                         rtdm_user_info_t *user_info)
 {
-    const unsigned int timeout = 1000; /* 1000 millisecond timeout */
     struct tcp_socket* ts = (struct tcp_socket *)&sockctx->dev_private;
     struct rt_tcp_dispatched_packet_send_cmd send_cmd;
     rtdm_lockctx_t context;
     int signal = 0;
 
     rtdm_lock_get_irqsave(&ts->socket_lock, context);
-
-    if (ts->is_closed &&
-        (ts->tcp_state == TCP_CLOSE ||
-         ts->tcp_state == TCP_FIN_WAIT1 ||
-         ts->tcp_state == TCP_FIN_WAIT2 ||
-         ts->tcp_state == TCP_CLOSING ||
-         ts->tcp_state == TCP_TIME_WAIT ||
-         ts->tcp_state == TCP_LAST_ACK)) {
-            /* not open socket of close() has been already called */
-        rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-        rtdm_printk("rttcp: close() of a non opened socket\n");
-        return -EBADF;
-    }
 
     ts->is_closed = 1;
 
@@ -1354,6 +1342,9 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
         rtpc_dispatch_call(rt_tcp_dispatched_packet_send, 0, &send_cmd,
                            sizeof(send_cmd), NULL, NULL);
         /* result is ignored */
+
+        /* Give the peer some time to reply to our FIN. */
+        msleep(1000);
     } else if (ts->tcp_state == TCP_CLOSE_WAIT) {
         /* Send FIN in CLOSE_WAIT */
         send_cmd.ts = ts;
@@ -1365,6 +1356,9 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
         rtpc_dispatch_call(rt_tcp_dispatched_packet_send, 0, &send_cmd,
                            sizeof(send_cmd), NULL, NULL);
         /* result is ignored */
+
+        /* Give the peer some time to reply to our FIN. */
+        msleep(1000);
     } else {
         /*
           rt_tcp_socket_validate() has not been called at all,
@@ -1379,15 +1373,9 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
     if (signal)
         rt_tcp_socket_invalidate_signal(ts);
 
-    msleep(timeout);
     rt_tcp_socket_destruct(ts);
 
-    if (rt_socket_cleanup(sockctx) < 0) {
-        /* warning, objects may remain in rtskb_slab_pool */
-        rtdm_printk("rttcp: error on unsuccessful RT socket cleanup\n");
-    }
-
-    return 0;
+    return rt_socket_cleanup(sockctx);
 }
 
 /***
