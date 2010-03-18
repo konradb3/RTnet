@@ -887,6 +887,28 @@ static void rt_tcp_rcv(struct rtskb *skb)
         goto feed;
     }
 
+    if (ts->tcp_state == TCP_SYN_SENT) {
+        ts->sync.ack_seq = rt_tcp_compute_ack_seq(th, data_len);
+
+        if (th->syn && th->ack) {
+            rt_tcp_socket_validate(ts);
+            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+            rtdm_event_signal(&ts->conn_evt);
+            /* Send ACK */
+            rt_tcp_send(ts, TCP_FLAG_ACK);
+            goto feed;
+        }
+
+        ts->tcp_state = TCP_CLOSE;
+        ts->sync.seq = ntohl(th->ack_seq);
+        rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
+        /* Send RST|ACK */
+        rtdm_event_signal(&ts->conn_evt);
+        rt_tcp_send(ts, TCP_FLAG_RST|TCP_FLAG_ACK);
+        goto drop;
+    }
+
     /* Check for SEQ correspondence to determine the connection relevance */
 
     /* OR-list of conditions to be satisfied:
@@ -1002,22 +1024,6 @@ static void rt_tcp_rcv(struct rtskb *skb)
     }
 
     if (th->syn) {
-        if (th->ack) {
-            if (ts->tcp_state == TCP_SYN_SENT) {
-                rt_tcp_socket_validate(ts);
-                rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-                rtdm_event_signal(&ts->conn_evt);
-                /* Send ACK */
-                rt_tcp_send(ts, TCP_FLAG_ACK);
-                goto feed;
-            }
-
-            /* Send RST|ACK */
-            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-            rt_tcp_send(ts, TCP_FLAG_RST|TCP_FLAG_ACK);
-            goto drop;
-        }
-
         /* Need to differentiate LISTEN socket from ESTABLISHED one */
         /* Both of them have the same sport/saddr, but different dport/daddr */
         /* dport is unknown if it is the first connection of n */
