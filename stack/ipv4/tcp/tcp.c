@@ -966,24 +966,20 @@ static void rt_tcp_rcv(struct rtskb *skb)
     }
 
     if (th->rst) {
-        if (th->ack) {
-            /* Check ack sequence */
-            if (rt_tcp_after(ts->sync.seq, ntohl(th->ack_seq))
-                /*
-                  && rt_tcp_before(ts->nacked_first, ntohl(th->ack_seq))
-                */ ) {
-                if (ts->tcp_state == TCP_SYN_SENT) {
-                    /* inform retransmission queue? */
-                    rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-                    rtdm_printk("rttcp: RST on connection establishment\n");
-                    rtdm_event_signal(&ts->conn_evt);
-                    /* clean up retransmission queue */
-                    goto drop;
-                }
-            }
+        if (ts->tcp_state == TCP_SYN_RECV) {
+            ts->tcp_state = TCP_LISTEN;
+            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+            goto drop;
+        } else {
+            /* Drop our half-open connection, peer obviously went away. */
+            signal = rt_tcp_socket_invalidate(ts, TCP_CLOSE);
+            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+
+            if (signal)
+                rt_tcp_socket_invalidate_signal(ts);
+
+            goto drop;
         }
-        rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-        goto drop;
     }
 
     ts->sync.ack_seq = rt_tcp_compute_ack_seq(th, data_len);
