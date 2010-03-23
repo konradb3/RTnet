@@ -82,7 +82,14 @@ waiting on hardware events.
 
 17.1. add new locking scheme replacing any standard spin lock calls:
 
-      /* if operation may take several microseconds: */
+      rtdm_lockctx_t context;
+      ...
+      rtdm_lock_get_irqsave(&<priv>->lock, context);
+      ...
+      rtdm_lock_put_irqrestore(&<priv>->lock, context);
+
+      /* ONLY IN EXCEPTIONAL CASES, e.g. if the operation can take more than a
+       * few ten microseconds: */
 
       rtdm_irq_disable(&<priv>->irq_handle);
       rtdm_lock_get(&<priv>->lock);
@@ -90,13 +97,9 @@ waiting on hardware events.
       rtdm_lock_put(&<priv>->lock);
       rtdm_irq_enable(&<priv>->irq_handle);
 
-      /* if only a few operations are required: */
-
-      rtdm_lockctx_t context;
-      ...
-      rtdm_lock_get_irqsave(&<priv>->lock, context);
-      ...
-      rtdm_lock_put_irqrestore(&<priv>->lock, context);
+      /* Note that the latter scheme does not work if the IRQ line is shared
+       * with other devices. Also, rtdm_irq_disable/enable can be costly
+       * themselves on certain architectures. */
 
 17.2. add the following code right before the code which triggers the physical
       transmission (take care if data has to be transfered manually, i.e.
@@ -168,8 +171,8 @@ waiting on hardware events.
 23. replace request_irq in open function with the following lines:
 
     rt_stack_connect(dev, &STACK_manager);
-    retval = rtdm_irq_request(&<priv>->irq_handle, dev->irq, XXX_interrupt, 0,
-                              NULL /* or driver name */, dev);
+    retval = rtdm_irq_request(&<priv>->irq_handle, dev->irq, XXX_interrupt,
+                              RTDM_IRQTYPE_SHARED, NULL /* or driver name */, dev);
     if (retval)
         return retval;
 
