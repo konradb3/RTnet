@@ -154,10 +154,14 @@ int timerwheel_remove_timer(struct timerwheel_timer *timer)
 
 void timerwheel_remove_timer_sync(struct timerwheel_timer *timer)
 {
+    u64 interval_ms = wheel.interval;
+
+    do_div(interval_ms, 1000000);
+
     timerwheel_remove_timer(timer);
 
     while (timer->slot != TIMERWHEEL_TIMER_UNUSED)
-        msleep(wheel.interval / 1000000);
+        msleep(interval_ms);
 }
 
 /*
