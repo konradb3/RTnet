@@ -80,23 +80,26 @@ struct rtnet_core_cmd {
     union {
         /*** rtifconfig **/
         struct {
-            __u32           ip_addr;
-            __u32           broadcast_ip;
-            unsigned int    set_dev_flags;
-            unsigned int    clear_dev_flags;
-            unsigned short  dev_addr_type;
-            unsigned char   dev_addr[DEV_ADDR_LEN];
+            __u32       ip_addr;
+            __u32       broadcast_ip;
+            __u32       set_dev_flags;
+            __u32       clear_dev_flags;
+            __u32       dev_addr_type;
+            __u32       __padding;
+            __u8        dev_addr[DEV_ADDR_LEN];
         } up;
 
         struct {
-            int             ifindex;
-            unsigned short  type;
-            __u32           ip_addr;
-            __u32           broadcast_ip;
-            unsigned int    mtu;
-            unsigned int    flags;
-            unsigned char   dev_addr[DEV_ADDR_LEN];
+            __u32       ifindex;
+            __u32       type;
+            __u32       ip_addr;
+            __u32       broadcast_ip;
+            __u32       mtu;
+            __u32       flags;
+            __u8        dev_addr[DEV_ADDR_LEN];
         } info;
+
+        __u64 __padding[8];
     } args;
 };
 
