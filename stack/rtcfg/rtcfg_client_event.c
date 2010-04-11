@@ -558,7 +558,7 @@ static void rtcfg_client_detach(int ifindex, struct rt_proc_call *call)
     }
     rtcfg_reset_device(ifindex);
 
-    rtcfg_next_main_state(cmd_event->ifindex, RTCFG_MAIN_OFF);
+    rtcfg_next_main_state(cmd_event->internal.data.ifindex, RTCFG_MAIN_OFF);
 
     rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
 }
@@ -689,7 +689,7 @@ static void rtcfg_client_recv_stage_1(int ifindex, struct rtskb *rtskb)
 
         cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
-        if (cmd_event->event_id == RTCFG_CMD_CLIENT) {
+        if (cmd_event->internal.data.event_id == RTCFG_CMD_CLIENT) {
             ret = 0;
 
             /* note: only the first pending call gets data */
@@ -853,7 +853,7 @@ static void rtcfg_client_queue_frag(int ifindex, struct rtskb *rtskb,
             }
 
             rtpc_complete_call(call,
-                (cmd_event->event_id == RTCFG_CMD_ANNOUNCE) ?
+                (cmd_event->internal.data.event_id == RTCFG_CMD_ANNOUNCE) ?
                 result : -EINVAL);
         }
 

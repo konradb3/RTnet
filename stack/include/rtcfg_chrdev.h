@@ -73,21 +73,22 @@ struct rtcfg_cmd {
 
     union {
         struct {
-            unsigned int            period;
-            unsigned int            burstrate;
-            unsigned int            heartbeat;
-            unsigned int            threshold;
-            unsigned int            flags;
+            __u32                   period;
+            __u32                   burstrate;
+            __u32                   heartbeat;
+            __u32                   threshold;
+            __u32                   flags;
         } server;
 
         struct {
-            unsigned int            addr_type;
+            __u32                   addr_type;
             __u32                   ip_addr;
             __u8                    mac_addr[DEV_ADDR_LEN];
+            __u32                   timeout;
+            __u16                   stage1_size;
+            __u16                   __padding;
             void                    *stage1_data;
-            size_t                  stage1_size;
             const char              *stage2_filename;
-            unsigned int            timeout;
 
             /* internal usage only */
             struct rtcfg_connection *conn_buf;
@@ -95,7 +96,7 @@ struct rtcfg_cmd {
         } add;
 
         struct {
-            unsigned int            addr_type;
+            __u32                   addr_type;
             __u32                   ip_addr;
             __u8                    mac_addr[DEV_ADDR_LEN];
 
@@ -105,14 +106,14 @@ struct rtcfg_cmd {
         } del;
 
         struct {
-            unsigned int            timeout;
+            __u32                   timeout;
         } wait;
 
         struct {
-            unsigned int            timeout;
+            __u32                   timeout;
+            __u32                   max_stations;
+            __u64                   buffer_size;
             void                    *buffer;
-            size_t                  buffer_size;
-            unsigned int            max_stations;
 
             /* internal usage only */
             struct rtcfg_station    *station_buf;
@@ -120,18 +121,19 @@ struct rtcfg_cmd {
         } client;
 
         struct {
-            unsigned int            timeout;
+            __u32                   timeout;
+            __u32                   flags;
+            __u32                   burstrate;
+            __u32                   __padding;
+            __u64                   buffer_size;
             void                    *buffer;
-            size_t                  buffer_size;
-            unsigned int            flags;
-            unsigned int            burstrate;
 
             /* internal usage only */
             struct rtskb            *rtskb;
         } announce;
 
         struct {
-            unsigned int            timeout;
+            __u32                   timeout;
         } ready;
 
         struct {
@@ -141,11 +143,19 @@ struct rtcfg_cmd {
             struct rtcfg_station    *station_addr_list;
             struct rtskb            *stage2_chain;
         } detach;
+
+        __u64 __padding[16];
     } args;
 
     /* internal usage only */
-    int         ifindex;
-    RTCFG_EVENT event_id;
+    union {
+        struct {
+            int         ifindex;
+            RTCFG_EVENT event_id;
+        } data;
+
+        __u64 __padding[2];
+    } internal;
 };
 
 

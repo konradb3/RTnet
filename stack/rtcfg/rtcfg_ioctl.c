@@ -40,7 +40,8 @@ int rtcfg_event_handler(struct rt_proc_call *call)
 
 
     cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
-    return rtcfg_do_main_event(cmd_event->ifindex, cmd_event->event_id, call);
+    return rtcfg_do_main_event(cmd_event->internal.data.ifindex,
+                               cmd_event->internal.data.event_id, call);
 }
 
 
@@ -64,7 +65,7 @@ void cleanup_cmd_add(void *priv_data)
 
 
     /* unlock proc and update directory structure */
-    rtcfg_unlockwr_proc(cmd->ifindex);
+    rtcfg_unlockwr_proc(cmd->internal.data.ifindex);
 
     buf = cmd->args.add.conn_buf;
     if (buf != NULL)
@@ -91,7 +92,7 @@ void cleanup_cmd_del(void *priv_data)
 
 
     /* unlock proc and update directory structure */
-    rtcfg_unlockwr_proc(cmd->ifindex);
+    rtcfg_unlockwr_proc(cmd->internal.data.ifindex);
 
     if (cmd->args.del.conn_buf != NULL) {
         buf = cmd->args.del.conn_buf->stage1_data;
@@ -198,7 +199,7 @@ void cleanup_cmd_detach(void *priv_data)
 
 
     /* unlock proc and update directory structure */
-    rtcfg_unlockwr_proc(cmd->ifindex);
+    rtcfg_unlockwr_proc(cmd->internal.data.ifindex);
 
     if (cmd->args.detach.conn_buf) {
         buf = cmd->args.detach.conn_buf->stage1_data;
@@ -284,7 +285,7 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
     cmd->args.add.stage2_file = file;
 
     /* lock proc structure for modification */
-    rtcfg_lockwr_proc(cmd->ifindex);
+    rtcfg_lockwr_proc(cmd->internal.data.ifindex);
 
     ret = rtpc_dispatch_call(rtcfg_event_handler, 0, cmd,
                              sizeof(*cmd), keep_cmd_add,
@@ -298,7 +299,7 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
 
         filp = filp_open(file->name, O_RDONLY, 0);
         if (IS_ERR(filp)) {
-            rtcfg_unlockwr_proc(cmd->ifindex);
+            rtcfg_unlockwr_proc(cmd->internal.data.ifindex);
             ret = PTR_ERR(filp);
             goto err;
         }
@@ -308,7 +309,7 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
         /* allocate buffer even for empty files */
         file->buffer = vmalloc((file->size)? file->size : 1);
         if (file->buffer == NULL) {
-            rtcfg_unlockwr_proc(cmd->ifindex);
+            rtcfg_unlockwr_proc(cmd->internal.data.ifindex);
             fput(filp);
             ret = -ENOMEM;
             goto err;
@@ -325,7 +326,7 @@ int rtcfg_ioctl_add(struct rtnet_device *rtdev, struct rtcfg_cmd *cmd)
         fput(filp);
 
         if (ret != (int)file->size) {
-            rtcfg_unlockwr_proc(cmd->ifindex);
+            rtcfg_unlockwr_proc(cmd->internal.data.ifindex);
             ret = -EIO;
             goto err;
         }
@@ -362,8 +363,8 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
     if (ret != 0)
         return -EFAULT;
 
-    cmd.ifindex  = rtdev->ifindex;
-    cmd.event_id = _IOC_NR(request);
+    cmd.internal.data.ifindex  = rtdev->ifindex;
+    cmd.internal.data.event_id = _IOC_NR(request);
 
     switch (request) {
         case RTCFG_IOC_SERVER:
@@ -381,7 +382,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 
             /* lock proc structure for modification
                (unlock in cleanup_cmd_del) */
-            rtcfg_lockwr_proc(cmd.ifindex);
+            rtcfg_lockwr_proc(cmd.internal.data.ifindex);
 
             ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
                                      sizeof(cmd), NULL, cleanup_cmd_del);
@@ -431,7 +432,7 @@ int rtcfg_ioctl(struct rtnet_device *rtdev, unsigned int request, unsigned long 
 
                 /* lock proc structure for modification
                    (unlock in cleanup_cmd_detach) */
-                rtcfg_lockwr_proc(cmd.ifindex);
+                rtcfg_lockwr_proc(cmd.internal.data.ifindex);
 
                 ret = rtpc_dispatch_call(rtcfg_event_handler, 0, &cmd,
                                          sizeof(cmd), NULL,

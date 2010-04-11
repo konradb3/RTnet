@@ -296,19 +296,19 @@ static int rtcfg_main_state_server_running(int ifindex, RTCFG_EVENT event_id,
 
 static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
 {
-    struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
+    struct rtcfg_device     *rtcfg_dev;
     struct rtcfg_connection *conn;
     struct rtcfg_connection *new_conn;
     struct list_head        *entry;
     unsigned int            addr_type;
 
-
+    rtcfg_dev = &device[cmd_event->internal.data.ifindex];
     addr_type = cmd_event->args.add.addr_type & RTCFG_ADDR_MASK;
 
     new_conn = cmd_event->args.add.conn_buf;
     memset(new_conn, 0, sizeof(struct rtcfg_connection));
 
-    new_conn->ifindex      = cmd_event->ifindex;
+    new_conn->ifindex      = cmd_event->internal.data.ifindex;
     new_conn->state        = RTCFG_CONN_SEARCHING;
     new_conn->addr_type    = cmd_event->args.add.addr_type;
 #ifdef CONFIG_RTNET_RTIPV4
@@ -324,7 +324,7 @@ static int rtcfg_server_add(struct rtcfg_cmd *cmd_event)
         struct rtnet_device *rtdev;
 
         /* MAC address yet unknown -> use broadcast address */
-        rtdev = rtdev_get_by_index(cmd_event->ifindex);
+        rtdev = rtdev_get_by_index(cmd_event->internal.data.ifindex);
         if (rtdev == NULL) {
             rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
             return -ENODEV;
@@ -403,9 +403,10 @@ static int rtcfg_server_del(struct rtcfg_cmd *cmd_event)
     struct rtcfg_connection *conn;
     struct list_head        *entry;
     unsigned int            addr_type;
-    struct rtcfg_device     *rtcfg_dev = &device[cmd_event->ifindex];
+    struct rtcfg_device     *rtcfg_dev;
 
 
+    rtcfg_dev = &device[cmd_event->internal.data.ifindex];
     addr_type = cmd_event->args.add.addr_type & RTCFG_ADDR_MASK;
 
     list_for_each(entry, &rtcfg_dev->spec.srv.conn_list) {
@@ -678,7 +679,8 @@ void rtcfg_complete_cmd(int ifindex, RTCFG_EVENT event_id, int result)
         cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
         rtpc_complete_call(call,
-            (cmd_event->event_id == event_id) ? result : -EINVAL);
+            (cmd_event->internal.data.event_id == event_id) ? result
+                                                            : -EINVAL);
     }
 }
 
