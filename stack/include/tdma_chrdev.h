@@ -40,32 +40,34 @@ struct tdma_config {
 
     union {
         struct {
-            uint64_t        cycle_period;
-            uint64_t        backup_sync_offset;
-            unsigned int    cal_rounds;
-            unsigned int    max_cal_requests;
-            unsigned int    max_slot_id;
+            __u64       cycle_period;
+            __u64       backup_sync_offset;
+            __u32       cal_rounds;
+            __u32       max_cal_requests;
+            __u32       max_slot_id;
         } master;
 
         struct {
-            unsigned int    cal_rounds;
-            unsigned int    max_slot_id;
+            __u32       cal_rounds;
+            __u32       max_slot_id;
         } slave;
 
         struct {
-            int             id;
-            uint64_t        offset;
-            unsigned int    period;
-            unsigned int    phasing;
-            unsigned int    size;
-            int             joint_slot;
-            unsigned int    cal_timeout;
-            uint64_t        *cal_results;
+            __s32       id;
+            __u32       period;
+            __u64       offset;
+            __u32       phasing;
+            __u32       size;
+            __s32       joint_slot;
+            __u32       cal_timeout;
+            __u64       *cal_results;
         } set_slot;
 
         struct {
-            int             id;
+            __s32       id;
         } remove_slot;
+
+        __u64 __padding[8];
     } args;
 };
 

@@ -76,7 +76,7 @@ int getintopt(int argc, int pos, char *argv[], int min)
 
 
 void write_calibration_log(char *log_filename, unsigned int rounds,
-                           uint64_t *cal_results)
+                           __u64 *cal_results)
 {
     char    str_buf[32];
     int     log_file;
@@ -255,7 +255,7 @@ void do_slot(int argc, char *argv[])
             result_size = ioctl(f, TDMA_IOC_CAL_RESULT_SIZE, &tdma_cfg);
             if (result_size > 0) {
                 tdma_cfg.args.set_slot.cal_results =
-                    (uint64_t *)malloc(result_size * sizeof(uint64_t));
+                    (__u64 *)malloc(result_size * sizeof(__u64));
                 if (!tdma_cfg.args.set_slot.cal_results) {
                     fprintf(stderr, "insufficient memory\n");
                     exit(1);
