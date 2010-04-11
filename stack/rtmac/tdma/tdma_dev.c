@@ -182,10 +182,8 @@ int tdma_dev_init(struct rtnet_device *rtdev, struct tdma_priv *tdma)
         (pos >= rtdev->name) && ((*pos) >= '0') && (*pos <= '9'); pos--);
     strncat(tdma->api_device.device_name+4, pos+1, IFNAMSIZ-4);
 
-    tdma->api_device.open_rt  = tdma_dev_open;
     tdma->api_device.open_nrt = tdma_dev_open;
 
-    tdma->api_device.ops.close_rt  = tdma_dev_close;
     tdma->api_device.ops.close_nrt = tdma_dev_close;
 
     tdma->api_device.ops.ioctl_rt  = tdma_dev_ioctl;

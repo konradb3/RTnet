@@ -73,11 +73,8 @@ int nomac_dev_init(struct rtnet_device *rtdev, struct nomac_priv *nomac)
         (pos >= rtdev->name) && ((*pos) >= '0') && (*pos <= '9'); pos--);
     strncat(nomac->api_device.device_name+5, pos+1, IFNAMSIZ-5);
 
-    nomac->api_device.open_rt  = (rtdm_open_handler_t)nomac_dev_openclose;
     nomac->api_device.open_nrt = (rtdm_open_handler_t)nomac_dev_openclose;
 
-    nomac->api_device.ops.close_rt  =
-            (rtdm_close_handler_t)nomac_dev_openclose;
     nomac->api_device.ops.close_nrt =
             (rtdm_close_handler_t)nomac_dev_openclose;
 

@@ -453,12 +453,9 @@ static struct rtdm_device netshm_dev = {
     device_flags:       RTDM_NAMED_DEVICE | RTDM_EXCLUSIVE,
     context_size:       sizeof(struct netshm_priv),
 
-    /* Note: open_rt() and close_rt() of this device can run in any context */
-    open_rt:            netshm_open,
     open_nrt:           netshm_open,
 
     ops: {
-        close_rt:       netshm_close,
         close_nrt:      netshm_close,
 
         /* Note: Instead of using two different entry functions for ioctl,
