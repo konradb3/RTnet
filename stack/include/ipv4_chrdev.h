@@ -34,43 +34,45 @@ struct ipv4_cmd {
     union {
         /*** rtroute ***/
         struct {
-            __u32           ip_addr;
+            __u32       ip_addr;
         } solicit;
 
         struct {
-            __u32           ip_addr;
-            unsigned char   dev_addr[DEV_ADDR_LEN];
+            __u8        dev_addr[DEV_ADDR_LEN];
+            __u32       ip_addr;
         } gethost;
 
         struct {
-            __u32           ip_addr;
-            unsigned char   dev_addr[DEV_ADDR_LEN];
+            __u8        dev_addr[DEV_ADDR_LEN];
+            __u32       ip_addr;
         } addhost;
 
         struct {
-            __u32           ip_addr;
+            __u32       ip_addr;
         } delhost;
 
         struct {
-            __u32           net_addr;
-            __u32           net_mask;
-            __u32           gw_addr;
+            __u32       net_addr;
+            __u32       net_mask;
+            __u32       gw_addr;
         } addnet;
 
         struct {
-            __u32           net_addr;
-            __u32           net_mask;
+            __u32       net_addr;
+            __u32       net_mask;
         } delnet;
 
         /*** rtping ***/
         struct {
-            __u32           ip_addr;
-            __u16           id;
-            __u16           sequence;
-            size_t          msg_size;
-            unsigned int    timeout;
-            __s64           rtt;
+            __u32       ip_addr;
+            __u16       id;
+            __u16       sequence;
+            __u32       msg_size;
+            __u32       timeout;
+            __s64       rtt;
         } ping;
+
+        __u64 __padding[8];
     } args;
 };
 
