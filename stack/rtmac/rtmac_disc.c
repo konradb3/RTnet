@@ -51,7 +51,7 @@ LIST_HEAD(disc_list);
  *  -EBUSY       other discipline active
  *  -ENOMEM      could not allocate memory
  *
- *  Note: must be called with rtdev->nrt_sem acquired
+ *  Note: must be called with rtdev->nrt_lock acquired
  */
 int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
 {
@@ -118,7 +118,7 @@ int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc)
  *  -EINVAL      called with rtdev=NULL
  *  -ENODEV      no discipline active on dev
  *
- *  Note: must be called with rtdev->nrt_sem acquired
+ *  Note: must be called with rtdev->nrt_lock acquired
  */
 int rtmac_disc_detach(struct rtnet_device *rtdev)
 {
