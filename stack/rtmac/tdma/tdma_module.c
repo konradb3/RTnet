@@ -46,35 +46,45 @@ MODULE_PARM_DESC(start_timer, "set to non-zero to start RTAI timer");
 #endif
 
 #ifdef CONFIG_PROC_FS
-LIST_HEAD(tdma_devices);
-DEFINE_MUTEX(tdma_nrt_lock);
-
-
 int tdma_proc_read(char *buf, char **start, off_t offset, int count,
                     int *eof, void *data)
 {
-    struct tdma_priv    *entry;
+    struct rtnet_device *rtdev = NULL;
+    struct tdma_priv    *tdma;
     const char          *state;
+    int                 d;
 #ifdef CONFIG_RTNET_TDMA_MASTER
     u64                 cycle;
 #endif
     RTNET_PROC_PRINT_VARS(80);
 
 
-    mutex_lock(&tdma_nrt_lock);
-
     if (!RTNET_PROC_PRINT("Interface       API Device      Operation Mode  "
                           "Cycle   State\n"))
         goto done;
 
-    list_for_each_entry(entry, &tdma_devices, list_entry) {
-        if (!RTNET_PROC_PRINT("%-15s %-15s ", entry->rtdev->name,
-                              entry->api_device.device_name))
+    for (d = 1; d <= MAX_RT_DEVICES; d++) {
+        rtdev = rtdev_get_by_index(d);
+        if (!rtdev)
+            continue;
+
+        if (mutex_lock_interruptible(&rtdev->nrt_lock)) {
+            rtdev_dereference(rtdev);
+            rtdev = NULL;
             break;
-        if (test_bit(TDMA_FLAG_CALIBRATED, &entry->flags)) {
+        }
+
+        if (!rtdev->mac_priv)
+            goto unlock_dev;
+        tdma = (struct tdma_priv *)rtdev->mac_priv->disc_priv;
+
+        if (!RTNET_PROC_PRINT("%-15s %-15s ", rtdev->name,
+                              tdma->api_device.device_name))
+            break;
+        if (test_bit(TDMA_FLAG_CALIBRATED, &tdma->flags)) {
 #ifdef CONFIG_RTNET_TDMA_MASTER
-            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags) &&
-                !test_bit(TDMA_FLAG_BACKUP_ACTIVE, &entry->flags))
+            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags) &&
+                !test_bit(TDMA_FLAG_BACKUP_ACTIVE, &tdma->flags))
                 state = "stand-by";
             else
 #endif /* CONFIG_RTNET_TDMA_MASTER */
@@ -82,10 +92,10 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
         } else
             state = "init";
 #ifdef CONFIG_RTNET_TDMA_MASTER
-        if (test_bit(TDMA_FLAG_MASTER, &entry->flags)) {
-            cycle = entry->cycle_period + 500;
+        if (test_bit(TDMA_FLAG_MASTER, &tdma->flags)) {
+            cycle = tdma->cycle_period + 500;
             do_div(cycle, 1000);
-            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
+            if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags)) {
                 if (!RTNET_PROC_PRINT("Backup Master   %-7ld %s\n",
                                       (unsigned long)cycle, state))
                     break;
@@ -98,11 +108,17 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
 #endif /* CONFIG_RTNET_TDMA_MASTER */
             if (!RTNET_PROC_PRINT("Slave           -       %s\n", state))
                 break;
+unlock_dev:
+        mutex_unlock(&rtdev->nrt_lock);
+        rtdev_dereference(rtdev);
+        rtdev = NULL;
     }
 
-  done:
-    mutex_unlock(&tdma_nrt_lock);
-
+done:
+    if (rtdev) {
+        mutex_unlock(&rtdev->nrt_lock);
+        rtdev_dereference(rtdev);
+    }
     RTNET_PROC_PRINT_DONE;
 }
 
@@ -111,57 +127,63 @@ int tdma_proc_read(char *buf, char **start, off_t offset, int count,
 int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                          int *eof, void *data)
 {
-    struct tdma_priv    *entry;
+    struct rtnet_device *rtdev = NULL;
+    struct tdma_priv    *tdma;
     struct tdma_slot    *slot;
-    int                 i;
+    int                 d, i;
     int                 jnt_id;
     u64                 slot_offset;
     RTNET_PROC_PRINT_VARS(80);
 
 
-    mutex_lock(&tdma_nrt_lock);
-
     if (!RTNET_PROC_PRINT("Interface       "
                           "Slots (id[->joint]:offset:phasing/period:size)\n"))
         goto done;
 
-    list_for_each_entry(entry, &tdma_devices, list_entry) {
-        if (!RTNET_PROC_PRINT("%-15s ", entry->rtdev->name))
+    for (d = 1; d <= MAX_RT_DEVICES; d++) {
+        rtdev = rtdev_get_by_index(d);
+        if (!rtdev)
+            continue;
+
+        if (mutex_lock_interruptible(&rtdev->nrt_lock)) {
+            rtdev_dereference(rtdev);
+            rtdev = NULL;
+            break;
+        }
+
+        if (!rtdev->mac_priv)
+            goto unlock_dev;
+        tdma = (struct tdma_priv *)rtdev->mac_priv->disc_priv;
+
+        if (!RTNET_PROC_PRINT("%-15s ", rtdev->name))
             break;
 
 #ifdef CONFIG_RTNET_TDMA_MASTER
-        if (test_bit(TDMA_FLAG_BACKUP_MASTER, &entry->flags)) {
-            slot_offset = entry->backup_sync_inc - entry->cycle_period + 500;
+        if (test_bit(TDMA_FLAG_BACKUP_MASTER, &tdma->flags)) {
+            slot_offset = tdma->backup_sync_inc - tdma->cycle_period + 500;
             do_div(slot_offset, 1000);
             if (!RTNET_PROC_PRINT("bak:%ld  ", (unsigned long)slot_offset))
                 break;
         }
 #endif /* CONFIG_RTNET_TDMA_MASTER */
 
-        if (entry->slot_table) {
-            if (mutex_lock_interruptible(&entry->rtdev->nrt_lock))
-                break;
-
-            for (i = 0; i <= entry->max_slot_id; i++) {
-                slot = entry->slot_table[i];
+        if (tdma->slot_table)
+            for (i = 0; i <= tdma->max_slot_id; i++) {
+                slot = tdma->slot_table[i];
                 if (!slot ||
                     ((i == DEFAULT_NRT_SLOT) &&
-                     (entry->slot_table[DEFAULT_SLOT] == slot)))
+                     (tdma->slot_table[DEFAULT_SLOT] == slot)))
                     continue;
 
                 if (slot->queue == &slot->local_queue) {
-                    if (!RTNET_PROC_PRINT("%d", i)) {
-                        mutex_unlock(&entry->rtdev->nrt_lock);
+                    if (!RTNET_PROC_PRINT("%d", i))
                         goto done;
-                    }
                 } else
-                    for (jnt_id = 0; jnt_id <= entry->max_slot_id; jnt_id++)
-                        if (&entry->slot_table[jnt_id]->local_queue ==
+                    for (jnt_id = 0; jnt_id <= tdma->max_slot_id; jnt_id++)
+                        if (&tdma->slot_table[jnt_id]->local_queue ==
                             slot->queue) {
-                            if (!RTNET_PROC_PRINT("%d->%d", i, jnt_id)) {
-                                mutex_unlock(&entry->rtdev->nrt_lock);
+                            if (!RTNET_PROC_PRINT("%d->%d", i, jnt_id))
                                 goto done;
-                            }
                             break;
                         }
 
@@ -169,21 +191,24 @@ int tdma_slots_proc_read(char *buf, char **start, off_t offset, int count,
                 do_div(slot_offset, 1000);
                 if (!RTNET_PROC_PRINT(":%ld:%d/%d:%d  ",
                         (unsigned long)slot_offset, slot->phasing + 1,
-                        slot->period, slot->mtu)) {
-                    mutex_unlock(&entry->rtdev->nrt_lock);
+                        slot->period, slot->mtu))
                     goto done;
-                }
             }
 
-            mutex_unlock(&entry->rtdev->nrt_lock);
-        }
         if (!RTNET_PROC_PRINT("\n"))
             break;
+
+unlock_dev:
+        mutex_unlock(&rtdev->nrt_lock);
+        rtdev_dereference(rtdev);
+        rtdev = NULL;
     }
 
-  done:
-    mutex_unlock(&tdma_nrt_lock);
-
+done:
+    if (rtdev) {
+        mutex_unlock(&rtdev->nrt_lock);
+        rtdev_dereference(rtdev);
+    }
     RTNET_PROC_PRINT_DONE;
 }
 #endif /* CONFIG_PROC_FS */
@@ -217,12 +242,6 @@ int tdma_attach(struct rtnet_device *rtdev, void *priv)
         goto err_out2;
 
     RTNET_MOD_INC_USE_COUNT;
-
-#ifdef CONFIG_PROC_FS
-    mutex_lock(&tdma_nrt_lock);
-    list_add(&tdma->list_entry, &tdma_devices);
-    mutex_unlock(&tdma_nrt_lock);
-#endif /* CONFIG_PROC_FS */
 
     return 0;
 
@@ -277,12 +296,6 @@ int tdma_detach(struct rtnet_device *rtdev, void *priv)
 #endif
 
     RTNET_MOD_DEC_USE_COUNT;
-
-#ifdef CONFIG_PROC_FS
-    mutex_lock(&tdma_nrt_lock);
-    list_del(&tdma->list_entry);
-    mutex_unlock(&tdma_nrt_lock);
-#endif /* CONFIG_PROC_FS */
 
     return 0;
 }
