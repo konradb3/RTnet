@@ -13227,7 +13227,7 @@ fi
 
 { $as_echo "$as_me:$LINENO: result: ${CONFIG_RTNET_RTIPV4_ROUTER:-n}" >&5
 $as_echo "${CONFIG_RTNET_RTIPV4_ROUTER:-n}" >&6; }
-if test "CONFIG_RTNET_RTIPV4_ROUTER" = "y"; then
+if test "$CONFIG_RTNET_RTIPV4_ROUTER" = "y"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define CONFIG_RTNET_RTIPV4_ROUTER 1

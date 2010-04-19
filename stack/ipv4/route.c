@@ -825,7 +825,7 @@ int rt_ip_route_forward(struct rtskb *rtskb, u32 daddr)
         goto error;
     }
 
-    if (rt_ip_route_output(&dest, daddr) < 0) {
+    if (rt_ip_route_output(&dest, daddr, INADDR_ANY) < 0) {
         /*ERRMSG*/rtdm_printk("RTnet: unable to forward packet from %u.%u.%u.%u\n",
                               NIPQUAD(rtskb->nh.iph->saddr));
         goto error;

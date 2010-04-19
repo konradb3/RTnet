@@ -1178,7 +1178,7 @@ AC_ARG_ENABLE(router,
         *) CONFIG_RTNET_RTIPV4_ROUTER=n ;;
     esac])
 AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_ROUTER:-n}])
-if test "CONFIG_RTNET_RTIPV4_ROUTER" = "y"; then
+if test "$CONFIG_RTNET_RTIPV4_ROUTER" = "y"; then
     AC_DEFINE(CONFIG_RTNET_RTIPV4_ROUTER, 1, [Router])
 fi
 
