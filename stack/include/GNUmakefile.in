@@ -234,6 +234,7 @@ noinst_HEADERS = \
 	ipv4/ip_sock.h \
 	ipv4/protocol.h \
 	ipv4/route.h \
+	ipv4/tcp.h \
 	ipv4/udp.h \
 	ipv4_chrdev.h \
 	\

@@ -211,7 +211,9 @@ libkernel_rttcp_a_CPPFLAGS = \
 	-I$(top_builddir)/stack/include
 
 libkernel_rttcp_a_SOURCES = \
-	tcp.c timerwheel.c
+	tcp.c \
+	timerwheel.c \
+	timerwheel.h
 
 OBJS = rttcp$(modext)
 EXTRA_DIST = Makefile.kbuild Kconfig
