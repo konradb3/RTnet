@@ -1,3 +1,13 @@
+0.9.12
+- RT-TCP support
+- support for Intel 82575 (igb)
+- kernel support up to 2.6.32
+- fixed IRQ conflict detection and enabled RT-IRQ sharing for most drivers
+- fixed aligment issues in RTcfg and various management interfaces that
+  specifically hit ARM platforms
+- fixes that help packaging
+- and more fixes all over the place
+
 0.9.11
 - kernel support up to 2.6.29
 - statistics support for RT NICs
