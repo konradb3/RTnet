@@ -11652,9 +11652,12 @@ fi
     else
         RTEXT_LINUX_SRC_DIR=${RTEXT_LINUX_DIR}
     fi
-    LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/utsrelease.h
+    LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/generated/utsrelease.h
     if test \! -f $LINUX_RELEASE_FILE; then
         LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/version.h
+        if test \! -f $LINUX_RELEASE_FILE; then
+            LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/version.h
+        fi
     fi
     RTEXT_LINUX_VERSION=`grep "#define UTS_RELEASE" $LINUX_RELEASE_FILE 2>/dev/null | sed -e 's/[^\"]*\"\([^\"]*\)\"/\1/'`
 
