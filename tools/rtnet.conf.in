@@ -29,6 +29,9 @@ NETMASK=""
 # Start realtime loopback device ("yes" or "no")
 RT_LOOPBACK="yes"
 
+# Use the following RTnet protocol drivers
+RT_PROTOCOLS="udp packet"
+
 # Start capturing interface ("yes" or "no")
 RTCAP="no"
 
