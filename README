@@ -9,11 +9,11 @@ and supports several popular card chip sets, including Gigabit Ethernet.
 Moreover, Ethernet-over-1394 support is available based on the RT-FireWire
 protocol stack.
 
-RTnet implements UDP/IP, ICMP and ARP in a deterministic way. It provides a
-POSIX socket API to real-time user space processes and kernel modules. Access
-to nondeterministic media is managed by the pluggable RTmac layer and the
-actual control discipline. As default for Ethernet, a Time Division Multiple
-Access (TDMA) discipline is provided.
+RTnet implements UDP/IP, TCP/IP (basic features), ICMP and ARP in a
+deterministic way. It provides a POSIX socket API to real-time user space
+processes and kernel modules. Access to nondeterministic media is managed by
+the pluggable RTmac layer and the actual control discipline. As default for
+Ethernet, a Time Division Multiple Access (TDMA) discipline is provided.
 
 
 What are the requirements?
