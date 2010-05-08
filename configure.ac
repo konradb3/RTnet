@@ -199,7 +199,7 @@ else
     fi
     LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/generated/utsrelease.h
     if test \! -f $LINUX_RELEASE_FILE; then
-        LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/version.h
+        LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/utsrelease.h
         if test \! -f $LINUX_RELEASE_FILE; then
             LINUX_RELEASE_FILE=${RTEXT_LINUX_DIR}/include/linux/version.h
         fi
