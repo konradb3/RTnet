@@ -11565,7 +11565,7 @@ if test \! -f $RTNET_KCONFIG_FILE; then
 $as_echo "$as_me: error: Kconfig-file $RTNET_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file" >&2;}
    { (exit 1); exit 1; }; }
 fi
-. $RTNET_KCONFIG_FILE
+PATH=$PATH:. . $RTNET_KCONFIG_FILE
 { $as_echo "$as_me:$LINENO: result: $RTNET_KCONFIG_FILE ($kconfig_type)" >&5
 $as_echo "$RTNET_KCONFIG_FILE ($kconfig_type)" >&6; }
 

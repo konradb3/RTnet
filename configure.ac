@@ -122,7 +122,7 @@ AC_MSG_CHECKING([for RTnet Kconfig file])
 if test \! -f $RTNET_KCONFIG_FILE; then
     AC_MSG_ERROR([Kconfig-file $RTNET_KCONFIG_FILE not found -- --with-kconfig-file sets Kconfig file])
 fi
-. $RTNET_KCONFIG_FILE
+PATH=$PATH:. . $RTNET_KCONFIG_FILE
 AC_MSG_RESULT([$RTNET_KCONFIG_FILE ($kconfig_type)])
 
 
