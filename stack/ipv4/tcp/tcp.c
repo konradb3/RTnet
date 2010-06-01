@@ -1327,7 +1327,7 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
         ts->tcp_state == TCP_SYN_RECV) {
         /* close() from ESTABLISHED */
         send_cmd.ts = ts;
-        send_cmd.flags = TCP_FLAG_FIN;
+        send_cmd.flags = TCP_FLAG_FIN|TCP_FLAG_ACK;
         signal = rt_tcp_socket_invalidate(ts, TCP_FIN_WAIT1);
 
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
@@ -1341,7 +1341,7 @@ static int rt_tcp_close(struct rtdm_dev_context *sockctx,
     } else if (ts->tcp_state == TCP_CLOSE_WAIT) {
         /* Send FIN in CLOSE_WAIT */
         send_cmd.ts = ts;
-        send_cmd.flags = TCP_FLAG_FIN;
+        send_cmd.flags = TCP_FLAG_FIN|TCP_FLAG_ACK;
         signal = rt_tcp_socket_invalidate(ts, TCP_LAST_ACK);
 
         rtdm_lock_put_irqrestore(&ts->socket_lock, context);
