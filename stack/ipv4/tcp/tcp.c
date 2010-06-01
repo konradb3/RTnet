@@ -673,13 +673,6 @@ rt_tcp_segment(struct dest_route *rt, struct tcp_socket *ts, __be32 flags,
     /* add rtskb entry to the socket retransmission queue */
     if (ts->tcp_state != TCP_CLOSE &&
         ((flags & (TCP_FLAG_SYN|TCP_FLAG_FIN)) || data_len)) {
-        if (ts->timer_state != max_retransmits) {
-            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
-            rtdm_printk("rttcp: send is delayed, no ack responses\n");
-            ret = -EAGAIN;
-            goto error;
-        }
-
         /* rtskb_clone below is called under lock, this is an admission,
            because for now there is no rtskb copy by reference */
         cloned_skb = rtskb_clone(skb, &ts->sock.skb_pool);
