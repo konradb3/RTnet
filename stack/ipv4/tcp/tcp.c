@@ -22,6 +22,7 @@
 #include <linux/moduleparam.h>
 #include <linux/list.h>
 #include <linux/skbuff.h>
+#include <linux/module.h>
 #include <net/tcp_states.h>
 #include <net/tcp.h>
 
@@ -36,6 +37,23 @@
 #include <ipv4/route.h>
 #include <ipv4/af_inet.h>
 #include "timerwheel.h"
+
+#ifdef CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION
+
+static unsigned int error_rate;
+module_param(error_rate, uint, 0664);
+MODULE_PARM_DESC(error_rate, "simulate packet loss after every n packets");
+
+static unsigned int multi_error = 1;
+module_param(multi_error, uint, 0664);
+MODULE_PARM_DESC(multi_error, "on simulated error, drop n packets in a row");
+
+static unsigned int counter_start = 1234;
+module_param(counter_start, uint, 0664);
+MODULE_PARM_DESC(counter_start, "start value of per-socket packet counter "
+                 "(used for error injection)");
+
+#endif /* CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION */
 
 struct tcp_sync {
     u32 seq;
@@ -125,6 +143,12 @@ struct tcp_socket {
     unsigned int       timer_state;
     struct rtskb_queue retransmit_queue;
     struct timerwheel_timer timer;
+
+#ifdef CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION
+    unsigned int packet_counter;
+    unsigned int error_rate;
+    unsigned int multi_error;
+#endif /* CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION */
 };
 
 struct rt_tcp_dispatched_packet_send_cmd {
@@ -864,6 +888,15 @@ static void rt_tcp_rcv(struct rtskb *skb)
 
     rtdm_lock_get_irqsave(&ts->socket_lock, context);
 
+#ifdef CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION
+    if (ts->error_rate > 0) {
+        if ((ts->packet_counter++ % error_rate) < ts->multi_error) {
+            rtdm_lock_put_irqrestore(&ts->socket_lock, context);
+            goto drop;
+        }
+    }
+#endif /* CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION */
+
     /* Check for daddr/dport correspondence to values stored in
        selected socket from hash */
     if (ts->tcp_state != TCP_LISTEN &&
@@ -1182,6 +1215,12 @@ static int rt_tcp_socket_create(struct tcp_socket* ts)
     ts->timer_state = max_retransmits;
     timerwheel_init_timer(&ts->timer, rt_tcp_retransmit_handler, ts);
     rtskb_queue_init(&ts->retransmit_queue);
+
+#ifdef CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION
+    ts->packet_counter = counter_start;
+    ts->error_rate = error_rate;
+    ts->multi_error = multi_error;
+#endif /* CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION */
 
     rtdm_lock_get_irqsave(&tcp_socket_base_lock, context);
 

@@ -60,6 +60,9 @@
 /* Router */
 #undef CONFIG_RTNET_RTIPV4_ROUTER
 
+/* TCP error injection */
+#undef CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION
+
 /* Real-Time WLAN support */
 #undef CONFIG_RTNET_RTWLAN
 

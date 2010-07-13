@@ -6,3 +6,13 @@ config RTNET_RTIPV4_TCP
 
     When the RTnet IPv4 is enabled while this feature is disabled, TCP
     will be forwarded to the Linux network stack.
+
+config RTNET_RTIPV4_TCP_ERROR_INJECTION
+    bool "TCP error injection"
+    depends on RTNET_RTIPV4_TCP
+    ---help---
+    Enables error injection for incoming TCP packets. This can be used
+    to test both protocol as well as application behavior under error
+    conditions. The per-socket error rate is 0 by default and can be
+    tuned during runtime via the error_rate and multi_error module
+    parameters.

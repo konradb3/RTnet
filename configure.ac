@@ -1125,13 +1125,25 @@ AM_CONDITIONAL(CONFIG_RTNET_RTIPV4_UDP,[test "$CONFIG_RTNET_RTIPV4_UDP" = "y"])
 
 AC_MSG_CHECKING([whether to enable real-time IPv4 TCP support])
 AC_ARG_ENABLE(tcp,
-    AS_HELP_STRING([--enable-tcp], [enable real-time IPv4 TCP support @<:@default=yes@:>@]),
+    AS_HELP_STRING([--enable-tcp], [enable real-time IPv4 TCP support @<:@default=no@:>@]),
     [case "$enableval" in
         y | yes) CONFIG_RTNET_RTIPV4_TCP=y ;;
         *) CONFIG_RTNET_RTIPV4_TCP=n ;;
     esac])
 AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_TCP:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_RTIPV4_TCP,[test "$CONFIG_RTNET_RTIPV4_TCP" = "y"])
+
+AC_MSG_CHECKING([whether to enable TCP error injection])
+AC_ARG_ENABLE(tcp-error-injection,
+    AS_HELP_STRING([--enable-tcp-error-injection], [enable TCP error injection @<:@default=no@:>@]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION=y ;;
+        *) CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION:-n}])
+if test "$CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION" = "y"; then
+    AC_DEFINE(CONFIG_RTNET_RTIPV4_TCP_ERROR_INJECTION,1,[TCP error injection])
+fi
 
 AC_MSG_CHECKING([for host routes])
 AC_ARG_ENABLE(host-routes,
