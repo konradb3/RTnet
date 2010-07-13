@@ -83,6 +83,10 @@ int timerwheel_add_timer(struct timerwheel_timer *timer,
 
     rtdm_lock_get_irqsave(&wheel.slot_lock, context);
 
+    /* cancel timer if it's still running */
+    if (timer->slot >= 0)
+        list_del(&timer->link);
+
     slot = slot + wheel.current_slot;
     if (slot >= wheel.slots)
         slot = slot - wheel.slots;
