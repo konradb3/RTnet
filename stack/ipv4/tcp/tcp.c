@@ -405,7 +405,7 @@ static void rt_tcp_retransmit_handler(void *data)
     if (unlikely(rtskb_queue_empty(&ts->retransmit_queue))) {
         /* handled, but retransmission queue is empty */
         rtdm_lock_get_irqsave(&ts->socket_lock, context);
-        rtdm_printk("rttcp: bug is RT TCP retransmission routine\n");
+        rtdm_printk("rttcp: bug in RT TCP retransmission routine\n");
         return;
     }
 
@@ -427,7 +427,7 @@ static void rt_tcp_retransmit_handler(void *data)
         /* BUG, window changes are not respected */
         if (unlikely(rtdev_xmit(skb)) != 0) {
             kfree_rtskb(skb);
-            rtdm_printk("rttcp: cann't resend a packet from a timer\n");
+            rtdm_printk("rttcp: packet retransmission from timer failed\n");
         }
     } else {
         ts->timer_state = max_retransmits;
