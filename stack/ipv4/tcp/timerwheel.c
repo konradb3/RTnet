@@ -61,7 +61,8 @@ static struct timerwheel_timer *timerwheel_get_from_current_slot(void)
     if (!list_empty(slot_list)) {
         timer = list_first_entry(slot_list, struct timerwheel_timer, link);
         list_del(&timer->link);
-        timer->slot = TIMERWHEEL_TIMER_TRIGGERED;
+        timer->slot = TIMERWHEEL_TIMER_UNUSED;
+        timer->refcount++;
     }
 
     rtdm_lock_put_irqrestore(&wheel.slot_lock, context);
@@ -112,7 +113,6 @@ static int timerwheel_sleep(void)
 static void timerwheel_pivot(void *arg)
 {
     struct timerwheel_timer *timer;
-    rtdm_lockctx_t context;
     int ret;
 
     while (1) {
@@ -125,10 +125,8 @@ static void timerwheel_pivot(void *arg)
         while ((timer = timerwheel_get_from_current_slot())) {
             timer->handler(timer->data);
 
-            rtdm_lock_get_irqsave(&wheel.slot_lock, context);
-            if (timer->slot == TIMERWHEEL_TIMER_TRIGGERED)
-                timer->slot = TIMERWHEEL_TIMER_UNUSED;
-            rtdm_lock_put_irqrestore(&wheel.slot_lock, context);
+            smp_mb();
+            timer->refcount--;
         }
     }
 }
@@ -145,7 +143,7 @@ int timerwheel_remove_timer(struct timerwheel_timer *timer)
         timer->slot = TIMERWHEEL_TIMER_UNUSED;
         ret = 0;
     } else
-        ret = timer->slot;
+        ret = -ENOENT;
 
     rtdm_lock_put_irqrestore(&wheel.slot_lock, context);
 
@@ -160,7 +158,7 @@ void timerwheel_remove_timer_sync(struct timerwheel_timer *timer)
 
     timerwheel_remove_timer(timer);
 
-    while (timer->slot != TIMERWHEEL_TIMER_UNUSED)
+    while (timer->refcount > 0)
         msleep(interval_ms);
 }
 
