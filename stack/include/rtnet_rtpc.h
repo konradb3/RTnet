@@ -45,7 +45,7 @@ struct rt_proc_call {
     atomic_t            ref_count;
     wait_queue_head_t   call_wq;
     rtpc_cleanup_proc   cleanup_handler;
-    char                priv_data[0];
+    char                priv_data[0] __attribute__ ((aligned(8)));
 };
 
 #define CALL_PENDING    1000 /* result value for blocked calls */
