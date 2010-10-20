@@ -100,8 +100,6 @@ struct rtnet_device {
     unsigned char       dev_addr[MAX_ADDR_LEN];     /* hw address   */
     unsigned char       addr_len;   /* hardware address length      */
 
-    struct dev_mc_list  *mc_list;   /* Multicast mac addresses      */
-    int                 mc_count;   /* Number of installed mcasts   */
     int                 promiscuity;
     int                 allmulti;
 

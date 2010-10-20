@@ -1822,22 +1822,13 @@ static void via_rhine_set_rx_mode(struct rtnet_device *dev) /*** RTnet ***/
 		rx_mode = 0x1C;
 		writel(0xffffffff, (void *)ioaddr + MulticastFilter0);
 		writel(0xffffffff, (void *)ioaddr + MulticastFilter1);
-	} else if ((dev->mc_count > multicast_filter_limit)
-			   ||  (dev->flags & IFF_ALLMULTI)) {
+	} else if (dev->flags & IFF_ALLMULTI) {
 		/* Too many to match, or accept all multicasts. */
 		writel(0xffffffff, (void *)ioaddr + MulticastFilter0);
 		writel(0xffffffff, (void *)ioaddr + MulticastFilter1);
 		rx_mode = 0x0C;
 	} else {
-		struct dev_mc_list *mclist;
-		int i;
 		memset(mc_filter, 0, sizeof(mc_filter));
-		for (i = 0, mclist = dev->mc_list; mclist && i < dev->mc_count;
-			 i++, mclist = mclist->next) {
-			int bit_nr = ether_crc(ETH_ALEN, mclist->dmi_addr) >> 26;
-
-			mc_filter[bit_nr >> 5] |= cpu_to_le32(1 << (bit_nr & 31));
-		}
 		writel(mc_filter[0], (void *)ioaddr + MulticastFilter0);
 		writel(mc_filter[1], (void *)ioaddr + MulticastFilter1);
 		rx_mode = 0x0C;

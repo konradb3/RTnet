@@ -442,13 +442,6 @@ static void smc_shutdown( int ioaddr );
 static int smc_findirq( int ioaddr );
 #endif
 
-/*
-  this routine will set the hardware multicast table to the specified
-  values given it by the higher level routines
-*/
-static void smc_setmulticast( int ioaddr, int count, struct dev_mc_list *  );
-static int crc32( unsigned char *, int );
-
 /* Routines to Read and Write the PHY Registers across the
    MII Management Interface
 */
@@ -600,91 +593,6 @@ static void smc_shutdown( int ioaddr )
 	outw( inw( ioaddr + CONFIG_REG ) & ~CONFIG_EPH_POWER_EN,
 		ioaddr + CONFIG_REG  );
 #endif
-}
-
-
-/*
- . Function: smc_setmulticast( int ioaddr, int count, dev_mc_list * adds )
- . Purpose:
- .    This sets the internal hardware table to filter out unwanted multicast
- .    packets before they take up memory.
- .
- .    The SMC chip uses a hash table where the high 6 bits of the CRC of
- .    address are the offset into the table.  If that bit is 1, then the
- .    multicast packet is accepted.  Otherwise, it's dropped silently.
- .
- .    To use the 6 bits as an offset into the table, the high 3 bits are the
- .    number of the 8 bit register, while the low 3 bits are the bit within
- .    that register.
- .
- . This routine is based very heavily on the one provided by Peter Cammaert.
-*/
-
-
-static void smc_setmulticast( int ioaddr, int count, struct dev_mc_list * addrs ) {
-	int			i;
-	unsigned char		multicast_table[ 8 ];
-	struct dev_mc_list	* cur_addr;
-	/* table for flipping the order of 3 bits */
-	unsigned char invert3[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-
-	PRINTK2("CARDNAME:smc_setmulticast\n");
-
-	/* start with a table of all zeros: reject all */
-	memset( multicast_table, 0, sizeof( multicast_table ) );
-
-	cur_addr = addrs;
-	for ( i = 0; i < count ; i ++, cur_addr = cur_addr->next  ) {
-		int position;
-
-		/* do we have a pointer here? */
-		if ( !cur_addr )
-			break;
-		/* make sure this is a multicast address - shouldn't this
-		   be a given if we have it here ? */
-		if ( !( *cur_addr->dmi_addr & 1 ) )
-			continue;
-
-		/* only use the low order bits */
-		position = crc32( cur_addr->dmi_addr, 6 ) & 0x3f;
-
-		/* do some messy swapping to put the bit in the right spot */
-		multicast_table[invert3[position&7]] |=
-					(1<<invert3[(position>>3)&7]);
-
-	}
-	/* now, the table can be loaded into the chipset */
-	SMC_SELECT_BANK( 3 );
-
-	for ( i = 0; i < 8 ; i++ ) {
-		outb( multicast_table[i], ioaddr + MCAST_REG1 + i );
-	}
-}
-
-/*
-  Finds the CRC32 of a set of bytes.
-  Again, from Peter Cammaert's code.
-*/
-static int crc32( unsigned char * s, int length ) {
-	/* indices */
-	int perByte;
-	int perBit;
-	/* crc polynomial for Ethernet */
-	const unsigned long poly = 0xedb88320;
-	/* crc value - preinitialized to all 1's */
-	unsigned long crc_value = 0xffffffff;
-
-	for ( perByte = 0; perByte < length; perByte ++ ) {
-		unsigned char	c;
-
-		c = *(s++);
-		for ( perBit = 0; perBit < 8; perBit++ ) {
-			crc_value = (crc_value>>1)^
-				(((crc_value^c)&0x01)?poly:0);
-			c >>= 1;
-		}
-	}
-	return	crc_value;
 }
 
 
@@ -1983,19 +1891,7 @@ static void smc_set_multicast_list(struct rtnet_device *dev)
 		PRINTK2("%s:smc_set_multicast_list:RCR_ALMUL\n", dev->name);
 		}
 
-	/* We just get all multicast packets even if we only want them
-	 . from one source.  This will be changed at some future
-	 . point. */
-	else if (dev->mc_count )  {
-		/* support hardware multicasting */
-
-		/* be sure I get rid of flags I might have set */
-		outw( inw( ioaddr + RCR_REG ) & ~(RCR_PRMS | RCR_ALMUL),
-			ioaddr + RCR_REG );
-		/* NOTE: this has to set the bank, so make sure it is the
-		   last thing called.  The bank is set to zero at the top */
-		smc_setmulticast( ioaddr, dev->mc_count, dev->mc_list );
-	} else  {
+	else  {
 		PRINTK2("%s:smc_set_multicast_list:~(RCR_PRMS|RCR_ALMUL)\n",
 			dev->name);
 		outw( inw( ioaddr + RCR_REG ) & ~(RCR_PRMS | RCR_ALMUL),

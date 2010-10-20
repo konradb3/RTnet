@@ -202,10 +202,6 @@ static int debug = -1;
 static int max_interrupt_work = 20;
 static int mtu;
 
-/* Maximum number of multicast addresses to filter (vs. rx-all-multicast).
-   This chip uses a 512 element hash table based on the Ethernet CRC.  */
-static int multicast_filter_limit = 100;
-
 /* Set the copy breakpoint for the copy-only-tiny-frames scheme.
    Setting to > 1518 effectively disables this feature. */
 /*** RTnet ***
@@ -2019,40 +2015,6 @@ static struct net_device_stats *get_stats(struct rtnet_device *rtdev)
 	return &np->stats;
 }
 
-/**
- * dp83815_crc - computer CRC for hash table entries
- *
- * Note - this is, for some reason, *not* the same function
- * as ether_crc_le() or ether_crc(), though it uses the
- * same big-endian polynomial.
- */
-#define DP_POLYNOMIAL			0x04C11DB7
-static unsigned dp83815_crc(int length, unsigned char *data)
-{
-	u32 crc;
-	u8 cur_byte;
-	u8 msb;
-	u8 byte, bit;
-
-	crc = ~0;
-	for (byte=0; byte<length; byte++) {
-		cur_byte = *data++;
-		for (bit=0; bit<8; bit++) {
-			msb = crc >> 31;
-			crc <<= 1;
-			if (msb ^ (cur_byte & 1)) {
-				crc ^= DP_POLYNOMIAL;
-				crc |= 1;
-			}
-			cur_byte >>= 1;
-		}
-	}
-	crc >>= 23;
-
-	return (crc);
-}
-
-
 void set_bit_le(int offset, unsigned char * data)
 {
 	data[offset >> 3] |= (1 << (offset & 0x07));
@@ -2071,20 +2033,13 @@ static void __set_rx_mode(struct rtnet_device *dev)
 			dev->name);
 		rx_mode = RxFilterEnable | AcceptBroadcast
 			| AcceptAllMulticast | AcceptAllPhys | AcceptMyPhys;
-	} else if ((dev->mc_count > multicast_filter_limit)
-	  || (dev->flags & IFF_ALLMULTI)) {
+	} else if (dev->flags & IFF_ALLMULTI) {
 		rx_mode = RxFilterEnable | AcceptBroadcast
 			| AcceptAllMulticast | AcceptMyPhys;
 	} else {
-		struct dev_mc_list *mclist;
 		int i;
+
 		memset(mc_filter, 0, sizeof(mc_filter));
-		for (i = 0, mclist = dev->mc_list; mclist && i < dev->mc_count;
-			 i++, mclist = mclist->next) {
-			set_bit_le(
-				dp83815_crc(ETH_ALEN, mclist->dmi_addr) & 0x1ff,
-				mc_filter);
-		}
 		rx_mode = RxFilterEnable | AcceptBroadcast
 			| AcceptMulticast | AcceptMyPhys;
 		for (i = 0; i < 64; i += 2) {

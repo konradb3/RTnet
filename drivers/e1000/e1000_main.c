@@ -2061,9 +2061,7 @@ e1000_set_multi(struct rtnet_device *netdev)
 {
 	struct e1000_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
-	struct dev_mc_list *mc_ptr;
 	uint32_t rctl;
-	uint32_t hash_value;
 	int i, rar_entries = E1000_RAR_ENTRIES;
 	int mta_reg_count = (hw->mac_type == e1000_ich8lan) ?
 				E1000_NUM_MTA_REGISTERS_ICH8LAN :
@@ -2101,18 +2099,12 @@ e1000_set_multi(struct rtnet_device *netdev)
 	 * if there are not 14 addresses, go ahead and clear the filters
 	 * -- with 82571 controllers only 0-13 entries are filled here
 	 */
-	mc_ptr = netdev->mc_list;
 
 	for (i = 1; i < rar_entries; i++) {
-		if (mc_ptr) {
-			e1000_rar_set(hw, mc_ptr->dmi_addr, i);
-			mc_ptr = mc_ptr->next;
-		} else {
-			E1000_WRITE_REG_ARRAY(hw, RA, i << 1, 0);
-			E1000_WRITE_FLUSH(hw);
-			E1000_WRITE_REG_ARRAY(hw, RA, (i << 1) + 1, 0);
-			E1000_WRITE_FLUSH(hw);
-		}
+		E1000_WRITE_REG_ARRAY(hw, RA, i << 1, 0);
+		E1000_WRITE_FLUSH(hw);
+		E1000_WRITE_REG_ARRAY(hw, RA, (i << 1) + 1, 0);
+		E1000_WRITE_FLUSH(hw);
 	}
 
 	/* clear the old settings from the multicast hash table */
@@ -2120,13 +2112,6 @@ e1000_set_multi(struct rtnet_device *netdev)
 	for (i = 0; i < mta_reg_count; i++) {
 		E1000_WRITE_REG_ARRAY(hw, MTA, i, 0);
 		E1000_WRITE_FLUSH(hw);
-	}
-
-	/* load any remaining addresses into the hash table */
-
-	for (; mc_ptr; mc_ptr = mc_ptr->next) {
-		hash_value = e1000_hash_mc_addr(hw, mc_ptr->dmi_addr);
-		e1000_mta_set(hw, hash_value);
 	}
 
 	if (hw->mac_type == e1000_82542_rev2_0)

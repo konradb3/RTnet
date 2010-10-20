@@ -1047,7 +1047,7 @@ static int __devinit vortex_probe1(struct pci_dev *pdev,
 	static int printed_version;
 	int retval, print_info;
 	struct vortex_chip_info * const vci = &vortex_info_tbl[chip_idx];
-	char *print_name;
+	const char *print_name;
 
 
 
@@ -3165,7 +3165,7 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 		if (vortex_debug > 0)
 			printk(KERN_NOTICE "%s: Setting promiscuous mode.\n", rtdev->name);
 		new_mode = SetRxFilter|RxStation|RxMulticast|RxBroadcast|RxProm;
-	} else	if ((rtdev->mc_list)  ||  (rtdev->flags & IFF_ALLMULTI)) {
+	} else	if (rtdev->flags & IFF_ALLMULTI) {
 		new_mode = SetRxFilter|RxStation|RxMulticast|RxBroadcast;
 	} else
 		new_mode = SetRxFilter | RxStation | RxBroadcast;

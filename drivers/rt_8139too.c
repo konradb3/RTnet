@@ -84,10 +84,6 @@ MODULE_PARM_DESC (full_duplex, "8139too: Force full duplex for board(s) (1)");
 #endif
  *** RTnet *** */
 
-/* Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
-   The RTL chips use a 64 element hash table based on the Ethernet CRC.  */
-static int multicast_filter_limit = 32;
-
 /* Size of the in-memory receive ring. */
 #define RX_BUF_LEN_IDX        2        /* 0==8K, 1==16K, 2==32K, 3==64K */
 #define RX_BUF_LEN        (8192 << RX_BUF_LEN_IDX)
@@ -518,15 +514,6 @@ struct rtl8139_private {
 MODULE_AUTHOR ("Jeff Garzik <jgarzik@mandrakesoft.com>");
 MODULE_DESCRIPTION ("RealTek RTL-8139 Fast Ethernet driver");
 MODULE_LICENSE("GPL");
-
-#if 0	/* unused module parameters from original 8139too driver */
-MODULE_PARM (multicast_filter_limit, "i");
-MODULE_PARM (debug, "i");
-
-MODULE_PARM_DESC (debug, "8139too bitmapped message enable number");
-MODULE_PARM_DESC (multicast_filter_limit, "8139too maximum number of filtered multicast addresses");
-#endif
-
 
 static int read_eeprom (void *ioaddr, int location, int addr_len);
 static int mdio_read (struct rtnet_device *rtdev, int phy_id, int location);
@@ -1799,7 +1786,7 @@ static void __set_rx_mode (struct rtnet_device *rtdev)
         struct rtl8139_private *tp = rtdev->priv;
         void *ioaddr = tp->mmio_addr;
         u32 mc_filter[2];        /* Multicast hash filter */
-        int i, rx_mode;
+        int rx_mode;
         u32 tmp;
 
 #ifdef DEBUG
@@ -1813,20 +1800,13 @@ static void __set_rx_mode (struct rtnet_device *rtdev)
                 /*printk (KERN_NOTICE "%s: Promiscuous mode enabled.\n", rtdev->name);*/
                 rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys | AcceptAllPhys;
                 mc_filter[1] = mc_filter[0] = 0xffffffff;
-        } else if ((rtdev->mc_count > multicast_filter_limit) || (rtdev->flags & IFF_ALLMULTI)) {
+        } else if (rtdev->flags & IFF_ALLMULTI) {
                 /* Too many to filter perfectly -- accept all multicasts. */
                 rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys;
                 mc_filter[1] = mc_filter[0] = 0xffffffff;
         } else {
-                struct dev_mc_list *mclist;
                 rx_mode = AcceptBroadcast | AcceptMyPhys;
                 mc_filter[1] = mc_filter[0] = 0;
-                for (i = 0, mclist = rtdev->mc_list; mclist && i < rtdev->mc_count; i++, mclist = mclist->next) {
-                        int bit_nr = ether_crc(ETH_ALEN, mclist->dmi_addr) >> 26;
-
-                        mc_filter[bit_nr >> 5] |= cpu_to_le32(1 << (bit_nr & 31));
-                        rx_mode |= AcceptMulticast;
-                }
         }
 
         /* We can safely update without stopping the chip. */

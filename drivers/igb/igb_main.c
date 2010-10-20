@@ -2443,10 +2443,7 @@ static void igb_set_multi(struct rtnet_device *netdev)
 	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	struct e1000_mac_info *mac = &hw->mac;
-	struct dev_mc_list *mc_ptr;
-	u8  *mta_list;
 	u32 rctl;
-	int i;
 
 	/* Check for Promiscuous and All Multicast modes */
 
@@ -2465,29 +2462,8 @@ static void igb_set_multi(struct rtnet_device *netdev)
 	}
 	wr32(E1000_RCTL, rctl);
 
-	if (!netdev->mc_count) {
-		/* nothing to program, so clear mc list */
-		igb_update_mc_addr_list_82575(hw, NULL, 0, 1,
-					  mac->rar_entry_count);
-		return;
-	}
-
-	mta_list = kzalloc(netdev->mc_count * 6, GFP_ATOMIC);
-	if (!mta_list)
-		return;
-
-	/* The shared function expects a packed array of only addresses. */
-	mc_ptr = netdev->mc_list;
-
-	for (i = 0; i < netdev->mc_count; i++) {
-		if (!mc_ptr)
-			break;
-		memcpy(mta_list + (i*ETH_ALEN), mc_ptr->dmi_addr, ETH_ALEN);
-		mc_ptr = mc_ptr->next;
-	}
-	igb_update_mc_addr_list_82575(hw, mta_list, i, 1,
-	                              mac->rar_entry_count);
-	kfree(mta_list);
+	/* nothing to program, so clear mc list */
+	igb_update_mc_addr_list_82575(hw, NULL, 0, 1, mac->rar_entry_count);
 }
 
 /* Need to wait a few seconds after link up to get diagnostic information from

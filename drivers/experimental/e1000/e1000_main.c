@@ -2970,11 +2970,7 @@ static void e1000_set_multi(struct net_device *netdev)
 {
 	struct e1000_adapter *adapter = netdev_priv(netdev);
 	struct e1000_hw *hw = &adapter->hw;
-	struct e1000_mac_info *mac = &hw->mac;
-	struct dev_mc_list *mc_ptr;
-	u8  *mta_list;
 	u32 rctl;
-	int i;
 
 	/* Check for Promiscuous and All Multicast modes */
 
@@ -2990,32 +2986,6 @@ static void e1000_set_multi(struct net_device *netdev)
 	}
 
 	E1000_WRITE_REG(hw, E1000_RCTL, rctl);
-
-	/* 82542 2.0 needs to be in reset to write receive address registers */
-
-	if (hw->mac.type == e1000_82542)
-		e1000_enter_82542_rst(adapter);
-
-	mta_list = kmalloc(netdev->mc_count * 6, GFP_ATOMIC);
-	if (!mta_list)
-		return;
-
-	/* The shared function expects a packed array of only addresses. */
-	mc_ptr = netdev->mc_list;
-
-	for (i = 0; i < netdev->mc_count; i++) {
-		if (!mc_ptr)
-			break;
-		memcpy(mta_list + (i*ETH_ALEN), mc_ptr->dmi_addr, ETH_ALEN);
-		mc_ptr = mc_ptr->next;
-	}
-
-	e1000_update_mc_addr_list(hw, mta_list, i, 1, mac->rar_entry_count);
-
-	kfree(mta_list);
-
-	if (hw->mac.type == e1000_82542)
-		e1000_leave_82542_rst(adapter);
 }
 
 /* Need to wait a few seconds after link up to get diagnostic information from
@@ -3561,7 +3531,7 @@ static bool e1000_tx_csum(struct e1000_adapter *adapter,
 	struct e1000_context_desc *context_desc;
 	struct e1000_buffer *buffer_info;
 	unsigned int i;
-	u8 css;
+	// u8 css;
 	u32 cmd_len = E1000_TXD_CMD_DEXT;
 
 	if (unlikely(skb->ip_summed != CHECKSUM_PARTIAL))

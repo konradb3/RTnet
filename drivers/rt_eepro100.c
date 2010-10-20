@@ -1737,14 +1737,9 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 	//unsigned long flags;
 	int entry/*, i*/;
 
-// *** RTnet ***
-    rtdev->mc_count = 0;
-// *** RTnet ***
-
 	if (rtdev->flags & IFF_PROMISC) {			/* Set promiscuous. */
 		new_rx_mode = 3;
-	} else if ((rtdev->flags & IFF_ALLMULTI)  ||
-			   rtdev->mc_count > multicast_filter_limit) {
+	} else if (rtdev->flags & IFF_ALLMULTI) {
 		new_rx_mode = 1;
 	} else
 		new_rx_mode = 0;
@@ -1800,7 +1795,7 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 		//spin_unlock_irqrestore(&sp->lock, flags);
 	}
 
-	if (new_rx_mode == 0  &&  rtdev->mc_count < 4) {
+	if (new_rx_mode == 0) {
 		/* The simple case of 0-3 multicast list entries occurs often, and
 		   fits within one tx_ring[] entry. */
 		/*struct dev_mc_list *mclist;*/
@@ -1817,7 +1812,7 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 			cpu_to_le32(TX_RING_ELEM_DMA(sp, (entry + 1) % TX_RING_SIZE));
 		sp->tx_ring[entry].tx_desc_addr = 0; /* Really MC list count. */
 		setup_params = (u16 *)&sp->tx_ring[entry].tx_desc_addr;
-		*setup_params++ = cpu_to_le16(rtdev->mc_count*6);
+		*setup_params++ = cpu_to_le16(0); /* mc_count */
 // *** RTnet ***
 #if 0
 		/* Fill in the multicast addresses. */

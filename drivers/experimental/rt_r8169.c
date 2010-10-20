@@ -2030,28 +2030,13 @@ static void rtl8169_set_rx_mode (struct rtnet_device *rtdev)
 		printk (KERN_NOTICE "%s: Promiscuous mode enabled.\n", rtdev->name);
 		rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys | AcceptAllPhys;
 		mc_filter[1] = mc_filter[0] = 0xffffffff;
-	} else if ((rtdev->mc_count > multicast_filter_limit) || (rtdev->flags & IFF_ALLMULTI)) {
+	} else if (rtdev->flags & IFF_ALLMULTI) {
 		/* Too many to filter perfectly -- accept all multicasts. */
 		rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys;
 		mc_filter[1] = mc_filter[0] = 0xffffffff;
 	} else {
-		struct dev_mc_list *mclist;
 		rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys;
 		mc_filter[1] = mc_filter[0] = 0;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-		for (i = 0, mclist = rtdev->mc_list; mclist && i < rtdev->mc_count; i++, mclist = mclist->next)
-		{
-			set_bit (ether_crc (ETH_ALEN, mclist->dmi_addr) >> 26, mc_filter);
-		}			
-#else
-		for (i = 0, mclist = rtdev->mc_list; mclist && i < rtdev->mc_count; i++, mclist = mclist->next)
-		{
-			int bit_nr = ether_crc(ETH_ALEN, mclist->dmi_addr) >> 26;
-			                                                                                                     
-			mc_filter[bit_nr >> 5] |= 1 << (bit_nr & 31);
-			rx_mode |= AcceptMulticast;
-		}
-#endif		
 	}
 
 	rtdm_lock_get_irqsave(&priv->lock, context);			/*** RTnet ***/
