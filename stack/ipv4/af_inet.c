@@ -276,10 +276,9 @@ static void rt_ip_ifdown(struct rtnet_device *rtdev)
 
 
 static struct rtdev_event_hook  rtdev_hook = {
-    .register_device =  NULL,
-    .unregister_device =NULL,
-    .ifup =             rt_ip_ifup,
-    .ifdown =           rt_ip_ifdown
+    .unregister_device = rt_ip_ifdown,
+    .ifup =              rt_ip_ifup,
+    .ifdown =            rt_ip_ifdown
 };
 
 static struct rtnet_ioctls ipv4_ioctls = {
