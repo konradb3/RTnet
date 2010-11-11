@@ -3772,7 +3772,6 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 	 * need for the IMC write */
 	u32 icr = rd32(E1000_ICR);
 	u32 eicr = 0;
-	int tx_clean_complete;
 
 	if (!icr)
 		return RTDM_IRQ_NONE;  /* Not our interrupt */
@@ -3791,19 +3790,15 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 			rtdm_nrtsig_pend(&adapter->mod_timer_sig);
 	}
 
-	adapter->flags |= IGB_FLAG_IN_NETPOLL;
-
-	tx_clean_complete = igb_clean_tx_irq(&adapter->tx_ring[0]);
-	if (tx_clean_complete && !test_bit(__IGB_DOWN, &adapter->state))
-		igb_irq_enable(adapter);
+	igb_clean_tx_irq(&adapter->tx_ring[0]);
 
 	if (igb_clean_rx_irq_adv(&adapter->rx_ring[0], time_stamp))
 		rt_mark_stack_mgr(netdev);
 
-	if (!test_bit(__IGB_DOWN, &adapter->state))
+	if (!test_bit(__IGB_DOWN, &adapter->state)) {
+		igb_irq_enable(adapter);
 		wr32(E1000_EIMS, adapter->rx_ring[0].eims_value);
-
-	adapter->flags &= ~IGB_FLAG_IN_NETPOLL;
+	}
 
 	return RTDM_IRQ_HANDLED;
 }
