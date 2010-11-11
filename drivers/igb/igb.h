@@ -307,8 +307,6 @@ struct igb_adapter {
 #endif
 	unsigned int tx_ring_count;
 	unsigned int rx_ring_count;
-
-	unsigned int data_received;
 };
 
 #define IGB_FLAG_HAS_MSI           (1 << 0)

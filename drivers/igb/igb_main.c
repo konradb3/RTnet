@@ -3769,7 +3769,6 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 	u32 icr = rd32(E1000_ICR);
 	u32 eicr = 0;
 	int tx_clean_complete;
-	int rx_clean_complete;
 
 	if (!icr)
 		return RTDM_IRQ_NONE;  /* Not our interrupt */
@@ -3790,7 +3789,6 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 			rtdm_nrtsig_pend(&adapter->mod_timer_sig);
 	}
 
-	adapter->data_received = 0;
 	adapter->flags |= IGB_FLAG_IN_NETPOLL;
 
 	tx_clean_complete = igb_clean_tx_irq(&adapter->tx_ring[0]);
@@ -3803,8 +3801,8 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 			igb_irq_enable(adapter);
 	}
 
-	rx_clean_complete =
-		igb_clean_rx_irq_adv(&adapter->rx_ring[0], time_stamp);
+	if (igb_clean_rx_irq_adv(&adapter->rx_ring[0], time_stamp))
+		rt_mark_stack_mgr(netdev);
 
 	/* If not enough Rx work done, exit the polling mode */
 	if (!rtnetif_running(netdev)) {
@@ -3821,10 +3819,6 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 	}
 
 	adapter->flags &= ~IGB_FLAG_IN_NETPOLL;
-
-	if (adapter->data_received) {
-		rt_mark_stack_mgr(netdev);
-	}
 
 	return RTDM_IRQ_HANDLED;
 }
@@ -4139,7 +4133,7 @@ igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t time_stamp)
 	struct rtskb *skb;
 	unsigned int i;
 	u32 length, hlen, staterr;
-	bool cleaned = false;
+	bool data_received = false;
 	int cleaned_count = 0;
 	unsigned int total_bytes = 0, total_packets = 0;
 
@@ -4166,7 +4160,6 @@ igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t time_stamp)
 			hlen = adapter->rx_ps_hdr_size;
 
 		length = le16_to_cpu(rx_desc->wb.upper.length);
-		cleaned = true;
 		cleaned_count++;
 
 		skb = buffer_info->skb;
@@ -4242,7 +4235,7 @@ send_up:
 		skb->protocol = rt_eth_type_trans(skb, netdev);
 		skb->time_stamp = time_stamp;
 		igb_receive_skb(rx_ring, staterr, rx_desc, skb);
-		adapter->data_received = 1;
+		data_received = true;
 
 next_desc:
 		rx_desc->wb.upper.status_error = 0;
@@ -4280,7 +4273,7 @@ next_desc:
 	adapter->net_stats.rx_bytes += total_bytes;
 	adapter->net_stats.rx_packets += total_packets;
 
-	return cleaned;
+	return data_received;
 }
 
 
