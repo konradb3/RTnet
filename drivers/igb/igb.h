@@ -167,6 +167,7 @@ struct igb_ring {
 	unsigned int total_packets;
 
 	rtdm_lock_t lock;
+	rtdm_irq_t irq_handle;
 
 	union {
 		/* TX */

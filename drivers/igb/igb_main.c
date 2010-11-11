@@ -99,10 +99,6 @@
 #undef ETHTOOL_GPERMADDR
 #endif
 
-#ifdef CONFIG_PCI_MSI
-#undef CONFIG_PCI_MSI
-#endif
-
 #ifdef CONFIG_PM
 #undef CONFIG_PM
 #endif
@@ -183,10 +179,10 @@ static struct net_device_stats *igb_get_stats(struct rtnet_device *);
 /* static int igb_set_mac(struct net_device *, void *); */
 static int igb_intr(rtdm_irq_t *irq_handle);
 #ifdef CONFIG_PCI_MSI
-static irqreturn_t igb_intr_msi(int irq, void *);
-static irqreturn_t igb_msix_other(int irq, void *);
-static irqreturn_t igb_msix_rx(int irq, void *);
-static irqreturn_t igb_msix_tx(int irq, void *);
+static int igb_intr_msi(rtdm_irq_t *irq_handle);
+static int igb_msix_other(rtdm_irq_t *irq_handle);
+static int igb_msix_rx(rtdm_irq_t *irq_handle);
+static int igb_msix_tx(rtdm_irq_t *irq_handle);
 #ifdef CONFIG_IGB_NAPI
 static int igb_clean_rx_ring_msix(struct napi_struct *, int);
 #endif
@@ -586,9 +582,10 @@ static int igb_request_msix(struct igb_adapter *adapter)
 	for (i = 0; i < adapter->num_tx_queues; i++) {
 		struct igb_ring *ring = &(adapter->tx_ring[i]);
 		sprintf(ring->name, "%s-tx-%d", netdev->name, i);
-		err = request_irq(adapter->msix_entries[vector].vector,
-				  &igb_msix_tx, 0, ring->name,
-				  &(adapter->tx_ring[i]));
+		err = rtdm_irq_request(&adapter->tx_ring[i].irq_handle,
+				       adapter->msix_entries[vector].vector,
+				       igb_msix_tx, 0, ring->name,
+				       &(adapter->tx_ring[i]));
 		if (err)
 			goto out;
 		ring->itr_register = E1000_EITR(0) + (vector << 2);
@@ -601,9 +598,10 @@ static int igb_request_msix(struct igb_adapter *adapter)
 			sprintf(ring->name, "%s-rx-%d", netdev->name, i);
 		else
 			memcpy(ring->name, netdev->name, IFNAMSIZ);
-		err = request_irq(adapter->msix_entries[vector].vector,
-				  &igb_msix_rx, 0, ring->name,
-				  &(adapter->rx_ring[i]));
+		err = rtdm_irq_request(&adapter->rx_ring[i].irq_handle,
+				       adapter->msix_entries[vector].vector,
+				       igb_msix_rx, 0, ring->name,
+				       &(adapter->rx_ring[i]));
 		if (err)
 			goto out;
 		ring->itr_register = E1000_EITR(0) + (vector << 2);
@@ -616,8 +614,9 @@ static int igb_request_msix(struct igb_adapter *adapter)
 		vector++;
 	}
 
-	err = request_irq(adapter->msix_entries[vector].vector,
-			  &igb_msix_other, 0, netdev->name, netdev);
+	err = rtdm_irq_request(&adapter->irq_handle,
+			       adapter->msix_entries[vector].vector,
+			       igb_msix_other, 0, netdev->name, netdev);
 	if (err)
 		goto out;
 
@@ -694,6 +693,8 @@ static int igb_request_irq(struct igb_adapter *adapter)
 	struct e1000_hw *hw = &adapter->hw;
 	int err = 0;
 
+	rt_stack_connect(netdev, &STACK_manager);
+
 #ifdef CONFIG_PCI_MSI
 	if (adapter->msix_entries) {
 		err = igb_request_msix(adapter);
@@ -723,12 +724,11 @@ static int igb_request_irq(struct igb_adapter *adapter)
 		}
 	}
 
-	rt_stack_connect(netdev, &STACK_manager);
-
 #ifdef CONFIG_PCI_MSI
 	if (adapter->flags & IGB_FLAG_HAS_MSI) {
-	        err = rtdm_irq_request(&adapter->irq_handle, adapter->pdev->irq,
-				       &igb_intr_msi, 0, netdev->name, netdev);
+	        err = rtdm_irq_request(&adapter->irq_handle,
+				       adapter->pdev->irq, igb_intr_msi, 0,
+				       netdev->name, netdev);
 		if (!err)
 			goto request_done;
 		/* fall back to legacy interrupts */
@@ -753,20 +753,13 @@ request_done:
 static void igb_free_irq(struct igb_adapter *adapter)
 {
 #ifdef CONFIG_PCI_MSI
-	struct rtnet_device *netdev = adapter->netdev;
-
 	if (adapter->msix_entries) {
-		int vector = 0, i;
+		int i;
 
 		for (i = 0; i < adapter->num_tx_queues; i++)
-			free_irq(adapter->msix_entries[vector++].vector,
-				&(adapter->tx_ring[i]));
+			rtdm_irq_free(&adapter->tx_ring[i].irq_handle);
 		for (i = 0; i < adapter->num_rx_queues; i++)
-			free_irq(adapter->msix_entries[vector++].vector,
-				&(adapter->rx_ring[i]));
-
-		free_irq(adapter->msix_entries[vector++].vector, netdev);
-		return;
+			rtdm_irq_free(&adapter->rx_ring[i].irq_handle);
 	}
 #endif
 
@@ -1575,7 +1568,7 @@ static void __devexit igb_remove(struct pci_dev *pdev)
 		igb_reset_phy(&adapter->hw);
 
 	igb_remove_device(&adapter->hw);
-	// igb_reset_interrupt_capability(adapter);
+	igb_reset_interrupt_capability(adapter);
 
 	igb_free_queues(adapter);
 
@@ -1632,7 +1625,7 @@ static int __devinit igb_sw_init(struct igb_adapter *adapter)
 
 	/* This call may decrease the number of queues depending on
 	 * interrupt mode. */
-	// igb_set_interrupt_capability(adapter);
+	igb_set_interrupt_capability(adapter);
 
 	if (igb_alloc_queues(adapter)) {
 		dev_err(&pdev->dev, "Unable to allocate memory for queues\n");
@@ -3513,9 +3506,10 @@ void igb_update_stats(struct igb_adapter *adapter)
 }
 
 #ifdef CONFIG_PCI_MSI
-static irqreturn_t igb_msix_other(int irq, void *data)
+static int igb_msix_other(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *netdev = data;
+	struct rtnet_device *netdev =
+		rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	u32 icr = rd32(E1000_ICR);
@@ -3526,8 +3520,8 @@ static irqreturn_t igb_msix_other(int irq, void *data)
 	hw->mac.get_link_status = 1;
 	/* guard against interrupt when we're going down */
 	if (!test_bit(__IGB_DOWN, &adapter->state))
-		mod_timer(&adapter->watchdog_timer, jiffies + 1);
-	
+		rtdm_nrtsig_pend(&adapter->mod_timer_sig);
+
 no_link_interrupt:
 	wr32(E1000_IMS, E1000_IMS_LSC);
 	wr32(E1000_EIMS, adapter->eims_other);
@@ -3535,9 +3529,10 @@ no_link_interrupt:
 	return RTDM_IRQ_HANDLED;
 }
 
-static irqreturn_t igb_msix_tx(int irq, void *data)
+static int igb_msix_tx(rtdm_irq_t *irq_handle)
 {
-	struct igb_ring *tx_ring = data;
+	struct igb_ring *tx_ring =
+		rtdm_irq_get_arg(irq_handle, struct igb_ring);
 	struct igb_adapter *adapter = tx_ring->adapter;
 	struct e1000_hw *hw = &adapter->hw;
 
@@ -3583,15 +3578,16 @@ static void igb_write_itr(struct igb_ring *ring)
 #endif
 
 #ifdef CONFIG_PCI_MSI
-static irqreturn_t igb_msix_rx(int irq, void *data)
+static int igb_msix_rx(rtdm_irq_t *irq_handle)
 {
-	struct igb_ring *rx_ring = data;
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
+	struct igb_ring *rx_ring =
+		rtdm_irq_get_arg(irq_handle, struct igb_ring);
+	struct igb_adapter *adapter = rx_ring->adapter;
+	struct e1000_hw *hw = &adapter->hw;
 
-	/* Write the ITR value calculated at the end of the
-	 * previous interrupt.
-	 */
-
-	igb_write_itr(rx_ring);
+	if (igb_clean_rx_irq_adv(rx_ring, time_stamp))
+		rt_mark_stack_mgr(adapter->netdev);
 
 #ifdef CONFIG_IGB_NAPI
 	if (netif_rx_schedule_prep(&rx_ring->napi))
@@ -3602,7 +3598,11 @@ static irqreturn_t igb_msix_rx(int irq, void *data)
 	if (rx_ring->adapter->flags & IGB_FLAG_DCA_ENABLED)
 		igb_update_rx_dca(rx_ring);
 #endif
-		return IRQ_HANDLED;
+
+	if (!test_bit(__IGB_DOWN, &adapter->state))
+		wr32(E1000_EIMS, rx_ring->eims_value);
+
+	return RTDM_IRQ_HANDLED;
 }
 #endif /* CONFIG_PCI_MSI */
 
@@ -3731,24 +3731,34 @@ static int igb_notify_dca(struct notifier_block *nb, unsigned long event,
  * @irq: interrupt number
  * @data: pointer to a network interface device structure
  **/
-static irqreturn_t igb_intr_msi(int irq, void *data)
+static int igb_intr_msi(rtdm_irq_t *irq_handle)
 {
-	struct rtnet_device *netdev = data;
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
+	struct rtnet_device *netdev =
+		rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct igb_adapter *adapter = netdev->priv;
 	struct e1000_hw *hw = &adapter->hw;
 	/* read ICR disables interrupts using IAM */
 	u32 icr = rd32(E1000_ICR);
 
-	igb_write_itr(adapter->rx_ring);
-
 	if (icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
 		hw->mac.get_link_status = 1;
 		if (!test_bit(__IGB_DOWN, &adapter->state))
-			mod_timer(&adapter->watchdog_timer, jiffies + 1);
+			rtdm_nrtsig_pend(&adapter->mod_timer_sig);
 	}
 
 #ifdef CONFIG_IGB_NAPI
 	netif_rx_schedule(&adapter->rx_ring[0].napi);
+#else
+	igb_clean_tx_irq(&adapter->tx_ring[0]);
+
+	if (igb_clean_rx_irq_adv(&adapter->rx_ring[0], time_stamp))
+		rt_mark_stack_mgr(netdev);
+
+	if (!test_bit(__IGB_DOWN, &adapter->state)) {
+		igb_irq_enable(adapter);
+		wr32(E1000_EIMS, adapter->rx_ring[0].eims_value);
+	}
 #endif
 
 	return RTDM_IRQ_HANDLED;
@@ -3763,7 +3773,7 @@ static irqreturn_t igb_intr_msi(int irq, void *data)
  **/
 static int igb_intr(rtdm_irq_t *irq_handle)
 {
-        nanosecs_abs_t time_stamp = rtdm_clock_read();
+	nanosecs_abs_t time_stamp = rtdm_clock_read();
 	struct rtnet_device *netdev =
 		rtdm_irq_get_arg(irq_handle, struct rtnet_device);
 	struct igb_adapter *adapter = netdev->priv;
