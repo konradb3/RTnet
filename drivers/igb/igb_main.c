@@ -120,6 +120,10 @@
 #undef IGB_FRAMES_SUPPORT
 #endif
 
+#ifdef CONFIG_IGB_DCA
+#undef CONFIG_IGB_DCA
+#endif
+
 #define DRV_VERSION "1.2.45-k2-rtnet"
 char igb_driver_name[] = "rt_igb";
 char igb_driver_version[] = DRV_VERSION;
