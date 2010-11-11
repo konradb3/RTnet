@@ -2629,6 +2629,7 @@ enum latency_range {
 	latency_invalid = 255
 };
 
+#if 0
 /**
  * igb_update_ring_itr - update the dynamic ITR value based on packet size
  *
@@ -2827,6 +2828,7 @@ set_itr_now:
 
 	return;
 }
+#endif
 
 
 #define IGB_TX_FLAGS_CSUM		0x00000001
@@ -3558,6 +3560,7 @@ static irqreturn_t igb_msix_tx(int irq, void *data)
 }
 #endif /* CONFIG_PCI_MSI */
 
+#if 0
 static void igb_write_itr(struct igb_ring *ring)
 {
 	struct e1000_hw *hw = &ring->adapter->hw;
@@ -3577,6 +3580,7 @@ static void igb_write_itr(struct igb_ring *ring)
 		ring->set_itr = 0;
 	}
 }
+#endif
 
 #ifdef CONFIG_PCI_MSI
 static irqreturn_t igb_msix_rx(int irq, void *data)
@@ -3773,8 +3777,6 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 	if (!icr)
 		return RTDM_IRQ_NONE;  /* Not our interrupt */
 
-	igb_write_itr(adapter->rx_ring);
-
 	/* IMS will not auto-mask if INT_ASSERTED is not set, and if it is
 	 * not set, then the adapter didn't send an interrupt */
 	if (!(icr & E1000_ICR_INT_ASSERTED))
@@ -3792,31 +3794,14 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 	adapter->flags |= IGB_FLAG_IN_NETPOLL;
 
 	tx_clean_complete = igb_clean_tx_irq(&adapter->tx_ring[0]);
-	/* If no Tx and not enough Rx work done, exit the polling mode */
-	if ((tx_clean_complete) || !rtnetif_running(netdev)) {
-		if (adapter->itr_setting & 3)
-			igb_set_itr(adapter);
-		/* netif_rx_complete(napi); */
-		if (!test_bit(__IGB_DOWN, &adapter->state))
-			igb_irq_enable(adapter);
-	}
+	if (tx_clean_complete && !test_bit(__IGB_DOWN, &adapter->state))
+		igb_irq_enable(adapter);
 
 	if (igb_clean_rx_irq_adv(&adapter->rx_ring[0], time_stamp))
 		rt_mark_stack_mgr(netdev);
 
-	/* If not enough Rx work done, exit the polling mode */
-	if (!rtnetif_running(netdev)) {
-	        /* netif_rx_complete(napi); */
-		if (adapter->itr_setting & 3) {
-			if (adapter->num_rx_queues == 1)
-				igb_set_itr(adapter);
-			else
-				igb_update_ring_itr(&adapter->rx_ring[0]);
-		}
-
-		if (!test_bit(__IGB_DOWN, &adapter->state))
-			wr32(E1000_EIMS, adapter->rx_ring[0].eims_value);
-	}
+	if (!test_bit(__IGB_DOWN, &adapter->state))
+		wr32(E1000_EIMS, adapter->rx_ring[0].eims_value);
 
 	adapter->flags &= ~IGB_FLAG_IN_NETPOLL;
 
