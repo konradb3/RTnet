@@ -201,7 +201,7 @@ static bool igb_clean_tx_irq(struct igb_ring *);
 static int igb_poll(struct napi_struct *, int);
 #endif
 /* static bool igb_clean_rx_irq_adv(struct igb_ring *, int *, int); */
-static bool igb_clean_rx_irq_adv(struct igb_ring *, nanosecs_abs_t *);
+static bool igb_clean_rx_irq_adv(struct igb_ring *, nanosecs_abs_t);
 static void igb_alloc_rx_buffers_adv(struct igb_ring *, int);
 #ifdef CONFIG_IGB_LRO
 static int igb_get_skb_hdr(struct rtskb *skb, void **, void **, u64 *, void *);
@@ -770,8 +770,7 @@ static void igb_free_irq(struct igb_adapter *adapter)
 	}
 #endif
 
-	// free_irq(adapter->pdev->irq, netdev);
-	 rtdm_irq_free(&adapter->irq_handle);
+	rtdm_irq_free(&adapter->irq_handle);
 }
 
 /**
@@ -1219,7 +1218,6 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 	pci_save_state(pdev);
 
 	err = -ENOMEM;
-	//netdev = alloc_etherdev_mq(sizeof(struct igb_adapter), IGB_MAX_TX_QUEUES);
 	netdev = rt_alloc_etherdev(sizeof(struct igb_adapter));
 
 	if (!netdev)
@@ -1228,7 +1226,6 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 	rtdev_alloc_name(netdev, "rteth%d");
 	rt_rtdev_connect(netdev, &RTDEV_manager);
 	RTNET_SET_MODULE_OWNER(netdev);
-	// SET_NETDEV_DEV(netdev, &pdev->dev);
 
 	netdev->vers = RTDEV_VERS_2_0;
 
@@ -1250,8 +1247,6 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 	if (!adapter->hw.hw_addr)
 		goto err_ioremap;
 
-	// use old scheme here
-	// netdev->netdev_ops = &igb_netdev_ops;
 	netdev->open = igb_open;
 	netdev->stop = igb_close;
 	netdev->hard_start_xmit = igb_xmit_frame_adv;
@@ -2245,7 +2240,6 @@ static void igb_unmap_and_free_tx_resource(struct igb_adapter *adapter,
 		buffer_info->dma = 0;
 	}
 	if (buffer_info->skb) {
-	        //dev_kfree_skb_any(buffer_info->skb);
 	        kfree_rtskb(buffer_info->skb);
 		buffer_info->skb = NULL;
 	}
@@ -3175,13 +3169,11 @@ static int igb_xmit_frame_ring_adv(struct rtskb *skb,
 	// len -= skb->data_len;
 
 	if (test_bit(__IGB_DOWN, &adapter->state)) {
-	        // dev_kfree_skb_any(skb);
 		kfree_rtskb(skb);
 		return NETDEV_TX_OK;
 	}
 
 	if (len <= 0) {
-	        // dev_kfree_skb_any(skb);
 		kfree_rtskb(skb);
 		return NETDEV_TX_OK;
 	}
@@ -3223,7 +3215,6 @@ static int igb_xmit_frame_ring_adv(struct rtskb *skb,
 					      &hdr_len) : 0;
 
 	if (tso < 0) {
-	        // dev_kfree_skb_any(skb);
 		kfree_rtskb(skb);
 		rtdm_lock_put_irqrestore(&tx_ring->lock, context);
 		return NETDEV_TX_OK;
@@ -3239,8 +3230,6 @@ static int igb_xmit_frame_ring_adv(struct rtskb *skb,
 
 	count = igb_tx_map_adv(adapter, tx_ring, skb, first);
 	igb_tx_queue_adv(adapter, tx_ring, tx_flags, count, len, hdr_len);
-
-	// netdev->trans_start = jiffies;
 
 	/* Make sure there is space in the ring for the next send. */
 	igb_maybe_stop_tx(netdev, tx_ring, MAX_SKB_FRAGS + 4);
@@ -3768,7 +3757,6 @@ static irqreturn_t igb_intr_msi(int irq, void *data)
  * @irq: interrupt number
  * @data: pointer to a network interface device structure
  **/
-// static irqreturn_t igb_intr(int irq, void *data)
 static int igb_intr(rtdm_irq_t *irq_handle)
 {
         nanosecs_abs_t time_stamp = rtdm_clock_read();
@@ -3800,8 +3788,6 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 		/* guard against interrupt when we're going down */
 		if (!test_bit(__IGB_DOWN, &adapter->state))
 			rtdm_nrtsig_pend(&adapter->mod_timer_sig);
-			/* mod_timer(&adapter->watchdog_timer, jiffies + 1); */
-
 	}
 
 	adapter->data_received = 0;
@@ -3817,7 +3803,8 @@ static int igb_intr(rtdm_irq_t *irq_handle)
 			igb_irq_enable(adapter);
 	}
 
-	rx_clean_complete = igb_clean_rx_irq_adv(&adapter->rx_ring[0], &time_stamp);
+	rx_clean_complete =
+		igb_clean_rx_irq_adv(&adapter->rx_ring[0], time_stamp);
 
 	/* If not enough Rx work done, exit the polling mode */
 	if (!rtnetif_running(netdev)) {
@@ -3881,9 +3868,8 @@ static int igb_poll(struct napi_struct *napi, int budget)
 
 	return 1;
 }
-#endif
 
-#ifdef CONFGI_PCI_MSI
+#ifdef CONFIG_PCI_MSI
 static int igb_clean_rx_ring_msix(struct napi_struct *napi, int budget)
 {
 	struct igb_ring *rx_ring = container_of(napi, struct igb_ring, napi);
@@ -3919,6 +3905,7 @@ static int igb_clean_rx_ring_msix(struct napi_struct *napi, int budget)
 	return 1;
 }
 #endif /* CONFIG_PCI_MSI */
+#endif /* CONFIG_IGB_NAPI */
 
 /**
  * igb_clean_tx_irq - Reclaim resources after transmit completes
@@ -4141,11 +4128,8 @@ static inline void igb_rx_checksum_adv(struct igb_adapter *adapter,
 	adapter->hw_csum_good++;
 }
 
-/*
-static bool igb_clean_rx_irq_adv(struct igb_ring *rx_ring,
-				 int *work_done, int budget)
-*/
-static bool igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t *time_stamp)
+static bool
+igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t time_stamp)
 {
 	struct igb_adapter *adapter = rx_ring->adapter;
 	struct rtnet_device *netdev = adapter->netdev;
@@ -4246,8 +4230,7 @@ send_up:
 		}
 
 		if (staterr & E1000_RXDEXT_ERR_FRAME_ERR_MASK) {
-		        //dev_kfree_skb_irq(skb);
-		        kfree_rtskb(skb);
+			kfree_rtskb(skb);
 			goto next_desc;
 		}
 
@@ -4257,7 +4240,7 @@ send_up:
 		igb_rx_checksum_adv(adapter, staterr, skb);
 
 		skb->protocol = rt_eth_type_trans(skb, netdev);
-		skb->time_stamp = *time_stamp;
+		skb->time_stamp = time_stamp;
 		igb_receive_skb(rx_ring, staterr, rx_desc, skb);
 		adapter->data_received = 1;
 
@@ -4360,10 +4343,6 @@ static void igb_alloc_rx_buffers_adv(struct igb_ring *rx_ring,
 			 * this will result in a 16 byte aligned IP header after
 			 * the 14 byte MAC header is removed
 			 */
-
-			// In part of RTNet these values shall be set up
-			// skb->time_stamp = *time_stamp;
-			// skb->rtdev = rtdev;
 
 			rtskb_reserve(skb, NET_IP_ALIGN);
 
