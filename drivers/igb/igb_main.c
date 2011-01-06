@@ -1568,8 +1568,9 @@ static void __devexit igb_remove(struct pci_dev *pdev)
 		igb_reset_phy(&adapter->hw);
 
 	igb_remove_device(&adapter->hw);
+#ifdef CONFIG_PCI_MSI
 	igb_reset_interrupt_capability(adapter);
-
+#endif
 	igb_free_queues(adapter);
 
 	rtskb_pool_release(&adapter->skb_pool);
@@ -1623,10 +1624,11 @@ static int __devinit igb_sw_init(struct igb_adapter *adapter)
             return -ENOMEM;
         }
 
+#ifdef CONFIG_PCI_MSI
 	/* This call may decrease the number of queues depending on
 	 * interrupt mode. */
 	igb_set_interrupt_capability(adapter);
-
+#endif
 	if (igb_alloc_queues(adapter)) {
 		dev_err(&pdev->dev, "Unable to allocate memory for queues\n");
 		return -ENOMEM;
