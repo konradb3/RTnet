@@ -620,9 +620,7 @@ static int igb_request_msix(struct igb_adapter *adapter)
 	if (err)
 		goto out;
 
-#ifdef CONFIG_PCI_MSI
 	igb_configure_msix(adapter);
-#endif
 
 	return 0;
 out:
