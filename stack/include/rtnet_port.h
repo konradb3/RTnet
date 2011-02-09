@@ -213,6 +213,15 @@ static inline void *netdev_priv(struct net_device *dev)
 #define DMA_BIT_MASK(n)	(((n) == 64) ? ~0ULL : ((1ULL<<(n))-1))
 #endif
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,35)
+#define NIPQUAD(addr) \
+        ((unsigned char *)&addr)[0],	\
+	((unsigned char *)&addr)[1],	\
+	((unsigned char *)&addr)[2],	\
+	((unsigned char *)&addr)[3]
+#define NIPQUAD_FMT "%u.%u.%u.%u"
+#endif
+
 #endif /* __KERNEL__ */
 
 #endif /* __RTNET_PORT_H_ */

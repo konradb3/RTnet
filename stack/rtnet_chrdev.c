@@ -47,8 +47,13 @@ LIST_HEAD(ioctl_handlers);
  * @request:
  * @arg:
  */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,11)
+static long rtnet_ioctl(struct file *file,
+			unsigned int request, unsigned long arg)
+#else
 static int rtnet_ioctl(struct inode *inode, struct file *file,
                        unsigned int request, unsigned long arg)
+#endif
 {
     struct rtnet_ioctl_head head;
     struct rtnet_device     *rtdev = NULL;
@@ -286,7 +291,11 @@ void rtnet_unregister_ioctls(struct rtnet_ioctls *ioctls)
 
 
 static struct file_operations rtnet_fops = {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,11)
+    .unlocked_ioctl= rtnet_ioctl,
+#else
     .ioctl= rtnet_ioctl,
+#endif
 };
 
 static struct miscdevice rtnet_chr_misc_dev = {

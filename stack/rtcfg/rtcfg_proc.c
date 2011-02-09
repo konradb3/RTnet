@@ -24,6 +24,7 @@
 
 #include <rtdev.h>
 #include <rtnet_internal.h>
+#include <rtnet_port.h>
 #include <rtcfg/rtcfg_conn_event.h>
 #include <rtcfg/rtcfg_event.h>
 #include <rtcfg/rtcfg_frame.h>
