@@ -30,6 +30,7 @@
 #include <rtnet_rtpc.h>
 #include <rtskb.h>
 #include <rtdev.h>
+#include <rtnet_port.h>
 #include <ipv4/tcp.h>
 #include <ipv4/ip_sock.h>
 #include <ipv4/ip_output.h>
