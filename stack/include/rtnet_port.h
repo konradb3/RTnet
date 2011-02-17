@@ -222,6 +222,10 @@ static inline void *netdev_priv(struct net_device *dev)
 #define NIPQUAD_FMT "%u.%u.%u.%u"
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37)
+#define VLAN_N_VID VLAN_GROUP_ARRAY_LEN
+#endif
+
 #endif /* __KERNEL__ */
 
 #endif /* __RTNET_PORT_H_ */

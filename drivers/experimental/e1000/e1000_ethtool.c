@@ -378,7 +378,7 @@ static int e1000_set_tso(struct net_device *netdev, u32 data)
 		/* disable TSO on all VLANs if they're present */
 		if (!adapter->vlgrp)
 			goto tso_out;
-		for (i = 0; i < VLAN_GROUP_ARRAY_LEN; i++) {
+		for (i = 0; i < VLAN_N_VID; i++) {
 			v_netdev = vlan_group_get_device(adapter->vlgrp, i);
 			if (!v_netdev)
 				continue;
