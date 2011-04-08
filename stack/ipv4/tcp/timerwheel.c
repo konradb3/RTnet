@@ -19,6 +19,8 @@
  *
  */
 
+#include <linux/delay.h>
+
 #include <rtdm/rtdm_driver.h>
 #include "timerwheel.h"
 
