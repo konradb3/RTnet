@@ -302,7 +302,7 @@ static int tap_dev_open(struct net_device *dev)
 {
     memcpy(dev->dev_addr,
            (*(struct rtnet_device **)netdev_priv(dev))->dev_addr,
-           sizeof(dev->dev_addr));
+           MAX_ADDR_LEN);
 
     return 0;
 }

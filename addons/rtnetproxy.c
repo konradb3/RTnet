@@ -464,7 +464,7 @@ static int __init rtnetproxy_init(struct net_device *dev)
     ether_setup(dev);
     dev->tx_queue_len = 0;
 #ifdef CONFIG_RTNET_ADDON_PROXY_ARP
-    memcpy(dev->dev_addr, rtnetproxy_rtdev->dev_addr, sizeof(dev->dev_addr));
+    memcpy(dev->dev_addr, rtnetproxy_rtdev->dev_addr, MAX_ADDR_LEN);
 #else
     dev->flags |= IFF_NOARP;
 #endif
