@@ -411,10 +411,9 @@ EXPORT_SYMBOL(rtskb_acquire);
 struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
 {
     struct rtskb    *clone_rtskb;
-    unsigned int    data_offs = rtskb->data - rtskb->mac.raw;
-    unsigned int    total_len = rtskb->len + data_offs;
+    unsigned int    total_len;
 
-    clone_rtskb = alloc_rtskb(total_len, pool);
+    clone_rtskb = alloc_rtskb(rtskb->end - rtskb->buf_start, pool);
     if (clone_rtskb == NULL)
         return NULL;
 
@@ -427,13 +426,15 @@ struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
     clone_rtskb->rtdev      = rtskb->rtdev;
     clone_rtskb->time_stamp = rtskb->time_stamp;
 
-    clone_rtskb->mac.raw    = clone_rtskb->data;
-    clone_rtskb->nh.raw     = clone_rtskb->data;
-    clone_rtskb->h.raw      = clone_rtskb->data;
+    clone_rtskb->mac.raw    = clone_rtskb->buf_start;
+    clone_rtskb->nh.raw     = clone_rtskb->buf_start;
+    clone_rtskb->h.raw      = clone_rtskb->buf_start;
 
-    clone_rtskb->data       += data_offs;
-    clone_rtskb->nh.raw     += rtskb->nh.raw - rtskb->mac.raw;
-    clone_rtskb->h.raw      += rtskb->h.raw - rtskb->mac.raw;
+    clone_rtskb->data       += rtskb->data - rtskb->buf_start;
+    clone_rtskb->tail       += rtskb->tail - rtskb->buf_start;
+    clone_rtskb->mac.raw    += rtskb->mac.raw - rtskb->buf_start;
+    clone_rtskb->nh.raw     += rtskb->nh.raw - rtskb->buf_start;
+    clone_rtskb->h.raw      += rtskb->h.raw - rtskb->buf_start;
 
     clone_rtskb->protocol   = rtskb->protocol;
     clone_rtskb->pkt_type   = rtskb->pkt_type;
@@ -441,6 +442,7 @@ struct rtskb* rtskb_clone(struct rtskb *rtskb, struct rtskb_queue *pool)
     clone_rtskb->ip_summed  = rtskb->ip_summed;
     clone_rtskb->csum       = rtskb->csum;
 
+    total_len = rtskb->len + rtskb->data - rtskb->mac.raw;
     memcpy(clone_rtskb->mac.raw, rtskb->mac.raw, total_len);
     clone_rtskb->len = rtskb->len;
 
