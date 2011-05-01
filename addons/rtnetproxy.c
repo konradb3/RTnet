@@ -59,6 +59,8 @@
 #include <ipv4/route.h>
 
 
+static struct net_device *dev_rtnetproxy;
+
 /* **************************************************************************
  *  SKB pool management (JK):
  * ************************************************************************ */
@@ -155,15 +157,6 @@ static void *write_to_ringbuffer(skb_exch_ringbuffer_t *pRing, void *p)
     rtdm_lock_put_irqrestore(&skb_spinlock, context);
     return ret;
 }
-
-
-
-/* ************************************************************************
- * net_device specific stuff:
- * ************************************************************************ */
-static struct net_device dev_rtnetproxy;
-
-static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev);
 
 
 
@@ -359,7 +352,7 @@ static void rtnetproxy_recv(struct rtskb *rtskb)
 static inline void rtnetproxy_kernel_recv(struct rtskb *rtskb)
 {
     struct sk_buff *skb;
-    struct net_device *dev = &dev_rtnetproxy;
+    struct net_device *dev = dev_rtnetproxy;
 
     int header_len = rtskb->rtdev->hard_header_len;
     int len        = rtskb->len + header_len;
@@ -434,13 +427,21 @@ static int rtnetproxy_accept_fastpath(struct net_device *dev, struct dst_entry *
 }
 #endif
 
+#ifdef HAVE_NET_DEVICE_OPS
+static const struct net_device_ops rtnetproxy_netdev_ops = {
+    .ndo_start_xmit         = rtnetproxy_xmit,
+    .ndo_set_multicast_list = set_multicast_list,
+};
+#endif /* HAVE_NET_DEVICE_OPS */
+
 /* ************************************************************************
  *  device init
  * ************************************************************************ */
-static int __init rtnetproxy_init(struct net_device *dev)
+static void __init rtnetproxy_init(struct net_device *dev)
 {
     /* Fill in device structure with ethernet-generic values. */
     ether_setup(dev);
+
     dev->tx_queue_len = 0;
 #ifdef CONFIG_RTNET_ADDON_PROXY_ARP
     memcpy(dev->dev_addr, rtnetproxy_rtdev->dev_addr, MAX_ADDR_LEN);
@@ -449,16 +450,16 @@ static int __init rtnetproxy_init(struct net_device *dev)
 #endif
     dev->flags &= ~IFF_MULTICAST;
 
-    return 0;
-}
-
 #ifdef HAVE_NET_DEVICE_OPS
-static const struct net_device_ops rtnetproxy_netdev_ops = {
-    .ndo_init               = rtnetproxy_init,
-    .ndo_start_xmit         = rtnetproxy_xmit,
-    .ndo_set_multicast_list = set_multicast_list,
-};
-#endif /* HAVE_NET_DEVICE_OPS */
+    dev->netdev_ops      = &rtnetproxy_netdev_ops;
+#else /* !HAVE_NET_DEVICE_OPS */
+    dev->hard_start_xmit = rtnetproxy_xmit;
+    dev->set_multicast_list = set_multicast_list;
+#ifdef CONFIG_NET_FASTROUTE
+    dev->accept_fastpath = rtnetproxy_accept_fastpath;
+#endif
+#endif /* !HAVE_NET_DEVICE_OPS */
+}
 
 /* ************************************************************************
  * ************************************************************************
@@ -484,29 +485,17 @@ static int __init rtnetproxy_init_module(void)
         return -ENOMEM;
     }
 
-#ifdef HAVE_NET_DEVICE_OPS
-    dev_rtnetproxy.netdev_ops = &rtnetproxy_netdev_ops;
-#else /* !HAVE_NET_DEVICE_OPS */
-    dev_rtnetproxy.init = rtnetproxy_init;
-    dev_rtnetproxy.hard_start_xmit = rtnetproxy_xmit;
-    dev_rtnetproxy.set_multicast_list = set_multicast_list;
-#ifdef CONFIG_NET_FASTROUTE
-    dev->accept_fastpath = rtnetproxy_accept_fastpath;
-#endif
-#endif /* !HAVE_NET_DEVICE_OPS */
+    dev_rtnetproxy = alloc_netdev(0, "rtproxy", rtnetproxy_init);
+    if (!dev_rtnetproxy) {
+        rtskb_pool_release(&rtskb_pool);
+        return -ENOMEM;
+    }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-    SET_MODULE_OWNER(&dev_rtnetproxy);
+    SET_MODULE_OWNER(dev_rtnetproxy);
 #endif
 
-    /* Define the name for this unit */
-    err = dev_alloc_name(&dev_rtnetproxy,"rtproxy");
-
-    if (err < 0) {
-        rtskb_pool_release(&rtskb_pool);
-        return err;
-    }
-    err = register_netdev(&dev_rtnetproxy);
+    err = register_netdev(dev_rtnetproxy);
     if (err < 0) {
         rtskb_pool_release(&rtskb_pool);
         return err;
@@ -530,7 +519,7 @@ static int __init rtnetproxy_init_module(void)
     /* Register with RTnet */
     rt_ip_fallback_handler = rtnetproxy_recv;
 
-    printk("rtnetproxy installed as \"%s\"\n", dev_rtnetproxy.name);
+    printk("rtnetproxy installed as \"%s\"\n", dev_rtnetproxy->name);
 
     return 0;
 }
@@ -564,7 +553,7 @@ static void __exit rtnetproxy_cleanup_module(void)
         kfree_rtskb(del);
 
     /* Unregister the net device: */
-    unregister_netdev(&dev_rtnetproxy);
+    unregister_netdev(dev_rtnetproxy);
 
     rtskb_pool_release(&rtskb_pool);
 }
