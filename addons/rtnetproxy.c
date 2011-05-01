@@ -75,8 +75,7 @@ static struct rtskb_queue rtskb_pool;
  *  SKB ringbuffers for exchanging data between rtnet and kernel:
  * ************************************************************************ */
 #define SKB_RINGBUFFER_SIZE 16
-typedef struct
-{
+typedef struct {
     int wr;        // Offset to wr: Increment before write!
     int rd;        // Offset to rd: Increment before read!
     void *ptr[SKB_RINGBUFFER_SIZE];
@@ -124,8 +123,7 @@ static void *read_from_ringbuffer(skb_exch_ringbuffer_t *pRing)
 
 
     rtdm_lock_get_irqsave(&skb_spinlock, context);
-    if (pRing->rd != pRing->wr)
-    {
+    if (pRing->rd != pRing->wr) {
         pRing->rd = (pRing->rd + 1) % SKB_RINGBUFFER_SIZE;
         ret = pRing->ptr[pRing->rd];
     }
@@ -147,16 +145,13 @@ static void *write_to_ringbuffer(skb_exch_ringbuffer_t *pRing, void *p)
 
     rtdm_lock_get_irqsave(&skb_spinlock, context);
     tmpwr = (pRing->wr + 1) % SKB_RINGBUFFER_SIZE;
-    if (pRing->rd != tmpwr)
-    {
+    if (pRing->rd != tmpwr) {
         pRing->wr = tmpwr;
         pRing->ptr[tmpwr] = p;
         ret = p;
-    }
-    else
-    {
+    } else
         ret = 0;
-    }
+
     rtdm_lock_put_irqrestore(&skb_spinlock, context);
     return ret;
 }
@@ -193,8 +188,7 @@ static inline void send_data_out(struct sk_buff *skb)
     int rc;
 #endif
 
-    struct skb_data_format
-    {
+    struct skb_data_format {
         struct ethhdr ethhdr;
         char   reserved[12]; /* Ugly but it works... All the not-interesting header bytes */
         u32    ip_src;
@@ -208,9 +202,8 @@ static inline void send_data_out(struct sk_buff *skb)
     /* Copy the data from the standard sk_buff to the realtime sk_buff:
      * Both have the same length. */
     rtskb = alloc_rtskb(skb->len, &rtskb_pool);
-    if (NULL == rtskb) {
+    if (NULL == rtskb)
         return;
-    }
 
     memcpy(rtskb->data, skb->data, skb->len);
     rtskb->len = skb->len;
@@ -231,8 +224,7 @@ static inline void send_data_out(struct sk_buff *skb)
     /* Determine the device to use: Only ip routing is used here.
      * Non-ip protocols are not supported... */
     rc = rt_ip_route_output(&rt, pData->ip_dst, INADDR_ANY);
-    if (rc == 0)
-    {
+    if (rc == 0) {
         struct rtnet_device *rtdev = rt.rtdev;
 
 
@@ -257,12 +249,9 @@ static inline void send_data_out(struct sk_buff *skb)
          * No need to do it here. */
 
         rtdev_dereference(rtdev);
-    }
-    else
-    {
+    } else
         /* Routing failed => Free rtskb here... */
         kfree_rtskb(rtskb);
-    }
 
 #endif /* CONFIG_RTNET_ADDON_PROXY_ARP */
 }
@@ -277,16 +266,14 @@ static void rtnetproxy_transmit_thread(void *arg)
 {
     struct sk_buff *skb;
     struct rtskb *del;
-    while (1)
-    {
+
+    while (1) {
         /* Free all "used" rtskbs in ringbuffer */
-        while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet)) != 0)	{
+        while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet)) != 0)
             kfree_rtskb(del);
-    }
 
         /* Send out all frames in the ringbuffer that have not been sent yet */
-        while ((skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
-        {
+        while ((skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0) {
             send_data_out(skb);
             /* Place the "used" skb in the ringbuffer back to kernel */
             write_to_ringbuffer(&ring_skb_rtnet_kernel, skb);
@@ -305,15 +292,14 @@ static void rtnetproxy_transmit_thread(void *arg)
  * ************************************************************************ */
 static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-    if (write_to_ringbuffer(&ring_skb_kernel_rtnet, skb))
-    {
+    struct sk_buff *del_skb;
+
+    if (write_to_ringbuffer(&ring_skb_kernel_rtnet, skb)) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
         dev->stats.tx_packets++;
         dev->stats.tx_bytes+=skb->len;
 #endif
-    }
-    else
-    {
+    } else {
         /* No space in the ringbuffer... */
         printk("rtnetproxy_xmit - no space in queue\n");
         dev_kfree_skb(skb);  /* Free the standard skb. */
@@ -324,13 +310,9 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
     rtdm_sem_up(&rtnetproxy_sem);
 
     /* Delete all "used" skbs that already have been processed... */
-    {
-        struct sk_buff *del_skb;
-        while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
-        {
-            dev_kfree_skb(del_skb);  /* Free the standard skb. */
-        }
-    }
+    while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
+        dev_kfree_skb(del_skb);  /* Free the standard skb. */
+
     return 0;
 }
 
@@ -354,15 +336,14 @@ static void rtnetproxy_recv(struct rtskb *rtskb)
     if (rtskb_acquire(rtskb, &rtskb_pool) != 0) {
         rtdm_printk("rtnetproxy_recv: No free rtskb in pool\n");
         kfree_rtskb(rtskb);
+        return;
     }
+
     /* Place the rtskb in the ringbuffer: */
-    else if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb))
-    {
+    if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb)) {
         /* Switch over to kernel context: */
         rtdm_nrtsig_pend(&rtnetproxy_signal);
-    }
-    else
-    {
+    } else {
         /* No space in ringbuffer => Free rtskb here... */
         rtdm_printk("rtnetproxy_recv: No space in queue\n");
         kfree_rtskb(rtskb);
@@ -422,13 +403,11 @@ static void rtnetproxy_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 {
     struct rtskb *rtskb;
 
-    while ( (rtskb = read_from_ringbuffer(&ring_rtskb_rtnet_kernel)) != 0)
-    {
+    while ( (rtskb = read_from_ringbuffer(&ring_rtskb_rtnet_kernel)) != 0) {
         rtnetproxy_kernel_recv(rtskb);
         /* Place "used" rtskb in backqueue... */
-        while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb)) {
+        while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb))
             rtdm_sem_up(&rtnetproxy_sem);
-        }
     }
 
     /* Signal rtnet that there are "used" rtskbs waiting to be processed...
@@ -521,14 +500,14 @@ static int __init rtnetproxy_init_module(void)
 #endif
 
     /* Define the name for this unit */
-    err=dev_alloc_name(&dev_rtnetproxy,"rtproxy");
+    err = dev_alloc_name(&dev_rtnetproxy,"rtproxy");
 
-    if(err<0) {
+    if (err < 0) {
         rtskb_pool_release(&rtskb_pool);
         return err;
     }
     err = register_netdev(&dev_rtnetproxy);
-    if (err<0) {
+    if (err < 0) {
         rtskb_pool_release(&rtskb_pool);
         return err;
     }
@@ -559,6 +538,9 @@ static int __init rtnetproxy_init_module(void)
 
 static void __exit rtnetproxy_cleanup_module(void)
 {
+    struct sk_buff *del_skb;  /* standard skb */
+    struct rtskb *del; /* rtnet skb */
+
     /* Unregister the fallback at rtnet */
     rt_ip_fallback_handler = NULL;
 
@@ -569,28 +551,17 @@ static void __exit rtnetproxy_cleanup_module(void)
     rtdm_sem_destroy(&rtnetproxy_sem);
 
     /* Free the ringbuffers... */
-    {
-        struct sk_buff *del_skb;  /* standard skb */
-        while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
-        {
-            dev_kfree_skb(del_skb);
-        }
-        while ((del_skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
-        {
-            dev_kfree_skb(del_skb);
-        }
-    }
-    {
-        struct rtskb *del; /* rtnet skb */
-        while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet))!=0)
-        {
-            kfree_rtskb(del); // Although this is kernel mode, freeing should work...
-        }
-        while ((del=read_from_ringbuffer(&ring_rtskb_rtnet_kernel))!=0)
-        {
-            kfree_rtskb(del); // Although this is kernel mode, freeing should work...
-        }
-    }
+    while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
+        dev_kfree_skb(del_skb);
+
+    while ((del_skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
+        dev_kfree_skb(del_skb);
+
+    while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet))!=0)
+        kfree_rtskb(del);
+
+    while ((del=read_from_ringbuffer(&ring_rtskb_rtnet_kernel))!=0)
+        kfree_rtskb(del);
 
     /* Unregister the net device: */
     unregister_netdev(&dev_rtnetproxy);
