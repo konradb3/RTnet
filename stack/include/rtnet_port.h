@@ -226,6 +226,14 @@ static inline void *netdev_priv(struct net_device *dev)
 #define VLAN_N_VID VLAN_GROUP_ARRAY_LEN
 #endif
 
+#ifndef NETDEV_TX_OK
+#define NETDEV_TX_OK 0 /* driver took care of the packet */
+#endif
+
+#ifndef NETDEV_TX_BUSY
+#define NETDEV_TX_BUSY 1 /* driver tx path was busy */
+#endif
+
 #endif /* __KERNEL__ */
 
 #endif /* __RTNET_PORT_H_ */
