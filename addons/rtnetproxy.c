@@ -286,27 +286,24 @@ static void rtnetproxy_transmit_thread(void *arg)
 static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 {
     struct sk_buff *del_skb;
+    int ret = NETDEV_TX_OK;
 
     if (write_to_ringbuffer(&ring_skb_kernel_rtnet, skb)) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
         dev->stats.tx_packets++;
         dev->stats.tx_bytes+=skb->len;
 #endif
-    } else {
+        /* Signal rtnet that there are packets waiting to be processed. */
+        rtdm_sem_up(&rtnetproxy_sem);
+    } else
         /* No space in the ringbuffer... */
-        printk("rtnetproxy_xmit - no space in queue\n");
-        dev_kfree_skb(skb);  /* Free the standard skb. */
-    }
-
-    /* Signal rtnet that there are packets waiting to be processed...
-     * */
-    rtdm_sem_up(&rtnetproxy_sem);
+        ret = NETDEV_TX_BUSY;
 
     /* Delete all "used" skbs that already have been processed... */
     while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
         dev_kfree_skb(del_skb);  /* Free the standard skb. */
 
-    return 0;
+    return ret;
 }
 
 
