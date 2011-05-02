@@ -92,9 +92,6 @@ static skb_exch_ringbuffer_t  ring_skb_rtnet_kernel;
 /* Stores "new" rtskbs to be used by the kernel: */
 static skb_exch_ringbuffer_t  ring_rtskb_rtnet_kernel;
 
-/* Stores "used" rtskbs to be freed by rtnet: */
-static skb_exch_ringbuffer_t  ring_rtskb_kernel_rtnet;
-
 /* Spinlock for protected code areas... */
 static rtdm_lock_t skb_spinlock = RTDM_LOCK_UNLOCKED;
 
@@ -258,13 +255,8 @@ static inline void send_data_out(struct sk_buff *skb)
 static void rtnetproxy_transmit_thread(void *arg)
 {
     struct sk_buff *skb;
-    struct rtskb *del;
 
     while (1) {
-        /* Free all "used" rtskbs in ringbuffer */
-        while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet)) != 0)
-            kfree_rtskb(del);
-
         /* Send out all frames in the ringbuffer that have not been sent yet */
         while ((skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0) {
             send_data_out(skb);
@@ -395,15 +387,8 @@ static void rtnetproxy_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 
     while ( (rtskb = read_from_ringbuffer(&ring_rtskb_rtnet_kernel)) != 0) {
         rtnetproxy_kernel_recv(rtskb);
-        /* Place "used" rtskb in backqueue... */
-        while (0 == write_to_ringbuffer(&ring_rtskb_kernel_rtnet, rtskb))
-            rtdm_sem_up(&rtnetproxy_sem);
+        kfree_rtskb(rtskb);
     }
-
-    /* Signal rtnet that there are "used" rtskbs waiting to be processed...
-     * Resume the rtnetproxy_thread to recycle "used" rtskbs
-     * */
-    rtdm_sem_up(&rtnetproxy_sem);
 }
 
 /* ************************************************************************
@@ -499,7 +484,6 @@ static int __init rtnetproxy_init_module(void)
     }
 
     /* Initialize the ringbuffers: */
-    memset(&ring_rtskb_kernel_rtnet, 0, sizeof(ring_rtskb_kernel_rtnet));
     memset(&ring_rtskb_rtnet_kernel, 0, sizeof(ring_rtskb_rtnet_kernel));
     memset(&ring_skb_kernel_rtnet, 0, sizeof(ring_skb_kernel_rtnet));
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
@@ -542,9 +526,6 @@ static void __exit rtnetproxy_cleanup_module(void)
 
     while ((del_skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
         dev_kfree_skb(del_skb);
-
-    while ((del=read_from_ringbuffer(&ring_rtskb_kernel_rtnet))!=0)
-        kfree_rtskb(del);
 
     while ((del=read_from_ringbuffer(&ring_rtskb_rtnet_kernel))!=0)
         kfree_rtskb(del);
