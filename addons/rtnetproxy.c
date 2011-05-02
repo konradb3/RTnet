@@ -349,14 +349,12 @@ static int __init rtnetproxy_init_module(void)
 
     /* Initialize the proxy's rtskb pool (JK) */
     if (rtskb_pool_init(&rtskb_pool, proxy_rtskbs) < proxy_rtskbs) {
-        rtskb_pool_release(&rtskb_pool);
         err = -ENOMEM;
         goto err1;
     }
 
     dev_rtnetproxy = alloc_netdev(0, "rtproxy", rtnetproxy_init);
     if (!dev_rtnetproxy) {
-        rtskb_pool_release(&rtskb_pool);
         err = -ENOMEM;
         goto err1;
     }
@@ -365,22 +363,25 @@ static int __init rtnetproxy_init_module(void)
     SET_MODULE_OWNER(dev_rtnetproxy);
 #endif
 
-    rtdm_nrtsig_init(&rtnetproxy_rx_signal, rtnetproxy_signal_handler, NULL);
+    err = rtdm_nrtsig_init(&rtnetproxy_rx_signal, rtnetproxy_signal_handler,
+                           NULL);
+    if (err)
+        goto err2;
 
     rtskb_queue_init(&tx_queue);
     rtskb_queue_init(&rx_queue);
 
     err = register_netdev(dev_rtnetproxy);
-    if (err < 0) {
-        rtskb_pool_release(&rtskb_pool);
-        goto err1;
-    }
+    if (err < 0)
+        goto err3;
 
     /* Init the task for transmission */
     rtdm_event_init(&rtnetproxy_tx_event, 0);
-    rtdm_task_init(&rtnetproxy_tx_task, "rtnetproxy",
-                   rtnetproxy_tx_loop, 0,
-                   RTDM_TASK_LOWEST_PRIORITY, 0);
+    err = rtdm_task_init(&rtnetproxy_tx_task, "rtnetproxy",
+                         rtnetproxy_tx_loop, 0,
+                         RTDM_TASK_LOWEST_PRIORITY, 0);
+    if (err)
+        goto err4;
 
     /* Register with RTnet */
     rt_ip_fallback_handler = rtnetproxy_recv;
@@ -389,7 +390,17 @@ static int __init rtnetproxy_init_module(void)
 
     return 0;
 
+err4:
+    unregister_netdev(dev_rtnetproxy);
+
+err3:
+    rtdm_nrtsig_destroy(&rtnetproxy_rx_signal);
+
+err2:
+    free_netdev(dev_rtnetproxy);
+
 err1:
+    rtskb_pool_release(&rtskb_pool);
 #ifdef CONFIG_RTNET_ADDON_PROXY_ARP
     rtdev_dereference(rtnetproxy_rtdev);
 #endif
