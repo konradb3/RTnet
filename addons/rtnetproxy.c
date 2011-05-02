@@ -365,23 +365,22 @@ static int __init rtnetproxy_init_module(void)
     SET_MODULE_OWNER(dev_rtnetproxy);
 #endif
 
+    rtdm_nrtsig_init(&rtnetproxy_rx_signal, rtnetproxy_signal_handler, NULL);
+
+    rtskb_queue_init(&tx_queue);
+    rtskb_queue_init(&rx_queue);
+
     err = register_netdev(dev_rtnetproxy);
     if (err < 0) {
         rtskb_pool_release(&rtskb_pool);
         goto err1;
     }
 
-    rtskb_queue_init(&tx_queue);
-    rtskb_queue_init(&rx_queue);
-
     /* Init the task for transmission */
     rtdm_event_init(&rtnetproxy_tx_event, 0);
     rtdm_task_init(&rtnetproxy_tx_task, "rtnetproxy",
                    rtnetproxy_tx_loop, 0,
                    RTDM_TASK_LOWEST_PRIORITY, 0);
-
-    /* Register non-real-time signal */
-    rtdm_nrtsig_init(&rtnetproxy_rx_signal, rtnetproxy_signal_handler, NULL);
 
     /* Register with RTnet */
     rt_ip_fallback_handler = rtnetproxy_recv;
