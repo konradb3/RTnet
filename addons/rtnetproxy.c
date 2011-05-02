@@ -510,11 +510,14 @@ static void __exit rtnetproxy_cleanup_module(void)
     /* Unregister the fallback at rtnet */
     rt_ip_fallback_handler = NULL;
 
-    /* free the non-real-time signal */
-    rtdm_nrtsig_destroy(&rtnetproxy_rx_signal);
+    /* Unregister the net device: */
+    unregister_netdev(dev_rtnetproxy);
 
     rtdm_event_destroy(&rtnetproxy_tx_event);
     rtdm_task_join_nrt(&rtnetproxy_thread, 100);
+
+    /* free the non-real-time signal */
+    rtdm_nrtsig_destroy(&rtnetproxy_rx_signal);
 
     /* Free the ringbuffers... */
     while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
@@ -527,9 +530,6 @@ static void __exit rtnetproxy_cleanup_module(void)
         rtdev_dereference(rtskb->rtdev);
         kfree_rtskb(rtskb);
     }
-
-    /* Unregister the net device: */
-    unregister_netdev(dev_rtnetproxy);
 
     rtskb_pool_release(&rtskb_pool);
 }
