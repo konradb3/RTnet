@@ -406,6 +406,7 @@ static void __exit rtnetproxy_cleanup_module(void)
 
     /* Unregister the net device: */
     unregister_netdev(dev_rtnetproxy);
+    free_netdev(dev_rtnetproxy);
 
     rtdm_event_destroy(&rtnetproxy_tx_event);
     rtdm_task_join_nrt(&rtnetproxy_tx_task, 100);
