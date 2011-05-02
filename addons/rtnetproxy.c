@@ -344,20 +344,21 @@ static int __init rtnetproxy_init_module(void)
 	printk("Couldn't attach to %s\n", rtdev_attach);
 	return -EINVAL;
     }
-    rtdev_dereference(rtnetproxy_rtdev);
     printk("RTproxy attached to %s\n", rtdev_attach);
 #endif
 
     /* Initialize the proxy's rtskb pool (JK) */
     if (rtskb_pool_init(&rtskb_pool, proxy_rtskbs) < proxy_rtskbs) {
         rtskb_pool_release(&rtskb_pool);
-        return -ENOMEM;
+        err = -ENOMEM;
+        goto err1;
     }
 
     dev_rtnetproxy = alloc_netdev(0, "rtproxy", rtnetproxy_init);
     if (!dev_rtnetproxy) {
         rtskb_pool_release(&rtskb_pool);
-        return -ENOMEM;
+        err = -ENOMEM;
+        goto err1;
     }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
@@ -367,7 +368,7 @@ static int __init rtnetproxy_init_module(void)
     err = register_netdev(dev_rtnetproxy);
     if (err < 0) {
         rtskb_pool_release(&rtskb_pool);
-        return err;
+        goto err1;
     }
 
     rtskb_queue_init(&tx_queue);
@@ -388,6 +389,12 @@ static int __init rtnetproxy_init_module(void)
     printk("rtnetproxy installed as \"%s\"\n", dev_rtnetproxy->name);
 
     return 0;
+
+err1:
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    rtdev_dereference(rtnetproxy_rtdev);
+#endif
+    return err;
 }
 
 
@@ -418,6 +425,10 @@ static void __exit rtnetproxy_cleanup_module(void)
     }
 
     rtskb_pool_release(&rtskb_pool);
+
+#ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    rtdev_dereference(rtnetproxy_rtdev);
+#endif
 }
 
 module_init(rtnetproxy_init_module);
