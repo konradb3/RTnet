@@ -101,7 +101,7 @@ static rtdm_nrtsig_t rtnetproxy_signal;
 /* Thread for transmission */
 static rtdm_task_t rtnetproxy_thread;
 
-static rtdm_sem_t rtnetproxy_sem;
+static rtdm_event_t rtnetproxy_tx_event;
 
 #ifdef CONFIG_RTNET_ADDON_PROXY_ARP
 static char* rtdev_attach = "rteth0";
@@ -256,15 +256,13 @@ static void rtnetproxy_transmit_thread(void *arg)
 {
     struct sk_buff *skb;
 
-    while (1) {
+    while (rtdm_event_wait(&rtnetproxy_tx_event) == 0) {
         /* Send out all frames in the ringbuffer that have not been sent yet */
         while ((skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0) {
             send_data_out(skb);
             /* Place the "used" skb in the ringbuffer back to kernel */
             write_to_ringbuffer(&ring_skb_rtnet_kernel, skb);
         }
-        /* Will be activated with next frame to send... */
-        rtdm_sem_down(&rtnetproxy_sem);
     }
 }
 
@@ -286,7 +284,7 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
         dev->stats.tx_bytes+=skb->len;
 #endif
         /* Signal rtnet that there are packets waiting to be processed. */
-        rtdm_sem_up(&rtnetproxy_sem);
+        rtdm_event_signal(&rtnetproxy_tx_event);
     } else
         /* No space in the ringbuffer... */
         ret = NETDEV_TX_BUSY;
@@ -489,7 +487,7 @@ static int __init rtnetproxy_init_module(void)
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
     /* Init the task for transmission */
-    rtdm_sem_init(&rtnetproxy_sem, 0);
+    rtdm_event_init(&rtnetproxy_tx_event, 0);
     rtdm_task_init(&rtnetproxy_thread, "rtnetproxy",
                    rtnetproxy_transmit_thread, 0,
                    RTDM_TASK_LOWEST_PRIORITY, 0);
@@ -517,8 +515,8 @@ static void __exit rtnetproxy_cleanup_module(void)
     /* free the non-real-time signal */
     rtdm_nrtsig_destroy(&rtnetproxy_signal);
 
-    rtdm_task_destroy(&rtnetproxy_thread);
-    rtdm_sem_destroy(&rtnetproxy_sem);
+    rtdm_event_destroy(&rtnetproxy_tx_event);
+    rtdm_task_join_nrt(&rtnetproxy_thread, 100);
 
     /* Free the ringbuffers... */
     while ((del_skb = read_from_ringbuffer(&ring_skb_rtnet_kernel)) != 0)
