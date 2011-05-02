@@ -151,10 +151,8 @@ int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
 
     rtskb =
         alloc_rtskb((skb->len + sizeof(struct rtmac_hdr) + 15) & ~15, pool);
-    if (!rtskb) {
-        stats->tx_dropped++;
-        return -ENOMEM;
-    }
+    if (!rtskb)
+        return NETDEV_TX_BUSY;
 
     rtskb_reserve(rtskb, rtdev->hard_header_len + sizeof(struct rtmac_hdr));
 
@@ -167,23 +165,24 @@ int rtmac_vnic_xmit(struct sk_buff *skb, struct net_device *dev)
     if (res < 0) {
         stats->tx_dropped++;
         kfree_rtskb(rtskb);
-        return res;
+        goto done;
     }
 
     RTNET_ASSERT(rtdev->mac_disc->nrt_packet_tx != NULL, kfree_rtskb(rtskb);
-                 return -1;);
-
-    stats->tx_packets++;
-    stats->tx_bytes += skb->len;
+                 goto done;);
 
     res = rtdev->mac_disc->nrt_packet_tx(rtskb);
     if (res < 0) {
         stats->tx_dropped++;
         kfree_rtskb(rtskb);
-    } else
-        kfree_skb(skb);
+    } else {
+        stats->tx_packets++;
+        stats->tx_bytes += skb->len;
+    }
 
-    return res;
+done:
+    dev_kfree_skb(skb);
+    return NETDEV_TX_OK;
 }
 
 
