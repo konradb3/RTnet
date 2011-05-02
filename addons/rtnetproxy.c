@@ -89,14 +89,13 @@ static skb_exch_ringbuffer_t  ring_skb_kernel_rtnet;
 /* Stores "used" skbs to be freed by the kernel: */
 static skb_exch_ringbuffer_t  ring_skb_rtnet_kernel;
 
-/* Stores "new" rtskbs to be used by the kernel: */
-static skb_exch_ringbuffer_t  ring_rtskb_rtnet_kernel;
+static struct rtskb_queue rx_queue;
 
 /* Spinlock for protected code areas... */
 static rtdm_lock_t skb_spinlock = RTDM_LOCK_UNLOCKED;
 
 /* handle for non-real-time signal */
-static rtdm_nrtsig_t rtnetproxy_signal;
+static rtdm_nrtsig_t rtnetproxy_rx_signal;
 
 /* Thread for transmission */
 static rtdm_task_t rtnetproxy_thread;
@@ -314,20 +313,17 @@ static void rtnetproxy_recv(struct rtskb *rtskb)
 {
     /* Acquire rtskb (JK) */
     if (rtskb_acquire(rtskb, &rtskb_pool) != 0) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+        dev_rtnetproxy->stats.rx_dropped++;
+#endif
         rtdm_printk("rtnetproxy_recv: No free rtskb in pool\n");
         kfree_rtskb(rtskb);
         return;
     }
 
-    /* Place the rtskb in the ringbuffer: */
-    if (write_to_ringbuffer(&ring_rtskb_rtnet_kernel, rtskb)) {
-        /* Switch over to kernel context: */
-        rtdm_nrtsig_pend(&rtnetproxy_signal);
-    } else {
-        /* No space in ringbuffer => Free rtskb here... */
-        rtdm_printk("rtnetproxy_recv: No space in queue\n");
-        kfree_rtskb(rtskb);
-    }
+    rtdev_reference(rtskb->rtdev);
+    rtskb_queue_tail(&rx_queue, rtskb);
+    rtdm_nrtsig_pend(&rtnetproxy_rx_signal);
 }
 
 
@@ -383,8 +379,9 @@ static void rtnetproxy_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
 {
     struct rtskb *rtskb;
 
-    while ( (rtskb = read_from_ringbuffer(&ring_rtskb_rtnet_kernel)) != 0) {
+    while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {
         rtnetproxy_kernel_recv(rtskb);
+        rtdev_dereference(rtskb->rtdev);
         kfree_rtskb(rtskb);
     }
 }
@@ -481,8 +478,9 @@ static int __init rtnetproxy_init_module(void)
         return err;
     }
 
+    rtskb_queue_init(&rx_queue);
+
     /* Initialize the ringbuffers: */
-    memset(&ring_rtskb_rtnet_kernel, 0, sizeof(ring_rtskb_rtnet_kernel));
     memset(&ring_skb_kernel_rtnet, 0, sizeof(ring_skb_kernel_rtnet));
     memset(&ring_skb_rtnet_kernel, 0, sizeof(ring_skb_rtnet_kernel));
 
@@ -493,7 +491,7 @@ static int __init rtnetproxy_init_module(void)
                    RTDM_TASK_LOWEST_PRIORITY, 0);
 
     /* Register non-real-time signal */
-    rtdm_nrtsig_init(&rtnetproxy_signal, rtnetproxy_signal_handler, NULL);
+    rtdm_nrtsig_init(&rtnetproxy_rx_signal, rtnetproxy_signal_handler, NULL);
 
     /* Register with RTnet */
     rt_ip_fallback_handler = rtnetproxy_recv;
@@ -507,13 +505,13 @@ static int __init rtnetproxy_init_module(void)
 static void __exit rtnetproxy_cleanup_module(void)
 {
     struct sk_buff *del_skb;  /* standard skb */
-    struct rtskb *del; /* rtnet skb */
+    struct rtskb *rtskb;
 
     /* Unregister the fallback at rtnet */
     rt_ip_fallback_handler = NULL;
 
     /* free the non-real-time signal */
-    rtdm_nrtsig_destroy(&rtnetproxy_signal);
+    rtdm_nrtsig_destroy(&rtnetproxy_rx_signal);
 
     rtdm_event_destroy(&rtnetproxy_tx_event);
     rtdm_task_join_nrt(&rtnetproxy_thread, 100);
@@ -525,8 +523,10 @@ static void __exit rtnetproxy_cleanup_module(void)
     while ((del_skb = read_from_ringbuffer(&ring_skb_kernel_rtnet)) != 0)
         dev_kfree_skb(del_skb);
 
-    while ((del=read_from_ringbuffer(&ring_rtskb_rtnet_kernel))!=0)
-        kfree_rtskb(del);
+    while ((rtskb = rtskb_dequeue(&rx_queue)) != NULL) {
+        rtdev_dereference(rtskb->rtdev);
+        kfree_rtskb(rtskb);
+    }
 
     /* Unregister the net device: */
     unregister_netdev(dev_rtnetproxy);
