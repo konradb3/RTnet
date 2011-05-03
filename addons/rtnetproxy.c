@@ -126,15 +126,19 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
 #ifndef CONFIG_RTNET_ADDON_PROXY_ARP
     struct dest_route rt;
     struct iphdr *iph;
+    u32 saddr, daddr;
 #endif
 
     switch (ntohs(eth->h_proto)) {
     case ETH_P_IP:
+         if (len < sizeof(struct ethhdr) + sizeof(struct iphdr))
+             goto drop1;
 #ifdef CONFIG_RTNET_ADDON_PROXY_ARP
     case ETH_P_ARP:
 #endif
         break;
     default:
+drop1:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
         dev->stats.tx_dropped++;
 #endif
@@ -147,26 +151,31 @@ static int rtnetproxy_xmit(struct sk_buff *skb, struct net_device *dev)
         return NETDEV_TX_BUSY;
 
     memcpy(rtskb_put(rtskb, len), skb->data, len);
-    dev_kfree_skb(skb);
 
 #ifdef CONFIG_RTNET_ADDON_PROXY_ARP
+    dev_kfree_skb(skb);
+
     rtskb->rtdev = rtnetproxy_rtdev;
     rtdev_reference(rtnetproxy_rtdev);
 
 #else /* !CONFIG_RTNET_ADDON_PROXY_ARP */
-    iph = (struct iphdr *)(rtskb->data + sizeof(struct ethhdr));
+    iph = (struct iphdr *)(skb->data + sizeof(struct ethhdr));
+    saddr = iph->saddr;
+    daddr = iph->daddr;
 
-    if (rt_ip_route_output(&rt, iph->daddr, INADDR_ANY) < 0) {
-drop:
+    dev_kfree_skb(skb);
+
+    if (rt_ip_route_output(&rt, daddr, INADDR_ANY) < 0) {
+drop2:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
         dev->stats.tx_dropped++;
 #endif
         kfree_rtskb(rtskb);
         return NETDEV_TX_OK;
     }
-    if (rt.rtdev->local_ip != iph->saddr) {
+    if (rt.rtdev->local_ip != saddr) {
         rtdev_dereference(rt.rtdev);
-        goto drop;
+        goto drop2;
     }
 
     eth = (struct ethhdr *)rtskb->data;
