@@ -45,14 +45,6 @@ typedef int64_t                 nanosecs_rel_t;
 #endif /* !RTDM_API_VER */
 
 
-struct rtdm_dev_context;
-
-struct rtnet_callback {
-    void    (*func)(struct rtdm_dev_context *, void *);
-    void    *arg;
-};
-
-
 /* sub-classes: RTDM_CLASS_NETWORK */
 #define RTDM_SUBCLASS_RTNET     0
 
@@ -62,8 +54,8 @@ struct rtnet_callback {
 #define RTNET_RTIOC_XMITPARAMS  _IOW(RTIOC_TYPE_NETWORK, 0x10, unsigned int)
 #define RTNET_RTIOC_PRIORITY    RTNET_RTIOC_XMITPARAMS  /* legacy */
 #define RTNET_RTIOC_TIMEOUT     _IOW(RTIOC_TYPE_NETWORK, 0x11, int64_t)
-#define RTNET_RTIOC_CALLBACK    _IOW(RTIOC_TYPE_NETWORK, 0x12, \
-                                     struct rtnet_callback)
+/* RTNET_RTIOC_CALLBACK         _IOW(RTIOC_TYPE_NETWORK, 0x12, ...
+ * IOCTL only usable inside the kernel. */
 /* RTNET_RTIOC_NONBLOCK         _IOW(RTIOC_TYPE_NETWORK, 0x13, unsigned int)
  * This IOCTL is no longer supported (and it was buggy anyway).
  * Use RTNET_RTIOC_TIMEOUT with any negative timeout value instead. */
@@ -87,6 +79,16 @@ struct rtnet_callback {
 
 
 #ifdef __KERNEL__
+
+#include <rtdm/rtdm_driver.h>
+
+struct rtnet_callback {
+    void    (*func)(struct rtdm_dev_context *, void *);
+    void    *arg;
+};
+
+#define RTNET_RTIOC_CALLBACK    _IOW(RTIOC_TYPE_NETWORK, 0x12, \
+                                     struct rtnet_callback)
 
 /* utility functions */
 
