@@ -3,9 +3,7 @@
  *  rtnet.h
  *
  *  RTnet - real-time networking subsystem
- *  Copyright (C) 1999, 2000 Zentropic Computing, LLC
- *                2002       Ulrich Marx <marx@kammer.uni-hannover.de>
- *                2003-2005  Jan Kiszka <jan.kiszka@web.de>
+ *  Copyright (C) 2005-2011 Jan Kiszka <jan.kiszka@web.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
