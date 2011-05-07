@@ -35,7 +35,7 @@ MODULE_LICENSE("GPL");
 /***
  *  rt_packet_rcv
  */
-int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
+static int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 {
     struct rtsocket *sock   = container_of(pt, struct rtsocket,
                                            prot.packet.packet_type);
@@ -81,8 +81,8 @@ int rt_packet_rcv(struct rtskb *skb, struct rtpacket_type *pt)
 /***
  *  rt_packet_bind
  */
-int rt_packet_bind(struct rtsocket *sock, const struct sockaddr *addr,
-                   socklen_t addrlen)
+static int rt_packet_bind(struct rtsocket *sock, const struct sockaddr *addr,
+                          socklen_t addrlen)
 {
     struct sockaddr_ll      *sll = (struct sockaddr_ll *)addr;
     struct rtpacket_type    *pt  = &sock->prot.packet.packet_type;
@@ -127,8 +127,8 @@ int rt_packet_bind(struct rtsocket *sock, const struct sockaddr *addr,
 /***
  *  rt_packet_getsockname
  */
-int rt_packet_getsockname(struct rtsocket *sock, struct sockaddr *addr,
-                          socklen_t *addrlen)
+static int rt_packet_getsockname(struct rtsocket *sock, struct sockaddr *addr,
+                                 socklen_t *addrlen)
 {
     struct sockaddr_ll  *sll = (struct sockaddr_ll*)addr;
     struct rtnet_device *rtdev;
@@ -169,8 +169,8 @@ int rt_packet_getsockname(struct rtsocket *sock, struct sockaddr *addr,
 /***
  * rt_packet_socket - initialize a packet socket
  */
-int rt_packet_socket(struct rtdm_dev_context *sockctx,
-                     rtdm_user_info_t *user_info, int protocol)
+static int rt_packet_socket(struct rtdm_dev_context *sockctx,
+                            rtdm_user_info_t *user_info, int protocol)
 {
     struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
     int             ret;
@@ -201,8 +201,8 @@ int rt_packet_socket(struct rtdm_dev_context *sockctx,
 /***
  *  rt_packet_close
  */
-int rt_packet_close(struct rtdm_dev_context *sockctx,
-                    rtdm_user_info_t *user_info)
+static int rt_packet_close(struct rtdm_dev_context *sockctx,
+                           rtdm_user_info_t *user_info)
 {
     struct rtsocket         *sock = (struct rtsocket *)&sockctx->dev_private;
     struct rtpacket_type    *pt = &sock->prot.packet.packet_type;
@@ -235,9 +235,9 @@ int rt_packet_close(struct rtdm_dev_context *sockctx,
 /***
  *  rt_packet_ioctl
  */
-int rt_packet_ioctl(struct rtdm_dev_context *sockctx,
-                    rtdm_user_info_t *user_info,
-                    unsigned int request, void *arg)
+static int rt_packet_ioctl(struct rtdm_dev_context *sockctx,
+                           rtdm_user_info_t *user_info,
+                           unsigned int request, void *arg)
 {
     struct rtsocket *sock = (struct rtsocket *)&sockctx->dev_private;
     struct _rtdm_setsockaddr_args *setaddr = arg;
@@ -266,9 +266,9 @@ int rt_packet_ioctl(struct rtdm_dev_context *sockctx,
 /***
  *  rt_packet_recvmsg
  */
-ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
-                          rtdm_user_info_t *user_info, struct msghdr *msg,
-                          int msg_flags)
+static ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
+                                 rtdm_user_info_t *user_info,
+                                 struct msghdr *msg, int msg_flags)
 {
     struct rtsocket     *sock = (struct rtsocket *)&sockctx->dev_private;
     size_t              len   = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
@@ -347,9 +347,9 @@ ssize_t rt_packet_recvmsg(struct rtdm_dev_context *sockctx,
 /***
  *  rt_packet_sendmsg
  */
-ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
-                          rtdm_user_info_t *user_info,
-                          const struct msghdr *msg, int msg_flags)
+static ssize_t rt_packet_sendmsg(struct rtdm_dev_context *sockctx,
+                                 rtdm_user_info_t *user_info,
+                                 const struct msghdr *msg, int msg_flags)
 {
     struct rtsocket     *sock = (struct rtsocket *)&sockctx->dev_private;
     size_t              len   = rt_iovec_len(msg->msg_iov, msg->msg_iovlen);
@@ -514,7 +514,7 @@ static struct rtdm_device   raw_packet_proto_dev = {
 };
 
 
-int __init rt_packet_proto_init(void)
+static int __init rt_packet_proto_init(void)
 {
     int err;
 
@@ -530,7 +530,7 @@ int __init rt_packet_proto_init(void)
 }
 
 
-void rt_packet_proto_release(void)
+static void rt_packet_proto_release(void)
 {
     rtdm_dev_unregister(&packet_proto_dev, 1000);
     rtdm_dev_unregister(&raw_packet_proto_dev, 1000);
