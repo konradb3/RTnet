@@ -109,7 +109,7 @@ int rt_packet_bind(struct rtsocket *sock, const struct sockaddr *addr,
     sock->prot.packet.ifindex = sll->sll_ifindex;
 
     /* if protocol is non-zero, register the packet type */
-    if (sock->protocol != 0) {
+    if (new_type != 0) {
         pt->handler     = rt_packet_rcv;
         pt->err_handler = NULL;
 
