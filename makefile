@@ -129,7 +129,7 @@ clean distclean:
 	fi
 	@find . -name autom4te.cache | xargs rm -fr
 
-all %::
+all::
 	@if test -r GNUmakefile ; then \
 	$(MAKE) -f GNUmakefile $@ ; else \
 	echo "*** Please configure RTnet first (running 'make help' in RTnet's toplevel dir might help)." ; \
