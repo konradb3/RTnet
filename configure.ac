@@ -323,7 +323,7 @@ else
             AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])
             ;;
-        2.5.[[2-9]]*)
+        2.5.[[2-9]]*|2.6*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-252
             AC_DEFINE(CONFIG_XENO_2_1x, 1, [We build for Xenomai 2.x])
             AC_MSG_RESULT([${XENO_VERSION}])

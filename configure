@@ -11827,7 +11827,7 @@ _ACEOF
             { $as_echo "$as_me:$LINENO: result: ${XENO_VERSION}" >&5
 $as_echo "${XENO_VERSION}" >&6; }
             ;;
-        2.5.[2-9]*)
+        2.5.[2-9]*|2.6*)
             CONFIG_RTNET_RTEXT_VERSION=xeno-252
 
 cat >>confdefs.h <<\_ACEOF
