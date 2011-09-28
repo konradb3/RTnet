@@ -608,7 +608,7 @@ else
             fi;                                                             \
         done;                                                               \
         \$(MAKE) -C $RTEXT_LINUX_DIR                                        \
-                CROSS_COMPILE=\$(CROSS_COMPILE)                             \
+                CROSS_COMPILE=\"\$(CROSS_COMPILE)\"                         \
                 ARCH=\$(RTNET_TARGET_ARCH)                                  \
                 M=\"\`pwd\`\"                                               \
                 V=\$(V)                                                     \
@@ -664,7 +664,7 @@ AC_SUBST(RTNET_KBUILD_CLEAN)
 AC_SUBST(RTNET_KBUILD_DISTCLEAN)
 
 bs_kmodext=$RTNET_MODULE_EXT
-bs_kcompile="make -C $RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CROSS_COMPILE=$CROSS_COMPILE V=1 M=`pwd` SUBDIRS=`pwd` modules"
+bs_kcompile="make -C $RTEXT_LINUX_DIR ARCH=$RTNET_TARGET_ARCH CROSS_COMPILE=\"$CROSS_COMPILE\" V=1 M=`pwd` SUBDIRS=`pwd` modules"
 
 
 dnl ======================================================================
