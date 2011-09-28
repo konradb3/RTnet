@@ -71,7 +71,7 @@ rm -f conftest.$bs_kmodext conftest.o
 AS_IF([_AC_EVAL_STDERR($bs_kcompile > /dev/null)],
       [$2],
       [_AC_MSG_LOG_CONFTEST
-m4_ifvaln([$3],[$3])dnl])dnl
+m4_ifvaln([$3],[$3])dnl])
 rm -f conftest.err conftest.$bs_kmodext conftest.o .conftest.o.d .conftest.o.cmd .conftest.ko.cmd .conftest.mod.o.cmd .tmp_versions/conftest.mod Makefile m4_ifval([$1], [conftest.$ac_ext]); rmdir .tmp_versions[]dnl
 ])# BS_KCOMPILE_IFELSE
 
@@ -96,7 +96,7 @@ AC_CACHE_CHECK([for $1], ac_Header,
 @%:@include <$1>])],
 				  [AS_VAR_SET(ac_Header, yes)],
 				  [AS_VAR_SET(ac_Header, no)])])
-AS_IF([test AS_VAR_GET(ac_Header) = yes], [$2], [$3])[]dnl
+AS_IF([test AS_VAR_GET(ac_Header) = yes], [$2], [$3])
 AS_VAR_POPDEF([ac_Header])dnl
 ])# BS_CHECK_HEADER
 
