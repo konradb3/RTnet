@@ -1019,6 +1019,16 @@ AC_ARG_ENABLE(e1000-new,
 AC_MSG_RESULT([${CONFIG_RTNET_DRV_E1000_NEW:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_E1000_NEW,[test "$CONFIG_RTNET_DRV_E1000_NEW" = "y"])
 
+AC_MSG_CHECKING([whether to build new Intel PRO/1000 PCEe (Gigabit) driver])
+AC_ARG_ENABLE(e1000e,
+    AS_HELP_STRING([--enable-e1000e], [build new Intel PCEe PRO/1000 driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_E1000E=y ;;
+        *) CONFIG_RTNET_DRV_E1000E=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_E1000E:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_E1000E,[test "$CONFIG_RTNET_DRV_E1000E" = "y"])
+
 AC_MSG_CHECKING([whether to build AT91 Ethernet [AT91RM9200] driver])
 AC_ARG_ENABLE(at91ether,
     AS_HELP_STRING([--enable-at91ether], [build AT91 Ethernet driver]),
@@ -1434,6 +1444,7 @@ if test x$CONFIG_KBUILD = xy; then
     for DIR in \
         drivers \
         drivers/e1000 \
+        drivers/e1000e \
         drivers/mpc52xx_fec \
         drivers/tulip \
         drivers/igb \
@@ -1517,6 +1528,7 @@ AC_CONFIG_FILES([ \
     \
     drivers/GNUmakefile \
     drivers/e1000/GNUmakefile \
+    drivers/e1000e/GNUmakefile \
     drivers/mpc52xx_fec/GNUmakefile \
     drivers/tulip/GNUmakefile \
     drivers/igb/GNUmakefile \
