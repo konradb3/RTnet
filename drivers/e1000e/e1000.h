@@ -42,20 +42,22 @@
 #include <linux/crc32.h>
 #include <linux/if_vlan.h>
 
+#include <rtnet_port.h>
+
 #include "hw.h"
 
 struct e1000_info;
 
 #define e_dbg(format, arg...) \
-	netdev_dbg(hw->adapter->netdev, format, ## arg)
+	pr_debug(format, ## arg)
 #define e_err(format, arg...) \
-	netdev_err(adapter->netdev, format, ## arg)
+	pr_err(format, ## arg)
 #define e_info(format, arg...) \
-	netdev_info(adapter->netdev, format, ## arg)
+	pr_info(format, ## arg)
 #define e_warn(format, arg...) \
-	netdev_warn(adapter->netdev, format, ## arg)
+	pr_warn(format, ## arg)
 #define e_notice(format, arg...) \
-	netdev_notice(adapter->netdev, format, ## arg)
+	pr_notice(format, ## arg)
 
 
 /* Interrupt modes, as used by the IntMode parameter */
@@ -213,7 +215,7 @@ struct e1000_ps_page {
  */
 struct e1000_buffer {
 	dma_addr_t dma;
-	struct sk_buff *skb;
+	struct rtskb *skb;
 	union {
 		/* Tx */
 		struct {
@@ -254,7 +256,9 @@ struct e1000_ring {
 	u16 itr_register;
 	int set_itr;
 
-	struct sk_buff *rx_skb_top;
+	struct rtskb *rx_skb_top;
+
+	rtdm_lock_t lock;
 };
 
 /* PHY register snapshot values */
@@ -334,7 +338,7 @@ struct e1000_adapter {
 	 * Rx
 	 */
 	bool (*clean_rx) (struct e1000_adapter *adapter,
-			  int *work_done, int work_to_do)
+			  nanosecs_abs_t *time_stamp)
 						____cacheline_aligned_in_smp;
 	void (*alloc_rx_buf) (struct e1000_adapter *adapter,
 			      int cleaned_count, gfp_t gfp);
@@ -358,8 +362,15 @@ struct e1000_adapter {
 	u32 min_frame_size;
 
 	/* OS defined structs */
-	struct net_device *netdev;
+	struct rtnet_device *netdev;
 	struct pci_dev *pdev;
+
+	struct rtskb_queue skb_pool;
+	rtdm_irq_t irq_handle;
+	rtdm_irq_t rx_irq_handle;
+	rtdm_irq_t tx_irq_handle;
+	rtdm_nrtsig_t mod_timer_sig;
+	rtdm_nrtsig_t downshift_sig;
 
 	/* structs defined in e1000_hw.h */
 	struct e1000_hw hw;
