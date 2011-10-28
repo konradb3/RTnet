@@ -796,6 +796,8 @@ CONFIG_RTNET_DRV_IGB_FALSE
 CONFIG_RTNET_DRV_IGB_TRUE
 CONFIG_RTNET_DRV_AT91ETHER_FALSE
 CONFIG_RTNET_DRV_AT91ETHER_TRUE
+CONFIG_RTNET_DRV_E1000E_FALSE
+CONFIG_RTNET_DRV_E1000E_TRUE
 CONFIG_RTNET_DRV_E1000_NEW_FALSE
 CONFIG_RTNET_DRV_E1000_NEW_TRUE
 CONFIG_RTNET_DRV_E1000_FALSE
@@ -1006,6 +1008,7 @@ enable_r8169
 enable_rt2500
 enable_e1000
 enable_e1000_new
+enable_e1000e
 enable_at91ether
 enable_igb
 enable_rxfifosize
@@ -1694,6 +1697,7 @@ Optional Features:
   --enable-rt2500         build Ralink 2500 WLAN driver
   --enable-e1000          build Intel PRO/1000 driver
   --enable-e1000-new      build new Intel PRO/1000 driver
+  --enable-e1000e         build new Intel PCEe PRO/1000 driver
   --enable-at91ether      build AT91 Ethernet driver
   --enable-igb            build Intel 82575 driver
   --with-rxfifosize       Set RX-FIFO size
@@ -4675,13 +4679,13 @@ if ${lt_cv_nm_interface+:} false; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4678: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4682: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4681: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4685: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4684: output\"" >&5)
+  (eval echo "\"\$as_me:4688: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5887,7 +5891,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5890 "configure"' > conftest.$ac_ext
+  echo '#line 5894 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7416,11 +7420,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7419: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7423: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7423: \$? = $ac_status" >&5
+   echo "$as_me:7427: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7755,11 +7759,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7758: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7762: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7762: \$? = $ac_status" >&5
+   echo "$as_me:7766: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7860,11 +7864,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7863: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7867: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7867: \$? = $ac_status" >&5
+   echo "$as_me:7871: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -7915,11 +7919,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7918: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7922: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7922: \$? = $ac_status" >&5
+   echo "$as_me:7926: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10283,7 +10287,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10286 "configure"
+#line 10290 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10379,7 +10383,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10382 "configure"
+#line 10386 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12108,6 +12112,27 @@ else
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build new Intel PRO/1000 PCEe (Gigabit) driver" >&5
+$as_echo_n "checking whether to build new Intel PRO/1000 PCEe (Gigabit) driver... " >&6; }
+# Check whether --enable-e1000e was given.
+if test "${enable_e1000e+set}" = set; then :
+  enableval=$enable_e1000e; case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_E1000E=y ;;
+        *) CONFIG_RTNET_DRV_E1000E=n ;;
+    esac
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${CONFIG_RTNET_DRV_E1000E:-n}" >&5
+$as_echo "${CONFIG_RTNET_DRV_E1000E:-n}" >&6; }
+ if test "$CONFIG_RTNET_DRV_E1000E" = "y"; then
+  CONFIG_RTNET_DRV_E1000E_TRUE=
+  CONFIG_RTNET_DRV_E1000E_FALSE='#'
+else
+  CONFIG_RTNET_DRV_E1000E_TRUE='#'
+  CONFIG_RTNET_DRV_E1000E_FALSE=
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build AT91 Ethernet AT91RM9200 driver" >&5
 $as_echo_n "checking whether to build AT91 Ethernet AT91RM9200 driver... " >&6; }
 # Check whether --enable-at91ether was given.
@@ -12717,6 +12742,7 @@ if test x$CONFIG_KBUILD = xy; then
     for DIR in \
         drivers \
         drivers/e1000 \
+        drivers/e1000e \
         drivers/mpc52xx_fec \
         drivers/tulip \
         drivers/igb \
@@ -12778,7 +12804,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/igb/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile drivers/experimental/e1000/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/ipv4/udp/GNUmakefile stack/ipv4/tcp/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
+ac_config_files="$ac_config_files GNUmakefile Documentation/GNUmakefile drivers/GNUmakefile drivers/e1000/GNUmakefile drivers/e1000e/GNUmakefile drivers/mpc52xx_fec/GNUmakefile drivers/tulip/GNUmakefile drivers/igb/GNUmakefile drivers/experimental/GNUmakefile drivers/experimental/rt2500/GNUmakefile drivers/experimental/e1000/GNUmakefile stack/GNUmakefile stack/include/GNUmakefile stack/packet/GNUmakefile stack/ipv4/GNUmakefile stack/ipv4/udp/GNUmakefile stack/ipv4/tcp/GNUmakefile stack/rtcfg/GNUmakefile stack/rtmac/GNUmakefile stack/rtmac/nomac/GNUmakefile stack/rtmac/tdma/GNUmakefile tools/GNUmakefile tools/rtnet tools/rtnet.conf addons/GNUmakefile examples/GNUmakefile examples/generic/GNUmakefile examples/rtai/GNUmakefile examples/xenomai/GNUmakefile examples/xenomai/native/GNUmakefile examples/xenomai/native/kernel/GNUmakefile examples/xenomai/posix/GNUmakefile scripts/GNUmakefile scripts/kconfig/GNUmakefile scripts/kconfig/lxdialog/GNUmakefile"
 
 
 
@@ -13009,6 +13035,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CONFIG_RTNET_DRV_E1000_NEW_TRUE}" && test -z "${CONFIG_RTNET_DRV_E1000_NEW_FALSE}"; then
   as_fn_error $? "conditional \"CONFIG_RTNET_DRV_E1000_NEW\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CONFIG_RTNET_DRV_E1000E_TRUE}" && test -z "${CONFIG_RTNET_DRV_E1000E_FALSE}"; then
+  as_fn_error $? "conditional \"CONFIG_RTNET_DRV_E1000E\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CONFIG_RTNET_DRV_AT91ETHER_TRUE}" && test -z "${CONFIG_RTNET_DRV_AT91ETHER_FALSE}"; then
@@ -13946,6 +13976,7 @@ do
     "Documentation/GNUmakefile") CONFIG_FILES="$CONFIG_FILES Documentation/GNUmakefile" ;;
     "drivers/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/GNUmakefile" ;;
     "drivers/e1000/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/e1000/GNUmakefile" ;;
+    "drivers/e1000e/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/e1000e/GNUmakefile" ;;
     "drivers/mpc52xx_fec/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/mpc52xx_fec/GNUmakefile" ;;
     "drivers/tulip/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/tulip/GNUmakefile" ;;
     "drivers/igb/GNUmakefile") CONFIG_FILES="$CONFIG_FILES drivers/igb/GNUmakefile" ;;
