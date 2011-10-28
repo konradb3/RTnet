@@ -234,6 +234,10 @@ static inline void *netdev_priv(struct net_device *dev)
 #define NETDEV_TX_BUSY 1 /* driver tx path was busy */
 #endif
 
+#ifndef NETIF_F_RXCSUM
+#define NETIF_F_RXCSUM		(1 << 29) /* Receive checksumming offload */
+#endif
+
 #endif /* __KERNEL__ */
 
 #endif /* __RTNET_PORT_H_ */
