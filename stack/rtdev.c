@@ -45,6 +45,7 @@ static struct rtnet_device  *loopback_device;
 static rtdm_lock_t          rtnet_devices_rt_lock  = RTDM_LOCK_UNLOCKED;
 
 LIST_HEAD(event_hook_list);
+LIST_HEAD(rtskb_list);
 DEFINE_MUTEX(rtnet_devices_nrt_lock);
 
 static int rtdev_locked_xmit(struct rtskb *skb, struct rtnet_device *rtdev);
@@ -320,6 +321,118 @@ static inline int __rtdev_new_index(void)
 
 
 
+static int rtskb_map(struct rtnet_device *rtdev, struct rtskb *skb)
+{
+    dma_addr_t addr;
+
+    addr = rtdev->map_rtskb(rtdev, skb);
+
+    if (WARN_ON(addr == RTSKB_UNMAPPED))
+        return -ENOMEM;
+
+    if (skb->buf_dma_addr != RTSKB_UNMAPPED &&
+        addr != skb->buf_dma_addr) {
+        printk("RTnet: device %s maps skb differently than others. "
+               "Different IOMMU domain?\nThis is not supported.\n",
+               rtdev->name);
+        return -EACCES;
+    }
+
+    skb->buf_dma_addr = addr;
+
+    return 0;
+}
+
+
+
+int rtdev_map_rtskb(struct rtskb *skb)
+{
+    struct rtnet_device *rtdev;
+    int err = 0;
+    int i;
+
+    skb->buf_dma_addr = RTSKB_UNMAPPED;
+
+    mutex_lock(&rtnet_devices_nrt_lock);
+
+    for (i = 0; i < MAX_RT_DEVICES; i++) {
+        rtdev = rtnet_devices[i];
+        if (rtdev && rtdev->map_rtskb) {
+            err = rtskb_map(rtdev, skb);
+            if (err)
+                break;
+        }
+    }
+
+    if (!err)
+        list_add(&skb->entry, &rtskb_list);
+
+    mutex_unlock(&rtnet_devices_nrt_lock);
+
+    return err;
+}
+
+
+
+static int rtdev_map_all_rtskbs(struct rtnet_device *rtdev)
+{
+    struct rtskb *skb;
+    int err = 0;
+
+    if (!rtdev->map_rtskb)
+        return 0;
+
+    list_for_each_entry(skb, &rtskb_list, entry) {
+        err = rtskb_map(rtdev, skb);
+        if (err)
+           break;
+    }
+
+    return err;
+}
+
+
+
+void rtdev_unmap_rtskb(struct rtskb *skb)
+{
+    struct rtnet_device *rtdev;
+    int i;
+
+    if (skb->buf_dma_addr == RTSKB_UNMAPPED)
+        return;
+
+    mutex_lock(&rtnet_devices_nrt_lock);
+
+    list_del(&skb->entry);
+
+    for (i = 0; i < MAX_RT_DEVICES; i++) {
+        rtdev = rtnet_devices[i];
+        if (rtdev && rtdev->unmap_rtskb) {
+            rtdev->unmap_rtskb(rtdev, skb);
+        }
+    }
+
+    skb->buf_dma_addr = RTSKB_UNMAPPED;
+
+    mutex_unlock(&rtnet_devices_nrt_lock);
+}
+
+
+
+static void rtdev_unmap_all_rtskbs(struct rtnet_device *rtdev)
+{
+    struct rtskb *skb;
+
+    if (!rtdev->unmap_rtskb)
+        return;
+
+    list_for_each_entry(skb, &rtskb_list, entry) {
+        rtdev->unmap_rtskb(rtdev, skb);
+    }
+}
+
+
+
 /***
  * rt_register_rtnetdev: register a new rtnet_device (linux-like)
  * @rtdev:               the device
@@ -330,6 +443,7 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     struct rtdev_event_hook *hook;
     rtdm_lockctx_t          context;
     int                     ifindex;
+    int                     err;
 
 
     /* requires at least driver layer version 2.0 */
@@ -356,6 +470,12 @@ int rt_register_rtnetdev(struct rtnet_device *rtdev)
     if (__rtdev_get_by_name(rtdev->name) != NULL) {
         mutex_unlock(&rtnet_devices_nrt_lock);
         return -EEXIST;
+    }
+
+    err = rtdev_map_all_rtskbs(rtdev);
+    if (err) {
+        mutex_unlock(&rtnet_devices_nrt_lock);
+        return err;
     }
 
     rtdm_lock_get_irqsave(&rtnet_devices_rt_lock, context);
@@ -436,6 +556,8 @@ int rt_unregister_rtnetdev(struct rtnet_device *rtdev)
         if (hook->unregister_device)
             hook->unregister_device(rtdev);
     }
+
+    rtdev_unmap_all_rtskbs(rtdev);
 
     mutex_unlock(&rtnet_devices_nrt_lock);
 

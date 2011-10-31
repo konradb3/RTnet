@@ -296,8 +296,8 @@ void __rtskb_pool_release(struct rtskb_queue *pool)
 {
     struct rtskb *skb;
 
-
     while ((skb = rtskb_dequeue(pool)) != NULL) {
+        rtdev_unmap_rtskb(skb);
         kmem_cache_free(rtskb_slab_pool, skb);
         rtskb_amount--;
     }
@@ -334,6 +334,9 @@ unsigned int rtskb_pool_extend(struct rtskb_queue *pool,
         skb->buf_end = skb->buf_start + SKB_DATA_ALIGN(RTSKB_SIZE) - 1;
 #endif
 
+        if (rtdev_map_rtskb(skb) < 0)
+            break;
+
         rtskb_queue_tail(pool, skb);
 
         rtskb_amount++;
@@ -356,6 +359,7 @@ unsigned int rtskb_pool_shrink(struct rtskb_queue *pool,
         if ((skb = rtskb_dequeue(pool)) == NULL)
             break;
 
+        rtdev_unmap_rtskb(skb);
         kmem_cache_free(rtskb_slab_pool, skb);
         rtskb_amount--;
     }

@@ -146,6 +146,12 @@ struct rtnet_device {
     int                 (*do_ioctl)(struct rtnet_device *rtdev, 
 				    unsigned int request, void * cmd);
     struct net_device_stats *(*get_stats)(struct rtnet_device *rtdev);
+
+    /* DMA pre-mapping hooks */
+    dma_addr_t          (*map_rtskb)(struct rtnet_device *rtdev,
+                                     struct rtskb *skb);
+    void                (*unmap_rtskb)(struct rtnet_device *rtdev,
+                                       struct rtskb *skb);
 };
 
 
@@ -213,6 +219,8 @@ unsigned int rt_hard_mtu(struct rtnet_device *rtdev, unsigned int priority);
 int rtdev_open(struct rtnet_device *rtdev);
 int rtdev_close(struct rtnet_device *rtdev);
 
+int rtdev_map_rtskb(struct rtskb *skb);
+void rtdev_unmap_rtskb(struct rtskb *skb);
 
 #endif  /* __KERNEL__ */
 

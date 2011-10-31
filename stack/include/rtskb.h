@@ -144,6 +144,7 @@ cap_rtmac_stamp field now contains valid data.
 #define RTSKB_CAP_SHARED        1   /* rtskb shared between stack and RTcap */
 #define RTSKB_CAP_RTMAC_STAMP   2   /* cap_rtmac_stamp is valid             */
 
+#define RTSKB_UNMAPPED          0
 
 struct rtskb_queue;
 struct rtsocket;
@@ -207,6 +208,8 @@ struct rtskb {
     unsigned char       *end;
     unsigned int        len;
 
+    dma_addr_t          buf_dma_addr;
+
     unsigned char       *buf_start;
 
 #ifdef CONFIG_RTNET_CHECKED
@@ -223,6 +226,8 @@ struct rtskb {
     unsigned int        cap_len;    /* capture length of this rtskb         */
     nanosecs_abs_t      cap_rtmac_stamp; /* RTmac enqueuing time            */
 #endif
+
+    struct list_head    entry; /* for global rtskb list */
 };
 
 struct rtskb_queue {
@@ -687,6 +692,12 @@ static inline struct rtskb *rtskb_padto(struct rtskb *rtskb, unsigned int len)
     memset(rtskb->data + rtskb->len, 0, len - rtskb->len);
 
     return rtskb;
+}
+
+static inline dma_addr_t rtskb_data_dma_addr(struct rtskb *rtskb,
+                                             unsigned int offset)
+{
+    return rtskb->buf_dma_addr + rtskb->data - rtskb->buf_start + offset;
 }
 
 extern struct rtskb_queue global_pool;
