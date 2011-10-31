@@ -603,7 +603,6 @@ static void e1000e_update_tdt_wa(struct e1000_adapter *adapter, unsigned int i)
 static void e1000_alloc_rx_buffers(struct e1000_adapter *adapter,
 				   int cleaned_count, gfp_t gfp)
 {
-	struct pci_dev *pdev = adapter->pdev;
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	union e1000_rx_desc_extended *rx_desc;
 	struct e1000_buffer *buffer_info;
@@ -632,14 +631,7 @@ static void e1000_alloc_rx_buffers(struct e1000_adapter *adapter,
 
 		buffer_info->skb = skb;
 map_skb:
-		buffer_info->dma = dma_map_single(&pdev->dev, skb->data,
-						  adapter->rx_buffer_len,
-						  DMA_FROM_DEVICE);
-		if (dma_mapping_error(&pdev->dev, buffer_info->dma)) {
-			dev_err(&pdev->dev, "Rx DMA map failed\n");
-			adapter->rx_dma_failed++;
-			break;
-		}
+		buffer_info->dma = rtskb_data_dma_addr(skb, 0);
 
 		rx_desc = E1000_RX_DESC_EXT(*rx_ring, i);
 		rx_desc->read.buffer_addr = cpu_to_le64(buffer_info->dma);
@@ -677,7 +669,6 @@ static bool e1000_clean_rx_irq(struct e1000_adapter *adapter,
 			       nanosecs_abs_t *time_stamp)
 {
 	struct rtnet_device *netdev = adapter->netdev;
-	struct pci_dev *pdev = adapter->pdev;
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	union e1000_rx_desc_extended *rx_desc, *next_rxd;
 	struct e1000_buffer *buffer_info, *next_buffer;
@@ -711,10 +702,6 @@ static bool e1000_clean_rx_irq(struct e1000_adapter *adapter,
 		next_buffer = &rx_ring->buffer_info[i];
 
 		cleaned_count++;
-		dma_unmap_single(&pdev->dev,
-				 buffer_info->dma,
-				 adapter->rx_buffer_len,
-				 DMA_FROM_DEVICE);
 		buffer_info->dma = 0;
 
 		length = le16_to_cpu(rx_desc->wb.upper.length);
@@ -794,15 +781,7 @@ next_desc:
 static void e1000_put_txbuf(struct e1000_adapter *adapter,
 			     struct e1000_buffer *buffer_info)
 {
-	if (buffer_info->dma) {
-		if (buffer_info->mapped_as_page)
-			dma_unmap_page(&adapter->pdev->dev, buffer_info->dma,
-				       buffer_info->length, DMA_TO_DEVICE);
-		else
-			dma_unmap_single(&adapter->pdev->dev, buffer_info->dma,
-					 buffer_info->length, DMA_TO_DEVICE);
-		buffer_info->dma = 0;
-	}
+	buffer_info->dma = 0;
 	if (buffer_info->skb) {
 		kfree_rtskb(buffer_info->skb);
 		buffer_info->skb = NULL;
@@ -903,18 +882,12 @@ static void e1000_clean_rx_ring(struct e1000_adapter *adapter)
 {
 	struct e1000_ring *rx_ring = adapter->rx_ring;
 	struct e1000_buffer *buffer_info;
-	struct pci_dev *pdev = adapter->pdev;
 	unsigned int i;
 
 	/* Free all the Rx ring sk_buffs */
 	for (i = 0; i < rx_ring->count; i++) {
 		buffer_info = &rx_ring->buffer_info[i];
-		if (buffer_info->dma) {
-			dma_unmap_single(&pdev->dev, buffer_info->dma,
-					 adapter->rx_buffer_len,
-					 DMA_FROM_DEVICE);
-			buffer_info->dma = 0;
-		}
+		buffer_info->dma = 0;
 
 		if (buffer_info->skb) {
 			kfree_rtskb(buffer_info->skb);
@@ -3293,7 +3266,6 @@ static int e1000_tx_map(struct e1000_adapter *adapter,
 			struct rtskb *skb, unsigned int first)
 {
 	struct e1000_ring *tx_ring = adapter->tx_ring;
-	struct pci_dev *pdev = adapter->pdev;
 	struct e1000_buffer *buffer_info;
 	unsigned int offset = 0, size, i;
 
@@ -3305,12 +3277,8 @@ static int e1000_tx_map(struct e1000_adapter *adapter,
 	buffer_info->length = size;
 	buffer_info->time_stamp = jiffies;
 	buffer_info->next_to_watch = i;
-	buffer_info->dma = dma_map_single(&pdev->dev,
-					  skb->data + offset,
-					  size, DMA_TO_DEVICE);
+	buffer_info->dma = rtskb_data_dma_addr(skb, offset);
 	buffer_info->mapped_as_page = false;
-	if (dma_mapping_error(&pdev->dev, buffer_info->dma))
-		goto dma_error;
 
 	tx_ring->buffer_info[i].skb = skb;
 	tx_ring->buffer_info[i].segs = 1;
@@ -3318,11 +3286,6 @@ static int e1000_tx_map(struct e1000_adapter *adapter,
 	tx_ring->buffer_info[first].next_to_watch = i;
 
 	return 1;
-
-dma_error:
-	dev_err(&pdev->dev, "Tx DMA map failed\n");
-	buffer_info->dma = 0;
-	return 0;
 }
 
 static void e1000_tx_queue(struct e1000_adapter *adapter,
@@ -3935,6 +3898,32 @@ static void e1000_eeprom_checks(struct e1000_adapter *adapter)
 	}
 }
 
+static dma_addr_t e1000_map_rtskb(struct rtnet_device *netdev,
+				  struct rtskb *skb)
+{
+	struct e1000_adapter *adapter = netdev->priv;
+	struct device *dev = &adapter->pdev->dev;
+	dma_addr_t addr;
+
+	addr = dma_map_single(dev, skb->buf_start, RTSKB_SIZE,
+			      DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(dev, addr)) {
+		dev_err(dev, "DMA map failed\n");
+		return RTSKB_UNMAPPED;
+	}
+	return addr;
+}
+
+static void e1000_unmap_rtskb(struct rtnet_device *netdev,
+			      struct rtskb *skb)
+{
+	struct e1000_adapter *adapter = netdev->priv;
+	struct device *dev = &adapter->pdev->dev;
+
+	dma_unmap_single(dev, skb->buf_dma_addr, RTSKB_SIZE,
+			 DMA_BIDIRECTIONAL);
+}
+
 /**
  * e1000_probe - Device Initialization Routine
  * @pdev: PCI device information struct
@@ -4055,6 +4044,8 @@ static int __devinit e1000_probe(struct pci_dev *pdev,
 	netdev->stop = e1000_close;
 	netdev->hard_start_xmit = e1000_xmit_frame;
         //netdev->get_stats = e1000_get_stats;
+	netdev->map_rtskb = e1000_map_rtskb;
+	netdev->unmap_rtskb = e1000_unmap_rtskb;
 	strncpy(netdev->name, pci_name(pdev), sizeof(netdev->name) - 1);
 
 	netdev->mem_start = mmio_start;
