@@ -1133,6 +1133,32 @@ static const struct net_device_ops igb_netdev_ops = {
 };
 */
 
+static dma_addr_t igb_map_rtskb(struct rtnet_device *netdev,
+				struct rtskb *skb)
+{
+	struct igb_adapter *adapter = netdev->priv;
+	struct device *dev = &adapter->pdev->dev;
+	dma_addr_t addr;
+
+	addr = dma_map_single(dev, skb->buf_start, RTSKB_SIZE,
+			      DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(dev, addr)) {
+		dev_err(dev, "DMA map failed\n");
+		return RTSKB_UNMAPPED;
+	}
+	return addr;
+}
+
+static void igb_unmap_rtskb(struct rtnet_device *netdev,
+			      struct rtskb *skb)
+{
+	struct igb_adapter *adapter = netdev->priv;
+	struct device *dev = &adapter->pdev->dev;
+
+	dma_unmap_single(dev, skb->buf_dma_addr, RTSKB_SIZE,
+			 DMA_BIDIRECTIONAL);
+}
+
 /**
  * igb_probe - Device Initialization Routine
  * @pdev: PCI device information struct
@@ -1242,6 +1268,8 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 	netdev->stop = igb_close;
 	netdev->hard_start_xmit = igb_xmit_frame_adv;
 	netdev->get_stats = igb_get_stats;
+	netdev->map_rtskb = igb_map_rtskb;
+	netdev->unmap_rtskb = igb_unmap_rtskb;
 #if 0
 	netdev->do_ioctl = igb_ioctl;
 	netdev->set_multicast_list = igb_set_multi;
@@ -2225,13 +2253,7 @@ static void igb_free_all_tx_resources(struct igb_adapter *adapter)
 static void igb_unmap_and_free_tx_resource(struct igb_adapter *adapter,
 					   struct igb_buffer *buffer_info)
 {
-	if (buffer_info->dma) {
-		pci_unmap_page(adapter->pdev,
-				buffer_info->dma,
-				buffer_info->length,
-				PCI_DMA_TODEVICE);
-		buffer_info->dma = 0;
-	}
+	buffer_info->dma = 0;
 	if (buffer_info->skb) {
 	        kfree_rtskb(buffer_info->skb);
 		buffer_info->skb = NULL;
@@ -2342,17 +2364,7 @@ static void igb_clean_rx_ring(struct igb_ring *rx_ring)
 	/* Free all the Rx ring sk_buffs */
 	for (i = 0; i < rx_ring->count; i++) {
 		buffer_info = &rx_ring->buffer_info[i];
-		if (buffer_info->dma) {
-			if (adapter->rx_ps_hdr_size)
-				pci_unmap_single(pdev, buffer_info->dma,
-						 adapter->rx_ps_hdr_size,
-						 PCI_DMA_FROMDEVICE);
-			else
-				pci_unmap_single(pdev, buffer_info->dma,
-						 adapter->rx_buffer_len,
-						 PCI_DMA_FROMDEVICE);
-			buffer_info->dma = 0;
-		}
+		buffer_info->dma = 0;
 
 		if (buffer_info->skb) {
 			kfree_rtskb(buffer_info->skb);
@@ -3005,8 +3017,7 @@ static int igb_tx_map_adv(struct igb_adapter *adapter, struct igb_ring *tx_ring,
 	/* set time_stamp *before* dma to help avoid a possible race */
 	buffer_info->time_stamp = jiffies;
 	buffer_info->next_to_watch = i;
-	buffer_info->dma = pci_map_single(adapter->pdev, skb->data, len,
-					  PCI_DMA_TODEVICE);
+	buffer_info->dma = rtskb_data_dma_addr(skb, 0);
 	count++;
 	i++;
 	if (i == tx_ring->count)
@@ -4117,7 +4128,6 @@ igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t time_stamp)
 {
 	struct igb_adapter *adapter = rx_ring->adapter;
 	struct rtnet_device *netdev = adapter->netdev;
-	struct pci_dev *pdev = adapter->pdev;
 	union e1000_adv_rx_desc *rx_desc , *next_rxd;
 	struct igb_buffer *buffer_info , *next_buffer;
 	struct rtskb *skb;
@@ -4156,10 +4166,6 @@ igb_clean_rx_irq_adv(struct igb_ring *rx_ring, nanosecs_abs_t time_stamp)
 		prefetch(skb->data - NET_IP_ALIGN);
 		buffer_info->skb = NULL;
 		if (!adapter->rx_ps_hdr_size) {
-			pci_unmap_single(pdev, buffer_info->dma,
-					 adapter->rx_buffer_len +
-					   NET_IP_ALIGN,
-					 PCI_DMA_FROMDEVICE);
 			rtskb_put(skb, length);
 			goto send_up;
 		}
@@ -4332,9 +4338,7 @@ static void igb_alloc_rx_buffers_adv(struct igb_ring *rx_ring,
 			skb->rtdev = adapter->netdev;
 
 			buffer_info->skb = skb;
-			buffer_info->dma = pci_map_single(pdev, skb->data,
-							  bufsz,
-							  PCI_DMA_FROMDEVICE);
+			buffer_info->dma = rtskb_data_dma_addr(skb, 0);
 
 		}
 		/* Refresh the desc even if buffer_addrs didn't change because
