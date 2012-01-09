@@ -1173,7 +1173,8 @@ static int rt_tcp_window_send(struct tcp_socket *ts, u32 data_len,
     if (data_len > dst_window)
         data_len = dst_window;
 
-    if ((ret = rt_tcp_segment(&ts->rt, ts, 0, data_len, data_ptr, 0)) < 0) {
+    if ((ret = rt_tcp_segment(&ts->rt, ts, TCP_FLAG_ACK,
+                              data_len, data_ptr, 0)) < 0) {
         rtdm_printk("rttcp: cann't send a packet: err %d\n", -ret);
         return ret;
     }
