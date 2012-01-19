@@ -67,9 +67,11 @@ MODULE_PARM_DESC(copybreak,
  * Tx interrupt delay needs to typically be set to something non-zero
  *
  * Valid Range: 0-65535
+ * 
+ * Default Value: 0 for rtnet
  */
 E1000_PARAM(TxIntDelay, "Transmit Interrupt Delay");
-#define DEFAULT_TIDV 8
+#define DEFAULT_TIDV 0
 #define MAX_TXDELAY 0xFFFF
 #define MIN_TXDELAY 0
 
@@ -77,9 +79,11 @@ E1000_PARAM(TxIntDelay, "Transmit Interrupt Delay");
  * Transmit Absolute Interrupt Delay in units of 1.024 microseconds
  *
  * Valid Range: 0-65535
+ * 
+ * Default Value: 0 for rtnet
  */
 E1000_PARAM(TxAbsIntDelay, "Transmit Absolute Interrupt Delay");
-#define DEFAULT_TADV 32
+#define DEFAULT_TADV 0
 #define MAX_TXABSDELAY 0xFFFF
 #define MIN_TXABSDELAY 0
 
@@ -106,9 +110,11 @@ E1000_PARAM(RxAbsIntDelay, "Receive Absolute Interrupt Delay");
  * Interrupt Throttle Rate (interrupts/sec)
  *
  * Valid Range: 100-100000 (0=off, 1=dynamic, 3=dynamic conservative)
+ * 
+ * Default Value: 0 for rtnet
  */
 E1000_PARAM(InterruptThrottleRate, "Interrupt Throttling Rate");
-#define DEFAULT_ITR 3
+#define DEFAULT_ITR 0
 #define MAX_ITR 100000
 #define MIN_ITR 100
 
@@ -380,7 +386,7 @@ void __devinit e1000e_check_options(struct e1000_adapter *adapter)
 			}
 		} else {
 			adapter->itr_setting = opt.def;
-			adapter->itr = 20000;
+			adapter->itr = 0;
 		}
 	}
 	{ /* Interrupt Mode */
