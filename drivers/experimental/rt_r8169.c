@@ -85,7 +85,7 @@ RTL8169_VERSION "2.2"	<2004/08/09>
 #define RTL8169_DRIVER_NAME   MODULENAME " RTnet Gigabit Ethernet driver " RTL8169_VERSION
 #define PFX MODULENAME ": "
 
-#define RTL8169_DEBUG
+//#define RTL8169_DEBUG
 #undef RTL8169_JUMBO_FRAME_SUPPORT	/*** RTnet: no not enable! ***/
 #undef	RTL8169_HW_FLOW_CONTROL_SUPPORT
 
@@ -1711,11 +1711,12 @@ static void rtl8169_rx_interrupt (struct rtnet_device *rtdev, struct rtl8169_pri
 			priv->stats.rx_errors++;
 			if ( le32_to_cpu(rxdesc->status) & (RxRWT|RxRUNT) )
 				priv->stats.rx_length_errors++;
-			if ( le32_to_cpu(rxdesc->status) & RxCRC)
+			if ( le32_to_cpu(rxdesc->status) & RxCRC) {
 				/* in the rt_via-rhine.c there's a lock around the incrementation... we'll do that also here <kk> */
 				rtdm_lock_get(&priv->lock); /*** RTnet ***/
 				priv->stats.rx_crc_errors++;
 				rtdm_lock_put(&priv->lock); /*** RTnet ***/
+			}
 	    }
 	    else{
 			pkt_size=(int)(le32_to_cpu(rxdesc->status) & 0x00001FFF)-4;
