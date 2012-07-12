@@ -26,7 +26,7 @@
 #include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/netdevice.h>
-#include <linux/spinlock.h>
+#include <linux/mutex.h>
 
 #include <rtnet_internal.h>
 #include <rtmac/rtmac_disc.h>
@@ -35,7 +35,7 @@
 
 
 
-static rwlock_t disc_list_lock = RW_LOCK_UNLOCKED;
+static DEFINE_MUTEX(disc_list_lock);
 
 LIST_HEAD(disc_list);
 
@@ -171,16 +171,16 @@ struct rtmac_disc *rtmac_get_disc_by_name(const char *name)
     struct list_head    *disc;
 
 
-    read_lock_bh(&disc_list_lock);
+    mutex_lock(&disc_list_lock);
 
     list_for_each(disc, &disc_list) {
         if (strcmp(((struct rtmac_disc *)disc)->name, name) == 0) {
-            read_unlock_bh(&disc_list_lock);
+            mutex_unlock(&disc_list_lock);
             return (struct rtmac_disc *)disc;
         }
     }
 
-    read_unlock_bh(&disc_list_lock);
+    mutex_unlock(&disc_list_lock);
 
     return NULL;
 }
@@ -217,11 +217,11 @@ int rtmac_disc_register(struct rtmac_disc *disc)
     }
 #endif /* CONFIG_PROC_FS */
 
-    write_lock_bh(&disc_list_lock);
+    mutex_lock(&disc_list_lock);
 
     list_add(&disc->list, &disc_list);
 
-    write_unlock_bh(&disc_list_lock);
+    mutex_unlock(&disc_list_lock);
 
     return 0;
 }
@@ -232,11 +232,11 @@ void rtmac_disc_deregister(struct rtmac_disc *disc)
 {
     RTNET_ASSERT(disc != NULL, return;);
 
-    write_lock_bh(&disc_list_lock);
+    mutex_lock(&disc_list_lock);
 
     list_del(&disc->list);
 
-    write_unlock_bh(&disc_list_lock);
+    mutex_unlock(&disc_list_lock);
 
     rtnet_unregister_ioctls(&disc->ioctls);
 
@@ -255,7 +255,7 @@ int rtmac_proc_read_disc(char *buf, char **start, off_t offset, int count,
     RTNET_PROC_PRINT_VARS(80);
 
 
-    read_lock_bh(&disc_list_lock);
+    mutex_lock(&disc_list_lock);
 
     if (!RTNET_PROC_PRINT("Name\t\tID\n"))
         goto done;
@@ -268,7 +268,7 @@ int rtmac_proc_read_disc(char *buf, char **start, off_t offset, int count,
     }
 
   done:
-    read_unlock_bh(&disc_list_lock);
+    mutex_unlock(&disc_list_lock);
 
     RTNET_PROC_PRINT_DONE;
 }
