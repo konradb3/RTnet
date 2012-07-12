@@ -202,6 +202,13 @@ static inline int rtnetif_carrier_ok(struct rtnet_device *rtdev)
     return !test_bit(__RTNET_LINK_STATE_NOCARRIER, &rtdev->link_state);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,1,0)
+#define HAVE_NETDEV_PRIV
+#define HAVE_NET_DEVICE_OPS
+#define HAVE_NETIF_MSG
+#define HAVE_SET_RX_MODE
+#endif
+
 #ifndef HAVE_NETDEV_PRIV
 static inline void *netdev_priv(struct net_device *dev)
 {
