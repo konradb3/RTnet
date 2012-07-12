@@ -57,6 +57,7 @@
 #include <rtnet_sys.h>
 #include <ipv4/ip_input.h>
 #include <ipv4/route.h>
+#include <rtnet_port.h>
 
 
 static struct net_device *dev_rtnetproxy;
@@ -293,8 +294,7 @@ static void rtnetproxy_signal_handler(rtdm_nrtsig_t nrtsig, void *arg)
  * ************************************************************************
  * ************************************************************************ */
 
-/* fake multicast ability */
-static void set_multicast_list(struct net_device *dev)
+static void fake_multicast_support(struct net_device *dev)
 {
 }
 
@@ -308,7 +308,11 @@ static int rtnetproxy_accept_fastpath(struct net_device *dev, struct dst_entry *
 #ifdef HAVE_NET_DEVICE_OPS
 static const struct net_device_ops rtnetproxy_netdev_ops = {
     .ndo_start_xmit         = rtnetproxy_xmit,
-    .ndo_set_multicast_list = set_multicast_list,
+#ifdef  HAVE_SET_RX_MODE
+    .ndo_set_rx_mode        = fake_multicast_support,
+#else
+    .ndo_set_multicast_list = fake_multicast_support,
+#endif
 };
 #endif /* HAVE_NET_DEVICE_OPS */
 
@@ -332,7 +336,7 @@ static void __init rtnetproxy_init(struct net_device *dev)
     dev->netdev_ops      = &rtnetproxy_netdev_ops;
 #else /* !HAVE_NET_DEVICE_OPS */
     dev->hard_start_xmit = rtnetproxy_xmit;
-    dev->set_multicast_list = set_multicast_list;
+    dev->set_multicast_list = fake_multicast_support;
 #ifdef CONFIG_NET_FASTROUTE
     dev->accept_fastpath = rtnetproxy_accept_fastpath;
 #endif
