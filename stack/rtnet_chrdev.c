@@ -37,8 +37,7 @@
 
 
 static DEFINE_SPINLOCK(ioctl_handler_lock);
-
-LIST_HEAD(ioctl_handlers);
+static LIST_HEAD(ioctl_handlers);
 
 /**
  * rtnet_ioctl -
