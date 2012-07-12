@@ -83,8 +83,6 @@ struct rtmac_disc {
 int rtmac_disc_attach(struct rtnet_device *rtdev, struct rtmac_disc *disc);
 int rtmac_disc_detach(struct rtnet_device *rtdev);
 
-struct rtmac_disc *rtmac_get_disc_by_name(const char *name);
-
 int rtmac_disc_register(struct rtmac_disc *disc);
 void rtmac_disc_deregister(struct rtmac_disc *disc);
 

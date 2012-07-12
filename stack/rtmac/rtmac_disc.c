@@ -165,7 +165,7 @@ int rtmac_disc_detach(struct rtnet_device *rtdev)
 
 
 
-struct rtmac_disc *rtmac_get_disc_by_name(const char *name)
+static struct rtmac_disc *rtmac_get_disc_by_name(const char *name)
 {
     struct list_head    *disc;
 
