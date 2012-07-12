@@ -36,8 +36,7 @@
 
 
 static DEFINE_MUTEX(disc_list_lock);
-
-LIST_HEAD(disc_list);
+static LIST_HEAD(disc_list);
 
 
 
