@@ -19,6 +19,24 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
+ *  As a special exception to the GNU General Public license, the RTnet
+ *  project allows you to use this header file in unmodified form to produce
+ *  application programs executing in user-space which use RTnet services by
+ *  normal system calls. The resulting executable will not be covered by the
+ *  GNU General Public License merely as a result of this header file use.
+ *  Instead, this header file use will be considered normal use of RTnet and
+ *  not a "derived work" in the sense of the GNU General Public License.
+ *
+ *  This exception does not apply when the application code is built as a
+ *  static or dynamically loadable portion of the Linux kernel nor does the
+ *  exception override other reasons justifying application of the GNU General
+ *  Public License.
+ *
+ *  This exception applies only to the code released by the RTnet project
+ *  under the name RTnet and bearing this exception notice. If you copy code
+ *  from other sources into a copy of RTnet, the exception does not apply to
+ *  the code that you add in this way.
+ *
  */
 
 #ifndef __RTNET_H_
