@@ -37,12 +37,12 @@
 #include <net/ip6_checksum.h>
 #include <linux/mii.h>
 #include <linux/ethtool.h>
-#include <linux/if_vlan.h>
 #include <linux/pci.h>
 #include <linux/pci-aspm.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/if_ether.h>
+#include <linux/etherdevice.h>
 #include <linux/aer.h>
 #ifdef CONFIG_IGB_DCA
 #include <linux/dca.h>
@@ -207,10 +207,6 @@ static int igb_get_skb_hdr(struct rtskb *skb, void **, void **, u64 *, void *);
 static void igb_tx_timeout(struct rtnet_device *);
 #endif
 static void igb_reset_task(struct work_struct *);
-static void igb_vlan_rx_register(struct rtnet_device *, struct vlan_group *);
-static void igb_vlan_rx_add_vid(struct rtnet_device *, u16);
-static void igb_vlan_rx_kill_vid(struct rtnet_device *, u16);
-static void igb_restore_vlan(struct igb_adapter *);
 
 static int igb_suspend(struct pci_dev *, pm_message_t);
 #ifdef CONFIG_PM
@@ -809,29 +805,6 @@ static void igb_irq_enable(struct igb_adapter *adapter)
 	}
 }
 
-static void igb_update_mng_vlan(struct igb_adapter *adapter)
-{
-	struct rtnet_device *netdev = adapter->netdev;
-	u16 vid = adapter->hw.mng_cookie.vlan_id;
-	u16 old_vid = adapter->mng_vlan_id;
-	if (adapter->vlgrp) {
-		if (!vlan_group_get_device(adapter->vlgrp, vid)) {
-			if (adapter->hw.mng_cookie.status &
-				E1000_MNG_DHCP_COOKIE_STATUS_VLAN) {
-				igb_vlan_rx_add_vid(netdev, vid);
-				adapter->mng_vlan_id = vid;
-			} else
-				adapter->mng_vlan_id = IGB_MNG_VLAN_NONE;
-
-			if ((old_vid != (u16)IGB_MNG_VLAN_NONE) &&
-					(vid != old_vid) &&
-			    !vlan_group_get_device(adapter->vlgrp, old_vid))
-				igb_vlan_rx_kill_vid(netdev, old_vid);
-		} else
-			adapter->mng_vlan_id = vid;
-	}
-}
-
 /**
  * igb_release_hw_control - release control of the h/w to f/w
  * @adapter: address of board private structure
@@ -884,8 +857,6 @@ static void igb_configure(struct igb_adapter *adapter)
 
 	igb_get_hw_control(adapter);
 	igb_set_multi(netdev);
-
-	igb_restore_vlan(adapter);
 
 	igb_configure_tx(adapter);
 	igb_setup_rctl(adapter);
@@ -1088,8 +1059,6 @@ void igb_reset(struct igb_adapter *adapter)
 	if (adapter->hw.mac.ops.init_hw(&adapter->hw))
 		dev_err(&adapter->pdev->dev, "Hardware Error\n");
 
-	igb_update_mng_vlan(adapter);
-
 	/* Enable h/w to recognize an 802.1Q VLAN Ethernet packet */
 	wr32(E1000_VET, ETHERNET_IEEE_VLAN_TYPE);
 
@@ -1111,27 +1080,6 @@ static int igb_is_need_ioport(struct pci_dev *pdev)
 		return false;
 	}
 }
-
-/*
-static const struct net_device_ops igb_netdev_ops = {
-	.ndo_open 		= igb_open,
-	.ndo_stop		= igb_close,
-	.ndo_start_xmit		= igb_xmit_frame_adv,
-	.ndo_get_stats		= igb_get_stats,
-	.ndo_set_multicast_list	= igb_set_multi,
-	.ndo_set_mac_address	= igb_set_mac,
-	.ndo_change_mtu		= igb_change_mtu,
-	.ndo_do_ioctl		= igb_ioctl,
-	.ndo_tx_timeout		= igb_tx_timeout,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_vlan_rx_register	= igb_vlan_rx_register,
-	.ndo_vlan_rx_add_vid	= igb_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= igb_vlan_rx_kill_vid,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= igb_netpoll,
-#endif
-};
-*/
 
 static dma_addr_t igb_map_rtskb(struct rtnet_device *netdev,
 				struct rtskb *skb)
@@ -1282,11 +1230,6 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 #ifdef IGB_HAVE_TX_TIMEOUT
 	netdev->tx_timeout = igb_tx_timeout;
 #endif
-#if NETIF_F_HW_VLAN_RX
-	netdev->vlan_rx_register = igb_vlan_rx_register;
-	netdev->vlan_rx_add_vid = igb_vlan_rx_add_vid;
-	netdev->vlan_rx_kill_vid = igb_vlan_rx_kill_vid;
-#endif
 #ifdef CONFIG_NET_POLL_CONTROLLER
 	netdev->poll_controller = igb_netpoll;
 #endif
@@ -1345,11 +1288,6 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 			"PHY reset is blocked due to SOL/IDER session.\n");
 
 	netdev->features = NETIF_F_SG | NETIF_F_HW_CSUM;
-	/*
-			   NETIF_F_HW_VLAN_TX |
-			   NETIF_F_HW_VLAN_RX |
-			   NETIF_F_HW_VLAN_FILTER;
-	*/
 	// no TSO support for now
 	/*
 	netdev->features |= NETIF_F_TSO;
@@ -1358,13 +1296,6 @@ static int __devinit igb_probe(struct pci_dev *pdev,
 
 #ifdef CONFIG_IGB_LRO
 	netdev->features |= NETIF_F_LRO;
-#endif
-
-#if NETIF_F_HW_VLAN_TX
-	netdev->vlan_features |= NETIF_F_TSO;
-	netdev->vlan_features |= NETIF_F_TSO6;
-	netdev->vlan_features |= NETIF_F_HW_CSUM;
-	netdev->vlan_features |= NETIF_F_SG;
 #endif
 
 	if (pci_using_dac)
@@ -1703,13 +1634,6 @@ static int igb_open(struct rtnet_device *netdev)
 
 	/* e1000_power_up_phy(adapter); */
 
-	/*
-	 adapter->mng_vlan_id = IGB_MNG_VLAN_NONE;
-	if ((adapter->hw.mng_cookie.status &
-	     E1000_MNG_DHCP_COOKIE_STATUS_VLAN))
-		igb_update_mng_vlan(adapter);
-	*/
-
 	/* before we allocate an interrupt, we must be ready to handle it.
 	 * Setting DEBUG_SHIRQ in the kernel makes it fire an interrupt
 	 * as soon as we call pci_request_irq, so we have to setup our
@@ -1777,14 +1701,6 @@ static int igb_close(struct rtnet_device *netdev)
 
 	igb_free_all_tx_resources(adapter);
 	igb_free_all_rx_resources(adapter);
-
-	/* kill manageability vlan ID if supported, but not if a vlan with
-	 * the same ID is registered on the host OS (let 8021q kill it) */
-	if ((adapter->hw.mng_cookie.status &
-			  E1000_MNG_DHCP_COOKIE_STATUS_VLAN) &&
-	     !(adapter->vlgrp &&
-	       vlan_group_get_device(adapter->vlgrp, adapter->mng_vlan_id)))
-		igb_vlan_rx_kill_vid(netdev, adapter->mng_vlan_id);
 
 	return 0;
 }
@@ -2206,11 +2122,7 @@ static void igb_configure_rx(struct igb_adapter *adapter)
 		wr32(E1000_RXCSUM, rxcsum);
 	}
 
-	if (adapter->vlgrp)
-		wr32(E1000_RLPML,
-				adapter->max_frame_size + VLAN_TAG_SIZE);
-	else
-		wr32(E1000_RLPML, adapter->max_frame_size);
+	wr32(E1000_RLPML, adapter->max_frame_size);
 
 	/* Enable Receives */
 	wr32(E1000_RCTL, rctl);
@@ -2931,68 +2843,6 @@ static inline bool igb_tx_csum_adv(struct igb_adapter *adapter,
 					struct igb_ring *tx_ring,
 					struct rtskb *skb, u32 tx_flags)
 {
-#if NETIF_F_HW_VLAN_TX
-	struct e1000_adv_tx_context_desc *context_desc;
-	unsigned int i;
-	struct igb_buffer *buffer_info;
-	u32 info = 0, tu_cmd = 0;
-
-	if ((skb->ip_summed == CHECKSUM_PARTIAL) ||
-	    (tx_flags & IGB_TX_FLAGS_VLAN)) {
-		i = tx_ring->next_to_use;
-		buffer_info = &tx_ring->buffer_info[i];
-		context_desc = E1000_TX_CTXTDESC_ADV(*tx_ring, i);
-
-		if (tx_flags & IGB_TX_FLAGS_VLAN)
-			info |= (tx_flags & IGB_TX_FLAGS_VLAN_MASK);
-		info |= (skb_network_offset(skb) << E1000_ADVTXD_MACLEN_SHIFT);
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
-			info |= skb_network_header_len(skb);
-
-		context_desc->vlan_macip_lens = cpu_to_le32(info);
-
-		tu_cmd |= (E1000_TXD_CMD_DEXT | E1000_ADVTXD_DTYP_CTXT);
-
-		if (skb->ip_summed == CHECKSUM_PARTIAL) {
-			switch (skb->protocol) {
-			case __constant_htons(ETH_P_IP):
-				tu_cmd |= E1000_ADVTXD_TUCMD_IPV4;
-				//if (ip_hdr(skb)->protocol == IPPROTO_TCP)
-				//        tu_cmd |= E1000_ADVTXD_TUCMD_L4T_TCP;
-				break;
-			case __constant_htons(ETH_P_IPV6):
-				/* XXX what about other V6 headers?? */
-				if (ipv6_hdr(skb)->nexthdr == IPPROTO_TCP)
-					tu_cmd |= E1000_ADVTXD_TUCMD_L4T_TCP;
-				break;
-			default:
-				if (unlikely(net_ratelimit()))
-					dev_warn(&adapter->pdev->dev,
-					    "partial checksum but proto=%x!\n",
-					    skb->protocol);
-				break;
-			}
-		}
-
-		context_desc->type_tucmd_mlhl = cpu_to_le32(tu_cmd);
-		context_desc->seqnum_seed = 0;
-		if (adapter->flags & IGB_FLAG_NEED_CTX_IDX)
-			context_desc->mss_l4len_idx =
-				cpu_to_le32(tx_ring->queue_index << 4);
-
-		buffer_info->time_stamp = jiffies;
-		buffer_info->next_to_watch = i;
-		buffer_info->dma = 0;
-
-		i++;
-		if (i == tx_ring->count)
-			i = 0;
-		tx_ring->next_to_use = i;
-
-		return true;
-	}
-#endif
-
 	return false;
 }
 
@@ -3200,13 +3050,6 @@ static int igb_xmit_frame_ring_adv(struct rtskb *skb,
 		return NETDEV_TX_BUSY;
 	}
 	// skb_orphan(skb);
-
-#if NETIF_F_HW_VLAN_TX
-	if (adapter->vlgrp && vlan_tx_tag_present(skb)) {
-		tx_flags |= IGB_TX_FLAGS_VLAN;
-		tx_flags |= (vlan_tx_tag_get(skb) << IGB_TX_FLAGS_VLAN_SHIFT);
-	}
-#endif
 
 	if (skb->protocol == htons(ETH_P_IP))
 		tx_flags |= IGB_TX_FLAGS_IPV4;
@@ -4072,9 +3915,6 @@ static void igb_receive_skb(struct igb_ring *ring, u8 status,
                             union e1000_adv_rx_desc * rx_desc,
                             struct rtskb *skb)
 {
-#if NETIF_F_HW_VLAN_RX
-	bool vlan_extracted = (ring->adapter->vlgrp && (status & E1000_RXD_STAT_VP));
-#endif
 #ifdef CONFIG_IGB_LRO
 	if (ring->adapter->netdev->features & NETIF_F_LRO &&
 	    skb->ip_summed == CHECKSUM_UNNECESSARY) {
@@ -4088,13 +3928,7 @@ static void igb_receive_skb(struct igb_ring *ring, u8 status,
 		ring->lro_used = 1;
 	} else {
 #endif
-#if NETIF_F_HW_VLAN_RX
-		if (vlan_extracted)
-			vlan_hwaccel_receive_skb(skb, ring->adapter->vlgrp,
-			                  le16_to_cpu(rx_desc->wb.upper.vlan));
-		else
-#endif
-			rtnetif_rx(skb);
+		rtnetif_rx(skb);
 #ifdef CONFIG_IGB_LRO
 	}
 #endif
@@ -4427,105 +4261,6 @@ static int igb_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 	}
 }
 #endif
-
-static void igb_vlan_rx_register(struct rtnet_device *netdev,
-				 struct vlan_group *grp)
-{
-	struct igb_adapter *adapter = netdev->priv;
-	struct e1000_hw *hw = &adapter->hw;
-	u32 ctrl, rctl;
-
-	igb_irq_disable(adapter);
-	adapter->vlgrp = grp;
-
-	if (grp) {
-		/* enable VLAN tag insert/strip */
-		ctrl = rd32(E1000_CTRL);
-		ctrl |= E1000_CTRL_VME;
-		wr32(E1000_CTRL, ctrl);
-
-		/* enable VLAN receive filtering */
-		rctl = rd32(E1000_RCTL);
-		rctl &= ~E1000_RCTL_CFIEN;
-		wr32(E1000_RCTL, rctl);
-		igb_update_mng_vlan(adapter);
-		wr32(E1000_RLPML,
-				adapter->max_frame_size + VLAN_TAG_SIZE);
-	} else {
-		/* disable VLAN tag insert/strip */
-		ctrl = rd32(E1000_CTRL);
-		ctrl &= ~E1000_CTRL_VME;
-		wr32(E1000_CTRL, ctrl);
-
-		if (adapter->mng_vlan_id != (u16)IGB_MNG_VLAN_NONE) {
-			igb_vlan_rx_kill_vid(netdev, adapter->mng_vlan_id);
-			adapter->mng_vlan_id = IGB_MNG_VLAN_NONE;
-		}
-		wr32(E1000_RLPML,
-				adapter->max_frame_size);
-	}
-
-	if (!test_bit(__IGB_DOWN, &adapter->state))
-		igb_irq_enable(adapter);
-}
-
-static void igb_vlan_rx_add_vid(struct rtnet_device *netdev, u16 vid)
-{
-	struct igb_adapter *adapter = netdev->priv;
-	struct e1000_hw *hw = &adapter->hw;
-	u32 vfta, index;
-
-	if ((adapter->hw.mng_cookie.status &
-	     E1000_MNG_DHCP_COOKIE_STATUS_VLAN) &&
-	    (vid == adapter->mng_vlan_id))
-		return;
-	/* add VID to filter table */
-	index = (vid >> 5) & 0x7F;
-	vfta = array_rd32(E1000_VFTA, index);
-	vfta |= (1 << (vid & 0x1F));
-	igb_write_vfta(&adapter->hw, index, vfta);
-}
-
-static void igb_vlan_rx_kill_vid(struct rtnet_device *netdev, u16 vid)
-{
-	struct igb_adapter *adapter = netdev->priv;
-	struct e1000_hw *hw = &adapter->hw;
-	u32 vfta, index;
-
-	igb_irq_disable(adapter);
-	vlan_group_set_device(adapter->vlgrp, vid, NULL);
-
-	if (!test_bit(__IGB_DOWN, &adapter->state))
-		igb_irq_enable(adapter);
-
-	if ((adapter->hw.mng_cookie.status &
-	     E1000_MNG_DHCP_COOKIE_STATUS_VLAN) &&
-	    (vid == adapter->mng_vlan_id)) {
-		/* release control to f/w */
-		igb_release_hw_control(adapter);
-		return;
-	}
-
-	/* remove VID from filter table */
-	index = (vid >> 5) & 0x7F;
-	vfta = array_rd32(E1000_VFTA, index);
-	vfta &= ~(1 << (vid & 0x1F));
-	igb_write_vfta(&adapter->hw, index, vfta);
-}
-
-static void igb_restore_vlan(struct igb_adapter *adapter)
-{
-	igb_vlan_rx_register(adapter->netdev, adapter->vlgrp);
-
-	if (adapter->vlgrp) {
-		u16 vid;
-		for (vid = 0; vid < VLAN_N_VID; vid++) {
-			if (!vlan_group_get_device(adapter->vlgrp, vid))
-				continue;
-			igb_vlan_rx_add_vid(adapter->netdev, vid);
-		}
-	}
-}
 
 int igb_set_spd_dplx(struct igb_adapter *adapter, u16 spddplx)
 {
