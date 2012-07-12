@@ -36,7 +36,7 @@
 #include <ipv4/route.h>
 
 
-static rwlock_t ioctl_handler_lock = RW_LOCK_UNLOCKED;
+static DEFINE_SPINLOCK(ioctl_handler_lock);
 
 LIST_HEAD(ioctl_handlers);
 
@@ -69,7 +69,7 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
     if (ret != 0)
         return -EFAULT;
 
-    read_lock_bh(&ioctl_handler_lock);
+    spin_lock(&ioctl_handler_lock);
 
     list_for_each(entry, &ioctl_handlers) {
         ioctls = list_entry(entry, struct rtnet_ioctls, entry);
@@ -77,7 +77,7 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
         if (ioctls->ioctl_type == _IOC_TYPE(request)) {
             atomic_inc(&ioctls->ref_count);
 
-            read_unlock_bh(&ioctl_handler_lock);
+            spin_unlock(&ioctl_handler_lock);
 
             if ((_IOC_NR(request) & RTNET_IOC_NODEV_PARAM) == 0) {
                 rtdev = rtdev_get_by_name(head.if_name);
@@ -97,7 +97,7 @@ static int rtnet_ioctl(struct inode *inode, struct file *file,
         }
     }
 
-    read_unlock_bh(&ioctl_handler_lock);
+    spin_unlock(&ioctl_handler_lock);
 
     return -ENOTTY;
 }
@@ -250,12 +250,12 @@ int rtnet_register_ioctls(struct rtnet_ioctls *ioctls)
 
     RTNET_ASSERT(ioctls->handler != NULL, return -EINVAL;);
 
-    write_lock_bh(&ioctl_handler_lock);
+    spin_lock(&ioctl_handler_lock);
 
     list_for_each(entry, &ioctl_handlers) {
         registered_ioctls = list_entry(entry, struct rtnet_ioctls, entry);
         if (registered_ioctls->ioctl_type == ioctls->ioctl_type) {
-            write_unlock_bh(&ioctl_handler_lock);
+            spin_unlock(&ioctl_handler_lock);
             return -EEXIST;
         }
     }
@@ -263,7 +263,7 @@ int rtnet_register_ioctls(struct rtnet_ioctls *ioctls)
     list_add_tail(&ioctls->entry, &ioctl_handlers);
     atomic_set(&ioctls->ref_count, 0);
 
-    write_unlock_bh(&ioctl_handler_lock);
+    spin_unlock(&ioctl_handler_lock);
 
     return 0;
 }
@@ -272,20 +272,20 @@ int rtnet_register_ioctls(struct rtnet_ioctls *ioctls)
 
 void rtnet_unregister_ioctls(struct rtnet_ioctls *ioctls)
 {
-    write_lock_bh(&ioctl_handler_lock);
+    spin_lock(&ioctl_handler_lock);
 
     while (atomic_read(&ioctls->ref_count) != 0) {
-        write_unlock_bh(&ioctl_handler_lock);
+        spin_unlock(&ioctl_handler_lock);
 
         set_current_state(TASK_UNINTERRUPTIBLE);
         schedule_timeout(1*HZ); /* wait a second */
 
-        write_lock_bh(&ioctl_handler_lock);
+        spin_lock(&ioctl_handler_lock);
     }
 
     list_del(&ioctls->entry);
 
-    write_unlock_bh(&ioctl_handler_lock);
+    spin_unlock(&ioctl_handler_lock);
 }
 
 
