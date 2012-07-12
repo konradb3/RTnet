@@ -43,6 +43,8 @@
 #include <linux/sched.h>
 #include <asm/io.h>
 
+#include <rtnet_port.h>
+
 #ifndef IRQ_HANDLED
 #define irqreturn_t void
 #define IRQ_HANDLED
