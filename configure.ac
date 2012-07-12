@@ -413,7 +413,7 @@ case "${RTEXT_LINUX_VERSION}" in
             AC_MSG_ERROR([*** Unsupported kernel version $RTEXT_LINUX_VERSION - please upgrade at least to 2.4.19])
         fi
         ;;
-    2.6.*)
+    2.6.* | 3.*)
         ;;
     *)
         AC_MSG_ERROR([*** Unsupported kernel version $RTEXT_LINUX_VERSION])
@@ -440,7 +440,7 @@ case "${RTEXT_LINUX_VERSION}" in
         unset CONFIG_KBUILD_LEGACY
         MODULE_SYMVERS=Modules.symvers
         ;;
-    2.6.*)
+    2.6.* | 3.*)
         CONFIG_KBUILD=y
         unset CONFIG_KBUILD_LEGACY
         MODULE_SYMVERS=Module.symvers
