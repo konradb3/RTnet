@@ -26,6 +26,8 @@
 #include <linux/moduleparam.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>
+#include <linux/vmalloc.h>
+#include <linux/bitops.h>
 
 #include <rtdev.h>
 #include <rtdev_mgr.h>
@@ -243,6 +245,35 @@ static inline void *netdev_priv(struct net_device *dev)
 
 #ifndef NETIF_F_RXCSUM
 #define NETIF_F_RXCSUM		(1 << 29) /* Receive checksumming offload */
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
+#define usleep_range(min, max)	msleep((min + 999) / 1000)
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37)
+static inline void *vzalloc(size_t size)
+{
+	void *p = vmalloc(size);
+	if (p)
+		memset(p, 0, size);
+	return p;
+}
+#endif
+
+#ifndef for_each_set_bit
+#define for_each_set_bit(bit, addr, size) \
+	for ((bit) = find_first_bit((addr), (size));		\
+	     (bit) < (size);					\
+	     (bit) = find_next_bit((addr), (size), (bit) + 1))
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37)
+#define pr_warn(fmt, ...)	printk(KERN_WARNING fmt, ##__VA_ARGS__)
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33)
+#define pci_pcie_cap(pdev)	pci_find_capability(pdev, PCI_CAP_ID_EXP)
 #endif
 
 #endif /* __KERNEL__ */
