@@ -11203,7 +11203,7 @@ case "${RTEXT_LINUX_VERSION}" in
             as_fn_error $? "*** Unsupported kernel version $RTEXT_LINUX_VERSION - please upgrade at least to 2.4.19" "$LINENO" 5
         fi
         ;;
-    2.6.*)
+    2.6.* | 3.*)
         ;;
     *)
         as_fn_error $? "*** Unsupported kernel version $RTEXT_LINUX_VERSION" "$LINENO" 5
@@ -11227,7 +11227,7 @@ case "${RTEXT_LINUX_VERSION}" in
         unset CONFIG_KBUILD_LEGACY
         MODULE_SYMVERS=Modules.symvers
         ;;
-    2.6.*)
+    2.6.* | 3.*)
         CONFIG_KBUILD=y
         unset CONFIG_KBUILD_LEGACY
         MODULE_SYMVERS=Module.symvers
