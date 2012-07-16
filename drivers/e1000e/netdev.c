@@ -3970,14 +3970,23 @@ static int __devinit e1000_probe(struct pci_dev *pdev,
 	pci_using_dac = 0;
 	err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(64));
 	if (!err) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
+		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
+#else
 		err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64));
+#endif
 		if (!err)
 			pci_using_dac = 1;
 	} else {
 		err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
 		if (err) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
+			err = pci_set_consistent_dma_mask(pdev,
+							  DMA_BIT_MASK(32));
+#else
 			err = dma_set_coherent_mask(&pdev->dev,
 						    DMA_BIT_MASK(32));
+#endif
 			if (err) {
 				dev_err(&pdev->dev, "No usable DMA "
 					"configuration, aborting\n");
@@ -4230,8 +4239,10 @@ static int __devinit e1000_probe(struct pci_dev *pdev,
 
 	e1000_print_device_info(adapter);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,34)
 	if (pci_dev_run_wake(pdev))
 		pm_runtime_put_noidle(&pdev->dev);
+#endif
 
 	return 0;
 
@@ -4305,8 +4316,10 @@ static void __devexit e1000_remove(struct pci_dev *pdev)
 		clear_bit(__E1000_DOWN, &adapter->state);
 	rt_unregister_rtnetdev(netdev);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,34)
 	if (pci_dev_run_wake(pdev))
 		pm_runtime_get_noresume(&pdev->dev);
+#endif
 
 	/*
 	 * Release control of h/w to f/w.  If f/w is AMT enabled, this
