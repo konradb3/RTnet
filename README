@@ -1,4 +1,4 @@
-                             RTnet Version 0.9.12
+                             RTnet Version 0.9.13
                              ====================
 
 What is it?
@@ -19,14 +19,13 @@ Ethernet, a Time Division Multiple Access (TDMA) discipline is provided.
 What are the requirements?
 --------------------------
 - Linux kernel 2.6.x
-  Linux kernel 2.4.x
 - Xenomai 2.0 or better
   RTAI 3.3-cv or better
 - x86, PowerPC, or ARM platform (other platforms are untested)
-- RealTek 8139, Intel 8255x (EtherExpress Pro 100), Intel PRO/1000, DEC
-  21x4x-based (tulip), AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi DP8381x,
-  RTL8169 network adapter, MPC8260 FCC, MPC8xx SCC/FEC, or MPC5200 on-chip
-  controllers, SMSC LAN91C111 embedded controller, Intel 82575 (igb)
+- RealTek 8139, Intel 8255x (EtherExpress Pro 100), Intel PRO/1000 (e1000 and
+  e1000e), DEC 21x4x-based (tulip), AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi
+  DP8381x, RTL8169 network adapter, MPC8260 FCC, MPC8xx SCC/FEC, or MPC5200
+  on-chip controllers, SMSC LAN91C111 embedded controller, Intel 82575 (igb)
 - For Ethernet-over-FireWire see rtfirewire.berlios.de
 - For RT-WLAN: Ralink 2500
 
@@ -127,5 +126,6 @@ David Schleef                           - he wrote the original RTnet, some
 
 
 RTnet is free software, and you are welcome to redistribute it under
-the terms of the GNU General Public License. This program comes with
-ABSOLUTELY NO WARRANTY. See "COPYING" for details.
+the terms of the GNU General Public License unless otherwise stated. This
+program comes with ABSOLUTELY NO WARRANTY. See "COPYING" and header files
+rtnet.h and rtmac.h for details.

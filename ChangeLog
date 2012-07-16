@@ -1,3 +1,15 @@
+0.9.13
+- added rt_e1000e
+- support for kernel up to 3.2 and Xenomai 2.6
+- support for premapping rtskbs
+  (for compatibility with IOMMUs, enabled in rt_igb and rt_e1000e)
+- rework of rtnetproxy
+- RT-TCP fixes
+- MSI-X support for rt_igb
+- updated RTAI examples
+- copyright clarification for userspace-relevant headers
+- various smaller fixes and cleanups
+
 0.9.12
 - RT-TCP support
 - support for Intel 82575 (igb)
