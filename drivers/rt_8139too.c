@@ -793,7 +793,6 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
         int option;
         void *ioaddr;
         static int board_idx = -1;
-        u8 pci_rev;
 
         board_idx++;
 
@@ -810,14 +809,6 @@ static int __devinit rtl8139_init_one (struct pci_dev *pdev,
                         rtdm_printk (KERN_INFO RTL8139_DRIVER_NAME "\n");
         }
 #endif
-
-        pci_read_config_byte(pdev, PCI_REVISION_ID, &pci_rev);
-        if (pdev->vendor == PCI_VENDOR_ID_REALTEK &&
-            pdev->device == PCI_DEVICE_ID_REALTEK_8139 && pci_rev >= 0x20) {
-                rtdm_printk(KERN_INFO PFX "pci dev %s (id %04x:%04x rev %02x) is an enhanced 8139C+ chip\n",
-                          pci_name(pdev), pdev->vendor, pdev->device, pci_rev);
-                rtdm_printk(KERN_INFO PFX "Use the \"8139cp\" driver for improved performance and stability.\n");
-        }
 
         if ((i=rtl8139_init_board (pdev, &rtdev)) < 0)
                 return i;
