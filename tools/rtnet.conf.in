@@ -17,7 +17,14 @@ MODULE_EXT="@RTNET_MODULE_EXT@"
 
 # RT-NIC driver
 RT_DRIVER="rt_eepro100"
-RT_DRIVER_OPTIONS="cards=1,0,0,0"
+RT_DRIVER_OPTIONS=""
+
+# PCI addresses of RT-NICs to claim (format: 0000:00:00.0)
+#   If both Linux and RTnet drivers for the same hardware are loaded, this
+#   list instructs the start script to rebind the given PCI devices, detaching
+#   from their Linux driver, attaching it to the RT driver above. Example:
+#   REBIND_RT_NICS="0000:00:19.0 0000:01:1d.1"
+REBIND_RT_NICS=""
 
 # IP address and netmask of this station
 #   The TDMA_CONFIG file overrides these parameters for masters and backup
