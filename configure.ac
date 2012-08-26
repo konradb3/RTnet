@@ -921,6 +921,17 @@ AC_MSG_RESULT([${CONFIG_RTNET_DRV_MPC52XX_FEC:-n}])
 AM_CONDITIONAL(CONFIG_RTNET_DRV_MPC52XX_FEC,[test "$CONFIG_RTNET_DRV_MPC52XX_FEC" = "y"])
 
 
+AC_MSG_CHECKING([whether to build fec enet driver])
+AC_ARG_ENABLE(fec,
+    AS_HELP_STRING([--enable-fec], [build fec driver]),
+    [case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_FEC=y ;;
+        *) CONFIG_RTNET_DRV_FEC=n ;;
+    esac])
+AC_MSG_RESULT([${CONFIG_RTNET_DRV_FEC:-n}])
+AM_CONDITIONAL(CONFIG_RTNET_DRV_FEC,[test "$CONFIG_RTNET_DRV_FEC" = "y"])
+
+
 AC_MSG_CHECKING([whether to build SMSC LAN91C111 driver])
 AC_ARG_ENABLE(smc91111,
     AS_HELP_STRING([--enable-smc91111], [build SMSC LAN91C111 driver]),

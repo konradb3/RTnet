@@ -34,6 +34,7 @@ EXTRA_LIBRARIES = \
 	libkernel_mpc8260_fcc_enet.a \
 	libkernel_mpc8xx_enet.a \
 	libkernel_mpc8xx_fec.a \
+	libkernel_fec.a \
 	libkernel_natsemi.a \
 	libkernel_pcnet32.a \
 	libkernel_smc91111.a \
@@ -107,6 +108,14 @@ libkernel_mpc8xx_fec_a_CPPFLAGS = \
 
 libkernel_mpc8xx_fec_a_SOURCES = \
 	rt_mpc8xx_fec.c
+
+libkernel_fec_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_fec_a_SOURCES = \
+	rt_fec.c
 
 libkernel_natsemi_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
@@ -185,6 +194,10 @@ if CONFIG_RTNET_DRV_FEC_ENET
 OBJS += rt_mpc8xx_fec$(modext)
 endif
 
+if CONFIG_RTNET_DRV_FEC
+OBJS += rt_fec$(modext)
+endif
+
 if CONFIG_RTNET_DRV_NATSEMI
 OBJS += rt_natsemi$(modext)
 endif
@@ -229,6 +242,9 @@ rt_mpc8xx_enet.o: libkernel_mpc8xx_enet.a
 rt_mpc8xx_fec.o: libkernel_mpc8xx_fec.a
 	$(LD) --whole-archive $< -r -o $@
 
+rt_fec.o: libkernel_fec.a
+	$(LD) --whole-archive $< -r -o $@
+
 rt_natsemi.o: libkernel_natsemi.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -258,6 +274,7 @@ all-local.ko: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_fec_a_SOURCES) \
+		$(libkernel_fec_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
@@ -280,6 +297,7 @@ clean-local: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_fec_a_SOURCES) \
+		$(libkernel_fec_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
