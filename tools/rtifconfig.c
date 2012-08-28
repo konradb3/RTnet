@@ -93,6 +93,7 @@ void parse_stats(void)
     struct itf_stats *itf;
     char buf[512];
     FILE *fh;
+    int ret;
 
     fh = fopen("/proc/rtnet/stats", "r");
     if (!fh)
@@ -118,7 +119,7 @@ void parse_stats(void)
         snprintf(itf->name, sizeof(itf->name), "%s", name);
 
         p++;
-        sscanf(p,
+        ret = sscanf(p,
                "%llu %llu %lu %lu %lu %lu %lu %lu %llu %llu %lu %lu %lu %lu %lu %lu",
                &itf->stats.rx_bytes,
                &itf->stats.rx_packets,
@@ -136,6 +137,10 @@ void parse_stats(void)
                &itf->stats.collisions,
                &itf->stats.tx_carrier_errors,
                &itf->stats.tx_compressed);
+        if (ret < 16) {
+            free(itf);
+            continue;
+        }
 
         itf->next = itf_stats_head;
         itf_stats_head = itf;
