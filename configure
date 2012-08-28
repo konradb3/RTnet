@@ -816,6 +816,8 @@ CONFIG_RTNET_DRV_MACB_FALSE
 CONFIG_RTNET_DRV_MACB_TRUE
 CONFIG_RTNET_DRV_SMC91111_FALSE
 CONFIG_RTNET_DRV_SMC91111_TRUE
+CONFIG_RTNET_DRV_FEC_FALSE
+CONFIG_RTNET_DRV_FEC_TRUE
 CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE
 CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE
 CONFIG_RTNET_DRV_FEC_ENET_FALSE
@@ -999,6 +1001,7 @@ enable_fcc_enet
 enable_scc_enet
 enable_fec_enet
 enable_mpc52xx_fec
+enable_fec
 enable_smc91111
 enable_macb
 enable_eth1394
@@ -1688,6 +1691,7 @@ Optional Features:
   --enable-scc-enet       build scc enet driver
   --enable-fec-enet       build fec enet driver
   --enable-mpc52xx-fec    build MPC52xx fec driver
+  --enable-fec            build fec driver
   --enable-smc91111       build SMSC LAN91C111 driver
   --enable-macb           build MACB driver
   --enable-eth1394        build Eth1394 driver
@@ -4679,13 +4683,13 @@ if ${lt_cv_nm_interface+:} false; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4682: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4686: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4685: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4689: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4688: output\"" >&5)
+  (eval echo "\"\$as_me:4692: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5891,7 +5895,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5894 "configure"' > conftest.$ac_ext
+  echo '#line 5898 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7420,11 +7424,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7423: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7427: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7427: \$? = $ac_status" >&5
+   echo "$as_me:7431: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7759,11 +7763,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7762: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7766: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7766: \$? = $ac_status" >&5
+   echo "$as_me:7770: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7864,11 +7868,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7867: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7871: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7871: \$? = $ac_status" >&5
+   echo "$as_me:7875: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -7919,11 +7923,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7922: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7926: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7926: \$? = $ac_status" >&5
+   echo "$as_me:7930: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10287,7 +10291,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10290 "configure"
+#line 10294 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10383,7 +10387,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10386 "configure"
+#line 10390 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11913,6 +11917,28 @@ fi
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build fec enet driver" >&5
+$as_echo_n "checking whether to build fec enet driver... " >&6; }
+# Check whether --enable-fec was given.
+if test "${enable_fec+set}" = set; then :
+  enableval=$enable_fec; case "$enableval" in
+        y | yes) CONFIG_RTNET_DRV_FEC=y ;;
+        *) CONFIG_RTNET_DRV_FEC=n ;;
+    esac
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${CONFIG_RTNET_DRV_FEC:-n}" >&5
+$as_echo "${CONFIG_RTNET_DRV_FEC:-n}" >&6; }
+ if test "$CONFIG_RTNET_DRV_FEC" = "y"; then
+  CONFIG_RTNET_DRV_FEC_TRUE=
+  CONFIG_RTNET_DRV_FEC_FALSE='#'
+else
+  CONFIG_RTNET_DRV_FEC_TRUE='#'
+  CONFIG_RTNET_DRV_FEC_FALSE=
+fi
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build SMSC LAN91C111 driver" >&5
 $as_echo_n "checking whether to build SMSC LAN91C111 driver... " >&6; }
 # Check whether --enable-smc91111 was given.
@@ -12999,6 +13025,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CONFIG_RTNET_DRV_MPC52XX_FEC_TRUE}" && test -z "${CONFIG_RTNET_DRV_MPC52XX_FEC_FALSE}"; then
   as_fn_error $? "conditional \"CONFIG_RTNET_DRV_MPC52XX_FEC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CONFIG_RTNET_DRV_FEC_TRUE}" && test -z "${CONFIG_RTNET_DRV_FEC_FALSE}"; then
+  as_fn_error $? "conditional \"CONFIG_RTNET_DRV_FEC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CONFIG_RTNET_DRV_SMC91111_TRUE}" && test -z "${CONFIG_RTNET_DRV_SMC91111_FALSE}"; then

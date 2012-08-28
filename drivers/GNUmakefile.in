@@ -46,11 +46,12 @@ host_triplet = @host@
 @CONFIG_RTNET_DRV_FCC_ENET_TRUE@am__append_11 = rt_mpc8260_fcc_enet$(modext)
 @CONFIG_RTNET_DRV_SCC_ENET_TRUE@am__append_12 = rt_mpc8xx_enet$(modext)
 @CONFIG_RTNET_DRV_FEC_ENET_TRUE@am__append_13 = rt_mpc8xx_fec$(modext)
-@CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_14 = rt_natsemi$(modext)
-@CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_15 = rt_pcnet32$(modext)
-@CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_16 = rt_smc91111$(modext)
-@CONFIG_RTNET_DRV_MACB_TRUE@am__append_17 = rt_macb$(modext)
-@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_18 = rt_via-rhine$(modext)
+@CONFIG_RTNET_DRV_FEC_TRUE@am__append_14 = rt_fec$(modext)
+@CONFIG_RTNET_DRV_NATSEMI_TRUE@am__append_15 = rt_natsemi$(modext)
+@CONFIG_RTNET_DRV_PCNET32_TRUE@am__append_16 = rt_pcnet32$(modext)
+@CONFIG_RTNET_DRV_SMC91111_TRUE@am__append_17 = rt_smc91111$(modext)
+@CONFIG_RTNET_DRV_MACB_TRUE@am__append_18 = rt_macb$(modext)
+@CONFIG_RTNET_DRV_VIA_RHINE_TRUE@am__append_19 = rt_via-rhine$(modext)
 subdir = drivers
 DIST_COMMON = $(srcdir)/GNUmakefile.am $(srcdir)/GNUmakefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -89,6 +90,10 @@ libkernel_eth1394_a_LIBADD =
 am_libkernel_eth1394_a_OBJECTS =  \
 	libkernel_eth1394_a-rt_eth1394.$(OBJEXT)
 libkernel_eth1394_a_OBJECTS = $(am_libkernel_eth1394_a_OBJECTS)
+libkernel_fec_a_AR = $(AR) $(ARFLAGS)
+libkernel_fec_a_LIBADD =
+am_libkernel_fec_a_OBJECTS = libkernel_fec_a-rt_fec.$(OBJEXT)
+libkernel_fec_a_OBJECTS = $(am_libkernel_fec_a_OBJECTS)
 libkernel_loopback_a_AR = $(AR) $(ARFLAGS)
 libkernel_loopback_a_LIBADD =
 am_libkernel_loopback_a_OBJECTS =  \
@@ -151,7 +156,8 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 SOURCES = $(libkernel_8139too_a_SOURCES) \
 	$(libkernel_at91_ether_a_SOURCES) \
 	$(libkernel_eepro100_a_SOURCES) $(libkernel_eth1394_a_SOURCES) \
-	$(libkernel_loopback_a_SOURCES) $(libkernel_macb_a_SOURCES) \
+	$(libkernel_fec_a_SOURCES) $(libkernel_loopback_a_SOURCES) \
+	$(libkernel_macb_a_SOURCES) \
 	$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_fec_a_SOURCES) \
@@ -161,7 +167,8 @@ SOURCES = $(libkernel_8139too_a_SOURCES) \
 DIST_SOURCES = $(libkernel_8139too_a_SOURCES) \
 	$(libkernel_at91_ether_a_SOURCES) \
 	$(libkernel_eepro100_a_SOURCES) $(libkernel_eth1394_a_SOURCES) \
-	$(libkernel_loopback_a_SOURCES) $(libkernel_macb_a_SOURCES) \
+	$(libkernel_fec_a_SOURCES) $(libkernel_loopback_a_SOURCES) \
+	$(libkernel_macb_a_SOURCES) \
 	$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_enet_a_SOURCES) \
 	$(libkernel_mpc8xx_fec_a_SOURCES) \
@@ -356,6 +363,7 @@ EXTRA_LIBRARIES = \
 	libkernel_mpc8260_fcc_enet.a \
 	libkernel_mpc8xx_enet.a \
 	libkernel_mpc8xx_fec.a \
+	libkernel_fec.a \
 	libkernel_natsemi.a \
 	libkernel_pcnet32.a \
 	libkernel_smc91111.a \
@@ -428,6 +436,14 @@ libkernel_mpc8xx_fec_a_CPPFLAGS = \
 libkernel_mpc8xx_fec_a_SOURCES = \
 	rt_mpc8xx_fec.c
 
+libkernel_fec_a_CPPFLAGS = \
+	$(RTEXT_KMOD_CFLAGS) \
+	-I$(top_srcdir)/stack/include \
+	-I$(top_builddir)/stack/include
+
+libkernel_fec_a_SOURCES = \
+	rt_fec.c
+
 libkernel_natsemi_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
 	-I$(top_srcdir)/stack/include \
@@ -473,7 +489,8 @@ libkernel_via_rhine_a_SOURCES = \
 OBJS = $(am__append_6) $(am__append_7) $(am__append_8) $(am__append_9) \
 	$(am__append_10) $(am__append_11) $(am__append_12) \
 	$(am__append_13) $(am__append_14) $(am__append_15) \
-	$(am__append_16) $(am__append_17) $(am__append_18)
+	$(am__append_16) $(am__append_17) $(am__append_18) \
+	$(am__append_19)
 EXTRA_DIST = Kconfig Makefile.kbuild
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
 all: all-recursive
@@ -526,6 +543,10 @@ libkernel_eth1394.a: $(libkernel_eth1394_a_OBJECTS) $(libkernel_eth1394_a_DEPEND
 	-rm -f libkernel_eth1394.a
 	$(libkernel_eth1394_a_AR) libkernel_eth1394.a $(libkernel_eth1394_a_OBJECTS) $(libkernel_eth1394_a_LIBADD)
 	$(RANLIB) libkernel_eth1394.a
+libkernel_fec.a: $(libkernel_fec_a_OBJECTS) $(libkernel_fec_a_DEPENDENCIES) 
+	-rm -f libkernel_fec.a
+	$(libkernel_fec_a_AR) libkernel_fec.a $(libkernel_fec_a_OBJECTS) $(libkernel_fec_a_LIBADD)
+	$(RANLIB) libkernel_fec.a
 libkernel_loopback.a: $(libkernel_loopback_a_OBJECTS) $(libkernel_loopback_a_DEPENDENCIES) 
 	-rm -f libkernel_loopback.a
 	$(libkernel_loopback_a_AR) libkernel_loopback.a $(libkernel_loopback_a_OBJECTS) $(libkernel_loopback_a_LIBADD)
@@ -573,6 +594,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_at91_ether_a-rt_at91_ether.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eepro100_a-rt_eepro100.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_eth1394_a-rt_eth1394.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_fec_a-rt_fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_loopback_a-rt_loopback.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_macb_a-rt_macb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkernel_mpc8260_fcc_enet_a-rt_mpc8260_fcc_enet.Po@am__quote@
@@ -659,6 +681,20 @@ libkernel_eth1394_a-rt_eth1394.obj: rt_eth1394.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_eth1394.c' object='libkernel_eth1394_a-rt_eth1394.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_eth1394_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_eth1394_a-rt_eth1394.obj `if test -f 'rt_eth1394.c'; then $(CYGPATH_W) 'rt_eth1394.c'; else $(CYGPATH_W) '$(srcdir)/rt_eth1394.c'; fi`
+
+libkernel_fec_a-rt_fec.o: rt_fec.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_fec_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_fec_a-rt_fec.o -MD -MP -MF $(DEPDIR)/libkernel_fec_a-rt_fec.Tpo -c -o libkernel_fec_a-rt_fec.o `test -f 'rt_fec.c' || echo '$(srcdir)/'`rt_fec.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libkernel_fec_a-rt_fec.Tpo $(DEPDIR)/libkernel_fec_a-rt_fec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_fec.c' object='libkernel_fec_a-rt_fec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_fec_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_fec_a-rt_fec.o `test -f 'rt_fec.c' || echo '$(srcdir)/'`rt_fec.c
+
+libkernel_fec_a-rt_fec.obj: rt_fec.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_fec_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_fec_a-rt_fec.obj -MD -MP -MF $(DEPDIR)/libkernel_fec_a-rt_fec.Tpo -c -o libkernel_fec_a-rt_fec.obj `if test -f 'rt_fec.c'; then $(CYGPATH_W) 'rt_fec.c'; else $(CYGPATH_W) '$(srcdir)/rt_fec.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libkernel_fec_a-rt_fec.Tpo $(DEPDIR)/libkernel_fec_a-rt_fec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rt_fec.c' object='libkernel_fec_a-rt_fec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_fec_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libkernel_fec_a-rt_fec.obj `if test -f 'rt_fec.c'; then $(CYGPATH_W) 'rt_fec.c'; else $(CYGPATH_W) '$(srcdir)/rt_fec.c'; fi`
 
 libkernel_loopback_a-rt_loopback.o: rt_loopback.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libkernel_loopback_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libkernel_loopback_a-rt_loopback.o -MD -MP -MF $(DEPDIR)/libkernel_loopback_a-rt_loopback.Tpo -c -o libkernel_loopback_a-rt_loopback.o `test -f 'rt_loopback.c' || echo '$(srcdir)/'`rt_loopback.c
@@ -1129,6 +1165,9 @@ rt_mpc8xx_enet.o: libkernel_mpc8xx_enet.a
 rt_mpc8xx_fec.o: libkernel_mpc8xx_fec.a
 	$(LD) --whole-archive $< -r -o $@
 
+rt_fec.o: libkernel_fec.a
+	$(LD) --whole-archive $< -r -o $@
+
 rt_natsemi.o: libkernel_natsemi.a
 	$(LD) --whole-archive $< -r -o $@
 
@@ -1158,6 +1197,7 @@ all-local.ko: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_fec_a_SOURCES) \
+		$(libkernel_fec_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
@@ -1180,6 +1220,7 @@ clean-local: $(libkernel_8139too_a_SOURCES) \
 		$(libkernel_mpc8260_fcc_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_enet_a_SOURCES) \
 		$(libkernel_mpc8xx_fec_a_SOURCES) \
+		$(libkernel_fec_a_SOURCES) \
 		$(libkernel_natsemi_a_SOURCES) \
 		$(libkernel_pcnet32_a_SOURCES) \
 		$(libkernel_smc91111_a_SOURCES) \
