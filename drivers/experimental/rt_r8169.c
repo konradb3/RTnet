@@ -136,10 +136,6 @@ MODULE_PARM_DESC(debug, MODULENAME " debug level (bit mask, see docs!)");
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 20;
 
-/* Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
-   The RTL chips use a 64 element hash table based on the Ethernet CRC.  */
-static int multicast_filter_limit = 32;
-
 /* MAC address length*/
 #define MAC_ADDR_LEN        6
 
@@ -2022,7 +2018,7 @@ static void rtl8169_set_rx_mode (struct rtnet_device *rtdev)
 	unsigned long ioaddr = priv->ioaddr;
 	rtdm_lockctx_t context;
 	u32 mc_filter[2];	/* Multicast hash filter */
-	int i, rx_mode;
+	int rx_mode;
 	u32 tmp=0;
 	
 
