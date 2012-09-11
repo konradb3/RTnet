@@ -1937,7 +1937,6 @@ static int rtl8169_close (struct rtnet_device *rtdev)
 	*** /RTnet ***/
 
 	/*** RTnet ***/
-	free_irq (rtdev->irq, rtdev);
 	if ( (i=rtdm_irq_free(&priv->irq_handle))<0 )
 		return i;
 
