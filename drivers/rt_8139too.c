@@ -632,8 +632,10 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         u8 tmp8;
         int rc;
         unsigned int i;
+#ifdef USE_IO_OPS
         u32 pio_start, pio_end, pio_flags, pio_len;
-        unsigned long mmio_start, mmio_end, mmio_flags, mmio_len;
+#endif
+        unsigned long mmio_start, mmio_flags, mmio_len;
         u32 tmp;
 
 
@@ -659,19 +661,18 @@ static int __devinit rtl8139_init_board (struct pci_dev *pdev,
         if (rc)
                 goto err_out;
 
-        pio_start = pci_resource_start (pdev, 0);
-        pio_end = pci_resource_end (pdev, 0);
-        pio_flags = pci_resource_flags (pdev, 0);
-        pio_len = pci_resource_len (pdev, 0);
-
         mmio_start = pci_resource_start (pdev, 1);
-        mmio_end = pci_resource_end (pdev, 1);
         mmio_flags = pci_resource_flags (pdev, 1);
         mmio_len = pci_resource_len (pdev, 1);
 
         /* set this immediately, we need to know before
          * we talk to the chip directly */
 #ifdef USE_IO_OPS
+        pio_start = pci_resource_start (pdev, 0);
+        pio_end = pci_resource_end (pdev, 0);
+        pio_flags = pci_resource_flags (pdev, 0);
+        pio_len = pci_resource_len (pdev, 0);
+
         /* make sure PCI base addr 0 is PIO */
         if (!(pio_flags & IORESOURCE_IO)) {
                 rtdm_printk (KERN_ERR PFX "%s: region #0 not a PIO resource, aborting\n", pci_name(pdev));
