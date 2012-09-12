@@ -692,7 +692,7 @@ e1000_probe(struct pci_dev *pdev,
 
 	static int cards_found = 0;
 	static int e1000_ksp3_port_a = 0; /* global ksp3 port a indication */
-	int i, err, pci_using_dac;
+	int i, err;
 	uint16_t eeprom_data;
 	uint16_t eeprom_apme_mask = E1000_EEPROM_APME;
 
@@ -708,16 +708,13 @@ e1000_probe(struct pci_dev *pdev,
 	if ((err = pci_enable_device(pdev)))
 		return err;
 
-	if (!(err = pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) &&
-	    !(err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64)))) {
-		pci_using_dac = 1;
-	} else {
+	if ((err = pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) ||
+	    (err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64)))) {
 		if ((err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32))) &&
 		    (err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32)))) {
 			E1000_ERR("No usable DMA configuration, aborting\n");
 			return err;
 		}
-		pci_using_dac = 0;
 	}
 
 	if ((err = pci_request_regions(pdev, e1000_driver_name)))
@@ -1948,8 +1945,6 @@ e1000_clean_rx_ring(struct e1000_adapter *adapter,
                     struct e1000_rx_ring *rx_ring)
 {
 	struct e1000_buffer *buffer_info;
-	struct e1000_ps_page *ps_page;
-	struct e1000_ps_page_dma *ps_page_dma;
 	struct pci_dev *pdev = adapter->pdev;
 	unsigned long size;
 	unsigned int i;
@@ -1966,8 +1961,6 @@ e1000_clean_rx_ring(struct e1000_adapter *adapter,
 			kfree_rtskb(buffer_info->skb);
 			buffer_info->skb = NULL;
 		}
-		ps_page = &rx_ring->ps_page[i];
-		ps_page_dma = &rx_ring->ps_page_dma[i];
 	}
 
 	size = sizeof(struct e1000_buffer) * rx_ring->count;
