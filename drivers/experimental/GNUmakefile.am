@@ -2,8 +2,7 @@ moduledir = $(DESTDIR)$(RTNET_MODULE_DIR)
 modext = $(RTNET_MODULE_EXT)
 
 EXTRA_LIBRARIES = \
-	libkernel_3c59x.a \
-	libkernel_r8169.a
+	libkernel_3c59x.a
 
 libkernel_3c59x_a_CPPFLAGS = \
 	$(RTEXT_KMOD_CFLAGS) \
@@ -13,22 +12,10 @@ libkernel_3c59x_a_CPPFLAGS = \
 libkernel_3c59x_a_SOURCES = \
 	rt_3c59x.c
 
-libkernel_r8169_a_CPPFLAGS = \
-	$(RTEXT_KMOD_CFLAGS) \
-	-I$(top_srcdir)/stack/include \
-	-I$(top_builddir)/stack/include
-
-libkernel_r8169_a_SOURCES = \
-	rt_r8169.c
-
 OBJS =
 
 if CONFIG_RTNET_DRV_3C59X
 OBJS += rt_3c59x$(modext)
-endif
-
-if CONFIG_RTNET_DRV_R8169
-OBJS += rt_r8169$(modext)
 endif
 
 OPTDIRS =
@@ -44,16 +31,13 @@ endif
 rt_3c59x.o: libkernel_3c59x.a
 	$(LD) --whole-archive $< -r -o $@
 
-rt_r8169.o: libkernel_r8169.a
-	$(LD) --whole-archive $< -r -o $@
-
 all-local: all-local$(modext)
 
 # 2.4 build
 all-local.o: $(OBJS)
 
 # 2.6 build
-all-local.ko: $(libkernel_3c59x_a_SOURCES) $(libkernel_r8169_a_SOURCES) FORCE
+all-local.ko: $(libkernel_3c59x_a_SOURCES) FORCE
 	$(RTNET_KBUILD_CMD)
 
 install-exec-local: $(OBJS)
@@ -63,7 +47,7 @@ install-exec-local: $(OBJS)
 uninstall-local:
 	for MOD in $(OBJS); do $(RM) $(moduledir)/$$MOD; done
 
-clean-local: $(libkernel_3c59x_a_SOURCES) $(libkernel_r8169_a_SOURCES)
+clean-local: $(libkernel_3c59x_a_SOURCES)
 	$(RTNET_KBUILD_CLEAN)
 
 distclean-local:
@@ -71,7 +55,7 @@ distclean-local:
 
 SUBDIRS = $(OPTDIRS)
 
-EXTRA_DIST = Kconfig Makefile.kbuild README.r8169
+EXTRA_DIST = Kconfig Makefile.kbuild
 
 DISTCLEANFILES = Makefile Modules.symvers Module.symvers Module.markers modules.order
 
