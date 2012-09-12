@@ -7,6 +7,8 @@
 - rework of rtnetproxy
 - RT-TCP fixes
 - MSI-X support for rt_igb
+- fixes, extended hardware support and cleanups for rt_r8169
+  (which is no longer considered experimental)
 - added REBIND_RT_NICS feature to rtnet start script
   (replaces "cards" driver parameter)
 - updated RTAI examples [Paolo Mantegazza]
