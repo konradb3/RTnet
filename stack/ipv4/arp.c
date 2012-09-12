@@ -111,7 +111,7 @@ int rt_arp_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     struct rtnet_device *rtdev = skb->rtdev;
     struct arphdr       *arp = skb->nh.arph;
     unsigned char       *arp_ptr= (unsigned char *)(arp+1);
-    unsigned char       *sha, *tha;
+    unsigned char       *sha;
     u32                 sip, tip;
     u16                 dev_type = rtdev->type;
 
@@ -163,7 +163,6 @@ int rt_arp_rcv(struct rtskb *skb, struct rtpacket_type *pt)
     memcpy(&sip, arp_ptr, 4);
 
     arp_ptr += 4;
-    tha=arp_ptr;
     arp_ptr += rtdev->addr_len;
     memcpy(&tip, arp_ptr, 4);
 
