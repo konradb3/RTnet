@@ -1294,11 +1294,8 @@ static void rt_tcp_socket_destruct(struct tcp_socket* ts)
     struct rtskb    *skb;
     int             index;
     int             signal;
-
-    struct rtdm_dev_context *sockctx;
     struct rtsocket *sock = &ts->sock;
 
-    sockctx = container_of((void*)sock, struct rtdm_dev_context, dev_private);
     /*
       rtdm_printk("rttcp: rt_tcp_socket_destruct 0x%p\n", ts);
     */
@@ -1689,7 +1686,7 @@ static int rt_tcp_setsockopt(rtdm_user_info_t *user_info, struct tcp_socket *ts,
                              int level, int optname, const void *optval,
                              socklen_t optlen)
 {
-    uint64_t val;
+    /* uint64_t val; */
     struct timeval tv;
     rtdm_lockctx_t  context;
 
@@ -1698,15 +1695,15 @@ static int rt_tcp_setsockopt(rtdm_user_info_t *user_info, struct tcp_socket *ts,
             if (optlen < sizeof(unsigned int))
                 return -EINVAL;
 
-            val = *(unsigned long*)optval;
-
             /* commented out, because current implementation transmits
                keepalive probes from interrupt context */
             /*
-              if (val)
-              rt_tcp_keepalive_enable(ts);
-              else
-              rt_tcp_keepalive_disable(ts);
+            val = *(unsigned long*)optval;
+
+            if (val)
+                rt_tcp_keepalive_enable(ts);
+            else
+                rt_tcp_keepalive_disable(ts);
             */
             return 0;
 
