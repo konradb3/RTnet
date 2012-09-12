@@ -279,7 +279,6 @@ static void tulip_up(/*RTnet*/struct rtnet_device *rtdev)
 {
 	struct tulip_private *tp = (struct tulip_private *)rtdev->priv;
 	long ioaddr = rtdev->base_addr;
-	int next_tick = 3*HZ;
 	int i;
 
 	/* Wake the chip from sleep/snooze mode. */
@@ -440,7 +439,6 @@ media_picked:
 			tp->csr6 = 0x00420000;
 			outl(0x0001B078, ioaddr + 0xB8);
 			outl(0x0201B078, ioaddr + 0xB8);
-			next_tick = 1*HZ;
 		}
 	} else if ((tp->chip_id == MX98713 || tp->chip_id == COMPEX9881)
 			   && ! tp->medialock) {
@@ -1048,8 +1046,9 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 		{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_496) },
 		{ },
 	};
+#if defined(__i386__)
 	static int last_irq;
-	static int multiport_cnt;	/* For four-port boards w/one EEPROM */
+#endif
 	u8 chip_rev;
 	unsigned int i, irq;
 	unsigned short sum;
@@ -1060,7 +1059,6 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	int chip_idx = ent->driver_data;
 	unsigned int t2104x_mode = 0;
 	unsigned int eeprom_missing = 0;
-	unsigned int force_csr0 = 0;
 
 #ifndef MODULE
 	static int did_version;		/* Already printed version info. */
@@ -1112,10 +1110,8 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 	      Saturn.
 	 */
 
-	if (pci_dev_present(early_486_chipsets)) {
+	if (pci_dev_present(early_486_chipsets))
 		csr0 = MRL | MRM | (8 << BurstLenShift) | (1 << CALShift);
-		force_csr0 = 1;
-	}
 
 	/* bugfix: the ASIX must have a burst limit or horrible things happen. */
 	if (chip_idx == AX88140) {
@@ -1284,10 +1280,8 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 		for (i = 0; i < 8; i ++)
 			if (ee_data[i] != ee_data[16+i])
 				sa_offset = 20;
-		if (ee_data[0] == 0xff  &&  ee_data[1] == 0xff &&  ee_data[2] == 0) {
+		if (ee_data[0] == 0xff  &&  ee_data[1] == 0xff &&  ee_data[2] == 0)
 			sa_offset = 2;		/* Grrr, damn Matrox boards. */
-			multiport_cnt = 4;
-		}
 #ifdef CONFIG_DDB5476
 		if ((pdev->bus->number == 0) && (PCI_SLOT(pdev->devfn) == 6)) {
 			/* DDB5476 MAC address in first EEPROM locations. */
@@ -1357,7 +1351,9 @@ static int __devinit tulip_init_one (struct pci_dev *pdev,
 
 	for (i = 0; i < 6; i++)
 		last_phys_addr[i] = rtdev->dev_addr[i];
+#if defined(__i386__)
 	last_irq = irq;
+#endif
 
 	/* The lower four bits are the media type. */
 	if (board_idx >= 0  &&  board_idx < MAX_UNITS) {
