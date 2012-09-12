@@ -36,11 +36,11 @@ static rtdm_event_t         wakeup_sem;
 
 int nomac_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 {
-    struct nomac_priv   *nomac;
+    /* unused here, just to demonstrate access to the discipline state
+    struct nomac_priv   *nomac =
+        (struct nomac_priv *)rtdev->mac_priv->disc_priv; */
     int                 ret;
 
-
-    nomac = (struct nomac_priv *)rtdev->mac_priv->disc_priv;
 
     rtcap_mark_rtmac_enqueue(rtskb);
 
@@ -56,12 +56,12 @@ int nomac_rt_packet_tx(struct rtskb *rtskb, struct rtnet_device *rtdev)
 
 int nomac_nrt_packet_tx(struct rtskb *rtskb)
 {
-    struct nomac_priv   *nomac;
-    struct rtnet_device *rtdev;
+    struct rtnet_device *rtdev = rtskb->rtdev;
+    /* unused here, just to demonstrate access to the discipline state
+    struct nomac_priv   *nomac =
+        (struct nomac_priv *)rtdev->mac_priv->disc_priv; */
     int                 ret;
 
-
-    nomac = (struct nomac_priv *)rtskb->rtdev->mac_priv->disc_priv;
 
     rtcap_mark_rtmac_enqueue(rtskb);
 
@@ -72,8 +72,6 @@ int nomac_nrt_packet_tx(struct rtskb *rtskb)
         rtdm_event_signal(&wakeup_sem);
         return 0;
     } else {
-        rtdev = rtskb->rtdev;
-
         /* no MAC: we simply transmit the packet under xmit_lock */
         rtdm_mutex_lock(&rtdev->xmit_mutex);
         ret = rtmac_xmit(rtskb);
