@@ -65,7 +65,6 @@ unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset,
                                       u8 *to, int len, unsigned int csum)
 {
     int copy;
-    int pos = 0;
 
     /* Copy header. */
     if ((copy = skb->len-offset) > 0) {
@@ -76,7 +75,6 @@ unsigned int rtskb_copy_and_csum_bits(const struct rtskb *skb, int offset,
             return csum;
         offset += copy;
         to += copy;
-        pos = copy;
     }
 
     RTNET_ASSERT(len == 0, );
