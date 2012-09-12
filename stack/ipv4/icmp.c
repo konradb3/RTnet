@@ -202,6 +202,7 @@ static void rt_icmp_send_reply(struct icmp_bxm *icmp_param, struct rtskb *skb)
 
     RTNET_ASSERT(err == 0,
                  rtdm_printk("RTnet: %s() error in xmit\n", __FUNCTION__););
+    (void)err;
 }
 
 
