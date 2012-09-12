@@ -497,10 +497,6 @@ int rtcfg_main_state_client_ready(int ifindex, RTCFG_EVENT event_id,
 static int rtcfg_client_get_frag(int ifindex, struct rt_proc_call *call)
 {
     struct rtcfg_device *rtcfg_dev = &device[ifindex];
-    struct rtcfg_cmd    *cmd_event;
-
-
-    cmd_event = rtpc_get_priv(call, struct rtcfg_cmd);
 
     if ((rtcfg_dev->flags & RTCFG_FLAG_STAGE_2_DATA) == 0) {
         rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
@@ -986,12 +982,9 @@ static void rtcfg_client_recv_stage_2_frag(int ifindex, struct rtskb *rtskb)
  */
 static int rtcfg_client_recv_ready(int ifindex, struct rtskb *rtskb)
 {
-    struct rtcfg_frm_simple *ready_frm;
     struct rtcfg_device     *rtcfg_dev = &device[ifindex];
     u32                     i;
 
-
-    ready_frm = (struct rtcfg_frm_simple *)rtskb->data;
 
     if (rtskb->len < sizeof(struct rtcfg_frm_simple)) {
         rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);
@@ -1103,7 +1096,6 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
 {
     struct rtcfg_frm_stage_1_cfg *stage_1_cfg;
     struct rtcfg_device          *rtcfg_dev = &device[ifindex];
-    u8                           addr_type;
 
 
     if (rtskb->len < sizeof(struct rtcfg_frm_stage_1_cfg)) {
@@ -1115,8 +1107,6 @@ static void rtcfg_client_update_server(int ifindex, struct rtskb *rtskb)
 
     stage_1_cfg = (struct rtcfg_frm_stage_1_cfg *)rtskb->data;
     __rtskb_pull(rtskb, sizeof(struct rtcfg_frm_stage_1_cfg));
-
-    addr_type = stage_1_cfg->addr_type;
 
     switch (stage_1_cfg->addr_type) {
 #ifdef CONFIG_RTNET_RTIPV4
