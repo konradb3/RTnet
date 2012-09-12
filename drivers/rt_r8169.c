@@ -1854,16 +1854,12 @@ static int rtl8169_interrupt(rtdm_irq_t *irq_handle)
 
 		/*** RTnet / <kk> (Linux-2.6.12-Backport) ***/
 		if (unlikely(status & LinkChg)) {
-			rtdm_lockctx_t context;
-			rtdm_lock_get_irqsave(&priv->lock, context);
-			if (RTL_R8(PHYstatus) & LinkStatus) {	/*** <kk> only supporting XMII, not yet TBI ***/
+			rtdm_lock_get(&priv->lock);
+			if (RTL_R8(PHYstatus) & LinkStatus)	/*** <kk> only supporting XMII, not yet TBI ***/
 				rtnetif_carrier_on(rtdev);
-				rtdm_printk(KERN_INFO PFX "%s: link up\n", rtdev->name);
-			} else {
+			else
 				rtnetif_carrier_off(rtdev);
-				rtdm_printk(KERN_INFO PFX "%s: link down\n", rtdev->name);
-			}
-			rtdm_lock_put_irqrestore(&priv->lock, context);
+			rtdm_lock_put(&priv->lock);
 		}
 
 		// Rx interrupt
