@@ -42,7 +42,7 @@
 int             f;
 struct ipv4_cmd cmd;
 struct in_addr  addr;
-__u16           count    = 0;
+unsigned int    count    = 0;
 int             delay    = 1000;
 unsigned int    sent     = 0;
 unsigned int    received = 0;
@@ -123,7 +123,8 @@ void ping(int signal)
            ret, inet_ntoa(from), cmd.args.ping.sequence, rtt);
 
   done:
-    if (cmd.args.ping.sequence++ == count)
+    cmd.args.ping.sequence++;
+    if (count > 0 && sent == count)
         print_statistics();
 }
 
