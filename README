@@ -26,6 +26,10 @@ What are the requirements?
   e1000e), DEC 21x4x-based (tulip), AMD PCnet32/PCnetPCI, VIA Rhine, NatSemi
   DP8381x, RTL8169 network adapter, MPC8260 FCC, MPC8xx SCC/FEC, or MPC5200
   on-chip controllers, SMSC LAN91C111 embedded controller, Intel 82575 (igb)
+- CAUTION: On systems with > 4 GB RAM, currently only the following chipsets
+  will work: RealTek 8139, Intel PRO/1000 PCI-E (e1000e, NOT e1000),
+  Intel 82575 (igb). For other drivers, as a workaround, RAM usage can be
+  limited to 4 GB by giving mem=4096M as boot parameter.
 - For Ethernet-over-FireWire see rtfirewire.berlios.de
 - For RT-WLAN: Ralink 2500
 
