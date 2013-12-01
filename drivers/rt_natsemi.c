@@ -2015,10 +2015,6 @@ static struct net_device_stats *get_stats(struct rtnet_device *rtdev)
 	return &np->stats;
 }
 
-void set_bit_le(int offset, unsigned char * data)
-{
-	data[offset >> 3] |= (1 << (offset & 0x07));
-}
 #define HASH_TABLE	0x200
 static void __set_rx_mode(struct rtnet_device *dev)
 {
