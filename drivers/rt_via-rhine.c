@@ -216,7 +216,7 @@ MODULE_PARM_DESC(cards, "array of cards to be supported (e.g. 1,0,1)");
 /*** RTnet ***/
 
 /* These identify the driver base version and may not be removed. */
-static char version[] __devinitdata =
+static char version[] =
 KERN_INFO DRV_NAME ".c:" DRV_VERSION "  " DRV_RELDATE "  Jan.Kiszka@web.de\n";
 
 static char shortname[] = DRV_NAME;
@@ -395,7 +395,7 @@ enum chip_capability_flags {
 #define IOSYNC	do { readb((void *)dev->base_addr + StationAddr); } while (0)
 
 /* directly indexed by enum via_rhine_chips, above */
-static struct via_rhine_chip_info via_rhine_chip_info[] __devinitdata =
+static struct via_rhine_chip_info via_rhine_chip_info[] =
 {
 	{ "VIA VT86C100A Rhine", RHINE_IOTYPE, 128,
 	  CanHaveMII | ReqTxAlign | HasDavicomPhy },
@@ -407,7 +407,7 @@ static struct via_rhine_chip_info via_rhine_chip_info[] __devinitdata =
 	  CanHaveMII | HasWOL },
 };
 
-static struct pci_device_id via_rhine_pci_tbl[] __devinitdata =
+static struct pci_device_id via_rhine_pci_tbl[] =
 {
 	{0x1106, 0x3043, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VT86C100A},
 	{0x1106, 0x3065, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VT6102},
@@ -602,7 +602,7 @@ static void wait_for_reset(struct rtnet_device *dev, int chip_id, char *name) /*
 }
 
 #ifdef USE_MEM
-static void __devinit enable_mmio(long ioaddr, int chip_id)
+static void enable_mmio(long ioaddr, int chip_id)
 {
 	int n;
 	if (chip_id == VT86C100A) {
@@ -616,7 +616,7 @@ static void __devinit enable_mmio(long ioaddr, int chip_id)
 }
 #endif
 
-static void __devinit reload_eeprom(long ioaddr)
+static void reload_eeprom(long ioaddr)
 {
 	int i;
 	outb(0x20, ioaddr + MACRegEEcsr);
@@ -626,7 +626,7 @@ static void __devinit reload_eeprom(long ioaddr)
 			break;
 }
 
-static int __devinit via_rhine_init_one (struct pci_dev *pdev,
+static int via_rhine_init_one (struct pci_dev *pdev,
 					 const struct pci_device_id *ent)
 {
 	struct rtnet_device *dev; /*** RTnet ***/
@@ -1992,7 +1992,7 @@ static int via_rhine_close(struct rtnet_device *dev) /*** RTnet ***/
 }
 
 
-static void __devexit via_rhine_remove_one (struct pci_dev *pdev)
+static void via_rhine_remove_one (struct pci_dev *pdev)
 {
  /*** RTnet ***/
 	struct rtnet_device *dev = pci_get_drvdata(pdev);
@@ -2019,7 +2019,7 @@ static struct pci_driver via_rhine_driver = {
 	.name		= DRV_NAME,
 	.id_table	= via_rhine_pci_tbl,
 	.probe		= via_rhine_init_one,
-	.remove		= __devexit_p(via_rhine_remove_one),
+	.remove		= via_rhine_remove_one,
 };
 
 

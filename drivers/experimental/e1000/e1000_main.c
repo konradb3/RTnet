@@ -268,7 +268,7 @@ static void e1000_free_rx_resources(struct e1000_adapter *adapter,
 static int e1000_init_module(void);
 static void e1000_exit_module(void);
 static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
-static void __devexit e1000_remove(struct pci_dev *pdev);
+static void e1000_remove(struct pci_dev *pdev);
 static int e1000_alloc_queues(struct e1000_adapter *adapter);
 #ifdef CONFIG_E1000_MQ
 static void e1000_setup_queue_mapping(struct e1000_adapter *adapter);
@@ -400,7 +400,7 @@ static struct pci_driver e1000_driver = {
 	.name     = e1000_driver_name,
 	.id_table = e1000_pci_tbl,
 	.probe    = e1000_probe,
-	.remove   = __devexit_p(e1000_remove),
+	.remove   = e1000_remove,
 #ifdef HAVE_PCI_ERS
 	.err_handler = &e1000_err_handler
 #endif
@@ -1080,7 +1080,7 @@ void e1000_reset(struct e1000_adapter *adapter)
  * The OS initialization, configuring of the adapter private structure,
  * and a hardware reset occur.
  **/
-static int __devinit e1000_probe(struct pci_dev *pdev,
+static int e1000_probe(struct pci_dev *pdev,
                                  const struct pci_device_id *ent)
 {
 	struct net_device *netdev;
@@ -1496,7 +1496,7 @@ err_dma:
  * Hot-Plug event, or because the driver is going to be removed from
  * memory.
  **/
-static void __devexit e1000_remove(struct pci_dev *pdev)
+static void e1000_remove(struct pci_dev *pdev)
 {
 	struct net_device *netdev = pci_get_drvdata(pdev);
 	struct e1000_adapter *adapter = netdev_priv(netdev);
@@ -1546,7 +1546,7 @@ static void __devexit e1000_remove(struct pci_dev *pdev)
  * Fields are initialized based on PCI device information and
  * OS network device settings (MTU size).
  **/
-static int __devinit e1000_sw_init(struct e1000_adapter *adapter)
+static int e1000_sw_init(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
 	struct net_device *netdev = adapter->netdev;
@@ -1667,7 +1667,7 @@ static int __devinit e1000_sw_init(struct e1000_adapter *adapter)
  * e1000_alloc_queues - Allocate memory for all rings
  * @adapter: board private structure to initialize
  **/
-static int __devinit e1000_alloc_queues(struct e1000_adapter *adapter)
+static int e1000_alloc_queues(struct e1000_adapter *adapter)
 {
 	adapter->tx_ring = kcalloc(adapter->num_tx_queues,
 	                           sizeof(struct e1000_tx_ring), GFP_KERNEL);

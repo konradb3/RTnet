@@ -156,7 +156,7 @@ static void igb_free_all_tx_resources(struct igb_adapter *);
 static void igb_free_all_rx_resources(struct igb_adapter *);
 void igb_update_stats(struct igb_adapter *);
 static int igb_probe(struct pci_dev *, const struct pci_device_id *);
-static void __devexit igb_remove(struct pci_dev *pdev);
+static void igb_remove(struct pci_dev *pdev);
 static int igb_sw_init(struct igb_adapter *);
 static int igb_open(struct rtnet_device *);
 static int igb_close(struct rtnet_device *);
@@ -243,7 +243,7 @@ static struct pci_driver igb_driver = {
 	.name     = igb_driver_name,
 	.id_table = igb_pci_tbl,
 	.probe    = igb_probe,
-	.remove   = __devexit_p(igb_remove),
+	.remove   = igb_remove,
 #ifdef CONFIG_PM
 	/* Power Managment Hooks */
 	.suspend  = igb_suspend,
@@ -1118,7 +1118,7 @@ static void igb_unmap_rtskb(struct rtnet_device *netdev,
  * The OS initialization, configuring of the adapter private structure,
  * and a hardware reset occur.
  **/
-static int __devinit igb_probe(struct pci_dev *pdev,
+static int igb_probe(struct pci_dev *pdev,
 			       const struct pci_device_id *ent)
 {
 	struct rtnet_device *netdev;
@@ -1488,7 +1488,7 @@ err_dma:
  * Hot-Plug event, or because the driver is going to be removed from
  * memory.
  **/
-static void __devexit igb_remove(struct pci_dev *pdev)
+static void igb_remove(struct pci_dev *pdev)
 {
 	struct rtnet_device *netdev = pci_get_drvdata(pdev);
 	struct igb_adapter *adapter = netdev->priv;
@@ -1555,7 +1555,7 @@ static void __devexit igb_remove(struct pci_dev *pdev)
  * Fields are initialized based on PCI device information and
  * OS network device settings (MTU size).
  **/
-static int __devinit igb_sw_init(struct igb_adapter *adapter)
+static int igb_sw_init(struct igb_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
 	struct rtnet_device *netdev = adapter->netdev;

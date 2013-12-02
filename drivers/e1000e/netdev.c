@@ -1631,7 +1631,7 @@ void e1000e_free_rx_resources(struct e1000_adapter *adapter)
  * e1000_alloc_queues - Allocate memory for all rings
  * @adapter: board private structure to initialize
  **/
-static int __devinit e1000_alloc_queues(struct e1000_adapter *adapter)
+static int e1000_alloc_queues(struct e1000_adapter *adapter)
 {
 	if (rtskb_pool_init(&adapter->skb_pool,
 			    RT_E1000E_NUM_RXD) < RT_E1000E_NUM_RXD)
@@ -2562,7 +2562,7 @@ void e1000e_reinit_locked(struct e1000_adapter *adapter)
  * Fields are initialized based on PCI device information and
  * OS network device settings (MTU size).
  **/
-static int __devinit e1000_sw_init(struct e1000_adapter *adapter)
+static int e1000_sw_init(struct e1000_adapter *adapter)
 {
 	struct rtnet_device *netdev = adapter->netdev;
 
@@ -3940,7 +3940,7 @@ static void e1000_unmap_rtskb(struct rtnet_device *netdev,
  * The OS initialization, configuring of the adapter private structure,
  * and a hardware reset occur.
  **/
-static int __devinit e1000_probe(struct pci_dev *pdev,
+static int e1000_probe(struct pci_dev *pdev,
 				 const struct pci_device_id *ent)
 {
 	struct rtnet_device *netdev;
@@ -4285,7 +4285,7 @@ err_dma:
  * Hot-Plug event, or because the driver is going to be removed from
  * memory.
  **/
-static void __devexit e1000_remove(struct pci_dev *pdev)
+static void e1000_remove(struct pci_dev *pdev)
 {
 	struct rtnet_device *netdev = pci_get_drvdata(pdev);
 	struct e1000_adapter *adapter = netdev->priv;
@@ -4431,7 +4431,7 @@ static struct pci_driver e1000_driver = {
 	.name     = e1000e_driver_name,
 	.id_table = e1000_pci_tbl,
 	.probe    = e1000_probe,
-	.remove   = __devexit_p(e1000_remove),
+	.remove   = e1000_remove,
 	.shutdown = e1000_shutdown,
 	.err_handler = &e1000_err_handler
 };

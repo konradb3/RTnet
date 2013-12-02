@@ -38,7 +38,7 @@
 
 #include <rtnet_port.h>
 
-static char version[] __devinitdata =
+static char version[] =
 	"Linux Tulip driver version " DRV_VERSION " (" DRV_RELDATE ")\n";
 
 
@@ -199,7 +199,7 @@ struct tulip_chip_table tulip_tbl[] = {
 };
 
 
-static struct pci_device_id tulip_pci_tbl[] __devinitdata = {
+static struct pci_device_id tulip_pci_tbl[] = {
 	{ 0x1011, 0x0002, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21040 },
 	{ 0x1011, 0x0014, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21041 },
 	{ 0x1011, 0x0009, PCI_ANY_ID, PCI_ANY_ID, 0, 0, DC21140 },
@@ -953,7 +953,7 @@ static void set_rx_mode(/*RTnet*/struct rtnet_device *rtdev)
 #endif /* set_rx_mode */
 
 #ifdef XXX_CONFIG_TULIP_MWI
-static void __devinit tulip_mwi_config (struct pci_dev *pdev,
+static void tulip_mwi_config (struct pci_dev *pdev,
 					struct net_device *dev)
 {
 	struct tulip_private *tp = rtdev->priv;
@@ -1035,7 +1035,7 @@ out:
 #endif
 
 
-static int __devinit tulip_init_one (struct pci_dev *pdev,
+static int tulip_init_one (struct pci_dev *pdev,
 				     const struct pci_device_id *ent)
 {
 	struct tulip_private *tp;
@@ -1545,7 +1545,7 @@ err_out_free_netdev:
 }
 
 
-static void __devexit tulip_remove_one (struct pci_dev *pdev)
+static void tulip_remove_one (struct pci_dev *pdev)
 {
 	struct rtnet_device *rtdev = (struct rtnet_device *) pci_get_drvdata (pdev);
 	struct tulip_private *tp;
@@ -1580,7 +1580,7 @@ static struct pci_driver tulip_driver = {
 	name:		DRV_NAME,
 	id_table:	tulip_pci_tbl,
 	probe:		tulip_init_one,
-	remove:		__devexit_p(tulip_remove_one),
+	remove:		tulip_remove_one,
 };
 
 

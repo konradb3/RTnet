@@ -459,7 +459,7 @@ int tulip_check_duplex(struct rtnet_device *rtdev)
 	return 0;
 }
 
-void __devinit tulip_find_mii (struct rtnet_device *rtdev, int board_idx)
+void tulip_find_mii (struct rtnet_device *rtdev, int board_idx)
 {
 	struct tulip_private *tp = rtdev->priv;
 	int phyn, phy_idx = 0;

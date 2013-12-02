@@ -396,7 +396,7 @@ static void at91ether_check_link(unsigned long dev_id)
  *   continues to do so, for bug-compatibility).
  */
 
-static short __devinit unpack_mac_address(struct rtnet_device *dev, unsigned int hi, unsigned int lo)
+static short unpack_mac_address(struct rtnet_device *dev, unsigned int hi, unsigned int lo)
 {
 	char addr[6];
 
@@ -427,7 +427,7 @@ static short __devinit unpack_mac_address(struct rtnet_device *dev, unsigned int
 /*
  * Set the ethernet MAC address in dev->dev_addr
  */
-static void __devinit get_mac_address(struct rtnet_device *dev)
+static void get_mac_address(struct rtnet_device *dev)
 {
 	/* Check Specific-Address 1 */
 	if (unpack_mac_address(dev, at91_emac_read(AT91_EMAC_SA1H), at91_emac_read(AT91_EMAC_SA1L)))
@@ -989,7 +989,7 @@ static int at91ether_close_rt(struct rtnet_device *dev)
 /*
  * Initialize the ethernet interface
  */
-static int __devinit at91ether_setup_rt(unsigned long phy_type, unsigned short phy_address,
+static int at91ether_setup_rt(unsigned long phy_type, unsigned short phy_address,
 			struct platform_device *pdev, struct clk *ether_clk)
 {
 	struct at91_eth_data *board_data = pdev->dev.platform_data;
@@ -1136,7 +1136,7 @@ static int __devinit at91ether_setup_rt(unsigned long phy_type, unsigned short p
 /*
  * Detect MAC and PHY and perform initialization
  */
-static int __devinit at91ether_probe(struct platform_device *pdev)
+static int at91ether_probe(struct platform_device *pdev)
 {
 	unsigned int phyid1, phyid2;
 	int detected = -1;
@@ -1180,7 +1180,7 @@ static int __devinit at91ether_probe(struct platform_device *pdev)
 	return detected;
 }
 
-static int __devexit at91ether_remove(struct platform_device *pdev)
+static int at91ether_remove(struct platform_device *pdev)
 {
 	struct rtnet_device *dev = platform_get_drvdata(pdev);
 	struct at91_private *lp = dev->priv;
@@ -1197,7 +1197,7 @@ static int __devexit at91ether_remove(struct platform_device *pdev)
 
 static struct platform_driver at91ether_driver = {
 	.probe		= at91ether_probe,
-	.remove		= __devexit_p(at91ether_remove),
+	.remove		= at91ether_remove,
 	.driver		= {
 		.name	= DRV_NAME,
 		.owner	= THIS_MODULE,

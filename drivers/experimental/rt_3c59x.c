@@ -295,7 +295,7 @@ static inline int null_set_power_state(struct pci_dev *dev, int state)
 // *** RTnet ***
 
 
-static char version[] __devinitdata =
+static char version[] =
 DRV_NAME " for RTnet : Donald Becker and others. www.scyld.com/network/vortex.html\n";
 
 MODULE_AUTHOR("Donald Becker <becker@scyld.com>");
@@ -462,7 +462,7 @@ static struct vortex_chip_info {
 	int flags;
 	int drv_flags;
 	int io_size;
-} vortex_info_tbl[] __devinitdata = {
+} vortex_info_tbl[] = {
 #define EISA_TBL_OFFSET	0		/* Offset of this entry for vortex_eisa_init */
 	{"3c590 Vortex 10Mbps",
 	 PCI_USES_IO|PCI_USES_MASTER, IS_VORTEX, 32, },
@@ -545,7 +545,7 @@ static struct vortex_chip_info {
 };
 
 
-static struct pci_device_id vortex_pci_tbl[] __devinitdata = {
+static struct pci_device_id vortex_pci_tbl[] = {
 	{ 0x10B7, 0x5900, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CH_3C590 },
 	{ 0x10B7, 0x5920, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CH_3C592 },
 	{ 0x10B7, 0x5970, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CH_3C597 },
@@ -1006,7 +1006,7 @@ static int __init vortex_eisa_init (void)
 #endif
 
 /* returns count (>= 0), or negative on error */
-static int __devinit vortex_init_one (struct pci_dev *pdev,
+static int vortex_init_one (struct pci_dev *pdev,
 				      const struct pci_device_id *ent)
 {
 	int rc;
@@ -1032,7 +1032,7 @@ static int __devinit vortex_init_one (struct pci_dev *pdev,
  *
  * NOTE: pdev can be NULL, for the case of an EISA driver
  */
-static int __devinit vortex_probe1(struct pci_dev *pdev,
+static int vortex_probe1(struct pci_dev *pdev,
 				   long ioaddr, int irq,
 				   int chip_idx, int card_idx)
 {
@@ -3291,7 +3291,7 @@ static void acpi_set_WOL(struct rtnet_device *rtdev)
 }
 
 
-static void __devexit vortex_remove_one (struct pci_dev *pdev)
+static void vortex_remove_one (struct pci_dev *pdev)
 {
 	struct vortex_private *vp;
 	// *** RTnet ***
@@ -3337,7 +3337,7 @@ static void __devexit vortex_remove_one (struct pci_dev *pdev)
 static struct pci_driver vortex_driver = {
 	name:		"3c59x_rt",
 	probe:		vortex_init_one,
-	remove:		__devexit_p(vortex_remove_one),
+	remove:		vortex_remove_one,
 	id_table:	vortex_pci_tbl,
 #ifdef CONFIG_PM
 	suspend:	NULL,

@@ -59,12 +59,12 @@
  */
 
 #define E1000_PARAM(X, desc) \
-	static const int __devinitdata X[E1000_MAX_NIC+1] = E1000_PARAM_INIT; \
+	static const int X[E1000_MAX_NIC+1] = E1000_PARAM_INIT; \
 	MODULE_PARM(X, "1-" __MODULE_STRING(E1000_MAX_NIC) "i"); \
 	MODULE_PARM_DESC(X, desc);
 #else
 #define E1000_PARAM(X, desc) \
-	static int __devinitdata X[E1000_MAX_NIC+1] = E1000_PARAM_INIT; \
+	static int X[E1000_MAX_NIC+1] = E1000_PARAM_INIT; \
 	static unsigned int num_##X = 0; \
 	module_param_array_named(X, X, int, &num_##X, 0); \
 	MODULE_PARM_DESC(X, desc);
@@ -234,7 +234,7 @@ struct e1000_option {
 	} arg;
 };
 
-static int __devinit e1000_validate_option(unsigned int *value,
+static int e1000_validate_option(unsigned int *value,
                                            const struct e1000_option *opt,
                                            struct e1000_adapter *adapter)
 {
@@ -297,7 +297,7 @@ static void e1000_check_copper_options(struct e1000_adapter *adapter);
  * value exists, a default value is used.  The final value is stored
  * in a variable in the adapter structure.
  **/
-void __devinit e1000_check_options(struct e1000_adapter *adapter)
+void e1000_check_options(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
 	int bd = adapter->bd_number;
@@ -631,7 +631,7 @@ void __devinit e1000_check_options(struct e1000_adapter *adapter)
  *
  * Handles speed and duplex options on fiber adapters
  **/
-static void __devinit e1000_check_fiber_options(struct e1000_adapter *adapter)
+static void e1000_check_fiber_options(struct e1000_adapter *adapter)
 {
 	int bd = adapter->bd_number;
 #ifndef module_param_array
@@ -670,7 +670,7 @@ static void __devinit e1000_check_fiber_options(struct e1000_adapter *adapter)
  *
  * Handles speed and duplex options on copper adapters
  **/
-static void __devinit e1000_check_copper_options(struct e1000_adapter *adapter)
+static void e1000_check_copper_options(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
 	unsigned int speed, dplx, an;

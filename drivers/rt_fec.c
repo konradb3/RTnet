@@ -1588,7 +1588,7 @@ static int fec_enet_init(struct rtnet_device *ndev)
 }
 
 #ifdef CONFIG_OF
-static int __devinit fec_get_phy_mode_dt(struct platform_device *pdev)
+static int fec_get_phy_mode_dt(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
 
@@ -1598,7 +1598,7 @@ static int __devinit fec_get_phy_mode_dt(struct platform_device *pdev)
 	return -ENODEV;
 }
 
-static void __devinit fec_reset_phy(struct platform_device *pdev)
+static void fec_reset_phy(struct platform_device *pdev)
 {
 	int err, phy_reset;
 	struct device_node *np = pdev->dev.of_node;
@@ -1630,8 +1630,7 @@ static inline void fec_reset_phy(struct platform_device *pdev)
 }
 #endif /* CONFIG_OF */
 
-static int __devinit
-fec_probe(struct platform_device *pdev)
+static int fec_probe(struct platform_device *pdev)
 {
 	struct fec_enet_netdev_priv *npriv;
 	struct fec_enet_private *fep;
@@ -1813,8 +1812,7 @@ failed_alloc_etherdev:
 	return ret;
 }
 
-static int __devexit
-fec_drv_remove(struct platform_device *pdev)
+static int fec_drv_remove(struct platform_device *pdev)
 {
 	struct rtnet_device *ndev = platform_get_drvdata(pdev);
 	struct fec_enet_private *fep = rtnetdev_priv(ndev);
@@ -1915,7 +1913,7 @@ static struct platform_driver fec_driver = {
 	},
 	.id_table = fec_devtype,
 	.probe	= fec_probe,
-	.remove	= __devexit_p(fec_drv_remove),
+	.remove	= fec_drv_remove,
 };
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,2,0)

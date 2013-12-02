@@ -183,7 +183,7 @@ static void e1000_free_rx_resources(struct e1000_adapter *adapter,
 static int e1000_init_module(void);
 static void e1000_exit_module(void);
 static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
-static void __devexit e1000_remove(struct pci_dev *pdev);
+static void e1000_remove(struct pci_dev *pdev);
 static int e1000_alloc_queues(struct e1000_adapter *adapter);
 static int e1000_sw_init(struct e1000_adapter *adapter);
 static int e1000_open(struct rtnet_device *netdev);
@@ -235,7 +235,7 @@ static struct pci_driver e1000_driver = {
 	.name     = e1000_driver_name,
 	.id_table = e1000_pci_tbl,
 	.probe    = e1000_probe,
-	.remove   = __devexit_p(e1000_remove),
+	.remove   = e1000_remove,
 };
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
@@ -681,8 +681,7 @@ e1000_reset_task(struct e1000_adapter *adapter)
  * and a hardware reset occur.
  **/
 
-static int __devinit
-e1000_probe(struct pci_dev *pdev,
+static int e1000_probe(struct pci_dev *pdev,
             const struct pci_device_id *ent)
 {
 	struct rtnet_device *netdev;
@@ -981,8 +980,7 @@ err_alloc_etherdev:
  * memory.
  **/
 
-static void __devexit
-e1000_remove(struct pci_dev *pdev)
+static void e1000_remove(struct pci_dev *pdev)
 {
 	struct rtnet_device *netdev = pci_get_drvdata(pdev);
 	struct e1000_adapter *adapter = netdev->priv;
@@ -1034,8 +1032,7 @@ e1000_remove(struct pci_dev *pdev)
  * OS network device settings (MTU size).
  **/
 
-static int __devinit
-e1000_sw_init(struct e1000_adapter *adapter)
+static int e1000_sw_init(struct e1000_adapter *adapter)
 {
 	struct e1000_hw *hw = &adapter->hw;
 	struct rtnet_device *netdev = adapter->netdev;
@@ -1125,8 +1122,7 @@ e1000_sw_init(struct e1000_adapter *adapter)
  * intended for Multiqueue, but should work fine with a single queue.
  **/
 
-static int __devinit
-e1000_alloc_queues(struct e1000_adapter *adapter)
+static int e1000_alloc_queues(struct e1000_adapter *adapter)
 {
 	int size;
 

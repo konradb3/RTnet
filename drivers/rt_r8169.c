@@ -215,7 +215,7 @@ const static struct {
 };
 
 
-static struct pci_device_id rtl8169_pci_tbl[] __devinitdata = {
+static struct pci_device_id rtl8169_pci_tbl[] = {
 	{ PCI_VENDOR_ID_REALTEK, 0x8167, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0x10ec, 0x8169, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0x1186, 0x4300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },	/* <kk> D-Link DGE-528T */
@@ -653,7 +653,7 @@ void rtl8169_timer_handler( void *timer_data )
 
 //======================================================================================================
 //======================================================================================================
-static int __devinit rtl8169_init_board ( struct pci_dev *pdev, struct rtnet_device **dev_out, unsigned long *ioaddr_out)
+static int rtl8169_init_board ( struct pci_dev *pdev, struct rtnet_device **dev_out, unsigned long *ioaddr_out)
 {
 	unsigned long ioaddr = 0;
 	struct rtnet_device *rtdev;
@@ -818,7 +818,7 @@ err_out:
 
 
 //======================================================================================================
-static int __devinit rtl8169_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
+static int rtl8169_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	struct rtnet_device *rtdev = NULL;	/*** RTnet ***/
 	struct rtl8169_private *priv = NULL;
@@ -1063,7 +1063,7 @@ static int __devinit rtl8169_init_one (struct pci_dev *pdev, const struct pci_de
 
 
 //======================================================================================================
-static void __devexit rtl8169_remove_one (struct pci_dev *pdev)
+static void rtl8169_remove_one (struct pci_dev *pdev)
 {
 	struct rtnet_device *rtdev = pci_get_drvdata(pdev);
 	struct rtl8169_private *priv = rtdev->priv;	/*** RTnet ***/

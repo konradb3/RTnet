@@ -147,13 +147,13 @@ typedef enum {
 static struct {
         const char *name;
         u32 hw_flags;
-} board_info[] __devinitdata = {
+} board_info[] = {
         { "RealTek RTL8139", RTL8139_CAPS },
         { "RealTek RTL8129", RTL8129_CAPS },
 };
 
 
-static struct pci_device_id rtl8139_pci_tbl[] __devinitdata = {
+static struct pci_device_id rtl8139_pci_tbl[] = {
         {0x10ec, 0x8139, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
         {0x10ec, 0x8138, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
         {0x1113, 0x1211, PCI_ANY_ID, PCI_ANY_ID, 0, 0, RTL8139 },
@@ -623,7 +623,7 @@ static void rtl8139_chip_reset (void *ioaddr)
 }
 
 
-static int __devinit rtl8139_init_board (struct pci_dev *pdev,
+static int rtl8139_init_board (struct pci_dev *pdev,
                                          struct rtnet_device **dev_out)
 {
         void *ioaddr;
@@ -785,7 +785,7 @@ err_out:
 
 
 
-static int __devinit rtl8139_init_one (struct pci_dev *pdev,
+static int rtl8139_init_one (struct pci_dev *pdev,
                                        const struct pci_device_id *ent)
 {
         struct rtnet_device *rtdev = NULL;
@@ -927,7 +927,7 @@ err_out:
 }
 
 
-static void __devexit rtl8139_remove_one (struct pci_dev *pdev)
+static void rtl8139_remove_one (struct pci_dev *pdev)
 {
         struct rtnet_device *rtdev = pci_get_drvdata(pdev);
 
@@ -972,7 +972,7 @@ static void __devexit rtl8139_remove_one (struct pci_dev *pdev)
 #define EE_READ_CMD                (6)
 #define EE_ERASE_CMD        (7)
 
-static int __devinit read_eeprom (void *ioaddr, int location, int addr_len)
+static int read_eeprom (void *ioaddr, int location, int addr_len)
 {
         int i;
         unsigned retval = 0;
@@ -1825,7 +1825,7 @@ static struct pci_driver rtl8139_pci_driver = {
         name:                   DRV_NAME,
         id_table:               rtl8139_pci_tbl,
         probe:                  rtl8139_init_one,
-        remove:                 __devexit_p(rtl8139_remove_one),
+        remove:                 rtl8139_remove_one,
         suspend:                NULL,
         resume:                 NULL,
 };

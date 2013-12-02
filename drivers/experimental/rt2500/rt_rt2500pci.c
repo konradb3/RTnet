@@ -1233,7 +1233,7 @@ struct pci_driver rt2x00_pci_driver =
     .name	= DRV_NAME,
     .id_table	= rt2x00_device_pci_tbl,
     .probe	= rt2x00_pci_probe,
-    .remove	= __devexit_p(rt2x00_pci_remove),
+    .remove	= rt2x00_pci_remove,
 };
 
 

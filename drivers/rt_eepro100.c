@@ -571,7 +571,7 @@ static inline void speedo_write_flush(long ioaddr)
 	(void)readb((void *)(ioaddr + SCBStatus));
 }
 
-static int __devinit eepro100_init_one (struct pci_dev *pdev,
+static int eepro100_init_one (struct pci_dev *pdev,
 		const struct pci_device_id *ent)
 {
 	unsigned long ioaddr;
@@ -1926,7 +1926,7 @@ static void set_rx_mode(struct rtnet_device *rtdev)
 }
 
 
-static void __devexit eepro100_remove_one (struct pci_dev *pdev)
+static void eepro100_remove_one (struct pci_dev *pdev)
 {
 	// *** RTnet ***
 	struct rtnet_device *rtdev = pci_get_drvdata (pdev);
@@ -1955,7 +1955,7 @@ static void __devexit eepro100_remove_one (struct pci_dev *pdev)
 	// *** RTnet ***
 }
 
-static struct pci_device_id eepro100_pci_tbl[] __devinitdata = {
+static struct pci_device_id eepro100_pci_tbl[] = {
 	{ PCI_VENDOR_ID_INTEL, 0x1229, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x1209, PCI_ANY_ID, PCI_ANY_ID, },
 	{ PCI_VENDOR_ID_INTEL, 0x1029, PCI_ANY_ID, PCI_ANY_ID, },
@@ -1991,7 +1991,7 @@ static struct pci_driver eepro100_driver = {
 	name:		"eepro100_rt",
 	id_table:	eepro100_pci_tbl,
 	probe:		eepro100_init_one,
-	remove:		__devexit_p(eepro100_remove_one),
+	remove:		eepro100_remove_one,
 	suspend:	NULL,
 	resume:		NULL,
 };

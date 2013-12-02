@@ -245,7 +245,7 @@ static int full_duplex[MAX_UNITS];
 #define PKT_BUF_SZ		1536 /* Size of each temporary Rx buffer. */
 
 /* These identify the driver base version and may not be removed. */
-static char version[] __devinitdata =
+static char version[] =
   KERN_INFO DRV_NAME " dp8381x driver, version "
       DRV_VERSION ", " DRV_RELDATE "\n"
   KERN_INFO "  originally by Donald Becker <becker@scyld.com>\n"
@@ -374,11 +374,11 @@ enum pcistuff {
 static struct {
 	const char *name;
 	unsigned long flags;
-} natsemi_pci_info[] __devinitdata = {
+} natsemi_pci_info[] = {
 	{ "NatSemi DP8381[56]", PCI_IOTYPE },
 };
 
-static struct pci_device_id natsemi_pci_tbl[] __devinitdata = {
+static struct pci_device_id natsemi_pci_tbl[] = {
 	{ PCI_VENDOR_ID_NS, PCI_DEVICE_ID_NS_83815, PCI_ANY_ID, PCI_ANY_ID, },
 	{ 0, },
 };
@@ -732,7 +732,7 @@ static int netdev_close(struct rtnet_device *dev);
 static int netdev_get_eeprom(struct rtnet_device *dev, u8 *buf);*/
 
 
-static int __devinit natsemi_probe1 (struct pci_dev *pdev,
+static int natsemi_probe1 (struct pci_dev *pdev,
 	const struct pci_device_id *ent)
 {
 	struct rtnet_device *dev; /*** RTnet ***/
@@ -2668,7 +2668,7 @@ static int netdev_close(struct rtnet_device *dev)
 }
 
 
-static void __devexit natsemi_remove1 (struct pci_dev *pdev)
+static void natsemi_remove1 (struct pci_dev *pdev)
 {
 
  /*** RTnet ***/
@@ -2801,7 +2801,7 @@ static struct pci_driver natsemi_driver = {
 	.name		= DRV_NAME,
 	.id_table	= natsemi_pci_tbl,
 	.probe		= natsemi_probe1,
-	.remove		= __devexit_p(natsemi_remove1),
+	.remove		= natsemi_remove1,
 /*#ifdef CONFIG_PM*/
 #if 0
 	.suspend	= natsemi_suspend,

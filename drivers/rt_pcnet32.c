@@ -84,7 +84,7 @@ static int pcnet32_have_pci;
 /*
  * VLB I/O addresses
  */
-static unsigned int pcnet32_portlist[] __devinitdata =
+static unsigned int pcnet32_portlist[] =
 	{ 0x300, 0x320, 0x340, 0x360, 0 };
 
 
@@ -478,8 +478,7 @@ static struct pcnet32_access pcnet32_dwio = {
 /* only probes for non-PCI devices, the rest are handled by
  * pci_register_driver via pcnet32_probe_pci */
 
-static void __devinit
-pcnet32_probe_vlbus(void)
+static void pcnet32_probe_vlbus(void)
 {
     unsigned int *port, ioaddr;
 
@@ -497,8 +496,7 @@ pcnet32_probe_vlbus(void)
 }
 
 
-static int __devinit
-pcnet32_probe_pci(struct pci_dev *pdev, const struct pci_device_id *ent)
+static int pcnet32_probe_pci(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
     unsigned long ioaddr;
     int err;
@@ -529,8 +527,7 @@ pcnet32_probe_pci(struct pci_dev *pdev, const struct pci_device_id *ent)
  *  Called from both pcnet32_probe_vlbus and pcnet_probe_pci.
  *  pdev will be NULL when called from pcnet32_probe_vlbus.
  */
-static int __devinit
-pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
+static int pcnet32_probe1(unsigned long ioaddr, unsigned int irq_line, int shared,
 		struct pci_dev *pdev)
 {
     struct pcnet32_private *lp;
