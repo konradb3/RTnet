@@ -50,7 +50,6 @@ const char rtnet_rtdm_provider_name[] =
 
 EXPORT_SYMBOL(rtnet_rtdm_provider_name);
 
-
 #ifdef CONFIG_PROC_FS
 /***
  *      proc filesystem section
@@ -59,64 +58,71 @@ struct proc_dir_entry *rtnet_proc_root;
 
 EXPORT_SYMBOL(rtnet_proc_root);
 
-
-static int rtnet_read_proc_devices(char *buf, char **start, off_t offset,
-                                   int count, int *eof, void *data)
+static int proc_rtnet_devices_show(struct seq_file *p, void *data)
 {
     int i;
-    int res;
     struct rtnet_device *rtdev;
-    RTNET_PROC_PRINT_VARS(80);
 
-
-    if (!RTNET_PROC_PRINT("Index\tName\t\tFlags\n"))
-        goto done;
+    seq_printf(p, "Index\tName\t\tFlags\n");
 
     mutex_lock(&rtnet_devices_nrt_lock);
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
         rtdev = __rtdev_get_by_index(i);
         if (rtdev != NULL) {
-            res = RTNET_PROC_PRINT("%d\t%-15s %s%s%s%s\n",
-                            rtdev->ifindex, rtdev->name,
-                            (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
-                            (rtdev->flags & IFF_BROADCAST) ? " BROADCAST" : "",
-                            (rtdev->flags & IFF_LOOPBACK) ? " LOOPBACK" : "",
-                            (rtdev->flags & IFF_PROMISC) ? " PROMISC" : "");
-            if (!res)
-                break;
+	  seq_printf(p, "%d\t%-15s %s%s%s%s\n",
+		     rtdev->ifindex, rtdev->name,
+		     (rtdev->flags & IFF_UP) ? "UP" : "DOWN",
+		     (rtdev->flags & IFF_BROADCAST) ? " BROADCAST" : "",
+		     (rtdev->flags & IFF_LOOPBACK) ? " LOOPBACK" : "",
+		     (rtdev->flags & IFF_PROMISC) ? " PROMISC" : "");
         }
     }
     mutex_unlock(&rtnet_devices_nrt_lock);
 
-  done:
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 
+static int proc_rtnet_devices_open(struct inode *inode, struct  file *file) {
+  return single_open(file, proc_rtnet_devices_show, NULL);
+}
+
+static const struct file_operations proc_rtnet_devices_fops = {
+  .open = proc_rtnet_devices_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
 
 
-static int rtnet_read_proc_rtskb(char *buf, char **start, off_t offset, int count,
-                                 int *eof, void *data)
+static int proc_rtnet_rtskb_show(struct seq_file *p, void *data)
 {
     unsigned int rtskb_len;
-    RTNET_PROC_PRINT_VARS(256);
-
 
     rtskb_len = ALIGN_RTSKB_STRUCT_LEN + SKB_DATA_ALIGN(RTSKB_SIZE);
-    RTNET_PROC_PRINT("Statistics\t\tCurrent\tMaximum\n"
-                     "rtskb pools\t\t%d\t%d\n"
-                     "rtskbs\t\t\t%d\t%d\n"
-                     "rtskb memory need\t%d\t%d\n",
-                     rtskb_pools, rtskb_pools_max,
-                     rtskb_amount, rtskb_amount_max,
-                     rtskb_amount * rtskb_len, rtskb_amount_max * rtskb_len);
+    seq_printf(p, "Statistics\t\tCurrent\tMaximum\n"
+	       "rtskb pools\t\t%d\t%d\n"
+	       "rtskbs\t\t\t%d\t%d\n"
+	       "rtskb memory need\t%d\t%d\n",
+	       rtskb_pools, rtskb_pools_max,
+	       rtskb_amount, rtskb_amount_max,
+	       rtskb_amount * rtskb_len, rtskb_amount_max * rtskb_len);
 
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 
+static int proc_rtnet_rtskb_open(struct inode *inode, struct  file *file) {
+  return single_open(file, proc_rtnet_rtskb_show, NULL);
+}
+
+static const struct file_operations proc_rtnet_rtskb_fops = {
+  .open = proc_rtnet_rtskb_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
 
 
-static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
-                                   int count, int *eof, void *data)
+static int proc_rtnet_version_show(struct seq_file *p, void *data)
 {
     const char verstr[] =
         "RTnet " RTNET_PACKAGE_VERSION " - built on " __DATE__ " " __TIME__ "\n"
@@ -138,31 +144,34 @@ static int rtnet_read_proc_version(char *buf, char **start, off_t offset,
 #else
             "no\n";
 #endif
-    RTNET_PROC_PRINT_VARS(256);
 
+    seq_printf(p, "%s", verstr);
 
-    RTNET_PROC_PRINT(verstr);
-
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 
+static int proc_rtnet_version_open(struct inode *inode, struct  file *file) {
+  return single_open(file, proc_rtnet_version_show, NULL);
+}
+
+static const struct file_operations proc_rtnet_version_fops = {
+  .open = proc_rtnet_version_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
 
 
-static int rtnet_read_proc_stats(char *buf, char **start, off_t offset,
-                                 int count, int *eof, void *data)
+static int proc_rtnet_stats_show(struct seq_file *p, void *data)
 {
     int i;
-    int res;
     struct rtnet_device *rtdev;
-    RTNET_PROC_PRINT_VARS(130);
 
-
-    if (!RTNET_PROC_PRINT("Inter-|   Receive                            "
-                          "                    |  Transmit\n") ||
-        !RTNET_PROC_PRINT(" face |bytes    packets errs drop fifo frame "
-                          "compressed multicast|bytes    packets errs "
-                          "drop fifo colls carrier compressed\n"))
-        goto done;
+    seq_printf(p, "Inter-|   Receive                            "
+	       "                    |  Transmit\n");
+    seq_printf(p, " face |bytes    packets errs drop fifo frame "
+	       "compressed multicast|bytes    packets errs "
+	       "drop fifo colls carrier compressed\n");
 
     mutex_lock(&rtnet_devices_nrt_lock);
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
@@ -172,69 +181,71 @@ static int rtnet_read_proc_stats(char *buf, char **start, off_t offset,
         if (rtdev->get_stats) {
             struct net_device_stats *stats = rtdev->get_stats(rtdev);
 
-            res = RTNET_PROC_PRINT(
-                    "%6s:%8lu %7lu %4lu %4lu %4lu %5lu %10lu %9lu "
-                    "%8lu %7lu %4lu %4lu %4lu %5lu %7lu %10lu\n",
-                    rtdev->name, stats->rx_bytes, stats->rx_packets,
-                    stats->rx_errors,
-                    stats->rx_dropped + stats->rx_missed_errors,
-                    stats->rx_fifo_errors,
-                    stats->rx_length_errors + stats->rx_over_errors +
-                      stats->rx_crc_errors + stats->rx_frame_errors,
-                    stats->rx_compressed, stats->multicast,
-                    stats->tx_bytes, stats->tx_packets,
-                    stats->tx_errors, stats->tx_dropped,
-                    stats->tx_fifo_errors, stats->collisions,
-                    stats->tx_carrier_errors +
-                      stats->tx_aborted_errors +
-                      stats->tx_window_errors +
-                      stats->tx_heartbeat_errors,
-                    stats->tx_compressed);
+            seq_printf(p, "%6s:%8lu %7lu %4lu %4lu %4lu %5lu %10lu %9lu "
+		       "%8lu %7lu %4lu %4lu %4lu %5lu %7lu %10lu\n",
+		       rtdev->name, stats->rx_bytes, stats->rx_packets,
+		       stats->rx_errors,
+		       stats->rx_dropped + stats->rx_missed_errors,
+		       stats->rx_fifo_errors,
+		       stats->rx_length_errors + stats->rx_over_errors +
+		       stats->rx_crc_errors + stats->rx_frame_errors,
+		       stats->rx_compressed, stats->multicast,
+		       stats->tx_bytes, stats->tx_packets,
+		       stats->tx_errors, stats->tx_dropped,
+		       stats->tx_fifo_errors, stats->collisions,
+		       stats->tx_carrier_errors +
+		       stats->tx_aborted_errors +
+		       stats->tx_window_errors +
+		       stats->tx_heartbeat_errors,
+		       stats->tx_compressed);
         } else {
-            res = RTNET_PROC_PRINT("%6s: No statistics available.\n",
-                                   rtdev->name);
+	  seq_printf(p, "%6s: No statistics available.\n", rtdev->name);
         }
-        if (!res)
-            break;
     }
     mutex_unlock(&rtnet_devices_nrt_lock);
 
-  done:
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 
+static int proc_rtnet_stats_open(struct inode *inode, struct  file *file) {
+  return single_open(file, proc_rtnet_stats_show, NULL);
+}
+
+static const struct file_operations proc_rtnet_stats_fops = {
+  .open = proc_rtnet_stats_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
 
 
 static int rtnet_proc_register(void)
 {
     struct proc_dir_entry *proc_entry;
 
-    rtnet_proc_root = create_proc_entry("rtnet", S_IFDIR, 0);
+    rtnet_proc_root = proc_mkdir("rtnet", 0);
     if (!rtnet_proc_root)
         goto error1;
 
-    proc_entry = create_proc_entry("devices", S_IFREG | S_IRUGO | S_IWUSR,
-                                   rtnet_proc_root);
+    proc_entry = proc_create("devices", S_IFREG | S_IRUGO | S_IWUSR,
+			     rtnet_proc_root, &proc_rtnet_devices_fops);
     if (!proc_entry)
         goto error2;
-    proc_entry->read_proc = rtnet_read_proc_devices;
 
-    proc_entry = create_proc_entry("rtskb", S_IFREG | S_IRUGO | S_IWUSR,
-                                   rtnet_proc_root);
+    proc_entry = proc_create("rtskb", S_IFREG | S_IRUGO | S_IWUSR,
+			     rtnet_proc_root, &proc_rtnet_rtskb_fops);
     if (!proc_entry)
         goto error3;
-    proc_entry->read_proc = rtnet_read_proc_rtskb;
 
-    proc_entry = create_proc_entry("version", S_IFREG | S_IRUGO | S_IWUSR,
-                                   rtnet_proc_root);
+    proc_entry = proc_create("version", S_IFREG | S_IRUGO | S_IWUSR,
+			     rtnet_proc_root, &proc_rtnet_version_fops);
     if (!proc_entry)
         goto error4;
-    proc_entry->read_proc = rtnet_read_proc_version;
 
-    proc_entry = create_proc_entry("stats", S_IRUGO, rtnet_proc_root);
+    proc_entry = proc_create("stats", S_IRUGO,
+			     rtnet_proc_root, &proc_rtnet_stats_fops);
     if (!proc_entry)
         goto error5;
-    proc_entry->read_proc = rtnet_read_proc_stats;
 
     return 0;
 

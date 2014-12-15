@@ -34,6 +34,27 @@
 struct proc_dir_entry *rtmac_proc_root;
 
 
+static int  rtnet_rtmac_disc_show(struct seq_file *p, void *data)
+{
+  int (*handler)(struct seq_file *p, void *data) = data;
+
+  return handler(p, NULL);
+}
+
+static int rtnet_rtmac_disc_open(struct inode *inode, struct file *file)
+{
+  return single_open(file, rtnet_rtmac_disc_show, NULL);
+}
+
+static const struct file_operations rtnet_rtmac_disc_fops = {
+  .open = rtnet_rtmac_disc_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
+
+
+
 int rtmac_disc_proc_register(struct rtmac_disc *disc)
 {
     int                     i;
@@ -42,9 +63,11 @@ int rtmac_disc_proc_register(struct rtmac_disc *disc)
 
     i = 0;
     while (disc->proc_entries[i].name != NULL) {
-        proc_entry = create_proc_entry(disc->proc_entries[i].name,
-                                       S_IFREG | S_IRUGO | S_IWUSR,
-                                       rtmac_proc_root);
+        proc_entry = proc_create_data(disc->proc_entries[i].name,
+				      S_IFREG | S_IRUGO | S_IWUSR,
+				      rtmac_proc_root,
+				      &rtnet_rtmac_disc_fops,
+				      disc->proc_entries[i].handler);
         if (!proc_entry) {
             while (--i > 0) {
                 remove_proc_entry(disc->proc_entries[i].name, rtmac_proc_root);
@@ -52,8 +75,6 @@ int rtmac_disc_proc_register(struct rtmac_disc *disc)
             }
             return -1;
         }
-
-        proc_entry->read_proc = disc->proc_entries[i].handler;
         i++;
     }
 
@@ -74,6 +95,32 @@ void rtmac_disc_proc_unregister(struct rtmac_disc *disc)
     }
 }
 
+static int rtnet_rtmac_disciplines_open(struct inode *inode, struct file *file)
+{
+  return single_open(file, rtnet_rtmac_disciplines_show, NULL);
+}
+
+static const struct file_operations rtnet_rtmac_disciplines_fops = {
+  .open = rtnet_rtmac_disciplines_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
+
+
+
+static int rtnet_rtmac_vnics_open(struct inode *inode, struct file *file)
+{
+  return single_open(file, rtnet_rtmac_vnics_show, NULL);
+}
+
+static const struct file_operations rtnet_rtmac_vnics_fops = {
+  .open = rtnet_rtmac_vnics_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
+
 
 
 int rtmac_proc_register(void)
@@ -81,21 +128,19 @@ int rtmac_proc_register(void)
     struct proc_dir_entry *proc_entry;
 
 
-    rtmac_proc_root = create_proc_entry("rtmac", S_IFDIR, rtnet_proc_root);
+    rtmac_proc_root = proc_mkdir("rtmac", rtnet_proc_root);
     if (!rtmac_proc_root)
         goto err1;
 
-    proc_entry = create_proc_entry("disciplines", S_IFREG | S_IRUGO | S_IWUSR,
-                                   rtmac_proc_root);
+    proc_entry = proc_create("disciplines", S_IFREG | S_IRUGO | S_IWUSR,
+			     rtmac_proc_root, &rtnet_rtmac_disciplines_fops);
     if (!proc_entry)
         goto err2;
-    proc_entry->read_proc = rtmac_proc_read_disc;
 
-    proc_entry = create_proc_entry("vnics", S_IFREG | S_IRUGO | S_IWUSR,
-                                   rtmac_proc_root);
+    proc_entry = proc_create("vnics", S_IFREG | S_IRUGO | S_IWUSR,
+			     rtmac_proc_root, &rtnet_rtmac_vnics_fops);
     if (!proc_entry)
         goto err3;
-    proc_entry->read_proc = rtmac_proc_read_vnic;
 
     return 0;
 

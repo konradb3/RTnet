@@ -247,28 +247,22 @@ void rtmac_disc_deregister(struct rtmac_disc *disc)
 
 
 #ifdef CONFIG_PROC_FS
-int rtmac_proc_read_disc(char *buf, char **start, off_t offset, int count,
-                         int *eof, void *data)
+int rtnet_rtmac_disciplines_show(struct seq_file *p, void *data)
 {
     struct list_head    *disc;
-    RTNET_PROC_PRINT_VARS(80);
-
 
     mutex_lock(&disc_list_lock);
 
-    if (!RTNET_PROC_PRINT("Name\t\tID\n"))
-        goto done;
+    seq_printf(p, "Name\t\tID\n");
 
     list_for_each(disc, &disc_list) {
-        if (!RTNET_PROC_PRINT("%-15s %04X\n",
-                              ((struct rtmac_disc *)disc)->name,
-                              ntohs(((struct rtmac_disc *)disc)->disc_type)))
-            break;
+        seq_printf(p, "%-15s %04X\n",
+		   ((struct rtmac_disc *)disc)->name,
+		   ntohs(((struct rtmac_disc *)disc)->disc_type));
     }
 
-  done:
     mutex_unlock(&disc_list_lock);
 
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 #endif /* CONFIG_PROC_FS */

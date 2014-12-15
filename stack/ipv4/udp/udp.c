@@ -94,9 +94,8 @@ static inline struct udp_socket *port_hash_search(u32 saddr, u16 sport)
 {
 	unsigned bucket = sport & port_hash_mask;
 	struct udp_socket *sock;
-	struct hlist_node *n;
 
-	hlist_for_each_entry(sock, n, &port_hash[bucket], link)
+	hlist_for_each_entry(sock, &port_hash[bucket], link)
 		if (sock->sport == sport &&
 		    (saddr == INADDR_ANY
 		     || sock->saddr == saddr

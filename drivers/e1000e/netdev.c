@@ -2204,7 +2204,7 @@ static void e1000_set_multi(struct rtnet_device *netdev)
 
 	e1000_update_mc_addr_list(hw, NULL, 0);
 
-	if (netdev->features & NETIF_F_HW_VLAN_RX)
+	if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
 		e1000e_vlan_strip_enable(adapter);
 	else
 		e1000e_vlan_strip_disable(adapter);
@@ -4102,15 +4102,15 @@ static int e1000_probe(struct pci_dev *pdev,
 
 	/* Set initial default active device features */
 	netdev->features = (NETIF_F_SG |
-			    NETIF_F_HW_VLAN_RX |
-			    NETIF_F_HW_VLAN_TX |
+			    NETIF_F_HW_VLAN_CTAG_RX |
+			    NETIF_F_HW_VLAN_CTAG_TX |
 			    NETIF_F_TSO |
 			    NETIF_F_TSO6 |
 			    NETIF_F_RXCSUM |
 			    NETIF_F_HW_CSUM);
 
 	if (adapter->flags & FLAG_HAS_HW_VLAN_FILTER)
-		netdev->features |= NETIF_F_HW_VLAN_FILTER;
+		netdev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 
 	if (pci_using_dac) {
 		netdev->features |= NETIF_F_HIGHDMA;

@@ -98,47 +98,50 @@ MODULE_PARM_DESC(net_hash_key_shift, "destination right shift for "
  *  proc filesystem section
  */
 #ifdef CONFIG_PROC_FS
-static int rt_route_read_proc(char *buf, char **start, off_t offset, int count,
-                              int *eof, void *data)
+static int rtnet_ipv4_route_show(struct seq_file *p, void *data)
 {
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     u32 mask;
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
-    RTNET_PROC_PRINT_VARS(256);
 
-
-    if (!RTNET_PROC_PRINT("Host routes allocated/total:\t%d/%d\n"
-                          "Host hash table size:\t\t%d\n",
-                          allocated_host_routes,
-                          CONFIG_RTNET_RTIPV4_HOST_ROUTES,
-                          HOST_HASH_TBL_SIZE))
-        goto done;
+    seq_printf(p, "Host routes allocated/total:\t%d/%d\n"
+	       "Host hash table size:\t\t%d\n",
+	       allocated_host_routes,
+	       CONFIG_RTNET_RTIPV4_HOST_ROUTES,
+	       HOST_HASH_TBL_SIZE);
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
     mask = NET_HASH_KEY_MASK << net_hash_key_shift;
-    if (!RTNET_PROC_PRINT("Network routes allocated/total:\t%d/%d\n"
-                          "Network hash table size:\t%d\n"
-                          "Network hash key shift/mask:\t%d/%08X\n",
-                          allocated_net_routes,
-                          CONFIG_RTNET_RTIPV4_NET_ROUTES, NET_HASH_TBL_SIZE,
-                          net_hash_key_shift, mask))
-        goto done;
+    seq_printf(p, "Network routes allocated/total:\t%d/%d\n"
+	       "Network hash table size:\t%d\n"
+	       "Network hash key shift/mask:\t%d/%08X\n",
+	       allocated_net_routes,
+	       CONFIG_RTNET_RTIPV4_NET_ROUTES, NET_HASH_TBL_SIZE,
+	       net_hash_key_shift, mask);
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
 #ifdef CONFIG_RTNET_RTIPV4_ROUTER
-    RTNET_PROC_PRINT("IP Router:\t\t\tyes\n");
+    seq_printf(p, "IP Router:\t\t\tyes\n");
 #else
-    RTNET_PROC_PRINT("IP Router:\t\t\tno\n");
+    seq_printf(p, "IP Router:\t\t\tno\n");
 #endif
 
-  done:
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 
+static int rtnet_ipv4_route_open(struct inode *inode, struct  file *file) {
+  return single_open(file, rtnet_ipv4_route_show, NULL);
+}
+
+static const struct file_operations rtnet_ipv4_route_fops = {
+  .open = rtnet_ipv4_route_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
 
 
-static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
-                                   int count, int *eof, void *data)
+static int  rtnet_ipv4_host__route_show(struct seq_file *p, void *data)
 {
     struct host_route   *entry_ptr;
     struct dest_route   dest_host;
@@ -146,13 +149,8 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
     unsigned int        index;
     unsigned int        i;
     rtdm_lockctx_t      context;
-    int                 res;
-    RTNET_PROC_PRINT_VARS_EX(80);
 
-
-    if (!RTNET_PROC_PRINT_EX("Hash\tDestination\tHW Address\t\tDevice\n"))
-        goto done;
-
+    seq_printf(p, "Hash\tDestination\tHW Address\t\tDevice\n");
     for (key = 0; key < HOST_HASH_TBL_SIZE; key++) {
         index = 0;
         while (1) {
@@ -174,25 +172,32 @@ static int rt_host_route_read_proc(char *buf, char **start, off_t offset,
 
             rtdm_lock_put_irqrestore(&host_table_lock, context);
 
-            res = RTNET_PROC_PRINT_EX("%02X\t%u.%u.%u.%-3u\t"
-                    "%02X:%02X:%02X:%02X:%02X:%02X\t%s\n",
-                    key, NIPQUAD(dest_host.ip),
-                    dest_host.dev_addr[0], dest_host.dev_addr[1],
-                    dest_host.dev_addr[2], dest_host.dev_addr[3],
-                    dest_host.dev_addr[4], dest_host.dev_addr[5],
-                    dest_host.rtdev->name);
+            seq_printf(p, "%02X\t%u.%u.%u.%-3u\t"
+		      "%02X:%02X:%02X:%02X:%02X:%02X\t%s\n",
+		      key, NIPQUAD(dest_host.ip),
+		      dest_host.dev_addr[0], dest_host.dev_addr[1],
+		      dest_host.dev_addr[2], dest_host.dev_addr[3],
+		      dest_host.dev_addr[4], dest_host.dev_addr[5],
+		      dest_host.rtdev->name);
             rtdev_dereference(dest_host.rtdev);
-            if (!res)
-                goto done;
 
             index++;
         }
     }
-
-  done:
-    RTNET_PROC_PRINT_DONE_EX;
+    return 0;
 }
 
+static int rtnet_ipv4_host__route_open(struct inode *inode,
+					    struct  file *file) {
+  return single_open(file, rtnet_ipv4_host__route_show, NULL);
+}
+
+static const struct file_operations rtnet_ipv4_host__route_fops = {
+  .open = rtnet_ipv4_host__route_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
 
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
@@ -266,31 +271,27 @@ static int __init rt_route_proc_register(void)
     struct proc_dir_entry *proc_entry;
 
 
-    proc_entry = create_proc_entry("route", S_IFREG | S_IRUGO | S_IWUSR,
-                                   ipv4_proc_root);
+    proc_entry = proc_create("route", S_IFREG | S_IRUGO | S_IWUSR,
+			     ipv4_proc_root, &rtnet_ipv4_route_fops);
     if (!proc_entry)
         goto err1;
-    proc_entry->read_proc = rt_route_read_proc;
 
-    proc_entry = create_proc_entry("host_route", S_IFREG | S_IRUGO | S_IWUSR,
-                                   ipv4_proc_root);
+    proc_entry = proc_create("host_route", S_IFREG | S_IRUGO | S_IWUSR,
+			     ipv4_proc_root, &rtnet_ipv4_host__route_fops);
     if (!proc_entry)
         goto err2;
-    proc_entry->read_proc = rt_host_route_read_proc;
 
     /* create "arp" as an alias for "host_route" */
-    proc_entry = create_proc_entry("arp", S_IFREG | S_IRUGO | S_IWUSR,
-                                   ipv4_proc_root);
+    proc_entry = proc_create("arp", S_IFREG | S_IRUGO | S_IWUSR,
+			     ipv4_proc_root, &rtnet_ipv4_host__route_fops);
     if (!proc_entry)
         goto err3;
-    proc_entry->read_proc = rt_host_route_read_proc;
 
 #ifdef CONFIG_RTNET_RTIPV4_NETROUTING
-    proc_entry = create_proc_entry("net_route", S_IFREG | S_IRUGO | S_IWUSR,
-                                   ipv4_proc_root);
+    proc_entry = proc_create("net_route", S_IFREG | S_IRUGO | S_IWUSR,
+			     ipv4_proc_root, &rtnet_ipv4_net__route_fops);
     if (!proc_entry)
         goto err4;
-    proc_entry->read_proc = rt_net_route_read_proc;
 #endif /* CONFIG_RTNET_RTIPV4_NETROUTING */
 
     return 0;

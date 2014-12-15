@@ -744,7 +744,9 @@ static int rtcfg_client_recv_announce(int ifindex, struct rtskb *rtskb)
     struct rtcfg_frm_announce *announce_frm;
     struct rtcfg_device       *rtcfg_dev = &device[ifindex];
     u32                       i;
+#ifdef CONFIG_RTNET_RTIPV4
     u32                       announce_frm_addr;
+#endif
     int                       result;
 
 

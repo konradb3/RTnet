@@ -507,8 +507,9 @@ static int rtcfg_server_recv_announce(int ifindex, RTCFG_EVENT event_id,
     struct list_head          *entry;
     struct rtcfg_frm_announce *announce;
     struct rtcfg_connection   *conn;
+#ifdef CONFIG_RTNET_RTIPV4
     u32                        announce_addr;
-
+#endif
 
     if (rtskb->len < sizeof(struct rtcfg_frm_announce)) {
         rtdm_mutex_unlock(&rtcfg_dev->dev_mutex);

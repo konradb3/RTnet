@@ -201,9 +201,8 @@ static inline struct tcp_socket *port_hash_search(u32 saddr, u16 sport)
 {
     u32 bucket = sport & port_hash_mask;
     struct tcp_socket *ts;
-    struct hlist_node *n;
 
-    hlist_for_each_entry(ts, n, &port_hash[bucket], link)
+    hlist_for_each_entry(ts, &port_hash[bucket], link)
         if (ts->sport == sport &&
             (saddr == INADDR_ANY
              || ts->saddr == saddr
@@ -2175,8 +2174,7 @@ static inline char* rt_tcp_string_of_state(u8 state)
     }
 }
 
-static int rt_tcp_proc_read(char *buf, char **start, off_t offset,
-                            int count, int *eof, void *data)
+static int rtnet_ipv4_tcp_show(struct seq_file *p, void *data)
 {
     rtdm_lockctx_t context;
     struct tcp_socket *ts;
@@ -2186,13 +2184,9 @@ static int rt_tcp_proc_read(char *buf, char **start, off_t offset,
     char dbuffer[24];
     int state;
     int index;
-    int ret;
 
-    RTNET_PROC_PRINT_VARS_EX(80);
-
-    if (!RTNET_PROC_PRINT_EX("Hash    Local Address           "
-                             "Foreign Address         State\n"))
-        goto done;
+    seq_printf(p, "Hash    Local Address           "
+	          "Foreign Address         State\n");
 
     for (index = 0; index < RT_TCP_SOCKETS; index++) {
         rtdm_lock_get_irqsave(&tcp_socket_base_lock, context);
@@ -2215,33 +2209,41 @@ static int rt_tcp_proc_read(char *buf, char **start, off_t offset,
             snprintf(dbuffer, sizeof(dbuffer), "%u.%u.%u.%u:%u",
                      NIPQUAD(daddr), ntohs(dport));
 
-            ret = RTNET_PROC_PRINT_EX("%04X    %-23s %-23s %s\n",
-                                      sport & port_hash_mask, sbuffer, dbuffer,
-                                      rt_tcp_string_of_state(state));
-            if (!ret)
-                break;
+            seq_printf(p, "%04X    %-23s %-23s %s\n",
+		       sport & port_hash_mask, sbuffer, dbuffer,
+		       rt_tcp_string_of_state(state));
         }
     }
-
- done:
-    RTNET_PROC_PRINT_DONE_EX;
+    return 0;
 }
 
 /***
  *  rt_tcp_proc_register
  */
+
+static int rtnet_ipv4_tcp_open(struct inode *inode, struct  file *file)
+{
+  return single_open(file, rtnet_ipv4_tcp_show, NULL);
+}
+
+static const struct file_operations rtnet_ipv4_tcp_fops = {
+  .open = rtnet_ipv4_tcp_open,
+  .read = seq_read,
+  .llseek = seq_lseek,
+  .release = single_release,
+};
+
+
 static int __init rt_tcp_proc_register(void)
 {
     struct proc_dir_entry *proc_entry;
 
-    proc_entry = create_proc_entry("tcp", S_IFREG | S_IRUGO | S_IWUSR,
-                                   ipv4_proc_root);
+    proc_entry = proc_create("tcp", S_IFREG | S_IRUGO | S_IWUSR,
+			     ipv4_proc_root, &rtnet_ipv4_tcp_fops);
 
     if (!proc_entry) {
         return -EPERM;
     }
-
-    proc_entry->read_proc = rt_tcp_proc_read;
 
     return 0;
 }

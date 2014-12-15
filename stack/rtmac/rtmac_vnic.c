@@ -333,17 +333,13 @@ void rtmac_vnic_unregister(struct rtnet_device *rtdev)
 
 
 #ifdef CONFIG_PROC_FS
-int rtmac_proc_read_vnic(char *buf, char **start, off_t offset, int count,
-                         int *eof, void *data)
+int rtnet_rtmac_vnics_show(struct seq_file *p, void *data)
 {
     struct rtnet_device *rtdev;
     int                 i;
-    int                 res = 0;
-    RTNET_PROC_PRINT_VARS(80);
 
 
-    if (!RTNET_PROC_PRINT("RT-NIC name\tVNIC name\n"))
-        goto done;
+    seq_printf(p, "RT-NIC name\tVNIC name\n");
 
     for (i = 1; i <= MAX_RT_DEVICES; i++) {
         rtdev = rtdev_get_by_index(i);
@@ -359,19 +355,15 @@ int rtmac_proc_read_vnic(char *buf, char **start, off_t offset, int count,
             struct rtmac_priv *rtmac;
 
             rtmac = (struct rtmac_priv *)rtdev->mac_priv;
-            res = RTNET_PROC_PRINT("%-15s %s\n",
-                                    rtdev->name, rtmac->vnic->name);
+            seq_printf(p, "%-15s %s\n",
+		       rtdev->name, rtmac->vnic->name);
         }
 
         mutex_unlock(&rtdev->nrt_lock);
         rtdev_dereference(rtdev);
-
-        if (!res)
-            break;
     }
 
-  done:
-    RTNET_PROC_PRINT_DONE;
+    return 0;
 }
 #endif /* CONFIG_PROC_FS */
 

@@ -87,8 +87,7 @@ int rtmac_disc_register(struct rtmac_disc *disc);
 void rtmac_disc_deregister(struct rtmac_disc *disc);
 
 #ifdef CONFIG_PROC_FS
-int rtmac_proc_read_disc(char *buf, char **start, off_t offset,
-                         int count, int *eof, void *data);
+int rtnet_rtmac_disciplines_show(struct seq_file *p, void *data);
 #endif /* CONFIG_PROC_FS */
 
 

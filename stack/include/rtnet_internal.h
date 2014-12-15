@@ -76,8 +76,9 @@ extern const char rtnet_rtdm_provider_name[];
 
 #include <linux/proc_fs.h>
 
+#ifdef CONFIG_PROC_FS
 extern struct proc_dir_entry *rtnet_proc_root;
-
+#endif
 
 /* Derived from Erwin Rol's rtai_proc_fs.h.
    Standard version assumes that output fits into the provided buffer,

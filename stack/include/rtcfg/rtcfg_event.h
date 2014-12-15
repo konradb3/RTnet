@@ -68,6 +68,7 @@ struct rtcfg_device {
     unsigned int                    burstrate;
 #ifdef CONFIG_PROC_FS
     struct proc_dir_entry           *proc_entry;
+    char                            proc_entry_name[64];
 #endif
 
     union {

@@ -305,7 +305,7 @@ static int __init rt_ipv4_proto_init(void)
     rt_icmp_init();
 
 #ifdef CONFIG_PROC_FS
-    ipv4_proc_root = create_proc_entry("ipv4", S_IFDIR, rtnet_proc_root);
+    ipv4_proc_root = proc_mkdir("ipv4", rtnet_proc_root);
     if (!ipv4_proc_root) {
         /*ERRMSG*/printk("RTnet: unable to initialize /proc entry (ipv4)\n");
         return -1;
